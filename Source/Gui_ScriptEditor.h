@@ -72,7 +72,9 @@ public:
 	wxArrayString fmv_str;
 	wxArrayString battlecode_str;
 	wxArrayString modelcode_str;
+	wxArrayString worldcode_str;
 	wxArrayString soundcode_str;
+	wxArrayString spscode_str;
 	wxArrayString entrylist_str;
 	wxArrayString bubblesymbol_str;
 	wxArrayString worldmap_str;
@@ -87,7 +89,9 @@ public:
 	uint16_t** fmv_id;
 	uint16_t** battlecode_id;
 	uint16_t** modelcode_id;
+	uint16_t** worldcode_id;
 	uint16_t** soundcode_id;
+	uint16_t** spscode_id;
 	uint16_t** entrylist_id;
 	uint16_t** worldmap_id;
 	
@@ -96,6 +100,7 @@ public:
 	unsigned int arg_amount;
 	unsigned int* arg_position;
 	bool* func_should_parse;
+	uint16_t current_opcode;
 	int* arg_control_type;
 	wxStaticText** arg_label;
 	wxWindow** arg_control;
@@ -132,7 +137,7 @@ private:
 	
 	void UpdateGlobalLocalStrings(int ignoreentry=-1);
 	ScriptLocalVariableSet* ParseLocal(LogStruct& log, wxString str);
-	void ScriptChangeArg(int argi, int64_t value);
+	void ScriptChangeArg(int argi, int64_t value, int argshift = 0);
 	
 	void OnFunctionChoose(wxListEvent& event);
 	void OnIntValueText(wxCommandEvent& event);

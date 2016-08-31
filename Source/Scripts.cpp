@@ -81,6 +81,9 @@ int64_t ScriptArgument::GetValue() {
 			} else if (vartype>=20 && vartype<30) { \
 				IO ## Char(f,opcodetmp[i++]); size++; \
 				IO ## Char(f,opcodetmp[i++]); size++; \
+			} else if (vartype==55) { \
+				IO ## Char(f,opcodetmp[i++]); size++; \
+				IO ## Char(f,opcodetmp[i++]); size++; \
 			} \
 			IO ## Char(f,opcodetmp[i]); size++; \
 			varbyte = opcodetmp[i++]; \
@@ -378,14 +381,35 @@ int ScriptDataStruct::RemoveFunction(int entryid, int funcid) {
 }
 
 void ScriptDataStruct::AddEntry(int entrypos, uint8_t entrytype) {
-	unsigned int i,j,k,l;
+	unsigned int i,j,k,l,m;
+	bool isargentry;
+	int varargtype;
 	for (i=0;i<entry_amount;i++)
 		for (j=0;j<entry_function_amount[i];j++)
 			for (k=0;k<func[i][j].op_amount;k++)
 				if (func[i][j].op[k].opcode!=0x06 && func[i][j].op[k].opcode!=0x0B && func[i][j].op[k].opcode!=0x29)
-					for (l=0;l<func[i][j].op[k].arg_amount;l++)
-						if (!func[i][j].op[k].arg[l].is_var && HADES_STRING_SCRIPT_OPCODE[func[i][j].op[k].opcode].arg_type[l]==AT_ENTRY && func[i][j].op[k].arg[l].value>=entrypos && func[i][j].op[k].arg[l].value<entry_amount)
+					for (l=0;l<func[i][j].op[k].arg_amount;l++) {
+						isargentry = !func[i][j].op[k].arg[l].is_var && HADES_STRING_SCRIPT_OPCODE[func[i][j].op[k].opcode].arg_type[l]==AT_ENTRY;
+						isargentry = isargentry || (func[i][j].op[k].opcode==0xB3 || func[i][j].op[k].opcode==0xDA) && l==2 && !func[i][j].op[k].arg[l].is_var && !func[i][j].op[k].arg[1].is_var && func[i][j].op[k].arg[1].value==150;
+						if (isargentry && func[i][j].op[k].arg[l].value>=entrypos && func[i][j].op[k].arg[l].value<entry_amount) {
 							func[i][j].op[k].arg[l].value++;
+						} else if (func[i][j].op[k].arg[l].is_var) {
+							for (m=0;m<func[i][j].op[k].arg[l].size;m++) {
+								varargtype = VarOpList[func[i][j].op[k].arg[l].var[m]].type;
+								if (varargtype==55) {
+									if (func[i][j].op[k].arg[l].var[m+1]>=entrypos && func[i][j].op[k].arg[l].var[m+1]<entry_amount) {
+										func[i][j].op[k].arg[l].var[m+1]++;
+									}
+								} else if (varargtype==3 || varargtype==5 || (varargtype>=10 && varargtype<20)) {
+									m++;
+								} else if (varargtype==6 || (varargtype>=20 && varargtype<30)) {
+									m += 2;
+								} else if (varargtype==7) {
+									m += 4;
+								}
+							}
+						}
+					}
 	entry_amount++;
 	ScriptFunction** newfunc = new ScriptFunction*[entry_amount];
 	uint16_t** newfunctype = new uint16_t*[entry_amount];
@@ -451,20 +475,45 @@ void ScriptDataStruct::AddEntry(int entrypos, uint8_t entrytype) {
 }
 
 int ScriptDataStruct::RemoveEntry(int entrypos, int* modifiedargamount) {
-	unsigned int i,j,k,l;
+	unsigned int i,j,k,l,m;
+	bool isargentry;
+	int varargtype;
 	int res = 0;
 	for (i=0;i<entry_amount;i++)
-		for (j=0;j<entry_function_amount[i];j++)
-			for (k=0;k<func[i][j].op_amount;k++)
-				if (func[i][j].op[k].opcode!=0x06 && func[i][j].op[k].opcode!=0x0B && func[i][j].op[k].opcode!=0x29)
-					for (l=0;l<func[i][j].op[k].arg_amount;l++)
-						if (!func[i][j].op[k].arg[l].is_var && HADES_STRING_SCRIPT_OPCODE[func[i][j].op[k].opcode].arg_type[l]==AT_ENTRY) {
-							if (func[i][j].op[k].arg[l].value==entrypos) {
-								func[i][j].op[k].arg[l].value = 0;
-								if (modifiedargamount)
-									(*modifiedargamount)++;
-							} else if (func[i][j].op[k].arg[l].value>entrypos && func[i][j].op[k].arg[l].value<entry_amount) {
-								func[i][j].op[k].arg[l].value--;
+		if (i!=entrypos)
+			for (j=0;j<entry_function_amount[i];j++)
+				for (k=0;k<func[i][j].op_amount;k++)
+					if (func[i][j].op[k].opcode!=0x06 && func[i][j].op[k].opcode!=0x0B && func[i][j].op[k].opcode!=0x29)
+						for (l=0;l<func[i][j].op[k].arg_amount;l++) {
+							isargentry = !func[i][j].op[k].arg[l].is_var && HADES_STRING_SCRIPT_OPCODE[func[i][j].op[k].opcode].arg_type[l]==AT_ENTRY;
+							isargentry = isargentry || (func[i][j].op[k].opcode==0xB3 || func[i][j].op[k].opcode==0xDA) && l==2 && !func[i][j].op[k].arg[l].is_var && !func[i][j].op[k].arg[1].is_var && func[i][j].op[k].arg[1].value==150;
+							if (isargentry) {
+								if (func[i][j].op[k].arg[l].value==entrypos) {
+									func[i][j].op[k].arg[l].value = 0;
+									if (modifiedargamount)
+										(*modifiedargamount)++;
+								} else if (func[i][j].op[k].arg[l].value>entrypos && func[i][j].op[k].arg[l].value<entry_amount) {
+									func[i][j].op[k].arg[l].value--;
+								}
+							} else if (func[i][j].op[k].arg[l].is_var) {
+								for (m=0;m<func[i][j].op[k].arg[l].size;m++) {
+									varargtype = VarOpList[func[i][j].op[k].arg[l].var[m]].type;
+									if (varargtype==55) {
+										if (func[i][j].op[k].arg[l].var[m+1]==entrypos) {
+											func[i][j].op[k].arg[l].var[m+1] = 0;
+											if (modifiedargamount)
+												(*modifiedargamount)++;
+										} else if (func[i][j].op[k].arg[l].var[m+1]>entrypos && func[i][j].op[k].arg[l].var[m+1]<entry_amount) {
+											func[i][j].op[k].arg[l].var[m+1]--;
+										}
+									} else if (varargtype==3 || varargtype==5 || (varargtype>=10 && varargtype<20)) {
+										m++;
+									} else if (varargtype==6 || (varargtype>=20 && varargtype<30)) {
+										m += 2;
+									} else if (varargtype==7) {
+										m += 4;
+									}
+								}
 							}
 						}
 	for (i=0;i<entry_function_amount[entrypos];i++)
@@ -640,9 +689,21 @@ void ScriptDataStruct::WritePPF(fstream& f) {
 }
 
 void ScriptDataStruct::ReadHWS(fstream& f, bool usetext) {
+	uint8_t oldentryamount = entry_amount;
 	MACRO_SCRIPT_IOFUNCTION(HWSRead,HWSSeek,true,false,ReadHWS)
 	if (usetext)
 		name.ReadFromChar(header_name);
+	if (oldentryamount!=entry_amount) {
+		ScriptLocalVariableSet* newlocaldata = new ScriptLocalVariableSet[entry_amount];
+		unsigned int i;
+		memcpy(newlocaldata,local_data,min(oldentryamount,entry_amount)*sizeof(ScriptLocalVariableSet));
+		for (i=0;i<entry_amount;i++)
+			newlocaldata[i].allocate_amount = entry_local_var[i];
+		for (i=oldentryamount;i<entry_amount;i++)
+			newlocaldata[i].amount = 0;
+		delete[] local_data;
+		local_data = newlocaldata;
+	}
 	MarkDataModified();
 }
 

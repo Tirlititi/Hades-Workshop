@@ -265,6 +265,7 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 	text(td),
 	datas(sv),
 	script_type(scpttype),
+	current_opcode(0xFFFF),
 	arg_control_type(NULL),
 	extra_size(script.GetExtraSize()),
 	refresh_control_disable(false),
@@ -452,11 +453,23 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 		modelcode_str.Add(_(ModelCodeName[i].name));
 		modelcode_id[i] = new uint16_t(ModelCodeName[i].id);
 	}
+	worldcode_id = new uint16_t*[G_N_ELEMENTS(WorldCodeName)];
+	worldcode_str.Alloc(G_N_ELEMENTS(WorldCodeName));
+	for (i=0;i<G_N_ELEMENTS(WorldCodeName);i++) {
+		worldcode_str.Add(_(WorldCodeName[i].name));
+		worldcode_id[i] = new uint16_t(WorldCodeName[i].id);
+	}
 	soundcode_id = new uint16_t*[G_N_ELEMENTS(SoundCodeName)];
 	soundcode_str.Alloc(G_N_ELEMENTS(SoundCodeName));
 	for (i=0;i<G_N_ELEMENTS(SoundCodeName);i++) {
 		soundcode_str.Add(_(SoundCodeName[i].name));
 		soundcode_id[i] = new uint16_t(SoundCodeName[i].id);
+	}
+	spscode_id = new uint16_t*[G_N_ELEMENTS(SpsCodeName)];
+	spscode_str.Alloc(G_N_ELEMENTS(SpsCodeName));
+	for (i=0;i<G_N_ELEMENTS(SpsCodeName);i++) {
+		spscode_str.Add(_(SpsCodeName[i].name));
+		spscode_id[i] = new uint16_t(SpsCodeName[i].id);
 	}
 	worldmap_id = new uint16_t*[G_N_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME)];
 	worldmap_str.Alloc(G_N_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME));
@@ -511,9 +524,15 @@ ScriptEditDialog::~ScriptEditDialog() {
 	for (i=0;i<modelcode_str.Count();i++)
 		delete[] modelcode_id[i];
 	delete[] modelcode_id;
+	for (i=0;i<worldcode_str.Count();i++)
+		delete[] worldcode_id[i];
+	delete[] worldcode_id;
 	for (i=0;i<soundcode_str.Count();i++)
 		delete[] soundcode_id[i];
 	delete[] soundcode_id;
+	for (i=0;i<spscode_str.Count();i++)
+		delete[] spscode_id[i];
+	delete[] spscode_id;
 	for (i=0;i<worldmap_str.Count();i++)
 		delete[] worldmap_id[i];
 	delete[] worldmap_id;
@@ -696,11 +715,11 @@ wxString ScriptEditHandler::ConvertVarArgument(ScriptArgument& arg) {
 			operandtmp[operand++] += L"S";
 		} else if (vartype==6) {
 			operandtmp[operand].Empty();
-			operandtmp[operand++] << (unsigned int)(arg.var[i]+0x100*arg.var[i+1]);
+			operandtmp[operand++] << (unsigned int)(arg.var[i]+(arg.var[i+1] << 8));
 			i += 2;
 		} else if (vartype==7) {
 			operandtmp[operand].Empty();
-			operandtmp[operand] << (unsigned int)(arg.var[i]+0x100*arg.var[i+1]+0x10000*arg.var[i+2]+0x1000000*arg.var[i+3]);
+			operandtmp[operand] << (unsigned int)(arg.var[i]+(arg.var[i+1] << 8)+(arg.var[i+2] << 16)+(arg.var[i+3] << 24));
 			operandtmp[operand++] += L"L";
 			i += 4;
 		} else if (vartype>=10 && vartype<20) {
@@ -710,7 +729,7 @@ wxString ScriptEditHandler::ConvertVarArgument(ScriptArgument& arg) {
 			operand++;
 		} else if (vartype>=20 && vartype<30) {
 			varcat = varbyte;
-			varid = arg.var[i]+0x100*arg.var[i+1];
+			varid = arg.var[i]+(arg.var[i+1] << 8);
 			i += 2;
 			MACRO_SEARCHVARNAME(operandtmp[operand])
 			operand++;
@@ -719,6 +738,18 @@ wxString ScriptEditHandler::ConvertVarArgument(ScriptArgument& arg) {
 		} else if (vartype==51) {
 			operandtmp[operand-2] = _(VarOpList[varbyte].opstring)+_(L"(")+operandtmp[operand-2]+_(L", ")+operandtmp[operand-1]+_(L")");
 			operand--;
+		} else if (vartype==55) {
+			if (arg.var[i+1]<G_N_ELEMENTS(VarEntryPropList)) {
+				operandtmp[operand].Empty();
+				operandtmp[operand] << _(VarEntryPropList[arg.var[i+1]].opstring) << _(L"(") << (unsigned int)arg.var[i] << _(L")");
+				operand++;
+				i += 2;
+			} else {
+				operandtmp[operand].Empty();
+				operandtmp[operand] << _(VarOpList[varbyte].opstring) << _(L"(") << (unsigned int)arg.var[i+1] << _(L", ") << (unsigned int)arg.var[i] << _(L")");
+				operand++;
+				i += 2;
+			}
 		}
 		varbyte = arg.var[i++];
 		vartype = VarOpList[varbyte].type;
@@ -1417,6 +1448,37 @@ uint8_t* ConvertStringToVararg(wxString varstr, uint8_t& varsize, wxString& errm
 						}
 						lvlmove[++parlvl] = 2;
 						expectedval++;
+					} else if (objecttype==55) { // GetEntryProperty
+						MACRO_APPEND_BYTE(i,true)
+						tmpstr = GetNextVarThing(varstr);
+						if (!tmpstr.IsSameAs(L"(")) {
+							errmsg = _(HADES_STRING_SCRIPT_VARARG_OPEN_PAR);
+							return NULL;
+						}
+						tmpstr = GetNextVarThing(varstr);
+						if (!tmpstr.IsNumber()) {
+							errmsg = _(HADES_STRING_SCRIPT_VARARG_GETENTRY);
+							return NULL;
+						}
+						tmp32 = wxAtoi(tmpstr);
+						tmpstr = GetNextVarThing(varstr);
+						if (!tmpstr.IsSameAs(L",")) {
+							errmsg = _(HADES_STRING_SCRIPT_VARARG_MISS_COMMA);
+							return NULL;
+						}
+						tmpstr = GetNextVarThing(varstr);
+						if (!tmpstr.IsNumber()) {
+							errmsg = _(HADES_STRING_SCRIPT_VARARG_GETENTRY);
+							return NULL;
+						}
+						MACRO_APPEND_BYTE(wxAtoi(tmpstr),true)
+						MACRO_APPEND_BYTE(tmp32,true)
+						tmpstr = GetNextVarThing(varstr);
+						if (!tmpstr.IsSameAs(L")")) {
+							errmsg = _(HADES_STRING_SCRIPT_VARARG_MISS_PAR);
+							return NULL;
+						}
+						expectedval--;
 					} else { // unknown/unused
 						errmsg.Printf(wxT(HADES_STRING_SCRIPT_VARARG_UNKNOWN),tmpstr);
 						return NULL;
@@ -1425,8 +1487,33 @@ uint8_t* ConvertStringToVararg(wxString varstr, uint8_t& varsize, wxString& errm
 				}
 			}
 			if (i>=256) {
-				errmsg.Printf(wxT(HADES_STRING_SCRIPT_VARARG_UNKNOWN),tmpstr);
-				return NULL;
+				for (i=0;i<G_N_ELEMENTS(VarEntryPropList);i++)
+					if (tmpstr.IsSameAs(VarEntryPropList[i].opstring)) { // GetEntry specific property
+						MACRO_APPEND_BYTE(0x78,true)
+						tmpstr = GetNextVarThing(varstr);
+						if (!tmpstr.IsSameAs(L"(")) {
+							errmsg = _(HADES_STRING_SCRIPT_VARARG_OPEN_PAR);
+							return NULL;
+						}
+						tmpstr = GetNextVarThing(varstr);
+						if (!tmpstr.IsNumber()) {
+							errmsg = _(HADES_STRING_SCRIPT_VARARG_GETENTRY);
+							return NULL;
+						}
+						MACRO_APPEND_BYTE(wxAtoi(tmpstr),true)
+						tmpstr = GetNextVarThing(varstr);
+						if (!tmpstr.IsSameAs(L")")) {
+							errmsg = _(HADES_STRING_SCRIPT_VARARG_MISS_PAR);
+							return NULL;
+						}
+						MACRO_APPEND_BYTE(VarEntryPropList[i].type-1000,true)
+						expectedval--;
+						break;
+					}
+				if (i>=G_N_ELEMENTS(VarEntryPropList)) {
+					errmsg.Printf(wxT(HADES_STRING_SCRIPT_VARARG_UNKNOWN),tmpstr);
+					return NULL;
+				}
 			}
 		}
 		lastobjecttype = objecttype;
@@ -2354,19 +2441,25 @@ ScriptHelpDialog::ScriptHelpDialog(ScriptEditDialog* p) :
 		m_listvariable->Append(var_list[i],var_list_item[i]);
 	}
 	j = 0;
-	varcode_list.Alloc(G_N_ELEMENTS(VarOpList));
-	varcode_list_item = (void**)new VariableOperation*[G_N_ELEMENTS(VarOpList)];
+	varcode_list.Alloc(G_N_ELEMENTS(VarOpList)+G_N_ELEMENTS(VarEntryPropList));
+	varcode_list_item = (void**)new VariableOperation*[G_N_ELEMENTS(VarOpList)+G_N_ELEMENTS(VarEntryPropList)];
 	varcode_list.Add(_(L"[DATA_ACCESS]"));
 	varcode_list_item[j] = (void*)&VarOpList[0x29];
 	m_listvarcode->Append(varcode_list[j],varcode_list_item[j]);
 	j++;
 	for (i=0;i<G_N_ELEMENTS(VarOpList);i++)
-		if (VarOpList[i].type==0 || VarOpList[i].type==2 || VarOpList[i].type==50 || VarOpList[i].type==51) {
+		if (VarOpList[i].type==0 || VarOpList[i].type==2 || VarOpList[i].type==50 || VarOpList[i].type==51 || VarOpList[i].type==55) {
 			varcode_list.Add(_(VarOpList[i].opstring));
 			varcode_list_item[j] = (void*)&VarOpList[i];
 			m_listvarcode->Append(varcode_list[j],varcode_list_item[j]);
 			j++;
 		}
+	for (i=0;i<G_N_ELEMENTS(VarEntryPropList);i++) {
+		varcode_list.Add(_(VarEntryPropList[i].opstring));
+		varcode_list_item[j] = (void*)&VarEntryPropList[i];
+		m_listvarcode->Append(varcode_list[j],varcode_list_item[j]);
+		j++;
+	}
 	wxImage tmpimg = wxBITMAP(findglass_image).ConvertToImage();
 	m_searchbtn->SetBitmap(tmpimg.Rescale(16,16,wxIMAGE_QUALITY_HIGH));
 }
@@ -2388,6 +2481,10 @@ void ScriptHelpDialog::DisplayHelpVarCode(VariableOperation* item) {
 		for (unsigned int i=0;i<G_N_ELEMENTS(ScriptCharacterField);i++)
 			desc += _(ScriptCharacterField[i].name)+_(L"\n");
 		desc += _(ARRAY_ADDITIONAL_INFO);
+		m_helptextctrl->SetValue(desc);
+	} else if (item->type>=1000) {
+		wxString desc;
+		desc << _(VarOpList[0x78].opstring) << _(L"(") << (unsigned int)(item->type-1000) << _(L", Entry)\n\n") << _(item->description);
 		m_helptextctrl->SetValue(desc);
 	} else
 		m_helptextctrl->SetValue(item->description);
@@ -2447,9 +2544,9 @@ void ScriptHelpDialog::OnListDoubleClick(wxCommandEvent& event) {
 		parent->m_scripttext->WriteText(_(item->opstring));
 		if (item->type==3)
 			parent->m_scripttext->WriteText(_(L"[0]"));
-		else if (item->type==50)
+		else if (item->type==50 || item->type>=1000)
 			parent->m_scripttext->WriteText(_(L"(0)"));
-		else if (item->type==51)
+		else if (item->type==51 || item->type==55)
 			parent->m_scripttext->WriteText(_(L"(0, 0)"));
 	}
 }
@@ -2539,7 +2636,9 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 			opcode = HADES_STRING_SCRIPT_OPCODE[i].id;
 			break;
 		}
-	if (opcode==0xFFFF) {
+	if (refreshargcontrol)
+		current_opcode = opcode;
+	if (current_opcode==0xFFFF) {
 		if (refreshargcontrol) {
 			m_helptextctrl->SetValue(_(HADES_STRING_SCRIPT_OPCODE[0].help));
 			arg_amount = 0;
@@ -2549,13 +2648,13 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 		return;
 	}
 	if (refreshargcontrol) {
-		m_helptextctrl->SetValue(_(HADES_STRING_SCRIPT_OPCODE[opcode].help));
+		m_helptextctrl->SetValue(_(HADES_STRING_SCRIPT_OPCODE[current_opcode].help));
 		arg_amount = 0;
-		for (i=0;i<HADES_STRING_SCRIPT_OPCODE[opcode].arg_amount;i++)
-			if (HADES_STRING_SCRIPT_OPCODE[opcode].arg_type[i]!=AT_NONE && /*
-			 */ HADES_STRING_SCRIPT_OPCODE[opcode].arg_type[i]!=AT_POSITION_Y && HADES_STRING_SCRIPT_OPCODE[opcode].arg_type[i]!=AT_POSITION_Z && /*
-			 */ HADES_STRING_SCRIPT_OPCODE[opcode].arg_type[i]!=AT_COLOR_MAGENTA && HADES_STRING_SCRIPT_OPCODE[opcode].arg_type[i]!=AT_COLOR_YELLOW && /*
-			 */ HADES_STRING_SCRIPT_OPCODE[opcode].arg_type[i]!=AT_COLOR_GREEN && HADES_STRING_SCRIPT_OPCODE[opcode].arg_type[i]!=AT_COLOR_BLUE)
+		for (i=0;i<HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_amount;i++)
+			if (HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[i]!=AT_NONE && /*
+			 */ HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[i]!=AT_POSITION_Y && HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[i]!=AT_POSITION_Z && /*
+			 */ HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[i]!=AT_COLOR_MAGENTA && HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[i]!=AT_COLOR_YELLOW && /*
+			 */ HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[i]!=AT_COLOR_GREEN && HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[i]!=AT_COLOR_BLUE)
 				 arg_amount++;
 		arg_control_type = new int[arg_amount];
 		arg_label = new wxStaticText*[arg_amount];
@@ -2566,7 +2665,7 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 	if (!tmpstr.IsSameAs(L"("))
 		cleanarg = false;
 	argi = 0;
-	if (opcode==0x29 && script_type==SCRIPT_TYPE_FIELD) {
+	if (current_opcode==0x29 && script_type==SCRIPT_TYPE_FIELD) {
 		unsigned int ptamount = 0;
 		int16_t regionpts[100];
 		bool islastarg = false;
@@ -2595,8 +2694,8 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 			gl_window->DisplayFieldRegion(ptamount,regionpts);
 	}
 	for (i=0;i<arg_amount;i++) {
-		if (refreshargcontrol && HADES_STRING_SCRIPT_OPCODE[opcode].arg_type[argi]!=AT_NONE) {
-			arg_label[i] = new wxStaticText(m_argpanel,wxID_ANY,_(HADES_STRING_SCRIPT_OPCODE[opcode].arg_help[i]));
+		if (refreshargcontrol && HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[argi]!=AT_NONE) {
+			arg_label[i] = new wxStaticText(m_argpanel,wxID_ANY,_(HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_help[i]));
 			arg_label[i]->Wrap(-1);
 			argsizer->Add(arg_label[i],0,wxALL,5);
 		}
@@ -2605,7 +2704,7 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 			arg = tmpstr;
 		else
 			arg = wxEmptyString;
-		if (HADES_STRING_SCRIPT_OPCODE[opcode].arg_type[argi]==AT_NONE) {
+		if (HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[argi]==AT_NONE) {
 			i--;
 			tmpstr = GetNextPunc(line);
 			if (!(tmpstr.IsSameAs(L",") && i+1<arg_amount) && !(tmpstr.IsSameAs(L")") && i+1==arg_amount))
@@ -2614,17 +2713,17 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 			continue;
 		}
 		if (refreshargcontrol) {
-			switch (HADES_STRING_SCRIPT_OPCODE[opcode].arg_type[argi]) {
+			switch (HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[argi]) {
 			case AT_JUMP:
 				arg_control[i] = ArgCreateText(arg,i);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_SPIN:
-				arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[opcode].arg_length[argi],true);
+				arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_length[argi],true);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_USPIN:
-				arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[opcode].arg_length[argi],false);
+				arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_length[argi],false);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_BOOL:
@@ -2632,49 +2731,49 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_BOOLLIST:
-				arg_control[i] = ArgCreateFlags(arg,i,8*HADES_STRING_SCRIPT_OPCODE[opcode].arg_length[argi],defaultbool_str);
+				arg_control[i] = ArgCreateFlags(arg,i,8*HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_length[argi],defaultbool_str);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_TEXT:
 				if (use_text)
 					arg_control[i] = ArgCreateChoice(arg,i,NULL,text_str);
 				else
-					arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[opcode].arg_length[argi],false);
+					arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_length[argi],false);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_BATTLE:
 				if (use_battle)
 					arg_control[i] = ArgCreateChoice(arg,i,battle_id,battle_str);
 				else
-					arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[opcode].arg_length[argi],false);
+					arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_length[argi],false);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_FIELD:
 				if (use_field)
 					arg_control[i] = ArgCreateChoice(arg,i,field_id,field_str);
 				else
-					arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[opcode].arg_length[argi],false);
+					arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_length[argi],false);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_DISC_FIELD:
 				if (use_field)
 					arg_control[i] = ArgCreateDiscFieldChoice(arg,i,field_id,field_str);
 				else
-					arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[opcode].arg_length[argi],false);
+					arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_length[argi],false);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_ATTACK:
 				if (use_attack)
 					arg_control[i] = ArgCreateChoice(arg,i,NULL,attack_str);
 				else
-					arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[opcode].arg_length[argi],false);
+					arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_length[argi],false);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_ITEM:
 				if (use_item)
 					arg_control[i] = ArgCreateChoice(arg,i,item_id,item_str);
 				else
-					arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[opcode].arg_length[argi],false);
+					arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_length[argi],false);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_MENUTYPE:
@@ -2687,7 +2786,7 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 				else if (static_cast<wxChoice*>(arg_control[0])->GetSelection()==2)
 					arg_control[i] = ArgCreateChoice(arg,i,NULL,shop_str);
 				else
-					arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[opcode].arg_length[argi],false);
+					arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_length[argi],false);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_CHARACTER:
@@ -2701,7 +2800,7 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 				if (use_character)
 					arg_control[i] = ArgCreateChoice(arg,i,character_id,character_str);
 				else
-					arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[opcode].arg_length[argi],false);
+					arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_length[argi],false);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_ABILITYSET:
@@ -2724,8 +2823,16 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 				arg_control[i] = ArgCreateChoice(arg,i,modelcode_id,modelcode_str);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
+			case AT_WORLDCODE:
+				arg_control[i] = ArgCreateChoice(arg,i,worldcode_id,worldcode_str);
+				argsizer->Add(arg_control[i],0,wxALL,5);
+				break;
 			case AT_SOUNDCODE:
 				arg_control[i] = ArgCreateChoice(arg,i,soundcode_id,soundcode_str);
+				argsizer->Add(arg_control[i],0,wxALL,5);
+				break;
+			case AT_SPSCODE:
+				arg_control[i] = ArgCreateChoice(arg,i,spscode_id,spscode_str);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_ENTRY:
@@ -2734,7 +2841,7 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 				break;
 			case AT_FUNCTION: {
 				arg_control[i] = ArgCreateChoice(arg,i,functionlist_id,functionlist_str);
-				if ((argi>0 && HADES_STRING_SCRIPT_OPCODE[opcode].arg_type[argi-1]==AT_ENTRY) && static_cast<wxChoice*>(arg_control[i-1])->GetSelection()!=wxNOT_FOUND) {
+				if ((argi>0 && HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[argi-1]==AT_ENTRY) && static_cast<wxChoice*>(arg_control[i-1])->GetSelection()!=wxNOT_FOUND) {
 					unsigned int entrysel = static_cast<wxChoice*>(arg_control[i-1])->GetSelection();
 					uint16_t funcid = wxAtoi(arg), funclistpos = 0;
 					for (unsigned int j=0;j<script.entry_amount;j++)
@@ -2752,11 +2859,11 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_SOUND:
-				arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[opcode].arg_length[argi],false);
+				arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_length[argi],false);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_AUDIO:
-				arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[opcode].arg_length[argi],false);
+				arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_length[argi],false);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_BUBBLESYMBOL:
@@ -2768,18 +2875,18 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_TILE:
-				arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[opcode].arg_length[argi],false);
+				arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_length[argi],false);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_TILEANIM:
-				arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[opcode].arg_length[argi],false);
+				arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_length[argi],false);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_ABILITY:
 				if (use_ability)
 					arg_control[i] = ArgCreateChoice(arg,i,NULL,ability_str);
 				else
-					arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[opcode].arg_length[argi],false);
+					arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_length[argi],false);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_DECK:
@@ -2791,7 +2898,7 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 			case AT_COLOR_RED:
 				break;
 			default:
-				arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[opcode].arg_length[argi],false);
+				arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_length[argi],false);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 			}
 		}
@@ -2843,7 +2950,7 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 				}
 			}
 		}
-		switch (HADES_STRING_SCRIPT_OPCODE[opcode].arg_type[argi]) {
+		switch (HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[argi]) {
 		case AT_POSITION_X: {
 			wxArrayString arrarg;
 			bool usez;
@@ -2858,7 +2965,7 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 			else
 				arg = wxEmptyString;
 			arrarg.Add(arg);
-			usez = HADES_STRING_SCRIPT_OPCODE[opcode].arg_type[argi]==AT_POSITION_Z;
+			usez = HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[argi]==AT_POSITION_Z;
 			if (usez) {
 				tmpstr = GetNextPunc(line);
 				if (!tmpstr.IsSameAs(L","))
@@ -2902,7 +3009,7 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 		}
 		case AT_COLOR_CYAN:
 		case AT_COLOR_RED: {
-			bool rgb = HADES_STRING_SCRIPT_OPCODE[opcode].arg_type[argi]==AT_COLOR_RED;
+			bool rgb = HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[argi]==AT_COLOR_RED;
 			wxArrayString arrarg;
 			arrarg.Add(arg);
 			tmpstr = GetNextPunc(line);
@@ -3258,16 +3365,29 @@ wxColourPickerCtrl* ScriptEditDialog::ArgCreateColorPicker(wxArrayString& arg, u
 	return res;
 }
 
-void ScriptEditDialog::ScriptChangeArg(int argi, int64_t value) {
+void ScriptEditDialog::ScriptChangeArg(int argi, int64_t value, int argshift) {
 	wxString scripttxt = m_scripttext->GetLineText(line_selection);
 	size_t argpos = scripttxt.Length();
 	wxString token, newtxt = scripttxt;
+	int shiftedargi = argi;
 	int i;
 	GetNextWord(scripttxt);
 	token = GetNextPunc(scripttxt);
 	if (!token.IsSameAs(L'('))
 		return;
-	for (i=0;i<argi;i++) {
+	for (i=0;i<shiftedargi;i++) {
+		GetNextArg(scripttxt);
+		token = GetNextPunc(scripttxt);
+		if (!token.IsSameAs(L','))
+			return;
+		if (current_opcode!=0xFFFF && i<HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_amount) {
+			if (HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[i]==AT_POSITION_X || HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[i]==AT_POSITION_Z || /*
+			 */ HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[i]==AT_COLOR_CYAN || HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[i]==AT_COLOR_MAGENTA || /*
+			 */ HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[i]==AT_COLOR_RED || HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[i]==AT_COLOR_GREEN)
+				 shiftedargi++;
+		}
+	}
+	for (i=0;i<argshift;i++) {
 		GetNextArg(scripttxt);
 		token = GetNextPunc(scripttxt);
 		if (!token.IsSameAs(L','))
@@ -3756,9 +3876,9 @@ void ScriptEditDialog::OnArgPositionMouseMove(wxMouseEvent& event) {
 	posdata->drawpt = wxPoint(event.GetPosition());
 	ScriptChangeArg(argi,posdata->x+posdata->GetAsTranslation().x);
 	if (posdata->use_z)
-		ScriptChangeArg(argi+2,posdata->y+posdata->GetAsTranslation().y);
+		ScriptChangeArg(argi,posdata->y+posdata->GetAsTranslation().y,2);
 	else
-		ScriptChangeArg(argi+1,posdata->y+posdata->GetAsTranslation().y);
+		ScriptChangeArg(argi,posdata->y+posdata->GetAsTranslation().y,1);
 	wxString line = m_scripttext->GetLineText(line_selection);
 	DisplayOperation(line,false,false);
 	wxClientDC dc((wxWindow*)event.GetEventObject());
@@ -3795,12 +3915,12 @@ void ScriptEditDialog::OnArgPositionKeyboard(wxKeyEvent& event) {
 	int key = event.GetKeyCode();
 	if (key==WXK_UP && posdata->use_z) {
 		posdata->z -= posdata->zoom/6;
-		ScriptChangeArg(argi+1,posdata->z);
+		ScriptChangeArg(argi,posdata->z,1);
 		wxString line = m_scripttext->GetLineText(line_selection);
 		DisplayOperation(line,false,false);
 	} else if (key==WXK_DOWN && posdata->use_z) {
 		posdata->z += posdata->zoom/6;
-		ScriptChangeArg(argi+1,posdata->z);
+		ScriptChangeArg(argi,posdata->z,1);
 		wxString line = m_scripttext->GetLineText(line_selection);
 		DisplayOperation(line,false,false);
 	} else
@@ -3811,12 +3931,12 @@ void ScriptEditDialog::OnArgColorPicker(wxColourPickerEvent& event) {
 	int argi = event.GetId()-SS_ARG_ID;
 	if (arg_control_type[argi]==ARG_CONTROL_COLOR_RGB) {
 		ScriptChangeArg(argi,event.GetColour().Red());
-		ScriptChangeArg(argi+1,event.GetColour().Green());
-		ScriptChangeArg(argi+2,event.GetColour().Blue());
+		ScriptChangeArg(argi,event.GetColour().Green(),1);
+		ScriptChangeArg(argi,event.GetColour().Blue(),2);
 	} else {
 		ScriptChangeArg(argi,255-event.GetColour().Red());
-		ScriptChangeArg(argi+1,255-event.GetColour().Green());
-		ScriptChangeArg(argi+2,255-event.GetColour().Blue());
+		ScriptChangeArg(argi,255-event.GetColour().Green(),1);
+		ScriptChangeArg(argi,255-event.GetColour().Blue(),2);
 	}
 }
 
@@ -3881,9 +4001,9 @@ void ScriptEditEntryDialog::ApplyModifications(ScriptDataStruct& scpt) {
 				scpt.RemoveEntry(i,&lostentryarg);
 				j++;
 			}
-			if (j>=base_entry_amount || base_entry_id[j]!=i) {
+			if (j>=base_entry_amount || base_entry_id[j]!=i)
 				scpt.AddEntry(i,entry_type[i]);
-			} else
+			else
 				j++;
 		}
 	}
