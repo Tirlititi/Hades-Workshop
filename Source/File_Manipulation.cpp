@@ -695,10 +695,10 @@ void SteamReadFF9String(fstream& f, FF9String& deststr) {
 	deststr.raw = NULL;
 	while (!reachend) {
 		tmpstr[i] = f.get();
-		if (i==0 && tmpstr[i]==0) {
+		if (tmpstr[i]==0) {
 			reachend = true;
 			deststr.null_terminated = 1;
-			deststr.length = 6;
+			deststr.length = i+6;
 		} else if (i>=5 && tmpstr[i-5]=='[' && tmpstr[i-4]=='E' && tmpstr[i-3]=='N' && tmpstr[i-2]=='D' && tmpstr[i-1]=='N' && tmpstr[i]==']') {
 			reachend = true;
 			i -= 5;
