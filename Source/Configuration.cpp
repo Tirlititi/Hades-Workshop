@@ -12,7 +12,7 @@ using namespace std;
 SaveSet::SaveSet(SpellDataSet* sp, CommandDataSet* cmd, EnemyDataSet* enmy, ShopDataSet* shop, TextDataSet* text,/*
 			*/  WorldMapDataSet* world, BattleSceneDataSet* scene, ItemDataSet* item, SupportDataSet* support,/*
 			*/  StatDataSet* stat, CardDataSet* card, FieldDataSet* field, SpellAnimationDataSet* spellanim,/*
-			*/  MenuUIDataSet* ui, PartySpecialDataSet* partyspecial, MipsDataSet* mips) :
+			*/  MenuUIDataSet* ui, PartySpecialDataSet* partyspecial, MipsDataSet* mips, CILDataSet* cil) :
 	spellset(sp),
 	cmdset(cmd),
 	enemyset(enmy),
@@ -28,7 +28,8 @@ SaveSet::SaveSet(SpellDataSet* sp, CommandDataSet* cmd, EnemyDataSet* enmy, Shop
 	spellanimset(spellanim),
 	ffuiset(ui),
 	partyspecialset(partyspecial),
-	mipsset(mips) {
+	mipsset(mips),
+	cilset(cil) {
 }
 
 GameType TheGameType;
@@ -1059,9 +1060,7 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 		unityarchive.close();
 	}
 	unityarchivename = dest.steam_dir_managed+"Assembly-CSharp.dll";
-	unityarchive.open(unityarchivename.c_str(),ios::in | ios::binary);
-	dest.meta_dll.Load(unityarchive);
-	unityarchive.close();
+	dest.meta_dll.Load(unityarchivename.c_str());
 	
 	// Battles
 	string battlenamelower[G_N_ELEMENTS(SteamBattleScript)];
@@ -1247,32 +1246,106 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	}
 	
 	// DLL file
-	dest.dll_battledb_method_id = dest.meta_dll.GetMethodIndex("FF9BattleDB",".cctor");
-	dest.dll_ability_method_id = dest.meta_dll.GetMethodIndex("ff9abil",".cctor","FF9");
-	dest.dll_rdata_method_id = dest.meta_dll.GetMethodIndex("rdata",".cctor");
-	dest.dll_level_method_id = dest.meta_dll.GetMethodIndex("ff9level",".cctor");
-	dest.dll_item_method_id = dest.meta_dll.GetMethodIndex("ff9item",".cctor");
-	dest.dll_armor_method_id = dest.meta_dll.GetMethodIndex("ff9armor",".cctor","FF9");
-	dest.dll_weapon_method_id = dest.meta_dll.GetMethodIndex("ff9weap",".cctor","FF9");
-	dest.dll_equip_method_id = dest.meta_dll.GetMethodIndex("ff9equip",".cctor","FF9");
-	dest.dll_mix_method_id = dest.meta_dll.GetMethodIndex("ff9mix",".cctor","FF9");
-	dest.dll_statusset_field_id = 21;
-	dest.dll_spellnaming_field_id = 628;
-	dest.dll_cmdspelllist_field_id = 577;
-	dest.dll_statexp_field_id = 543;
-	dest.dll_statcmdtrance_field_id = 576;
-	dest.dll_magicsword_field_id = 629;
-	for (i=0;i<EQUIP_SET_AMOUNT;i++)
-		dest.dll_equipset_field_id[i] = 547+i;
-	for (i=0;i<SHOP_AMOUNT;i++) {
+	fstream& dllfile = dest.meta_dll.dll_file;
+	DllMethodInfo fieldmethinfo;
+	ILInstruction fieldinst;
+	int fieldmethodid;
+	dest.dll_battledb_method_id = dest.meta_dll.GetMethodIdByName("FF9BattleDB",".cctor");
+	dest.dll_ability_method_id = dest.meta_dll.GetMethodIdByName("ff9abil",".cctor","FF9");
+	dest.dll_rdata_method_id = dest.meta_dll.GetMethodIdByName("rdata",".cctor");
+	dest.dll_level_method_id = dest.meta_dll.GetMethodIdByName("ff9level",".cctor");
+	dest.dll_item_method_id = dest.meta_dll.GetMethodIdByName("ff9item",".cctor");
+	dest.dll_armor_method_id = dest.meta_dll.GetMethodIdByName("ff9armor",".cctor","FF9");
+	dest.dll_weapon_method_id = dest.meta_dll.GetMethodIdByName("ff9weap",".cctor","FF9");
+	dest.dll_equip_method_id = dest.meta_dll.GetMethodIdByName("ff9equip",".cctor","FF9");
+	dest.dll_mix_method_id = dest.meta_dll.GetMethodIdByName("ff9mix",".cctor","FF9");
+	dllfile.seekg(dest.meta_dll.GetMethodOffset(dest.dll_battledb_method_id));
+	fieldmethinfo.ReadMethodInfo(dllfile);
+	ILInstruction statussetinst[3] = {
+		{ 0x20, STATUS_SET_AMOUNT*2 }, // DEBUG: Steam version has 2x more status sets...
+		{ 0x8D, dest.meta_dll.GetTypeRefTokenIdentifier("UInt32","System") },
+		{ 0x25 }
+	};
+	fieldmethinfo.JumpToInstructions(dllfile,3,statussetinst);
+	fieldinst.Read(dllfile);
+	dest.dll_statusset_field_id = dest.meta_dll.GetStaticFieldIdFromToken(fieldinst.param);
+	fieldmethodid = dest.meta_dll.GetMethodIdByName("BattleHUD",".cctor");
+	dllfile.seekg(dest.meta_dll.GetMethodOffset(fieldmethodid));
+	fieldmethinfo.ReadMethodInfo(dllfile);
+	ILInstruction spellnaminginst[3] = {
+		{ 0x20, SPELL_AMOUNT },
+		{ 0x8D, dest.meta_dll.GetTypeRefTokenIdentifier("Byte","System") },
+		{ 0x25 }
+	};
+	fieldmethinfo.JumpToInstructions(dllfile,3,spellnaminginst);
+	fieldinst.Read(dllfile);
+	dest.dll_spellnaming_field_id = dest.meta_dll.GetStaticFieldIdFromToken(fieldinst.param);
+	dllfile.seekg(dest.meta_dll.GetMethodOffset(dest.dll_rdata_method_id));
+	fieldmethinfo.ReadMethodInfo(dllfile);
+	ILInstruction cmdspelllistinst[3] = {
+		{ 0x20, COMMAND_SPELL_AMOUNT },
+		{ 0x8D, dest.meta_dll.GetTypeRefTokenIdentifier("Int32","System") },
+		{ 0x25 }
+	};
+	fieldmethinfo.JumpToInstructions(dllfile,3,cmdspelllistinst);
+	fieldinst.Read(dllfile);
+	dest.dll_cmdspelllist_field_id = dest.meta_dll.GetStaticFieldIdFromToken(fieldinst.param);
+	dllfile.seekg(fieldmethinfo.code_abs_offset);
+	ILInstruction statcmdtranceinst[4] = {
+		{ 0x1F, COMMAND_SET_AMOUNT },
+		{ 0x19 },
+		{ 0x73, dest.meta_dll.GetMemberTokenIdentifier("void byte[,]::.ctor( int, int )") },
+		{ 0x25 }
+	};
+	fieldmethinfo.JumpToInstructions(dllfile,4,statcmdtranceinst);
+	fieldinst.Read(dllfile);
+	dest.dll_statcmdtrance_field_id = dest.meta_dll.GetStaticFieldIdFromToken(fieldinst.param);
+	dllfile.seekg(dest.meta_dll.GetMethodOffset(dest.dll_level_method_id));
+	fieldmethinfo.ReadMethodInfo(dllfile);
+	ILInstruction statexpinst[3] = {
+		{ 0x1F, MAX_LEVEL },
+		{ 0x8D, dest.meta_dll.GetTypeRefTokenIdentifier("UInt64","System") },
+		{ 0x25 }
+	};
+	fieldmethinfo.JumpToInstructions(dllfile,3,statexpinst);
+	fieldinst.Read(dllfile);
+	dest.dll_statexp_field_id = dest.meta_dll.GetStaticFieldIdFromToken(fieldinst.param);
+	fieldmethodid = dest.meta_dll.GetMethodIdByName("BattleHUD","SetAbilityMagic");
+	dllfile.seekg(dest.meta_dll.GetMethodOffset(fieldmethodid));
+	fieldmethinfo.ReadMethodInfo(dllfile);
+	ILInstruction magicswordinst[3] = {
+		{ 0x1F, MAGIC_SWORD_AMOUNT },
+		{ 0x8D, dest.meta_dll.GetTypeRefTokenIdentifier("Int32","System") },
+		{ 0x25 }
+	};
+	fieldmethinfo.JumpToInstructions(dllfile,3,magicswordinst);
+	fieldinst.Read(dllfile);
+	dest.dll_magicsword_field_id = dest.meta_dll.GetStaticFieldIdFromToken(fieldinst.param);
+	fieldmethodid = dest.meta_dll.GetMethodIdByName("ff9buy",".cctor","FF9");
+	dllfile.seekg(dest.meta_dll.GetMethodOffset(fieldmethodid));
+	fieldmethinfo.ReadMethodInfo(dllfile);
+	fieldinst.Read(dllfile);
+	while (dllfile.tellg()<fieldmethinfo.code_abs_offset+fieldmethinfo.code_size && fieldinst.opcode!=0xD0)
+		fieldinst.Read(dllfile);
+	dest.dll_shop_field_id[0] = dest.meta_dll.GetStaticFieldIdFromToken(fieldinst.param);
+	for (i=1;i<SHOP_AMOUNT;i++) {
 		if (i<23)
-			dest.dll_shop_field_id[i] = 594+i;
+			dest.dll_shop_field_id[i] = dest.dll_shop_field_id[0]+i;
 		else if (i>24)
-			dest.dll_shop_field_id[i] = 592+i;
+			dest.dll_shop_field_id[i] = dest.dll_shop_field_id[0]+i-2;
 		else
 			dest.dll_shop_field_id[i] = -1;
 	}
-	
+	fieldmethodid = dest.meta_dll.GetMethodIdByName("ff9play","FF9Play_SetDefEquips");
+	dllfile.seekg(dest.meta_dll.GetMethodOffset(fieldmethodid));
+	fieldmethinfo.ReadMethodInfo(dllfile);
+	fieldinst.Read(dllfile);
+	while (dllfile.tellg()<fieldmethinfo.code_abs_offset+fieldmethinfo.code_size && fieldinst.opcode!=0xD0)
+		fieldinst.Read(dllfile);
+	dest.dll_equipset_field_id[0] = dest.meta_dll.GetStaticFieldIdFromToken(fieldinst.param);
+	for (i=1;i<EQUIP_SET_AMOUNT;i++)
+		dest.dll_equipset_field_id[i] = dest.dll_equipset_field_id[0]+i;
+	dest.language = LANGUAGE_VERSION_UNKNOWN;
 	dest.spell_name_space_total = 0xFFFF;
 	dest.spell_help_space_total = 0xFFFF;
 	dest.cmd_name_space_total = 0xFFFF;
@@ -1301,6 +1374,8 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 	string dirdata = destfolder+"\\x64\\FF9_Data\\";
 	string dirmanaged = destfolder+"\\x64\\FF9_Data\\Managed\\";
 	string fname;
+	if (config.steam_dir_assets.compare(dirassets)==0)
+		return 1;
 	if (deleteold) {
 		// Delete previous mod files
 		fname = dirassets+"p0data2.bin";
@@ -1354,6 +1429,10 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		fstream filebase(fname.c_str(),ios::in | ios::binary);
 		fname = dirassets+"p0data2.bin";
 		fstream filedest(fname.c_str(),ios::out | ios::binary);
+		if (!filebase.is_open())
+			return 2;
+		if (!filedest.is_open())
+			return 3;
 		bool* copylist = new bool[config.meta_battle.header_file_amount];
 		uint32_t* filenewsize = new uint32_t[config.meta_battle.header_file_amount];
 		for (i=0;i<config.meta_battle.header_file_amount;i++) {
@@ -1398,6 +1477,10 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		fstream filebase(fname.c_str(),ios::in | ios::binary);
 		fname = dirassets+"p0data3.bin";
 		fstream filedest(fname.c_str(),ios::out | ios::binary);
+		if (!filebase.is_open())
+			return 2;
+		if (!filedest.is_open())
+			return 3;
 		bool* copylist = new bool[config.meta_world.header_file_amount];
 		uint32_t* filenewsize = new uint32_t[config.meta_world.header_file_amount];
 		for (i=0;i<config.meta_world.header_file_amount;i++)
@@ -1426,6 +1509,10 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		fstream filebase(fname.c_str(),ios::in | ios::binary);
 		fname = dirassets+"p0data7.bin";
 		fstream filedest(fname.c_str(),ios::out | ios::binary);
+		if (!filebase.is_open())
+			return 2;
+		if (!filedest.is_open())
+			return 3;
 		bool* copylist = new bool[config.meta_script.header_file_amount];
 		uint32_t* filenewsize = new uint32_t[config.meta_script.header_file_amount];
 		for (i=0;i<config.meta_script.header_file_amount;i++) {
@@ -1506,6 +1593,10 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		fstream filebase(fname.c_str(),ios::in | ios::binary);
 		fname = dirdata+"resources.assets";
 		fstream filedest(fname.c_str(),ios::out | ios::binary);
+		if (!filebase.is_open())
+			return 2;
+		if (!filedest.is_open())
+			return 3;
 		bool* copylist = new bool[config.meta_res.header_file_amount];
 		uint32_t* filenewsize = new uint32_t[config.meta_res.header_file_amount];
 		for (i=0;i<config.meta_res.header_file_amount;i++) {
@@ -1631,15 +1722,32 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 	
 	// Assembly-CSharp.dll : everything else...
 	{
-		fname = config.steam_dir_managed+"Assembly-CSharp.dll";
-		fstream filebase(fname.c_str(),ios::in | ios::binary);
-		DllMetaDataModification dllmodif[100];
+		unsigned int dllmodifcount, dllmodifmax, sectionmodifcount;
+		dllmodifmax = 100;
+		if (section[DATA_SECTION_CIL]) {
+			dllmodifmax += saveset.cilset->rawmodifamount;
+			for (i=0;i<saveset.cilset->macromodifamount;i++)
+				dllmodifmax += saveset.cilset->macromodif[i].info->GetMethodCount();
+		}
+		DllMetaDataModification* dllmodif = new DllMetaDataModification[dllmodifmax];
 		DllMetaDataModification* sectionmodif;
-		unsigned int dllmodifcount = 0, sectionmodifcount;
+		dllmodifcount = 0;
+		if (section[DATA_SECTION_CIL]) {
+			for (i=0;i<saveset.cilset->rawmodifamount;i++) {
+				dllmodif[dllmodifcount] = saveset.cilset->rawmodif[i];
+				dllmodifcount++;
+			}
+			for (i=0;i<saveset.cilset->macromodifamount;i++) {
+				sectionmodif = saveset.cilset->macromodif[i].info->ComputeModifications(&sectionmodifcount);
+				memcpy(&dllmodif[dllmodifcount],sectionmodif,sectionmodifcount*sizeof(DllMetaDataModification));
+				delete[] sectionmodif;
+				dllmodifcount += sectionmodifcount;
+			}
+		}
 		
 		#define MACRO_DLL_ADD_MODIF(SECTION,SET) \
 			if (section[SECTION]) { \
-				sectionmodif = saveset.SET->ComputeSteamMod(filebase,config,&sectionmodifcount); \
+				sectionmodif = saveset.SET->ComputeSteamMod(config.meta_dll.dll_file,config,&sectionmodifcount); \
 				memcpy(&dllmodif[dllmodifcount],sectionmodif,sectionmodifcount*sizeof(DllMetaDataModification)); \
 				delete[] sectionmodif; \
 				dllmodifcount += sectionmodifcount; \
@@ -1653,13 +1761,16 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		MACRO_DLL_ADD_MODIF(DATA_SECTION_STAT,statset)
 		MACRO_DLL_ADD_MODIF(DATA_SECTION_PARTY_SPECIAL,partyspecialset)
 		if (dllmodifcount>0) {
-			filebase.seekg(0);
 			fname = dirmanaged+"Assembly-CSharp.dll";
 			fstream filedest(fname.c_str(),ios::out | ios::binary);
-			config.meta_dll.Duplicate(filebase,filedest,dllmodifcount,dllmodif);
+			if (!filedest.is_open()) {
+				delete[] dllmodif;
+				return 3;
+			}
+			config.meta_dll.Duplicate(filedest,dllmodifcount,dllmodif);
 			filedest.close();
 		}
-		filebase.close();
+		delete[] dllmodif;
 	}
 	return 0;
 }
@@ -1865,13 +1976,27 @@ wstring* LoadHWS(string filepath, bool* section, bool* sectext, bool* localsec, 
 				}
 			} else if (sectiontype[i]==DATA_SECTION_PARTY_SPECIAL) {
 				saveset.partyspecialset->LoadHWS(save);
-			} else if (sectiontype[i]==DATA_SECTION_MIPS) {
-				if (GetGameType()==GAME_TYPE_PSX) {
-					int res = saveset.mipsset->LoadHWS(save);
-					MACRO_HANDLE_FLAG_PROBLEM(1,HADES_STRING_HWS_OPEN_WARNING_MIPS_SIZE)
-				} else {
-					problemres << HADES_STRING_HWS_OPEN_WARNING_COMMON << HADES_STRING_HWS_OPEN_WARNING_MIPS_UNAVAILABLE;
-					problem = true;
+			} else if (sectiontype[i]==DATA_SECTION_ASSEMBLY) {
+				if (GetHWSGameType()==GAME_TYPE_PSX) { // MIPS
+					if (GetGameType()==GAME_TYPE_PSX) {
+						int res = saveset.mipsset->LoadHWS(save);
+						MACRO_HANDLE_FLAG_PROBLEM(1,HADES_STRING_HWS_OPEN_WARNING_MIPS_SIZE)
+					} else {
+						problemres << HADES_STRING_HWS_OPEN_WARNING_COMMON << HADES_STRING_HWS_OPEN_WARNING_MIPS_UNAVAILABLE;
+						problem = true;
+					}
+				} else { // CIL
+					if (GetGameType()==GAME_TYPE_PSX) {
+						problemres << HADES_STRING_HWS_OPEN_WARNING_COMMON << HADES_STRING_HWS_OPEN_WARNING_CIL_UNAVAILABLE;
+						problem = true;
+					} else {
+						int* res = saveset.cilset->LoadHWS(save);
+						MACRO_HANDLE_QUANTIFIED_PROBLEM(0,HADES_STRING_HWS_OPEN_WARNING_CIL_RAW_NOT_FOUND)
+						MACRO_HANDLE_QUANTIFIED_PROBLEM(1,HADES_STRING_HWS_OPEN_WARNING_CIL_RAW_NOT_MATCHING)
+						MACRO_HANDLE_QUANTIFIED_PROBLEM(2,HADES_STRING_HWS_OPEN_WARNING_CIL_MACRO_UNKNOWN)
+						MACRO_HANDLE_QUANTIFIED_PROBLEM(3,HADES_STRING_HWS_OPEN_WARNING_CIL_MACRO_FAIL)
+						delete[] res;
+					}
 				}
 			}
 		}
@@ -1949,8 +2074,12 @@ int WriteHWS(string filepath, bool* section, bool* localsec, SaveSet& saveset, U
 				saveset.ffuiset->WriteHWS(save,backup.menu_ui);
 			else if (i==DATA_SECTION_PARTY_SPECIAL)
 				saveset.partyspecialset->WriteHWS(save);
-			else if (i==DATA_SECTION_MIPS)
-				saveset.mipsset->WriteHWS(save);
+			else if (i==DATA_SECTION_ASSEMBLY) {
+				if (GetGameType()==GAME_TYPE_PSX)
+					saveset.mipsset->WriteHWS(save);
+				else
+					saveset.cilset->WriteHWS(save);
+			}
 			sectionlength = save.tellg();
 			sectionlength -= sectionpos;
 			save.seekg(sectionpos-4);

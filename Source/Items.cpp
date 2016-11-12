@@ -462,59 +462,59 @@ void ItemDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 		fname += "Assembly-CSharp.dll";
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
 		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_item_method_id));
-		methinfo.JumpToCode(ffbin);
+		methinfo.ReadMethodInfo(ffbin);
 		ILInstruction initinstit[3] = {
 			{ 0x20, ITEM_AMOUNT },
-			{ 0x8D, config.meta_dll.GetTypeIdentifier("FF9ITEM_DATA") },
-			{ 0x25, 0 }
+			{ 0x8D, config.meta_dll.GetTypeTokenIdentifier("FF9ITEM_DATA") },
+			{ 0x25 }
 		};
-		ILScriptJumpToInstructions(ffbin,3,initinstit);
+		methinfo.JumpToInstructions(ffbin,3,initinstit);
 		steam_method_position[0] = ffbin.tellg();
 		uint8_t* rawitemdata = ConvertILScriptToRawData_Object(ffbin,ITEM_AMOUNT,14,steam_item_field_size,steam_item_field_array);
 		steam_method_base_length[0] = (unsigned int)ffbin.tellg()-steam_method_position[0];
 		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_item_method_id));
-		methinfo.JumpToCode(ffbin);
+		methinfo.ReadMethodInfo(ffbin);
 		ILInstruction initinstuse[3] = {
 			{ 0x1F, ITEM_USABLE_AMOUNT },
-			{ 0x8D, config.meta_dll.GetTypeIdentifier("ITEM_DATA") },
-			{ 0x25, 0 }
+			{ 0x8D, config.meta_dll.GetTypeTokenIdentifier("ITEM_DATA","FF9") },
+			{ 0x25 }
 		};
-		ILScriptJumpToInstructions(ffbin,3,initinstuse);
+		methinfo.JumpToInstructions(ffbin,3,initinstuse);
 		steam_method_position[1] = ffbin.tellg();
 		uint8_t* rawusabledata = ConvertILScriptToRawData_Object(ffbin,ITEM_USABLE_AMOUNT,13,steam_usable_field_size);
 		steam_method_base_length[1] = (unsigned int)ffbin.tellg()-steam_method_position[1];
 		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_armor_method_id));
-		methinfo.JumpToCode(ffbin);
+		methinfo.ReadMethodInfo(ffbin);
 		ILInstruction initinstarmor[3] = {
 			{ 0x20, ITEM_ARMOR_AMOUNT },
-			{ 0x8D, config.meta_dll.GetTypeIdentifier("DEF_PARAMS") },
-			{ 0x25, 0 }
+			{ 0x8D, config.meta_dll.GetTypeTokenIdentifier("DEF_PARAMS") },
+			{ 0x25 }
 		};
-		ILScriptJumpToInstructions(ffbin,3,initinstarmor);
+		methinfo.JumpToInstructions(ffbin,3,initinstarmor);
 		steam_method_position[2] = ffbin.tellg();
 		uint8_t* rawarmordata = ConvertILScriptToRawData_Object(ffbin,ITEM_ARMOR_AMOUNT,4,steam_armor_field_size);
 		steam_method_base_length[2] = (unsigned int)ffbin.tellg()-steam_method_position[2];
 		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_equip_method_id));
-		methinfo.JumpToCode(ffbin);
+		methinfo.ReadMethodInfo(ffbin);
 		ILInstruction initinststat[3] = {
 			{ 0x20, ITEM_STAT_AMOUNT },
-			{ 0x8D, config.meta_dll.GetTypeIdentifier("EQUIP_PRIVILEGE") },
-			{ 0x25, 0 }
+			{ 0x8D, config.meta_dll.GetTypeTokenIdentifier("EQUIP_PRIVILEGE","FF9") },
+			{ 0x25 }
 		};
-		ILScriptJumpToInstructions(ffbin,3,initinststat);
+		methinfo.JumpToInstructions(ffbin,3,initinststat);
 		steam_method_position[3] = ffbin.tellg();
 		uint8_t* rawitstatdata = ConvertILScriptToRawData_Object(ffbin,ITEM_STAT_AMOUNT,9,steam_stat_field_size);
 		steam_method_base_length[3] = (unsigned int)ffbin.tellg()-steam_method_position[3];
 		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_weapon_method_id));
-		methinfo.JumpToCode(ffbin);
+		methinfo.ReadMethodInfo(ffbin);
 		ILInstruction initinstweap[3] = {
 			{ 0x1F, ITEM_WEAPON_AMOUNT },
-			{ 0x8D, config.meta_dll.GetTypeIdentifier("WEAPON") },
-			{ 0x25, 0 }
+			{ 0x8D, config.meta_dll.GetTypeTokenIdentifier("WEAPON") },
+			{ 0x25 }
 		};
-		ILScriptJumpToInstructions(ffbin,3,initinstweap);
+		methinfo.JumpToInstructions(ffbin,3,initinstweap);
 		steam_method_position[4] = ffbin.tellg();
-		uint8_t* rawweapdata = ConvertILScriptToRawData_Object(ffbin,ITEM_WEAPON_AMOUNT,9,steam_weapon_field_size,steam_weapon_field_array);
+		uint8_t* rawweapdata = ConvertILScriptToRawData_Object(ffbin,ITEM_WEAPON_AMOUNT,9,steam_weapon_field_size,steam_weapon_field_array,&config.meta_dll);
 		steam_method_base_length[4] = (unsigned int)ffbin.tellg()-steam_method_position[4];
 		ffbin.close();
 		fname = tmpnam(NULL);

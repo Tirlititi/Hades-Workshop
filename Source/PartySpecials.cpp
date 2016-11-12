@@ -28,7 +28,6 @@ void PartySpecialDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 			SteamReadChar(ffbin,magic_sword_requirement[i]);
 			ffbin.seekg(3,ios::cur);
 		}
-		ffbin.close();
 	}
 }
 

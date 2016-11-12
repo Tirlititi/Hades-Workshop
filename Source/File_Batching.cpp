@@ -86,10 +86,12 @@ LogStruct FileBatch_ImportText(wxString filetext, TextDataSet& data, bool adjust
 				strvalue = txtvalue.ToStdWstring();
 				tmptextstr[currenttextstruct][currenttext].SetValue(strvalue);
 				tmptextid[currenttextstruct][nexttext] = 0;
-				value = FB_GetCharCount(strvalue,hades::SPECIAL_STRING_OPCODE_WCHAR);
-				if (value!=data.text_data[tmptextstructid[currenttextstruct]]->text[tmptextid[currenttextstruct][currenttext]-1].code_amount) {
-					errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_MISSMATCH_CODE),tmptextstructid[currenttextstruct],tmptextid[currenttextstruct][currenttext],data.text_data[tmptextstructid[currenttextstruct]]->text[tmptextid[currenttextstruct][currenttext]-1].code_amount,value);
-					res.AddWarning(errstr.ToStdWstring());
+				if (GetGameType()==GAME_TYPE_PSX) {
+					value = FB_GetCharCount(strvalue,hades::SPECIAL_STRING_OPCODE_WCHAR);
+					if (value!=data.text_data[tmptextstructid[currenttextstruct]]->text[tmptextid[currenttextstruct][currenttext]-1].code_amount) {
+						errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_MISSMATCH_CODE),tmptextstructid[currenttextstruct],tmptextid[currenttextstruct][currenttext],data.text_data[tmptextstructid[currenttextstruct]]->text[tmptextid[currenttextstruct][currenttext]-1].code_amount,value);
+						res.AddWarning(errstr.ToStdWstring());
+					}
 				}
 				currenttext = -1;
 			}
@@ -175,41 +177,43 @@ LogStruct FileBatch_ImportText(wxString filetext, TextDataSet& data, bool adjust
 			txtvalue += line+_(L"\n");
 		}
 	}
-	uint32_t blocksize;
-	for (currenttextstruct=0;currenttextstruct<nexttextstruct;currenttextstruct++) {
-		blocksize = 4+8*data.text_data[tmptextstructid[currenttextstruct]]->amount;
-		for (i=0;i<data.text_data[tmptextstructid[currenttextstruct]]->amount;i++) {
-			for (j=0;j<data.text_data[tmptextstructid[currenttextstruct]]->format_amount[i];j++)
-				blocksize += data.text_data[tmptextstructid[currenttextstruct]]->format_data[i][j].length;
-			for (currenttext=0;tmptextid[currenttextstruct][currenttext]>0;currenttext++)
-				if (tmptextid[currenttextstruct][currenttext]==i+1) {
-					blocksize += tmptextstr[currenttextstruct][currenttext].length;
-					break;
-				}
-			if (tmptextid[currenttextstruct][currenttext]==0)
-				blocksize += data.text_data[tmptextstructid[currenttextstruct]]->text[i].length;
-		}
-		if (blocksize>data.text_data[tmptextstructid[currenttextstruct]]->size+data.text_data[tmptextstructid[currenttextstruct]]->GetExtraSize()) {
-			errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_SIZE),tmptextstructid[currenttextstruct],blocksize-data.text_data[tmptextstructid[currenttextstruct]]->size-data.text_data[tmptextstructid[currenttextstruct]]->GetExtraSize());
-			res.AddError(errstr.ToStdWstring());
+	if (GetGameType()==GAME_TYPE_PSX) {
+		uint32_t blocksize;
+		for (currenttextstruct=0;currenttextstruct<nexttextstruct;currenttextstruct++) {
+			blocksize = 4+8*data.text_data[tmptextstructid[currenttextstruct]]->amount;
+			for (i=0;i<data.text_data[tmptextstructid[currenttextstruct]]->amount;i++) {
+				for (j=0;j<data.text_data[tmptextstructid[currenttextstruct]]->format_amount[i];j++)
+					blocksize += data.text_data[tmptextstructid[currenttextstruct]]->format_data[i][j].length;
+				for (currenttext=0;tmptextid[currenttextstruct][currenttext]>0;currenttext++)
+					if (tmptextid[currenttextstruct][currenttext]==i+1) {
+						blocksize += tmptextstr[currenttextstruct][currenttext].length;
+						break;
+					}
+				if (tmptextid[currenttextstruct][currenttext]==0)
+					blocksize += data.text_data[tmptextstructid[currenttextstruct]]->text[i].length;
+			}
+			if (blocksize>data.text_data[tmptextstructid[currenttextstruct]]->size+data.text_data[tmptextstructid[currenttextstruct]]->GetExtraSize()) {
+				errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_SIZE),tmptextstructid[currenttextstruct],blocksize-data.text_data[tmptextstructid[currenttextstruct]]->size-data.text_data[tmptextstructid[currenttextstruct]]->GetExtraSize());
+				res.AddError(errstr.ToStdWstring());
+			}
 		}
 	}
 	if (nexttextstruct==0) {
 		errstr.Printf(wxT(HADES_STRING_BATCH_NOTHING));
 		res.AddError(errstr.ToStdWstring());
 	}
-	CharmapDataStruct* chmap = data.charmap[data.main_charmap_index];
+	CharmapDataStruct* chmap = GetGameType()==GAME_TYPE_PSX ? data.charmap[data.main_charmap_index] : NULL;
 	CharmapDataStruct* chmapext;
 	uint16_t sizex, sizey;
 	wstring nullstr = L"";
 	if ((!fatalwarning || res.warning_amount==0) && res.error_amount==0) {
 		for (currenttextstruct=0;currenttextstruct<nexttextstruct;currenttextstruct++) {
-			chmapext = data.charmap[tmptextstructid[currenttextstruct]];
+			chmapext = GetGameType()==GAME_TYPE_PSX ? data.charmap[tmptextstructid[currenttextstruct]] : NULL;
 			for (currenttext=0;tmptextid[currenttextstruct][currenttext]>0;currenttext++)
 				data.text_data[tmptextstructid[currenttextstruct]]->SetText(tmptextid[currenttextstruct][currenttext]-1,nullstr);
 			for (currenttext=0;tmptextid[currenttextstruct][currenttext]>0;currenttext++) {
 				data.text_data[tmptextstructid[currenttextstruct]]->SetText(tmptextid[currenttextstruct][currenttext]-1,tmptextstr[currenttextstruct][currenttext]);
-				if (adjustsize) {
+				if (adjustsize && GetGameType()==GAME_TYPE_PSX) { // ToDo: implement the feature in Steam
 					chmap->CalculateTextSize(&data.text_data[tmptextstructid[currenttextstruct]]->text[tmptextid[currenttextstruct][currenttext]-1],chmapext,&sizex,&sizey);
 					data.text_data[tmptextstructid[currenttextstruct]]->SetDialogBoxSize(tmptextid[currenttextstruct][currenttext]-1,sizex,sizey,!isjapan);
 				}
@@ -736,7 +740,7 @@ int BatchImportDialog::ShowModal(int type, SaveSet* datas, bool isjapan) {
 	dataset = datas;
 	japanversion = isjapan;
 	datamodified = false;
-	if (type==2) {
+	if (type!=1 || GetGameType()!=GAME_TYPE_PSX) {
 		m_adjustsizepanel->Show(false);
 	}
 	return wxDialog::ShowModal();

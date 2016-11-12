@@ -96,7 +96,8 @@ void MainFrame::OnOpenClick(wxCommandEvent& event) {
 		openFileDialog->Destroy();
 		return;
 	}
-	ConfigurationSet config;
+	ConfigurationSet* configalloc = new ConfigurationSet; // Debug : ConfigurationSet, much like fstream, must never be copied ; ToDo : delete it at some point
+	ConfigurationSet& config = *configalloc;
 	string filename = openFileDialog->GetPath().ToStdString();
 	size_t dirsep = filename.find_last_of("/\\")+1;
 	GameType gt = GAME_TYPE_PSX;
@@ -288,7 +289,7 @@ void MainFrame::OnSaveHWSClick(wxCommandEvent& event) {
 						i==DATA_SECTION_BATTLE_SCENE ? CDPanel[currentpanel]->sceneloaded :
 						i==DATA_SECTION_SPELL_ANIM ? CDPanel[currentpanel]->spellanimloaded :
 						i==DATA_SECTION_MENU_UI ? CDPanel[currentpanel]->ffuiloaded : 
-						i==DATA_SECTION_MIPS ? CDPanel[currentpanel]->mipsloaded : false;
+						i==DATA_SECTION_ASSEMBLY ? CDPanel[currentpanel]->mipsloaded || CDPanel[currentpanel]->cilloaded : false;
 	}
 	for (i=0;i<DATA_SECTION_AMOUNT;i++) {
 		secton[i] =		i==DATA_SECTION_SPELL ? CDPanel[currentpanel]->spellmodified :
@@ -306,7 +307,7 @@ void MainFrame::OnSaveHWSClick(wxCommandEvent& event) {
 						i==DATA_SECTION_BATTLE_SCENE ? CDPanel[currentpanel]->scenemodified :
 						i==DATA_SECTION_SPELL_ANIM ? CDPanel[currentpanel]->spellanimmodified :
 						i==DATA_SECTION_MENU_UI ? CDPanel[currentpanel]->ffuimodified :
-						i==DATA_SECTION_MIPS ? CDPanel[currentpanel]->mipsmodified : false;
+						i==DATA_SECTION_ASSEMBLY ? CDPanel[currentpanel]->mipsmodified || CDPanel[currentpanel]->cilmodified : false;
 	}
 	if (TheIOHWSMessageOut->ShowModal(true,section,sectext,secton)==wxID_OK) {
 		int hwslen = TheIOHWSMessageOut->m_hwspicker->GetPath().Length();
@@ -358,18 +359,25 @@ void MainFrame::OnSaveSteamClick(wxCommandEvent& event) {
 									i==DATA_SECTION_BATTLE_SCENE ? CDPanel[currentpanel]->scenemodified :
 									i==DATA_SECTION_SPELL_ANIM ? CDPanel[currentpanel]->spellanimmodified :
 									i==DATA_SECTION_MENU_UI ? CDPanel[currentpanel]->ffuimodified :
-									i==DATA_SECTION_MIPS ? CDPanel[currentpanel]->mipsmodified : false;
+									i==DATA_SECTION_CIL ? CDPanel[currentpanel]->cilmodified : false;
 		}
 		SteamSaveDir = dial.m_dirpicker->GetDirName();
 		wxFileName::Mkdir(SteamSaveDir.GetPath()+_(L"\\StreamingAssets\\"),wxS_DIR_DEFAULT,wxPATH_MKDIR_FULL);
 		wxFileName::Mkdir(SteamSaveDir.GetPath()+_(L"\\x64\\FF9_Data\\"),wxS_DIR_DEFAULT,wxPATH_MKDIR_FULL);
 		wxFileName::Mkdir(SteamSaveDir.GetPath()+_(L"\\x64\\FF9_Data\\Managed\\"),wxS_DIR_DEFAULT,wxPATH_MKDIR_FULL);
 		wxArrayString dirname = SteamSaveDir.GetDirs();
-		if (CreateSteamMod(SteamSaveDir.GetPath().ToStdString(),modifiedsection,CDPanel[currentpanel]->config,CDPanel[currentpanel]->saveset,dirname.Last().compare(L"FINAL FANTASY IX")!=0)==0) {
+		int res = CreateSteamMod(SteamSaveDir.GetPath().ToStdString(),modifiedsection,CDPanel[currentpanel]->config,CDPanel[currentpanel]->saveset,dirname.Last().compare(L"FINAL FANTASY IX")!=0);
+		if (res==0) {
 			wxMessageDialog popupsuccess(this,HADES_STRING_STEAM_SAVE_SUCCESS,HADES_STRING_SUCCESS,wxOK|wxCENTRE);
 			popupsuccess.ShowModal();
-		} else {
-			wxMessageDialog popupfail(this,HADES_STRING_STEAM_SAVE_ERROR,HADES_STRING_ERROR,wxOK|wxCENTRE);
+		} else if (res==1) {
+			wxMessageDialog popupfail(this,HADES_STRING_STEAM_SAVE_ERROR_OPENED_FILES,HADES_STRING_ERROR,wxOK|wxCENTRE);
+			popupfail.ShowModal();
+		} else if (res==2) {
+			wxMessageDialog popupfail(this,HADES_STRING_STEAM_SAVE_ERROR_FAIL_READ,HADES_STRING_ERROR,wxOK|wxCENTRE);
+			popupfail.ShowModal();
+		} else if (res==3) {
+			wxMessageDialog popupfail(this,HADES_STRING_STEAM_SAVE_ERROR_FAIL_WRITE,HADES_STRING_ERROR,wxOK|wxCENTRE);
 			popupfail.ShowModal();
 		}
 		delete[] modifiedsection;

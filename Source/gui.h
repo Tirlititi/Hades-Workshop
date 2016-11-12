@@ -480,7 +480,7 @@ class PreviewTextCtrl;
 #define wxID_FIELD 1424
 #define wxID_SPELL_ANIM 1425
 #define wxID_MENU_UI 1426
-#define wxID_MIPS 1427
+#define wxID_ASSEMBLY 1427
 #define wxID_SET 1428
 #define wxID_BUBBLE 1429
 #define wxID_OPCODE 1430
@@ -1459,6 +1459,23 @@ class CDPanel : public wxPanel
 		wxTextCtrl* m_mipsbattlerampos;
 		wxStaticText* m_staticText47211;
 		wxButton* m_mipsbattlecode;
+		wxPanel* m_panelcil;
+		wxNotebook* m_notebookcil;
+		wxPanel* m_panel6611;
+		wxListBox* m_ciltypelist;
+		wxListBox* m_cilmethodlist;
+		wxScrolledWindow* m_cilmethodscrolledwindow;
+		wxStaticText* m_staticText346;
+		wxButton* m_cilmethodedit;
+		wxPanel* m_panel92;
+		wxListBox* m_cilmacrolist;
+		wxScrolledWindow* m_cilmethodscrolledwindow11;
+		wxStaticText* m_staticText347;
+		wxButton* m_cilmacrobutton;
+		wxStaticText* m_staticText345;
+		wxTextCtrl* m_cilmacrodescription;
+		wxStaticText* m_staticText348;
+		wxListBox* m_cilmacromethods;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnNotebookMain( wxNotebookEvent& event ) { event.Skip(); }
@@ -1574,6 +1591,12 @@ class CDPanel : public wxPanel
 		virtual void OnNotebookMips( wxNotebookEvent& event ) { event.Skip(); }
 		virtual void OnListBoxMipsBattle( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnMipsBattleButton( wxCommandEvent& event ) { event.Skip(); }
+		virtual void OnNotebookCil( wxNotebookEvent& event ) { event.Skip(); }
+		virtual void OnListBoxCilStruct( wxCommandEvent& event ) { event.Skip(); }
+		virtual void OnListBoxCilMethod( wxCommandEvent& event ) { event.Skip(); }
+		virtual void OnCilMethodButton( wxCommandEvent& event ) { event.Skip(); }
+		virtual void OnListBoxCilMacro( wxCommandEvent& event ) { event.Skip(); }
+		virtual void OnCilMacroButton( wxCommandEvent& event ) { event.Skip(); }
 		
 	
 	public:
@@ -1980,7 +2003,7 @@ class IOHWSWindow : public wxDialog
 		wxCheckBox* m_scene;
 		wxCheckBox* m_spellanim;
 		wxCheckBox* m_ffui;
-		wxCheckBox* m_mips;
+		wxCheckBox* m_assembly;
 		wxCheckBox* m_enemylocal;
 		wxCheckBox* m_worldlocal;
 		wxCheckBox* m_fieldlocal;
@@ -2720,6 +2743,30 @@ class MipsScriptHelpWindow : public wxDialog
 		
 		MipsScriptHelpWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("MIPS Help"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 550,400 ), long style = wxDEFAULT_DIALOG_STYLE|wxDIALOG_NO_PARENT|wxRESIZE_BORDER ); 
 		~MipsScriptHelpWindow();
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class CilScriptEditWindow
+///////////////////////////////////////////////////////////////////////////////
+class CilScriptEditWindow : public wxDialog 
+{
+	private:
+	
+	protected:
+		wxTextCtrl* m_scriptposctrl;
+		wxTextCtrl* m_scriptctrl;
+		wxButton* m_buttoncancel;
+		wxButton* m_buttonok;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
+		
+	
+	public:
+		
+		CilScriptEditWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("CIL Script"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 450,500 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER ); 
+		~CilScriptEditWindow();
 	
 };
 

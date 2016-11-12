@@ -4,9 +4,6 @@
 class ScriptEditHandler;
 class ScriptEditDialog;
 class ScriptHelpDialog;
-class MipsScriptEditDialog;
-class MipsScriptHelpDialog;
-class MipsScriptSizer;
 
 #include <wx/clrpicker.h>
 #include "gui.h"
@@ -191,41 +188,6 @@ private:
 	void OnEntrySelect(wxCommandEvent& event);
 	void OnSpinCtrl(wxSpinEvent& event);
 	void OnButtonClick(wxCommandEvent& event);
-};
-
-class MipsScriptSizer : public wxBoxSizer {
-public:
-	MipsScriptEditDialog* parent;
-	MipsInstruction* codeline;
-	unsigned int line_nb;
-	unsigned int arg_amount;
-	unsigned int* arg_type;
-	wxChoice* m_code;
-	wxSpinCtrl** m_arg;
-	
-	MipsScriptSizer(MipsScriptEditDialog* p, unsigned int l, MipsInstruction* c);
-	void CreateArgumentControls();
-};
-
-class MipsScriptEditDialog : public MipsScriptEditWindow {
-public:
-	MipsFunction function;
-	MipsScriptSizer** code_sizer;
-	wxArrayString code_list;
-	MipsScriptHelpDialog* help_dial;
-	wxFlexGridSizer* m_parentsizer;
-	
-	MipsScriptEditDialog(wxWindow* parent, MipsFunction* func);
-	~MipsScriptEditDialog();
-	int ShowModal();
-	void DisplayCode();
-	void HighlightCode(bool removeprev = true);
-	
-	void OnAddressCheck(wxCommandEvent& event);
-	void OnHelpClick(wxCommandEvent& event);
-	void OnMipsScroll(wxScrollEvent& event);
-	void OnChangeCode(wxCommandEvent& event);
-	void OnChangeArgSpin(wxSpinEvent& event);
 };
 
 #endif

@@ -53,7 +53,9 @@ enum {
 	DATA_SECTION_SPELL_ANIM,
 	DATA_SECTION_MENU_UI,
 	DATA_SECTION_PARTY_SPECIAL,
-	DATA_SECTION_MIPS
+	DATA_SECTION_ASSEMBLY,
+	DATA_SECTION_MIPS = DATA_SECTION_ASSEMBLY,
+	DATA_SECTION_CIL = DATA_SECTION_ASSEMBLY
 };
 
 typedef uint8_t GameType;
@@ -278,11 +280,12 @@ public:
 	MenuUIDataSet* ffuiset;
 	PartySpecialDataSet* partyspecialset;
 	MipsDataSet* mipsset;
+	CILDataSet* cilset;
 	
 	SaveSet(SpellDataSet* sp, CommandDataSet* cmd, EnemyDataSet* enmy, ShopDataSet* shop, TextDataSet* text,/*
 		*/  WorldMapDataSet* world, BattleSceneDataSet* scene, ItemDataSet* item, SupportDataSet* support,/*
 		*/  StatDataSet* stat, CardDataSet* card, FieldDataSet* field, SpellAnimationDataSet* spellanim,/*
-		*/  MenuUIDataSet* ui, PartySpecialDataSet* partyspecial, MipsDataSet* mips);
+		*/  MenuUIDataSet* ui, PartySpecialDataSet* partyspecial, MipsDataSet* mips, CILDataSet* cil);
 };
 
 struct UnusedSaveBackupPart {

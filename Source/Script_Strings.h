@@ -465,6 +465,25 @@ static wstring BubbleSymbolName[] = {
 	L"! - Beach"
 };
 
+static wstring CommandAddendaName[] = {
+	L"Enemy Command",
+	L"Boundary Check", // ???
+	L"Party Counter",
+	L"Return Magic",
+	L"Auto-Potion",
+	L"Charge! Command",
+	L"Enemy Counter",
+	L"Enemy Death",
+	L"Enemy Reaction",
+	L"Flee Command",
+	L"Eidolon Phantom",
+	L"Rebirth Flame",
+	L"Trance Command",
+	L"Dead Command", // ???
+	L"Reraise Command", // ???
+	L"Stone Command"
+};
+
 struct ConstantNames {
 	uint16_t id;
 	wstring name;
@@ -779,7 +798,7 @@ struct SpellAnimSequenceCode {
 };
 
 static SpellAnimSequenceCode SPELLANIM_OPCODE[] = {
-	{ 0x0, L"END", L"End of spell animation.\nIt must always be the last code.\n - 1st arg : unknown\n - 2nd arg : unknown", { SAAT_NOTHING, SAAT_NOTHING } }, // Must be the first of the list
+	{ 0x00, L"END", L"End of spell animation.\nIt must always be the last code.\n - 1st arg : unknown\n - 2nd arg : unknown", { SAAT_NOTHING, SAAT_NOTHING } }, // Must be the first of the list
 	{ 0x01, L"Wait", L"Wait for some fixed time.\n - 1st arg : unknown\n - 2nd arg : time to wait", { SAAT_INTEGER, SAAT_INTEGER } },
 	{ 0x02, L"Play caster animation", L"Play an animation for the caster.\n - 1st arg : unknown\n - 2nd arg : unknown", { SAAT_INTEGER, SAAT_INTEGER } },
 	{ 0x03, L"0x03", L"Unknown effect.\n - 1st arg : unknown\n - 2nd arg : unknown", { SAAT_INTEGER, SAAT_INTEGER } },
@@ -953,21 +972,21 @@ static EnemySequenceCode ENEMYANIM_OPCODE[] = {
 	{ 0x07, L"Wait Animation", L"Wait until the animation is completed.", 0, NULL, NULL },
 	{ 0x02, L"Effect Point", L"Apply the effect.", 0, NULL, NULL },
 	{ 0x0E, L"Battle Text", L"Display battle text.\n - 1st arg : Text", 1, new int[1]{ 1 }, new Enemy_Animation_Argument_Type[1]{ EAAT_TEXT } },
-	{ 0x21, L"Battle Text 2", L"Display battle text.\n - 1st arg : Text", 1, new int[1]{ 1 }, new Enemy_Animation_Argument_Type[1]{ EAAT_TEXT } },
+	{ 0x21, L"Battle Title", L"Display battle text as title.\n - 1st arg : Text", 1, new int[1]{ 1 }, new Enemy_Animation_Argument_Type[1]{ EAAT_TEXT } },
 	{ 0x08, L"Set Spell Animation + Channel", L"Define the next spell animation to run with channelling.\n - 1st arg : Animation\n - 2nd arg : Caster attachement point\n - 3rd arg : ???\n - 4th arg : ???", 4, new int[4]{ 2, 2, 2, 2 }, new Enemy_Animation_Argument_Type[4]{ EAAT_SPELL_ANIM, EAAT_INTEGER, EAAT_INTEGER, EAAT_INTEGER } },
 	{ 0x1A, L"Set Spell Animation", L"Define the next spell animation to run.\n - 1st arg : Animation\n - 2nd arg : Caster attachement point\n - 3rd arg : ???\n - 4th arg : ???", 4, new int[4]{ 2, 2, 2, 2 }, new Enemy_Animation_Argument_Type[4]{ EAAT_SPELL_ANIM, EAAT_INTEGER, EAAT_INTEGER, EAAT_INTEGER } },
 	{ 0x0A, L"Run Spell Animation", L"Play the spell animation previously set.", 0, NULL, NULL },
 	{ 0x05, L"Play Animation", L"Play enemy animation.\n - 1st arg : animation", 1, new int[1]{ 1 }, new Enemy_Animation_Argument_Type[1]{ EAAT_ANIMATION } },
 	{ 0x11, L"Change Stand Animation", L"Define the new standing animation for the caster.\n - 1st arg : Animation", 1, new int[1]{ 1 }, new Enemy_Animation_Argument_Type[1]{ EAAT_INTEGER } },
-	{ 0x03, L"Walk Target", L"Make the caster walk toward the target.\n - 1st arg : Time\n - 2nd arg : Distance Y", 2, new int[2]{ 1, 2 }, new Enemy_Animation_Argument_Type[2]{ EAAT_TIME, EAAT_COORDINATE } },
-	{ 0x1E, L"Walk Target 2", L"Make the caster walk toward the target.\n - 1st arg : Time\n - 2nd arg : Distance Y", 2, new int[2]{ 1, 2 }, new Enemy_Animation_Argument_Type[2]{ EAAT_TIME, EAAT_COORDINATE } },
+	{ 0x03, L"Walk Target", L"Make the caster walk toward the target.\n - 1st arg : Time\n - 2nd arg : Distance", 2, new int[2]{ 1, 2 }, new Enemy_Animation_Argument_Type[2]{ EAAT_TIME, EAAT_COORDINATE } },
+	{ 0x1E, L"Walk Target Front", L"Make the caster walk in front of the target.\n - 1st arg : Time\n - 2nd arg : Distance Y", 2, new int[2]{ 1, 2 }, new Enemy_Animation_Argument_Type[2]{ EAAT_TIME, EAAT_COORDINATE } },
 	{ 0x1B, L"Walk Relative", L"Make the caster walk to relative position.\n - 1st arg : Time\n - 2nd arg : Distance X\n - 3rd arg : Distance Z\n - 4th arg : Distance Y", 4, new int[4]{ 1, 2, 2, 2 }, new Enemy_Animation_Argument_Type[4]{ EAAT_TIME, EAAT_COORDINATE, EAAT_COORDINATE, EAAT_COORDINATE } },
 	{ 0x13, L"Walk Absolute", L"Make the caster walk to absolute position.\n - 1st arg : Time\n - 2nd arg : Position X\n - 3rd arg : Position Z\n - 4th arg : Position Y", 4, new int[4]{ 1, 2, 2, 2 }, new Enemy_Animation_Argument_Type[4]{ EAAT_TIME, EAAT_COORDINATE, EAAT_COORDINATE, EAAT_COORDINATE } },
 	{ 0x0C, L"Resize", L"Resize the caster.\n - 1st arg : ???\n - 2nd arg : Size factor (16 keeps the size)\n - 3rd arg : Time", 3, new int[3]{ 1, 1, 1 }, new Enemy_Animation_Argument_Type[3]{ EAAT_INTEGER, EAAT_INTEGER, EAAT_TIME } },
 	{ 0x20, L"Run Camera", L"Run a camera sequence.\n - 1st arg : Camera sequence", 1, new int[1]{ 1 }, new Enemy_Animation_Argument_Type[1]{ EAAT_INTEGER } },
 	{ 0x12, L"Run Camera 2", L"Run a camera sequence.\n - 1st arg : Camera sequence", 1, new int[1]{ 1 }, new Enemy_Animation_Argument_Type[1]{ EAAT_INTEGER } },
 	{ 0x19, L"Play Sound", L"Play a sound.\n - 1st arg : Sound\n - 2nd arg : ???\n - 3rd arg : ???", 3, new int[3]{ 2, 2, 1 }, new Enemy_Animation_Argument_Type[3]{ EAAT_SOUND, EAAT_INTEGER, EAAT_INTEGER } },
-	{ 0x06, L"SFX", L"Seems to have various effects (display sfx, apply the effect and display damage...).\n - 1st arg : SFX\n - 2nd arg : ???\n - 3rd arg : Time to wait before running", 3, new int[3]{ 2, 1, 1 }, new Enemy_Animation_Argument_Type[3]{ EAAT_INTEGER, EAAT_INTEGER, EAAT_INTEGER } },
+	{ 0x06, L"SFX", L"Seems to have various effects (display sfx, apply the effect and display damage...).\n - 1st arg : SFX\n - 2nd arg : Some model bone\n - 3rd arg : Time to wait before running", 3, new int[3]{ 2, 1, 1 }, new Enemy_Animation_Argument_Type[3]{ EAAT_INTEGER, EAAT_INTEGER, EAAT_INTEGER } },
 	{ 0x18, L"End", L"Terminate animation sequence?", 0, NULL, NULL }, // unsure ; followed by 0x00
 	{ 0x00, L"END", L"Terminate animation sequence.", 0, NULL, NULL },
 	{ 0x04, L"Return", L"Return to the normal position after walking toward a target.\n - 1st arg : Time", 1, new int[1]{ 1 }, new Enemy_Animation_Argument_Type[1]{ EAAT_TIME } },
@@ -992,151 +1011,5 @@ static EnemySequenceCode& GetEnemySequenceCode(uint8_t code) {
 	}
 	return ENEMYANIM_OPCODE[0];
 }
-
-//====================================//
-//             MIPS Script            //
-//====================================//
-
-struct MipsHelpField {
-	wstring label;
-	wstring help;
-};
-
-static MipsHelpField MIPS_HELP[] = {
-	{ L"Introduction",	L"MIPS is the deepest coding language, shared by all the PSX games. As such, modifying it is extremely dangerous unless you know what you are doing.\n\n"
-						L"This help only gives a few hints about modifying Final Fantasy IX's MIPS code. For a general documentation about MIPS, you can go to :\n"
-						L"http://cgi.cse.unsw.edu.au/~cs3231/doc/R3000.pdf\n\n"
-						L"You may find some basic operations done tediously. In particular, multiplying by constant numbers such as 100 is done by default with lines like these :\n"
-						L" $2 = $1 << 1\n"
-						L" $2 = $2 + $1\n"
-						L" $2 = $2 << 3\n"
-						L" $2 = $1 + $2\n"
-						L" $1 = $2 << 2\n"
-						L"This is because raw multiplications are considered slow and are avoided when possible. This kind of optimisation appears in scripts that are not looping (and thus don't cause slowness problems).\n"
-						L"You may replace those by raw multiplications to get some space and don't bother doing this optimisation in your own code.\n\n"
-						L"One other very important thing to note is that the jumps are always delayed by 1 instruction. That means the line following a jump is executed before actually jumping.\n" },
-	{ L"Battle - Function Dependency",	L"Spell effects are parts of the whole battle code. It uses references to other parts of this code and sometimes to other spell effects.\n"
-										L"Apart from the effects which are strictly the same, here is a list of the dependencies between spell effects :\n\n"
-										L"%9 is partially used by %19 and %20\n"
-										L"%11 is used by %108 and %109\n"
-										L"%15 is partially used by %69\n"
-										L"%16 is partially used by %26, %28 and %83\n"
-										L"%17 is partially used by %91\n"
-										L"%24 is partially used by %22 and %23\n"
-										L"%26 is used by %28\n"
-										L"%27 is partially used by %25\n"
-										L"%32 is partially used by %17 and %91\n"
-										L"%48 is partially used by %42\n"
-										L"%50 is partially used by %14\n"
-										L"%63 is partially used by %68\n"
-										L"%65 is partially used by %51\n"
-										L"%66 is partially used by %53\n"
-										L"%69 is partially used by %10\n"
-										L"%71 is partially used by %50\n"
-										L"%72 is partially used by %13 and %71\n"
-										L"%73 is used by %62 and %72\n"
-										L"%93 is partially used by %76\n"
-										L"%98 is partially used by %18, %21, %28, %41, %52, %54, %63 and %97\n"
-										L"%99 is partially used by %74 and %75\n"
-										L"%101 is partially used by %58\n"
-										L"%102 is partially used by %101\n"
-										L"%103 is partially used by %109\n"
-										L"%104 is partially used by %38, %66, %67 and %68\n"
-										L"%107 is partially used by %8 and %85\n\n"
-										L"In addition to those, Apply Effect is called by most of spell effects."},
-	{ L"Battle - Apply Effect",	L"Apply Effect allows to deal damage, add or remove a status or simply update the state of the battle situation.\n"
-								L"Its arguments are set in the memory addresses $29[...]. Here is a list of those arguments, with the byte size in parentheses :\n\n"
-								L"24(4) : Caster ID\n"
-								L"28(4) : Target ID\n"
-								L"32(4) : Maybe Spell Instance ID\n"
-								L"38(2) : Damage Formula - Base\n"
-								L"40(2) : Damage Formula - Defence\n"
-								L"44(2) : Damage Formula - Bonus\n"
-								L"48(2) : Effect Flags (Miss ; Dodge ; MP Attack ; Absorb ; ??? ; ??? ; Guard ; Set HP ; Add Status ; - last bits unused -)\n"
-								L"50(1) : Caster Flags (HP Damage ; HP Heal ; Critical Message ; MP Damage ; MP Heal ; Miss Message ; Death Message ; Guard Message )\n"
-								L"51(1) : Target Flags (HP Damage ; HP Heal ; Critical Message ; MP Damage ; MP Heal ; Miss Message ; Death Message ; Guard Message )\n"
-								L"52(2) : Caster HP Damage\n"
-								L"54(2) : Target HP Damage\n"
-								L"56(2) : Caster MP Damage\n"
-								L"58(2) : Target MP Damage\n" },
-	{ L"Battle - Data Access",	L"MIPS code can always access to everything in the RAM... provided you know where to seek !\n"
-								L"In the following list of useful datas for spell effects, the numbers in parentheses indicate the byte sizes and thus which mask you must use between 0xFF, 0xFFFF and 0xFFFFFFFF.\n\n"
-								L"Spell Stats :\n"
-								L" $1 = $17[8]\n"
-								L" $1 = $1[N] & mask\n"
-								L"with N replaced by :\n"
-								L" 1 for its animation(2)\n"
-								L" 4 for its effect(1)\n"
-								L" 5 for its power(1)\n"
-								L" 6 for its element(1)\n"
-								L" 7 for its accuracy(1)\n"
-								L" 8 for its flags(1)\n"
-								L" 9 for its status set(1)\n"
-								L" 10 for its mp cost(1)\n"
-								L" 12 for its alternate animation(2)\n\n"
-								L"Caster Stats :\n"
-								L" $1 = $21[N] & mask\n"
-								L"Target Stats :\n"
-								L" $1 = $19[N] & mask\n"
-								L"with N replaced by :\n"
-								L" 36 for max HP(2)\n"
-								L" 38 for max MP(2)\n"
-								L" 40 for HP(2)\n"
-								L" 42 for MP(2)\n"
-								L" 48 for speed(1)\n"
-								L" 49 for strength(1)\n"
-								L" 50 for magic(1)\n"
-								L" 51 for spirit(1)\n"
-								L" 60 for status(3)\n"
-								L" 70 for category(1)\n"
-								L" 108 for defence(1)\n"
-								L" 109 for evade(1)\n"
-								L" 110 for magic defence(1)\n"
-								L" 111 for magic evade(1)\n"
-								L" 112 for elemental immunity(1)\n"
-								L" 113 for elemental absorption(1)\n"
-								L" 114 for elemental resistance(1)\n"
-								L" 115 for elemental weakness(1)\n"
-								L" 116 for weapon ID(4)\n"
-								L" 120 for trance gauge(1)\n"
-								L" 121 for elemental boost(1)\n"
-								L" 122 for level(1)\n"
-								L" 196 for activate supporting abilities(8)\n\n"
-								L"Weapon Stats :\n"
-								L" $1 = $19[116] or $21[116]\n"
-								L" $1 = $1[N] & mask\n"
-								L"with N replaced by :\n"
-								L" 0 for its flags(1)\n"
-								L" 1 for its status(1)\n"
-								L" 2 for its model(2)\n"
-								L" 4 for its damage formula(1)\n"
-								L" 5 for its attack power(1)\n"
-								L" 6 for its element(1)\n"
-								L" 7 for its status accuracy(1)\n\n"
-								L"Random Number (between 0 and 0xFFFFFFFF):\n"
-								L" $16 = 32776 << 16\n"
-								L" $1 = $16[-17448]\n"
-								L" jump 0x4C600 (store return position to $31)\n"
-								L" nothing\n\n"
-								L"Other :\n"
-								L" $16 : spell effect ID\n" },
-	{ L"Generic - Data Access",	L"MIPS code can always access to everything in the RAM... provided you know where to seek !\n"
-								L"In the following list of useful datas that are loaded in the RAM most of the time, the numbers in parentheses indicate the byte sizes.\n\n"
-								L"General VAR_B variables :\n"
-								L" $1 = 32776 << 16\n"
-								L" $1 = $1 + 45992\n"
-								L" $1 = $1[N] & mask\n"
-								L"with N replaced by the wanted variable ID (see the script help for a list of general variables)\n\n"
-								L"Others :\n"
-								L" $1 = 32775 << 16\n"
-								L" $1 = $1[-32732]\n"
-								L" $1 = $1[28]\n"
-								L" $1 = $1[N] & mask\n"
-								L"with N replaced by :\n"
-								L" 1376 for gil amount(4)\n"
-								L" 1384 for catched frog amount(2)\n"
-								L" 1386 for successful steal amount(2)\n"
-								L" 1388 for dragon slain amount(2)\n" },
-};
 
 #endif

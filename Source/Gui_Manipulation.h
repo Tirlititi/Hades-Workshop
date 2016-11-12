@@ -8,7 +8,7 @@
 class CDDataStruct : public CDPanel {
 public:
 	string filename;
-	ConfigurationSet config;
+	ConfigurationSet& config;
 	ClusterSet cluster;
 	SaveSet saveset;
 	UnusedSaveBackup backupset;
@@ -62,6 +62,9 @@ public:
 	MipsDataSet mipsset;
 	bool mipsloaded;
 	bool mipsmodified;
+	CILDataSet cilset;
+	bool cilloaded;
+	bool cilmodified;
 	int fieldselection;
 	unsigned int* spellsorted;
 	unsigned int* supportsorted;
@@ -75,8 +78,9 @@ public:
 	unsigned int* fieldsorted;
 	unsigned int* scenesorted;
 	unsigned int* spellanimsorted;
+	unsigned int* cilsorted;
 	
-	CDDataStruct(wxWindow* parent, string fname, ConfigurationSet cfg);
+	CDDataStruct(wxWindow* parent, string fname, ConfigurationSet& cfg);
 	void MarkDataSpellModified();
 	void MarkDataSupportModified();
 	void MarkDataCommandModified();
@@ -93,6 +97,7 @@ public:
 	void MarkDataSpellAnimationModified(unsigned int spellanimid, Spell_Animation_Data_Type datatype);
 	void MarkDataMenuUIModified();
 	void MarkDataMipsModified(int datatype);
+	void MarkDataCilModified();
 	void ChangeFF9StringCharmap(wchar_t* chmapdef, wchar_t* chmapa, wchar_t* chmapb, ExtendedCharmap& chmapext);
 	void ChangeFF9StringOpcodeChar(wchar_t newchar);
 	bool OverwriteBinary();
@@ -152,6 +157,9 @@ public:
 	void DisplaySpecialText(int textblockid);
 	void InitMips(void);
 	void DisplayMipsBattle(int mipsbattleid);
+	void InitCil(void);
+	void DisplayCilStruct(int cilstructid);
+	void DisplayCilMacro(int cilmacroid);
 	void DisplayCurrentData();
 	
 	void SpellDisplayNames(bool create=false);
@@ -168,6 +176,7 @@ public:
 	void FieldDisplayNames(bool create=false);
 	void BattleSceneDisplayNames(bool create=false);
 	void SpellAnimationDisplayNames(bool create=false);
+	void CilDisplayNames(bool create=false);
 	
 private:
 	uint16_t* scenetex;
@@ -194,6 +203,7 @@ private:
 	void OnNotebookEnvironment(wxNotebookEvent& event);
 	void OnNotebookInterface(wxNotebookEvent& event);
 	void OnNotebookMips(wxNotebookEvent& event);
+	void OnNotebookCil(wxNotebookEvent& event);
 	void OnNotebookNone(wxNotebookEvent& event) {} // Without this, wxNotebookEvent are passed to children notebooks for some reason
 	void OnListBoxSpell(wxCommandEvent& event);
 	void OnSpellChangeName(wxCommandEvent& event);
@@ -312,6 +322,11 @@ private:
 	void OnSpecialTextRightClickMenu(wxCommandEvent& event);
 	void OnListBoxMipsBattle(wxCommandEvent& event);
 	void OnMipsBattleButton(wxCommandEvent& event);
+	void OnListBoxCilStruct(wxCommandEvent& event);
+	void OnListBoxCilMethod(wxCommandEvent& event);
+	void OnListBoxCilMacro(wxCommandEvent& event);
+	void OnCilMethodButton(wxCommandEvent& event);
+	void OnCilMacroButton(wxCommandEvent& event);
 	
 public:
 	void DebugWrite();

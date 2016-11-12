@@ -10,21 +10,24 @@
 #define TILE_SIZE_STEAM 32
 
 void FieldTilesTileDataStruct::AllocTileData() {
-	tile_pos_unk1 = new uint8_t[tile_amount];
-	tile_pos_unk2 = new uint8_t[tile_amount];
-	tile_pos_y = new uint8_t[tile_amount];
-	tile_pos_x = new uint8_t[tile_amount];
 	tile_data_data1 = new uint32_t[tile_amount];
 	tile_data_data2 = new uint32_t[tile_amount];
+	tile_data_data3 = new uint32_t[tile_amount];
+	tile_depth = new uint16_t[tile_amount];
+	tile_pos_y = new uint16_t[tile_amount];
+	tile_pos_x = new uint16_t[tile_amount];
 	tile_clut_y = new uint16_t[tile_amount];
 	tile_clut_x = new uint8_t[tile_amount];
 	tile_page_y = new uint8_t[tile_amount];
 	tile_page_x = new uint8_t[tile_amount];
 	tile_tp = new uint8_t[tile_amount];
-	tile_abr = new uint8_t[tile_amount];
+	tile_alpha = new uint8_t[tile_amount];
 	tile_source_v = new uint8_t[tile_amount];
 	tile_source_u = new uint8_t[tile_amount];
-	tile_packet_type = new bool[tile_amount];
+	tile_h = new uint16_t[tile_amount];
+	tile_w = new uint16_t[tile_amount];
+	tile_abr = new uint8_t[tile_amount];
+	tile_trans = new bool[tile_amount];
 	tile_steam_id = new unsigned int[tile_amount];
 }
 
@@ -37,10 +40,10 @@ void FieldTilesCameraDataStruct::UpdateSize() {
 	for (i=0;i<parent->tiles_amount;i++)
 		if (parent->tiles[i].camera_id==id)
 			for (j=0;j<parent->tiles[i].tile_amount;j++) {
-				pos_x = min(pos_x,parent->tiles[i].pos_x+parent->tiles[i].tile_pos_x[j]*4);
-				pos_y = min(pos_y,parent->tiles[i].pos_y+parent->tiles[i].tile_pos_y[j]*16);
-				maxx = max(maxx,parent->tiles[i].pos_x+parent->tiles[i].tile_pos_x[j]*4+TILE_SIZE);
-				maxy = max(maxy,parent->tiles[i].pos_y+parent->tiles[i].tile_pos_y[j]*16+TILE_SIZE);
+				pos_x = min(pos_x,parent->tiles[i].pos_x+parent->tiles[i].tile_pos_x[j]);
+				pos_y = min(pos_y,parent->tiles[i].pos_y+parent->tiles[i].tile_pos_y[j]);
+				maxx = max(maxx,parent->tiles[i].pos_x+parent->tiles[i].tile_pos_x[j]+TILE_SIZE);
+				maxy = max(maxy,parent->tiles[i].pos_y+parent->tiles[i].tile_pos_y[j]+TILE_SIZE);
 			}
 	width = pos_x<0xFFFF ? maxx-pos_x : 0;
 	height = pos_y<0xFFFF ? maxy-pos_y : 0;
@@ -55,7 +58,7 @@ void FieldTilesDataStruct::Copy(FieldTilesDataStruct& cpy) {
 	*this = cpy;
 	anim = new FieldTilesAnimDataStruct[anim_amount];
 	tiles = new FieldTilesTileDataStruct[tiles_amount];
-	unkblock = new FieldTilesUnkblockDataStruct[unkblock_amount];
+	light = new FieldTilesLightDataStruct[light_amount];
 	camera = new FieldTilesCameraDataStruct[camera_amount];
 	tiles_sorted = new FieldTilesTileDataStruct*[tiles_amount];
 	for (i=0;i<anim_amount;i++) {
@@ -68,26 +71,22 @@ void FieldTilesDataStruct::Copy(FieldTilesDataStruct& cpy) {
 		}
 	}
 	for (i=0;i<tiles_amount;i++) {
-		tiles_sorted[i] = cpy.tiles_sorted[i];
 		tiles[i] = cpy.tiles[i];
 		tiles[i].AllocTileData();
 		for (j=0;j<tiles[i].tile_amount;j++) {
-			tiles[i].tile_pos_unk1[j] = cpy.tiles[i].tile_pos_unk1[j];
-			tiles[i].tile_pos_unk2[j] = cpy.tiles[i].tile_pos_unk2[j];
-			tiles[i].tile_pos_x[j] = cpy.tiles[i].tile_pos_x[j];
-			tiles[i].tile_pos_y[j] = cpy.tiles[i].tile_pos_y[j];
 			tiles[i].tile_data_data1[j] = cpy.tiles[i].tile_data_data1[j];
 			tiles[i].tile_data_data2[j] = cpy.tiles[i].tile_data_data2[j];
+			tiles[i].tile_data_data3[j] = cpy.tiles[i].tile_data_data3[j];
 			tiles[i].tile_steam_id[j] = cpy.tiles[i].tile_steam_id[j];
 		}
 	}
-	for (i=0;i<unkblock_amount;i++) {
-		unkblock[i] = cpy.unkblock[i];
+	for (i=0;i<light_amount;i++) {
+		light[i] = cpy.light[i];
 	}
 	for (i=0;i<camera_amount;i++) {
 		camera[i] = cpy.camera[i];
 	}
-	ConvertDatas(true);
+	SetupDataInfos(true);
 }
 
 void FieldTilesDataStruct::AddTilesetToImage(uint32_t* imgdest, FieldTilesTileDataStruct& t, bool showtp, uint32_t* steamimg, uint32_t steamimgwidth) {
@@ -97,7 +96,7 @@ void FieldTilesDataStruct::AddTilesetToImage(uint32_t* imgdest, FieldTilesTileDa
 	bool psx = GetGameType()==GAME_TYPE_PSX;
 	tilesize = psx ? TILE_SIZE : TILE_SIZE_STEAM;
 	for (i=0;i<t.tile_amount;i++) {
-		pixely = t.pos_y+t.tile_pos_y[i]*16-camera[t.camera_id].pos_y;
+		pixely = t.pos_y+t.tile_pos_y[i]-camera[t.camera_id].pos_y;
 		if (psx) {
 			timtiley = t.tile_page_y[i]*256 + t.tile_source_v[i];
 		} else {
@@ -106,11 +105,11 @@ void FieldTilesDataStruct::AddTilesetToImage(uint32_t* imgdest, FieldTilesTileDa
 		}
 		switch (t.tile_abr[i]) {
 		case 0:
-			alpha = t.tile_packet_type[i] ? 0x80000000 : 0xFF000000;
+			alpha = t.tile_trans[i] ? 0x80000000 : 0xFF000000;
 			bm = TIM_BLENDMODE_ALPHA;
 			break;
 		case 1:
-			alpha = t.tile_packet_type[i] ? 0x80000000 : 0xFF000000;
+			alpha = t.tile_trans[i] ? 0x80000000 : 0xFF000000;
 			bm = TIM_BLENDMODE_LIGHT;
 			break;
 		case 2:
@@ -123,15 +122,15 @@ void FieldTilesDataStruct::AddTilesetToImage(uint32_t* imgdest, FieldTilesTileDa
 			break;
 		}
 		for (y=0;y<tilesize;y++) {
-			pixelx = t.pos_x+t.tile_pos_x[i]*4-camera[t.camera_id].pos_x;
+			pixelx = t.pos_x+t.tile_pos_x[i]-camera[t.camera_id].pos_x;
 			if (psx) {
-				timtilex = t.tile_tp[i]==1 ? t.tile_page_x[i]*128 + t.tile_source_u[i] : t.tile_page_x[i]*128*2 + t.tile_source_u[i];
+				timtilex = t.tile_tp[i]>0 ? t.tile_page_x[i]*128 + t.tile_source_u[i] : t.tile_page_x[i]*128*2 + t.tile_source_u[i];
 			} else {
 				timtilex = (t.tile_steam_id[i]%(steamimgwidth/(TILE_SIZE_STEAM+4)))*(TILE_SIZE_STEAM+4)+2;
 				pixelx *= 2;
 			}
 			for (x=0;x<tilesize;x++) {
-				if (t.tile_tp[i]==1) {
+				if (t.tile_tp[i]>0) {
 					if (psx)
 						pix = TIMImageDataStruct::GetVRamPixel(timtilex,timtiley,t.tile_clut_x[i],t.tile_clut_y[i],false);
 					else
@@ -278,76 +277,101 @@ int FieldTilesDataStruct::Export(const char* outputfile, unsigned int cameraid, 
 	return 0;
 }
 
-void FieldTilesDataStruct::ConvertDatas(bool readway) {
+void FieldTilesDataStruct::SetupDataInfos(bool readway) {
 	unsigned int i,j;
 	if (readway) {
 		for (i=0;i<tiles_amount;i++) {
+			tiles[i].is_screen_static = tiles[i].data1 & 0x1;
+			tiles[i].use_attaching = (tiles[i].data1 >> 1) & 0x1;
+			tiles[i].is_looping = (tiles[i].data1 >> 2) & 0x1;
+			tiles[i].has_parallax = (tiles[i].data1 >> 3) & 0x1;
 			tiles[i].is_static = (tiles[i].data1 >> 4) & 0x1;
-			tiles[i].distance = (tiles[i].data1 >> 8) & 0xFFFFFF;
+			tiles[i].is_scroll_with_offset = (tiles[i].data1 >> 7) & 0x1;
+			tiles[i].distance = (tiles[i].data1 >> 8) & 0xFFF;
+			tiles[i].default_distance = (tiles[i].data1 >> 20) & 0xFFF;
+			tiles[i].is_x_offset = tiles[i].data2 & 0x1;
+			tiles[i].viewport_id = tiles[i].data2 >> 1;
 			for (j=0;j<tiles[i].tile_amount;j++) {
 				tiles[i].tile_clut_y[j] = tiles[i].tile_data_data1[j] & 0x1FF;
 				tiles[i].tile_clut_x[j] = (tiles[i].tile_data_data1[j] >> 9) & 0x3F;
 				tiles[i].tile_page_y[j] = (tiles[i].tile_data_data1[j] >> 15) & 0x1;
 				tiles[i].tile_page_x[j] = (tiles[i].tile_data_data1[j] >> 16) & 0xF;
 				tiles[i].tile_tp[j] = (tiles[i].tile_data_data1[j] >> 20) & 0x3;
-//				tiles[i].tile_abr[j] = (tiles[i].tile_data_data1[j] >> 22) & 0x3;
+				tiles[i].tile_alpha[j] = (tiles[i].tile_data_data1[j] >> 22) & 0x3;
 				tiles[i].tile_source_v[j] = (tiles[i].tile_data_data1[j] >> 24) & 0xFF;
 				tiles[i].tile_source_u[j] = tiles[i].tile_data_data2[j] & 0xFF;
-				// Unknown 20 bits
-				tiles[i].tile_packet_type[j] = (tiles[i].tile_data_data2[j] >> 28) & 0x1;
-				// Unknown 3 bits
-				tiles[i].tile_abr[j] = tiles[i].tile_packet_type[j] ? 1 : 0;
-				tiles[i].tile_tp[j] = tiles[i].tile_tp[j]>0 ? 1 : 0;
+				tiles[i].tile_h[j] = (tiles[i].tile_data_data1[j] >> 8) & 0x3FF;
+				tiles[i].tile_w[j] = (tiles[i].tile_data_data1[j] >> 18) & 0x3FF;
+				tiles[i].tile_trans[j] = (tiles[i].tile_data_data2[j] >> 28) & 0x1;
+				tiles[i].tile_depth[j] = tiles[i].tile_data_data3[j] & 0xFFF;
+				tiles[i].tile_pos_y[j] = (tiles[i].tile_data_data3[j] >> 12) & 0x3FF;
+				tiles[i].tile_pos_x[j] = (tiles[i].tile_data_data3[j] >> 22) & 0x3FF;
+				// Unused 3 bits
+				tiles[i].tile_abr[j] = tiles[i].tile_trans[j] ? 1 : 0;
 			}
 		}
+		FieldTilesTileDataStruct* tmp;
+		for (i=0;i<tiles_amount;i++)
+			tiles_sorted[i] = &tiles[i];
+		for (i=0;i<tiles_amount;i++)
+			for (j=i+1;j<tiles_amount;j++)
+				if ((tiles_sorted[j]->distance)>=(tiles_sorted[i]->distance)) {
+					tmp = tiles_sorted[j];
+					tiles_sorted[j] = tiles_sorted[i];
+					tiles_sorted[i] = tmp;
+				}
+		for (i=0;i<anim_amount;i++)
+			if (anim[i].tile_amount>0)
+				tiles[anim[i].tile_list[0]].is_first_of_anim = true;
 	} else {
-		
+		// ToDo
 	}
 }
 
 #define MACRO_TILES_IOFUNCTION(IO,SEEK,READ,PPF) \
 	unsigned int i,j,k; \
-	if (!READ) ConvertDatas(false); \
+	if (!READ) SetupDataInfos(false); \
 	uint32_t headerpos = f.tellg(); \
 	if (PPF) PPFInitScanStep(f); \
 	IO ## Short(f,tiles_size); \
-	IO ## Short(f,unknown1); \
+	IO ## Short(f,depth_shift); \
 	IO ## Short(f,anim_amount); \
 	IO ## Short(f,tiles_amount); \
-	IO ## Short(f,unkblock_amount); \
+	IO ## Short(f,light_amount); \
 	IO ## Short(f,camera_amount); \
 	IO ## Long(f,anim_offset); \
 	IO ## Long(f,tiles_offset); \
-	IO ## Long(f,unkblock_offset); \
+	IO ## Long(f,light_offset); \
 	IO ## Long(f,camera_offset); \
 	IO ## Short(f,anim_unk1); \
 	IO ## Short(f,tiles_unk1); \
-	IO ## Short(f,unkblock_unk1); \
+	IO ## Short(f,light_unk1); \
 	IO ## Short(f,camera_unk1); \
 	IO ## Short(f,anim_unk2); \
 	IO ## Short(f,tiles_unk2); \
-	IO ## Short(f,unkblock_unk2); \
+	IO ## Short(f,light_unk2); \
 	IO ## Short(f,camera_unk2); \
 	IO ## Short(f,anim_unk3); \
 	IO ## Short(f,tiles_unk3); \
-	IO ## Short(f,unkblock_unk3); \
+	IO ## Short(f,light_unk3); \
 	IO ## Short(f,camera_unk3); \
 	if (PPF) PPFEndScanStep(); \
 	if (READ) { \
 		anim = new FieldTilesAnimDataStruct[anim_amount]; \
 		tiles = new FieldTilesTileDataStruct[tiles_amount]; \
 		tiles_sorted = new FieldTilesTileDataStruct*[tiles_amount]; \
-		unkblock = new FieldTilesUnkblockDataStruct[unkblock_amount]; \
+		light = new FieldTilesLightDataStruct[light_amount]; \
 		camera = new FieldTilesCameraDataStruct[camera_amount]; \
 	} \
 	for (i=0;i<anim_amount;i++) { \
 		SEEK(f,headerpos,anim_offset+i*0x10); \
 		if (PPF) PPFInitScanStep(f); \
-		IO ## Char(f,anim[i].unk1); \
-		IO ## Char(f,anim[i].tile_amount); \
-		IO ## Short(f,anim[i].unk2); \
-		IO ## Long(f,anim[i].unk3); \
-		IO ## Long(f,anim[i].unk4); \
+		IO ## Char(f,anim[i].flag); \
+		IO ## Long3(f,anim[i].tile_amount); \
+		IO ## Char(f,anim[i].camera_id); \
+		IO ## Long3(f,anim[i].default_frame); \
+		IO ## Short(f,(uint16_t&)anim[i].rate); \
+		IO ## Short(f,anim[i].counter); \
 		IO ## Long(f,anim[i].tile_list_offset); \
 		if (PPF) PPFEndScanStep(); \
 		if (READ) { \
@@ -367,22 +391,29 @@ void FieldTilesDataStruct::ConvertDatas(bool readway) {
 		SEEK(f,headerpos,tiles_offset+i*0x38); \
 		if (PPF) PPFInitScanStep(f); \
 		IO ## Long(f,tiles[i].data1); \
-		IO ## Long(f,tiles[i].data2); \
-		IO ## Long(f,tiles[i].data3); \
+		IO ## Short(f,tiles[i].height); \
+		IO ## Short(f,tiles[i].width); \
+		IO ## Short(f,(uint16_t&)tiles[i].default_x); \
+		IO ## Short(f,(uint16_t&)tiles[i].default_y); \
 		IO ## Short(f,(uint16_t&)tiles[i].pos_x); \
 		IO ## Short(f,(uint16_t&)tiles[i].pos_y); \
-		IO ## Long(f,tiles[i].unk1); \
-		IO ## Long(f,tiles[i].unk2); \
-		IO ## Short(f,tiles[i].unk3); \
-		IO ## Short(f,tiles[i].unk4); \
-		IO ## Long(f,tiles[i].data4); \
-		IO ## Long(f,tiles[i].data5); \
-		IO ## Short(f,tiles[i].camera_id); \
+		IO ## Short(f,(uint16_t&)tiles[i].pos_minx); \
+		IO ## Short(f,(uint16_t&)tiles[i].pos_maxx); \
+		IO ## Short(f,(uint16_t&)tiles[i].pos_miny); \
+		IO ## Short(f,(uint16_t&)tiles[i].pos_maxy); \
+		IO ## Short(f,(uint16_t&)tiles[i].screen_x); \
+		IO ## Short(f,(uint16_t&)tiles[i].screen_y); \
+		IO ## Short(f,(uint16_t&)tiles[i].pos_dx); \
+		IO ## Short(f,(uint16_t&)tiles[i].pos_dy); \
+		IO ## Short(f,(uint16_t&)tiles[i].pos_fracx); \
+		IO ## Short(f,(uint16_t&)tiles[i].pos_fracy); \
+		IO ## Char(f,tiles[i].camera_id); \
+		IO ## Char(f,tiles[i].data2); \
 		IO ## Short(f,tiles[i].tile_amount); \
 		IO ## Long(f,tiles[i].tile_pos_offset); \
 		IO ## Long(f,tiles[i].tile_data_offset); \
 		IO ## Long(f,tiles[i].tile_packet_offset); \
-		IO ## Long(f,tiles[i].unk5); \
+		IO ## Long(f,tiles[i].tile_tpage); \
 		if (PPF) PPFEndScanStep(); \
 		if (READ) { \
 			tiles[i].AllocTileData(); \
@@ -392,33 +423,30 @@ void FieldTilesDataStruct::ConvertDatas(bool readway) {
 		} \
 		for (j=0;j<tiles[i].tile_amount;j++) { \
 			tiles[i].tile_steam_id[j] = k++; \
-			SEEK(f,headerpos,tiles[i].tile_pos_offset+j*0x4); \
-			if (PPF) PPFInitScanStep(f); \
-			IO ## Char(f,tiles[i].tile_pos_unk1[j]); \
-			IO ## Char(f,tiles[i].tile_pos_unk2[j]); \
-			IO ## Char(f,tiles[i].tile_pos_y[j]); \
-			IO ## Char(f,tiles[i].tile_pos_x[j]); \
-			if (PPF) PPFEndScanStep(); \
 			SEEK(f,headerpos,tiles[i].tile_data_offset+j*0x8); \
 			if (PPF) PPFInitScanStep(f); \
 			IO ## Long(f,tiles[i].tile_data_data1[j]); \
 			IO ## Long(f,tiles[i].tile_data_data2[j]); \
 			if (PPF) PPFEndScanStep(); \
+			SEEK(f,headerpos,tiles[i].tile_pos_offset+j*0x4); \
+			if (PPF) PPFInitScanStep(f); \
+			IO ## Long(f,tiles[i].tile_data_data3[j]); \
+			if (PPF) PPFEndScanStep(); \
 		} \
 	} \
-	SEEK(f,headerpos,unkblock_offset); \
+	SEEK(f,headerpos,light_offset); \
 	if (PPF) PPFInitScanStep(f); \
-	for (i=0;i<unkblock_amount;i++) { \
+	for (i=0;i<light_amount;i++) { \
 	} \
 	if (PPF) PPFEndScanStep(); \
 	SEEK(f,headerpos,camera_offset); \
 	if (PPF) PPFInitScanStep(f); \
 	for (i=0;i<camera_amount;i++) { \
-		IO ## Short(f,camera[i].size_ratio_y); \
-		IO ## Short(f,camera[i].size_ratio_x); \
-		IO ## Short(f,camera[i].angle_a); \
+		IO ## Short(f,camera[i].distance); \
+		IO ## Short(f,(uint16_t&)camera[i].angle_x); \
+		IO ## Short(f,(uint16_t&)camera[i].angle_a); \
 		IO ## Short(f,(uint16_t&)camera[i].eye_x); \
-		IO ## Short(f,camera[i].angle_b); \
+		IO ## Short(f,(uint16_t&)camera[i].angle_b); \
 		IO ## Short(f,(uint16_t&)camera[i].eye_y); \
 		IO ## Short(f,(uint16_t&)camera[i].eye_z); \
 		IO ## Short(f,(uint16_t&)camera[i].focal_x); \
@@ -427,38 +455,25 @@ void FieldTilesDataStruct::ConvertDatas(bool readway) {
 		IO ## Long(f,(uint32_t&)camera[i].offset_x); \
 		IO ## Long(f,(uint32_t&)camera[i].offset_z); \
 		IO ## Long(f,(uint32_t&)camera[i].offset_y); \
-		IO ## Short(f,(uint16_t&)camera[i].offset_x2); \
-		IO ## Short(f,(uint16_t&)camera[i].offset_y2); \
-		IO ## Short(f,(uint16_t&)camera[i].offset_x3); \
-		IO ## Short(f,(uint16_t&)camera[i].offset_y3); \
+		IO ## Short(f,(uint16_t&)camera[i].offset_centerx); \
+		IO ## Short(f,(uint16_t&)camera[i].offset_centery); \
+		IO ## Short(f,(uint16_t&)camera[i].offset_width); \
+		IO ## Short(f,(uint16_t&)camera[i].offset_height); \
 		IO ## Short(f,(uint16_t&)camera[i].min_x); \
 		IO ## Short(f,(uint16_t&)camera[i].max_x); \
 		IO ## Short(f,(uint16_t&)camera[i].min_y); \
 		IO ## Short(f,(uint16_t&)camera[i].max_y); \
-		IO ## Short(f,(uint16_t&)camera[i].closeness); \
-		IO ## Short(f,(uint16_t&)camera[i].unk); \
+		IO ## Long(f,(uint32_t&)camera[i].depth); \
 		if (READ) { \
 			camera[i].parent = this; \
 			camera[i].id = i; \
-			camera[i].UpdateSize(); \
 		} \
 	} \
 	if (PPF) PPFEndScanStep(); \
 	if (READ) { \
-		ConvertDatas(true); \
-		FieldTilesTileDataStruct* tmp; \
-		for (i=0;i<tiles_amount;i++) \
-			tiles_sorted[i] = &tiles[i]; \
-		for (i=0;i<tiles_amount;i++) \
-			for (j=i+1;j<tiles_amount;j++) \
-				if ((tiles_sorted[j]->distance)>=(tiles_sorted[i]->distance)) { \
-					tmp = tiles_sorted[j]; \
-					tiles_sorted[j] = tiles_sorted[i]; \
-					tiles_sorted[i] = tmp; \
-				} \
-		for (i=0;i<anim_amount;i++) \
-			if (anim[i].tile_amount>0) \
-				tiles[anim[i].tile_list[0]].is_first_of_anim = true; \
+		SetupDataInfos(true); \
+		for (i=0;i<camera_amount;i++) \
+			camera[i].UpdateSize(); \
 	}
 
 
@@ -500,8 +515,7 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 		}
 		delete[] anim;
 		for (i=0;i<tiles_amount;i++) {
-			delete[] tiles[i].tile_pos_unk1;
-			delete[] tiles[i].tile_pos_unk2;
+			delete[] tiles[i].tile_depth;
 			delete[] tiles[i].tile_pos_x;
 			delete[] tiles[i].tile_pos_y;
 			delete[] tiles[i].tile_clut_y;
@@ -509,18 +523,22 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 			delete[] tiles[i].tile_page_y;
 			delete[] tiles[i].tile_page_x;
 			delete[] tiles[i].tile_tp;
-			delete[] tiles[i].tile_abr;
+			delete[] tiles[i].tile_alpha;
 			delete[] tiles[i].tile_source_v;
 			delete[] tiles[i].tile_source_u;
-			delete[] tiles[i].tile_packet_type;
+			delete[] tiles[i].tile_h;
+			delete[] tiles[i].tile_w;
+			delete[] tiles[i].tile_abr;
+			delete[] tiles[i].tile_trans;
 			delete[] tiles[i].tile_steam_id;
 			delete[] tiles[i].tile_data_data1;
 			delete[] tiles[i].tile_data_data2;
+			delete[] tiles[i].tile_data_data3;
 		}
 		delete[] tiles;
-		delete[] unkblock;
+		delete[] light;
 		delete[] camera;
-//		delete[] tiles_sorted;
+		delete[] tiles_sorted;
 	}
 }
 
@@ -546,17 +564,18 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 	IO ## Short(f,(uint16_t&)unknown7); \
 	IO ## Short(f,(uint16_t&)unknown8); \
 	IO ## Short(f,(uint16_t&)unknown9); \
-	IO ## Long(f,unknown10); \
+	IO ## Short(f,(uint16_t&)active_walkpath); \
+	IO ## Short(f,(uint16_t&)active_triangle); \
 	IO ## Short(f,triangle_amount); \
 	IO ## Short(f,triangle_offset); \
-	IO ## Short(f,indexunk_amount); \
-	IO ## Short(f,indexunk_offset); \
-	IO ## Short(f,unknown1_amount); \
-	IO ## Short(f,unknown1_offset); \
+	IO ## Short(f,edge_amount); \
+	IO ## Short(f,edge_offset); \
+	IO ## Short(f,animation_amount); \
+	IO ## Short(f,animation_offset); \
 	IO ## Short(f,walkpath_amount); \
 	IO ## Short(f,walkpath_offset); \
-	IO ## Short(f,unknown2_amount); \
-	IO ## Short(f,unknown2_offset); \
+	IO ## Short(f,normal_amount); \
+	IO ## Short(f,normal_offset); \
 	IO ## Short(f,vertice_amount); \
 	IO ## Short(f,vertice_offset); \
 	if (PPF) PPFEndScanStep(); \
@@ -565,15 +584,15 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 		triangle_stepsound = new uint8_t[triangle_amount]; \
 		triangle_unk2 = new uint16_t[triangle_amount]; \
 		triangle_walkpath = new uint16_t[triangle_amount]; \
-		triangle_unknown2 = new uint16_t[triangle_amount]; \
+		triangle_normal = new uint16_t[triangle_amount]; \
 		triangle_unk4 = new uint16_t[triangle_amount]; \
 		triangle_unk5 = new uint16_t[triangle_amount]; \
 		triangle_vertice1 = new uint16_t[triangle_amount]; \
 		triangle_vertice2 = new uint16_t[triangle_amount]; \
 		triangle_vertice3 = new uint16_t[triangle_amount]; \
-		triangle_indexunk1 = new uint16_t[triangle_amount]; \
-		triangle_indexunk2 = new uint16_t[triangle_amount]; \
-		triangle_indexunk3 = new uint16_t[triangle_amount]; \
+		triangle_edge1 = new uint16_t[triangle_amount]; \
+		triangle_edge2 = new uint16_t[triangle_amount]; \
+		triangle_edge3 = new uint16_t[triangle_amount]; \
 		triangle_adjacenttriangle1 = new uint16_t[triangle_amount]; \
 		triangle_adjacenttriangle2 = new uint16_t[triangle_amount]; \
 		triangle_adjacenttriangle3 = new uint16_t[triangle_amount]; \
@@ -582,15 +601,14 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 		triangle_centery = new int16_t[triangle_amount]; \
 		triangle_unk9 = new uint16_t[triangle_amount]; \
 		triangle_unk10 = new uint16_t[triangle_amount]; \
-		indexunk_unk1 = new uint16_t[indexunk_amount]; \
-		indexunk_unk2 = new uint16_t[indexunk_amount]; \
-		unknown1_unk1 = new uint16_t[unknown1_amount]; \
-		unknown1_unk2 = new uint16_t[unknown1_amount]; \
-		unknown1_unk3 = new uint16_t[unknown1_amount]; \
-		unknown1_unk4 = new uint16_t[unknown1_amount]; \
-		unknown1_unk5 = new uint32_t[unknown1_amount]; \
-		unknown1_unk6 = new uint16_t[unknown1_amount]; \
-		unknown1_unk7 = new uint16_t[unknown1_amount]; \
+		edge_flag = new uint16_t[edge_amount]; \
+		edge_clone = new int16_t[edge_amount]; \
+		animation_flag = new uint16_t[animation_amount]; \
+		animation_frameamount = new uint16_t[animation_amount]; \
+		animation_framerate = new int16_t[animation_amount]; \
+		animation_counter = new uint16_t[animation_amount]; \
+		animation_currentframe = new int32_t[animation_amount]; \
+		animation_frameoffset = new uint32_t[animation_amount]; \
 		walkpath_unk1 = new uint16_t[walkpath_amount]; \
 		walkpath_unk2 = new uint16_t[walkpath_amount]; \
 		walkpath_minx = new int16_t[walkpath_amount]; \
@@ -608,13 +626,10 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 		walkpath_triangleamount = new uint16_t[walkpath_amount]; \
 		walkpath_trianglelistoffset = new uint16_t[walkpath_amount]; \
 		walkpath_trianglelist = new uint32_t*[walkpath_amount]; \
-		unknown2_unk1 = new uint32_t[unknown2_amount]; \
-		unknown2_unka1 = new int16_t[unknown2_amount]; \
-		unknown2_unkb1 = new int16_t[unknown2_amount]; \
-		unknown2_unka2 = new int16_t[unknown2_amount]; \
-		unknown2_unkb2 = new int16_t[unknown2_amount]; \
-		unknown2_unka3 = new int16_t[unknown2_amount]; \
-		unknown2_unkb3 = new int16_t[unknown2_amount]; \
+		normal_x = new int32_t[normal_amount]; \
+		normal_z = new int32_t[normal_amount]; \
+		normal_y = new int32_t[normal_amount]; \
+		normal_overz = new int32_t[normal_amount]; \
 		vertice_x = new int16_t[vertice_amount]; \
 		vertice_z = new int16_t[vertice_amount]; \
 		vertice_y = new int16_t[vertice_amount]; \
@@ -626,15 +641,15 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 		IO ## Char(f,triangle_stepsound[i]); \
 		IO ## Short(f,triangle_unk2[i]); \
 		IO ## Short(f,triangle_walkpath[i]); \
-		IO ## Short(f,triangle_unknown2[i]); \
+		IO ## Short(f,triangle_normal[i]); \
 		IO ## Short(f,triangle_unk4[i]); \
 		IO ## Short(f,triangle_unk5[i]); \
 		IO ## Short(f,triangle_vertice1[i]); \
 		IO ## Short(f,triangle_vertice2[i]); \
 		IO ## Short(f,triangle_vertice3[i]); \
-		IO ## Short(f,triangle_indexunk1[i]); \
-		IO ## Short(f,triangle_indexunk2[i]); \
-		IO ## Short(f,triangle_indexunk3[i]); \
+		IO ## Short(f,triangle_edge1[i]); \
+		IO ## Short(f,triangle_edge2[i]); \
+		IO ## Short(f,triangle_edge3[i]); \
 		IO ## Short(f,triangle_adjacenttriangle1[i]); \
 		IO ## Short(f,triangle_adjacenttriangle2[i]); \
 		IO ## Short(f,triangle_adjacenttriangle3[i]); \
@@ -645,23 +660,22 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 		IO ## Short(f,triangle_unk10[i]); \
 		if (PPF) PPFEndScanStep(); \
 	} \
-	for (i=0;i<indexunk_amount;i++) { \
-		SEEK(f,headerpos,indexunk_offset+i*0x4); \
+	for (i=0;i<edge_amount;i++) { \
+		SEEK(f,headerpos,edge_offset+i*0x4); \
 		if (PPF) PPFInitScanStep(f); \
-		IO ## Short(f,indexunk_unk1[i]); \
-		IO ## Short(f,indexunk_unk2[i]); \
+		IO ## Short(f,edge_flag[i]); \
+		IO ## Short(f,(uint16_t&)edge_clone[i]); \
 		if (PPF) PPFEndScanStep(); \
 	} \
-	for (i=0;i<unknown1_amount;i++) { \
-		SEEK(f,headerpos,unknown1_offset+i*0x10); \
+	for (i=0;i<animation_amount;i++) { \
+		SEEK(f,headerpos,animation_offset+i*0x10); \
 		if (PPF) PPFInitScanStep(f); \
-		IO ## Short(f,unknown1_unk1[i]); \
-		IO ## Short(f,unknown1_unk2[i]); \
-		IO ## Short(f,unknown1_unk3[i]); \
-		IO ## Short(f,unknown1_unk4[i]); \
-		IO ## Long(f,unknown1_unk5[i]); \
-		IO ## Short(f,unknown1_unk6[i]); \
-		IO ## Short(f,unknown1_unk7[i]); \
+		IO ## Short(f,animation_flag[i]); \
+		IO ## Short(f,animation_frameamount[i]); \
+		IO ## Short(f,(uint16_t&)animation_framerate[i]); \
+		IO ## Short(f,animation_counter[i]); \
+		IO ## Long(f,(uint32_t&)animation_currentframe[i]); \
+		IO ## Long(f,animation_frameoffset[i]); \
 		if (PPF) PPFEndScanStep(); \
 	} \
 	for (i=0;i<walkpath_amount;i++) { \
@@ -692,16 +706,13 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 		} \
 		if (PPF) PPFEndScanStep(); \
 	} \
-	for (i=0;i<unknown2_amount;i++) { \
-		SEEK(f,headerpos,unknown2_offset+i*0x10); \
+	for (i=0;i<normal_amount;i++) { \
+		SEEK(f,headerpos,normal_offset+i*0x10); \
 		if (PPF) PPFInitScanStep(f); \
-		IO ## Long(f,unknown2_unk1[i]); \
-		IO ## Short(f,(uint16_t&)unknown2_unka1[i]); \
-		IO ## Short(f,(uint16_t&)unknown2_unkb1[i]); \
-		IO ## Short(f,(uint16_t&)unknown2_unka2[i]); \
-		IO ## Short(f,(uint16_t&)unknown2_unkb2[i]); \
-		IO ## Short(f,(uint16_t&)unknown2_unka3[i]); \
-		IO ## Short(f,(uint16_t&)unknown2_unkb3[i]); \
+		IO ## Long(f,(uint32_t&)normal_x[i]); \
+		IO ## Long(f,(uint32_t&)normal_z[i]); \
+		IO ## Long(f,(uint32_t&)normal_y[i]); \
+		IO ## Long(f,(uint32_t&)normal_overz[i]); \
 		if (PPF) PPFEndScanStep(); \
 	} \
 	for (i=0;i<vertice_amount;i++) { \

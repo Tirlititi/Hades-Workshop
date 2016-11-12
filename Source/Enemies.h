@@ -9,6 +9,8 @@ struct EnemyDataStruct;
 struct EnemySequenceCodeLine;
 struct BattleDataStruct;
 
+struct BattleModelLinks;
+
 struct EnemyDataSet;
 
 #include <inttypes.h>
@@ -249,6 +251,7 @@ public:
 	// Make the modifications inside field and world map image maps only...
 	// Mark the updated image maps as modified
 	int ChangeBattleScene(uint16_t battleid, uint16_t newsceneid, uint32_t newsceneoffset = 0, uint32_t newscenesize = 0);
+	int ChangeBattleModel(uint16_t battleid, uint8_t enemyid, BattleModelLinks& newmodelinfo);
 	
 	void Load(fstream& ffbin, ClusterSet& clusset);
 	// Use false if World Maps or fields are saved in the normal process : it prevents the image maps to be saved twice
@@ -265,6 +268,39 @@ private:
 	uint16_t modified_scene_id[0x1000];
 	uint32_t modified_scene_offset[0x1000];
 	uint32_t modified_scene_size[0x1000];
+};
+
+struct BattleModelLinks {
+	uint16_t model;
+	uint16_t anim_stand;
+	uint16_t anim_death1;
+	uint16_t anim_hit1;
+	uint16_t anim_hit2;
+	uint16_t anim_death2;
+	uint16_t anim_death3;
+	uint16_t radius;
+	uint16_t mesh;
+	uint16_t mesh_vanish;
+	uint8_t bone_camera1;
+	uint8_t bone_camera2;
+	uint8_t bone_camera3;
+	uint8_t bone_target;
+	uint8_t selection_bone[6];
+	int8_t selection_offsetz[6];
+	int8_t selection_offsety[6];
+	uint16_t shadow_x;
+	uint16_t shadow_y;
+	uint8_t shadow_bone1;
+	uint8_t shadow_bone2;
+	int16_t shadow_offset_x;
+	int16_t shadow_offset_y;
+	uint16_t sound_engage;
+	uint16_t sound_death;
+	uint16_t sequence_anim_amount;
+	uint16_t* sequence_anim;
+	
+	static BattleModelLinks& GetLinksByModel(uint16_t modelid);
+	static bool IsBattleModel(uint16_t modelid);
 };
 
 #endif

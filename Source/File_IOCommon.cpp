@@ -188,3 +188,22 @@ void BufferWriteChar(uint8_t* buffer, uint8_t value) {
 	buffer[iobuffer_offset++] = value;
 }
 
+uint32_t Raw_FloatToUInt(float f) {
+	uint32_t* res = (uint32_t*)&f;
+	return *res;
+}
+
+uint64_t Raw_DoubleToUInt(double f) {
+	uint64_t* res = (uint64_t*)&f;
+	return *res;
+}
+
+float Raw_UIntToFloat(uint32_t v) {
+	float* res = (float*)&v;
+	return *res;
+}
+
+double Raw_UIntToDouble(uint64_t v) {
+	double* res = (double*)&v;
+	return *res;
+}

@@ -5,6 +5,7 @@
 #include "Spells.h"
 
 #define G_N_ELEMENTS(arr) ((sizeof(arr))/(sizeof(arr[0])))
+
 struct SortedChoiceItem {
 	unsigned int id;
 	wxString label;
@@ -79,7 +80,9 @@ struct SortedChoiceItemModel {
 #define HADES_STRING_PPF_SAVE_SUCCESS L"PPF file successfully created !"
 #define HADES_STRING_STEAM_SAVE_DEFAULT L"HadesWorkshopMod\\"
 #define HADES_STRING_STEAM_SAVE_SUCCESS L"Steam modded files successfully created !"
-#define HADES_STRING_STEAM_SAVE_ERROR L"There was an error..." // DEBUG
+#define HADES_STRING_STEAM_SAVE_ERROR_OPENED_FILES L"You can't overwrite the currently opened Steam files"
+#define HADES_STRING_STEAM_SAVE_ERROR_FAIL_READ L"Unable to open the file for reading"
+#define HADES_STRING_STEAM_SAVE_ERROR_FAIL_WRITE L"Unable to create the file"
 #define HADES_STRING_HWS_OPEN_SUCCESS L"Data successfully imported !"
 #define HADES_STRING_HWS_OPEN_FAIL L"Cannot open '%s' as Final Fantasy IX save."
 #define HADES_STRING_HWS_OPEN_WARNING L"Data has been imported with some errors :"
@@ -125,7 +128,12 @@ struct SortedChoiceItemModel {
 #define HADES_STRING_HWS_OPEN_WARNING_MENU_UI_TEXT_UNKNOWN L" unknown UI text blocks."
 #define HADES_STRING_HWS_OPEN_WARNING_MENU_UI_TEXT_UNAVAILABLE L"Special text format is not compatible."
 #define HADES_STRING_HWS_OPEN_WARNING_MIPS_SIZE L"The MIPS code is too heavy."
-#define HADES_STRING_HWS_OPEN_WARNING_MIPS_UNAVAILABLE L"MIPS code can't be imported."
+#define HADES_STRING_HWS_OPEN_WARNING_MIPS_UNAVAILABLE L"MIPS code can't be imported to the Steam version."
+#define HADES_STRING_HWS_OPEN_WARNING_CIL_UNAVAILABLE L"CIL code can't be imported to the PSX version."
+#define HADES_STRING_HWS_OPEN_WARNING_CIL_RAW_NOT_FOUND L" methods from the modifications are not found."
+#define HADES_STRING_HWS_OPEN_WARNING_CIL_RAW_NOT_MATCHING L" methods from the modifications don't match with the ones in the DLL."
+#define HADES_STRING_HWS_OPEN_WARNING_CIL_MACRO_UNKNOWN L" macros are unknown."
+#define HADES_STRING_HWS_OPEN_WARNING_CIL_MACRO_FAIL L" macros can't be activated."
 #define HADES_STRING_HWS_SAVE_SUCCESS L"Data successfully exported !"
 #define HADES_STRING_TXT_SAVE_SUCCESS L"Text successfully exported !"
 #define HADES_STRING_TEXTURE_SAVE_SUCCESS L"Texture successfully exported !"
@@ -218,7 +226,6 @@ static wxString HADES_STRING_SYNTH_NAME[8] = {
 //-- Scripts
 #define HADES_STRING_ON_OFF_BUTTON				L"Check"
 #define HADES_STRING_NULL_CHARACTER_SLOT		L"Null Character"
-#define HADES_STRING_ENEMY_COMMAND				L"Enemy command"
 #define HADES_STRING_SCRIPT_NEW_ENTRY	 		L"New Entry"
 #define HADES_STRING_ENTRY_ARG_LOST				"%u script lines used an entry that was deleted"
 #define HADES_STRING_SCRIPT_NO_DELETE	 		L"Can't delete the Main_Init function"
@@ -257,6 +264,13 @@ static wxString HADES_STRING_SYNTH_NAME[8] = {
 #define HADES_STRING_LSCRIPT_MISS_NAME			L" - Local Variable : Expected a name for local variable\n"
 #define HADES_STRING_LSCRIPT_UNEXPECTED			" - Local Variable : Unexpected '%s'\n"
 #define HADES_STRING_LSCRIPT_MISS_ALLOC			" - Local Variable : Need to allocate '%u'\n"
+
+//-- CIL Editor
+#define HADES_STRING_CILSCRIPT_NOTINST			" - IL_%.4X : '%s' is not a CIL instruction ; line ignored\n"
+#define HADES_STRING_CILSCRIPT_NOTARG			" - IL_%.4X : Expected an argument instead of '%s'\n"
+#define HADES_STRING_CILSCRIPT_WRONGTYPECHECK	" - IL_%.4X : Expected a list of check types, '%s', '%s' or '%s'\n"
+#define HADES_STRING_CILSCRIPT_WRONGILPOS		" - IL_%.4X : '%s' is not a valid IL position\n"
+#define HADES_STRING_CILSCRIPT_RANGEILPOS		" - IL_%.4X : '%s' is out of range for tbis instruction's short form\n"
 
 //-- File Batching
 #define HADES_STRING_BATCH_NOTHING				" - Nothing done\n"
@@ -335,9 +349,14 @@ static wxString HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM[] = {
 	L"Localization"
 };
 
-//-- Mips
-#define HADES_STRING_MIPS_FULL_CODE	L"Full Code"
-#define HADES_STRING_MIPS_OOB		"RAM position is out of bounds [0x%X, 0x%X]"
+//-- Mips & CIL
+#define HADES_STRING_MIPS_FULL_CODE		L"Full Code"
+#define HADES_STRING_MIPS_OOB			"RAM position is out of bounds [0x%X, 0x%X]"
+#define HADES_STRING_CIL_NO_METHOD		L"Can't find a method body\n"\
+										L"Method is external"
+#define HADES_STRING_CIL_PROTECTED		L"This method contains some database specially handled by Hades Workshop. You can't modify it."
+#define HADES_STRING_CIL_APPLY_MACRO	L"Apply Macro"
+#define HADES_STRING_CIL_UNAPPLY_MACRO	L"Unapply Macro"
 
 //-- Others
 #define HADES_STRING_FONT_ERROR L"Unsupported font."
@@ -363,14 +382,14 @@ static SortedChoiceItemWithHelp HADES_STRING_SPELL_EFFECT[] = {
 	{ 15, L"Osmose", L"Magic attack stealing target's MP, but reverse the effect on Zombie.\nDamage MP = (Power - MagicDefence) * Random[Magic, Magic + (Level + Magic) / 8] / 4\n\nDamage MP Modifiers : Mini (Caster), Petrify (miss) and Shell" },
 	{ 16, L"Drain", L"Magic attack stealing target's HP, but reverse the effect on Zombie.\nDamage = (Power - MagicDefence) * Random[Magic, Magic + (Level + Magic) / 8]\n\nDamage Modifiers : Mini (Caster), Petrify (miss) and Shell" },
 	{ 17, L"Gravity", L"Magic attack depending on target's max HP.\nDamage = MaxHP * Power / 100\nHit Rate = Accuracy + Magic / 4 + Level - TargetLevel\n\nDamage Modifiers : Elemental Affinity and Boost\nHit Rate Modifiers : Multi-targeting, Shell and Easy Kill.\nUse magical evasion.\nMiss on flying targets if the spell is Earth-elemental." },
-	{ 18, L"Random Magic", L"Magic attack with a wide range of damage that can also add status.\nDamage = Power * Random[1, Level + Magic - 1]\nStatus Hit Rate = SpellAccuracy\n\nDamage Modifiers : Multi-targeting, Mini (Caster), Shell, Elemental Affinity and Boost\nMiss on flying targets if the spell is Earth-elemental." },
+	{ 18, L"Random Magic", L"Magic attack with a wide range of damage that can also add status.\nExcept for a few spell slots, it never misses (see btl_calc::DecideMeteor).\nDamage = Power * Random[1, Level + Magic - 1]\nStatus Hit Rate = SpellAccuracy\n\nDamage Modifiers : Multi-targeting, Mini (Caster), Shell, Elemental Affinity and Boost\nMiss on flying targets if the spell is Earth-elemental." },
 	{ 19, L"Physical Strike", L"Physical attack that can also add status.\nDamage = (Attaque * Power / 10 - Defence) * Random[Strength, Strength + (Level + Strength) / 8]\nStatus Hit Rate = SpellAccuracy\n\nDamage Modifiers\n Caster : Berserk, Trance, Mini and Elemental Boost (Spell)\n Target : Defend, Protect, Sleep, Mini and Elemental Affinity (Weapon)" },
 	{ 20, L"Magic Weapon", L"Magic attack using strength that can also add status.\nDamage = (Attaque * Power / 10 - MagicDefence) * Random[Strength, Strength + (Level + Strength) / 8]\nStatus Hit Rate = SpellAccuracy\n\nDamage Modifiers : Mini (half), Shell, Elemental Affinity and Boost (Spell)\nMiss on flying targets if the spell is Earth-elemental." },
 	{ 21, L"Goblin Punch", L"Magic attack improved if target and caster are same level.\nBase Damage = (Power - MagicDefence) * Random[Magic, Magic + (Level + Magic) / 8]\nImproved Damage = (Power + Level) * Random[Magic, Magic + (Level + Magic) / 8]\n\nDamage Modifiers : Mini (half) and Shell" },
 	{ 22, L"LV? Death", L"Bring HP to « Power » if target's level is a multiple of « Accuracy ».\nPass through any status immunity but miss if the target is under Petrify." },
 	{ 23, L"LV? Attack", L"Magic attack if target's level is a multiple of « Accuracy ».\nDamage = (Power - MagicDefence) * Random[Magic, Magic + (Level + Magic) / 8]\n\nDamage Modifiers : Mini (Caster), Shell, Petrify (miss), Elemental Affinity and Boost" },
 	{ 24, L"LV? Defless", L"Reduce both defence and magic defence if target's level is a multiple of « Accuracy » and not under Petrify.\nNew Defences = Random[0, Old Defences - 1]" },
-	{ 25, L"Roulette", L"Bring HP to « Power » but fail if the target is under Easy Kill or Petrify.\nThe base Roulette spell randomizes the target but the others have a determinist target." },
+	{ 25, L"Roulette", L"Bring HP to « Power » but fail if the target is under Easy Kill or Petrify.\nThe base Roulette spell slot randomizes the target but the others have a determinist target (see btl_cmd::CheckCommandCondition)." },
 	{ 26, L"Pure Damage", L"Type free attack.\nDamage = Power * 100 + Accuracy" },
 	{ 27, L"Matra Magic", L"Bring HP to « Power » but fail if the target is under Easy Kill or Petrify.\nHit Rate = Accuracy + Magic / 4 + Level - TargetLevel\n\nHit Rate Modifier : Shell\nUse magical evasion." },
 	{ 28, L"Limit Glove", L"Pure damage if caster's HP are exactly 1 but miss otherwise.\nDamage = Power * 100 + Accuracy" },
@@ -396,7 +415,7 @@ static SortedChoiceItemWithHelp HADES_STRING_SPELL_EFFECT[] = {
 	{ 48, L"Spear", L"Physical attack.\nDamage = 1.5 * (Attack - Defence) * Random[Strength, Strength + (Level + Strength) / 8]\n\nDamage Modifiers : Healer, High Jump (factor changed from 1.5 to 2), Mini (Caster - half), Defend, Protect, Sleep and Mini (Target)" },
 	{ 49, L"Eidolon Phoenix", L"Magic Attack on target enemies and Life on target allies.\nDamage = Magic Attack formula using Phoenix's spell datas\nHeal = Life formula using Rebirth Flame's spell datas" },
 	{ 50, L"Six Dragons", L"Randomly change target's HP and/or MP but fail if the target is under Petrify.\nRestore both HP and MP : 10%\nRestore HP : 20%\nRestore MP : 20%\nReduce HP to 1 : 15%\nReduce MP to 1 : 15%\nReduce both HP and MP to 1 : 20%" },
-	{ 51, L"Curse", L"Add an elemental weakness.\nThe base Curse spell randomizes the element but the others have a determinist element." },
+	{ 51, L"Curse", L"Add an elemental weakness.\nThe base Curse spell slots randomize the element but the others have a determinist element (see btl_cmd::CheckCommandCondition)." },
 	{ 52, L"Angel's Snack", L"Use an item specified by « Power » on each target." },
 	{ 53, L"Lucky Seven", L"Type free attack improved if the last figure of caster's HP is 7.\nBase Damage = 1\nImproved Damage = Random{7, 77, 777, 7777}" },
 	{ 54, L"What's That!?", L"Place the target enemies in a back attack state but fail if the « Scripted Start » flag of the battle is on.\nAlso put the target allies back to their usual row position." },
@@ -2444,7 +2463,7 @@ static SortedChoiceItem HADES_STRING_MODEL_NAME[] = {
 	{ 264,	L"Weapon_Hamelin" },
 	{ 265,	L"Enemy_MagicVice" },
 	{ 266,	L"Enemy_Mimic" },
-	{ 267,	L"KujaA" },
+	{ 267,	L"Kuja" },
 	{ 268,	L"Conde_Priest" },
 	{ 269,	L"Cleyran_Priest" },
 	{ 270,	L"Cid_Human" },
@@ -2762,7 +2781,7 @@ static SortedChoiceItem HADES_STRING_MODEL_NAME[] = {
 	{ 660,	L"MarcusB" },
 	{ 663,	L"Enemy_GiganToadB" },
 	{ 664,	L"Enemy_Benero" },
-	{ 667,	L"KujaB" },
+	{ 667,	L"Kuja_Burned" },
 	{ 671,	L"Enemy_Dagger" },
 	{ 672,	L"Enemy_Necron" },
 	{ 673,	L"Enemy_DummyB" },

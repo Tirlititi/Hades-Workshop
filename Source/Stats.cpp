@@ -227,38 +227,38 @@ void StatDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 			SteamReadChar(ffbin,initial_equip[i].accessory);
 		}
 		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_ability_method_id));
-		methinfo.JumpToCode(ffbin);
+		methinfo.ReadMethodInfo(ffbin);
 		ILInstruction initinstabil[3] = {
 			{ 0x1F, ABILITY_SET_CAPACITY },
-			{ 0x8D, config.meta_dll.GetTypeIdentifier("PA_DATA") },
-			{ 0x25, 0 }
+			{ 0x8D, config.meta_dll.GetTypeTokenIdentifier("PA_DATA","FF9") },
+			{ 0x25 }
 		};
 		uint8_t* rawabildata[ABILITY_SET_AMOUNT];
 		for (i=0;i<ABILITY_SET_AMOUNT;i++) {
-			ILScriptJumpToInstructions(ffbin,3,initinstabil);
+			methinfo.JumpToInstructions(ffbin,3,initinstabil);
 			steam_method_position_abilset[i] = ffbin.tellg();
 			rawabildata[i] = ConvertILScriptToRawData_Object(ffbin,ABILITY_SET_CAPACITY,2,steam_statabil_field_size);
 			steam_method_base_length_abilset[i] = (unsigned int)ffbin.tellg()-steam_method_position_abilset[i];
 		}
 		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_level_method_id));
-		methinfo.JumpToCode(ffbin);
+		methinfo.ReadMethodInfo(ffbin);
 		ILInstruction initinststat[3] = {
 			{ 0x1F, PLAYABLE_CHAR_AMOUNT },
-			{ 0x8D, config.meta_dll.GetTypeIdentifier("FF9LEVEL_BASE") },
-			{ 0x25, 0 }
+			{ 0x8D, config.meta_dll.GetTypeTokenIdentifier("FF9LEVEL_BASE") },
+			{ 0x25 }
 		};
-		ILScriptJumpToInstructions(ffbin,3,initinststat);
+		methinfo.JumpToInstructions(ffbin,3,initinststat);
 		steam_method_position_initstat = ffbin.tellg();
 		uint8_t* rawstatdata = ConvertILScriptToRawData_Object(ffbin,PLAYABLE_CHAR_AMOUNT,5,steam_stat_field_size);
 		steam_method_base_length_initstat = (unsigned int)ffbin.tellg()-steam_method_position_initstat;
 		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_level_method_id));
-		methinfo.JumpToCode(ffbin);
+		methinfo.ReadMethodInfo(ffbin);
 		ILInstruction initinsthpmp[3] = {
 			{ 0x1F, MAX_LEVEL },
-			{ 0x8D, config.meta_dll.GetTypeIdentifier("FF9LEVEL_HPMP") },
-			{ 0x25, 0 }
+			{ 0x8D, config.meta_dll.GetTypeTokenIdentifier("FF9LEVEL_HPMP") },
+			{ 0x25 }
 		};
-		ILScriptJumpToInstructions(ffbin,3,initinsthpmp);
+		methinfo.JumpToInstructions(ffbin,3,initinsthpmp);
 		steam_method_position_hpmp = ffbin.tellg();
 		uint8_t* rawlvldata = ConvertILScriptToRawData_Object(ffbin,MAX_LEVEL,2,steam_lvlhpmp_field_size);
 		steam_method_base_length_hpmp = (unsigned int)ffbin.tellg()-steam_method_position_hpmp;
@@ -269,14 +269,14 @@ void StatDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 		}
 		// ToDo : shared_commands
 		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_rdata_method_id));
-		methinfo.JumpToCode(ffbin);
+		methinfo.ReadMethodInfo(ffbin);
 		ILInstruction initinstcmd[4] = {
 			{ 0x1F, COMMAND_SET_AMOUNT },
-			{ 0x18, 0 },
-			{ 0x73, 492 | 0xA000000 }, // DEBUG : config.meta_dll.GetMemberIdentifier(".ctor","command_tags")? ; MemberRef value = 356 ; command_tags ID = 122
-			{ 0x25, 0 }
+			{ 0x18 },
+			{ 0x73, config.meta_dll.GetMemberTokenIdentifier("void valuetype FF9.command_tags[,]::.ctor( int, int )") },
+			{ 0x25 }
 		};
-		ILScriptJumpToInstructions(ffbin,4,initinstcmd);
+		methinfo.JumpToInstructions(ffbin,4,initinstcmd);
 		steam_method_position_cmdset = ffbin.tellg();
 		int64_t** rawcmddata = ConvertILScriptToRawData_Array2(ffbin,COMMAND_SET_AMOUNT,2);
 		steam_method_base_length_cmdset = (unsigned int)ffbin.tellg()-steam_method_position_cmdset;
@@ -327,19 +327,20 @@ DllMetaDataModification* StatDataSet::ComputeSteamMod(fstream& ffbinbase, Config
 		res[modcounter].value[4] = initial_equip[i].accessory;
 		modcounter++;
 	}
+	argvalue = new uint32_t*[ABILITY_SET_CAPACITY];
+	for (j=0;j<ABILITY_SET_CAPACITY;j++)
+		argvalue[j] = new uint32_t[2];
 	for (i=0;i<ABILITY_SET_AMOUNT;i++) {
-		argvalue = new uint32_t*[ABILITY_SET_CAPACITY];
 		for (j=0;j<ABILITY_SET_CAPACITY;j++) {
-			argvalue[j] = new uint32_t[2];
 			argvalue[j][0] = ability_list[i].ability[j];
 			argvalue[j][1] = ability_list[i].ap_cost[j];
 		}
 		res[modcounter] = ModifyILScript_Object(ffbinbase,argvalue,steam_method_position_abilset[i],steam_method_base_length_abilset[i],ABILITY_SET_CAPACITY,2,steam_statabil_field_size);
-		for (j=0;j<ABILITY_SET_CAPACITY;j++)
-			delete[] argvalue[j];
-		delete[] argvalue;
 		modcounter++;
 	}
+	for (j=0;j<ABILITY_SET_CAPACITY;j++)
+		delete[] argvalue[j];
+	delete[] argvalue;
 	res[modcounter].position = config.meta_dll.GetStaticFieldOffset(config.dll_statcmdtrance_field_id);
 	res[modcounter].base_length = 3*COMMAND_SET_AMOUNT;
 	res[modcounter].new_length = 3*COMMAND_SET_AMOUNT;

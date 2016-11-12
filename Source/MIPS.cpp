@@ -161,7 +161,7 @@ void MipsSequence::WriteHWS(fstream& ffbin) {
 	MACRO_MIPS_WRITE(HWSWrite,HWSSeek,false)
 }
 
-void MipsDataSet::Load(fstream& ffbin, ConfigurationSet config) {
+void MipsDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 	unsigned int i;
 	ffbin.seekg(config.mips_battle_offset_list);
 	for (i=0;i<MIPS_BATTLE_RAM_POS_AMOUNT;i++)

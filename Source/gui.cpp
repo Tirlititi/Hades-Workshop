@@ -2774,6 +2774,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	wxArrayString m_enemystatdropcardChoices;
 	m_enemystatdropcard = new wxChoice( m_enemystatpanel1, wxID_CARD, wxDefaultPosition, wxDefaultSize, m_enemystatdropcardChoices, 0 );
 	m_enemystatdropcard->SetSelection( 0 );
+	m_enemystatdropcard->SetToolTip( _("32/256 drop rate") );
+	
 	fgSizer9->Add( m_enemystatdropcard, 0, wxALL, 2 );
 	
 	m_enemystatexplabel = new wxStaticText( m_enemystatpanel1, wxID_ANY, _("Exp"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -2809,9 +2811,9 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemystatmodel = new wxChoice( m_enemystatpanel1, wxID_MODEL, wxDefaultPosition, wxDefaultSize, m_enemystatmodelChoices, 0 );
 	m_enemystatmodel->SetSelection( 0 );
 	m_enemystatmodel->Enable( false );
-	m_enemystatmodel->SetToolTip( _("Can't edit yet") );
+	m_enemystatmodel->SetToolTip( _("Warning: if you change an enemy model,\nbe sure to modify the spell sequences accordingly") );
 	
-	fgSizer9->Add( m_enemystatmodel, 0, wxALL, 2 );
+	fgSizer9->Add( m_enemystatmodel, 0, wxALL|wxEXPAND, 2 );
 	
 	
 	m_enemystatpanel1->SetSizer( fgSizer9 );
@@ -4606,7 +4608,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_staticText210->Wrap( -1 );
 	fgSizer39->Add( m_staticText210, 0, wxALL, 5 );
 	
-	m_fieldtexturepreview = new wxScrolledWindow( m_fieldscrolledwindow, wxID_ANY, wxDefaultPosition, wxSize( 389,389 ), wxHSCROLL|wxSUNKEN_BORDER|wxVSCROLL );
+	m_fieldtexturepreview = new wxScrolledWindow( m_fieldscrolledwindow, wxID_ANY, wxDefaultPosition, wxSize( 518,518 ), wxHSCROLL|wxSUNKEN_BORDER|wxVSCROLL );
 	m_fieldtexturepreview->SetScrollRate( 5, 5 );
 	fgSizer39->Add( m_fieldtexturepreview, 1, wxEXPAND | wxALL, 5 );
 	
@@ -4837,7 +4839,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_staticText472111->Wrap( -1 );
 	fgSizer7311->Add( m_staticText472111, 0, wxALL, 5 );
 	
-	m_mipsbattlecodegen = new wxButton( m_mipsbattlegenscrolledwindow, wxID_ANY, _("Edit Code"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_mipsbattlecodegen = new wxButton( m_mipsbattlegenscrolledwindow, wxID_SCRIPT, _("Edit Code"), wxDefaultPosition, wxDefaultSize, 0 );
 	fgSizer7311->Add( m_mipsbattlecodegen, 0, wxALL, 2 );
 	
 	
@@ -4863,13 +4865,13 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_mipsbattlerampos = new wxTextCtrl( m_mipsbattlescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY|wxSIMPLE_BORDER );
 	m_mipsbattlerampos->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 	
-	fgSizer731->Add( m_mipsbattlerampos, 0, wxALL, 5 );
+	fgSizer731->Add( m_mipsbattlerampos, 0, wxALL, 2 );
 	
 	m_staticText47211 = new wxStaticText( m_mipsbattlescrolledwindow, wxID_ANY, _("MIPS Code"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText47211->Wrap( -1 );
 	fgSizer731->Add( m_staticText47211, 0, wxALL, 5 );
 	
-	m_mipsbattlecode = new wxButton( m_mipsbattlescrolledwindow, wxID_ANY, _("Edit Code"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_mipsbattlecode = new wxButton( m_mipsbattlescrolledwindow, wxID_SCRIPT, _("Edit Code"), wxDefaultPosition, wxDefaultSize, 0 );
 	fgSizer731->Add( m_mipsbattlecode, 0, wxALL, 2 );
 	
 	
@@ -4891,6 +4893,106 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_panelmips->Layout();
 	bSizer1591->Fit( m_panelmips );
 	m_notebookmain->AddPage( m_panelmips, _("MIPS Code"), false );
+	m_panelcil = new wxPanel( m_notebookmain, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer15912;
+	bSizer15912 = new wxBoxSizer( wxVERTICAL );
+	
+	m_notebookcil = new wxNotebook( m_panelcil, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	m_panel6611 = new wxPanel( m_notebookcil, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer15911;
+	bSizer15911 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_ciltypelist = new wxListBox( m_panel6611, wxID_ANY, wxDefaultPosition, wxSize( 130,-1 ), 0, NULL, wxLB_HSCROLL ); 
+	bSizer15911->Add( m_ciltypelist, 0, wxALL|wxEXPAND, 5 );
+	
+	m_cilmethodlist = new wxListBox( m_panel6611, wxID_ANY, wxDefaultPosition, wxSize( 130,-1 ), 0, NULL, wxLB_HSCROLL ); 
+	bSizer15911->Add( m_cilmethodlist, 0, wxALL|wxEXPAND, 5 );
+	
+	m_cilmethodscrolledwindow = new wxScrolledWindow( m_panel6611, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	m_cilmethodscrolledwindow->SetScrollRate( 5, 5 );
+	wxFlexGridSizer* fgSizer733;
+	fgSizer733 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer733->SetFlexibleDirection( wxBOTH );
+	fgSizer733->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	m_staticText346 = new wxStaticText( m_cilmethodscrolledwindow, wxID_ANY, _("CIL Code"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText346->Wrap( -1 );
+	fgSizer733->Add( m_staticText346, 0, wxALL, 5 );
+	
+	m_cilmethodedit = new wxButton( m_cilmethodscrolledwindow, wxID_SCRIPT, _("Edit Code"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer733->Add( m_cilmethodedit, 0, wxALL, 2 );
+	
+	
+	m_cilmethodscrolledwindow->SetSizer( fgSizer733 );
+	m_cilmethodscrolledwindow->Layout();
+	fgSizer733->Fit( m_cilmethodscrolledwindow );
+	bSizer15911->Add( m_cilmethodscrolledwindow, 1, wxEXPAND | wxALL, 5 );
+	
+	
+	m_panel6611->SetSizer( bSizer15911 );
+	m_panel6611->Layout();
+	bSizer15911->Fit( m_panel6611 );
+	m_notebookcil->AddPage( m_panel6611, _("Raw Code"), false );
+	m_panel92 = new wxPanel( m_notebookcil, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer1591111;
+	bSizer1591111 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_cilmacrolist = new wxListBox( m_panel92, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), 0, NULL, 0 ); 
+	bSizer1591111->Add( m_cilmacrolist, 0, wxALL|wxEXPAND, 5 );
+	
+	m_cilmethodscrolledwindow11 = new wxScrolledWindow( m_panel92, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	m_cilmethodscrolledwindow11->SetScrollRate( 5, 5 );
+	wxFlexGridSizer* fgSizer7331;
+	fgSizer7331 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer7331->AddGrowableCol( 1 );
+	fgSizer7331->SetFlexibleDirection( wxBOTH );
+	fgSizer7331->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	m_staticText347 = new wxStaticText( m_cilmethodscrolledwindow11, wxID_ANY, _("Apply/Unapply"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText347->Wrap( -1 );
+	fgSizer7331->Add( m_staticText347, 0, wxALL, 5 );
+	
+	m_cilmacrobutton = new wxButton( m_cilmethodscrolledwindow11, wxID_SCRIPT, _("Apply Macro"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer7331->Add( m_cilmacrobutton, 0, wxALL, 2 );
+	
+	m_staticText345 = new wxStaticText( m_cilmethodscrolledwindow11, wxID_ANY, _("Description"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText345->Wrap( -1 );
+	fgSizer7331->Add( m_staticText345, 0, wxALL, 5 );
+	
+	m_cilmacrodescription = new wxTextCtrl( m_cilmethodscrolledwindow11, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY|wxSIMPLE_BORDER );
+	m_cilmacrodescription->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
+	m_cilmacrodescription->SetMinSize( wxSize( -1,100 ) );
+	
+	fgSizer7331->Add( m_cilmacrodescription, 0, wxALL|wxEXPAND, 2 );
+	
+	m_staticText348 = new wxStaticText( m_cilmethodscrolledwindow11, wxID_ANY, _("Methods Involved"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText348->Wrap( -1 );
+	fgSizer7331->Add( m_staticText348, 0, wxALL, 5 );
+	
+	m_cilmacromethods = new wxListBox( m_cilmethodscrolledwindow11, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 ); 
+	m_cilmacromethods->SetMinSize( wxSize( -1,100 ) );
+	
+	fgSizer7331->Add( m_cilmacromethods, 0, wxALL|wxEXPAND, 2 );
+	
+	
+	m_cilmethodscrolledwindow11->SetSizer( fgSizer7331 );
+	m_cilmethodscrolledwindow11->Layout();
+	fgSizer7331->Fit( m_cilmethodscrolledwindow11 );
+	bSizer1591111->Add( m_cilmethodscrolledwindow11, 1, wxEXPAND | wxALL, 5 );
+	
+	
+	m_panel92->SetSizer( bSizer1591111 );
+	m_panel92->Layout();
+	bSizer1591111->Fit( m_panel92 );
+	m_notebookcil->AddPage( m_panel92, _("Macros"), false );
+	
+	bSizer15912->Add( m_notebookcil, 1, wxEXPAND | wxALL, 5 );
+	
+	
+	m_panelcil->SetSizer( bSizer15912 );
+	m_panelcil->Layout();
+	bSizer15912->Fit( m_panelcil );
+	m_notebookmain->AddPage( m_panelcil, _("CIL Code"), false );
 	
 	bSizer7->Add( m_notebookmain, 1, wxEXPAND | wxALL, 5 );
 	
@@ -5474,6 +5576,12 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_mipsbattlelist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxMipsBattle ), NULL, this );
 	m_mipsbattlecodegen->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnMipsBattleButton ), NULL, this );
 	m_mipsbattlecode->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnMipsBattleButton ), NULL, this );
+	m_notebookcil->Connect( wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED, wxNotebookEventHandler( CDPanel::OnNotebookCil ), NULL, this );
+	m_ciltypelist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxCilStruct ), NULL, this );
+	m_cilmethodlist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxCilMethod ), NULL, this );
+	m_cilmethodedit->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnCilMethodButton ), NULL, this );
+	m_cilmacrolist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxCilMacro ), NULL, this );
+	m_cilmacrobutton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnCilMacroButton ), NULL, this );
 }
 
 CDPanel::~CDPanel()
@@ -6054,6 +6162,12 @@ CDPanel::~CDPanel()
 	m_mipsbattlelist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxMipsBattle ), NULL, this );
 	m_mipsbattlecodegen->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnMipsBattleButton ), NULL, this );
 	m_mipsbattlecode->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnMipsBattleButton ), NULL, this );
+	m_notebookcil->Disconnect( wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED, wxNotebookEventHandler( CDPanel::OnNotebookCil ), NULL, this );
+	m_ciltypelist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxCilStruct ), NULL, this );
+	m_cilmethodlist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxCilMethod ), NULL, this );
+	m_cilmethodedit->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnCilMethodButton ), NULL, this );
+	m_cilmacrolist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxCilMacro ), NULL, this );
+	m_cilmacrobutton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnCilMacroButton ), NULL, this );
 	
 }
 
@@ -6984,9 +7098,9 @@ IOHWSWindow::IOHWSWindow( wxWindow* parent, wxWindowID id, const wxString& title
 	m_ffui->SetValue(true); 
 	bSizer31->Add( m_ffui, 0, wxALL, 3 );
 	
-	m_mips = new wxCheckBox( this, wxID_MIPS, _("MIPS Code"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_mips->SetValue(true); 
-	bSizer31->Add( m_mips, 0, wxALL, 3 );
+	m_assembly = new wxCheckBox( this, wxID_ASSEMBLY, _("Assembly Code"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_assembly->SetValue(true); 
+	bSizer31->Add( m_assembly, 0, wxALL, 3 );
 	
 	
 	gbSizer3->Add( bSizer31, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
@@ -7290,7 +7404,7 @@ AboutWindow::AboutWindow( wxWindow* parent, wxWindowID id, const wxString& title
 	wxBoxSizer* bSizer16;
 	bSizer16 = new wxBoxSizer( wxVERTICAL );
 	
-	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.34\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_CENTRE|wxTE_MULTILINE|wxTE_READONLY|wxSIMPLE_BORDER );
+	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.35b\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_CENTRE|wxTE_MULTILINE|wxTE_READONLY|wxSIMPLE_BORDER );
 	m_textCtrl13->SetMaxLength( 0 ); 
 	m_textCtrl13->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 	m_textCtrl13->SetMinSize( wxSize( -1,330 ) );
@@ -9598,6 +9712,67 @@ MipsScriptHelpWindow::~MipsScriptHelpWindow()
 {
 	// Disconnect Events
 	m_listfunction->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( MipsScriptHelpWindow::OnListClick ), NULL, this );
+	
+}
+
+CilScriptEditWindow::CilScriptEditWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	
+	wxFlexGridSizer* fgSizer45;
+	fgSizer45 = new wxFlexGridSizer( 0, 1, 0, 0 );
+	fgSizer45->AddGrowableCol( 0 );
+	fgSizer45->AddGrowableRow( 0 );
+	fgSizer45->SetFlexibleDirection( wxBOTH );
+	fgSizer45->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	wxFlexGridSizer* fgSizer78;
+	fgSizer78 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer78->AddGrowableCol( 1 );
+	fgSizer78->AddGrowableRow( 0 );
+	fgSizer78->SetFlexibleDirection( wxBOTH );
+	fgSizer78->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	m_scriptposctrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 60,-1 ), wxTE_MULTILINE|wxTE_NO_VSCROLL|wxTE_READONLY|wxNO_BORDER );
+	m_scriptposctrl->SetForegroundColour( wxColour( 166, 0, 129 ) );
+	m_scriptposctrl->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_MENU ) );
+	
+	fgSizer78->Add( m_scriptposctrl, 0, wxALL|wxEXPAND, 5 );
+	
+	m_scriptctrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE );
+	fgSizer78->Add( m_scriptctrl, 0, wxALL|wxEXPAND, 5 );
+	
+	
+	fgSizer45->Add( fgSizer78, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer124;
+	bSizer124 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_buttoncancel = new wxButton( this, wxID_CANCEL, _("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer124->Add( m_buttoncancel, 0, wxALL, 5 );
+	
+	m_buttonok = new wxButton( this, wxID_OK, _("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer124->Add( m_buttonok, 0, wxALL, 5 );
+	
+	
+	fgSizer45->Add( bSizer124, 1, wxALIGN_RIGHT, 5 );
+	
+	
+	this->SetSizer( fgSizer45 );
+	this->Layout();
+	
+	this->Centre( wxBOTH );
+	
+	// Connect Events
+	m_buttoncancel->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CilScriptEditWindow::OnButtonClick ), NULL, this );
+	m_buttonok->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CilScriptEditWindow::OnButtonClick ), NULL, this );
+}
+
+CilScriptEditWindow::~CilScriptEditWindow()
+{
+	// Disconnect Events
+	m_buttoncancel->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CilScriptEditWindow::OnButtonClick ), NULL, this );
+	m_buttonok->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CilScriptEditWindow::OnButtonClick ), NULL, this );
 	
 }
 

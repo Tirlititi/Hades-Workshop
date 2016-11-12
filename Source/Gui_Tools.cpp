@@ -232,6 +232,13 @@ int ToolModManager::ShowModal(CDDataStruct* data) {
 		curitem = m_listtree->AppendItem(topitem,_(L"Battle MIPS"));
 		m_listtree->SetItemData(curitem,new ModManagerClientData(1,DATA_SECTION_MIPS));
 		if (cddata->mipsset.battle_modified) m_listtree->CheckItem(curitem);
+		if (!m_listtree->AreAllChildrenInState(topitem,wxCHK_UNCHECKED))
+			m_listtree->CheckItem(topitem);
+	}
+	if (cddata->cilloaded) {
+		topitem = m_listtree->AppendItem(m_listtree->GetRootItem(),_(L"CIL Code"));
+		m_listtree->SetItemData(topitem,new ModManagerClientData(0,7));
+		if (cddata->cilmodified) m_listtree->CheckItem(topitem);
 	}
 	return ModManagerWindow::ShowModal();
 }
@@ -252,9 +259,13 @@ void ToolModMarkModification(CDDataStruct* data, ModManagerClientData* info, boo
 				data->scenemodified = false;
 			else if (info->section==6)
 				data->ffuimodified = false;
-			else if (info->section==7)
-				data->mipsmodified = false;
+			else if (info->section==7) {
+				if (GetGameType()==GAME_TYPE_PSX)
+					data->mipsmodified = false;
+			}
 		}
+		if (info->section==7 && GetGameType()!=GAME_TYPE_PSX)
+			data->cilmodified = check;
 	} else if (info->type==1) {
 		if (info->section==DATA_SECTION_SPELL) {
 			data->spellmodified = check;
@@ -290,7 +301,7 @@ void ToolModMarkModification(CDDataStruct* data, ModManagerClientData* info, boo
 			data->ffuiset.special_text->modified = check;
 			if (check)
 				data->ffuimodified = true;
-		} else if (info->section==DATA_SECTION_MIPS) {
+		} else if (info->section==DATA_SECTION_ASSEMBLY) {
 			data->mipsset.battle_modified = check;
 			if (check)
 				data->mipsmodified = true;

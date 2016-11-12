@@ -65,13 +65,13 @@ void ShopDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 				shop[i].item_list[j++] = 0;
 		}
 		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_mix_method_id));
-		methinfo.JumpToCode(ffbin);
+		methinfo.ReadMethodInfo(ffbin);
 		ILInstruction initinst[3] = {
 			{ 0x1F, SYNTHESIS_AMOUNT },
-			{ 0x8D, config.meta_dll.GetTypeIdentifier("FF9MIX_DATA") },
-			{ 0x25, 0 }
+			{ 0x8D, config.meta_dll.GetTypeTokenIdentifier("FF9MIX_DATA","FF9") },
+			{ 0x25 }
 		};
-		ILScriptJumpToInstructions(ffbin,3,initinst);
+		methinfo.JumpToInstructions(ffbin,3,initinst);
 		steam_method_position_synthesis = ffbin.tellg();
 		uint8_t* rawsynthdata = ConvertILScriptToRawData_Object(ffbin,SYNTHESIS_AMOUNT,5,steam_shop_field_size,steam_shop_field_array);
 		steam_method_base_length_synthesis = (unsigned int)ffbin.tellg()-steam_method_position_synthesis;

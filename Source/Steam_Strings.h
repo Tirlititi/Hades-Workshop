@@ -8,6 +8,11 @@ struct SteamDictionary {
 	string name;
 };
 
+struct SteamWDictionary {
+	uint16_t id;
+	wstring name;
+};
+
 struct SteamBattleDictionary {
 	uint16_t battle_id; // ID of the battle
 	uint16_t script_id; // ID of the script file
@@ -22,6 +27,95 @@ struct SteamFieldDictionary {
 	string script_name;
 	string background_name;
 	bool has_localization;
+};
+
+// Weapon Model
+static SteamWDictionary SteamWeaponModel[] = {
+	{ 37, L"GEO_WEP_B1_011" },
+	{ 476, L"GEO_WEP_B1_012" },
+	{ 475, L"GEO_WEP_B1_013" },
+	{ 501, L"GEO_WEP_B1_014" },
+	{ 477, L"GEO_WEP_B1_015" },
+	{ 441, L"GEO_WEP_B1_016" },
+	{ 527, L"GEO_WEP_B1_017" },
+	{ 522, L"GEO_WEP_B1_018" },
+	{ 521, L"GEO_WEP_B1_019" },
+	{ 517, L"GEO_WEP_B1_020" },
+	{ 516, L"GEO_WEP_B1_021" },
+	{ 515, L"GEO_WEP_B1_022" },
+	{ 514, L"GEO_WEP_B1_023" },
+	{ 520, L"GEO_WEP_B1_024" },
+	{ 519, L"GEO_WEP_B1_025" },
+	{ 518, L"GEO_WEP_B1_026" },
+	{ 366, L"GEO_WEP_B1_027" },
+	{ 385, L"GEO_WEP_B1_028" },
+	{ 384, L"GEO_WEP_B1_029" },
+	{ 389, L"GEO_WEP_B1_030" },
+	{ 388, L"GEO_WEP_B1_031" },
+	{ 387, L"GEO_WEP_B1_032" },
+	{ 386, L"GEO_WEP_B1_033" },
+	{ 392, L"GEO_WEP_B1_034" },
+	{ 391, L"GEO_WEP_B1_035" },
+	{ 629, L"GEO_WEP_B1_036" },
+	{ 390, L"GEO_WEP_B1_037" },
+	{ 367, L"GEO_WEP_B1_038" },
+	{ 595, L"GEO_WEP_B1_039" },
+	{ 383, L"GEO_WEP_B1_040" },
+	{ 594, L"GEO_WEP_B1_041" },
+	{ 465, L"GEO_WEP_B1_042" },
+	{ 496, L"GEO_WEP_B1_043" },
+	{ 468, L"GEO_WEP_B1_044" },
+	{ 497, L"GEO_WEP_B1_045" },
+	{ 467, L"GEO_WEP_B1_046" },
+	{ 466, L"GEO_WEP_B1_047" },
+	{ 470, L"GEO_WEP_B1_048" },
+	{ 469, L"GEO_WEP_B1_049" },
+	{ 605, L"GEO_WEP_B1_050" },
+	{ 413, L"GEO_WEP_B1_051" },
+	{ 471, L"GEO_WEP_B1_052" },
+	{ 498, L"GEO_WEP_B1_053" },
+	{ 500, L"GEO_WEP_B1_054" },
+	{ 472, L"GEO_WEP_B1_055" },
+	{ 440, L"GEO_WEP_B1_056" },
+	{ 499, L"GEO_WEP_B1_057" },
+	{ 474, L"GEO_WEP_B1_058" },
+	{ 473, L"GEO_WEP_B1_059" },
+	{ 456, L"GEO_WEP_B1_060" },
+	{ 455, L"GEO_WEP_B1_061" },
+	{ 454, L"GEO_WEP_B1_062" },
+	{ 453, L"GEO_WEP_B1_063" },
+	{ 460, L"GEO_WEP_B1_064" },
+	{ 459, L"GEO_WEP_B1_065" },
+	{ 458, L"GEO_WEP_B1_066" },
+	{ 457, L"GEO_WEP_B1_067" },
+	{ 461, L"GEO_WEP_B1_068" },
+	{ 491, L"GEO_WEP_B1_069" },
+	{ 493, L"GEO_WEP_B1_070" },
+	{ 492, L"GEO_WEP_B1_071" },
+	{ 463, L"GEO_WEP_B1_072" },
+	{ 462, L"GEO_WEP_B1_073" },
+	{ 464, L"GEO_WEP_B1_074" },
+	{ 44, L"GEO_WEP_B1_075" },
+	{ 494, L"GEO_WEP_B1_076" },
+	{ 43, L"GEO_WEP_B1_077" },
+	{ 264, L"GEO_WEP_B1_078" },
+	{ 495, L"GEO_WEP_B1_079" },
+	{ 322, L"GEO_WEP_B1_080" },
+	{ 478, L"GEO_WEP_B1_081" },
+	{ 503, L"GEO_WEP_B1_082" },
+	{ 502, L"GEO_WEP_B1_083" },
+	{ 504, L"GEO_WEP_B1_084" },
+	{ 481, L"GEO_WEP_B1_085" },
+	{ 480, L"GEO_WEP_B1_086" },
+	{ 479, L"GEO_WEP_B1_087" },
+	{ 483, L"GEO_WEP_B1_088" },
+	{ 482, L"GEO_WEP_B1_089" },
+	{ 484, L"GEO_WEP_B1_090" },
+	{ 507, L"GEO_WEP_B1_091" },
+	{ 506, L"GEO_WEP_B1_092" },
+	{ 505, L"GEO_WEP_B1_093" },
+	{ 486, L"GEO_WEP_B1_094" },
+	{ 485, L"GEO_WEP_B1_095" }
 };
 
 // Script Files

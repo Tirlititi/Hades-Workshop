@@ -117,13 +117,13 @@ void SupportDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 		fname += "Assembly-CSharp.dll";
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
 		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_ability_method_id));
-		methinfo.JumpToCode(ffbin);
+		methinfo.ReadMethodInfo(ffbin);
 		ILInstruction initinst[3] = {
 			{ 0x1F, SUPPORT_AMOUNT },
-			{ 0x8D, config.meta_dll.GetTypeIdentifier("SA_DATA") },
-			{ 0x25, 0 }
+			{ 0x8D, config.meta_dll.GetTypeTokenIdentifier("SA_DATA","FF9") },
+			{ 0x25 }
 		};
-		ILScriptJumpToInstructions(ffbin,3,initinst);
+		methinfo.JumpToInstructions(ffbin,3,initinst);
 		steam_method_position = ffbin.tellg();
 		uint8_t* rawsupportdata = ConvertILScriptToRawData_Object(ffbin,SUPPORT_AMOUNT,5,steam_support_field_size);
 		steam_method_base_length = (unsigned int)ffbin.tellg()-steam_method_position;

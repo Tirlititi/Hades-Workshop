@@ -223,13 +223,13 @@ void SpellDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 		ffbin.seekg(config.meta_dll.GetStaticFieldOffset(config.dll_statusset_field_id));
 		MACRO_SPELL_IOFUNCTIONSTATUS(SteamRead,SteamSeek,true,false)
 		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_battledb_method_id));
-		methinfo.JumpToCode(ffbin);
+		methinfo.ReadMethodInfo(ffbin);
 		ILInstruction initinst[3] = {
 			{ 0x20, SPELL_AMOUNT },
-			{ 0x8D, config.meta_dll.GetTypeIdentifier("AA_DATA") },
-			{ 0x25, 0 }
+			{ 0x8D, config.meta_dll.GetTypeTokenIdentifier("AA_DATA") },
+			{ 0x25 }
 		};
-		ILScriptJumpToInstructions(ffbin,3,initinst);
+		methinfo.JumpToInstructions(ffbin,3,initinst);
 		steam_method_position = ffbin.tellg();
 		uint8_t* rawspelldata = ConvertILScriptToRawData_Object(ffbin,SPELL_AMOUNT,18,steam_spell_field_size);
 		steam_method_base_length = (unsigned int)ffbin.tellg()-steam_method_position;

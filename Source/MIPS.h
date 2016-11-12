@@ -137,7 +137,7 @@ struct MipsDataSet {
 	
 	bool battle_modified;
 	
-	void Load(fstream& ffbin, ConfigurationSet config);
+	void Load(fstream& ffbin, ConfigurationSet& config);
 	void Write(fstream& ffbin, ConfigurationSet& config);
 	void WritePPF(fstream& ffbin, ConfigurationSet& config);
 	int LoadHWS(fstream& ffhws);

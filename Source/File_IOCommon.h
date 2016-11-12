@@ -38,4 +38,9 @@ void BufferWriteShort(uint8_t* buffer, uint16_t value);
 void BufferWriteShortBE(uint8_t* buffer, uint16_t value);
 void BufferWriteChar(uint8_t* buffer, uint8_t value);
 
+uint32_t Raw_FloatToUInt(float f);
+uint64_t Raw_DoubleToUInt(double f);
+float Raw_UIntToFloat(uint32_t v);
+double Raw_UIntToDouble(uint64_t v);
+
 #endif

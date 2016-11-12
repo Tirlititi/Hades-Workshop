@@ -231,13 +231,13 @@ void CommandDataSet::Load(fstream &ffbin, ConfigurationSet& config) {
 		fname += "Assembly-CSharp.dll";
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
 		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_rdata_method_id));
-		methinfo.JumpToCode(ffbin);
+		methinfo.ReadMethodInfo(ffbin);
 		ILInstruction initinst[3] = {
 			{ 0x1F, COMMAND_AMOUNT },
-			{ 0x8D, config.meta_dll.GetTypeIdentifier("FF9COMMAND") },
-			{ 0x25, 0 }
+			{ 0x8D, config.meta_dll.GetTypeTokenIdentifier("FF9COMMAND") },
+			{ 0x25 }
 		};
-		ILScriptJumpToInstructions(ffbin,3,initinst);
+		methinfo.JumpToInstructions(ffbin,3,initinst);
 		steam_method_position = ffbin.tellg();
 		uint8_t* rawcmddata = ConvertILScriptToRawData_Object(ffbin,COMMAND_AMOUNT,6,steam_cmd_field_size);
 		steam_method_base_length = (unsigned int)ffbin.tellg()-steam_method_position;

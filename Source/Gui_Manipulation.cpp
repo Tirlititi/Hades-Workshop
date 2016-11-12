@@ -7,6 +7,7 @@
 #include "Gui_CurveEditor.h"
 #include "Gui_FieldTextureEditor.h"
 #include "Gui_ScriptEditor.h"
+#include "Gui_AssemblyEditor.h"
 #include "Gui_SpellAnimationsEditor.h"
 #include "Gui_TextEditor.h"
 #include "Gui_TextureEditor.h"
@@ -320,6 +321,24 @@ void CDDataStruct::SpellAnimationDisplayNames(bool create) {
 	}
 }
 
+void CDDataStruct::CilDisplayNames(bool create) {
+	unsigned int i,prev = cilsorted[m_ciltypelist->GetSelection()];
+	if (!create)
+		m_ciltypelist->Clear();
+	wxArrayString names;
+	names.Alloc(cilset.data->GetTypeAmount());
+	for (i=0;i<cilset.data->GetTypeAmount();i++)
+		names.Add(_(cilset.data->GetTypeName(i)));
+	if (cilsorted!=OrderedIndex)
+		delete[] cilsorted;
+	cilsorted = SortStrings(names);
+	for (i=0;i<cilset.data->GetTypeAmount();i++) {
+		m_ciltypelist->Append(cilset.data->GetTypeName(cilsorted[i]),(void*)&cilsorted[i]);
+		if (!create && cilsorted[i]==prev)
+			m_ciltypelist->SetSelection(i);
+	}
+}
+
 void CDDataStruct::ChangeFF9StringCharmap(wchar_t* chmapdef, wchar_t* chmapa, wchar_t* chmapb, ExtendedCharmap& chmapext) {
 	unsigned int i,j;
 	if (GetGameType()!=GAME_TYPE_PSX)
@@ -574,7 +593,7 @@ IOHWSMessage::IOHWSMessage(wxWindow* parent) :
 	section_box[DATA_SECTION_BATTLE_SCENE] = m_scene;
 	section_box[DATA_SECTION_SPELL_ANIM] = m_spellanim;
 	section_box[DATA_SECTION_MENU_UI] = m_ffui;
-	section_box[DATA_SECTION_MIPS] = m_mips;
+	section_box[DATA_SECTION_ASSEMBLY] = m_assembly;
 	section_text_box[DATA_SECTION_SPELL] = m_spelltext;
 	section_text_box[DATA_SECTION_CMD] = m_commandtext;
 	section_text_box[DATA_SECTION_SUPPORT] = m_supporttext;
@@ -590,7 +609,7 @@ IOHWSMessage::IOHWSMessage(wxWindow* parent) :
 	section_text_box[DATA_SECTION_BATTLE_SCENE] = NULL;
 	section_text_box[DATA_SECTION_SPELL_ANIM] = NULL;
 	section_text_box[DATA_SECTION_MENU_UI] = NULL;
-	section_text_box[DATA_SECTION_MIPS] = NULL;
+	section_text_box[DATA_SECTION_ASSEMBLY] = NULL;
 }
 
 void IOHWSMessage::UpdateLoadableSection() {
@@ -821,8 +840,12 @@ wstring* CDDataStruct::ReadHWS(const char* fname, bool* section, bool* sectext, 
 		InitSpellAnimation();
 	if (section[DATA_SECTION_MENU_UI])
 		InitMenuUI();
-	if (section[DATA_SECTION_MIPS])
-		InitMips();
+	if (section[DATA_SECTION_ASSEMBLY]) {
+		if (GetGameType()==GAME_TYPE_PSX)
+			InitMips();
+		else
+			InitCil();
+	}
 	wstring* res = LoadHWS(fname,section,sectext,localsec,saveset,backupset);
 	if (section[DATA_SECTION_SPELL]) {
 		MarkDataSpellModified();
@@ -896,8 +919,11 @@ wstring* CDDataStruct::ReadHWS(const char* fname, bool* section, bool* sectext, 
 	if (section[DATA_SECTION_MENU_UI]) {
 		MarkDataMenuUIModified();
 	}
-	if (section[DATA_SECTION_MIPS] && GetGameType()==GAME_TYPE_PSX) {
-		MarkDataMipsModified(0);
+	if (section[DATA_SECTION_ASSEMBLY]) {
+		if (GetGameType()==GAME_TYPE_PSX)
+			MarkDataMipsModified(0);
+		else
+			MarkDataCilModified();
 	}
 	GetTopWindow()->MarkDataModified();
 	DisplayCurrentData();
@@ -1028,6 +1054,11 @@ void CDDataStruct::MarkDataMenuUIModified() {
 void CDDataStruct::MarkDataMipsModified(int datatype) {
 	mipsmodified = true;
 	mipsset.MarkAsModified(datatype);
+	GetTopWindow()->MarkDataModified();
+}
+
+void CDDataStruct::MarkDataCilModified() {
+	cilmodified = true;
 	GetTopWindow()->MarkDataModified();
 }
 
@@ -3519,6 +3550,7 @@ void CDDataStruct::DisplayEnemyStat(int battleid, int statid) {
 	m_enemystatscrolledwindow->Show(true);
 	m_enemygroupscrolledwindow->Show(false);
 	m_enemyspellscrolledwindow->Show(false);
+	m_enemystatmodel->Enable(GetGameType()!=GAME_TYPE_PSX);
 	m_enemyspelllist->SetSelection(wxNOT_FOUND);
 	m_enemygrouplist->SetSelection(wxNOT_FOUND);
 	m_enemystatname->ChangeValue(_(es.name.str));
@@ -3549,11 +3581,13 @@ void CDDataStruct::DisplayEnemyStat(int battleid, int statid) {
 	m_enemystatexp->SetValue(es.exp);
 	m_enemystatgils->SetValue(es.gils);
 	m_enemystatdefaultattack->SetSelection(es.default_attack);
-	for (i=0;i<G_N_ELEMENTS(HADES_STRING_MODEL_NAME);i++)
-		if (HADES_STRING_MODEL_NAME[i].id==es.model) {
+	for (i=0;i<m_enemystatmodel->GetCount();i++) {
+		SortedChoiceItem* modname = (SortedChoiceItem*)m_enemystatmodel->GetClientData(i);
+		if (modname->id==es.model) {
 			m_enemystatmodel->SetSelection(i);
 			break;
 		}
+	}
 	
 	MACRO_FLAG_DISPLAY8(es.element_absorb,m_enemystatelementabsorb)
 	MACRO_FLAG_DISPLAY8(es.element_immune,m_enemystatelementimmune)
@@ -3958,7 +3992,20 @@ void CDDataStruct::OnEnemyChangeChoice(wxCommandEvent& event) {
 			MACRO_ENEMY_CHANGE_DATA(default_attack,event.GetSelection())
 		} else if (id==wxID_MODEL) {
 			SortedChoiceItem* item = (SortedChoiceItem*)event.GetClientData();
-			MACRO_ENEMY_CHANGE_DATA(model,item->id)
+			BattleModelLinks& linkeddata = BattleModelLinks::GetLinksByModel(item->id);
+			// DEBUG: due to the need to change the spell sequences, it is not a good idea to use this feature here...
+			if (false && GetTopWindow()->m_editsimilarenemy->IsChecked()) {
+				unsigned int i,nb,*similarbattleid;
+				EnemyStatDataStruct** similarstats = enemyset.GetSimilarEnemyStats(es,&nb,&similarbattleid);
+				for (i=0;i<nb;i++) {
+					enemyset.ChangeBattleModel(similarbattleid[i],similarstats[i]->id,linkeddata);
+					MarkDataEnemyModified(similarbattleid[i],CHUNK_TYPE_ENEMY_STATS);
+					MarkDataEnemyModified(similarbattleid[i],CHUNK_TYPE_BATTLE_DATA);
+				}
+			} else {
+				enemyset.ChangeBattleModel(*sortid,m_enemystatlist->GetSelection(),linkeddata);
+				MarkDataEnemyModified(*sortid,CHUNK_TYPE_BATTLE_DATA);
+			}
 		} else if (id==wxID_BLUEMAGIC) {
 			MACRO_ENEMY_CHANGE_DATA(blue_magic,event.GetSelection())
 		}
@@ -5701,6 +5748,88 @@ void CDDataStruct::OnMipsBattleButton(wxCommandEvent& event) {
 }
 
 //=============================//
+//          CIL Code           //
+//=============================//
+
+void CDDataStruct::DisplayCilStruct(int cilstructid) {
+	unsigned int sortid = *(unsigned int*)m_ciltypelist->GetClientData(cilstructid);
+	unsigned int i,mamount;
+	m_cilmethodlist->Clear();
+	mamount = cilset.data->GetTypeMethodAmount(sortid);
+	for (i=0;i<mamount;i++)
+		m_cilmethodlist->Append(_(cilset.data->GetMethodName(sortid,i)));
+	if (mamount>0)
+		m_cilmethodlist->SetSelection(0);
+	m_cilmethodedit->Enable(mamount>0);
+}
+
+void CDDataStruct::DisplayCilMacro(int cilmacroid) {
+	CILMacro macro(CILMacroIDList[cilmacroid].id,cilset.data);
+	bool canenable = true;
+	unsigned int i;
+	if (cilset.IsMacroEnabled(macro.type->id))
+		m_cilmacrobutton->SetLabel(_(HADES_STRING_CIL_UNAPPLY_MACRO));
+	else
+		m_cilmacrobutton->SetLabel(_(HADES_STRING_CIL_APPLY_MACRO));
+	for (i=0;i<cilset.rawmodifamount;i++)
+		if (macro.FindMethodById(cilset.rawmodif[i].method_id)>=0) {
+			canenable = false;
+			break;
+		}
+	m_cilmacrobutton->Enable(canenable);
+	m_cilmacrodescription->SetValue(_(macro.type->description));
+	m_cilmacromethods->Clear();
+	for (i=0;i<macro.info->GetMethodCount();i++) {
+		wxString methodlabel;
+		methodlabel << _(macro.info->GetMethodTypeName(i)) << _(L"::") << _(macro.info->GetMethodName(i));
+		m_cilmacromethods->Append(methodlabel);
+	}
+}
+
+void CDDataStruct::OnListBoxCilStruct(wxCommandEvent& event) {
+	DisplayCilStruct(m_ciltypelist->GetSelection());
+}
+
+void CDDataStruct::OnListBoxCilMethod(wxCommandEvent& event) {
+	
+}
+
+void CDDataStruct::OnListBoxCilMacro(wxCommandEvent& event) {
+	DisplayCilMacro(m_cilmacrolist->GetSelection());
+}
+
+void CDDataStruct::OnCilMethodButton(wxCommandEvent& event) {
+	int tid = *(unsigned int*)m_ciltypelist->GetClientData(m_ciltypelist->GetSelection());
+	int mid = m_cilmethodlist->GetSelection();
+	CilScriptEditDialog dial(this,&cilset,tid,mid);
+	if (dial.error_type==0) {
+		if (dial.ShowModal()==wxID_OK) {
+			cilset.UpdateWithNewModification(*dial.ComputeModification());
+			MarkDataCilModified();
+		}
+	} else if (dial.error_type==1) {
+		wxLogError(HADES_STRING_CIL_NO_METHOD);
+	} else if (dial.error_type==2) {
+		wxMessageDialog popup(NULL,HADES_STRING_CIL_PROTECTED,HADES_STRING_WARNING,wxOK|wxCENTRE);
+		popup.ShowModal();
+		dial.ShowModal();
+	}
+}
+
+void CDDataStruct::OnCilMacroButton(wxCommandEvent& event) {
+	int macrosel = m_cilmacrolist->GetSelection();
+	uint32_t macroid = CILMacroIDList[macrosel].id;
+	if (cilset.IsMacroEnabled(macroid)) {
+		cilset.RemoveMacroModif(macroid);
+		m_cilmacrobutton->SetLabel(_(HADES_STRING_CIL_APPLY_MACRO));
+	} else {
+		cilset.AddMacroModif(macroid);
+		m_cilmacrobutton->SetLabel(_(HADES_STRING_CIL_UNAPPLY_MACRO));
+	}
+	MarkDataCilModified();
+}
+
+//=============================//
 //           Main              //
 //=============================//
 
@@ -5960,7 +6089,8 @@ void CDDataStruct::InitEnemy(void) {
 		m_enemystatitemdrop4->Append(_(itemset.item[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 	}
 	for (i=0;i<G_N_ELEMENTS(HADES_STRING_MODEL_NAME);i++)
-		m_enemystatmodel->Append(HADES_STRING_MODEL_NAME[i].label,(void*)&HADES_STRING_MODEL_NAME[i]);
+		if (BattleModelLinks::IsBattleModel(HADES_STRING_MODEL_NAME[i].id))
+			m_enemystatmodel->Append(HADES_STRING_MODEL_NAME[i].label,(void*)&HADES_STRING_MODEL_NAME[i]);
 	for (i=0;i<SPELL_AMOUNT;i++)
 		m_enemystatbluemagic->Append(_(spellset.spell[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 	for (i=0;i<SUPPORT_AMOUNT;i++)
@@ -5987,7 +6117,7 @@ void CDDataStruct::InitEnemy(void) {
 	}
 	m_enemylist->SetSelection(0);
 	GetTopWindow()->m_exportenemyscript->Enable();
-	GetTopWindow()->m_importenemyscript->Enable();
+//	GetTopWindow()->m_importenemyscript->Enable();
 }
 
 void CDDataStruct::InitCard(void) {
@@ -6055,7 +6185,7 @@ void CDDataStruct::InitWorldMap(void) {
 	m_worldplacelist->SetSelection(0);
 	m_worldbattlelist->SetSelection(0);
 	GetTopWindow()->m_exportworldscript->Enable();
-	GetTopWindow()->m_importworldscript->Enable();
+//	GetTopWindow()->m_importworldscript->Enable();
 }
 
 void CDDataStruct::InitField(void) {
@@ -6075,7 +6205,7 @@ void CDDataStruct::InitField(void) {
 	fieldloaded = true;
 	m_fieldlist->SetSelection(0);
 	GetTopWindow()->m_exportfieldscript->Enable();
-	GetTopWindow()->m_importfieldscript->Enable();
+//	GetTopWindow()->m_importfieldscript->Enable();
 	GetTopWindow()->m_exportfieldbackground->Enable();
 }
 
@@ -6128,15 +6258,29 @@ void CDDataStruct::InitMips(void) {
 		return;
 	unsigned int i;
 	fstream f;
-	if (gametype==GAME_TYPE_PSX) f.open(filename.c_str(),ios::in | ios::binary);
+	f.open(filename.c_str(),ios::in | ios::binary);
 	mipsset.Load(f,config);
-	if (gametype==GAME_TYPE_PSX) f.close();
+	f.close();
 	m_mipsbattlelist->Append(HADES_STRING_MIPS_FULL_CODE);
 	for (i=0;i<G_N_ELEMENTS(HADES_STRING_SPELL_EFFECT);i++)
 		m_mipsbattlelist->Append(HADES_STRING_SPELL_EFFECT[i].label);
 	m_mipsbattleramposgen->SetValue(wxString::Format(wxT("0x%X"),mipsset.battle_code.ram_pos & 0x7FFFFFFF));
 	mipsloaded = true;
 	m_mipsbattlelist->SetSelection(0);
+}
+
+void CDDataStruct::InitCil(void) {
+	if (cilloaded || GetGameType()==GAME_TYPE_PSX)
+		return;
+	unsigned int i;
+	fstream f;
+	cilset.Init(&config.meta_dll);
+	CilDisplayNames(true);
+	for (i=0;i<G_N_ELEMENTS(CILMacroIDList);i++)
+		m_cilmacrolist->Append(_(CILMacroIDList[i].name));
+	cilloaded = true;
+	m_ciltypelist->SetSelection(0);
+	m_cilmacrolist->SetSelection(0);
 }
 
 void CDDataStruct::DisplayCurrentData() {
@@ -6191,9 +6335,18 @@ void CDDataStruct::DisplayCurrentData() {
 		if (sel2==0)
 			DisplaySpecialText(m_specialtextlist->GetSelection());
 	} else if (sel1==6) {
-		sel2 = m_notebookmips->GetSelection();
-		if (sel2==0)
-			DisplayMipsBattle(m_mipsbattlelist->GetSelection());
+		if (GetGameType()==GAME_TYPE_PSX) {
+			sel2 = m_notebookmips->GetSelection();
+			if (sel2==0)
+				DisplayMipsBattle(m_mipsbattlelist->GetSelection());
+		} else {
+			sel2 = m_notebookcil->GetSelection();
+			if (sel2==0) {
+				DisplayCilStruct(m_ciltypelist->GetSelection());
+			} else if (sel2==1) {
+				DisplayCilMacro(m_cilmacrolist->GetSelection());
+			}
+		}
 	}
 }
 
@@ -6223,9 +6376,8 @@ void CDDataStruct::OnNotebookMain(wxNotebookEvent& event) {
 			InitMips();
 			DisplayMipsBattle(m_mipsbattlelist->GetSelection());
 		} else {
-			m_notebookmain->ChangeSelection(0);
-			wxMessageDialog popup(NULL,HADES_STRING_NO_STEAM,HADES_STRING_ERROR,wxOK|wxCENTRE);
-			popup.ShowModal();
+			InitCil();
+			DisplayCilStruct(m_ciltypelist->GetSelection());
 		}
 	}
 }
@@ -6318,6 +6470,16 @@ void CDDataStruct::OnNotebookMips(wxNotebookEvent& event) {
 	}
 }
 
+void CDDataStruct::OnNotebookCil(wxNotebookEvent& event) {
+	unsigned int sel = event.GetSelection();
+	InitCil();
+	if (sel==0) {
+		DisplayCilStruct(m_ciltypelist->GetSelection());
+	} else if (sel==1) {
+		DisplayCilMacro(m_cilmacrolist->GetSelection());
+	}
+}
+
 bool DiscardTextLimit = false;
 void CDDataStruct::TextReachLimit() {
 	if (DiscardTextLimit)
@@ -6327,11 +6489,11 @@ void CDDataStruct::TextReachLimit() {
 		DiscardTextLimit = true;
 }
 
-CDDataStruct::CDDataStruct(wxWindow* parent, string fname, ConfigurationSet cfg) :
+CDDataStruct::CDDataStruct(wxWindow* parent, string fname, ConfigurationSet& cfg) :
 	CDPanel(parent),
 	filename(fname),
 	config(cfg),
-	saveset(&spellset,&cmdset,&enemyset,&shopset,&textset,&worldset,&sceneset,&itemset,&supportset,&statset,&cardset,&fieldset,&spellanimset,&ffuiset,&partyspecialset,&mipsset),
+	saveset(&spellset,&cmdset,&enemyset,&shopset,&textset,&worldset,&sceneset,&itemset,&supportset,&statset,&cardset,&fieldset,&spellanimset,&ffuiset,&partyspecialset,&mipsset,&cilset),
 	backupset(),
 	spellloaded(false),
 	spellmodified(false),
@@ -6365,6 +6527,8 @@ CDDataStruct::CDDataStruct(wxWindow* parent, string fname, ConfigurationSet cfg)
 	ffuimodified(false),
 	mipsloaded(false),
 	mipsmodified(false),
+	cilloaded(false),
+	cilmodified(false),
 	spellsorted(OrderedIndex),
 	supportsorted(OrderedIndex),
 	cmdsorted(OrderedIndex),
@@ -6377,6 +6541,7 @@ CDDataStruct::CDDataStruct(wxWindow* parent, string fname, ConfigurationSet cfg)
 	fieldsorted(OrderedIndex),
 	scenesorted(OrderedIndex),
 	spellanimsorted(OrderedIndex),
+	cilsorted(OrderedIndex),
 	scenetex(NULL),
 	scenepal(NULL),
 	scenetexpreview(wxNullBitmap),
@@ -6387,11 +6552,13 @@ CDDataStruct::CDDataStruct(wxWindow* parent, string fname, ConfigurationSet cfg)
 	steamlang = GetSteamLanguage();
 	cluster.config = &config;
 	if (gametype==GAME_TYPE_PSX) {
+		m_notebookmain->RemovePage(7);
 		fstream f(filename.c_str(),ios::in | ios::binary);
 		cluster.Read(f,config);
 		cluster.CreateImageMaps(f);
 		f.close();
 	} else {
+		m_notebookmain->RemovePage(6);
 		cluster.enemy_amount = config.enmy_amount;
 		cluster.text_amount = config.text_amount;
 		cluster.world_amount = config.world_amount;
