@@ -1747,7 +1747,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		
 		#define MACRO_DLL_ADD_MODIF(SECTION,SET) \
 			if (section[SECTION]) { \
-				sectionmodif = saveset.SET->ComputeSteamMod(config.meta_dll.dll_file,config,&sectionmodifcount); \
+				sectionmodif = saveset.SET->ComputeSteamMod(config,&sectionmodifcount); \
 				memcpy(&dllmodif[dllmodifcount],sectionmodif,sectionmodifcount*sizeof(DllMetaDataModification)); \
 				delete[] sectionmodif; \
 				dllmodifcount += sectionmodifcount; \
@@ -1760,6 +1760,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		MACRO_DLL_ADD_MODIF(DATA_SECTION_SUPPORT,supportset)
 		MACRO_DLL_ADD_MODIF(DATA_SECTION_STAT,statset)
 		MACRO_DLL_ADD_MODIF(DATA_SECTION_PARTY_SPECIAL,partyspecialset)
+		MACRO_DLL_ADD_MODIF(DATA_SECTION_ENMY,enemyset)
 		if (dllmodifcount>0) {
 			fname = dirmanaged+"Assembly-CSharp.dll";
 			fstream filedest(fname.c_str(),ios::out | ios::binary);

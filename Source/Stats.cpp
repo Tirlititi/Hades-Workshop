@@ -214,82 +214,84 @@ void StatDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 			initial_stat[i].default_name.CreateEmpty();
 			initial_stat[i].default_name.SetValue(HADES_STRING_CHARACTER_DEFAULT_NAME[i]);
 		}
+		DllMetaData& dlldata = config.meta_dll;
 		DllMethodInfo methinfo;
-		string fname = config.steam_dir_managed;
-		fname += "Assembly-CSharp.dll";
-		ffbin.open(fname.c_str(),ios::in | ios::binary);
+		string fname;
 		for (i=0;i<EQUIP_SET_AMOUNT;i++) {
-			ffbin.seekg(config.meta_dll.GetStaticFieldOffset(config.dll_equipset_field_id[i]));
-			SteamReadChar(ffbin,initial_equip[i].weapon);
-			SteamReadChar(ffbin,initial_equip[i].head);
-			SteamReadChar(ffbin,initial_equip[i].wrist);
-			SteamReadChar(ffbin,initial_equip[i].armor);
-			SteamReadChar(ffbin,initial_equip[i].accessory);
+			dlldata.dll_file.seekg(dlldata.GetStaticFieldOffset(config.dll_equipset_field_id[i]));
+			SteamReadChar(dlldata.dll_file,initial_equip[i].weapon);
+			SteamReadChar(dlldata.dll_file,initial_equip[i].head);
+			SteamReadChar(dlldata.dll_file,initial_equip[i].wrist);
+			SteamReadChar(dlldata.dll_file,initial_equip[i].armor);
+			SteamReadChar(dlldata.dll_file,initial_equip[i].accessory);
 		}
-		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_ability_method_id));
-		methinfo.ReadMethodInfo(ffbin);
+		dlldata.dll_file.seekg(dlldata.GetMethodOffset(config.dll_ability_method_id));
+		methinfo.ReadMethodInfo(dlldata.dll_file);
 		ILInstruction initinstabil[3] = {
 			{ 0x1F, ABILITY_SET_CAPACITY },
-			{ 0x8D, config.meta_dll.GetTypeTokenIdentifier("PA_DATA","FF9") },
+			{ 0x8D, dlldata.GetTypeTokenIdentifier("PA_DATA","FF9") },
 			{ 0x25 }
 		};
 		uint8_t* rawabildata[ABILITY_SET_AMOUNT];
 		for (i=0;i<ABILITY_SET_AMOUNT;i++) {
-			methinfo.JumpToInstructions(ffbin,3,initinstabil);
-			steam_method_position_abilset[i] = ffbin.tellg();
-			rawabildata[i] = ConvertILScriptToRawData_Object(ffbin,ABILITY_SET_CAPACITY,2,steam_statabil_field_size);
-			steam_method_base_length_abilset[i] = (unsigned int)ffbin.tellg()-steam_method_position_abilset[i];
+			methinfo.JumpToInstructions(dlldata.dll_file,3,initinstabil);
+			steam_method_position_abilset[i] = dlldata.dll_file.tellg();
+			rawabildata[i] = dlldata.ConvertScriptToRaw_Object(ABILITY_SET_CAPACITY,2,steam_statabil_field_size);
+			steam_method_base_length_abilset[i] = (unsigned int)dlldata.dll_file.tellg()-steam_method_position_abilset[i];
 		}
-		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_level_method_id));
-		methinfo.ReadMethodInfo(ffbin);
+		dlldata.dll_file.seekg(dlldata.GetMethodOffset(config.dll_level_method_id));
+		methinfo.ReadMethodInfo(dlldata.dll_file);
 		ILInstruction initinststat[3] = {
 			{ 0x1F, PLAYABLE_CHAR_AMOUNT },
-			{ 0x8D, config.meta_dll.GetTypeTokenIdentifier("FF9LEVEL_BASE") },
+			{ 0x8D, dlldata.GetTypeTokenIdentifier("FF9LEVEL_BASE") },
 			{ 0x25 }
 		};
-		methinfo.JumpToInstructions(ffbin,3,initinststat);
-		steam_method_position_initstat = ffbin.tellg();
-		uint8_t* rawstatdata = ConvertILScriptToRawData_Object(ffbin,PLAYABLE_CHAR_AMOUNT,5,steam_stat_field_size);
-		steam_method_base_length_initstat = (unsigned int)ffbin.tellg()-steam_method_position_initstat;
-		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_level_method_id));
-		methinfo.ReadMethodInfo(ffbin);
+		methinfo.JumpToInstructions(dlldata.dll_file,3,initinststat);
+		steam_method_position_initstat = dlldata.dll_file.tellg();
+		uint8_t* rawstatdata = dlldata.ConvertScriptToRaw_Object(PLAYABLE_CHAR_AMOUNT,5,steam_stat_field_size);
+		steam_method_base_length_initstat = (unsigned int)dlldata.dll_file.tellg()-steam_method_position_initstat;
+		dlldata.dll_file.seekg(dlldata.GetMethodOffset(config.dll_level_method_id));
+		methinfo.ReadMethodInfo(dlldata.dll_file);
 		ILInstruction initinsthpmp[3] = {
 			{ 0x1F, MAX_LEVEL },
-			{ 0x8D, config.meta_dll.GetTypeTokenIdentifier("FF9LEVEL_HPMP") },
+			{ 0x8D, dlldata.GetTypeTokenIdentifier("FF9LEVEL_HPMP") },
 			{ 0x25 }
 		};
-		methinfo.JumpToInstructions(ffbin,3,initinsthpmp);
-		steam_method_position_hpmp = ffbin.tellg();
-		uint8_t* rawlvldata = ConvertILScriptToRawData_Object(ffbin,MAX_LEVEL,2,steam_lvlhpmp_field_size);
-		steam_method_base_length_hpmp = (unsigned int)ffbin.tellg()-steam_method_position_hpmp;
-		ffbin.seekg(config.meta_dll.GetStaticFieldOffset(config.dll_statexp_field_id));
+		methinfo.JumpToInstructions(dlldata.dll_file,3,initinsthpmp);
+		steam_method_position_hpmp = dlldata.dll_file.tellg();
+		uint8_t* rawlvldata = dlldata.ConvertScriptToRaw_Object(MAX_LEVEL,2,steam_lvlhpmp_field_size);
+		steam_method_base_length_hpmp = (unsigned int)dlldata.dll_file.tellg()-steam_method_position_hpmp;
+		dlldata.dll_file.seekg(dlldata.GetStaticFieldOffset(config.dll_statexp_field_id));
 		for (i=0;i<MAX_LEVEL;i++) {
-			SteamReadLong(ffbin,level[i].exp_table);
-			ffbin.seekg(4,ios::cur);
+			SteamReadLong(dlldata.dll_file,level[i].exp_table);
+			dlldata.dll_file.seekg(4,ios::cur);
 		}
 		// ToDo : shared_commands
-		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_rdata_method_id));
-		methinfo.ReadMethodInfo(ffbin);
+		dlldata.dll_file.seekg(dlldata.GetMethodOffset(config.dll_rdata_method_id));
+		methinfo.ReadMethodInfo(dlldata.dll_file);
 		ILInstruction initinstcmd[4] = {
 			{ 0x1F, COMMAND_SET_AMOUNT },
 			{ 0x18 },
-			{ 0x73, config.meta_dll.GetMemberTokenIdentifier("void valuetype FF9.command_tags[,]::.ctor( int, int )") },
+			{ 0x73, dlldata.GetMemberTokenIdentifier("void valuetype FF9.command_tags[,]::.ctor( int, int )") },
 			{ 0x25 }
 		};
-		methinfo.JumpToInstructions(ffbin,4,initinstcmd);
-		steam_method_position_cmdset = ffbin.tellg();
-		int64_t** rawcmddata = ConvertILScriptToRawData_Array2(ffbin,COMMAND_SET_AMOUNT,2);
-		steam_method_base_length_cmdset = (unsigned int)ffbin.tellg()-steam_method_position_cmdset;
+		methinfo.JumpToInstructions(dlldata.dll_file,4,initinstcmd);
+		steam_method_position_cmdset = dlldata.dll_file.tellg();
+		int64_t** rawcmddata = dlldata.ConvertScriptToRaw_Array2(COMMAND_SET_AMOUNT,2);
+		steam_method_base_length_cmdset = (unsigned int)dlldata.dll_file.tellg()-steam_method_position_cmdset;
 		for (i=0;i<COMMAND_SET_AMOUNT;i++) {
 			command_list[i].first_command = rawcmddata[i][0];
 			command_list[i].second_command = rawcmddata[i][1];
 			delete[] rawcmddata[i];
 		}
 		delete[] rawcmddata;
-		ffbin.seekg(config.meta_dll.GetStaticFieldOffset(config.dll_statcmdtrance_field_id));
-		MACRO_STAT_IOFUNCTIONTRANCECOMMAND(SteamRead,SteamSeek,true,false)
+		dlldata.dll_file.seekg(dlldata.GetStaticFieldOffset(config.dll_statcmdtrance_field_id));
+		for (i=0;i<COMMAND_SET_AMOUNT;i++) {
+			SteamReadChar(dlldata.dll_file,command_list[i].first_command_trance);
+			SteamReadChar(dlldata.dll_file,command_list[i].second_command_trance);
+			SteamReadChar(dlldata.dll_file,command_list[i].trance_attack);
+		}
 		// ToDo : Update some "trance_attack" with ff9com.FF9COMMAND_TRANCE_NONE
-		ffbin.close();
 		fname = tmpnam(NULL);
 		ffbin.open(fname.c_str(),ios::out | ios::binary);
 		for (i=0;i<ABILITY_SET_AMOUNT;i++)
@@ -311,8 +313,9 @@ void StatDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 	}
 }
 
-DllMetaDataModification* StatDataSet::ComputeSteamMod(fstream& ffbinbase, ConfigurationSet& config, unsigned int* modifamount) {
+DllMetaDataModification* StatDataSet::ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount) {
 	DllMetaDataModification* res = new DllMetaDataModification[EQUIP_SET_AMOUNT+ABILITY_SET_AMOUNT+5];
+	DllMetaData& dlldata = config.meta_dll;
 	unsigned int i,j,modcounter = 0;
 	uint32_t** argvalue;
 	for (i=0;i<EQUIP_SET_AMOUNT;i++) {
@@ -335,7 +338,7 @@ DllMetaDataModification* StatDataSet::ComputeSteamMod(fstream& ffbinbase, Config
 			argvalue[j][0] = ability_list[i].ability[j];
 			argvalue[j][1] = ability_list[i].ap_cost[j];
 		}
-		res[modcounter] = ModifyILScript_Object(ffbinbase,argvalue,steam_method_position_abilset[i],steam_method_base_length_abilset[i],ABILITY_SET_CAPACITY,2,steam_statabil_field_size);
+		res[modcounter] = dlldata.ConvertRawToScript_Object(argvalue,steam_method_position_abilset[i],steam_method_base_length_abilset[i],ABILITY_SET_CAPACITY,2,steam_statabil_field_size);
 		modcounter++;
 	}
 	for (j=0;j<ABILITY_SET_CAPACITY;j++)
@@ -368,7 +371,7 @@ DllMetaDataModification* StatDataSet::ComputeSteamMod(fstream& ffbinbase, Config
 		argvalue[i][3] = initial_stat[i].spirit;
 		argvalue[i][4] = initial_stat[i].magic_stone;
 	}
-	res[modcounter] = ModifyILScript_Object(ffbinbase,argvalue,steam_method_position_initstat,steam_method_base_length_initstat,PLAYABLE_CHAR_AMOUNT,5,steam_stat_field_size);
+	res[modcounter] = dlldata.ConvertRawToScript_Object(argvalue,steam_method_position_initstat,steam_method_base_length_initstat,PLAYABLE_CHAR_AMOUNT,5,steam_stat_field_size);
 	for (i=0;i<PLAYABLE_CHAR_AMOUNT;i++)
 		delete[] argvalue[i];
 	delete[] argvalue;
@@ -379,7 +382,7 @@ DllMetaDataModification* StatDataSet::ComputeSteamMod(fstream& ffbinbase, Config
 		argvalue[i][0] = level[i].hp_table;
 		argvalue[i][1] = level[i].mp_table;
 	}
-	res[modcounter] = ModifyILScript_Object(ffbinbase,argvalue,steam_method_position_hpmp,steam_method_base_length_hpmp,MAX_LEVEL,2,steam_lvlhpmp_field_size);
+	res[modcounter] = dlldata.ConvertRawToScript_Object(argvalue,steam_method_position_hpmp,steam_method_base_length_hpmp,MAX_LEVEL,2,steam_lvlhpmp_field_size);
 	for (i=0;i<MAX_LEVEL;i++)
 		delete[] argvalue[i];
 	delete[] argvalue;
@@ -390,7 +393,7 @@ DllMetaDataModification* StatDataSet::ComputeSteamMod(fstream& ffbinbase, Config
 		argvalue[i][0] = command_list[i].first_command;
 		argvalue[i][1] = command_list[i].second_command;
 	}
-	res[modcounter] = ModifyILScript_Array2(ffbinbase,argvalue,steam_method_position_cmdset,steam_method_base_length_cmdset,COMMAND_SET_AMOUNT,2);
+	res[modcounter] = dlldata.ConvertRawToScript_Array2(argvalue,steam_method_position_cmdset,steam_method_base_length_cmdset,COMMAND_SET_AMOUNT,2,dlldata.GetMemberTokenIdentifier("void valuetype FF9.command_tags[,]::Set( int, int, valuetype FF9.command_tags )"));
 	for (i=0;i<COMMAND_SET_AMOUNT;i++)
 		delete[] argvalue[i];
 	delete[] argvalue;

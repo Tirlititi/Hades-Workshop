@@ -22,7 +22,7 @@ public:
 	void LoadHWS(fstream& ffhws);
 	void WriteHWS(fstream& ffhws);
 	// Return a modifamount-long pointer, to be deleted[]
-	DllMetaDataModification* ComputeSteamMod(fstream& ffbinbase, ConfigurationSet& config, unsigned int* modifamount);
+	DllMetaDataModification* ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount);
 };
 
 #endif

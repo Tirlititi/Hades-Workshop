@@ -202,6 +202,7 @@ void SpellDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 		FFIXSeek(ffbin,config.spell_data_offset[4],0x10*SPELL_AMOUNT); // ToDo : Should go to the .hwf
 		MACRO_SPELL_IOFUNCTIONSTATUS(FFIXRead,FFIXSeek,true,false)
 	} else {
+		DllMetaData& dlldata = config.meta_dll;
 		DllMethodInfo methinfo;
 		string fname = config.steam_dir_data;
 		fname += "resources.assets";
@@ -215,25 +216,23 @@ void SpellDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 		for (i=0;i<SPELL_AMOUNT;i++)
 			SteamReadFF9String(ffbin,spell[i].help);
 		ffbin.close();
-		fname = config.steam_dir_managed;
-		fname += "Assembly-CSharp.dll";
-		ffbin.open(fname.c_str(),ios::in | ios::binary);
-		ffbin.seekg(config.meta_dll.GetStaticFieldOffset(config.dll_spellnaming_field_id));
-		MACRO_SPELL_IOFUNCTIONPERFNAME(SteamRead,SteamSeek,true,false)
-		ffbin.seekg(config.meta_dll.GetStaticFieldOffset(config.dll_statusset_field_id));
-		MACRO_SPELL_IOFUNCTIONSTATUS(SteamRead,SteamSeek,true,false)
-		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_battledb_method_id));
-		methinfo.ReadMethodInfo(ffbin);
+		dlldata.dll_file.seekg(dlldata.GetStaticFieldOffset(config.dll_spellnaming_field_id));
+		for (i=0;i<SPELL_AMOUNT;i++)
+			SteamReadChar(dlldata.dll_file,spell[i].perform_name);
+		dlldata.dll_file.seekg(dlldata.GetStaticFieldOffset(config.dll_statusset_field_id));
+		for (i=0;i<STATUS_SET_AMOUNT;i++)
+			SteamReadLong(dlldata.dll_file,status_set[i]);
+		dlldata.dll_file.seekg(dlldata.GetMethodOffset(config.dll_battledb_method_id));
+		methinfo.ReadMethodInfo(dlldata.dll_file);
 		ILInstruction initinst[3] = {
 			{ 0x20, SPELL_AMOUNT },
-			{ 0x8D, config.meta_dll.GetTypeTokenIdentifier("AA_DATA") },
+			{ 0x8D, dlldata.GetTypeTokenIdentifier("AA_DATA") },
 			{ 0x25 }
 		};
-		methinfo.JumpToInstructions(ffbin,3,initinst);
-		steam_method_position = ffbin.tellg();
-		uint8_t* rawspelldata = ConvertILScriptToRawData_Object(ffbin,SPELL_AMOUNT,18,steam_spell_field_size);
-		steam_method_base_length = (unsigned int)ffbin.tellg()-steam_method_position;
-		ffbin.close();
+		methinfo.JumpToInstructions(dlldata.dll_file,3,initinst);
+		steam_method_position = dlldata.dll_file.tellg();
+		uint8_t* rawspelldata = dlldata.ConvertScriptToRaw_Object(SPELL_AMOUNT,18,steam_spell_field_size);
+		steam_method_base_length = (unsigned int)dlldata.dll_file.tellg()-steam_method_position;
 		fname = tmpnam(NULL);
 		ffbin.open(fname.c_str(),ios::out | ios::binary);
 		ffbin.write((const char*)rawspelldata,0x10*SPELL_AMOUNT);
@@ -246,8 +245,9 @@ void SpellDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 	}
 }
 
-DllMetaDataModification* SpellDataSet::ComputeSteamMod(fstream& ffbinbase, ConfigurationSet& config, unsigned int* modifamount) {
+DllMetaDataModification* SpellDataSet::ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount) {
 	DllMetaDataModification* res = new DllMetaDataModification[3];
+	DllMetaData& dlldata = config.meta_dll;
 	uint32_t** argvalue = new uint32_t*[SPELL_AMOUNT];
 	unsigned int i;
 	for (i=0;i<SPELL_AMOUNT;i++) {
@@ -271,7 +271,7 @@ DllMetaDataModification* SpellDataSet::ComputeSteamMod(fstream& ffbinbase, Confi
 		argvalue[i][16] = spell[i].model_alt;
 		argvalue[i][17] = spell[i].name_offset;
 	}
-	res[0] = ModifyILScript_Object(ffbinbase,argvalue,steam_method_position,steam_method_base_length,SPELL_AMOUNT,18,steam_spell_field_size);
+	res[0] = dlldata.ConvertRawToScript_Object(argvalue,steam_method_position,steam_method_base_length,SPELL_AMOUNT,18,steam_spell_field_size);
 	for (i=0;i<SPELL_AMOUNT;i++)
 		delete[] argvalue[i];
 	delete[] argvalue;

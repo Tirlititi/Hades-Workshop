@@ -429,6 +429,7 @@ void ItemDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 		MACRO_ITEM_IOFUNCTIONKEYHELP(FFIXRead,FFIXSeek,true,false)
 		MACRO_ITEM_IOFUNCTIONKEYDESC(FFIXRead,FFIXSeek,true,false)
 	} else {
+		DllMetaData& dlldata = config.meta_dll;
 		DllMethodInfo methinfo;
 		string fname = config.steam_dir_data;
 		fname += "resources.assets";
@@ -458,65 +459,61 @@ void ItemDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 		for (i=0;i<KEY_ITEM_AMOUNT;i++)
 			SteamReadFF9String(ffbin,key_item[i].description);
 		ffbin.close();
-		fname = config.steam_dir_managed;
-		fname += "Assembly-CSharp.dll";
-		ffbin.open(fname.c_str(),ios::in | ios::binary);
-		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_item_method_id));
-		methinfo.ReadMethodInfo(ffbin);
+		dlldata.dll_file.seekg(dlldata.GetMethodOffset(config.dll_item_method_id));
+		methinfo.ReadMethodInfo(dlldata.dll_file);
 		ILInstruction initinstit[3] = {
 			{ 0x20, ITEM_AMOUNT },
-			{ 0x8D, config.meta_dll.GetTypeTokenIdentifier("FF9ITEM_DATA") },
+			{ 0x8D, dlldata.GetTypeTokenIdentifier("FF9ITEM_DATA") },
 			{ 0x25 }
 		};
-		methinfo.JumpToInstructions(ffbin,3,initinstit);
-		steam_method_position[0] = ffbin.tellg();
-		uint8_t* rawitemdata = ConvertILScriptToRawData_Object(ffbin,ITEM_AMOUNT,14,steam_item_field_size,steam_item_field_array);
-		steam_method_base_length[0] = (unsigned int)ffbin.tellg()-steam_method_position[0];
-		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_item_method_id));
-		methinfo.ReadMethodInfo(ffbin);
+		methinfo.JumpToInstructions(dlldata.dll_file,3,initinstit);
+		steam_method_position[0] = dlldata.dll_file.tellg();
+		uint8_t* rawitemdata = dlldata.ConvertScriptToRaw_Object(ITEM_AMOUNT,14,steam_item_field_size,steam_item_field_array);
+		steam_method_base_length[0] = (unsigned int)dlldata.dll_file.tellg()-steam_method_position[0];
+		dlldata.dll_file.seekg(dlldata.GetMethodOffset(config.dll_item_method_id));
+		methinfo.ReadMethodInfo(dlldata.dll_file);
 		ILInstruction initinstuse[3] = {
 			{ 0x1F, ITEM_USABLE_AMOUNT },
-			{ 0x8D, config.meta_dll.GetTypeTokenIdentifier("ITEM_DATA","FF9") },
+			{ 0x8D, dlldata.GetTypeTokenIdentifier("ITEM_DATA","FF9") },
 			{ 0x25 }
 		};
-		methinfo.JumpToInstructions(ffbin,3,initinstuse);
-		steam_method_position[1] = ffbin.tellg();
-		uint8_t* rawusabledata = ConvertILScriptToRawData_Object(ffbin,ITEM_USABLE_AMOUNT,13,steam_usable_field_size);
-		steam_method_base_length[1] = (unsigned int)ffbin.tellg()-steam_method_position[1];
-		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_armor_method_id));
-		methinfo.ReadMethodInfo(ffbin);
+		methinfo.JumpToInstructions(dlldata.dll_file,3,initinstuse);
+		steam_method_position[1] = dlldata.dll_file.tellg();
+		uint8_t* rawusabledata = dlldata.ConvertScriptToRaw_Object(ITEM_USABLE_AMOUNT,13,steam_usable_field_size);
+		steam_method_base_length[1] = (unsigned int)dlldata.dll_file.tellg()-steam_method_position[1];
+		dlldata.dll_file.seekg(dlldata.GetMethodOffset(config.dll_armor_method_id));
+		methinfo.ReadMethodInfo(dlldata.dll_file);
 		ILInstruction initinstarmor[3] = {
 			{ 0x20, ITEM_ARMOR_AMOUNT },
-			{ 0x8D, config.meta_dll.GetTypeTokenIdentifier("DEF_PARAMS") },
+			{ 0x8D, dlldata.GetTypeTokenIdentifier("DEF_PARAMS") },
 			{ 0x25 }
 		};
-		methinfo.JumpToInstructions(ffbin,3,initinstarmor);
-		steam_method_position[2] = ffbin.tellg();
-		uint8_t* rawarmordata = ConvertILScriptToRawData_Object(ffbin,ITEM_ARMOR_AMOUNT,4,steam_armor_field_size);
-		steam_method_base_length[2] = (unsigned int)ffbin.tellg()-steam_method_position[2];
-		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_equip_method_id));
-		methinfo.ReadMethodInfo(ffbin);
+		methinfo.JumpToInstructions(dlldata.dll_file,3,initinstarmor);
+		steam_method_position[2] = dlldata.dll_file.tellg();
+		uint8_t* rawarmordata = dlldata.ConvertScriptToRaw_Object(ITEM_ARMOR_AMOUNT,4,steam_armor_field_size);
+		steam_method_base_length[2] = (unsigned int)dlldata.dll_file.tellg()-steam_method_position[2];
+		dlldata.dll_file.seekg(dlldata.GetMethodOffset(config.dll_equip_method_id));
+		methinfo.ReadMethodInfo(dlldata.dll_file);
 		ILInstruction initinststat[3] = {
 			{ 0x20, ITEM_STAT_AMOUNT },
-			{ 0x8D, config.meta_dll.GetTypeTokenIdentifier("EQUIP_PRIVILEGE","FF9") },
+			{ 0x8D, dlldata.GetTypeTokenIdentifier("EQUIP_PRIVILEGE","FF9") },
 			{ 0x25 }
 		};
-		methinfo.JumpToInstructions(ffbin,3,initinststat);
-		steam_method_position[3] = ffbin.tellg();
-		uint8_t* rawitstatdata = ConvertILScriptToRawData_Object(ffbin,ITEM_STAT_AMOUNT,9,steam_stat_field_size);
-		steam_method_base_length[3] = (unsigned int)ffbin.tellg()-steam_method_position[3];
-		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_weapon_method_id));
-		methinfo.ReadMethodInfo(ffbin);
+		methinfo.JumpToInstructions(dlldata.dll_file,3,initinststat);
+		steam_method_position[3] = dlldata.dll_file.tellg();
+		uint8_t* rawitstatdata = dlldata.ConvertScriptToRaw_Object(ITEM_STAT_AMOUNT,9,steam_stat_field_size);
+		steam_method_base_length[3] = (unsigned int)dlldata.dll_file.tellg()-steam_method_position[3];
+		dlldata.dll_file.seekg(dlldata.GetMethodOffset(config.dll_weapon_method_id));
+		methinfo.ReadMethodInfo(dlldata.dll_file);
 		ILInstruction initinstweap[3] = {
 			{ 0x1F, ITEM_WEAPON_AMOUNT },
-			{ 0x8D, config.meta_dll.GetTypeTokenIdentifier("WEAPON") },
+			{ 0x8D, dlldata.GetTypeTokenIdentifier("WEAPON") },
 			{ 0x25 }
 		};
-		methinfo.JumpToInstructions(ffbin,3,initinstweap);
-		steam_method_position[4] = ffbin.tellg();
-		uint8_t* rawweapdata = ConvertILScriptToRawData_Object(ffbin,ITEM_WEAPON_AMOUNT,9,steam_weapon_field_size,steam_weapon_field_array,&config.meta_dll);
-		steam_method_base_length[4] = (unsigned int)ffbin.tellg()-steam_method_position[4];
-		ffbin.close();
+		methinfo.JumpToInstructions(dlldata.dll_file,3,initinstweap);
+		steam_method_position[4] = dlldata.dll_file.tellg();
+		uint8_t* rawweapdata = dlldata.ConvertScriptToRaw_Object(ITEM_WEAPON_AMOUNT,9,steam_weapon_field_size,steam_weapon_field_array);
+		steam_method_base_length[4] = (unsigned int)dlldata.dll_file.tellg()-steam_method_position[4];
 		fname = tmpnam(NULL);
 		ffbin.open(fname.c_str(),ios::out | ios::binary);
 		ffbin.write((const char*)rawitemdata,0x12*ITEM_AMOUNT);
@@ -556,8 +553,9 @@ void ItemDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 	}
 }
 
-DllMetaDataModification* ItemDataSet::ComputeSteamMod(fstream& ffbinbase, ConfigurationSet& config, unsigned int* modifamount) {
+DllMetaDataModification* ItemDataSet::ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount) {
 	DllMetaDataModification* res = new DllMetaDataModification[5];
+	DllMetaData& dlldata = config.meta_dll;
 	uint32_t** argvalue = new uint32_t*[ITEM_AMOUNT];
 	unsigned int i;
 	for (i=0;i<ITEM_AMOUNT;i++) {
@@ -576,7 +574,7 @@ DllMetaDataModification* ItemDataSet::ComputeSteamMod(fstream& ffbinbase, Config
 		argvalue[i][11] = item[i].type;
 		argvalue[i][12] = item[i].menu_position;
 	}
-	res[0] = ModifyILScript_Object(ffbinbase,argvalue,steam_method_position[0],steam_method_base_length[0],ITEM_AMOUNT,14,steam_item_field_size,steam_item_field_array);
+	res[0] = dlldata.ConvertRawToScript_Object(argvalue,steam_method_position[0],steam_method_base_length[0],ITEM_AMOUNT,14,steam_item_field_size,steam_item_field_array);
 	for (i=0;i<ITEM_AMOUNT;i++)
 		delete[] argvalue[i];
 	delete[] argvalue;
@@ -597,7 +595,7 @@ DllMetaDataModification* ItemDataSet::ComputeSteamMod(fstream& ffbinbase, Config
 		argvalue[i][11] = usable[i].accuracy;
 		argvalue[i][12] = usable[i].status;
 	}
-	res[1] = ModifyILScript_Object(ffbinbase,argvalue,steam_method_position[1],steam_method_base_length[1],ITEM_USABLE_AMOUNT,13,steam_usable_field_size);
+	res[1] = dlldata.ConvertRawToScript_Object(argvalue,steam_method_position[1],steam_method_base_length[1],ITEM_USABLE_AMOUNT,13,steam_usable_field_size);
 	for (i=0;i<ITEM_USABLE_AMOUNT;i++)
 		delete[] argvalue[i];
 	delete[] argvalue;
@@ -609,7 +607,7 @@ DllMetaDataModification* ItemDataSet::ComputeSteamMod(fstream& ffbinbase, Config
 		argvalue[i][2] = armor[i].magic_defence;
 		argvalue[i][3] = armor[i].magic_evade;
 	}
-	res[2] = ModifyILScript_Object(ffbinbase,argvalue,steam_method_position[2],steam_method_base_length[2],ITEM_ARMOR_AMOUNT,4,steam_armor_field_size);
+	res[2] = dlldata.ConvertRawToScript_Object(argvalue,steam_method_position[2],steam_method_base_length[2],ITEM_ARMOR_AMOUNT,4,steam_armor_field_size);
 	for (i=0;i<ITEM_ARMOR_AMOUNT;i++)
 		delete[] argvalue[i];
 	delete[] argvalue;
@@ -626,7 +624,7 @@ DllMetaDataModification* ItemDataSet::ComputeSteamMod(fstream& ffbinbase, Config
 		argvalue[i][7] = stat[i].element_weak;
 		argvalue[i][8] = stat[i].element_boost;
 	}
-	res[3] = ModifyILScript_Object(ffbinbase,argvalue,steam_method_position[3],steam_method_base_length[3],ITEM_STAT_AMOUNT,9,steam_stat_field_size);
+	res[3] = dlldata.ConvertRawToScript_Object(argvalue,steam_method_position[3],steam_method_base_length[3],ITEM_STAT_AMOUNT,9,steam_stat_field_size);
 	for (i=0;i<ITEM_STAT_AMOUNT;i++)
 		delete[] argvalue[i];
 	delete[] argvalue;
@@ -643,7 +641,7 @@ DllMetaDataModification* ItemDataSet::ComputeSteamMod(fstream& ffbinbase, Config
 		argvalue[i][7] = (uint16_t)weapon[i].offset1;
 		argvalue[i][8] = (uint16_t)weapon[i].offset2;
 	}
-	res[4] = ModifyILScript_Object(ffbinbase,argvalue,steam_method_position[4],steam_method_base_length[4],ITEM_WEAPON_AMOUNT,9,steam_weapon_field_size,steam_weapon_field_array);
+	res[4] = dlldata.ConvertRawToScript_Object(argvalue,steam_method_position[4],steam_method_base_length[4],ITEM_WEAPON_AMOUNT,9,steam_weapon_field_size,steam_weapon_field_array);
 	for (i=0;i<ITEM_WEAPON_AMOUNT;i++)
 		delete[] argvalue[i];
 	delete[] argvalue;

@@ -100,6 +100,7 @@ void SupportDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 		MACRO_SUPPORT_IOFUNCTIONNAME(FFIXRead,FFIXSeek,true,false)
 		MACRO_SUPPORT_IOFUNCTIONHELP(FFIXRead,FFIXSeek,true,false)
 	} else {
+		DllMetaData& dlldata = config.meta_dll;
 		DllMethodInfo methinfo;
 		string fname = config.steam_dir_data;
 		fname += "resources.assets";
@@ -113,21 +114,17 @@ void SupportDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 		for (i=0;i<SUPPORT_AMOUNT;i++)
 			SteamReadFF9String(ffbin,support[i].help);
 		ffbin.close();
-		fname = config.steam_dir_managed;
-		fname += "Assembly-CSharp.dll";
-		ffbin.open(fname.c_str(),ios::in | ios::binary);
-		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_ability_method_id));
-		methinfo.ReadMethodInfo(ffbin);
+		dlldata.dll_file.seekg(dlldata.GetMethodOffset(config.dll_ability_method_id));
+		methinfo.ReadMethodInfo(dlldata.dll_file);
 		ILInstruction initinst[3] = {
 			{ 0x1F, SUPPORT_AMOUNT },
-			{ 0x8D, config.meta_dll.GetTypeTokenIdentifier("SA_DATA","FF9") },
+			{ 0x8D, dlldata.GetTypeTokenIdentifier("SA_DATA","FF9") },
 			{ 0x25 }
 		};
-		methinfo.JumpToInstructions(ffbin,3,initinst);
-		steam_method_position = ffbin.tellg();
-		uint8_t* rawsupportdata = ConvertILScriptToRawData_Object(ffbin,SUPPORT_AMOUNT,5,steam_support_field_size);
-		steam_method_base_length = (unsigned int)ffbin.tellg()-steam_method_position;
-		ffbin.close();
+		methinfo.JumpToInstructions(dlldata.dll_file,3,initinst);
+		steam_method_position = dlldata.dll_file.tellg();
+		uint8_t* rawsupportdata = dlldata.ConvertScriptToRaw_Object(SUPPORT_AMOUNT,5,steam_support_field_size);
+		steam_method_base_length = (unsigned int)dlldata.dll_file.tellg()-steam_method_position;
 		fname = tmpnam(NULL);
 		ffbin.open(fname.c_str(),ios::out | ios::binary);
 		ffbin.write((const char*)rawsupportdata,8*SUPPORT_AMOUNT);
@@ -140,8 +137,9 @@ void SupportDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 	}
 }
 
-DllMetaDataModification* SupportDataSet::ComputeSteamMod(fstream& ffbinbase, ConfigurationSet& config, unsigned int* modifamount) {
+DllMetaDataModification* SupportDataSet::ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount) {
 	DllMetaDataModification* res = new DllMetaDataModification[1];
+	DllMetaData& dlldata = config.meta_dll;
 	uint32_t** argvalue = new uint32_t*[SUPPORT_AMOUNT];
 	unsigned int i;
 	for (i=0;i<SUPPORT_AMOUNT;i++) {
@@ -152,7 +150,7 @@ DllMetaDataModification* SupportDataSet::ComputeSteamMod(fstream& ffbinbase, Con
 		argvalue[i][3] = support[i].help_offset;
 		argvalue[i][4] = support[i].help_size_x;
 	}
-	res[0] = ModifyILScript_Object(ffbinbase,argvalue,steam_method_position,steam_method_base_length,SUPPORT_AMOUNT,5,steam_support_field_size);
+	res[0] = dlldata.ConvertRawToScript_Object(argvalue,steam_method_position,steam_method_base_length,SUPPORT_AMOUNT,5,steam_support_field_size);
 	for (i=0;i<SUPPORT_AMOUNT;i++)
 		delete[] argvalue[i];
 	delete[] argvalue;

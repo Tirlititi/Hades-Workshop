@@ -2667,6 +2667,7 @@ void CDDataStruct::DisplayItem(int itemid) {
 		m_itemusabletargetamount->Enable(tt!=SPELL_TARGET_TYPE_EVERYONE && tt!=SPELL_TARGET_TYPE_SELF);
 		m_itemusabletargetpriority->Enable(tt==SPELL_TARGET_TYPE_ANY);
 		m_itemusabletargetflagdead->SetValue(ic.target_flag & TARGET_FLAG_CAN_TARGET_DEAD);
+		m_itemusabletargetflagcamera->SetValue(ic.target_flag & TARGET_FLAG_CAMERA);
 		m_itemusabletargetflagdeadfirst->SetValue(ic.target_flag & TARGET_FLAG_TARGET_DEAD_FIRST);
 		m_itemusabletargetpanel->SetSelection(ic.GetPanel());
 		m_itemusablepanel->Layout();
@@ -2958,6 +2959,7 @@ void CDDataStruct::OnItemChangeFlags(wxCommandEvent& event) {
 		ItemUsableDataStruct& ic = itemset.usable[it.usable_id];
 		MACRO_FLAG_SET32(ic.status,wxID_IS)
 		MACRO_FLAG_SET(ic.target_flag,wxID_CAN_TARGET_DEAD,TARGET_FLAG_CAN_TARGET_DEAD)
+		MACRO_FLAG_SET(ic.target_flag,wxID_TARGET_CAMERA,TARGET_FLAG_CAMERA)
 		MACRO_FLAG_SET(ic.target_flag,wxID_TARGET_DEAD_FIRST,TARGET_FLAG_TARGET_DEAD_FIRST)
 	}
 	if (it.weapon_id>=0) {
@@ -3605,7 +3607,8 @@ void CDDataStruct::DisplayEnemyStat(int battleid, int statid) {
 
 void CDDataStruct::DisplayEnemySpell(int battleid, int spellid) {
 	unsigned int* sortid = (unsigned int*)m_enemylist->GetClientData(battleid);
-	EnemySpellDataStruct& ep = enemyset.battle[*sortid]->spell[spellid];
+	EnemyDataStruct& ed = *enemyset.battle[*sortid];
+	EnemySpellDataStruct& ep = ed.spell[spellid];
 	BattleDataStruct& bd = *enemyset.battle_data[*sortid];
 	unsigned int i;
 	m_enemystatscrolledwindow->Show(false);
@@ -3633,8 +3636,12 @@ void CDDataStruct::DisplayEnemySpell(int battleid, int spellid) {
 			m_enemyspellanimreflect->SetSelection(i);
 			break;
 		}
-	m_enemyspellbaseanim->SetRange(0,bd.animation_amount-1);
-	m_enemyspellbaseanim->SetValue(bd.sequence_base_anim[spellid]);
+	for (i=0;i<ed.stat_amount;i++)
+		if (ed.stat[i].sequence_anim_base==bd.sequence_base_anim[spellid])
+			m_enemyspellbaseanim->SetSelection(i);
+	m_enemyspelltargetflagdead->SetValue(ep.target_flag & TARGET_FLAG_CAN_TARGET_DEAD);
+	m_enemyspelltargetflagcamera->SetValue(ep.target_flag & TARGET_FLAG_CAMERA);
+	m_enemyspelltargetflagdeadfirst->SetValue(ep.target_flag & TARGET_FLAG_TARGET_DEAD_FIRST);
 	MACRO_FLAG_DISPLAY8(ep.flag,m_enemyspellflag)
 	m_enemyspellscrolledwindow->Layout();
 	m_enemyspellscrolledwindow->GetParent()->GetSizer()->Layout();
@@ -3707,8 +3714,11 @@ void CDDataStruct::DisplayEnemy(int battleid) {
 	EnemyDataStruct& eb = *enemyset.battle[*sortid];
 	TextDataStruct& td = *enemyset.text[*sortid];
 	m_enemystatlist->Clear();
-	for (i=0;i<eb.stat_amount;i++)
+	m_enemyspellbaseanim->Clear();
+	for (i=0;i<eb.stat_amount;i++) {
 		m_enemystatlist->Append(_(eb.stat[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+		m_enemyspellbaseanim->Append(_(eb.stat[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+	}
 	m_enemyspelllist->Clear();
 	m_enemystatdefaultattack->Clear();
 	for (i=0;i<eb.spell_amount;i++) {
@@ -3724,16 +3734,11 @@ void CDDataStruct::DisplayEnemy(int battleid) {
 	m_enemytextlist->Clear();
 	for (i=eb.stat_amount+eb.spell_amount;i<td.amount;i++)
 		m_enemytextlist->Append(_(td.text[i].GetStr(hades::TEXT_PREVIEW_TYPE)));
-	if (GetGameType()==GAME_TYPE_PSX) {
-		for (i=0;i<G_N_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME);i++)
-			if (eb.scene_id==HADES_STRING_BATTLE_SCENE_NAME[i].id) {
-				m_enemyscene->SetSelection(i);
-				break;
-			}
-	} else { // ToDo
-		m_enemyscene->SetSelection(0);
-		m_enemyscene->Enable(false);
-	}
+	for (i=0;i<G_N_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME);i++)
+		if (eb.scene_id==HADES_STRING_BATTLE_SCENE_NAME[i].id) {
+			m_enemyscene->SetSelection(i);
+			break;
+		}
 	MACRO_FLAG_DISPLAY16(eb.flag,m_enemyflag)
 	m_enemystatlist->SetSelection(0);
 	DisplayEnemyStat(battleid,0);
@@ -3822,6 +3827,7 @@ void CDDataStruct::OnEnemyStatChangeName(wxCommandEvent& event) {
 		}
 	}
 	m_enemystatlist->SetString(statsel,_(es.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+	m_enemyspellbaseanim->SetString(statsel,_(es.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 }
 
 void CDDataStruct::OnEnemySpellChangeName(wxCommandEvent& event) {
@@ -3895,10 +3901,6 @@ void CDDataStruct::OnEnemyChangeSpin(wxSpinEvent& event) {
 			ep.accuracy = event.GetPosition();
 		} else if (id==wxID_SPELLMP) {
 			ep.mp = event.GetPosition();
-		} else if (id==wxID_ANIM) {
-			enemyset.battle_data[*sortid]->sequence_base_anim[m_enemyspelllist->GetSelection()] = event.GetPosition();
-			MarkDataEnemyModified(*sortid,CHUNK_TYPE_BATTLE_DATA);
-			return;
 		}
 	} else if (m_enemygrouplist->GetSelection()!=wxNOT_FOUND) {
 		EnemyGroupDataStruct& eg = eb.group[m_enemygrouplist->GetSelection()];
@@ -3956,14 +3958,16 @@ void CDDataStruct::OnEnemyChangeChoice(wxCommandEvent& event) {
 	EnemyDataStruct& eb = *enemyset.battle[*sortid];
 	int id = event.GetId();
 	if (id==wxID_SCENE) {
-		ImageMapDataStruct& em = *enemyset.preload[*sortid];
 		unsigned int* newscene = (unsigned int*)event.GetClientData();
-		int extrablock = em.RemoveData(MAP_OBJECT_SCENE,eb.scene_id);
-		em.AddData(MAP_OBJECT_SCENE,*newscene,&cluster.global_map,cluster.enemy_shared_map,em.GetExtraSize()/0x10+extrablock);
-		em.UpdateOffset();
-		eb.scene_id = *newscene;
-		MarkDataEnemyModified(*sortid,CHUNK_TYPE_IMAGE_MAP);
+		if (GetGameType()==GAME_TYPE_PSX) {
+			ImageMapDataStruct& em = *enemyset.preload[*sortid];
+			int extrablock = em.RemoveData(MAP_OBJECT_SCENE,eb.scene_id);
+			em.AddData(MAP_OBJECT_SCENE,*newscene,&cluster.global_map,cluster.enemy_shared_map,em.GetExtraSize()/0x10+extrablock);
+			em.UpdateOffset();
+		}
 		enemyset.ChangeBattleScene(enemyset.battle_data[*sortid]->object_id,*newscene);
+		MarkDataEnemyModified(*sortid,GetGameType()==GAME_TYPE_PSX ? CHUNK_TYPE_IMAGE_MAP : CHUNK_TYPE_BATTLE_SCENE);
+		return;
 	} else if (m_enemystatlist->GetSelection()!=wxNOT_FOUND) {
 		EnemyStatDataStruct& es = eb.stat[m_enemystatlist->GetSelection()];
 		if (id==wxID_STEAL1) {
@@ -4023,6 +4027,10 @@ void CDDataStruct::OnEnemyChangeChoice(wxCommandEvent& event) {
 		} else if (id==wxID_ANIM) {
 			SortedChoiceItemModel* item = (SortedChoiceItemModel*)event.GetClientData();
 			es.model = item->id;
+		} else if (id==wxID_SEQANIM) {
+			enemyset.battle_data[*sortid]->sequence_base_anim[m_enemyspelllist->GetSelection()] = enemyset.battle[*sortid]->stat[event.GetSelection()].sequence_anim_base;
+			MarkDataEnemyModified(*sortid,CHUNK_TYPE_BATTLE_DATA);
+			return;
 		}
 	} else if (m_enemygrouplist->GetSelection()!=wxNOT_FOUND) {
 		EnemyGroupDataStruct& eg = eb.group[m_enemygrouplist->GetSelection()];
@@ -4071,6 +4079,9 @@ void CDDataStruct::OnEnemyChangeFlags(wxCommandEvent& event) {
 		EnemySpellDataStruct& ep = eb.spell[m_enemyspelllist->GetSelection()];
 		MACRO_FLAG_SET8(ep.element,wxID_SE)
 		MACRO_FLAG_SET8(ep.flag,wxID_SF)
+		MACRO_FLAG_SET(ep.target_flag,wxID_CAN_TARGET_DEAD,TARGET_FLAG_CAN_TARGET_DEAD)
+		MACRO_FLAG_SET(ep.target_flag,wxID_TARGET_CAMERA,TARGET_FLAG_CAMERA)
+		MACRO_FLAG_SET(ep.target_flag,wxID_TARGET_DEAD_FIRST,TARGET_FLAG_TARGET_DEAD_FIRST)
 	} else if (m_enemygrouplist->GetSelection()!=wxNOT_FOUND) {
 		EnemyGroupDataStruct& eg = eb.group[m_enemygrouplist->GetSelection()];
 		if (id==wxID_TARGETABLE1) {
@@ -4197,11 +4208,23 @@ void CDDataStruct::OnEnemyChangeButton(wxCommandEvent& event) {
 }
 
 bool DiscardEnemySizeLimit = false;
+void CDDataStruct::OnEnemyStatRightClick(wxMouseEvent& event) {
+	int newsel = m_enemystatlist->HitTest(event.GetPosition());
+	if (newsel!=wxNOT_FOUND) {
+		m_enemystatlist->SetSelection(newsel);
+		DisplayEnemyStat(m_enemylist->GetSelection(),newsel);
+		enemystatmenupaste->Enable(copyenemystat_battleid>=0);
+		if (GetGameType()!=GAME_TYPE_PSX)
+			m_enemystatlist->PopupMenu(enemystatmenu);
+	}
+}
+
 void CDDataStruct::OnEnemySpellRightClick(wxMouseEvent& event) {
 	int newsel = m_enemyspelllist->HitTest(event.GetPosition());
 	if (newsel!=wxNOT_FOUND) {
 		m_enemyspelllist->SetSelection(newsel);
 		DisplayEnemySpell(m_enemylist->GetSelection(),newsel);
+		enemyspellmenupaste->Enable(copyenemyspell_battleid>=0);
 		m_enemyspelllist->PopupMenu(enemyspellmenu);
 	}
 }
@@ -4222,6 +4245,51 @@ void CDDataStruct::OnEnemyTextRightClick(wxMouseEvent& event) {
 	m_enemytextlist->PopupMenu(enemytextmenu);
 }
 
+void CDDataStruct::OnEnemyStatRightClickMenu(wxCommandEvent& event) {
+	int sel = m_enemylist->GetSelection();
+	int id = event.GetId();
+	unsigned int* sortid = (unsigned int*)m_enemylist->GetClientData(sel);
+	EnemyDataStruct& eb = *enemyset.battle[*sortid];
+	int objid = m_enemystatlist->GetSelection();
+	int newsel = -1;
+	if (id==wxID_COPY) {
+		copyenemystat_battleid = *sortid;
+		copyenemystat_statid = objid;
+		return;
+	} else if (id==wxID_PASTE) {
+		newsel = eb.stat_amount;
+		if (eb.AddStat(&enemyset.battle[copyenemystat_battleid]->stat[copyenemystat_statid])) {
+			newsel = -1;
+			if (!DiscardEnemySizeLimit) {
+				DiscardableMessageWindow popup(wxGetApp().GetTopWindow(),HADES_STRING_DATA_REACH_LIMIT);
+				if (popup.ShowModal()==wxID_DISCARD)
+					DiscardEnemySizeLimit = true;
+			}
+		}
+	} else if (id==wxID_REMOVE && eb.stat_amount>1) {
+		eb.RemoveStat(objid);
+		newsel = min(eb.stat_amount-1,objid);
+		if (*sortid==copyenemystat_battleid) {
+			if (objid==copyenemystat_statid) {
+				copyenemystat_battleid = -1;
+				copyenemystat_statid = -1;
+			} else if (objid<copyenemystat_statid) {
+				copyenemystat_statid--;
+			}
+		}
+	}
+	if (newsel>=0) {
+		DisplayEnemy(m_enemylist->GetSelection());
+		m_enemystatlist->SetSelection(newsel);
+		DisplayEnemyStat(m_enemylist->GetSelection(),newsel);
+	}
+	m_enemylist->SetString(sel,GetEnemyBattleName(*sortid));
+	UpdateEnemyName(*sortid);
+	MarkDataEnemyModified(*sortid,CHUNK_TYPE_BATTLE_DATA);
+	MarkDataEnemyModified(*sortid,CHUNK_TYPE_ENEMY_STATS);
+	MarkDataEnemyModified(*sortid,CHUNK_TYPE_TEXT);
+}
+
 void CDDataStruct::OnEnemySpellRightClickMenu(wxCommandEvent& event) {
 	int sel = m_enemylist->GetSelection();
 	int id = event.GetId();
@@ -4229,9 +4297,13 @@ void CDDataStruct::OnEnemySpellRightClickMenu(wxCommandEvent& event) {
 	EnemyDataStruct& eb = *enemyset.battle[*sortid];
 	int objid = m_enemyspelllist->GetSelection();
 	int newsel = -1;
-	if (id==wxID_ADD) {
+	if (id==wxID_COPY) {
+		copyenemyspell_battleid = *sortid;
+		copyenemyspell_spellid = objid;
+		return;
+	} else if (id==wxID_PASTE) {
 		newsel = eb.spell_amount;
-		if (eb.AddSpell(objid)) {
+		if (eb.AddSpell(&enemyset.battle[copyenemyspell_battleid]->spell[copyenemyspell_spellid])) {
 			newsel = -1;
 			if (!DiscardEnemySizeLimit) {
 				DiscardableMessageWindow popup(wxGetApp().GetTopWindow(),HADES_STRING_DATA_REACH_LIMIT);
@@ -4242,6 +4314,14 @@ void CDDataStruct::OnEnemySpellRightClickMenu(wxCommandEvent& event) {
 	} else if (id==wxID_REMOVE) {
 		eb.RemoveSpell(objid);
 		newsel = min(eb.spell_amount-1,objid);
+		if (*sortid==copyenemyspell_battleid) {
+			if (objid==copyenemyspell_spellid) {
+				copyenemyspell_battleid = -1;
+				copyenemyspell_spellid = -1;
+			} else if (objid<copyenemyspell_spellid) {
+				copyenemyspell_spellid--;
+			}
+		}
 	}
 	if (newsel>=0) {
 		DisplayEnemy(m_enemylist->GetSelection());
@@ -6544,6 +6624,10 @@ CDDataStruct::CDDataStruct(wxWindow* parent, string fname, ConfigurationSet& cfg
 	cilsorted(OrderedIndex),
 	scenetex(NULL),
 	scenepal(NULL),
+	copyenemystat_battleid(-1),
+	copyenemystat_statid(-1),
+	copyenemyspell_battleid(-1),
+	copyenemyspell_spellid(-1),
 	scenetexpreview(wxNullBitmap),
 	scenetexlinkpreview(wxNullBitmap),
 	fieldtexpreview(wxNullBitmap) {
@@ -6572,9 +6656,17 @@ CDDataStruct::CDDataStruct(wxWindow* parent, string fname, ConfigurationSet& cfg
 	scenetexmenu->Append(wxID_ADD,HADES_STRING_GENERIC_ADD);
 	scenetexmenu->Append(wxID_REMOVE,HADES_STRING_GENERIC_REMOVE);
 	scenetexmenu->Connect(wxEVT_COMMAND_MENU_SELECTED,wxCommandEventHandler(CDDataStruct::OnBattleSceneTextureSelectRightClickMenu),NULL,this);
+	enemystatmenu = new wxMenu();
+	enemystatmenupaste = new wxMenuItem(enemystatmenu,wxID_PASTE,HADES_STRING_GENERIC_PASTE);
+	enemystatmenu->Append(wxID_COPY,HADES_STRING_GENERIC_COPY);
+	enemystatmenu->Append(wxID_REMOVE,HADES_STRING_GENERIC_REMOVE);
+	enemystatmenu->Append(enemystatmenupaste);
+	enemystatmenu->Connect(wxEVT_COMMAND_MENU_SELECTED,wxCommandEventHandler(CDDataStruct::OnEnemyStatRightClickMenu),NULL,this);
 	enemyspellmenu = new wxMenu();
-	enemyspellmenu->Append(wxID_ADD,HADES_STRING_GENERIC_ADD);
+	enemyspellmenupaste = new wxMenuItem(enemyspellmenu,wxID_PASTE,HADES_STRING_GENERIC_PASTE);
+	enemyspellmenu->Append(wxID_COPY,HADES_STRING_GENERIC_COPY);
 	enemyspellmenu->Append(wxID_REMOVE,HADES_STRING_GENERIC_REMOVE);
+	enemyspellmenu->Append(enemyspellmenupaste);
 	enemyspellmenu->Connect(wxEVT_COMMAND_MENU_SELECTED,wxCommandEventHandler(CDDataStruct::OnEnemySpellRightClickMenu),NULL,this);
 	enemygroupmenu = new wxMenu();
 	enemygroupmenu->Append(wxID_ADD,HADES_STRING_GENERIC_ADD);

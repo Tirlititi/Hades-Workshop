@@ -72,7 +72,7 @@ public:
 	int LoadHWS(fstream &ffbin, bool usetext);
 	void WriteHWS(fstream &ffbin);
 	// Return a modifamount-long pointer, to be deleted[]
-	DllMetaDataModification* ComputeSteamMod(fstream& ffbinbase, ConfigurationSet& config, unsigned int* modifamount);
+	DllMetaDataModification* ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount);
 	// texttype: 0 for name, 1 for help
 	void WriteSteamText(fstream& ffbin, unsigned int texttype);
 	void UpdateOffset();
@@ -80,6 +80,7 @@ public:
 private:
 	uint8_t spell_full_list[COMMAND_SPELL_AMOUNT];
 	
+	void SetupLinks();
 	void UpdateSpellsDatas();
 };
 

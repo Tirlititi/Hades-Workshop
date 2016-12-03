@@ -51,6 +51,8 @@ struct SortedChoiceItemModel {
 #define HADES_STRING_ERROR_UNKNOWN L"An unknown error has occured..."
 #define HADES_STRING_GENERIC_ADD L"Add"
 #define HADES_STRING_GENERIC_REMOVE L"Remove"
+#define HADES_STRING_GENERIC_COPY L"Copy"
+#define HADES_STRING_GENERIC_PASTE L"Paste"
 #define HADES_STRING_GENERIC_PROPERTIES L"Properties..."
 #define HADES_STRING_GENERIC_SELECT_ALL L"Select All"
 #define HADES_STRING_GENERIC_DESELECT_ALL L"Deselect All"
@@ -2107,7 +2109,7 @@ static SortedChoiceItem HADES_STRING_BATTLE_SCENE_NAME[] = {
 	{ 0xA7, L"Memoria, World Fusion" },
 	{ 0xA9, L"Memoria, Portal" },
 	{ 0xA8, L"Memoria, Birth" },
-	{ 0xAC, L"Memoria, Hades battle" },
+	{ 0xAC, L"Memoria, Hades & To the Origin" },
 	{ 0x99, L"Memoria, Ocean" },
 	{ 0xAA, L"Memoria, Time Warp" },
 	{ 0xAB, L"Memoria, Gaia's Birth" },

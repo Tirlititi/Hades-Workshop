@@ -51,8 +51,8 @@ public:
 	uint8_t status;
 	uint8_t mp;
 	uint16_t model;
-	uint8_t unknown1;
-	uint8_t unknown2;
+	uint8_t target_type;
+	uint8_t target_flag;
 	uint8_t unknown3;
 	uint32_t unknown4;
 	
@@ -129,6 +129,9 @@ public:
 	uint8_t zero2;
 	uint32_t zero3;
 	
+	uint8_t sequence_anim_base;
+	uint8_t sequence_anim_amount;
+	
 	// Return 0 if success ; 1 if the value is too long
 	int SetName(wstring newvalue);
 	int SetName(FF9String& newvalue);
@@ -166,11 +169,15 @@ public:
 	EnemySpellDataStruct* spell;
 	uint16_t flag;
 	
+	// Battle Scene ID are from the PSX version ; Use SteamBattleScenePSXId[] for conversion
 	uint16_t scene_id;
 	
-	int AddSpell(uint16_t copyid); // always append one
+	// always append one
+	int AddStat(EnemyStatDataStruct* copystat);
+	int AddSpell(EnemySpellDataStruct* copyspell);
+	int AddGroup();
+	void RemoveStat(uint16_t statid);
 	void RemoveSpell(uint16_t spellid);
-	int AddGroup(); // always append one
 	void RemoveGroup(uint16_t groupid);
 	
 	void Read(fstream& f);
@@ -244,12 +251,15 @@ public:
 	ImageMapDataStruct*** image_map; // PSX only - pointer to the cluster's image map list
 	unsigned int image_map_amount;
 	
+	uint32_t steam_method_position;
+	uint32_t steam_method_base_length;
+	
 	// Return temporary array not to be destroyed (as for statids)
 	EnemyStatDataStruct** GetSimilarEnemyStats(EnemyStatDataStruct& stat, unsigned int* amountfound, unsigned int** battleid);
 	// Change "battle_name[battleid]" according to battle's monster names
 	void UpdateBattleName(unsigned int battleid);
-	// Make the modifications inside field and world map image maps only...
-	// Mark the updated image maps as modified
+	// For PSX: Make the modifications inside field and world map image maps only... Mark the updated image maps as modified
+	// For Steam: Only register the change ; nothing more needed
 	int ChangeBattleScene(uint16_t battleid, uint16_t newsceneid, uint32_t newsceneoffset = 0, uint32_t newscenesize = 0);
 	int ChangeBattleModel(uint16_t battleid, uint8_t enemyid, BattleModelLinks& newmodelinfo);
 	
@@ -261,6 +271,8 @@ public:
 	// {Number of oversized battles, Number of unknown data, Number of unused battles, Number of ignored Preload data}
 	int* LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool usetext, unsigned int localflag);
 	void WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsigned int localflag);
+	// Return a modifamount-long pointer, to be deleted[]
+	DllMetaDataModification* ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount);
 	
 private:
 	unsigned int modified_battle_scene_amount;
@@ -268,6 +280,8 @@ private:
 	uint16_t modified_scene_id[0x1000];
 	uint32_t modified_scene_offset[0x1000];
 	uint32_t modified_scene_size[0x1000];
+	
+	void SetupEnemyInfo(uint16_t battleid);
 };
 
 struct BattleModelLinks {
@@ -301,6 +315,8 @@ struct BattleModelLinks {
 	
 	static BattleModelLinks& GetLinksByModel(uint16_t modelid);
 	static bool IsBattleModel(uint16_t modelid);
+	
+	void ApplyToEnemyStat(EnemyStatDataStruct& es);
 };
 
 #endif

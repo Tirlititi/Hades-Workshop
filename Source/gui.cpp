@@ -578,7 +578,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	
 	fgSizer7->Add( m_spelltargetpriority, 0, wxALL, 2 );
 	
-	m_spelltargetflaglabel = new wxStaticText( m_spellscrolledwindow, wxID_ANY, _("Target Flags"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_spelltargetflaglabel = new wxStaticText( m_spellscrolledwindow, wxID_ANY, _("UI Flags"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_spelltargetflaglabel->Wrap( -1 );
 	fgSizer7->Add( m_spelltargetflaglabel, 0, wxALL, 5 );
 	
@@ -591,7 +591,9 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_spelltargetflagdeadfirst = new wxCheckBox( m_spellscrolledwindow, wxID_TARGET_DEAD_FIRST, _("Target KO in priority"), wxDefaultPosition, wxDefaultSize, 0 );
 	gSizer21->Add( m_spelltargetflagdeadfirst, 0, wxALL, 5 );
 	
-	m_spelltargetflagcamera = new wxCheckBox( m_spellscrolledwindow, wxID_TARGET_CAMERA, _("Unknown"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_spelltargetflagcamera = new wxCheckBox( m_spellscrolledwindow, wxID_TARGET_CAMERA, _("Alternate Camera"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_spelltargetflagcamera->SetToolTip( _("Always use the alternative camera\nin spell animations using such a camera") );
+	
 	gSizer21->Add( m_spelltargetflagcamera, 0, wxALL, 5 );
 	
 	
@@ -1885,18 +1887,23 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	
 	fgSizer33->Add( m_itemusabletargetpriority, 0, wxALL, 2 );
 	
-	m_staticText199 = new wxStaticText( m_itemusablepanel, wxID_ANY, _("Target Flags"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText199 = new wxStaticText( m_itemusablepanel, wxID_ANY, _("UI Flags"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText199->Wrap( -1 );
 	fgSizer33->Add( m_staticText199, 0, wxALL, 5 );
 	
 	wxGridSizer* gSizer211;
-	gSizer211 = new wxGridSizer( 1, 2, 0, 0 );
+	gSizer211 = new wxGridSizer( 1, 3, 0, 0 );
 	
 	m_itemusabletargetflagdead = new wxCheckBox( m_itemusablepanel, wxID_CAN_TARGET_DEAD, _("Can target KO"), wxDefaultPosition, wxDefaultSize, 0 );
 	gSizer211->Add( m_itemusabletargetflagdead, 0, wxALL, 5 );
 	
 	m_itemusabletargetflagdeadfirst = new wxCheckBox( m_itemusablepanel, wxID_TARGET_DEAD_FIRST, _("Target KO in priority"), wxDefaultPosition, wxDefaultSize, 0 );
 	gSizer211->Add( m_itemusabletargetflagdeadfirst, 0, wxALL, 5 );
+	
+	m_itemusabletargetflagcamera = new wxCheckBox( m_itemusablepanel, wxID_TARGET_CAMERA, _("Alternate Camera"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_itemusabletargetflagcamera->SetToolTip( _("Always use the alternative camera\nin spell animations using such a camera") );
+	
+	gSizer211->Add( m_itemusabletargetflagcamera, 0, wxALL, 5 );
 	
 	
 	fgSizer33->Add( gSizer211, 1, wxEXPAND, 5 );
@@ -3496,14 +3503,37 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	
 	fgSizer10->Add( gSizer31, 1, wxEXPAND, 5 );
 	
-	m_staticText244 = new wxStaticText( m_enemyspellscrolledwindow, wxID_ANY, _("Base Anim"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText244 = new wxStaticText( m_enemyspellscrolledwindow, wxID_ANY, _("Animations"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText244->Wrap( -1 );
 	fgSizer10->Add( m_staticText244, 0, wxALL, 5 );
 	
-	m_enemyspellbaseanim = new wxSpinCtrl( m_enemyspellscrolledwindow, wxID_ANIM, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
-	m_enemyspellbaseanim->SetToolTip( _("ID of the first animation used by the caster") );
+	wxArrayString m_enemyspellbaseanimChoices;
+	m_enemyspellbaseanim = new wxChoice( m_enemyspellscrolledwindow, wxID_SEQANIM, wxDefaultPosition, wxDefaultSize, m_enemyspellbaseanimChoices, 0 );
+	m_enemyspellbaseanim->SetSelection( 0 );
+	m_enemyspellbaseanim->SetToolTip( _("Enemy using this ability, so the animations match") );
 	
 	fgSizer10->Add( m_enemyspellbaseanim, 0, wxALL, 2 );
+	
+	m_staticText313 = new wxStaticText( m_enemyspellscrolledwindow, wxID_ANY, _("UI Flags"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText313->Wrap( -1 );
+	fgSizer10->Add( m_staticText313, 0, wxALL, 5 );
+	
+	wxGridSizer* gSizer213;
+	gSizer213 = new wxGridSizer( 1, 3, 0, 0 );
+	
+	m_enemyspelltargetflagdead = new wxCheckBox( m_enemyspellscrolledwindow, wxID_CAN_TARGET_DEAD, _("Can target KO"), wxDefaultPosition, wxDefaultSize, 0 );
+	gSizer213->Add( m_enemyspelltargetflagdead, 0, wxALL, 5 );
+	
+	m_enemyspelltargetflagdeadfirst = new wxCheckBox( m_enemyspellscrolledwindow, wxID_TARGET_DEAD_FIRST, _("Target KO in priority"), wxDefaultPosition, wxDefaultSize, 0 );
+	gSizer213->Add( m_enemyspelltargetflagdeadfirst, 0, wxALL, 5 );
+	
+	m_enemyspelltargetflagcamera = new wxCheckBox( m_enemyspellscrolledwindow, wxID_TARGET_CAMERA, _("Alternate Camera"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_enemyspelltargetflagcamera->SetToolTip( _("Always use the alternative camera\nin spell animations using such a camera") );
+	
+	gSizer213->Add( m_enemyspelltargetflagcamera, 0, wxALL, 5 );
+	
+	
+	fgSizer10->Add( gSizer213, 1, wxEXPAND, 5 );
 	
 	m_enemyspellflaglabel = new wxStaticText( m_enemyspellscrolledwindow, wxID_ANY, _("Flags"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_enemyspellflaglabel->Wrap( -1 );
@@ -5186,6 +5216,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_itemusabletargetpriority->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnItemChangeChoice ), NULL, this );
 	m_itemusabletargetflagdead->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
 	m_itemusabletargetflagdeadfirst->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
+	m_itemusabletargetflagcamera->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
 	m_itemusabletargetpanel->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnItemChangeChoice ), NULL, this );
 	m_itemweaponformula->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnItemChangeChoice ), NULL, this );
 	m_itemweaponpower->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
@@ -5244,6 +5275,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_synthshopsynthshop8->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnShopChangeFlags ), NULL, this );
 	m_enemylist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxEnemy ), NULL, this );
 	m_enemystatlist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxEnemyStat ), NULL, this );
+	m_enemystatlist->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnEnemyStatRightClick ), NULL, this );
 	m_enemyspelllist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxEnemySpell ), NULL, this );
 	m_enemyspelllist->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnEnemySpellRightClick ), NULL, this );
 	m_enemygrouplist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxEnemyGroup ), NULL, this );
@@ -5451,7 +5483,10 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemyspellmp->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemyspellanimedit->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
 	m_enemyspellanimreflect->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
-	m_enemyspellbaseanim->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
+	m_enemyspellbaseanim->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemyspelltargetflagdead->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspelltargetflagdeadfirst->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspelltargetflagcamera->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyspellflag1->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyspellflag2->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyspellflag3->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
@@ -5772,6 +5807,7 @@ CDPanel::~CDPanel()
 	m_itemusabletargetpriority->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnItemChangeChoice ), NULL, this );
 	m_itemusabletargetflagdead->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
 	m_itemusabletargetflagdeadfirst->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
+	m_itemusabletargetflagcamera->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
 	m_itemusabletargetpanel->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnItemChangeChoice ), NULL, this );
 	m_itemweaponformula->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnItemChangeChoice ), NULL, this );
 	m_itemweaponpower->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
@@ -5830,6 +5866,7 @@ CDPanel::~CDPanel()
 	m_synthshopsynthshop8->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnShopChangeFlags ), NULL, this );
 	m_enemylist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxEnemy ), NULL, this );
 	m_enemystatlist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxEnemyStat ), NULL, this );
+	m_enemystatlist->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnEnemyStatRightClick ), NULL, this );
 	m_enemyspelllist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxEnemySpell ), NULL, this );
 	m_enemyspelllist->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnEnemySpellRightClick ), NULL, this );
 	m_enemygrouplist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxEnemyGroup ), NULL, this );
@@ -6037,7 +6074,10 @@ CDPanel::~CDPanel()
 	m_enemyspellmp->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemyspellanimedit->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
 	m_enemyspellanimreflect->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
-	m_enemyspellbaseanim->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
+	m_enemyspellbaseanim->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemyspelltargetflagdead->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspelltargetflagdeadfirst->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspelltargetflagcamera->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyspellflag1->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyspellflag2->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyspellflag3->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
@@ -7404,7 +7444,7 @@ AboutWindow::AboutWindow( wxWindow* parent, wxWindowID id, const wxString& title
 	wxBoxSizer* bSizer16;
 	bSizer16 = new wxBoxSizer( wxVERTICAL );
 	
-	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.35b\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_CENTRE|wxTE_MULTILINE|wxTE_READONLY|wxSIMPLE_BORDER );
+	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.35c\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_CENTRE|wxTE_MULTILINE|wxTE_READONLY|wxSIMPLE_BORDER );
 	m_textCtrl13->SetMaxLength( 0 ); 
 	m_textCtrl13->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 	m_textCtrl13->SetMinSize( wxSize( -1,330 ) );

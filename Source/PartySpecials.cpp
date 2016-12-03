@@ -20,21 +20,20 @@ void PartySpecialDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 		ffbin.seekg(config.party_magicsword_offset);
 		MACRO_MAGICSWORD_IOFUNCTION(FFIXRead,FFIXSeek,true,false)
 	} else {
-		string fname = config.steam_dir_managed;
-		fname += "Assembly-CSharp.dll";
-		ffbin.open(fname.c_str(),ios::in | ios::binary);
-		ffbin.seekg(config.meta_dll.GetStaticFieldOffset(config.dll_magicsword_field_id));
+		DllMetaData& dlldata = config.meta_dll;
+		dlldata.dll_file.seekg(dlldata.GetStaticFieldOffset(config.dll_magicsword_field_id));
 		for (i=0;i<MAGIC_SWORD_AMOUNT;i++) {
-			SteamReadChar(ffbin,magic_sword_requirement[i]);
-			ffbin.seekg(3,ios::cur);
+			SteamReadChar(dlldata.dll_file,magic_sword_requirement[i]);
+			dlldata.dll_file.seekg(3,ios::cur);
 		}
 	}
 }
 
-DllMetaDataModification* PartySpecialDataSet::ComputeSteamMod(fstream& ffbinbase, ConfigurationSet& config, unsigned int* modifamount) {
+DllMetaDataModification* PartySpecialDataSet::ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount) {
 	DllMetaDataModification* res = new DllMetaDataModification[1];
+	DllMetaData& dlldata = config.meta_dll;
 	unsigned int i;
-	res[0].position = config.meta_dll.GetStaticFieldOffset(config.dll_magicsword_field_id);
+	res[0].position = dlldata.GetStaticFieldOffset(config.dll_magicsword_field_id);
 	res[0].base_length = 4*MAGIC_SWORD_AMOUNT;
 	res[0].new_length = 4*MAGIC_SWORD_AMOUNT;
 	res[0].value = new uint8_t[res[0].new_length];

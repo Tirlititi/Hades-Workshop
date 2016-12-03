@@ -303,11 +303,13 @@ void FF9String::SetValue(wstring value) {
 		wxString wxstr(value);
 		wxCharBuffer buffer = wxstr.mb_str(wxConvUTF8);
 		length = buffer.length()+6;
-		size_t lastopposbeg = value.find_last_of(L'[');
-		if (lastopposbeg!=string::npos && lastopposbeg+6<=value.length()) {
-			if (value.substr(lastopposbeg+1,4).compare(L"TIME")==0) {
-				null_terminated = 0;
-				length = buffer.length();
+		if (value[len-1]==L']') {
+			size_t lastopposbeg = value.find_last_of(L'[');
+			if (lastopposbeg!=string::npos && lastopposbeg+6<=value.length()) {
+				if (value.substr(lastopposbeg+1,4).compare(L"TIME")==0) {
+					null_terminated = 0;
+					length = buffer.length();
+				}
 			}
 		}
 		str = value;

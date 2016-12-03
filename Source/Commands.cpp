@@ -167,33 +167,12 @@ void CommandDataStruct::BreakLink() {
 	if (PPF) PPFEndScanStep(); \
 	SEEK(ffbin,txtpos,help_space_total);
 
-#define MACRO_COMMAND_IOFUNCTIONLIST(IO,SEEK,READ,PPF,STEAMVER) \
-	if (READ) spell_space_remaining = COMMAND_SPELL_AMOUNT; \
+#define MACRO_COMMAND_IOFUNCTIONLIST(IO,SEEK,READ,PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<COMMAND_SPELL_AMOUNT;i++) { \
+	for (i=0;i<COMMAND_SPELL_AMOUNT;i++) \
 		IO ## Char(ffbin,spell_full_list[i]); \
-		if (STEAMVER) SEEK(ffbin,ffbin.tellg(),3); \
-	} \
 	if (PPF) PPFEndScanStep(); \
-	if (READ) { \
-		for (i=0;i<COMMAND_AMOUNT;i++) \
-			cmd[i].link = 0xFF; \
-		for (i=0;i<COMMAND_AMOUNT;i++) \
-			if (cmd[i].panel==COMMAND_PANEL_SPELL) { \
-				if (cmd[i].link==0xFF) { \
-					spell_space_remaining -= cmd[i].spell_amount; \
-					for (j=i+1;j<COMMAND_AMOUNT;j++) \
-						if (cmd[i].spell_index==cmd[j].spell_index && cmd[i].spell_amount==cmd[j].spell_amount) { \
-							cmd[i].link = j; \
-							cmd[j].link = i; \
-							break; \
-						} \
-				} \
-				for (j=0;j<cmd[i].spell_amount;j++) \
-					cmd[i].spell_list[j] = spell_full_list[cmd[i].spell_index+j]; \
-			} else \
-				cmd[i].spell_list[0] = cmd[i].spell_index; \
-	}
+	if (READ) SetupLinks();
 
 
 void CommandDataSet::Load(fstream &ffbin, ConfigurationSet& config) {
@@ -212,8 +191,9 @@ void CommandDataSet::Load(fstream &ffbin, ConfigurationSet& config) {
 		MACRO_COMMAND_IOFUNCTIONDATA(FFIXRead,FFIXSeek,true,false)
 		MACRO_COMMAND_IOFUNCTIONNAME(FFIXRead,FFIXSeek,true,false)
 		MACRO_COMMAND_IOFUNCTIONHELP(FFIXRead,FFIXSeek,true,false)
-		MACRO_COMMAND_IOFUNCTIONLIST(FFIXRead,FFIXSeek,true,false,false)
+		MACRO_COMMAND_IOFUNCTIONLIST(FFIXRead,FFIXSeek,true,false)
 	} else {
+		DllMetaData& dlldata = config.meta_dll;
 		DllMethodInfo methinfo;
 		string fname = config.steam_dir_data;
 		fname += "resources.assets";
@@ -227,21 +207,22 @@ void CommandDataSet::Load(fstream &ffbin, ConfigurationSet& config) {
 		for (i=0;i<COMMAND_AMOUNT;i++)
 			SteamReadFF9String(ffbin,cmd[i].help);
 		ffbin.close();
-		fname = config.steam_dir_managed;
-		fname += "Assembly-CSharp.dll";
-		ffbin.open(fname.c_str(),ios::in | ios::binary);
-		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_rdata_method_id));
-		methinfo.ReadMethodInfo(ffbin);
+		dlldata.dll_file.seekg(dlldata.GetMethodOffset(config.dll_rdata_method_id));
+		methinfo.ReadMethodInfo(dlldata.dll_file);
 		ILInstruction initinst[3] = {
 			{ 0x1F, COMMAND_AMOUNT },
-			{ 0x8D, config.meta_dll.GetTypeTokenIdentifier("FF9COMMAND") },
+			{ 0x8D, dlldata.GetTypeTokenIdentifier("FF9COMMAND") },
 			{ 0x25 }
 		};
-		methinfo.JumpToInstructions(ffbin,3,initinst);
-		steam_method_position = ffbin.tellg();
-		uint8_t* rawcmddata = ConvertILScriptToRawData_Object(ffbin,COMMAND_AMOUNT,6,steam_cmd_field_size);
-		steam_method_base_length = (unsigned int)ffbin.tellg()-steam_method_position;
-		ffbin.close();
+		methinfo.JumpToInstructions(dlldata.dll_file,3,initinst);
+		steam_method_position = dlldata.dll_file.tellg();
+		uint8_t* rawcmddata = dlldata.ConvertScriptToRaw_Object(COMMAND_AMOUNT,6,steam_cmd_field_size);
+		steam_method_base_length = (unsigned int)dlldata.dll_file.tellg()-steam_method_position;
+		dlldata.dll_file.seekg(dlldata.GetStaticFieldOffset(config.dll_cmdspelllist_field_id));
+		for (i=0;i<COMMAND_SPELL_AMOUNT;i++) {
+			SteamReadChar(dlldata.dll_file,spell_full_list[i]);
+			dlldata.dll_file.seekg(3,ios::cur);
+		}
 		fname = tmpnam(NULL);
 		ffbin.open(fname.c_str(),ios::out | ios::binary);
 		ffbin.write((const char*)rawcmddata,0xC*COMMAND_AMOUNT);
@@ -251,17 +232,13 @@ void CommandDataSet::Load(fstream &ffbin, ConfigurationSet& config) {
 		ffbin.close();
 		remove(fname.c_str());
 		delete[] rawcmddata;
-		fname = config.steam_dir_managed;
-		fname += "Assembly-CSharp.dll";
-		ffbin.open(fname.c_str(),ios::in | ios::binary);
-		ffbin.seekg(config.meta_dll.GetStaticFieldOffset(config.dll_cmdspelllist_field_id));
-		MACRO_COMMAND_IOFUNCTIONLIST(SteamRead,SteamSeek,true,false,true)
-		ffbin.close();
+		SetupLinks();
 	}
 }
 
-DllMetaDataModification* CommandDataSet::ComputeSteamMod(fstream& ffbinbase, ConfigurationSet& config, unsigned int* modifamount) {
+DllMetaDataModification* CommandDataSet::ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount) {
 	DllMetaDataModification* res = new DllMetaDataModification[2];
+	DllMetaData& dlldata = config.meta_dll;
 	uint32_t** argvalue = new uint32_t*[COMMAND_AMOUNT];
 	UpdateSpellsDatas();
 	unsigned int i;
@@ -274,7 +251,7 @@ DllMetaDataModification* CommandDataSet::ComputeSteamMod(fstream& ffbinbase, Con
 		argvalue[i][4] = cmd[i].spell_amount;
 		argvalue[i][5] = cmd[i].spell_index;
 	}
-	res[0] = ModifyILScript_Object(ffbinbase,argvalue,steam_method_position,steam_method_base_length,COMMAND_AMOUNT,6,steam_cmd_field_size);
+	res[0] = dlldata.ConvertRawToScript_Object(argvalue,steam_method_position,steam_method_base_length,COMMAND_AMOUNT,6,steam_cmd_field_size);
 	for (i=0;i<COMMAND_AMOUNT;i++)
 		delete[] argvalue[i];
 	delete[] argvalue;
@@ -311,11 +288,11 @@ void CommandDataSet::Write(fstream &ffbin, ConfigurationSet& config) {
 	MACRO_COMMAND_IOFUNCTIONDATA(FFIXWrite,FFIXSeek,false,false)
 	MACRO_COMMAND_IOFUNCTIONNAME(FFIXWrite,FFIXSeek,false,false)
 	MACRO_COMMAND_IOFUNCTIONHELP(FFIXWrite,FFIXSeek,false,false)
-	MACRO_COMMAND_IOFUNCTIONLIST(FFIXWrite,FFIXSeek,false,false,false)
+	MACRO_COMMAND_IOFUNCTIONLIST(FFIXWrite,FFIXSeek,false,false)
 	ffbin.seekg(config.cmd_data_offset[1]);
 	MACRO_COMMAND_IOFUNCTIONDATA(FFIXWrite,FFIXSeek,false,false)
 	MACRO_COMMAND_IOFUNCTIONNAME(FFIXWrite,FFIXSeek,false,false)
-	MACRO_COMMAND_IOFUNCTIONLIST(FFIXWrite,FFIXSeek,false,false,false)
+	MACRO_COMMAND_IOFUNCTIONLIST(FFIXWrite,FFIXSeek,false,false)
 	ffbin.seekg(config.cmd_data_offset[2]);
 	MACRO_COMMAND_IOFUNCTIONDATA(FFIXWrite,FFIXSeek,false,false)
 	MACRO_COMMAND_IOFUNCTIONNAME(FFIXWrite,FFIXSeek,false,false)
@@ -332,11 +309,11 @@ void CommandDataSet::WritePPF(fstream &ffbin, ConfigurationSet& config) {
 	MACRO_COMMAND_IOFUNCTIONDATA(PPFStepAdd,FFIXSeek,false,true)
 	MACRO_COMMAND_IOFUNCTIONNAME(PPFStepAdd,FFIXSeek,false,true)
 	MACRO_COMMAND_IOFUNCTIONHELP(PPFStepAdd,FFIXSeek,false,true)
-	MACRO_COMMAND_IOFUNCTIONLIST(PPFStepAdd,FFIXSeek,false,true,false)
+	MACRO_COMMAND_IOFUNCTIONLIST(PPFStepAdd,FFIXSeek,false,true)
 	ffbin.seekg(config.cmd_data_offset[1]);
 	MACRO_COMMAND_IOFUNCTIONDATA(PPFStepAdd,FFIXSeek,false,true)
 	MACRO_COMMAND_IOFUNCTIONNAME(PPFStepAdd,FFIXSeek,false,true)
-	MACRO_COMMAND_IOFUNCTIONLIST(PPFStepAdd,FFIXSeek,false,true,false)
+	MACRO_COMMAND_IOFUNCTIONLIST(PPFStepAdd,FFIXSeek,false,true)
 	ffbin.seekg(config.cmd_data_offset[2]);
 	MACRO_COMMAND_IOFUNCTIONDATA(PPFStepAdd,FFIXSeek,false,true)
 	MACRO_COMMAND_IOFUNCTIONNAME(PPFStepAdd,FFIXSeek,false,true)
@@ -440,7 +417,7 @@ int CommandDataSet::LoadHWS(fstream &ffbin, bool usetext) {
 		if (usetext)
 			res |= 2;
 	}
-	MACRO_COMMAND_IOFUNCTIONLIST(HWSRead,HWSSeek,true,false,false)
+	MACRO_COMMAND_IOFUNCTIONLIST(HWSRead,HWSSeek,true,false)
 	name_space_total = namesize;
 	help_space_total = helpsize;
 	UpdateOffset();
@@ -480,7 +457,7 @@ void CommandDataSet::WriteHWS(fstream &ffbin) {
 		lg = 0xFF;
 		HWSWriteChar(ffbin,lg);
 	}
-	MACRO_COMMAND_IOFUNCTIONLIST(HWSWrite,HWSSeek,false,false,false)
+	MACRO_COMMAND_IOFUNCTIONLIST(HWSWrite,HWSSeek,false,false)
 	name_space_total = namesize;
 	help_space_total = helpsize;
 }
@@ -496,6 +473,28 @@ void CommandDataSet::UpdateOffset() {
 	}
 	name_space_used = j;
 	help_space_used = k;
+}
+
+void CommandDataSet::SetupLinks() {
+	unsigned int i,j;
+	spell_space_remaining = COMMAND_SPELL_AMOUNT;
+	for (i=0;i<COMMAND_AMOUNT;i++)
+		cmd[i].link = 0xFF;
+	for (i=0;i<COMMAND_AMOUNT;i++)
+		if (cmd[i].panel==COMMAND_PANEL_SPELL) {
+			if (cmd[i].link==0xFF) {
+				spell_space_remaining -= cmd[i].spell_amount;
+				for (j=i+1;j<COMMAND_AMOUNT;j++)
+					if (cmd[i].spell_index==cmd[j].spell_index && cmd[i].spell_amount==cmd[j].spell_amount) {
+						cmd[i].link = j;
+						cmd[j].link = i;
+						break;
+					}
+			}
+			for (j=0;j<cmd[i].spell_amount;j++)
+				cmd[i].spell_list[j] = spell_full_list[cmd[i].spell_index+j];
+		} else
+			cmd[i].spell_list[0] = cmd[i].spell_index;
 }
 
 void CommandDataSet::UpdateSpellsDatas() {

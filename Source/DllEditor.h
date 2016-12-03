@@ -33,6 +33,7 @@ struct CILDataSet;
 #include "File_IOCommon.h"
 #include "DllCilMacro.h"
 #include "Assembly_Strings.h"
+#include "Steam_Strings.h"
 
 struct DllDataDirectory {
 	uint32_t virtual_address;
@@ -131,6 +132,9 @@ public:
 	uint32_t* cil_methodspec_method;
 	uint32_t* cil_methodspec_signature;
 	
+	unsigned int user_string_amount;
+	uint32_t* user_string_offset;
+	
 	~DllMetaData() { if (dll_file.is_open()) dll_file.close(); }
 	
 	int Load(const char* fname);
@@ -144,6 +148,7 @@ public:
 	uint32_t GetFieldTokenIdentifier(const char* tname, const char* fname);
 	uint32_t GetMethodTokenIdentifier(const char* tname, const char* mname, const char* namesp = NULL);
 	uint32_t GetMemberTokenIdentifier(const char* descname);
+	uint32_t GetStringToken(wstring value);
 	
 	unsigned int GetTypeAmount();
 	unsigned int GetTypeMethodAmount(unsigned int tid);
@@ -163,7 +168,14 @@ public:
 	string GetTokenDescription(uint32_t token, bool fulldesc = true);
 	string GetNameAtPos(uint32_t stroff);
 	wstring GetStringTokenDescription(uint32_t token);
-	wstring GetUserStringAtPos(uint32_t stroff);
+	wstring GetUserStringAtPos(uint32_t stroff, bool conservedllfilepos = true);
+	
+	// sizes in bits ; assuming the sum is a multiple of 8
+	uint8_t* ConvertScriptToRaw_Object(unsigned int objamount, unsigned int fieldamount, const unsigned int fieldsize[], const unsigned int array[] = NULL);
+	int64_t** ConvertScriptToRaw_Array2(unsigned int objamount, unsigned int arrayamount);
+	DllMetaDataModification ConvertRawToScript_Object(uint32_t** newfieldvalues, uint32_t pos, uint32_t baselen, unsigned int objamount, unsigned int fieldamount, const unsigned int fieldsize[], const unsigned int array[] = NULL);
+	DllMetaDataModification ConvertRawToScript_Array2(uint32_t** newfieldvalues, uint32_t pos, uint32_t baselen, unsigned int objamount, unsigned int arrayamount, uint32_t arraysettoken);
+	int64_t ScriptGetNextIntegerValue(bool includestr, uint32_t* integercodepos = NULL, SteamWDictionary* strdico = NULL);
 	
 	int Duplicate(fstream& fdest, unsigned int modifamount, DllMetaDataModification* modif); // Change dll_file stream
 
@@ -269,13 +281,5 @@ struct CILDataSet {
 	int* LoadHWS(fstream &ffhws);
 	void WriteHWS(fstream &ffhws);
 };
-
-// sizes in bits ; assuming the sum is a multiple of 8
-// Last argument only used for weapons' models (ToDo: remove that argument or turn these functions to methods)
-uint8_t* ConvertILScriptToRawData_Object(fstream& f, unsigned int objamount, unsigned int fieldamount, const unsigned int fieldsize[], const unsigned int array[] = NULL, DllMetaData* dlldata = NULL);
-int64_t** ConvertILScriptToRawData_Array2(fstream& f, unsigned int objamount, unsigned int arrayamount);
-
-DllMetaDataModification ModifyILScript_Object(fstream& f, uint32_t** newfieldvalues, uint32_t pos, uint32_t baselen, unsigned int objamount, unsigned int fieldamount, const unsigned int fieldsize[], const unsigned int array[] = NULL, DllMetaData* dlldata = NULL);
-DllMetaDataModification ModifyILScript_Array2(fstream& f, uint32_t** newfieldvalues, uint32_t pos, uint32_t baselen, unsigned int objamount, unsigned int arrayamount);
 
 #endif

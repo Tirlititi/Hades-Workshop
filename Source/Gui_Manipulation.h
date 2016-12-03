@@ -181,6 +181,10 @@ public:
 private:
 	uint16_t* scenetex;
 	uint16_t* scenepal;
+	int copyenemystat_battleid;
+	int copyenemystat_statid;
+	int copyenemyspell_battleid;
+	int copyenemyspell_spellid;
 	BattleSceneImportLinkTextureWindow* scenetexturelink;
 	wxBitmap chartexpreview;
 	wxBitmap worldchartexpreview;
@@ -188,12 +192,15 @@ private:
 	wxBitmap scenetexpreview;
 	wxBitmap scenetexlinkpreview;
 	wxMenu* scenetexmenu;
+	wxMenu* enemystatmenu;
 	wxMenu* enemyspellmenu;
 	wxMenu* enemygroupmenu;
 	wxMenu* enemytextmenu;
 	wxMenu* worldtextmenu;
 	wxMenu* textmenu;
 	wxMenu* specialtextmenu;
+	wxMenuItem* enemystatmenupaste;
+	wxMenuItem* enemyspellmenupaste;
 	
 	void TextReachLimit();
 	void OnNotebookMain(wxNotebookEvent& event);
@@ -244,9 +251,11 @@ private:
 	void OnEnemyChangeChoice(wxCommandEvent& event);
 	void OnEnemyChangeFlags(wxCommandEvent& event);
 	void OnEnemyChangeButton(wxCommandEvent& event);
+	void OnEnemyStatRightClick(wxMouseEvent& event);
 	void OnEnemySpellRightClick(wxMouseEvent& event);
 	void OnEnemyGroupRightClick(wxMouseEvent& event);
 	void OnEnemyTextRightClick(wxMouseEvent& event);
+	void OnEnemyStatRightClickMenu(wxCommandEvent& event);
 	void OnEnemySpellRightClickMenu(wxCommandEvent& event);
 	void OnEnemyGroupRightClickMenu(wxCommandEvent& event);
 	void OnEnemyTextRightClickMenu(wxCommandEvent& event);

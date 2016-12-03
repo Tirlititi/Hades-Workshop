@@ -480,7 +480,7 @@ int CilScriptEditDialog::ShowModal() {
 				script += wxString::Format(wxT(" IL_%.4X"),BufferGetPosition()+(int32_t)tmp32);
 			break;
 		case ILT_STRING:
-			script += wxString::Format(wxT(" 0x%X\t// %s"),tmp32,cilset->data->GetStringTokenDescription(tmp32).c_str());
+			script += wxString::Format(wxT(" 0x%X\t// \"%s\""),tmp32,cilset->data->GetStringTokenDescription(tmp32).c_str());
 			break;
 		case ILT_METHOD:
 			script += wxString::Format(wxT(" 0x%X\t// %s"),tmp32,cilset->data->GetTokenDescription(tmp32).c_str());

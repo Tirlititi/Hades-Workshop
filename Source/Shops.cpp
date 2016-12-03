@@ -40,10 +40,9 @@ void ShopDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 		ffbin.seekg(config.synthesis_data_offset);
 		MACRO_SHOP_IOFUNCTIONSYNTH(FFIXRead,true,false)
 	} else {
+		DllMetaData& dlldata = config.meta_dll;
 		DllMethodInfo methinfo;
-		string fname = config.steam_dir_managed;
-		fname += "Assembly-CSharp.dll";
-		ffbin.open(fname.c_str(),ios::in | ios::binary);
+		string fname;
 		for (i=0;i<SHOP_AMOUNT;i++) {
 			if (config.dll_shop_field_id[i]<0) {
 				shop[i].item_list[0] = 0xFF;
@@ -51,10 +50,10 @@ void ShopDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 				steam_method_base_length_shop[i] = 0;
 				j = 1;
 			} else {
-				ffbin.seekg(config.meta_dll.GetStaticFieldOffset(config.dll_shop_field_id[i]));
+				dlldata.dll_file.seekg(dlldata.GetStaticFieldOffset(config.dll_shop_field_id[i]));
 				j = 0;
 				do {
-					SteamReadChar(ffbin,shop[i].item_list[j]);
+					SteamReadChar(dlldata.dll_file,shop[i].item_list[j]);
 				} while (shop[i].item_list[j]!=0xFF && ++j<SHOP_ITEM_AMOUNT);
 				shop[i].item_amount = j;
 				if (j<SHOP_ITEM_AMOUNT)
@@ -64,18 +63,17 @@ void ShopDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 			while (j<SHOP_ITEM_AMOUNT)
 				shop[i].item_list[j++] = 0;
 		}
-		ffbin.seekg(config.meta_dll.GetMethodOffset(config.dll_mix_method_id));
-		methinfo.ReadMethodInfo(ffbin);
+		dlldata.dll_file.seekg(dlldata.GetMethodOffset(config.dll_mix_method_id));
+		methinfo.ReadMethodInfo(dlldata.dll_file);
 		ILInstruction initinst[3] = {
 			{ 0x1F, SYNTHESIS_AMOUNT },
-			{ 0x8D, config.meta_dll.GetTypeTokenIdentifier("FF9MIX_DATA","FF9") },
+			{ 0x8D, dlldata.GetTypeTokenIdentifier("FF9MIX_DATA","FF9") },
 			{ 0x25 }
 		};
-		methinfo.JumpToInstructions(ffbin,3,initinst);
-		steam_method_position_synthesis = ffbin.tellg();
-		uint8_t* rawsynthdata = ConvertILScriptToRawData_Object(ffbin,SYNTHESIS_AMOUNT,5,steam_shop_field_size,steam_shop_field_array);
-		steam_method_base_length_synthesis = (unsigned int)ffbin.tellg()-steam_method_position_synthesis;
-		ffbin.close();
+		methinfo.JumpToInstructions(dlldata.dll_file,3,initinst);
+		steam_method_position_synthesis = dlldata.dll_file.tellg();
+		uint8_t* rawsynthdata = dlldata.ConvertScriptToRaw_Object(SYNTHESIS_AMOUNT,5,steam_shop_field_size,steam_shop_field_array);
+		steam_method_base_length_synthesis = (unsigned int)dlldata.dll_file.tellg()-steam_method_position_synthesis;
 		fname = tmpnam(NULL);
 		ffbin.open(fname.c_str(),ios::out | ios::binary);
 		ffbin.write((const char*)rawsynthdata,6*SYNTHESIS_AMOUNT);
@@ -88,8 +86,9 @@ void ShopDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 	}
 }
 
-DllMetaDataModification* ShopDataSet::ComputeSteamMod(fstream& ffbinbase, ConfigurationSet& config, unsigned int* modifamount) {
+DllMetaDataModification* ShopDataSet::ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount) {
 	DllMetaDataModification* res;
+	DllMetaData& dlldata = config.meta_dll;
 	unsigned int fieldedshop = 0;
 	unsigned int i,j,k;
 	for (i=0;i<SHOP_AMOUNT;i++)
@@ -116,7 +115,7 @@ DllMetaDataModification* ShopDataSet::ComputeSteamMod(fstream& ffbinbase, Config
 		argvalue[i][3] = synthesis[i].synthesized;
 		argvalue[i][4] = synthesis[i].shops;
 	}
-	res[fieldedshop] = ModifyILScript_Object(ffbinbase,argvalue,steam_method_position_synthesis,steam_method_base_length_synthesis,SYNTHESIS_AMOUNT,5,steam_shop_field_size,steam_shop_field_array);
+	res[fieldedshop] = dlldata.ConvertRawToScript_Object(argvalue,steam_method_position_synthesis,steam_method_base_length_synthesis,SYNTHESIS_AMOUNT,5,steam_shop_field_size,steam_shop_field_array);
 	for (i=0;i<SYNTHESIS_AMOUNT;i++)
 		delete[] argvalue[i];
 	delete[] argvalue;
