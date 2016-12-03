@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeLite_Project Name="HadesWorkshop" InternalType="Console">
+  <Plugins>
+    <Plugin Name="qmake">
+      <![CDATA[00010001N0005Debug000000000000]]>
+    </Plugin>
+  </Plugins>
+  <Description/>
+  <Dependencies/>
+  <VirtualDirectory Name="src">
+    <File Name="../Hades-Workshop/Source/BattleScenes.cpp"/>
+    <File Name="../Hades-Workshop/Source/Cards.cpp"/>
+    <File Name="../Hades-Workshop/Source/Charmaps.cpp"/>
+    <File Name="../Hades-Workshop/Source/ClusterData.cpp"/>
+    <File Name="../Hades-Workshop/Source/Cluts.cpp"/>
+    <File Name="../Hades-Workshop/Source/Commands.cpp"/>
+    <File Name="../Hades-Workshop/Source/Configuration.cpp"/>
+    <File Name="../Hades-Workshop/Source/DllCilMacro.cpp"/>
+    <File Name="../Hades-Workshop/Source/DllEditor.cpp"/>
+    <File Name="../Hades-Workshop/Source/Enemies.cpp"/>
+    <File Name="../Hades-Workshop/Source/Fields.cpp"/>
+    <File Name="../Hades-Workshop/Source/File_Batching.cpp"/>
+    <File Name="../Hades-Workshop/Source/File_IOCommon.cpp"/>
+    <File Name="../Hades-Workshop/Source/File_Manipulation.cpp"/>
+    <File Name="../Hades-Workshop/Source/File_Recreation.cpp"/>
+    <File Name="../Hades-Workshop/Source/gui.cpp"/>
+    <File Name="../Hades-Workshop/Source/Gui_AssemblyEditor.cpp"/>
+    <File Name="../Hades-Workshop/Source/Gui_CurveEditor.cpp"/>
+    <File Name="../Hades-Workshop/Source/Gui_FieldTextureEditor.cpp"/>
+    <File Name="../Hades-Workshop/Source/Gui_GLWindow.cpp"/>
+    <File Name="../Hades-Workshop/Source/Gui_LoadingDialog.cpp"/>
+    <File Name="../Hades-Workshop/Source/Gui_Manipulation.cpp"/>
+    <File Name="../Hades-Workshop/Source/Gui_Preferences.cpp"/>
+    <File Name="../Hades-Workshop/Source/Gui_ScriptEditor.cpp"/>
+    <File Name="../Hades-Workshop/Source/Gui_SpellAnimationsEditor.cpp"/>
+    <File Name="../Hades-Workshop/Source/Gui_TextEditor.cpp"/>
+    <File Name="../Hades-Workshop/Source/Gui_TextureEditor.cpp"/>
+    <File Name="../Hades-Workshop/Source/Gui_Tools.cpp"/>
+    <File Name="../Hades-Workshop/Source/ImageMaps.cpp"/>
+    <File Name="../Hades-Workshop/Source/Items.cpp"/>
+    <File Name="../Hades-Workshop/Source/main.cpp"/>
+    <File Name="../Hades-Workshop/Source/MenuUI.cpp"/>
+    <File Name="../Hades-Workshop/Source/MIPS.cpp"/>
+    <File Name="../Hades-Workshop/Source/PartySpecials.cpp"/>
+    <File Name="../Hades-Workshop/Source/Scripts.cpp"/>
+    <File Name="../Hades-Workshop/Source/Shops.cpp"/>
+    <File Name="../Hades-Workshop/Source/SpellAnimations.cpp"/>
+    <File Name="../Hades-Workshop/Source/Spells.cpp"/>
+    <File Name="../Hades-Workshop/Source/Stats.cpp"/>
+    <File Name="../Hades-Workshop/Source/Supports.cpp"/>
+    <File Name="../Hades-Workshop/Source/Texts.cpp"/>
+    <File Name="../Hades-Workshop/Source/TIMImages.cpp"/>
+    <File Name="../Hades-Workshop/Source/UnityArchiver.cpp"/>
+    <File Name="../Hades-Workshop/Source/WorldMaps.cpp"/>
+  </VirtualDirectory>
+  <VirtualDirectory Name="include">
+    <File Name="../Hades-Workshop/Source/Assembly_Strings.h"/>
+    <File Name="../Hades-Workshop/Source/BattleScenes.h"/>
+    <File Name="../Hades-Workshop/Source/Cards.h"/>
+    <File Name="../Hades-Workshop/Source/Charmaps.h"/>
+    <File Name="../Hades-Workshop/Source/ClusterData.h"/>
+    <File Name="../Hades-Workshop/Source/Cluts.h"/>
+    <File Name="../Hades-Workshop/Source/Commands.h"/>
+    <File Name="../Hades-Workshop/Source/Configuration.h"/>
+    <File Name="../Hades-Workshop/Source/DllCilMacro.h"/>
+    <File Name="../Hades-Workshop/Source/DllEditor.h"/>
+    <File Name="../Hades-Workshop/Source/Enemies.h"/>
+    <File Name="../Hades-Workshop/Source/Fields.h"/>
+    <File Name="../Hades-Workshop/Source/File_Batching.h"/>
+    <File Name="../Hades-Workshop/Source/File_IOCommon.h"/>
+    <File Name="../Hades-Workshop/Source/File_Manipulation.h"/>
+    <File Name="../Hades-Workshop/Source/File_Recreation.h"/>
+    <File Name="../Hades-Workshop/Source/gui.h"/>
+    <File Name="../Hades-Workshop/Source/Gui_AssemblyEditor.h"/>
+    <File Name="../Hades-Workshop/Source/Gui_CurveEditor.h"/>
+    <File Name="../Hades-Workshop/Source/Gui_FieldTextureEditor.h"/>
+    <File Name="../Hades-Workshop/Source/Gui_GLWindow.h"/>
+    <File Name="../Hades-Workshop/Source/Gui_LoadingDialog.h"/>
+    <File Name="../Hades-Workshop/Source/Gui_Manipulation.h"/>
+    <File Name="../Hades-Workshop/Source/Gui_Preferences.h"/>
+    <File Name="../Hades-Workshop/Source/Gui_ScriptEditor.h"/>
+    <File Name="../Hades-Workshop/Source/Gui_SpellAnimationsEditor.h"/>
+    <File Name="../Hades-Workshop/Source/Gui_TextEditor.h"/>
+    <File Name="../Hades-Workshop/Source/Gui_TextureEditor.h"/>
+    <File Name="../Hades-Workshop/Source/Gui_Tools.h"/>
+    <File Name="../Hades-Workshop/Source/Hades_Strings.h"/>
+    <File Name="../Hades-Workshop/Source/ImageMaps.h"/>
+    <File Name="../Hades-Workshop/Source/Items.h"/>
+    <File Name="../Hades-Workshop/Source/main.h"/>
+    <File Name="../Hades-Workshop/Source/MenuUI.h"/>
+    <File Name="../Hades-Workshop/Source/MIPS.h"/>
+    <File Name="../Hades-Workshop/Source/PartySpecials.h"/>
+    <File Name="../Hades-Workshop/Source/Script_Strings.h"/>
+    <File Name="../Hades-Workshop/Source/Scripts.h"/>
+    <File Name="../Hades-Workshop/Source/Shops.h"/>
+    <File Name="../Hades-Workshop/Source/SpellAnimations.h"/>
+    <File Name="../Hades-Workshop/Source/Spells.h"/>
+    <File Name="../Hades-Workshop/Source/Stats.h"/>
+    <File Name="../Hades-Workshop/Source/Steam_Strings.h"/>
+    <File Name="../Hades-Workshop/Source/Supports.h"/>
+    <File Name="../Hades-Workshop/Source/Texts.h"/>
+    <File Name="../Hades-Workshop/Source/TIMImages.h"/>
+    <File Name="../Hades-Workshop/Source/UnityArchiver.h"/>
+    <File Name="../Hades-Workshop/Source/WorldMaps.h"/>
+  </VirtualDirectory>
+  <VirtualDirectory Name="resources">
+    <File Name="../Hades-Workshop/Source/gui.fbp"/>
+    <File Name="../Hades-Workshop/Source/resource.rc"/>
+  </VirtualDirectory>
+  <VirtualDirectory Name="extinclude">
+    <File Name="../Hades-Workshop/Source/makeppf3.h"/>
+  </VirtualDirectory>
+  <VirtualDirectory Name="extsrc">
+    <File Name="../Hades-Workshop/Source/makeppf3.cpp"/>
+  </VirtualDirectory>
+  <Settings Type="Executable">
+    <GlobalSettings>
+      <Compiler Options="" C_Options="">
+        <IncludePath Value="."/>
+      </Compiler>
+      <Linker Options="">
+        <LibraryPath Value="."/>
+      </Linker>
+      <ResourceCompiler Options=""/>
+    </GlobalSettings>
+    <Configuration Name="Debug" CompilerType="gnu g++" DebuggerType="GNU gdb debugger" Type="Executable" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
+      <Compiler Options="-g;-w;-O0;$(shell wx-config --cxxflags --unicode=yes --debug=no)" C_Options="-g;-w;-O0;$(shell wx-config --cxxflags --unicode=yes --debug=no)" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" UseDifferentPCHFlags="no" PCHFlags="">
+        <IncludePath Value="."/>
+        <Preprocessor Value="__WX__"/>
+      </Compiler>
+      <Linker Options="-mwindows;$(shell wx-config --debug=no --libs --unicode=yes)" Required="yes">
+        <Library Value="opengl32"/>
+        <Library Value="glu32"/>
+        <Library Value="libwxmsw30u_gl"/>
+      </Linker>
+      <ResourceCompiler Options="$(shell wx-config --rcflags)" Required="no"/>
+      <General OutputFile="$(IntermediateDirectory)/$(ProjectName)" IntermediateDirectory="./Build" Command="./$(ProjectName)" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes"/>
+      <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
+        <![CDATA[]]>
+      </Environment>
+      <Debugger IsRemote="no" RemoteHostName="" RemoteHostPort="" DebuggerPath="">
+        <PostConnectCommands/>
+        <StartupCommands/>
+      </Debugger>
+      <PreBuild/>
+      <PostBuild/>
+      <CustomBuild Enabled="no">
+        <RebuildCommand/>
+        <CleanCommand/>
+        <BuildCommand/>
+        <PreprocessFileCommand/>
+        <SingleFileCommand/>
+        <MakefileGenerationCommand/>
+        <ThirdPartyToolName>None</ThirdPartyToolName>
+        <WorkingDirectory/>
+      </CustomBuild>
+      <AdditionalRules>
+        <CustomPostBuild/>
+        <CustomPreBuild/>
+      </AdditionalRules>
+      <Completion EnableCpp11="no">
+        <ClangCmpFlagsC/>
+        <ClangCmpFlags/>
+        <ClangPP/>
+        <SearchPaths/>
+      </Completion>
+    </Configuration>
+    <Configuration Name="Release" CompilerType="gnu g++" DebuggerType="GNU gdb debugger" Type="" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
+      <Compiler Options="-O2;-Wall" C_Options="-O2;-Wall" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" UseDifferentPCHFlags="no" PCHFlags="">
+        <IncludePath Value="."/>
+      </Compiler>
+      <Linker Options="" Required="yes"/>
+      <ResourceCompiler Options="" Required="no"/>
+      <General OutputFile="$(IntermediateDirectory)/$(ProjectName)" IntermediateDirectory="./Release" Command="./$(ProjectName)" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes"/>
+      <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
+        <![CDATA[]]>
+      </Environment>
+      <Debugger IsRemote="no" RemoteHostName="" RemoteHostPort="" DebuggerPath="">
+        <PostConnectCommands/>
+        <StartupCommands/>
+      </Debugger>
+      <PreBuild/>
+      <PostBuild/>
+      <CustomBuild Enabled="no">
+        <RebuildCommand/>
+        <CleanCommand/>
+        <BuildCommand/>
+        <PreprocessFileCommand/>
+        <SingleFileCommand/>
+        <MakefileGenerationCommand/>
+        <ThirdPartyToolName>None</ThirdPartyToolName>
+        <WorkingDirectory/>
+      </CustomBuild>
+      <AdditionalRules>
+        <CustomPostBuild/>
+        <CustomPreBuild/>
+      </AdditionalRules>
+      <Completion EnableCpp11="no">
+        <ClangCmpFlagsC/>
+        <ClangCmpFlags/>
+        <ClangPP/>
+        <SearchPaths/>
+      </Completion>
+    </Configuration>
+  </Settings>
+  <Dependencies Name="Debug"/>
+  <Dependencies Name="Release"/>
+</CodeLite_Project>

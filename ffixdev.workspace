@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeLite_Workspace Name="ffixdev" Database="./ffixdev.tags">
+  <Project Name="HadesWorkshop" Path="HadesWorkshop.project" Active="Yes"/>
+  <Project Name="Launcher" Path="Source/Launcher/Launcher.project" Active="No"/>
+  <BuildMatrix>
+    <WorkspaceConfiguration Name="Debug" Selected="yes">
+      <Project Name="HadesWorkshop" ConfigName="Debug"/>
+      <Project Name="HadesWorkshop" ConfigName="Debug"/>
+      <Project Name="Launcher" ConfigName="Debug"/>
+    </WorkspaceConfiguration>
+    <WorkspaceConfiguration Name="Release" Selected="yes">
+      <Project Name="HadesWorkshop" ConfigName="Release"/>
+      <Project Name="HadesWorkshop" ConfigName="Release"/>
+      <Project Name="Launcher" ConfigName="Release"/>
+    </WorkspaceConfiguration>
+  </BuildMatrix>
+</CodeLite_Workspace>
