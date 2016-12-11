@@ -5131,6 +5131,21 @@ void CDDataStruct::DisplayWorldMap(int worldid) {
 	}
 	m_worldscrolledwindow->Layout();
 	m_worldscrolledwindow->Refresh();
+wxImage img;
+img.SetAlpha();
+img.LoadFile(_(L"QuMarsh.bmp"),wxBITMAP_TYPE_ANY);
+uint8_t* atlasbin, *atlasrgb;
+uint32_t datasize;
+atlasrgb = new uint8_t[img.GetWidth()*img.GetHeight()*4];
+for (unsigned int j=0;j<img.GetHeight();j++) for (i=0;i<img.GetWidth();i++) {
+atlasrgb[(i+j*img.GetWidth())*4] = img.GetRed(i,j);
+atlasrgb[(i+j*img.GetWidth())*4+1] = img.GetGreen(i,j);
+atlasrgb[(i+j*img.GetWidth())*4+2] = img.GetBlue(i,j);
+atlasrgb[(i+j*img.GetWidth())*4+3] = 255;
+}
+atlasbin = TIMImageDataStruct::CreateSteamTextureFile(datasize,img.GetWidth(),img.GetHeight(),atlasrgb);
+fstream ftga("atlas.tex",ios::binary|ios::out); ftga.write((const char*)atlasbin,datasize); ftga.close();
+delete[] atlasbin; delete[] atlasrgb;
 }
 
 void CDDataStruct::DisplayWorldPlace(int placeid) {
@@ -6518,7 +6533,7 @@ void CDDataStruct::OnNotebookEnvironment(wxNotebookEvent& event) {
 		DisplayWorldBattle(m_worldbattlelist->GetSelection());
 	} else if (sel==2) {
 		InitField();
-		DisplayField(m_fieldlist->GetSelection());
+//		DisplayField(m_fieldlist->GetSelection());
 	} else if (sel==3) {
 		if (GetGameType()==GAME_TYPE_PSX) {
 			InitBattleScene();

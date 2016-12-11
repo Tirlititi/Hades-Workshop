@@ -94,6 +94,7 @@ public:
 	// Return array allocated with "new" and should be deleted
 	uint32_t* ConvertAsSteamImage(bool usealpha=true);
 	uint32_t* ConvertAsFullImage(uint32_t* pal=NULL, uint16_t palpos=0, bool usealpha=true);
+	// TIFF image exportation
 	int Export(const char* outputfile, bool full=true, uint16_t texpos=0, uint32_t* pal=NULL, uint16_t palpos=0, bool usealpha=true);
 	// Doesn't check if there is enough space in the cluster : check it manually
 	// Charflag : (-1 = unused) (0 = import in even palettes) (1 = import in odd palettes)
@@ -109,6 +110,9 @@ public:
 	static uint32_t* CreatePaletteFromData(uint8_t* colordata, uint8_t* alphadata, uint16_t sizex, uint16_t sizey);
 	static TIMImageDataStruct& GetTIMPaletteStruct(TIMImageDataStruct& tim1, TIMImageDataStruct& tim2);
 	static TIMImageDataStruct& GetTIMTextureStruct(TIMImageDataStruct& tim1, TIMImageDataStruct& tim2);
+	
+	// Create a Unity-formatted texture (DXT5) ; result must be deleted[]
+	static uint8_t* CreateSteamTextureFile(uint32_t& datasize, uint32_t w, uint32_t h, uint8_t* rgba, uint32_t textformat = 0x0C);
 };
 
 uint32_t ImageMergePixels(uint32_t pix1, uint32_t pix2, TIM_BlendMode mode = TIM_BLENDMODE_ALPHA);

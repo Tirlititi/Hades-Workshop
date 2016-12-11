@@ -1,6 +1,7 @@
 #include "TIMImages.h"
 
 #include <algorithm>
+#include "Squish/squish.h"
 
 #define ALPHA_LIMIT 0x60
 
@@ -239,7 +240,7 @@ uint32_t* TIMImageDataStruct::ConvertAsSteamImage(bool usealpha) {
 	uint64_t alphaflag;
 	a = 0xFF;
 	i = 0;
-	j = steam_width*steam_height-steam_width;
+	j = steam_width*steam_height-steam_width; // ToDo: Use Squish for decompression but beware of the y half-symetry
 	for (y=0;y<steamheight4;y++) {
 		for (k=0;k<4;k++) {
 			for (x=0;x<steamwidth4;x++) {
@@ -315,7 +316,7 @@ tmp = 0; ftga.write((const char*)&tmp,4); ftga.write((const char*)&tmp,4);
 tmp = steam_width; ftga.write((const char*)&tmp,2);
 tmp = steam_height; ftga.write((const char*)&tmp,2);
 tmp = 0x2020; ftga.write((const char*)&tmp,2);
-uint32_t tmp = steam_width; ftga.write((const char*)&tmp,4);
+/*uint32_t tmp = steam_width; ftga.write((const char*)&tmp,4);
 tmp = steam_height; ftga.write((const char*)&tmp,4);
 tmp = steam_width*steam_height; ftga.write((const char*)&tmp,4);
 tmp = 4; ftga.write((const char*)&tmp,4);
@@ -330,6 +331,8 @@ tmp = 0; ftga.write((const char*)&tmp,4);
 tmp = 1; ftga.write((const char*)&tmp,4);
 tmp = steam_width*steam_height; ftga.write((const char*)&tmp,4);
 for (i=0;i<steam_height*steam_width;i++) {
+int x = i%steam_width;
+int y = i/steam_width;
 a = (res[i] >> 24) & 0xFF; r = (res[i] >> 16) & 0xFF; g = (res[i] >> 8) & 0xFF; b = res[i] & 0xFF;
 ftga.write((const char*)&b,1);
 ftga.write((const char*)&g,1);
@@ -747,6 +750,36 @@ TIMImageDataStruct& TIMImageDataStruct::GetTIMTextureStruct(TIMImageDataStruct& 
 	if (tim1.height<256)
 		return tim2;
 	return tim1;
+}
+
+uint8_t* TIMImageDataStruct::CreateSteamTextureFile(uint32_t& datasize, uint32_t w, uint32_t h, uint8_t* rgba, uint32_t textformat) {
+	if (textformat!=0x0C) { // Only DXT5 supported for now
+		datasize = 0;
+		return NULL;
+	}
+	uint32_t pixam = w*h/16;
+	uint32_t filesize = 0x3C+0x10*pixam;
+	uint8_t* raw = new uint8_t[filesize];
+	unsigned int i;
+	BufferInitPosition();
+	BufferWriteLong(raw,w); // width
+	BufferWriteLong(raw,h); // height
+	BufferWriteLong(raw,w*h); // image size
+	BufferWriteLong(raw,textformat); // format
+	BufferWriteLong(raw,1); // mip count
+	BufferWriteLong(raw,0x100); // flags
+	BufferWriteLong(raw,1); // image count
+	BufferWriteLong(raw,2); // dimension
+	BufferWriteLong(raw,1); // filter mode
+	BufferWriteLong(raw,0); // anisotropic
+	BufferWriteLong(raw,0); // mip bias
+	BufferWriteLong(raw,1); // wrap mode
+	BufferWriteLong(raw,0); // lightmap format
+	BufferWriteLong(raw,1); // color space
+	BufferWriteLong(raw,w*h); // image size
+	squish::CompressImage(rgba,w,h,&raw[BufferGetPosition()],squish::kDxt5);
+	datasize = filesize;
+	return raw;
 }
 
 uint32_t ImageMergePixels(uint32_t pix1, uint32_t pix2, TIM_BlendMode mode) {

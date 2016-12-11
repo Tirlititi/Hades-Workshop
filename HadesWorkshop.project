@@ -109,14 +109,45 @@
   </VirtualDirectory>
   <VirtualDirectory Name="extinclude">
     <File Name="../Hades-Workshop/Source/makeppf3.h"/>
+    <VirtualDirectory Name="Squish">
+      <File Name="Source/Squish/alpha.h"/>
+      <File Name="Source/Squish/clusterfit.h"/>
+      <File Name="Source/Squish/colourblock.h"/>
+      <File Name="Source/Squish/colourfit.h"/>
+      <File Name="Source/Squish/colourset.h"/>
+      <File Name="Source/Squish/config.h"/>
+      <File Name="Source/Squish/maths.h"/>
+      <File Name="Source/Squish/rangefit.h"/>
+      <File Name="Source/Squish/simd.h"/>
+      <File Name="Source/Squish/simd_float.h"/>
+      <File Name="Source/Squish/simd_sse.h"/>
+      <File Name="Source/Squish/simd_ve.h"/>
+      <File Name="Source/Squish/singlecolourfit.h"/>
+      <File Name="Source/Squish/singlecolourlookup.inl"/>
+      <File Name="Source/Squish/squish.h"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="extsrc">
     <File Name="../Hades-Workshop/Source/makeppf3.cpp"/>
+    <VirtualDirectory Name="Squish">
+      <File Name="Source/Squish/alpha.cpp"/>
+      <File Name="Source/Squish/clusterfit.cpp"/>
+      <File Name="Source/Squish/colourblock.cpp"/>
+      <File Name="Source/Squish/colourfit.cpp"/>
+      <File Name="Source/Squish/colourset.cpp"/>
+      <File Name="Source/Squish/maths.cpp"/>
+      <File Name="Source/Squish/rangefit.cpp"/>
+      <File Name="Source/Squish/singlecolourfit.cpp"/>
+      <File Name="Source/Squish/squish.cpp"/>
+    </VirtualDirectory>
   </VirtualDirectory>
+  <Dependencies Name="Debug"/>
+  <Dependencies Name="Release"/>
   <Settings Type="Executable">
     <GlobalSettings>
       <Compiler Options="" C_Options="">
         <IncludePath Value="."/>
+        <IncludePath Value="./Squish"/>
       </Compiler>
       <Linker Options="">
         <LibraryPath Value="."/>
@@ -203,6 +234,4 @@
       </Completion>
     </Configuration>
   </Settings>
-  <Dependencies Name="Debug"/>
-  <Dependencies Name="Release"/>
 </CodeLite_Project>
