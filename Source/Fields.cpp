@@ -6,8 +6,7 @@
 #include "TIMImages.h"
 #include "main.h"
 
-#define TILE_SIZE		16
-#define TILE_SIZE_STEAM 32
+#define MESH_TILE_SIZE 16
 
 void FieldTilesTileDataStruct::AllocTileData() {
 	tile_data_data1 = new uint32_t[tile_amount];
@@ -42,8 +41,8 @@ void FieldTilesCameraDataStruct::UpdateSize() {
 			for (j=0;j<parent->tiles[i].tile_amount;j++) {
 				pos_x = min(pos_x,parent->tiles[i].pos_x+parent->tiles[i].tile_pos_x[j]);
 				pos_y = min(pos_y,parent->tiles[i].pos_y+parent->tiles[i].tile_pos_y[j]);
-				maxx = max(maxx,parent->tiles[i].pos_x+parent->tiles[i].tile_pos_x[j]+TILE_SIZE);
-				maxy = max(maxy,parent->tiles[i].pos_y+parent->tiles[i].tile_pos_y[j]+TILE_SIZE);
+				maxx = max(maxx,parent->tiles[i].pos_x+parent->tiles[i].tile_pos_x[j]+MESH_TILE_SIZE);
+				maxy = max(maxy,parent->tiles[i].pos_y+parent->tiles[i].tile_pos_y[j]+MESH_TILE_SIZE);
 			}
 	width = pos_x<0xFFFF ? maxx-pos_x : 0;
 	height = pos_y<0xFFFF ? maxy-pos_y : 0;
@@ -90,17 +89,19 @@ void FieldTilesDataStruct::Copy(FieldTilesDataStruct& cpy) {
 }
 
 void FieldTilesDataStruct::AddTilesetToImage(uint32_t* imgdest, FieldTilesTileDataStruct& t, bool showtp, uint32_t* steamimg, uint32_t steamimgwidth) {
-	unsigned int i,x,y,pixelx,pixely,timtilex,timtiley,tilesize,steamfactor;
+	unsigned int i,x,y,pixelx,pixely,timtilex,timtiley,tilesize,tilegap,tileperiod,steamfactor;
 	uint32_t pix,alpha;
 	TIM_BlendMode bm;
 	bool psx = GetGameType()==GAME_TYPE_PSX;
-	tilesize = psx ? TILE_SIZE : TILE_SIZE_STEAM;
+	tilesize = parent->tile_size;
+	tilegap = parent->tile_gap;
+	tileperiod = tilesize+2*tilegap;
 	for (i=0;i<t.tile_amount;i++) {
 		pixely = t.pos_y+t.tile_pos_y[i]-camera[t.camera_id].pos_y;
 		if (psx) {
 			timtiley = t.tile_page_y[i]*256 + t.tile_source_v[i];
 		} else {
-			timtiley = (t.tile_steam_id[i]/(steamimgwidth/(TILE_SIZE_STEAM+4)))*(TILE_SIZE_STEAM+4)+2;
+			timtiley = (t.tile_steam_id[i]/(steamimgwidth/tileperiod))*tileperiod+tilegap;
 			pixely *= 2;
 		}
 		switch (t.tile_abr[i]) {
@@ -126,7 +127,7 @@ void FieldTilesDataStruct::AddTilesetToImage(uint32_t* imgdest, FieldTilesTileDa
 			if (psx) {
 				timtilex = t.tile_tp[i]>0 ? t.tile_page_x[i]*128 + t.tile_source_u[i] : t.tile_page_x[i]*128*2 + t.tile_source_u[i];
 			} else {
-				timtilex = (t.tile_steam_id[i]%(steamimgwidth/(TILE_SIZE_STEAM+4)))*(TILE_SIZE_STEAM+4)+2;
+				timtilex = (t.tile_steam_id[i]%(steamimgwidth/tileperiod))*tileperiod+2;
 				pixelx *= 2;
 			}
 			for (x=0;x<tilesize;x++) {
@@ -953,6 +954,8 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 	tim_data = new TIMImageDataStruct*[amount];
 	role = new FieldRoleDataStruct*[amount];
 	related_text = new TextDataStruct*[amount];
+	tile_size = GetGameType()==GAME_TYPE_PSX ? 16 : 32;
+	tile_gap = GetGameType()==GAME_TYPE_PSX ? 0 : 2;
 	j = 0;
 	LoadingDialogInit(amount,_(L"Reading fields..."));
 	if (GetGameType()==GAME_TYPE_PSX) {

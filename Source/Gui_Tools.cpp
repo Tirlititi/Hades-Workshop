@@ -495,3 +495,50 @@ void ToolModManager::OnTreeListCheck(wxTreeListEvent& event) {
 void ToolModManager::OnButtonClick(wxCommandEvent& event) {
 	EndModal(event.GetId());
 }
+
+//=============================//
+//    Background Converter     //
+//=============================//
+
+int CreateBackgroundImage(wxString& imgfilename, wxString& outputname, FieldTilesDataStruct& tiledata, wxBitmapType type = wxBITMAP_TYPE_ANY) {
+	// Compute size of the atlas so it's a roughly square image
+	unsigned int atlassize, atlasw, atlash, tileamount, tilesize, tilegap, tileperiod, tileperiod2;
+	unsigned int i,j;
+	uint8_t* atlas;
+	tilesize = tiledata.parent->tile_size;
+	tilegap = tiledata.parent->tile_gap;
+	tileperiod = tilesize+2*tileperiod;
+	tileperiod2 = tileperiod*tileperiod;
+	tileamount = 0;
+	for (i=0;i<tiledata.tiles_amount;i++)
+		tileamount += tiledata.tiles[i].tile_amount;
+	atlasw = sqrt(tileamount);
+	atlasw = max(atlasw,1);
+	atlash = tileamount/atlasw;
+	atlash = (atlash*atlasw<tileamount) ? atlash+1 : atlash;
+	atlasw *= tileperiod;
+	atlash *= tileperiod;
+	while (atlasw%4) atlasw++; // For DXT5 compression, it is better to have sizes multiple of 4
+	while (atlash%4) atlash++;
+	atlassize = atlasw*atlash*4;
+	atlas = new uint8_t[atlassize]{0};
+	// Add each tile to the atlas in the order
+	for (i=0;i<tiledata.tiles_amount;i++) {
+		wxImage tblockimg(imgfilename,type,i);
+		uint8_t* imgdata = tblockimg.GetData();
+		uint8_t* imgalpha = tblockimg.GetAlpha();
+		FieldTilesTileDataStruct& tile = tiledata.tiles[i];
+		for (j=0;j<tile.tile_amount;j++) {
+			
+		}
+	}
+	
+	// Convert the RGBA atlas into DXT5 compressed atlas
+	int dxtflag = squish::kDxt5;
+	unsigned int dxtatlassize = squish::GetStorageRequirements(atlasw,atlash,dxtflag);
+	uint8_t* dxtatlas = new uint8_t[dxtatlassize];
+	squish::CompressImage(atlas,atlasw,atlash,dxtatlas,dxtflag);
+	
+	delete[] dxtatlas;
+	delete[] atlas;
+}

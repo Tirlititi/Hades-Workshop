@@ -351,6 +351,9 @@ public:
 	TextDataStruct** related_text;
 	uint32_t name_space_used; // Steam version only
 	
+	unsigned int tile_size;
+	unsigned int tile_gap;
+	
 	int SetFieldName(unsigned int fieldid, wstring newvalue);
 	int SetFieldName(unsigned int fieldid, FF9String& newvalue);
 	
