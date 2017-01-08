@@ -38,6 +38,7 @@ namespace hades {
 bool MainApp::OnInit() {
 	wxImage::AddHandler(new wxPNGHandler);
 	wxImage::AddHandler(new wxTGAHandler);
+	wxImage::AddHandler(new wxTIFFHandler);
 	SetTopWindow(new MainFrame(NULL));
 	GetTopWindow()->Show();
 	
@@ -640,6 +641,9 @@ void MainFrame::OnToolClick( wxCommandEvent& event ) {
 		ToolModManager dial(this);
 		dial.ShowModal(CDPanel[currentpanel]);
 		MarkDataModified();
+	} else if (id==wxID_BACKEDIT) {
+		ToolBackgroundEditor dial(this);
+		dial.ShowModal(currentpanel!=wxNOT_FOUND ? CDPanel[currentpanel] : NULL);
 	}
 }
 

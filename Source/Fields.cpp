@@ -127,7 +127,7 @@ void FieldTilesDataStruct::AddTilesetToImage(uint32_t* imgdest, FieldTilesTileDa
 			if (psx) {
 				timtilex = t.tile_tp[i]>0 ? t.tile_page_x[i]*128 + t.tile_source_u[i] : t.tile_page_x[i]*128*2 + t.tile_source_u[i];
 			} else {
-				timtilex = (t.tile_steam_id[i]%(steamimgwidth/tileperiod))*tileperiod+2;
+				timtilex = (t.tile_steam_id[i]%(steamimgwidth/tileperiod))*tileperiod+tilegap;
 				pixelx *= 2;
 			}
 			for (x=0;x<tilesize;x++) {

@@ -22,4 +22,29 @@ private:
 	void OnButtonClick(wxCommandEvent& event);
 };
 
+class ToolBackgroundEditor : public BackgroundEditorWindow {
+public:
+	CDDataStruct* cddata;
+	
+	ToolBackgroundEditor(wxWindow* p);
+	~ToolBackgroundEditor();
+	int ShowModal(CDDataStruct* data);
+
+private:
+	wxBitmap main_img;
+	wxBitmap tile_img;
+	wxImage main_img_base;
+	wxImage tile_img_base;
+	
+	void DrawImage(wxDC& dc);
+	void UpdateImage();
+	
+	void OnFilePick(wxFileDirPickerEvent& event);
+	void OnRadioClick(wxCommandEvent& event);
+	void OnFieldChoice(wxCommandEvent& event);
+	void OnTileSelect(wxCommandEvent& event);
+	void OnButtonClick(wxCommandEvent& event);
+	void OnPaintImage(wxPaintEvent& event);
+};
+
 #endif
