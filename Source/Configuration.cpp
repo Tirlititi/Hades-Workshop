@@ -1468,6 +1468,8 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		}
 		filebase.close();
 		filedest.close();
+		delete[] copylist;
+		delete[] filenewsize;
 		delete[] unitydataoff;
 	}
 	
@@ -1500,6 +1502,8 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		saveset.worldset->world_data->WriteHWS(filedest);
 		filebase.close();
 		filedest.close();
+		delete[] copylist;
+		delete[] filenewsize;
 		delete[] unitydataoff;
 	}
 	
@@ -1582,6 +1586,8 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		}
 		filebase.close();
 		filedest.close();
+		delete[] copylist;
+		delete[] filenewsize;
 		delete[] unitydataoff;
 	}
 	
@@ -1717,6 +1723,8 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		}
 		filebase.close();
 		filedest.close();
+		delete[] copylist;
+		delete[] filenewsize;
 		delete[] unitydataoff;
 	}
 	

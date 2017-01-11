@@ -519,6 +519,8 @@ class PreviewTextCtrl;
 #define wxID_TYPE 1462
 #define wxID_FULLLIST 1463
 #define wxID_MAPLIST 1464
+#define wxID_SORTTILE 1465
+#define wxID_RESOLUTION 1466
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class MainFrameBase
@@ -2887,22 +2889,34 @@ class BackgroundEditorWindow : public wxDialog
 	protected:
 		wxAuiNotebook* m_auinotebook;
 		wxPanel* m_panelconverter;
+		wxStaticText* m_staticText317;
 		wxFilePickerCtrl* m_imagepicker;
+		wxStaticText* m_staticText318;
+		wxDirPickerCtrl* m_exportdir;
 		wxRadioButton* m_usegametilebtn;
 		wxRadioButton* m_customtilebtn;
 		wxChoice* m_fieldchoice;
 		wxScrolledWindow* m_texturewindow;
+		wxCheckBox* m_sorttileset;
 		wxListBox* m_tilelist;
+		wxStaticText* m_staticText314;
+		wxSpinCtrl* m_resolution;
 		wxPanel* m_panelimporter;
-		wxButton* m_buttoncancel;
-		wxButton* m_buttonok;
+		wxStaticText* m_staticText316;
+		wxFilePickerCtrl* m_importlauncher;
+		wxStaticText* m_staticText319;
+		wxDirPickerCtrl* m_importdir;
+		wxButton* m_buttonapply;
+		wxButton* m_buttonclose;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnFilePick( wxFileDirPickerEvent& event ) { event.Skip(); }
 		virtual void OnRadioClick( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnFieldChoice( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnPaintImage( wxPaintEvent& event ) { event.Skip(); }
+		virtual void OnCheckBox( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnTileSelect( wxCommandEvent& event ) { event.Skip(); }
+		virtual void OnSpinChange( wxSpinEvent& event ) { event.Skip(); }
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
 		
 	

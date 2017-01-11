@@ -362,6 +362,10 @@ static wxString HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM[] = {
 
 //-- Others
 #define HADES_STRING_FONT_ERROR L"Unsupported font."
+#define HADES_STRING_UNKNOWN_FIELD L"UNKNOWN_FIELD"
+#define HADES_STRING_INVALID_FF9LAUNCHER L"Select a valid FF9_Launcher.exe"
+#define HADES_STRING_IMPORT_BACKGROUND_RESULT	"%d background importations succeeded\n"\
+												"%d background importations failed"
 
 // Data Strings
 //-- Spells

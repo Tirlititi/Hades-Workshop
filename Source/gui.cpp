@@ -10068,21 +10068,35 @@ BackgroundEditorWindow::BackgroundEditorWindow( wxWindow* parent, wxWindowID id,
 	fgSizer45->SetFlexibleDirection( wxBOTH );
 	fgSizer45->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	m_auinotebook = new wxAuiNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxAUI_NB_TAB_SPLIT|wxAUI_NB_TOP );
+	m_auinotebook = new wxAuiNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxAUI_NB_TOP );
 	m_panelconverter = new wxPanel( m_auinotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxGridBagSizer* gbSizer41;
 	gbSizer41 = new wxGridBagSizer( 0, 0 );
 	gbSizer41->SetFlexibleDirection( wxBOTH );
 	gbSizer41->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	wxStaticBoxSizer* sbSizer6;
-	sbSizer6 = new wxStaticBoxSizer( new wxStaticBox( m_panelconverter, wxID_ANY, _("Background Image") ), wxVERTICAL );
+	wxFlexGridSizer* fgSizer81;
+	fgSizer81 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer81->AddGrowableCol( 1 );
+	fgSizer81->SetFlexibleDirection( wxBOTH );
+	fgSizer81->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	m_staticText317 = new wxStaticText( m_panelconverter, wxID_ANY, _("Background Image"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText317->Wrap( -1 );
+	fgSizer81->Add( m_staticText317, 0, wxALIGN_CENTER|wxALL, 5 );
 	
 	m_imagepicker = new wxFilePickerCtrl( m_panelconverter, wxID_ANY, wxEmptyString, _("Select a file"), wxT("Multi-layered Image (*.tiff)|*.tiff|All files|*"), wxDefaultPosition, wxDefaultSize, wxFLP_DEFAULT_STYLE );
-	sbSizer6->Add( m_imagepicker, 0, wxALL|wxEXPAND, 5 );
+	fgSizer81->Add( m_imagepicker, 0, wxALL|wxEXPAND, 5 );
+	
+	m_staticText318 = new wxStaticText( m_panelconverter, wxID_ANY, _("Destination Folder"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText318->Wrap( -1 );
+	fgSizer81->Add( m_staticText318, 0, wxALIGN_CENTER|wxALL, 5 );
+	
+	m_exportdir = new wxDirPickerCtrl( m_panelconverter, wxID_ANY, wxEmptyString, _("Select a folder"), wxDefaultPosition, wxDefaultSize, wxDIRP_DEFAULT_STYLE );
+	fgSizer81->Add( m_exportdir, 0, wxALL|wxEXPAND, 5 );
 	
 	
-	gbSizer41->Add( sbSizer6, wxGBPosition( 0, 0 ), wxGBSpan( 1, 4 ), wxALL|wxEXPAND, 5 );
+	gbSizer41->Add( fgSizer81, wxGBPosition( 0, 0 ), wxGBSpan( 1, 4 ), wxEXPAND, 5 );
 	
 	m_usegametilebtn = new wxRadioButton( m_panelconverter, wxID_ANY, _("Use Game Tiling"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
 	gbSizer41->Add( m_usegametilebtn, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
@@ -10103,8 +10117,19 @@ BackgroundEditorWindow::BackgroundEditorWindow( wxWindow* parent, wxWindowID id,
 	wxBoxSizer* bSizer186;
 	bSizer186 = new wxBoxSizer( wxVERTICAL );
 	
-	m_tilelist = new wxListBox( m_panelconverter, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, wxLB_MULTIPLE ); 
-	bSizer186->Add( m_tilelist, 0, wxALL|wxEXPAND, 5 );
+	m_sorttileset = new wxCheckBox( m_panelconverter, wxID_SORTTILE, _("Sort Tilesets by depth"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_sorttileset->SetValue(true); 
+	bSizer186->Add( m_sorttileset, 0, wxALL, 5 );
+	
+	m_tilelist = new wxListBox( m_panelconverter, wxID_ANY, wxDefaultPosition, wxSize( -1,200 ), 0, NULL, wxLB_MULTIPLE ); 
+	bSizer186->Add( m_tilelist, 0, wxALL, 5 );
+	
+	m_staticText314 = new wxStaticText( m_panelconverter, wxID_ANY, _("Resolution"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText314->Wrap( -1 );
+	bSizer186->Add( m_staticText314, 0, wxALL, 5 );
+	
+	m_resolution = new wxSpinCtrl( m_panelconverter, wxID_RESOLUTION, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 16, 127, 32 );
+	bSizer186->Add( m_resolution, 0, wxALL, 5 );
 	
 	
 	gbSizer41->Add( bSizer186, wxGBPosition( 2, 3 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
@@ -10118,6 +10143,30 @@ BackgroundEditorWindow::BackgroundEditorWindow( wxWindow* parent, wxWindowID id,
 	gbSizer41->Fit( m_panelconverter );
 	m_auinotebook->AddPage( m_panelconverter, _("Converter"), false, wxNullBitmap );
 	m_panelimporter = new wxPanel( m_auinotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxFlexGridSizer* fgSizer80;
+	fgSizer80 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer80->AddGrowableCol( 1 );
+	fgSizer80->SetFlexibleDirection( wxBOTH );
+	fgSizer80->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	m_staticText316 = new wxStaticText( m_panelimporter, wxID_ANY, _("FF9 Launcher"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText316->Wrap( -1 );
+	fgSizer80->Add( m_staticText316, 0, wxALIGN_CENTER_VERTICAL|wxALIGN_RIGHT|wxALL, 5 );
+	
+	m_importlauncher = new wxFilePickerCtrl( m_panelimporter, wxID_ANY, wxEmptyString, _("Select a file"), wxT("Steam game|FF9_Launcher.exe"), wxDefaultPosition, wxDefaultSize, wxFLP_DEFAULT_STYLE );
+	fgSizer80->Add( m_importlauncher, 0, wxALL|wxEXPAND, 5 );
+	
+	m_staticText319 = new wxStaticText( m_panelimporter, wxID_ANY, _("Converted Files Folder"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText319->Wrap( -1 );
+	fgSizer80->Add( m_staticText319, 0, wxALIGN_CENTER|wxALL, 5 );
+	
+	m_importdir = new wxDirPickerCtrl( m_panelimporter, wxID_ANY, wxEmptyString, _("Select a folder"), wxDefaultPosition, wxDefaultSize, wxDIRP_DEFAULT_STYLE );
+	fgSizer80->Add( m_importdir, 0, wxALL|wxEXPAND, 5 );
+	
+	
+	m_panelimporter->SetSizer( fgSizer80 );
+	m_panelimporter->Layout();
+	fgSizer80->Fit( m_panelimporter );
 	m_auinotebook->AddPage( m_panelimporter, _("Importer"), false, wxNullBitmap );
 	
 	fgSizer45->Add( m_auinotebook, 1, wxEXPAND | wxALL, 5 );
@@ -10125,11 +10174,11 @@ BackgroundEditorWindow::BackgroundEditorWindow( wxWindow* parent, wxWindowID id,
 	wxBoxSizer* bSizer124;
 	bSizer124 = new wxBoxSizer( wxHORIZONTAL );
 	
-	m_buttoncancel = new wxButton( this, wxID_CANCEL, _("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer124->Add( m_buttoncancel, 0, wxALL, 5 );
+	m_buttonapply = new wxButton( this, wxID_APPLY, _("Apply"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer124->Add( m_buttonapply, 0, wxALL, 5 );
 	
-	m_buttonok = new wxButton( this, wxID_OK, _("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer124->Add( m_buttonok, 0, wxALL, 5 );
+	m_buttonclose = new wxButton( this, wxID_CLOSE, _("Close"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer124->Add( m_buttonclose, 0, wxALL, 5 );
 	
 	
 	fgSizer45->Add( bSizer124, 1, wxALIGN_RIGHT, 5 );
@@ -10146,9 +10195,11 @@ BackgroundEditorWindow::BackgroundEditorWindow( wxWindow* parent, wxWindowID id,
 	m_customtilebtn->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( BackgroundEditorWindow::OnRadioClick ), NULL, this );
 	m_fieldchoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( BackgroundEditorWindow::OnFieldChoice ), NULL, this );
 	m_texturewindow->Connect( wxEVT_PAINT, wxPaintEventHandler( BackgroundEditorWindow::OnPaintImage ), NULL, this );
+	m_sorttileset->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnCheckBox ), NULL, this );
 	m_tilelist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( BackgroundEditorWindow::OnTileSelect ), NULL, this );
-	m_buttoncancel->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnButtonClick ), NULL, this );
-	m_buttonok->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnButtonClick ), NULL, this );
+	m_resolution->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( BackgroundEditorWindow::OnSpinChange ), NULL, this );
+	m_buttonapply->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnButtonClick ), NULL, this );
+	m_buttonclose->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnButtonClick ), NULL, this );
 }
 
 BackgroundEditorWindow::~BackgroundEditorWindow()
@@ -10159,9 +10210,11 @@ BackgroundEditorWindow::~BackgroundEditorWindow()
 	m_customtilebtn->Disconnect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( BackgroundEditorWindow::OnRadioClick ), NULL, this );
 	m_fieldchoice->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( BackgroundEditorWindow::OnFieldChoice ), NULL, this );
 	m_texturewindow->Disconnect( wxEVT_PAINT, wxPaintEventHandler( BackgroundEditorWindow::OnPaintImage ), NULL, this );
+	m_sorttileset->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnCheckBox ), NULL, this );
 	m_tilelist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( BackgroundEditorWindow::OnTileSelect ), NULL, this );
-	m_buttoncancel->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnButtonClick ), NULL, this );
-	m_buttonok->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnButtonClick ), NULL, this );
+	m_resolution->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( BackgroundEditorWindow::OnSpinChange ), NULL, this );
+	m_buttonapply->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnButtonClick ), NULL, this );
+	m_buttonclose->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnButtonClick ), NULL, this );
 	
 }
 

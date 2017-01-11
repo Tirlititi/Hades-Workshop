@@ -6,8 +6,6 @@
 #include "TIMImages.h"
 #include "main.h"
 
-#define MESH_TILE_SIZE 16
-
 void FieldTilesTileDataStruct::AllocTileData() {
 	tile_data_data1 = new uint32_t[tile_amount];
 	tile_data_data2 = new uint32_t[tile_amount];
@@ -41,8 +39,8 @@ void FieldTilesCameraDataStruct::UpdateSize() {
 			for (j=0;j<parent->tiles[i].tile_amount;j++) {
 				pos_x = min(pos_x,parent->tiles[i].pos_x+parent->tiles[i].tile_pos_x[j]);
 				pos_y = min(pos_y,parent->tiles[i].pos_y+parent->tiles[i].tile_pos_y[j]);
-				maxx = max(maxx,parent->tiles[i].pos_x+parent->tiles[i].tile_pos_x[j]+MESH_TILE_SIZE);
-				maxy = max(maxy,parent->tiles[i].pos_y+parent->tiles[i].tile_pos_y[j]+MESH_TILE_SIZE);
+				maxx = max(maxx,parent->tiles[i].pos_x+parent->tiles[i].tile_pos_x[j]+FIELD_TILE_BASE_SIZE);
+				maxy = max(maxy,parent->tiles[i].pos_y+parent->tiles[i].tile_pos_y[j]+FIELD_TILE_BASE_SIZE);
 			}
 	width = pos_x<0xFFFF ? maxx-pos_x : 0;
 	height = pos_y<0xFFFF ? maxy-pos_y : 0;

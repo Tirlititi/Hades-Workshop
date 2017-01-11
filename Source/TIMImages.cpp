@@ -757,8 +757,9 @@ uint8_t* TIMImageDataStruct::CreateSteamTextureFile(uint32_t& datasize, uint32_t
 		datasize = 0;
 		return NULL;
 	}
+	int dxtflag = squish::kDxt5;
 	uint32_t pixam = w*h/16;
-	uint32_t filesize = 0x3C+0x10*pixam;
+	uint32_t filesize = 0x3C+squish::GetStorageRequirements(w,h,dxtflag);
 	uint8_t* raw = new uint8_t[filesize];
 	unsigned int i;
 	BufferInitPosition();
@@ -777,7 +778,7 @@ uint8_t* TIMImageDataStruct::CreateSteamTextureFile(uint32_t& datasize, uint32_t
 	BufferWriteLong(raw,0); // lightmap format
 	BufferWriteLong(raw,1); // color space
 	BufferWriteLong(raw,w*h); // image size
-	squish::CompressImage(rgba,w,h,&raw[BufferGetPosition()],squish::kDxt5);
+	squish::CompressImage(rgba,w,h,&raw[BufferGetPosition()],dxtflag);
 	datasize = filesize;
 	return raw;
 }

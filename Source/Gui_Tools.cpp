@@ -2,6 +2,9 @@
 
 #include "main.h"
 #include "Gui_TextureEditor.h"
+#include "Gui_LoadingDialog.h"
+#include "Hades_Strings.h"
+#include "Steam_Strings.h"
 #include "Squish/squish.h"
 
 //=============================//
@@ -504,6 +507,9 @@ void ToolModManager::OnButtonClick(wxCommandEvent& event) {
 //    Background Converter     //
 //=============================//
 
+const static wxColor TILECOLOR_BOUNDARY = wxColor(0,0,0,255);
+const static wxColor TILECOLOR_INTERIOR = wxColor(80,80,80,50);
+
 ToolBackgroundEditor::ToolBackgroundEditor(wxWindow* p) :
 	BackgroundEditorWindow(p) {
 	
@@ -527,9 +533,9 @@ int ToolBackgroundEditor::ShowModal(CDDataStruct* data) {
 	return BackgroundEditorWindow::ShowModal();
 }
 
-int CreateBackgroundImage(wxString& imgfilename, wxString& outputname, FieldTilesDataStruct& tiledata, wxBitmapType type = wxBITMAP_TYPE_ANY) {
+int CreateBackgroundImage(wxString imgfilename, wxString outputname, FieldTilesDataStruct& tiledata, int* sortedimg = NULL, wxBitmapType type = wxBITMAP_TYPE_ANY) {
 	// Compute size of the atlas so it's a roughly square image
-	unsigned int atlassize, atlasw, atlash, tileamount, tilesize, tilegap, tileperiod, tileperiod2;
+	unsigned int atlassize, atlasw, atlash, atlastilecolcount, tileamount, tilesize, tilegap, tileperiod;
 	unsigned int i,j,x,y;
 	uint8_t* atlas;
 	wxFile atlasout(outputname,wxFile::write);
@@ -538,7 +544,6 @@ int CreateBackgroundImage(wxString& imgfilename, wxString& outputname, FieldTile
 	tilesize = tiledata.parent->tile_size;
 	tilegap = tiledata.parent->tile_gap;
 	tileperiod = tilesize+2*tilegap;
-	tileperiod2 = tileperiod*tileperiod;
 	tileamount = 0;
 	for (i=0;i<tiledata.tiles_amount;i++)
 		tileamount += tiledata.tiles[i].tile_amount;
@@ -546,25 +551,38 @@ int CreateBackgroundImage(wxString& imgfilename, wxString& outputname, FieldTile
 	atlasw = max(atlasw,1u);
 	atlash = tileamount/atlasw;
 	atlash = (atlash*atlasw<tileamount) ? atlash+1 : atlash;
+	atlastilecolcount = atlasw;
 	atlasw *= tileperiod;
 	atlash *= tileperiod;
+//atlasw = 1024; atlash = 1024; atlastilecolcount = 28; // DEBUG
 	while (atlasw%4) atlasw++; // For DXT5 compression, it is better to have sizes multiple of 4
 	while (atlash%4) atlash++;
 	atlassize = atlasw*atlash*4;
 	atlas = new uint8_t[atlassize]{0};
 	// Add each tile to the atlas in the order
 	unsigned int imgtilex, imgtiley, imgwidth;
-	unsigned int atlasx = tilegap, atlasy = tilegap;
+	unsigned int atlasx, atlasy;
 	for (i=0;i<tiledata.tiles_amount;i++) {
-		wxImage tblockimg(imgfilename,type,i);
-		uint8_t* imgdata = tblockimg.GetData();
-		uint8_t* imgalpha = tblockimg.GetAlpha();
 		FieldTilesTileDataStruct& tile = tiledata.tiles[i];
 		FieldTilesCameraDataStruct& camera = tiledata.camera[tile.camera_id];
+		wxImage tblockimg;
+		if (sortedimg) {
+			if (sortedimg[i]<0 || sortedimg[i]>=wxImage::GetImageCount(imgfilename))
+				continue;
+			tblockimg.LoadFile(imgfilename,type,sortedimg[i]);
+		} else {
+			if (i>=wxImage::GetImageCount(imgfilename))
+				break;
+			tblockimg.LoadFile(imgfilename,type,i);
+		}
+		uint8_t* imgdata = tblockimg.GetData();
+		uint8_t* imgalpha = tblockimg.GetAlpha();
 		imgwidth = tblockimg.GetWidth();
 		for (j=0;j<tile.tile_amount;j++) {
-			imgtilex = (tile.pos_x+tile.tile_pos_x[j]-camera.pos_x)/16*tilesize;
-			imgtiley = (tile.pos_y+tile.tile_pos_y[j]-camera.pos_y)/16*tilesize;
+			imgtilex = (tile.pos_x+tile.tile_pos_x[j]-camera.pos_x)/FIELD_TILE_BASE_SIZE*tilesize;
+			imgtiley = (tile.pos_y+tile.tile_pos_y[j]-camera.pos_y)/FIELD_TILE_BASE_SIZE*tilesize;
+			atlasx = (tile.tile_steam_id[j]%atlastilecolcount)*tileperiod+tilegap;
+			atlasy = (tile.tile_steam_id[j]/atlastilecolcount)*tileperiod+tilegap;
 			for (y=0;y<tilesize;y++)
 				for (x=0;x<tilesize;x++) {
 					atlas[(atlasx+x+(atlasy+y)*atlasw)*4] = imgdata[(imgtilex+x+(imgtiley+y)*imgwidth)*3];
@@ -572,15 +590,44 @@ int CreateBackgroundImage(wxString& imgfilename, wxString& outputname, FieldTile
 					atlas[(atlasx+x+(atlasy+y)*atlasw)*4+2] = imgdata[(imgtilex+x+(imgtiley+y)*imgwidth)*3+2];
 					atlas[(atlasx+x+(atlasy+y)*atlasw)*4+3] = imgalpha[imgtilex+x+(imgtiley+y)*imgwidth];
 				}
-			atlasx += tileperiod;
-			if (atlasx>=atlasw) {
-				atlasx -= atlasw;
-				atlasy += tileperiod;
-			}
+			for (y=0;y<tilesize;y++)
+				for (x=0;x<tilegap;x++) {
+					atlas[(atlasx-x-1+(atlasy+y)*atlasw)*4] = imgdata[(imgtilex+(imgtiley+y)*imgwidth)*3];
+					atlas[(atlasx-x-1+(atlasy+y)*atlasw)*4+1] = imgdata[(imgtilex+(imgtiley+y)*imgwidth)*3+1];
+					atlas[(atlasx-x-1+(atlasy+y)*atlasw)*4+2] = imgdata[(imgtilex+(imgtiley+y)*imgwidth)*3+2];
+					atlas[(atlasx-x-1+(atlasy+y)*atlasw)*4+3] = imgalpha[imgtilex+(imgtiley+y)*imgwidth];
+					atlas[(atlasx+tilesize+x+(atlasy+y)*atlasw)*4] = imgdata[(imgtilex+tilesize-1+(imgtiley+y)*imgwidth)*3];
+					atlas[(atlasx+tilesize+x+(atlasy+y)*atlasw)*4+1] = imgdata[(imgtilex+tilesize-1+(imgtiley+y)*imgwidth)*3+1];
+					atlas[(atlasx+tilesize+x+(atlasy+y)*atlasw)*4+2] = imgdata[(imgtilex+tilesize-1+(imgtiley+y)*imgwidth)*3+2];
+					atlas[(atlasx+tilesize+x+(atlasy+y)*atlasw)*4+3] = imgalpha[imgtilex+tilesize-1+(imgtiley+y)*imgwidth];
+				}
+			for (x=0;x<tilesize;x++)
+				for (y=0;y<tilegap;y++) {
+					atlas[(atlasx+(atlasy-y-1)*atlasw)*4] = imgdata[(imgtilex+x+imgtiley*imgwidth)*3];
+					atlas[(atlasx+(atlasy-y-1)*atlasw)*4+1] = imgdata[(imgtilex+x+imgtiley*imgwidth)*3+1];
+					atlas[(atlasx+(atlasy-y-1)*atlasw)*4+2] = imgdata[(imgtilex+x+imgtiley*imgwidth)*3+2];
+					atlas[(atlasx+(atlasy-y-1)*atlasw)*4+3] = imgalpha[imgtilex+x+imgtiley*imgwidth];
+					atlas[(atlasx+(atlasy+tilesize+y)*atlasw)*4] = imgdata[(imgtilex+x+(imgtiley+tilesize-1)*imgwidth)*3];
+					atlas[(atlasx+(atlasy+tilesize+y)*atlasw)*4+1] = imgdata[(imgtilex+x+(imgtiley+tilesize-1)*imgwidth)*3+1];
+					atlas[(atlasx+(atlasy+tilesize+y)*atlasw)*4+2] = imgdata[(imgtilex+x+(imgtiley+tilesize-1)*imgwidth)*3+2];
+					atlas[(atlasx+(atlasy+tilesize+y)*atlasw)*4+3] = imgalpha[imgtilex+x+(imgtiley+tilesize-1)*imgwidth];
+				}
 		}
 	}
-	
+	// Atlas are y-symetrized
+	uint8_t tmp8;
+	for (y=0;2*y<atlash;y++)
+		for (x=0;x<atlasw;x++) {
+			for (i=0;i<4;i++) {
+				tmp8 = atlas[(x+y*atlasw)*4+i];
+				atlas[(x+y*atlasw)*4+i] = atlas[(x+(atlash-y-1)*atlasw)*4+i];
+				atlas[(x+(atlash-y-1)*atlasw)*4+i] = tmp8;
+			}
+		}
 	// Convert the RGBA atlas into DXT5 compressed atlas
+	uint32_t dxtatlassize;
+	uint8_t* dxtatlas = TIMImageDataStruct::CreateSteamTextureFile(dxtatlassize,atlasw,atlash,atlas);
+	/* DEBUG
 	int dxtflag = squish::kDxt5;
 	unsigned int dxtatlassize = squish::GetStorageRequirements(atlasw,atlash,dxtflag);
 	uint8_t* dxtatlas = new uint8_t[dxtatlassize];
@@ -600,7 +647,7 @@ int CreateBackgroundImage(wxString& imgfilename, wxString& outputname, FieldTile
 	headervalue = 1;				atlasout.Write(&headervalue,4); // wrap mode
 	headervalue = 0;				atlasout.Write(&headervalue,4); // lightmap format
 	headervalue = 1;				atlasout.Write(&headervalue,4); // color space
-	headervalue = atlasw*atlash;	atlasout.Write(&headervalue,4);
+	headervalue = atlasw*atlash;	atlasout.Write(&headervalue,4);*/
 	atlasout.Write(dxtatlas,dxtatlassize);
 	atlasout.Close();
 	delete[] dxtatlas;
@@ -613,30 +660,116 @@ void ToolBackgroundEditor::DrawImage(wxDC& dc) {
 		m_texturewindow->SetVirtualSize(main_img.GetWidth(),main_img.GetHeight());
 		MACRO_CREATE_MEMORY_DC(dc,m_texturewindow)
 		mdc.DrawBitmap(main_img,0,0);
-//		if (imported_img.IsOk())
-//			mdc.DrawBitmap(imported_img,mainposx+imported_img_x/scale_ratio,mainposy+imported_img_y/scale_ratio);
+		if (tile_img.IsOk())
+			mdc.DrawBitmap(tile_img,0,0);
 		m_texturewindow->DoPrepareDC(dc);
 		dc.Blit(wxPoint(0,0),mdc.GetSize(),&mdc,wxPoint(0,0));
+	} else {
+		dc.Clear();
 	}
 }
 
 void ToolBackgroundEditor::UpdateImage() {
 	wxImage img = main_img_base.Copy();
+	wxImage tileimg = tile_img_base.Copy();
 	
 	main_img = wxBitmap(img);
+	tile_img = wxBitmap(tileimg);
 	wxClientDC dc(m_texturewindow);
 	DrawImage(dc);
 }
 
+void ToolBackgroundEditor::LoadAndMergeImages() {
+	if (!wxFile::Exists(m_imagepicker->GetPath())) {
+		main_img_base.Destroy();
+		return;
+	}
+	unsigned int i,ti,x,y;
+	wxArrayInt tileselindexlist;
+	bool imgisempty = true;
+	uint32_t pix,pix1,pix2;
+	m_tilelist->GetSelections(tileselindexlist);
+	for (ti=0;ti<tileselindexlist.GetCount();ti++) {
+		if (tileselindexlist[ti]<wxImage::GetImageCount(m_imagepicker->GetPath())) {
+			if (imgisempty) {
+				imgisempty = false;
+				main_img_base.LoadFile(m_imagepicker->GetPath(),wxBITMAP_TYPE_ANY,tileselindexlist[ti]);
+			} else {
+				wxImage imgtoken = wxImage(m_imagepicker->GetPath(),wxBITMAP_TYPE_ANY,tileselindexlist[ti]);
+				for (x=0;x<main_img_base.GetWidth();x++)
+					for (y=0;y<main_img_base.GetWidth();y++) {
+						if (imgtoken.GetAlpha(x,y)>0) {
+							pix1 = (main_img_base.GetAlpha(x,y) << 24) | (main_img_base.GetBlue(x,y) << 16) | (main_img_base.GetGreen(x,y) << 8) | main_img_base.GetRed(x,y);
+							pix2 = (imgtoken.GetAlpha(x,y) << 24) | (imgtoken.GetBlue(x,y) << 16) | (imgtoken.GetGreen(x,y) << 8) | imgtoken.GetRed(x,y);
+							pix = ImageMergePixels(pix1,pix2,TIM_BLENDMODE_ALPHA);
+							main_img_base.SetRGB(x,y,pix & 0xFF,(pix >> 8) & 0xFF,(pix >> 16) & 0xFF);
+							main_img_base.SetAlpha(x,y,(pix >> 24) & 0xFF);
+						}
+					}
+			}
+		}
+	}
+	if (imgisempty)
+		main_img_base.Destroy();
+}
+
+void ToolBackgroundEditor::ComputeTileFilter(int x, int y) {
+	if (x>=0 && y>=0) {
+		
+	} else {
+		unsigned int i,ti,x,y;
+		wxArrayInt tileselindexlist;
+		FieldTilesTileDataStruct* tileptr;
+		tile_img_base.Create(main_img_base.GetSize());
+		tile_img_base.SetAlpha();
+		for (x=0;x<tile_img_base.GetWidth();x++)
+			for (y=0;y<tile_img_base.GetHeight();y++)
+				tile_img_base.SetAlpha(x,y,0);
+		unsigned int imgtilex,imgtiley,tilesize;
+		tilesize = m_resolution->GetValue();
+		if (m_tilelist->GetSelections(tileselindexlist)>0)
+			for (ti=0;ti<tileselindexlist.GetCount();ti++) {
+				wxImage tileimgtoken = wxImage(tile_img_base.GetSize());
+				tileimgtoken.SetAlpha();
+				for (x=0;x<tileimgtoken.GetWidth();x++)
+					for (y=0;y<tileimgtoken.GetHeight();y++)
+						tileimgtoken.SetAlpha(x,y,0);
+				if (m_sorttileset->IsChecked())
+					tileptr = cddata->fieldset.background_data[m_fieldchoice->GetSelection()]->tiles_sorted[tileselindexlist[ti]];
+				else
+					tileptr = &cddata->fieldset.background_data[m_fieldchoice->GetSelection()]->tiles[tileselindexlist[ti]];
+				FieldTilesTileDataStruct& tile = *tileptr;
+				FieldTilesCameraDataStruct& camera = cddata->fieldset.background_data[m_fieldchoice->GetSelection()]->camera[tile.camera_id];
+				for (i=0;i<tile.tile_amount;i++) {
+					imgtilex = (tile.pos_x+tile.tile_pos_x[i]-camera.pos_x)/FIELD_TILE_BASE_SIZE*tilesize;
+					imgtiley = (tile.pos_y+tile.tile_pos_y[i]-camera.pos_y)/FIELD_TILE_BASE_SIZE*tilesize;
+					tileimgtoken.SetRGB(wxRect(imgtilex,imgtiley,tilesize,tilesize),TILECOLOR_INTERIOR.Red(),TILECOLOR_INTERIOR.Green(),TILECOLOR_INTERIOR.Blue());
+					for (x=0;x<tilesize && imgtilex+x<tileimgtoken.GetWidth();x++)
+						for (y=0;y<tilesize && imgtiley+y<tileimgtoken.GetHeight();y++)
+							tileimgtoken.SetAlpha(imgtilex+x,imgtiley+y,TILECOLOR_INTERIOR.Alpha());
+				}
+				for (x=0;x<tileimgtoken.GetWidth();x++)
+					for (y=0;y<tileimgtoken.GetHeight();y++) {
+						if (tileimgtoken.GetAlpha(x,y)!=0 && /*
+						 */ (x==0 || y==0 || x+1==tileimgtoken.GetWidth() || y+1==tileimgtoken.GetHeight() || /*
+						 */ tileimgtoken.GetAlpha(x-1,y)==0 || tileimgtoken.GetAlpha(x,y-1)==0 || tileimgtoken.GetAlpha(x+1,y)==0 || tileimgtoken.GetAlpha(x,y+1)==0)) {
+							tileimgtoken.SetAlpha(x,y,TILECOLOR_BOUNDARY.Alpha());
+							tile_img_base.SetRGB(x,y,TILECOLOR_BOUNDARY.Red(),TILECOLOR_BOUNDARY.Green(),TILECOLOR_BOUNDARY.Blue());
+						}
+						tile_img_base.SetAlpha(x,y,min(0xFF,tile_img_base.GetAlpha(x,y)+tileimgtoken.GetAlpha(x,y)));
+					}
+			}
+	}
+}
+
 void ToolBackgroundEditor::OnFilePick(wxFileDirPickerEvent& event) {
 	if (wxFile::Exists(event.GetPath())) {
-		main_img_base.LoadFile(event.GetPath(),wxBITMAP_TYPE_ANY,0);
-		UpdateImage();
+		LoadAndMergeImages();
+		ComputeTileFilter();
 	} else {
 		main_img_base.Destroy();
-		wxClientDC dc(m_texturewindow);
-		dc.Clear();
 	}
+	UpdateImage();
 }
 
 void ToolBackgroundEditor::OnRadioClick(wxCommandEvent& event) {
@@ -655,37 +788,177 @@ void ToolBackgroundEditor::OnFieldChoice(wxCommandEvent& event) {
 }
 
 void ToolBackgroundEditor::OnTileSelect(wxCommandEvent& event) {
-	FieldTilesTileDataStruct& tile = cddata->fieldset.background_data[m_fieldchoice->GetSelection()]->tiles[event.GetSelection()];
-	FieldTilesCameraDataStruct& camera = cddata->fieldset.background_data[m_fieldchoice->GetSelection()]->camera[tile.camera_id];
-	unsigned int i,x,imgtilex,imgtiley,tilesize;
-	main_img_base.LoadFile(m_imagepicker->GetPath(),wxBITMAP_TYPE_ANY,event.GetSelection());
-	tilesize = cddata->fieldset.tile_size;
-	for (i=0;i<tile.tile_amount;i++) {
-		imgtilex = (tile.pos_x+tile.tile_pos_x[i]-camera.pos_x)/16*tilesize;
-		imgtiley = (tile.pos_y+tile.tile_pos_y[i]-camera.pos_y)/16*tilesize;
-		// DEBUG
-		for (x=0;x<tilesize;x++) {
-			main_img_base.SetRGB(imgtilex+x,imgtiley,0,0,0);
-			main_img_base.SetAlpha(imgtilex+x,imgtiley,255);
-		}
-		for (x=0;x<tilesize;x++) {
-			main_img_base.SetRGB(imgtilex+x,imgtiley+tilesize-1,0,0,0);
-			main_img_base.SetAlpha(imgtilex+x,imgtiley+tilesize-1,255);
-		}
-		for (x=1;x<tilesize;x++) {
-			main_img_base.SetRGB(imgtilex,imgtiley+x,0,0,0);
-			main_img_base.SetAlpha(imgtilex,imgtiley+x,255);
-		}
-		for (x=1;x<tilesize;x++) {
-			main_img_base.SetRGB(imgtilex+tilesize-1,imgtiley+x,0,0,0);
-			main_img_base.SetAlpha(imgtilex+tilesize-1,imgtiley+x,255);
-		}
-	}
+	LoadAndMergeImages();
+	ComputeTileFilter();
 	UpdateImage();
 }
 
+void ToolBackgroundEditor::OnCheckBox(wxCommandEvent& event) {
+	int id = event.GetId();
+	if (id==wxID_SORTTILE) {
+		ComputeTileFilter();
+		UpdateImage();
+	}
+}
+
+void ToolBackgroundEditor::OnSpinChange(wxSpinEvent& event) {
+	int id = event.GetId();
+	if (id==wxID_RESOLUTION) {
+		ComputeTileFilter();
+		UpdateImage();
+	}
+}
+
 void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
-	EndModal(event.GetId());
+	int id = event.GetId();
+	unsigned int i,j;
+	if (id==wxID_APPLY) {
+		if (m_auinotebook->GetSelection()==0) {
+			wxString destfilebase = m_exportdir->GetPath()+_(L"\\");
+			for (i=0;i<G_N_ELEMENTS(SteamFieldScript);i++)
+				if (SteamFieldScript[i].script_id==cddata->fieldset.struct_id[m_fieldchoice->GetSelection()]) {
+					destfilebase += _(SteamFieldScript[i].background_name);
+					break;
+				}
+			if (i==G_N_ELEMENTS(SteamFieldScript))
+				destfilebase += _(HADES_STRING_UNKNOWN_FIELD);
+			FieldTilesDataStruct* tileset;
+			tileset = cddata->fieldset.background_data[m_fieldchoice->GetSelection()];
+			unsigned int tilesizebackup = tileset->parent->tile_size;
+			tileset->parent->tile_size = m_resolution->GetValue();
+			int* sortedimg = NULL;
+			if (m_sorttileset->IsChecked()) {
+				sortedimg = new int[tileset->tiles_amount];
+				for (i=0;i<tileset->tiles_amount;i++) {
+					sortedimg[i] = -1;
+					for (j=0;j<tileset->tiles_amount;j++)
+						if (&tileset->tiles[i]==tileset->tiles_sorted[j]) {
+							sortedimg[i] = j;
+							break;
+						}
+				}
+			}
+			int res = CreateBackgroundImage(m_imagepicker->GetPath(),destfilebase+_(L".tex"),*tileset,sortedimg);
+			tileset->parent->tile_size = tilesizebackup;
+			if (res==0) {
+				wxMessageDialog popupsuccess(this,HADES_STRING_STEAM_SAVE_SUCCESS,HADES_STRING_SUCCESS,wxOK|wxCENTRE);
+				popupsuccess.ShowModal();
+			} else if (res==1) {
+				wxLogError(HADES_STRING_OPEN_ERROR_CREATE,destfilebase+_(L".tex"));
+			}
+			if (sortedimg)
+				delete[] sortedimg;
+		} else {
+			wxString importdirname = m_importdir->GetPath()+_(L"\\");
+			wxString importpdatadir = m_importlauncher->GetPath();
+			if (!wxFile::Exists(importpdatadir) || importpdatadir.Find(_(L"FF9_Launcher.exe"))==wxNOT_FOUND) {
+				wxLogError(HADES_STRING_INVALID_FF9LAUNCHER);
+				return;
+			}
+			importpdatadir = importpdatadir.Mid(0,importpdatadir.Find(_(L"FF9_Launcher.exe")))+_(L"StreamingAssets\\");
+			wxString importfilename;
+			wxString pdatafilename;
+			ConfigurationSet& config = cddata->config;
+			bool* copylist[9];
+			uint32_t* filenewsize[9];
+			fstream filebase[9];
+			fstream filedest[9];
+			bool isok = true;
+			for (i=0;i<9;i++) {
+				copylist[i] = new bool[config.meta_field[i].header_file_amount];
+				filenewsize[i] = new uint32_t[config.meta_field[i].header_file_amount];
+				pdatafilename = importpdatadir;
+				pdatafilename << _(L"p0data1") << (i+1) << _(L".bin");
+				filebase[i].open(pdatafilename.mb_str(),ios::in | ios::binary);
+				filedest[i].open((pdatafilename+_(L".tmp")).mb_str(),ios::out | ios::binary);
+				if (!filebase[i].is_open()) {
+					wxLogError(HADES_STRING_OPEN_ERROR_FAIL,pdatafilename);
+					isok = false;
+				}
+				if (!filedest[i].is_open()) {
+					wxLogError(HADES_STRING_OPEN_ERROR_CREATE,pdatafilename);
+					isok = false;
+				}
+			}
+			if (!isok) {
+				for (i=0;i<9;i++) {
+					delete[] copylist[i];
+					delete[] filenewsize[i];
+					if (filebase[i].is_open())
+						filebase[i].close();
+					if (filedest[i].is_open())
+						filedest[i].close();
+				}
+				return;
+			}
+			LoadingDialogInit(11,_(L"Updating Unity Archives..."));
+			unsigned int importsuccess = 0;
+			unsigned int importfail = 0;
+			for (i=0;i<9;i++)
+				for (j=0;j<config.meta_field[i].header_file_amount;j++) {
+					copylist[i][j] = true;
+					filenewsize[i][j] = config.meta_field[i].file_size[j];
+				}
+			for (i=0;i<G_N_ELEMENTS(SteamFieldScript);i++) {
+				importfilename = importdirname+_(SteamFieldScript[i].background_name);
+				if (wxFile::Exists(importfilename+_(L".tex"))) {
+					fstream importatlas(importfilename+_(L".tex").mb_str(),ios::in | ios::binary);
+					if (!importatlas.is_open()) {
+						importfail++;
+						continue;
+					}
+					importatlas.seekg(0,ios::end);
+					size_t importatlassize = importatlas.tellg();
+					copylist[SteamFieldScript[i].file_id-1][config.field_image_file[i]] = true;
+					filenewsize[SteamFieldScript[i].file_id-1][config.field_image_file[i]] = importatlassize;
+					importatlas.close();
+				}
+				// ToDo : Tileset with .bgs
+				// ToDo : Walkmesh with .bgi
+			}
+			LoadingDialogUpdate(1);
+			uint32_t* unitydataoff[9];
+			for (i=0;i<9;i++) {
+				unitydataoff[i] = config.meta_field[i].Duplicate(filebase[i],filedest[i],copylist[i],filenewsize[i]);
+				LoadingDialogUpdate(2+i);
+			}
+			for (i=0;i<G_N_ELEMENTS(SteamFieldScript);i++) {
+				importfilename = importdirname+_(SteamFieldScript[i].background_name);
+				if (wxFile::Exists(importfilename+_(L".tex"))) {
+					fstream importatlas(importfilename+_(L".tex").mb_str(),ios::in | ios::binary);
+					if (!importatlas.is_open()) {
+						importfail++;
+						continue;
+					}
+					filedest[SteamFieldScript[i].file_id-1].seekg(unitydataoff[SteamFieldScript[i].file_id-1][config.field_image_file[i]]);
+					char* buffer = new char[filenewsize[SteamFieldScript[i].file_id-1][config.field_image_file[i]]];
+					importatlas.read(buffer,filenewsize[SteamFieldScript[i].file_id-1][config.field_image_file[i]]);
+					filedest[SteamFieldScript[i].file_id-1].write(buffer,filenewsize[SteamFieldScript[i].file_id-1][config.field_image_file[i]]);
+					importatlas.close();
+					importsuccess++;
+				}
+			}
+			LoadingDialogUpdate(11);
+			for (i=0;i<9;i++) {
+				filebase[i].close();
+				filedest[i].close();
+				delete[] copylist[i];
+				delete[] filenewsize[i];
+				delete[] unitydataoff[i];
+				pdatafilename = importpdatadir;
+				pdatafilename << _(L"p0data1") << (i+1) << _(L".bin");
+				remove(pdatafilename.mb_str());
+				rename((pdatafilename+_(L".tmp")).mb_str(),pdatafilename.mb_str());
+			}
+			LoadingDialogEnd();
+			wxString successtring;
+			successtring.Printf(wxT(HADES_STRING_IMPORT_BACKGROUND_RESULT),importsuccess,importfail);
+			wxMessageDialog popupsuccess(this,successtring,HADES_STRING_SUCCESS,wxOK|wxCENTRE);
+			popupsuccess.ShowModal();
+		}
+	} else if (id==wxID_CLOSE) {
+		EndModal(id);
+	}
 }
 
 void ToolBackgroundEditor::OnPaintImage(wxPaintEvent& event) {

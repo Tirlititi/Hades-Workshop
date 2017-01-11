@@ -2,6 +2,9 @@
 #define _FIELDS_H
 
 // Many thanks to yaz0r and Zidane_2 for sharing scripts about reading field backgrounds
+
+#define FIELD_TILE_BASE_SIZE	16
+
 struct FieldTilesAnimDataStruct;
 struct FieldTilesTileDataStruct;
 struct FieldTilesLightDataStruct;

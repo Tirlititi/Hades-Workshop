@@ -38,11 +38,15 @@ private:
 	
 	void DrawImage(wxDC& dc);
 	void UpdateImage();
+	void LoadAndMergeImages();
+	void ComputeTileFilter(int x = -1, int y = -1);
 	
 	void OnFilePick(wxFileDirPickerEvent& event);
 	void OnRadioClick(wxCommandEvent& event);
 	void OnFieldChoice(wxCommandEvent& event);
 	void OnTileSelect(wxCommandEvent& event);
+	void OnCheckBox(wxCommandEvent& event);
+	void OnSpinChange(wxSpinEvent& event);
 	void OnButtonClick(wxCommandEvent& event);
 	void OnPaintImage(wxPaintEvent& event);
 };

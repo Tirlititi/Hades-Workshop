@@ -42,7 +42,7 @@ struct UnityArchiveMetaData {
 	int32_t GetFileIndexByInfo(uint64_t info, uint32_t filetype = 0xFFFFFFFF, string folder = "");
 	
 	// Return the starting offset of the files in the duplicate (must be deleted[])
-	// Arrays must be of length header_file_amount ; they are deleled[] in the process
+	// Arrays must be of length header_file_amount
 	uint32_t* Duplicate(fstream& fbase, fstream& fdest, bool* copylist, uint32_t* filenewsize);
 };
 

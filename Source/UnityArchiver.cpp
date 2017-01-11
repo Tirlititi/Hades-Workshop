@@ -219,8 +219,6 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 		fdest.seekp(archivestart+4);
 		WriteLongBE(fdest,size);
 	}
-	delete[] copylist;
-	delete[] filenewsize;
 	return res;
 }
 
