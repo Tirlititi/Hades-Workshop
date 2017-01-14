@@ -67,7 +67,10 @@ void TIMImageDataStruct::Read(fstream& f) {
 		SteamReadLong(f,(uint32_t&)steam_lightmap_format);
 		SteamReadLong(f,(uint32_t&)steam_color_space);
 		SteamReadLong(f,steam_size2);
-		steam_pixel_alpha = new uint8_t[pixelamount];
+		pixel_value = new uint8_t[steam_width*steam_height]; // DXT5 : 1 bpp
+		for (i=0;i<steam_width*steam_height;i++)
+			SteamReadChar(f,pixel_value[i]);
+/*		steam_pixel_alpha = new uint8_t[pixelamount];
 		steam_pixel_alpha_ex = new uint8_t[pixelamount];
 		steam_pixel_alpha_flag1 = new uint16_t[pixelamount];
 		steam_pixel_alpha_flag2 = new uint16_t[pixelamount];
@@ -84,7 +87,7 @@ void TIMImageDataStruct::Read(fstream& f) {
 			SteamReadShort(f,steam_pixel_color[i]);
 			SteamReadShort(f,steam_pixel_color_ex[i]);
 			SteamReadLong(f,steam_pixel_color_flag[i]);
-		}
+		}*/
 		f.close();
 	}
 	loaded = true;
@@ -232,7 +235,50 @@ uint32_t* TIMImageDataStruct::ConvertAsImage(uint16_t texpos, uint16_t sizex, ui
 }
 
 uint32_t* TIMImageDataStruct::ConvertAsSteamImage(bool usealpha) {
-	uint32_t* res = new uint32_t[steam_width*steam_height];
+	uint8_t* res = new uint8_t[steam_width*steam_height*4];
+	unsigned int x,y;
+	uint8_t tmp8;
+	squish::DecompressImage((uint8_t*)res,steam_width,steam_height,pixel_value,squish::kDxt5);
+	for (y=0;2*y<steam_height;y++)
+		for (x=0;x<steam_width;x++) {
+			// DEBUG: PSX encryption of color is bgra, and backgrounds are assumed to be bgra in the rest of the API
+			// rgba is thus turned here into bgra (plus the y-symetry flip)
+			// It might be good to use rbga everywhere instead
+			tmp8 = res[(x+y*steam_width)*4];
+			res[(x+y*steam_width)*4] = res[(x+(steam_height-y-1)*steam_width)*4+2];
+			res[(x+(steam_height-y-1)*steam_width)*4+2] = tmp8;
+			tmp8 = res[(x+y*steam_width)*4+1];
+			res[(x+y*steam_width)*4+1] = res[(x+(steam_height-y-1)*steam_width)*4+1];
+			res[(x+(steam_height-y-1)*steam_width)*4+1] = tmp8;
+			tmp8 = res[(x+y*steam_width)*4+2];
+			res[(x+y*steam_width)*4+2] = res[(x+(steam_height-y-1)*steam_width)*4];
+			res[(x+(steam_height-y-1)*steam_width)*4] = tmp8;
+			tmp8 = res[(x+y*steam_width)*4+3];
+			res[(x+y*steam_width)*4+3] = res[(x+(steam_height-y-1)*steam_width)*4+3];
+			res[(x+(steam_height-y-1)*steam_width)*4+3] = tmp8;
+		}
+/*fstream ftga("aaaa.tga",ios::out|ios::binary);
+uint32_t* res32 = (uint32_t*)res;
+unsigned int i;
+uint8_t a,r,g,b;
+if (!ftga.is_open()) return res32;
+uint32_t tmp = 0x20000; ftga.write((const char*)&tmp,4);
+tmp = 0; ftga.write((const char*)&tmp,4); ftga.write((const char*)&tmp,4);
+tmp = steam_width; ftga.write((const char*)&tmp,2);
+tmp = steam_height; ftga.write((const char*)&tmp,2);
+tmp = 0x2020; ftga.write((const char*)&tmp,2);
+for (i=0;i<steam_height*steam_width;i++) {
+int x = i%steam_width;
+int y = i/steam_width;
+a = (res32[i] >> 24) & 0xFF; r = (res32[i] >> 16) & 0xFF; g = (res32[i] >> 8) & 0xFF; b = res32[i] & 0xFF;
+ftga.write((const char*)&b,1);
+ftga.write((const char*)&g,1);
+ftga.write((const char*)&r,1);
+ftga.write((const char*)&a,1);
+}*/
+	return (uint32_t*)res;
+	// DEBUG: old version...
+/*	uint32_t* res = new uint32_t[steam_width*steam_height];
 	uint32_t steamheight4 = steam_height/4;
 	uint32_t steamwidth4 = steam_width/4;
 	unsigned int i,j,x,y,k,l;
@@ -255,7 +301,7 @@ uint32_t* TIMImageDataStruct::ConvertAsSteamImage(bool usealpha) {
 					} else if (colorflag==1) {
 						r = (steam_pixel_color_ex[i] >> 11) & 0x1F;
 						g = (steam_pixel_color_ex[i] >> 6) & 0x1F;
-						b = steam_pixel_color_ex[i] & 0x1F;
+						b = steam_pixel_color_ex[i] & 0x1F;*/
 /*					} else if (steam_pixel_color[i]<=steam_pixel_color_ex[i]) {
 						if (colorflag==2) {
 							r = (((steam_pixel_color[i] >> 11) & 0x1F)+((steam_pixel_color_ex[i] >> 11) & 0x1F))/2;
@@ -267,7 +313,7 @@ uint32_t* TIMImageDataStruct::ConvertAsSteamImage(bool usealpha) {
 							b = 0;
 							a = 0;
 						}*/
-					} else if (colorflag==2) {
+/*					} else if (colorflag==2) {
 						r = (2*((steam_pixel_color[i] >> 11) & 0x1F)+((steam_pixel_color_ex[i] >> 11) & 0x1F))/3;
 						g = (2*((steam_pixel_color[i] >> 6) & 0x1F)+((steam_pixel_color_ex[i] >> 6) & 0x1F))/3;
 						b = (2*(steam_pixel_color[i] & 0x1F)+(steam_pixel_color_ex[i] & 0x1F))/3;
@@ -292,14 +338,14 @@ uint32_t* TIMImageDataStruct::ConvertAsSteamImage(bool usealpha) {
 						} else {
 								a = ((8-alphaflag)*steam_pixel_alpha[i]+(alphaflag-1)*steam_pixel_alpha_ex[i])/7;
 						}
-					}
+					}*/
 /*if (y+1==steamheight4 && x>=20 && x<=23) {
 fstream fout("aaaa.txt",ios::app|ios::out); fout << "Position: " << (unsigned int)x << ", " << (unsigned int)y << " (" << (unsigned int)l  << "," << (unsigned int)k << ")" << endl;
 fout << "Colors: " << (unsigned int)steam_pixel_color[i] << " " << (unsigned int)steam_pixel_color_ex[i] << endl;
 fout << "Alphas: " << (unsigned int)steam_pixel_alpha[i] << " " << (unsigned int)steam_pixel_alpha_ex[i] << endl;
 fout << "Flags: " << (unsigned int)colorflag << " " << (unsigned int)alphaflag << endl;
 fout << endl; fout.close(); }*/
-					res[j++] = (a << 24) | (color[r] << 16) | (color[g] << 8) | color[b];
+/*					res[j++] = (a << 24) | (color[r] << 16) | (color[g] << 8) | color[b];
 				}
 				i++;
 			}
@@ -307,7 +353,7 @@ fout << endl; fout.close(); }*/
 			i -= steamwidth4;
 		}
 		i += steamwidth4;
-	}
+	}*/
 // TGA then Unity RGBA32
 /*fstream ftga("aaaa.tga",ios::out|ios::binary);
 if (!ftga.is_open()) return res;
@@ -339,7 +385,7 @@ ftga.write((const char*)&g,1);
 ftga.write((const char*)&r,1);
 ftga.write((const char*)&a,1);
 }*/
-	return res;
+//	return res;
 }
 
 uint32_t* TIMImageDataStruct::ConvertAsFullImage(uint32_t* pal, uint16_t palpos, bool usealpha) {
@@ -757,7 +803,7 @@ uint8_t* TIMImageDataStruct::CreateSteamTextureFile(uint32_t& datasize, uint32_t
 		datasize = 0;
 		return NULL;
 	}
-	int dxtflag = squish::kDxt5;
+	int dxtflag = squish::kDxt5 | squish::kColourIterativeClusterFit;
 	uint32_t pixam = w*h/16;
 	uint32_t filesize = 0x3C+squish::GetStorageRequirements(w,h,dxtflag);
 	uint8_t* raw = new uint8_t[filesize];

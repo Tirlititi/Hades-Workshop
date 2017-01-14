@@ -128,7 +128,7 @@ int32_t UnityArchiveMetaData::GetFileIndexByInfo(uint64_t info, uint32_t filetyp
 uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* copylist, uint32_t* filenewsize) {
 	uint32_t archivestart = archive_type==1 ? 0x70 : 0;
 	uint32_t* res = new uint32_t[header_file_amount];
-	uint32_t copysize, offstart, offtmp;
+	uint32_t copysize, offstart, offtmp, filenewsizetmp;
 	unsigned int i,j;
 	char* buffer;
 	copysize = archivestart+0x25; // up to file_info data
@@ -148,17 +148,17 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 	fdest.seekp(GetAlignOffset(fdest.tellp()),ios::cur);
 	offstart = 0;
 	for (i=0;i<header_file_amount;i++) {
-		res[i] = offstart;
+		filenewsizetmp = filenewsize[i];
 		WriteLongLong(fdest,file_info[i]);
 		WriteLong(fdest,offstart);
 		if (copylist[i]) {
 			WriteLong(fdest,file_size[i]);
 		} else {
 			if (HasFileTypeName(file_type1[i]))
-				filenewsize[i] += 4+file_name_len[i]+GetAlignOffset(file_name_len[i]);
-			filenewsize[i]++; // DEBUG : text files and some others use this kind of padding but not all files do
-			filenewsize[i] += GetAlignOffset(filenewsize[i],8);
-			WriteLong(fdest,filenewsize[i]);
+				filenewsizetmp += 4+file_name_len[i]+GetAlignOffset(file_name_len[i]);
+			filenewsizetmp++; // DEBUG : text files and some others use this kind of padding but not all files do
+			filenewsizetmp += GetAlignOffset(filenewsizetmp,8);
+			WriteLong(fdest,filenewsizetmp);
 		}
 		WriteLong(fdest,file_type1[i]);
 		WriteLong(fdest,file_type2[i]);
@@ -186,7 +186,7 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 		if (copylist[i])
 			offstart += file_size[i];
 		else
-			offstart += filenewsize[i];
+			offstart += filenewsizetmp;
 		offstart += GetAlignOffset(offstart,8);
 	}
 	if (offtmp<archivestart+header_file_offset) {

@@ -1,11 +1,11 @@
 #include "Gui_Tools.h"
 
+#include <algorithm>
 #include "main.h"
 #include "Gui_TextureEditor.h"
 #include "Gui_LoadingDialog.h"
 #include "Hades_Strings.h"
 #include "Steam_Strings.h"
-#include "Squish/squish.h"
 
 //=============================//
 //         ModManager          //
@@ -554,35 +554,41 @@ int CreateBackgroundImage(wxString imgfilename, wxString outputname, FieldTilesD
 	atlastilecolcount = atlasw;
 	atlasw *= tileperiod;
 	atlash *= tileperiod;
-//atlasw = 1024; atlash = 1024; atlastilecolcount = 28; // DEBUG
 	while (atlasw%4) atlasw++; // For DXT5 compression, it is better to have sizes multiple of 4
 	while (atlash%4) atlash++;
 	atlassize = atlasw*atlash*4;
 	atlas = new uint8_t[atlassize]{0};
 	// Add each tile to the atlas in the order
-	unsigned int imgtilex, imgtiley, imgwidth;
+	unsigned int imgtilex, imgtiley, imgwidth, imgheight;
 	unsigned int atlasx, atlasy;
 	for (i=0;i<tiledata.tiles_amount;i++) {
 		FieldTilesTileDataStruct& tile = tiledata.tiles[i];
 		FieldTilesCameraDataStruct& camera = tiledata.camera[tile.camera_id];
 		wxImage tblockimg;
+		wxString imgfileindexname;
 		if (sortedimg) {
 			if (sortedimg[i]<0 || sortedimg[i]>=wxImage::GetImageCount(imgfilename))
 				continue;
 			tblockimg.LoadFile(imgfilename,type,sortedimg[i]);
+//			imgfileindexname << imgfilename << (tiledata.tiles_amount - sortedimg[i] - 1) << _(L".tif");
+//			tblockimg.LoadFile(imgfileindexname,type);
 		} else {
 			if (i>=wxImage::GetImageCount(imgfilename))
 				break;
 			tblockimg.LoadFile(imgfilename,type,i);
+//			imgfileindexname << imgfilename << (tiledata.tiles_amount - i - 1) << _(L".tif");
+//			tblockimg.LoadFile(imgfileindexname,type);
 		}
 		uint8_t* imgdata = tblockimg.GetData();
 		uint8_t* imgalpha = tblockimg.GetAlpha();
 		imgwidth = tblockimg.GetWidth();
+		imgheight = tblockimg.GetHeight();
 		for (j=0;j<tile.tile_amount;j++) {
 			imgtilex = (tile.pos_x+tile.tile_pos_x[j]-camera.pos_x)/FIELD_TILE_BASE_SIZE*tilesize;
 			imgtiley = (tile.pos_y+tile.tile_pos_y[j]-camera.pos_y)/FIELD_TILE_BASE_SIZE*tilesize;
 			atlasx = (tile.tile_steam_id[j]%atlastilecolcount)*tileperiod+tilegap;
 			atlasy = (tile.tile_steam_id[j]/atlastilecolcount)*tileperiod+tilegap;
+			// interior of the tile
 			for (y=0;y<tilesize;y++)
 				for (x=0;x<tilesize;x++) {
 					atlas[(atlasx+x+(atlasy+y)*atlasw)*4] = imgdata[(imgtilex+x+(imgtiley+y)*imgwidth)*3];
@@ -590,64 +596,93 @@ int CreateBackgroundImage(wxString imgfilename, wxString outputname, FieldTilesD
 					atlas[(atlasx+x+(atlasy+y)*atlasw)*4+2] = imgdata[(imgtilex+x+(imgtiley+y)*imgwidth)*3+2];
 					atlas[(atlasx+x+(atlasy+y)*atlasw)*4+3] = imgalpha[imgtilex+x+(imgtiley+y)*imgwidth];
 				}
+			// vertical and horizontal borders of the tile : (2*bordercolor_interior + bordercolor_exterior)/3
 			for (y=0;y<tilesize;y++)
 				for (x=0;x<tilegap;x++) {
-					atlas[(atlasx-x-1+(atlasy+y)*atlasw)*4] = imgdata[(imgtilex+(imgtiley+y)*imgwidth)*3];
-					atlas[(atlasx-x-1+(atlasy+y)*atlasw)*4+1] = imgdata[(imgtilex+(imgtiley+y)*imgwidth)*3+1];
-					atlas[(atlasx-x-1+(atlasy+y)*atlasw)*4+2] = imgdata[(imgtilex+(imgtiley+y)*imgwidth)*3+2];
-					atlas[(atlasx-x-1+(atlasy+y)*atlasw)*4+3] = imgalpha[imgtilex+(imgtiley+y)*imgwidth];
-					atlas[(atlasx+tilesize+x+(atlasy+y)*atlasw)*4] = imgdata[(imgtilex+tilesize-1+(imgtiley+y)*imgwidth)*3];
-					atlas[(atlasx+tilesize+x+(atlasy+y)*atlasw)*4+1] = imgdata[(imgtilex+tilesize-1+(imgtiley+y)*imgwidth)*3+1];
-					atlas[(atlasx+tilesize+x+(atlasy+y)*atlasw)*4+2] = imgdata[(imgtilex+tilesize-1+(imgtiley+y)*imgwidth)*3+2];
-					atlas[(atlasx+tilesize+x+(atlasy+y)*atlasw)*4+3] = imgalpha[imgtilex+tilesize-1+(imgtiley+y)*imgwidth];
+					if (imgtilex>0 && imgalpha[imgtilex-1+(imgtiley+y)*imgwidth]>0) {
+						atlas[(atlasx-x-1+(atlasy+y)*atlasw)*4] = (2*imgdata[(imgtilex+(imgtiley+y)*imgwidth)*3]+imgdata[(imgtilex-1+(imgtiley+y)*imgwidth)*3])/3;
+						atlas[(atlasx-x-1+(atlasy+y)*atlasw)*4+1] = (2*imgdata[(imgtilex+(imgtiley+y)*imgwidth)*3+1]+imgdata[(imgtilex-1+(imgtiley+y)*imgwidth)*3+1])/3;
+						atlas[(atlasx-x-1+(atlasy+y)*atlasw)*4+2] = (2*imgdata[(imgtilex+(imgtiley+y)*imgwidth)*3+2]+imgdata[(imgtilex-1+(imgtiley+y)*imgwidth)*3+2])/3;
+						atlas[(atlasx-x-1+(atlasy+y)*atlasw)*4+3] = max(imgalpha[imgtilex+(imgtiley+y)*imgwidth],imgalpha[imgtilex-1+(imgtiley+y)*imgwidth]);
+					} else {
+						atlas[(atlasx-x-1+(atlasy+y)*atlasw)*4] = imgdata[(imgtilex+(imgtiley+y)*imgwidth)*3];
+						atlas[(atlasx-x-1+(atlasy+y)*atlasw)*4+1] = imgdata[(imgtilex+(imgtiley+y)*imgwidth)*3+1];
+						atlas[(atlasx-x-1+(atlasy+y)*atlasw)*4+2] = imgdata[(imgtilex+(imgtiley+y)*imgwidth)*3+2];
+						atlas[(atlasx-x-1+(atlasy+y)*atlasw)*4+3] = imgalpha[imgtilex+(imgtiley+y)*imgwidth];
+					}
+					if (imgtilex+1<imgwidth && imgalpha[imgtilex+tilesize+(imgtiley+y)*imgwidth]>0) {
+						atlas[(atlasx+tilesize+x+(atlasy+y)*atlasw)*4] = (2*imgdata[(imgtilex+tilesize-1+(imgtiley+y)*imgwidth)*3]+imgdata[(imgtilex+tilesize+(imgtiley+y)*imgwidth)*3])/3;
+						atlas[(atlasx+tilesize+x+(atlasy+y)*atlasw)*4+1] = (2*imgdata[(imgtilex+tilesize-1+(imgtiley+y)*imgwidth)*3+1]+imgdata[(imgtilex+tilesize+(imgtiley+y)*imgwidth)*3+1])/3;
+						atlas[(atlasx+tilesize+x+(atlasy+y)*atlasw)*4+2] = (2*imgdata[(imgtilex+tilesize-1+(imgtiley+y)*imgwidth)*3+2]+imgdata[(imgtilex+tilesize+(imgtiley+y)*imgwidth)*3+2])/3;
+						atlas[(atlasx+tilesize+x+(atlasy+y)*atlasw)*4+3] = max(imgalpha[imgtilex+tilesize-1+(imgtiley+y)*imgwidth],imgalpha[imgtilex+tilesize+(imgtiley+y)*imgwidth]);
+					} else {
+						atlas[(atlasx+tilesize+x+(atlasy+y)*atlasw)*4] = imgdata[(imgtilex+tilesize-1+(imgtiley+y)*imgwidth)*3];
+						atlas[(atlasx+tilesize+x+(atlasy+y)*atlasw)*4+1] = imgdata[(imgtilex+tilesize-1+(imgtiley+y)*imgwidth)*3+1];
+						atlas[(atlasx+tilesize+x+(atlasy+y)*atlasw)*4+2] = imgdata[(imgtilex+tilesize-1+(imgtiley+y)*imgwidth)*3+2];
+						atlas[(atlasx+tilesize+x+(atlasy+y)*atlasw)*4+3] = imgalpha[imgtilex+tilesize-1+(imgtiley+y)*imgwidth];
+					}
 				}
 			for (x=0;x<tilesize;x++)
 				for (y=0;y<tilegap;y++) {
-					atlas[(atlasx+(atlasy-y-1)*atlasw)*4] = imgdata[(imgtilex+x+imgtiley*imgwidth)*3];
-					atlas[(atlasx+(atlasy-y-1)*atlasw)*4+1] = imgdata[(imgtilex+x+imgtiley*imgwidth)*3+1];
-					atlas[(atlasx+(atlasy-y-1)*atlasw)*4+2] = imgdata[(imgtilex+x+imgtiley*imgwidth)*3+2];
-					atlas[(atlasx+(atlasy-y-1)*atlasw)*4+3] = imgalpha[imgtilex+x+imgtiley*imgwidth];
-					atlas[(atlasx+(atlasy+tilesize+y)*atlasw)*4] = imgdata[(imgtilex+x+(imgtiley+tilesize-1)*imgwidth)*3];
-					atlas[(atlasx+(atlasy+tilesize+y)*atlasw)*4+1] = imgdata[(imgtilex+x+(imgtiley+tilesize-1)*imgwidth)*3+1];
-					atlas[(atlasx+(atlasy+tilesize+y)*atlasw)*4+2] = imgdata[(imgtilex+x+(imgtiley+tilesize-1)*imgwidth)*3+2];
-					atlas[(atlasx+(atlasy+tilesize+y)*atlasw)*4+3] = imgalpha[imgtilex+x+(imgtiley+tilesize-1)*imgwidth];
+					if (imgtiley>0 && imgalpha[imgtilex+x+(imgtiley-1)*imgwidth]>0) {
+						atlas[(atlasx+x+(atlasy-y-1)*atlasw)*4] = (2*imgdata[(imgtilex+x+imgtiley*imgwidth)*3]+imgdata[(imgtilex+x+(imgtiley-1)*imgwidth)*3])/3;
+						atlas[(atlasx+x+(atlasy-y-1)*atlasw)*4+1] = (2*imgdata[(imgtilex+x+imgtiley*imgwidth)*3+1]+imgdata[(imgtilex+x+(imgtiley-1)*imgwidth)*3+1])/3;
+						atlas[(atlasx+x+(atlasy-y-1)*atlasw)*4+2] = (2*imgdata[(imgtilex+x+imgtiley*imgwidth)*3+2]+imgdata[(imgtilex+x+(imgtiley-1)*imgwidth)*3+2])/3;
+						atlas[(atlasx+x+(atlasy-y-1)*atlasw)*4+3] = max(imgalpha[imgtilex+x+imgtiley*imgwidth],imgalpha[imgtilex+x+(imgtiley-1)*imgwidth]);
+					} else {
+						atlas[(atlasx+x+(atlasy-y-1)*atlasw)*4] = imgdata[(imgtilex+x+imgtiley*imgwidth)*3];
+						atlas[(atlasx+x+(atlasy-y-1)*atlasw)*4+1] = imgdata[(imgtilex+x+imgtiley*imgwidth)*3+1];
+						atlas[(atlasx+x+(atlasy-y-1)*atlasw)*4+2] = imgdata[(imgtilex+x+imgtiley*imgwidth)*3+2];
+						atlas[(atlasx+x+(atlasy-y-1)*atlasw)*4+3] = imgalpha[imgtilex+x+imgtiley*imgwidth];
+					}
+					if (imgtiley+1<imgheight && imgalpha[imgtilex+x+(imgtiley+tilesize)*imgwidth]>0) {
+						atlas[(atlasx+x+(atlasy+tilesize+y)*atlasw)*4] = (2*imgdata[(imgtilex+x+(imgtiley+tilesize-1)*imgwidth)*3]+imgdata[(imgtilex+x+(imgtiley+tilesize)*imgwidth)*3])/3;
+						atlas[(atlasx+x+(atlasy+tilesize+y)*atlasw)*4+1] = (2*imgdata[(imgtilex+x+(imgtiley+tilesize-1)*imgwidth)*3+1]+imgdata[(imgtilex+x+(imgtiley+tilesize)*imgwidth)*3+1])/3;
+						atlas[(atlasx+x+(atlasy+tilesize+y)*atlasw)*4+2] = (2*imgdata[(imgtilex+x+(imgtiley+tilesize-1)*imgwidth)*3+2]+imgdata[(imgtilex+x+(imgtiley+tilesize)*imgwidth)*3+2])/3;
+						atlas[(atlasx+x+(atlasy+tilesize+y)*atlasw)*4+3] = max(imgalpha[imgtilex+x+(imgtiley+tilesize-1)*imgwidth],imgalpha[imgtilex+x+(imgtiley+tilesize)*imgwidth]);
+					} else {
+						atlas[(atlasx+x+(atlasy+tilesize+y)*atlasw)*4] = imgdata[(imgtilex+x+(imgtiley+tilesize-1)*imgwidth)*3];
+						atlas[(atlasx+x+(atlasy+tilesize+y)*atlasw)*4+1] = imgdata[(imgtilex+x+(imgtiley+tilesize-1)*imgwidth)*3+1];
+						atlas[(atlasx+x+(atlasy+tilesize+y)*atlasw)*4+2] = imgdata[(imgtilex+x+(imgtiley+tilesize-1)*imgwidth)*3+2];
+						atlas[(atlasx+x+(atlasy+tilesize+y)*atlasw)*4+3] = imgalpha[imgtilex+x+(imgtiley+tilesize-1)*imgwidth];
+					}
 				}
+			// corners of the tile : (bordercolor_exterior1 + bordercolor_exterior2)/2 ; only the nearest pixel is non-transparent
+			for (x=0;x<tilegap;x++)
+				for (y=0;y<tilegap;y++) {
+					atlas[(atlasx-x-1+(atlasy-y-1)*atlasw)*4] = (atlas[(atlasx-1+atlasy*atlasw)*4]+atlas[(atlasx+(atlasy-1)*atlasw)*4])/2;
+					atlas[(atlasx-x-1+(atlasy-y-1)*atlasw)*4+1] = (atlas[(atlasx-1+atlasy*atlasw)*4+1]+atlas[(atlasx+(atlasy-1)*atlasw)*4+1])/2;
+					atlas[(atlasx-x-1+(atlasy-y-1)*atlasw)*4+2] = (atlas[(atlasx-1+atlasy*atlasw)*4+2]+atlas[(atlasx+(atlasy-1)*atlasw)*4+2])/2;
+					atlas[(atlasx-x-1+(atlasy+tilesize+y)*atlasw)*4] = (atlas[(atlasx-1+(atlasy+tilesize-1)*atlasw)*4]+atlas[(atlasx+(atlasy+tilesize)*atlasw)*4])/2;
+					atlas[(atlasx-x-1+(atlasy+tilesize+y)*atlasw)*4+1] = (atlas[(atlasx-1+(atlasy+tilesize-1)*atlasw)*4+1]+atlas[(atlasx+(atlasy+tilesize)*atlasw)*4+1])/2;
+					atlas[(atlasx-x-1+(atlasy+tilesize+y)*atlasw)*4+2] = (atlas[(atlasx-1+(atlasy+tilesize-1)*atlasw)*4+2]+atlas[(atlasx+(atlasy+tilesize)*atlasw)*4+2])/2;
+					atlas[(atlasx+tilesize+x+(atlasy-y-1)*atlasw)*4] = (atlas[(atlasx+tilesize+atlasy*atlasw)*4]+atlas[(atlasx+tilesize-1+(atlasy-1)*atlasw)*4])/2;
+					atlas[(atlasx+tilesize+x+(atlasy-y-1)*atlasw)*4+1] = (atlas[(atlasx+tilesize+atlasy*atlasw)*4+1]+atlas[(atlasx+tilesize-1+(atlasy-1)*atlasw)*4+1])/2;
+					atlas[(atlasx+tilesize+x+(atlasy-y-1)*atlasw)*4+2] = (atlas[(atlasx+tilesize+atlasy*atlasw)*4+2]+atlas[(atlasx+tilesize-1+(atlasy-1)*atlasw)*4+2])/2;
+					atlas[(atlasx+tilesize+x+(atlasy+tilesize+y)*atlasw)*4] = (atlas[(atlasx+tilesize+(atlasy+tilesize-1)*atlasw)*4]+atlas[(atlasx+tilesize-1+(atlasy+tilesize)*atlasw)*4])/2;
+					atlas[(atlasx+tilesize+x+(atlasy+tilesize+y)*atlasw)*4+1] = (atlas[(atlasx+tilesize+(atlasy+tilesize-1)*atlasw)*4+1]+atlas[(atlasx+tilesize-1+(atlasy+tilesize)*atlasw)*4+1])/2;
+					atlas[(atlasx+tilesize+x+(atlasy+tilesize+y)*atlasw)*4+2] = (atlas[(atlasx+tilesize+(atlasy+tilesize-1)*atlasw)*4+2]+atlas[(atlasx+tilesize-1+(atlasy+tilesize)*atlasw)*4+2])/2;
+				}
+			if (tilegap>0) {
+				atlas[(atlasx-1+(atlasy-1)*atlasw)*4+3] = max(atlas[(atlasx-1+atlasy*atlasw)*4+3],atlas[(atlasx+(atlasy-1)*atlasw)*4+3]);
+				atlas[(atlasx-1+(atlasy+tilesize)*atlasw)*4+3] = max(atlas[(atlasx-1+(atlasy+tilesize-1)*atlasw)*4+3],atlas[(atlasx+(atlasy+tilesize)*atlasw)*4+3]);
+				atlas[(atlasx+tilesize+(atlasy-1)*atlasw)*4+3] = max(atlas[(atlasx+tilesize+atlasy*atlasw)*4+3],atlas[(atlasx+tilesize-1+(atlasy-1)*atlasw)*4+3]);
+				atlas[(atlasx+tilesize+(atlasy+tilesize)*atlasw)*4+3] = max(atlas[(atlasx+tilesize+(atlasy+tilesize-1)*atlasw)*4+3],atlas[(atlasx+tilesize-1+(atlasy+tilesize)*atlasw)*4+3]);
+			}
 		}
 	}
 	// Atlas are y-symetrized
 	uint8_t tmp8;
 	for (y=0;2*y<atlash;y++)
-		for (x=0;x<atlasw;x++) {
+		for (x=0;x<atlasw;x++)
 			for (i=0;i<4;i++) {
 				tmp8 = atlas[(x+y*atlasw)*4+i];
 				atlas[(x+y*atlasw)*4+i] = atlas[(x+(atlash-y-1)*atlasw)*4+i];
 				atlas[(x+(atlash-y-1)*atlasw)*4+i] = tmp8;
 			}
-		}
 	// Convert the RGBA atlas into DXT5 compressed atlas
 	uint32_t dxtatlassize;
 	uint8_t* dxtatlas = TIMImageDataStruct::CreateSteamTextureFile(dxtatlassize,atlasw,atlash,atlas);
-	/* DEBUG
-	int dxtflag = squish::kDxt5;
-	unsigned int dxtatlassize = squish::GetStorageRequirements(atlasw,atlash,dxtflag);
-	uint8_t* dxtatlas = new uint8_t[dxtatlassize];
-	squish::CompressImage(atlas,atlasw,atlash,dxtatlas,dxtflag);
-	uint32_t headervalue;
-	headervalue = atlasw;			atlasout.Write(&headervalue,4);
-	headervalue = atlash;			atlasout.Write(&headervalue,4);
-	headervalue = atlasw*atlash;	atlasout.Write(&headervalue,4);
-	headervalue = 0x0C;				atlasout.Write(&headervalue,4); // DXT5 format
-	headervalue = 1;				atlasout.Write(&headervalue,4); // mip count
-	headervalue = 0x100;			atlasout.Write(&headervalue,4); // flags
-	headervalue = 1;				atlasout.Write(&headervalue,4); // image count
-	headervalue = 2;				atlasout.Write(&headervalue,4); // dimension
-	headervalue = 1;				atlasout.Write(&headervalue,4); // filter mode
-	headervalue = 0;				atlasout.Write(&headervalue,4); // anisotropic
-	headervalue = 0;				atlasout.Write(&headervalue,4); // mip bias
-	headervalue = 1;				atlasout.Write(&headervalue,4); // wrap mode
-	headervalue = 0;				atlasout.Write(&headervalue,4); // lightmap format
-	headervalue = 1;				atlasout.Write(&headervalue,4); // color space
-	headervalue = atlasw*atlash;	atlasout.Write(&headervalue,4);*/
 	atlasout.Write(dxtatlas,dxtatlassize);
 	atlasout.Close();
 	delete[] dxtatlas;
@@ -680,6 +715,9 @@ void ToolBackgroundEditor::UpdateImage() {
 }
 
 void ToolBackgroundEditor::LoadAndMergeImages() {
+//wxString imgfileindexname;
+//imgfileindexname << m_imagepicker->GetPath() << 0 << _(L".tif");
+//if (!wxFile::Exists(imgfileindexname)) {
 	if (!wxFile::Exists(m_imagepicker->GetPath())) {
 		main_img_base.Destroy();
 		return;
@@ -690,11 +728,16 @@ void ToolBackgroundEditor::LoadAndMergeImages() {
 	uint32_t pix,pix1,pix2;
 	m_tilelist->GetSelections(tileselindexlist);
 	for (ti=0;ti<tileselindexlist.GetCount();ti++) {
+//imgfileindexname.Empty();
+//imgfileindexname << m_imagepicker->GetPath() << (m_tilelist->GetCount() - tileselindexlist[ti] - 1) << _(L".tif");
+//if (wxFile::Exists(imgfileindexname)) {
 		if (tileselindexlist[ti]<wxImage::GetImageCount(m_imagepicker->GetPath())) {
 			if (imgisempty) {
 				imgisempty = false;
+//main_img_base.LoadFile(imgfileindexname,wxBITMAP_TYPE_ANY);
 				main_img_base.LoadFile(m_imagepicker->GetPath(),wxBITMAP_TYPE_ANY,tileselindexlist[ti]);
 			} else {
+//wxImage imgtoken = wxImage(imgfileindexname,wxBITMAP_TYPE_ANY);
 				wxImage imgtoken = wxImage(m_imagepicker->GetPath(),wxBITMAP_TYPE_ANY,tileselindexlist[ti]);
 				for (x=0;x<main_img_base.GetWidth();x++)
 					for (y=0;y<main_img_base.GetWidth();y++) {
@@ -714,6 +757,8 @@ void ToolBackgroundEditor::LoadAndMergeImages() {
 }
 
 void ToolBackgroundEditor::ComputeTileFilter(int x, int y) {
+	if (!main_img_base.IsOk())
+		return;
 	if (x>=0 && y>=0) {
 		
 	} else {
@@ -763,12 +808,8 @@ void ToolBackgroundEditor::ComputeTileFilter(int x, int y) {
 }
 
 void ToolBackgroundEditor::OnFilePick(wxFileDirPickerEvent& event) {
-	if (wxFile::Exists(event.GetPath())) {
-		LoadAndMergeImages();
-		ComputeTileFilter();
-	} else {
-		main_img_base.Destroy();
-	}
+	LoadAndMergeImages();
+	ComputeTileFilter();
 	UpdateImage();
 }
 
@@ -855,53 +896,71 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 				wxLogError(HADES_STRING_INVALID_FF9LAUNCHER);
 				return;
 			}
+			LoadingDialogInit(12,_(L"Updating Unity Archives..."));
 			importpdatadir = importpdatadir.Mid(0,importpdatadir.Find(_(L"FF9_Launcher.exe")))+_(L"StreamingAssets\\");
 			wxString importfilename;
-			wxString pdatafilename;
-			ConfigurationSet& config = cddata->config;
-			bool* copylist[9];
-			uint32_t* filenewsize[9];
+			wxString filename;
+			bool* copylist[9]{NULL};
+			uint32_t* filenewsize[9]{NULL};
 			fstream filebase[9];
 			fstream filedest[9];
+			UnityArchiveMetaData metafield[9];
+			UnityArchiveAssetBundle fieldindexlist[9];
 			bool isok = true;
 			for (i=0;i<9;i++) {
-				copylist[i] = new bool[config.meta_field[i].header_file_amount];
-				filenewsize[i] = new uint32_t[config.meta_field[i].header_file_amount];
-				pdatafilename = importpdatadir;
-				pdatafilename << _(L"p0data1") << (i+1) << _(L".bin");
-				filebase[i].open(pdatafilename.mb_str(),ios::in | ios::binary);
-				filedest[i].open((pdatafilename+_(L".tmp")).mb_str(),ios::out | ios::binary);
+				filename = importpdatadir;
+				filename << _(L"p0data1") << (i+1) << _(L".bin");
+				filebase[i].open(filename.mb_str(),ios::in | ios::binary);
+				filedest[i].open((filename+_(L".tmp")).mb_str(),ios::out | ios::binary);
 				if (!filebase[i].is_open()) {
-					wxLogError(HADES_STRING_OPEN_ERROR_FAIL,pdatafilename);
+					wxLogError(HADES_STRING_OPEN_ERROR_FAIL,filename);
 					isok = false;
 				}
 				if (!filedest[i].is_open()) {
-					wxLogError(HADES_STRING_OPEN_ERROR_CREATE,pdatafilename);
+					wxLogError(HADES_STRING_OPEN_ERROR_CREATE,filename);
 					isok = false;
 				}
+				if (!isok)
+					break;
+				metafield[i].Load(filebase[i]);
+				filebase[i].seekg(metafield[i].GetFileOffset("",142));
+				fieldindexlist[i].Load(filebase[i]);
+				filebase[i].seekg(0);
+				copylist[i] = new bool[metafield[i].header_file_amount];
+				filenewsize[i] = new uint32_t[metafield[i].header_file_amount];
 			}
 			if (!isok) {
+				LoadingDialogEnd();
 				for (i=0;i<9;i++) {
-					delete[] copylist[i];
-					delete[] filenewsize[i];
-					if (filebase[i].is_open())
-						filebase[i].close();
-					if (filedest[i].is_open())
-						filedest[i].close();
+					if (copylist[i]) delete[] copylist[i];
+					if (filenewsize[i]) delete[] filenewsize[i];
+					if (filebase[i].is_open()) filebase[i].close();
+					if (filedest[i].is_open()) filedest[i].close();
 				}
 				return;
 			}
-			LoadingDialogInit(11,_(L"Updating Unity Archives..."));
+			int32_t fieldimagefile[G_N_ELEMENTS(SteamFieldScript)];
+			string fieldbacknamelower;
+			for (i=0;i<G_N_ELEMENTS(SteamFieldScript);i++) {
+				fieldbacknamelower = SteamFieldScript[i].background_name;
+				transform(fieldbacknamelower.begin(),fieldbacknamelower.end(),fieldbacknamelower.begin(),::tolower);
+				filename = "assets/resources/fieldmaps/"+fieldbacknamelower+"/atlas.png";
+				if (SteamFieldScript[i].file_id==0)
+					fieldimagefile[i] = 0;
+				else
+					fieldimagefile[i] = metafield[SteamFieldScript[i].file_id-1].GetFileIndexByInfo(fieldindexlist[SteamFieldScript[i].file_id-1].GetFileInfo(filename.ToStdString()),28);
+			}
+			LoadingDialogUpdate(1);
 			unsigned int importsuccess = 0;
 			unsigned int importfail = 0;
 			for (i=0;i<9;i++)
-				for (j=0;j<config.meta_field[i].header_file_amount;j++) {
+				for (j=0;j<metafield[i].header_file_amount;j++) {
 					copylist[i][j] = true;
-					filenewsize[i][j] = config.meta_field[i].file_size[j];
+					filenewsize[i][j] = metafield[i].file_size[j];
 				}
 			for (i=0;i<G_N_ELEMENTS(SteamFieldScript);i++) {
 				importfilename = importdirname+_(SteamFieldScript[i].background_name);
-				if (wxFile::Exists(importfilename+_(L".tex"))) {
+				if (wxFile::Exists(importfilename+_(L".tex")) && SteamFieldScript[i].file_id>0) {
 					fstream importatlas(importfilename+_(L".tex").mb_str(),ios::in | ios::binary);
 					if (!importatlas.is_open()) {
 						importfail++;
@@ -909,46 +968,47 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 					}
 					importatlas.seekg(0,ios::end);
 					size_t importatlassize = importatlas.tellg();
-					copylist[SteamFieldScript[i].file_id-1][config.field_image_file[i]] = true;
-					filenewsize[SteamFieldScript[i].file_id-1][config.field_image_file[i]] = importatlassize;
+					copylist[SteamFieldScript[i].file_id-1][fieldimagefile[i]] = false;
+					filenewsize[SteamFieldScript[i].file_id-1][fieldimagefile[i]] = importatlassize;
 					importatlas.close();
 				}
 				// ToDo : Tileset with .bgs
 				// ToDo : Walkmesh with .bgi
 			}
-			LoadingDialogUpdate(1);
+			LoadingDialogUpdate(2);
 			uint32_t* unitydataoff[9];
 			for (i=0;i<9;i++) {
-				unitydataoff[i] = config.meta_field[i].Duplicate(filebase[i],filedest[i],copylist[i],filenewsize[i]);
-				LoadingDialogUpdate(2+i);
+				unitydataoff[i] = metafield[i].Duplicate(filebase[i],filedest[i],copylist[i],filenewsize[i]);
+				LoadingDialogUpdate(3+i);
 			}
 			for (i=0;i<G_N_ELEMENTS(SteamFieldScript);i++) {
 				importfilename = importdirname+_(SteamFieldScript[i].background_name);
-				if (wxFile::Exists(importfilename+_(L".tex"))) {
+				if (wxFile::Exists(importfilename+_(L".tex")) && SteamFieldScript[i].file_id>0) {
 					fstream importatlas(importfilename+_(L".tex").mb_str(),ios::in | ios::binary);
 					if (!importatlas.is_open()) {
 						importfail++;
 						continue;
 					}
-					filedest[SteamFieldScript[i].file_id-1].seekg(unitydataoff[SteamFieldScript[i].file_id-1][config.field_image_file[i]]);
-					char* buffer = new char[filenewsize[SteamFieldScript[i].file_id-1][config.field_image_file[i]]];
-					importatlas.read(buffer,filenewsize[SteamFieldScript[i].file_id-1][config.field_image_file[i]]);
-					filedest[SteamFieldScript[i].file_id-1].write(buffer,filenewsize[SteamFieldScript[i].file_id-1][config.field_image_file[i]]);
+					filedest[SteamFieldScript[i].file_id-1].seekg(unitydataoff[SteamFieldScript[i].file_id-1][fieldimagefile[i]]);
+					char* buffer = new char[filenewsize[SteamFieldScript[i].file_id-1][fieldimagefile[i]]];
+					importatlas.read(buffer,filenewsize[SteamFieldScript[i].file_id-1][fieldimagefile[i]]);
+					filedest[SteamFieldScript[i].file_id-1].write(buffer,filenewsize[SteamFieldScript[i].file_id-1][fieldimagefile[i]]);
 					importatlas.close();
+					delete[] buffer;
 					importsuccess++;
 				}
 			}
-			LoadingDialogUpdate(11);
+			LoadingDialogUpdate(12);
 			for (i=0;i<9;i++) {
 				filebase[i].close();
 				filedest[i].close();
 				delete[] copylist[i];
 				delete[] filenewsize[i];
 				delete[] unitydataoff[i];
-				pdatafilename = importpdatadir;
-				pdatafilename << _(L"p0data1") << (i+1) << _(L".bin");
-				remove(pdatafilename.mb_str());
-				rename((pdatafilename+_(L".tmp")).mb_str(),pdatafilename.mb_str());
+				filename = importpdatadir;
+				filename << _(L"p0data1") << (i+1) << _(L".bin");
+				remove(filename.mb_str());
+				rename((filename+_(L".tmp")).mb_str(),filename.mb_str());
 			}
 			LoadingDialogEnd();
 			wxString successtring;
