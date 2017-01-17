@@ -229,6 +229,11 @@ struct CILMacroUnlockAbilityAccess : public CILMacroBaseStruct {
 	DllMetaDataModification* ComputeModifications(unsigned int* modifamount) {
 		MACRO_CILMACRO_COMPUTEBEG()
 		ILInstruction modinst[] = {
+			{ 0x02 },
+			{ 0x7B, data->GetFieldTokenIdentifier("PLAYER","info") },
+			{ 0x7B, data->GetFieldTokenIdentifier("PLAYER_INFO","menu_type") },
+			{ 0x1F, 16 },
+			{ 0x3C, 0x3C },
 			{ 0x7E, data->GetFieldTokenIdentifier("ff9abil","_FF9Abil_PaData") },
 			{ 0x02 },
 			{ 0x7B, data->GetFieldTokenIdentifier("PLAYER","info") },

@@ -271,6 +271,7 @@ for (i=0;i<steam_height*steam_width;i++) {
 int x = i%steam_width;
 int y = i/steam_width;
 a = (res32[i] >> 24) & 0xFF; r = (res32[i] >> 16) & 0xFF; g = (res32[i] >> 8) & 0xFF; b = res32[i] & 0xFF;
+a = 0xFF;
 ftga.write((const char*)&b,1);
 ftga.write((const char*)&g,1);
 ftga.write((const char*)&r,1);
