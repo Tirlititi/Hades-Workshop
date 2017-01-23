@@ -112,25 +112,25 @@ const static wxColour POSITION_POINT_COLOR(0,0,255);
 //=============================//
 
 void RemoveSurroundingSpaces(wxString& str) {
-	size_t pos = str.find_first_not_of(L' ');
+	size_t pos = str.find_first_not_of(" \t");
 	if (pos==string::npos) {
 		str = wxEmptyString;
 		return;
 	}
 	str = str.Mid(pos);
-	pos = str.find_last_of(L' ');
+	pos = str.find_last_of(" \t");
 	if (pos!=string::npos)
 		str = str.Mid(0,pos);
 }
 
 wxString GetNextWord(wxString& line) {
 	wxString res;
-	size_t pos = line.find_first_not_of(L' ');
+	size_t pos = line.find_first_not_of(L" \t");
 	if (pos==string::npos)
 		return wxEmptyString;
 	size_t lineshift = pos;
 	res = line.Mid(pos);
-	pos = res.find_first_of(L" ,():;{}");
+	pos = res.find_first_of(L" ,():;{}\t");
 	if (pos!=string::npos) {
 		res = res.Mid(0,pos);
 		lineshift += pos;
@@ -142,7 +142,7 @@ wxString GetNextWord(wxString& line) {
 
 wxString GetNextArg(wxString& line) {
 	wxString res;
-	size_t pos = line.find_first_not_of(L' ');
+	size_t pos = line.find_first_not_of(" \t");
 	if (pos==string::npos)
 		return wxEmptyString;
 	res = line.Mid(pos);
@@ -184,7 +184,7 @@ wxString GetNextArg(wxString& line) {
 
 wxString GetNextPunc(wxString& line) {
 	wxString res;
-	size_t pos = line.find_first_not_of(L' ');
+	size_t pos = line.find_first_not_of(" \t");
 	if (pos==string::npos)
 		return wxEmptyString;
 	size_t lineshift = pos;
@@ -209,7 +209,7 @@ wxString GetNextPunc(wxString& line) {
 
 wxString GetNextThing(wxString& line) {
 	wxString res;
-	size_t pos = line.find_first_not_of(L' ');
+	size_t pos = line.find_first_not_of(" \t");
 	if (pos==string::npos)
 		return wxEmptyString;
 	res = line.Mid(pos);
@@ -221,7 +221,7 @@ wxString GetNextThing(wxString& line) {
 			return res;
 		}
 	size_t lineshift = pos;
-	pos = res.find_first_of(L" ,():;{}");
+	pos = res.find_first_of(L" ,():;{}\t");
 	if (pos!=string::npos) {
 		res = res.Mid(0,pos);
 		lineshift += pos;

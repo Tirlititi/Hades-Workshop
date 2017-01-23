@@ -40,7 +40,7 @@ public:
 	uint16_t pos_y;
 	uint16_t width;
 	uint16_t height;
-	uint8_t* pixel_value;
+	uint8_t* pixel_value; // Also used in Steam
 	
 	// Steam
 	uint32_t steam_width;
@@ -58,14 +58,16 @@ public:
 	int32_t steam_lightmap_format;
 	int32_t steam_color_space;
 	uint32_t steam_size2;
-	uint8_t* steam_pixel_alpha;
+	
+	// Unused anymore ; data is stored in pixel_value and decompressed with squish
+/*	uint8_t* steam_pixel_alpha;
 	uint8_t* steam_pixel_alpha_ex;
 	uint16_t* steam_pixel_alpha_flag1;
 	uint16_t* steam_pixel_alpha_flag2;
 	uint16_t* steam_pixel_alpha_flag3;
 	uint16_t* steam_pixel_color;
 	uint16_t* steam_pixel_color_ex;
-	uint32_t* steam_pixel_color_flag;
+	uint32_t* steam_pixel_color_flag;*/
 	
 	static uint8_t color[32]; // colors available for palettes
 	
@@ -112,7 +114,7 @@ public:
 	static TIMImageDataStruct& GetTIMTextureStruct(TIMImageDataStruct& tim1, TIMImageDataStruct& tim2);
 	
 	// Create a Unity-formatted texture (DXT5) ; result must be deleted[]
-	static uint8_t* CreateSteamTextureFile(uint32_t& datasize, uint32_t w, uint32_t h, uint8_t* rgba, uint32_t textformat = 0x0C);
+	static uint8_t* CreateSteamTextureFile(uint32_t& datasize, uint32_t w, uint32_t h, uint8_t* rgba, uint32_t textformat = 0x0C, int quality = -1);
 };
 
 uint32_t ImageMergePixels(uint32_t pix1, uint32_t pix2, TIM_BlendMode mode = TIM_BLENDMODE_ALPHA);

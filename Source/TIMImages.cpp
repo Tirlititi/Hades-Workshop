@@ -114,20 +114,9 @@ void TIMImageDataStruct::WriteHWS(fstream& f) {
 void TIMImageDataStruct::Flush() {
 	if (!loaded)
 		return;
-	if (GetGameType()==GAME_TYPE_PSX) {
-		if (format & 0x8)
-			delete[] pal_value;
-		delete[] pixel_value;
-	} else {
-		delete[] steam_pixel_alpha;
-		delete[] steam_pixel_alpha_ex;
-		delete[] steam_pixel_alpha_flag1;
-		delete[] steam_pixel_alpha_flag2;
-		delete[] steam_pixel_alpha_flag3;
-		delete[] steam_pixel_color;
-		delete[] steam_pixel_color_ex;
-		delete[] steam_pixel_color_flag;
-	}
+	if (GetGameType()==GAME_TYPE_PSX && (format & 0x8))
+		delete[] pal_value;
+	delete[] pixel_value;
 	loaded = false;
 }
 
@@ -799,12 +788,23 @@ TIMImageDataStruct& TIMImageDataStruct::GetTIMTextureStruct(TIMImageDataStruct& 
 	return tim1;
 }
 
-uint8_t* TIMImageDataStruct::CreateSteamTextureFile(uint32_t& datasize, uint32_t w, uint32_t h, uint8_t* rgba, uint32_t textformat) {
+uint8_t* TIMImageDataStruct::CreateSteamTextureFile(uint32_t& datasize, uint32_t w, uint32_t h, uint8_t* rgba, uint32_t textformat, int quality) {
 	if (textformat!=0x0C) { // Only DXT5 supported for now
 		datasize = 0;
 		return NULL;
 	}
-	int dxtflag = squish::kDxt5 | squish::kColourIterativeClusterFit;
+	int dxtflag = squish::kDxt5;
+	switch (quality) {
+	case 0:
+		dxtflag |= squish::kColourRangeFit;
+		break;
+	case 1:
+		dxtflag |= squish::kColourClusterFit;
+		break;
+	case 2:
+		dxtflag |= squish::kColourIterativeClusterFit;
+		break;
+	}
 	uint32_t pixam = w*h/16;
 	uint32_t filesize = 0x3C+squish::GetStorageRequirements(w,h,dxtflag);
 	uint8_t* raw = new uint8_t[filesize];

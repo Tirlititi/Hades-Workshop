@@ -519,8 +519,9 @@ class PreviewTextCtrl;
 #define wxID_TYPE 1462
 #define wxID_FULLLIST 1463
 #define wxID_MAPLIST 1464
-#define wxID_SORTTILE 1465
-#define wxID_RESOLUTION 1466
+#define wxID_SORTLAYER 1465
+#define wxID_REVERTLAYER 1466
+#define wxID_RESOLUTION 1467
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class MainFrameBase
@@ -2897,10 +2898,27 @@ class BackgroundEditorWindow : public wxDialog
 		wxRadioButton* m_customtilebtn;
 		wxChoice* m_fieldchoice;
 		wxScrolledWindow* m_texturewindow;
-		wxCheckBox* m_sorttileset;
+		wxCheckBox* m_sortlayer;
+		wxCheckBox* m_revertlayer;
 		wxListBox* m_tilelist;
 		wxStaticText* m_staticText314;
 		wxSpinCtrl* m_resolution;
+		wxStaticText* m_staticText326;
+		wxChoice* m_dxtflagchoice;
+		wxPanel* m_panelmassconverter;
+		wxStaticText* m_staticText3171;
+		wxDirPickerCtrl* m_massimageimporter;
+		wxStaticText* m_staticText325;
+		wxTextCtrl* m_massimageformat;
+		wxStaticText* m_staticText3181;
+		wxDirPickerCtrl* m_massexportdir;
+		wxCheckBox* m_massfieldid;
+		wxCheckBox* m_masssortlayer;
+		wxCheckBox* m_massrevertlayer;
+		wxStaticText* m_staticText3141;
+		wxSpinCtrl* m_massresolution;
+		wxStaticText* m_staticText31411;
+		wxChoice* m_massdxtflagchoice;
 		wxPanel* m_panelimporter;
 		wxStaticText* m_staticText316;
 		wxFilePickerCtrl* m_importlauncher;
@@ -2911,6 +2929,7 @@ class BackgroundEditorWindow : public wxDialog
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnFilePick( wxFileDirPickerEvent& event ) { event.Skip(); }
+		virtual void OnDirPick( wxFileDirPickerEvent& event ) { event.Skip(); }
 		virtual void OnRadioClick( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnFieldChoice( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnPaintImage( wxPaintEvent& event ) { event.Skip(); }

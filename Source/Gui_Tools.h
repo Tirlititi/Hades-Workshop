@@ -42,6 +42,7 @@ private:
 	void ComputeTileFilter(int x = -1, int y = -1);
 	
 	void OnFilePick(wxFileDirPickerEvent& event);
+	void OnDirPick(wxFileDirPickerEvent& event);
 	void OnRadioClick(wxCommandEvent& event);
 	void OnFieldChoice(wxCommandEvent& event);
 	void OnTileSelect(wxCommandEvent& event);

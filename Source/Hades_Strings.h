@@ -48,6 +48,7 @@ struct SortedChoiceItemModel {
 #define HADES_STRING_ERROR L"Error"
 #define HADES_STRING_WARNING L"Warning"
 #define HADES_STRING_SUCCESS L"Success"
+#define HADES_STRING_EMPTY_PROCEDURE L"Nothing to do !"
 #define HADES_STRING_ERROR_UNKNOWN L"An unknown error has occured..."
 #define HADES_STRING_GENERIC_ADD L"Add"
 #define HADES_STRING_GENERIC_REMOVE L"Remove"
@@ -360,12 +361,19 @@ static wxString HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM[] = {
 #define HADES_STRING_CIL_APPLY_MACRO	L"Apply Macro"
 #define HADES_STRING_CIL_UNAPPLY_MACRO	L"Unapply Macro"
 
-//-- Others
-#define HADES_STRING_FONT_ERROR L"Unsupported font."
+//-- Tools
 #define HADES_STRING_UNKNOWN_FIELD L"UNKNOWN_FIELD"
 #define HADES_STRING_INVALID_FF9LAUNCHER L"Select a valid FF9_Launcher.exe"
+#define HADES_STRING_INVALID_IMAGE_NAME_FORMAT L"The file name format must contain three '%%'"
+#define HADES_STRING_INVALID_IMAGE_DIMENSIONS L"The dimensions of the layers don't match"
 #define HADES_STRING_IMPORT_BACKGROUND_RESULT	"%d background importations succeeded\n"\
 												"%d background importations failed"
+#define HADES_STRING_BACKGROUNDIMPORT_MISSING_LAYERS	" - Missing %d layers for the field %d (%s)\n"
+#define HADES_STRING_BACKGROUNDIMPORT_ERROR_CREATE		" - Failed to convert the field %d (%s)\n"
+#define HADES_STRING_BACKGROUNDIMPORT_ERROR_DIMENSIONS	" - The dimensions of the layers don't match for the field %d (%s)\n"
+
+//-- Others
+#define HADES_STRING_FONT_ERROR L"Unsupported font."
 
 // Data Strings
 //-- Spells

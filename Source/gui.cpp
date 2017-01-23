@@ -10085,7 +10085,9 @@ BackgroundEditorWindow::BackgroundEditorWindow( wxWindow* parent, wxWindowID id,
 	m_staticText317->Wrap( -1 );
 	fgSizer81->Add( m_staticText317, 0, wxALIGN_CENTER|wxALL, 5 );
 	
-	m_imagepicker = new wxFilePickerCtrl( m_panelconverter, wxID_ANY, wxEmptyString, _("Select a file"), wxT("Multi-layered Image (*.tiff)|*.tiff|All files|*"), wxDefaultPosition, wxDefaultSize, wxFLP_DEFAULT_STYLE );
+	m_imagepicker = new wxFilePickerCtrl( m_panelconverter, wxID_ANY, wxEmptyString, _("Select a file"), wxT("Supported Image|*.tiff;*.tif;*.bmp;*.tga|All files|*"), wxDefaultPosition, wxDefaultSize, wxFLP_DEFAULT_STYLE );
+	m_imagepicker->SetToolTip( _("The file must be the first layer of the background image\nAll the layers must be in the same directory, named\n[name]0.tif\n[name]1.tif\n[name]2.tif\netc...") );
+	
 	fgSizer81->Add( m_imagepicker, 0, wxALL|wxEXPAND, 5 );
 	
 	m_staticText318 = new wxStaticText( m_panelconverter, wxID_ANY, _("Destination Folder"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -10117,9 +10119,13 @@ BackgroundEditorWindow::BackgroundEditorWindow( wxWindow* parent, wxWindowID id,
 	wxBoxSizer* bSizer186;
 	bSizer186 = new wxBoxSizer( wxVERTICAL );
 	
-	m_sorttileset = new wxCheckBox( m_panelconverter, wxID_SORTTILE, _("Sort Tilesets by depth"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_sorttileset->SetValue(true); 
-	bSizer186->Add( m_sorttileset, 0, wxALL, 5 );
+	m_sortlayer = new wxCheckBox( m_panelconverter, wxID_SORTLAYER, _("Sort layers by depth"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_sortlayer->SetValue(true); 
+	bSizer186->Add( m_sortlayer, 0, wxALL, 5 );
+	
+	m_revertlayer = new wxCheckBox( m_panelconverter, wxID_REVERTLAYER, _("Revert layer ordering"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_revertlayer->SetValue(true); 
+	bSizer186->Add( m_revertlayer, 0, wxALL, 5 );
 	
 	m_tilelist = new wxListBox( m_panelconverter, wxID_ANY, wxDefaultPosition, wxSize( -1,200 ), 0, NULL, wxLB_MULTIPLE ); 
 	bSizer186->Add( m_tilelist, 0, wxALL, 5 );
@@ -10128,8 +10134,18 @@ BackgroundEditorWindow::BackgroundEditorWindow( wxWindow* parent, wxWindowID id,
 	m_staticText314->Wrap( -1 );
 	bSizer186->Add( m_staticText314, 0, wxALL, 5 );
 	
-	m_resolution = new wxSpinCtrl( m_panelconverter, wxID_RESOLUTION, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 16, 127, 32 );
+	m_resolution = new wxSpinCtrl( m_panelconverter, wxID_RESOLUTION, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 16, 123, 32 );
 	bSizer186->Add( m_resolution, 0, wxALL, 5 );
+	
+	m_staticText326 = new wxStaticText( m_panelconverter, wxID_ANY, _("Compression Quality"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText326->Wrap( -1 );
+	bSizer186->Add( m_staticText326, 0, wxALL, 5 );
+	
+	wxString m_dxtflagchoiceChoices[] = { _("Low"), _("Medium"), _("High") };
+	int m_dxtflagchoiceNChoices = sizeof( m_dxtflagchoiceChoices ) / sizeof( wxString );
+	m_dxtflagchoice = new wxChoice( m_panelconverter, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_dxtflagchoiceNChoices, m_dxtflagchoiceChoices, 0 );
+	m_dxtflagchoice->SetSelection( 2 );
+	bSizer186->Add( m_dxtflagchoice, 0, wxALL, 5 );
 	
 	
 	gbSizer41->Add( bSizer186, wxGBPosition( 2, 3 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
@@ -10142,6 +10158,104 @@ BackgroundEditorWindow::BackgroundEditorWindow( wxWindow* parent, wxWindowID id,
 	m_panelconverter->Layout();
 	gbSizer41->Fit( m_panelconverter );
 	m_auinotebook->AddPage( m_panelconverter, _("Converter"), false, wxNullBitmap );
+	m_panelmassconverter = new wxPanel( m_auinotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxGridBagSizer* gbSizer411;
+	gbSizer411 = new wxGridBagSizer( 0, 0 );
+	gbSizer411->SetFlexibleDirection( wxBOTH );
+	gbSizer411->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	wxFlexGridSizer* fgSizer811;
+	fgSizer811 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer811->AddGrowableCol( 1 );
+	fgSizer811->SetFlexibleDirection( wxBOTH );
+	fgSizer811->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	m_staticText3171 = new wxStaticText( m_panelmassconverter, wxID_ANY, _("Image Folder"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText3171->Wrap( -1 );
+	fgSizer811->Add( m_staticText3171, 0, wxALIGN_CENTER|wxALL, 5 );
+	
+	m_massimageimporter = new wxDirPickerCtrl( m_panelmassconverter, wxID_ANY, wxEmptyString, _("Select a folder"), wxDefaultPosition, wxDefaultSize, wxDIRP_DEFAULT_STYLE );
+	fgSizer811->Add( m_massimageimporter, 0, wxALL|wxEXPAND, 5 );
+	
+	m_staticText325 = new wxStaticText( m_panelmassconverter, wxID_ANY, _("File Name Format"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText325->Wrap( -1 );
+	fgSizer811->Add( m_staticText325, 0, wxALIGN_CENTER|wxALL, 5 );
+	
+	m_massimageformat = new wxTextCtrl( m_panelmassconverter, wxID_ANY, _("Field%\\Background%_%.tif"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_massimageformat->SetToolTip( _("Formatted file name from Image Folder\nIt must contains '%' thrice which stand for numbers in the file names :\n1) Field ID,\n2) Background,\n3) Layer.") );
+	
+	fgSizer811->Add( m_massimageformat, 0, wxALL|wxEXPAND, 5 );
+	
+	m_staticText3181 = new wxStaticText( m_panelmassconverter, wxID_ANY, _("Destination Folder"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText3181->Wrap( -1 );
+	fgSizer811->Add( m_staticText3181, 0, wxALIGN_CENTER|wxALL, 5 );
+	
+	m_massexportdir = new wxDirPickerCtrl( m_panelmassconverter, wxID_ANY, wxEmptyString, _("Select a folder"), wxDefaultPosition, wxDefaultSize, wxDIRP_DEFAULT_STYLE );
+	fgSizer811->Add( m_massexportdir, 0, wxALL|wxEXPAND, 5 );
+	
+	
+	gbSizer411->Add( fgSizer811, wxGBPosition( 0, 0 ), wxGBSpan( 1, 4 ), wxEXPAND, 5 );
+	
+	wxFlexGridSizer* fgSizer84;
+	fgSizer84 = new wxFlexGridSizer( 0, 1, 0, 0 );
+	fgSizer84->SetFlexibleDirection( wxBOTH );
+	fgSizer84->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	m_massfieldid = new wxCheckBox( m_panelmassconverter, wxID_ANY, _("Use the script Field ID"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_massfieldid->SetToolTip( _("When on, the ID in the file format refers to the script Field ID\nWhen off, the ID is the order of field in the editor, starting from 0") );
+	
+	fgSizer84->Add( m_massfieldid, 0, wxALL, 5 );
+	
+	wxBoxSizer* bSizer187;
+	bSizer187 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_masssortlayer = new wxCheckBox( m_panelmassconverter, wxID_ANY, _("Sort layers by depth"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_masssortlayer->SetValue(true); 
+	bSizer187->Add( m_masssortlayer, 0, wxALL, 5 );
+	
+	m_massrevertlayer = new wxCheckBox( m_panelmassconverter, wxID_ANY, _("Revert layer ordering"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_massrevertlayer->SetValue(true); 
+	bSizer187->Add( m_massrevertlayer, 0, wxALL, 5 );
+	
+	
+	fgSizer84->Add( bSizer187, 1, wxEXPAND, 5 );
+	
+	wxFlexGridSizer* fgSizer85;
+	fgSizer85 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer85->SetFlexibleDirection( wxBOTH );
+	fgSizer85->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	m_staticText3141 = new wxStaticText( m_panelmassconverter, wxID_ANY, _("Resolution"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText3141->Wrap( -1 );
+	fgSizer85->Add( m_staticText3141, 0, wxALL, 5 );
+	
+	m_massresolution = new wxSpinCtrl( m_panelmassconverter, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 16, 123, 32 );
+	fgSizer85->Add( m_massresolution, 0, wxALL, 3 );
+	
+	m_staticText31411 = new wxStaticText( m_panelmassconverter, wxID_ANY, _("Compression Quality"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText31411->Wrap( -1 );
+	fgSizer85->Add( m_staticText31411, 0, wxALL, 5 );
+	
+	wxString m_massdxtflagchoiceChoices[] = { _("Low"), _("Medium"), _("High") };
+	int m_massdxtflagchoiceNChoices = sizeof( m_massdxtflagchoiceChoices ) / sizeof( wxString );
+	m_massdxtflagchoice = new wxChoice( m_panelmassconverter, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_massdxtflagchoiceNChoices, m_massdxtflagchoiceChoices, 0 );
+	m_massdxtflagchoice->SetSelection( 2 );
+	fgSizer85->Add( m_massdxtflagchoice, 0, wxALL, 5 );
+	
+	
+	fgSizer84->Add( fgSizer85, 1, wxEXPAND, 5 );
+	
+	
+	gbSizer411->Add( fgSizer84, wxGBPosition( 1, 0 ), wxGBSpan( 1, 4 ), wxEXPAND, 5 );
+	
+	
+	gbSizer411->AddGrowableCol( 2 );
+	gbSizer411->AddGrowableRow( 2 );
+	
+	m_panelmassconverter->SetSizer( gbSizer411 );
+	m_panelmassconverter->Layout();
+	gbSizer411->Fit( m_panelmassconverter );
+	m_auinotebook->AddPage( m_panelmassconverter, _("Mass Converter"), false, wxNullBitmap );
 	m_panelimporter = new wxPanel( m_auinotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxFlexGridSizer* fgSizer80;
 	fgSizer80 = new wxFlexGridSizer( 0, 2, 0, 0 );
@@ -10167,7 +10281,7 @@ BackgroundEditorWindow::BackgroundEditorWindow( wxWindow* parent, wxWindowID id,
 	m_panelimporter->SetSizer( fgSizer80 );
 	m_panelimporter->Layout();
 	fgSizer80->Fit( m_panelimporter );
-	m_auinotebook->AddPage( m_panelimporter, _("Importer"), false, wxNullBitmap );
+	m_auinotebook->AddPage( m_panelimporter, _("Mass Importer"), false, wxNullBitmap );
 	
 	fgSizer45->Add( m_auinotebook, 1, wxEXPAND | wxALL, 5 );
 	
@@ -10191,13 +10305,17 @@ BackgroundEditorWindow::BackgroundEditorWindow( wxWindow* parent, wxWindowID id,
 	
 	// Connect Events
 	m_imagepicker->Connect( wxEVT_COMMAND_FILEPICKER_CHANGED, wxFileDirPickerEventHandler( BackgroundEditorWindow::OnFilePick ), NULL, this );
+	m_exportdir->Connect( wxEVT_COMMAND_DIRPICKER_CHANGED, wxFileDirPickerEventHandler( BackgroundEditorWindow::OnDirPick ), NULL, this );
 	m_usegametilebtn->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( BackgroundEditorWindow::OnRadioClick ), NULL, this );
 	m_customtilebtn->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( BackgroundEditorWindow::OnRadioClick ), NULL, this );
 	m_fieldchoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( BackgroundEditorWindow::OnFieldChoice ), NULL, this );
 	m_texturewindow->Connect( wxEVT_PAINT, wxPaintEventHandler( BackgroundEditorWindow::OnPaintImage ), NULL, this );
-	m_sorttileset->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnCheckBox ), NULL, this );
+	m_sortlayer->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnCheckBox ), NULL, this );
+	m_revertlayer->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnCheckBox ), NULL, this );
 	m_tilelist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( BackgroundEditorWindow::OnTileSelect ), NULL, this );
 	m_resolution->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( BackgroundEditorWindow::OnSpinChange ), NULL, this );
+	m_massexportdir->Connect( wxEVT_COMMAND_DIRPICKER_CHANGED, wxFileDirPickerEventHandler( BackgroundEditorWindow::OnDirPick ), NULL, this );
+	m_importdir->Connect( wxEVT_COMMAND_DIRPICKER_CHANGED, wxFileDirPickerEventHandler( BackgroundEditorWindow::OnDirPick ), NULL, this );
 	m_buttonapply->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnButtonClick ), NULL, this );
 	m_buttonclose->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnButtonClick ), NULL, this );
 }
@@ -10206,13 +10324,17 @@ BackgroundEditorWindow::~BackgroundEditorWindow()
 {
 	// Disconnect Events
 	m_imagepicker->Disconnect( wxEVT_COMMAND_FILEPICKER_CHANGED, wxFileDirPickerEventHandler( BackgroundEditorWindow::OnFilePick ), NULL, this );
+	m_exportdir->Disconnect( wxEVT_COMMAND_DIRPICKER_CHANGED, wxFileDirPickerEventHandler( BackgroundEditorWindow::OnDirPick ), NULL, this );
 	m_usegametilebtn->Disconnect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( BackgroundEditorWindow::OnRadioClick ), NULL, this );
 	m_customtilebtn->Disconnect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( BackgroundEditorWindow::OnRadioClick ), NULL, this );
 	m_fieldchoice->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( BackgroundEditorWindow::OnFieldChoice ), NULL, this );
 	m_texturewindow->Disconnect( wxEVT_PAINT, wxPaintEventHandler( BackgroundEditorWindow::OnPaintImage ), NULL, this );
-	m_sorttileset->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnCheckBox ), NULL, this );
+	m_sortlayer->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnCheckBox ), NULL, this );
+	m_revertlayer->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnCheckBox ), NULL, this );
 	m_tilelist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( BackgroundEditorWindow::OnTileSelect ), NULL, this );
 	m_resolution->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( BackgroundEditorWindow::OnSpinChange ), NULL, this );
+	m_massexportdir->Disconnect( wxEVT_COMMAND_DIRPICKER_CHANGED, wxFileDirPickerEventHandler( BackgroundEditorWindow::OnDirPick ), NULL, this );
+	m_importdir->Disconnect( wxEVT_COMMAND_DIRPICKER_CHANGED, wxFileDirPickerEventHandler( BackgroundEditorWindow::OnDirPick ), NULL, this );
 	m_buttonapply->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnButtonClick ), NULL, this );
 	m_buttonclose->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnButtonClick ), NULL, this );
 	
@@ -10222,7 +10344,7 @@ MenuDEBUG::MenuDEBUG( long style ) : wxMenuBar( style )
 {
 	m_menu6 = new wxMenu();
 	wxMenuItem* debug;
-	debug = new wxMenuItem( m_menu6, wxID_ANY, wxString( _("DEBUG") ) + wxT('\t') + wxT("F2"), _("Does some debugging action"), wxITEM_NORMAL );
+	debug = new wxMenuItem( m_menu6, wxID_ANY, wxString( _("DEBUG") ) + wxT('\t') + wxT("F5"), _("Does some debugging action"), wxITEM_NORMAL );
 	m_menu6->Append( debug );
 	
 	Append( m_menu6, _("MyMenu") ); 

@@ -6713,4 +6713,18 @@ CDDataStruct::CDDataStruct(wxWindow* parent, string fname, ConfigurationSet& cfg
 
 
 void CDDataStruct::DebugWrite() {
+	fstream fout("HadesWorkshopOutput.txt",ios::out);
+	unsigned int i;
+	if (itemloaded) {
+		fout << "ITEMS\n";
+		for (i=0;i<ITEM_AMOUNT;i++) {
+			fout << itemset.item[i].name.GetStr(2) << " : ";
+			fout << (unsigned int)itemset.item[i].type << " type | ";
+			fout << (unsigned int)itemset.item[i].char_availability << " can_equip | ";
+			fout << (unsigned int)itemset.stat[itemset.item[i].stat_id].speed << " speed | ";
+			fout << (unsigned int)itemset.stat[itemset.item[i].stat_id].strength << " strength | ";
+			fout << (unsigned int)itemset.stat[itemset.item[i].stat_id].magic << " magic | ";
+			fout << (unsigned int)itemset.stat[itemset.item[i].stat_id].spirit << " spirit\n";
+		}
+	}
 }
