@@ -12,9 +12,9 @@ struct FieldTilesCameraDataStruct;
 struct FieldTilesDataStruct;
 
 struct FieldWalkmeshDataStruct;
-
 struct FieldRoleDataStruct;
 
+struct FieldSteamTitleInfo;
 struct FieldDataSet;
 
 #include <inttypes.h>
@@ -94,6 +94,8 @@ public:
 	uint8_t id;
 	FieldTilesDataStruct* parent;
 	
+	FieldTilesTileDataStruct() : tile_data_data1(NULL), tile_data_data2(NULL), tile_data_data3(NULL) {}
+	
 private:
 	uint32_t data1;
 	uint8_t data2;
@@ -101,8 +103,11 @@ private:
 	uint32_t* tile_data_data2;
 	uint32_t* tile_data_data3;
 	
+	void SetupDataInfos(bool readway);
 	void AllocTileData();
+	
 	friend FieldTilesDataStruct;
+	friend FieldSteamTitleInfo;
 };
 
 struct FieldTilesLightDataStruct {
@@ -178,12 +183,15 @@ public:
 	
 	FieldTilesTileDataStruct** tiles_sorted;
 	
+	SteamLanguage current_lang; // Steam only
+	bool title_tile; // Steam only
+	
 	~FieldTilesDataStruct();
 	void Copy(FieldTilesDataStruct& cpy);
 	uint32_t* ConvertAsImage(unsigned int cameraid, bool tileflag[] = NULL, bool showtp = false); // delete[] it
 	int Export(const char* outputfile, unsigned int cameraid, bool tileflag[] = NULL, bool showtp = false, bool mergetiles = false);
 	
-	void Read(fstream& f);
+	void Read(fstream& f, bool steamtitle = false);
 	void Write(fstream& f);
 	void WritePPF(fstream& f);
 	void ReadHWS(fstream& f);
@@ -339,6 +347,24 @@ public:
 	void WriteHWS(fstream& f);
 };
 
+struct FieldSteamTitleInfo {
+	uint32_t size;
+	unsigned int amount;
+	uint16_t* field_id;
+	uint16_t* width;
+	uint16_t* height;
+	uint16_t* title_tile_start;
+	uint16_t* title_tile_last;
+	bool* has_uk;
+	uint32_t* atlas_title_pos[STEAM_LANGUAGE_AMOUNT];
+	uint32_t* atlas_title_amount[STEAM_LANGUAGE_AMOUNT];
+	
+	bool UpdateTitleTileId(FieldTilesDataStruct* tileset, ConfigurationSet& config, SteamLanguage lang);
+	
+	void Read(fstream& f);
+	void Write(fstream& f);
+};
+
 struct FieldDataSet {
 public:
 	uint16_t amount;
@@ -352,6 +378,7 @@ public:
 	FieldRoleDataStruct** role;
 	
 	TextDataStruct** related_text;
+	FieldSteamTitleInfo* title_info; // Steam version only
 	uint32_t name_space_used; // Steam version only
 	
 	unsigned int tile_size;

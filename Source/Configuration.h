@@ -6,37 +6,6 @@
 #include <string>
 
 #define DATA_SECTION_AMOUNT 16
-struct ConfigurationSet;
-struct SaveSet;
-struct UnusedSaveBackupPart;
-struct UnusedSaveBackup;
-
-#include "File_Manipulation.h"
-#include "Spells.h"
-#include "Supports.h"
-#include "Items.h"
-#include "Cards.h"
-#include "Stats.h"
-#include "Commands.h"
-#include "Shops.h"
-#include "ClusterData.h"
-#include "ImageMaps.h"
-#include "TIMImages.h"
-#include "Charmaps.h"
-#include "Texts.h"
-#include "Scripts.h"
-#include "Fields.h"
-#include "Enemies.h"
-#include "WorldMaps.h"
-#include "BattleScenes.h"
-#include "SpellAnimations.h"
-#include "PartySpecials.h"
-#include "MenuUI.h"
-#include "MIPS.h"
-#include "UnityArchiver.h"
-#include "DllEditor.h"
-using namespace std;
-
 enum {
 	DATA_SECTION_SPELL,
 	DATA_SECTION_CMD,
@@ -84,6 +53,37 @@ typedef uint8_t LanguageVersion;
 #define LANGUAGE_VERSION_GERMANY	16
 #define LANGUAGE_VERSION_EUROPE		LANGUAGE_VERSION_FRANCE | LANGUAGE_VERSION_ENGLAND | LANGUAGE_VERSION_GERMANY
 #define LANGUAGE_VERSION_PALUS		LANGUAGE_VERSION_EUROPE | LANGUAGE_VERSION_AMERICA
+
+struct ConfigurationSet;
+struct SaveSet;
+struct UnusedSaveBackupPart;
+struct UnusedSaveBackup;
+
+#include "File_Manipulation.h"
+#include "Spells.h"
+#include "Supports.h"
+#include "Items.h"
+#include "Cards.h"
+#include "Stats.h"
+#include "Commands.h"
+#include "Shops.h"
+#include "ClusterData.h"
+#include "ImageMaps.h"
+#include "TIMImages.h"
+#include "Charmaps.h"
+#include "Texts.h"
+#include "Scripts.h"
+#include "Fields.h"
+#include "Enemies.h"
+#include "WorldMaps.h"
+#include "BattleScenes.h"
+#include "SpellAnimations.h"
+#include "PartySpecials.h"
+#include "MenuUI.h"
+#include "MIPS.h"
+#include "UnityArchiver.h"
+#include "DllEditor.h"
+using namespace std;
 
 struct ConfigurationSet {
 public:
@@ -207,6 +207,7 @@ public:
 	uint16_t* text_id;
 	
 	uint16_t field_amount;
+	int32_t field_title_info;
 	int32_t field_text_file[STEAM_LANGUAGE_AMOUNT];
 	int32_t* field_script_file[STEAM_LANGUAGE_AMOUNT];
 	int32_t* field_role_file;

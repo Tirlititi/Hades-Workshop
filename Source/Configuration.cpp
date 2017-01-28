@@ -1093,6 +1093,7 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	}
 	
 	// Fields
+	dest.field_title_info = dest.meta_res.GetFileIndex("mapLocalizeAreaTitle.txt");
 	string fieldnamelower[G_N_ELEMENTS(SteamFieldScript)];
 	string fieldbacknamelower[G_N_ELEMENTS(SteamFieldScript)];
 	for (i=0;i<G_N_ELEMENTS(SteamFieldScript);i++) {
