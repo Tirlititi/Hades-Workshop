@@ -183,15 +183,15 @@ public:
 	
 	FieldTilesTileDataStruct** tiles_sorted;
 	
-	SteamLanguage current_lang; // Steam only
-	bool title_tile; // Steam only
+	unsigned int title_tile_amount; // Steam only
 	
 	~FieldTilesDataStruct();
 	void Copy(FieldTilesDataStruct& cpy);
+	int GetRelatedTitleTileById(int tileid, SteamLanguage lang);
 	uint32_t* ConvertAsImage(unsigned int cameraid, bool tileflag[] = NULL, bool showtp = false); // delete[] it
-	int Export(const char* outputfile, unsigned int cameraid, bool tileflag[] = NULL, bool showtp = false, bool mergetiles = false);
+	int Export(const char* outputfile, unsigned int cameraid, bool tileflag[] = NULL, bool showtp = false, bool mergetiles = false, int steamtitlelang = -1);
 	
-	void Read(fstream& f, bool steamtitle = false);
+	void Read(fstream& f, unsigned int titletileamount = 0);
 	void Write(fstream& f);
 	void WritePPF(fstream& f);
 	void ReadHWS(fstream& f);
@@ -359,7 +359,7 @@ struct FieldSteamTitleInfo {
 	uint32_t* atlas_title_pos[STEAM_LANGUAGE_AMOUNT];
 	uint32_t* atlas_title_amount[STEAM_LANGUAGE_AMOUNT];
 	
-	bool UpdateTitleTileId(FieldTilesDataStruct* tileset, ConfigurationSet& config, SteamLanguage lang);
+	bool ReadTitleTileId(FieldTilesDataStruct* tileset, ConfigurationSet& config);
 	
 	void Read(fstream& f);
 	void Write(fstream& f);

@@ -74,21 +74,12 @@ void FieldTilesCameraDataStruct::UpdateSize() {
 void FieldTilesDataStruct::Copy(FieldTilesDataStruct& cpy) {
 	unsigned int i,j;
 	*this = cpy;
+	tiles = new FieldTilesTileDataStruct[tiles_amount+title_tile_amount*STEAM_LANGUAGE_AMOUNT];
 	anim = new FieldTilesAnimDataStruct[anim_amount];
-	tiles = new FieldTilesTileDataStruct[tiles_amount];
 	light = new FieldTilesLightDataStruct[light_amount];
 	camera = new FieldTilesCameraDataStruct[camera_amount];
 	tiles_sorted = new FieldTilesTileDataStruct*[tiles_amount];
-	for (i=0;i<anim_amount;i++) {
-		anim[i] = cpy.anim[i];
-		anim[i].tile_list = new uint8_t[anim[i].tile_amount];
-		anim[i].tile_duration = new uint8_t[anim[i].tile_amount];
-		for (j=0;j<anim[i].tile_amount;j++) {
-			anim[i].tile_list[j] = cpy.anim[i].tile_list[j];
-			anim[i].tile_duration[j] = cpy.anim[i].tile_duration[j];
-		}
-	}
-	for (i=0;i<tiles_amount;i++) {
+	for (i=0;i<tiles_amount+title_tile_amount*STEAM_LANGUAGE_AMOUNT;i++) {
 		tiles[i] = cpy.tiles[i];
 		tiles[i].AllocTileData();
 		for (j=0;j<tiles[i].tile_amount;j++) {
@@ -98,12 +89,23 @@ void FieldTilesDataStruct::Copy(FieldTilesDataStruct& cpy) {
 			tiles[i].tile_steam_id[j] = cpy.tiles[i].tile_steam_id[j];
 		}
 	}
+	for (i=0;i<anim_amount;i++) {
+		anim[i] = cpy.anim[i];
+		anim[i].tile_list = new uint8_t[anim[i].tile_amount];
+		anim[i].tile_duration = new uint8_t[anim[i].tile_amount];
+		for (j=0;j<anim[i].tile_amount;j++) {
+			anim[i].tile_list[j] = cpy.anim[i].tile_list[j];
+			anim[i].tile_duration[j] = cpy.anim[i].tile_duration[j];
+		}
+	}
 	for (i=0;i<light_amount;i++) {
 		light[i] = cpy.light[i];
 	}
 	for (i=0;i<camera_amount;i++) {
 		camera[i] = cpy.camera[i];
 	}
+	for (i=0;i<title_tile_amount*STEAM_LANGUAGE_AMOUNT;i++)
+		tiles[tiles_amount+i].SetupDataInfos(true);
 	SetupDataInfos(true);
 }
 
@@ -174,6 +176,25 @@ void FieldTilesDataStruct::AddTilesetToImage(uint32_t* imgdest, FieldTilesTileDa
 	}
 }
 
+int FieldTilesDataStruct::GetRelatedTitleTileById(int tileid, SteamLanguage lang) {
+	if (GetGameType()==GAME_TYPE_PSX || title_tile_amount==0)
+		return tileid;
+	unsigned int infoid;
+	for (infoid=0;infoid<parent->title_info->amount;infoid++)
+		if (parent->title_info->field_id[infoid]==object_id) {
+			if (tileid<0) {
+				int tid = -tileid-1;
+				if (tid<=parent->title_info->title_tile_last[infoid]-parent->title_info->title_tile_start[infoid])
+					return tiles_amount+lang*title_tile_amount-tid;
+				return tileid;
+			}
+			if (tileid>=tiles_amount || tileid<parent->title_info->title_tile_start[infoid] || tileid>parent->title_info->title_tile_last[infoid])
+				return tileid;
+			return tiles_amount+lang*title_tile_amount+tileid-parent->title_info->title_tile_start[infoid];
+		}
+	return tileid;
+}
+
 uint32_t* FieldTilesDataStruct::ConvertAsImage(unsigned int cameraid, bool tileflag[], bool showtp) {
 	unsigned int i,imgsize = camera[cameraid].width*camera[cameraid].height;
 	TIMImageDataStruct* tim = parent->tim_data[id];
@@ -186,14 +207,14 @@ uint32_t* FieldTilesDataStruct::ConvertAsImage(unsigned int cameraid, bool tilef
 	for (i=0;i<imgsize;i++)
 		res[i] = 0;
 	for (i=0;i<tiles_amount;i++) {
-		FieldTilesTileDataStruct& t = *tiles_sorted[i];
+		FieldTilesTileDataStruct& t = tiles[GetRelatedTitleTileById(tiles_sorted[i]->id,GetSteamLanguage())];
 		if (t.camera_id==cameraid && (tileflag==NULL || tileflag[t.id]) && (tileflag!=NULL || t.is_static || t.is_first_of_anim))
 			AddTilesetToImage(res,t,showtp,rawimg,tim->steam_width);
 	}
 	return res;
 }
 
-int FieldTilesDataStruct::Export(const char* outputfile, unsigned int cameraid, bool tileflag[], bool showtp, bool mergetiles) {
+int FieldTilesDataStruct::Export(const char* outputfile, unsigned int cameraid, bool tileflag[], bool showtp, bool mergetiles, int steamtitlelang) {
 	fstream ftiff(outputfile,ios::out|ios::binary);
 	if (!ftiff.is_open())
 		return 1;
@@ -250,10 +271,23 @@ int FieldTilesDataStruct::Export(const char* outputfile, unsigned int cameraid, 
 		MACRO_WL(0) // End of IFDs
 		for (j=0;j<width*height;j++)
 			img[j] = 0;
-		for (i=0;i<tiles_amount;i++) {
-			FieldTilesTileDataStruct& t = *tiles_sorted[i];
-			if (cameraid==t.camera_id && (tileflag==NULL || tileflag[t.id]))
-				AddTilesetToImage(img,t,true,rawimg,tim->steam_width);
+		if (steamtitlelang<0) {
+			for (i=0;i<tiles_amount;i++) {
+				FieldTilesTileDataStruct& t = *tiles_sorted[i];
+				if (cameraid==t.camera_id && (tileflag==NULL || tileflag[t.id]))
+					AddTilesetToImage(img,t,true,rawimg,tim->steam_width);
+			}
+			for (i=title_tile_amount;i<title_tile_amount*STEAM_LANGUAGE_AMOUNT;i++) {
+				FieldTilesTileDataStruct& t = tiles[tiles_amount+i];
+				if (cameraid==t.camera_id && (tileflag==NULL || tileflag[t.id]))
+					AddTilesetToImage(img,t,true,rawimg,tim->steam_width);
+			}
+		} else {
+			for (i=0;i<tiles_amount;i++) {
+				FieldTilesTileDataStruct& t = tiles[GetRelatedTitleTileById(tiles_sorted[i]->id,steamtitlelang)];
+				if (cameraid==t.camera_id && (tileflag==NULL || tileflag[t.id]))
+					AddTilesetToImage(img,t,true,rawimg,tim->steam_width);
+			}
 		}
 		for (y=0;y<height;y++)
 			for (x=0;x<width;x++) {
@@ -261,8 +295,17 @@ int FieldTilesDataStruct::Export(const char* outputfile, unsigned int cameraid, 
 			}
 	} else {
 		uint32_t lastifdp = 0x4;
-		for (i=0;i<tiles_amount;i++) {
-			FieldTilesTileDataStruct& t = *tiles_sorted[i];
+		for (i=0;i<tiles_amount+title_tile_amount*STEAM_LANGUAGE_AMOUNT;i++) {
+			FieldTilesTileDataStruct* tptr;
+			if (i<tiles_amount && steamtitlelang<0)
+				tptr = tiles_sorted[i];
+			else if (i<tiles_amount)
+				tptr = &tiles[GetRelatedTitleTileById(tiles_sorted[i]->id,steamtitlelang)];
+			else if (i>=tiles_amount+title_tile_amount && steamtitlelang<0)
+				tptr = &tiles[i];
+			else
+				continue;
+			FieldTilesTileDataStruct& t = *tptr;
 			if (cameraid==t.camera_id && (tileflag==NULL || tileflag[t.id])) {
 				MACRO_WS(IFD_INFO_AMOUNT)
 				MACRO_WS(0x100)	MACRO_WS(4)	MACRO_WL(1)	MACRO_WL(width) // Width
@@ -352,7 +395,7 @@ void FieldTilesDataStruct::SetupDataInfos(bool readway) {
 	}
 }
 
-#define MACRO_TILES_IOFUNCTION(IO,SEEK,READ,PPF,STEAMTITLEDEBUG) \
+#define MACRO_TILES_IOFUNCTION(IO,SEEK,READ,PPF) \
 	unsigned int i,j,k; \
 	if (!READ) SetupDataInfos(false); \
 	uint32_t headerpos = f.tellg(); \
@@ -381,13 +424,11 @@ void FieldTilesDataStruct::SetupDataInfos(bool readway) {
 	IO ## Short(f,camera_unk3); \
 	if (PPF) PPFEndScanStep(); \
 	if (READ) { \
-		tiles = new FieldTilesTileDataStruct[tiles_amount]; \
-		if (!STEAMTITLEDEBUG) { \
-			anim = new FieldTilesAnimDataStruct[anim_amount]; \
-			tiles_sorted = new FieldTilesTileDataStruct*[tiles_amount]; \
-			light = new FieldTilesLightDataStruct[light_amount]; \
-			camera = new FieldTilesCameraDataStruct[camera_amount]; \
-		} \
+		tiles = new FieldTilesTileDataStruct[tiles_amount+title_tile_amount*STEAM_LANGUAGE_AMOUNT]; \
+		anim = new FieldTilesAnimDataStruct[anim_amount]; \
+		tiles_sorted = new FieldTilesTileDataStruct*[tiles_amount]; \
+		light = new FieldTilesLightDataStruct[light_amount]; \
+		camera = new FieldTilesCameraDataStruct[camera_amount]; \
 	} \
 	k = 0; \
 	for (i=0;i<tiles_amount;i++) { \
@@ -437,103 +478,100 @@ void FieldTilesDataStruct::SetupDataInfos(bool readway) {
 			if (PPF) PPFEndScanStep(); \
 		} \
 	} \
-	if (!STEAMTITLEDEBUG) { \
-		for (i=0;i<anim_amount;i++) { \
-			SEEK(f,headerpos,anim_offset+i*0x10); \
-			if (PPF) PPFInitScanStep(f); \
-			IO ## Char(f,anim[i].flag); \
-			IO ## Long3(f,anim[i].tile_amount); \
-			IO ## Char(f,anim[i].camera_id); \
-			IO ## Long3(f,anim[i].default_frame); \
-			IO ## Short(f,(uint16_t&)anim[i].rate); \
-			IO ## Short(f,anim[i].counter); \
-			IO ## Long(f,anim[i].tile_list_offset); \
-			if (PPF) PPFEndScanStep(); \
-			if (READ) { \
-				anim[i].tile_list = new uint8_t[anim[i].tile_amount]; \
-				anim[i].tile_duration = new uint8_t[anim[i].tile_amount]; \
-			} \
-			SEEK(f,headerpos,anim[i].tile_list_offset); \
-			if (PPF) PPFInitScanStep(f); \
-			for (j=0;j<anim[i].tile_amount;j++) { \
-				IO ## Char(f,anim[i].tile_list[j]); \
-				IO ## Char(f,anim[i].tile_duration[j]); \
-			} \
-			if (PPF) PPFEndScanStep(); \
-		} \
-		SEEK(f,headerpos,light_offset); \
+	for (i=0;i<anim_amount;i++) { \
+		SEEK(f,headerpos,anim_offset+i*0x10); \
 		if (PPF) PPFInitScanStep(f); \
-		for (i=0;i<light_amount;i++) { \
-		} \
-		if (PPF) PPFEndScanStep(); \
-		SEEK(f,headerpos,camera_offset); \
-		if (PPF) PPFInitScanStep(f); \
-		for (i=0;i<camera_amount;i++) { \
-			IO ## Short(f,camera[i].distance); \
-			IO ## Short(f,(uint16_t&)camera[i].angle_x); \
-			IO ## Short(f,(uint16_t&)camera[i].angle_a); \
-			IO ## Short(f,(uint16_t&)camera[i].eye_x); \
-			IO ## Short(f,(uint16_t&)camera[i].angle_b); \
-			IO ## Short(f,(uint16_t&)camera[i].eye_y); \
-			IO ## Short(f,(uint16_t&)camera[i].eye_z); \
-			IO ## Short(f,(uint16_t&)camera[i].focal_x); \
-			IO ## Short(f,(uint16_t&)camera[i].focal_y); \
-			IO ## Short(f,(uint16_t&)camera[i].focal_z); \
-			IO ## Long(f,(uint32_t&)camera[i].offset_x); \
-			IO ## Long(f,(uint32_t&)camera[i].offset_z); \
-			IO ## Long(f,(uint32_t&)camera[i].offset_y); \
-			IO ## Short(f,(uint16_t&)camera[i].offset_centerx); \
-			IO ## Short(f,(uint16_t&)camera[i].offset_centery); \
-			IO ## Short(f,(uint16_t&)camera[i].offset_width); \
-			IO ## Short(f,(uint16_t&)camera[i].offset_height); \
-			IO ## Short(f,(uint16_t&)camera[i].min_x); \
-			IO ## Short(f,(uint16_t&)camera[i].max_x); \
-			IO ## Short(f,(uint16_t&)camera[i].min_y); \
-			IO ## Short(f,(uint16_t&)camera[i].max_y); \
-			IO ## Long(f,(uint32_t&)camera[i].depth); \
-			if (READ) { \
-				camera[i].parent = this; \
-				camera[i].id = i; \
-			} \
-		} \
+		IO ## Char(f,anim[i].flag); \
+		IO ## Long3(f,anim[i].tile_amount); \
+		IO ## Char(f,anim[i].camera_id); \
+		IO ## Long3(f,anim[i].default_frame); \
+		IO ## Short(f,(uint16_t&)anim[i].rate); \
+		IO ## Short(f,anim[i].counter); \
+		IO ## Long(f,anim[i].tile_list_offset); \
 		if (PPF) PPFEndScanStep(); \
 		if (READ) { \
-			SetupDataInfos(true); \
-			for (i=0;i<camera_amount;i++) \
-				camera[i].UpdateSize(); \
+			anim[i].tile_list = new uint8_t[anim[i].tile_amount]; \
+			anim[i].tile_duration = new uint8_t[anim[i].tile_amount]; \
 		} \
+		SEEK(f,headerpos,anim[i].tile_list_offset); \
+		if (PPF) PPFInitScanStep(f); \
+		for (j=0;j<anim[i].tile_amount;j++) { \
+			IO ## Char(f,anim[i].tile_list[j]); \
+			IO ## Char(f,anim[i].tile_duration[j]); \
+		} \
+		if (PPF) PPFEndScanStep(); \
+	} \
+	SEEK(f,headerpos,light_offset); \
+	if (PPF) PPFInitScanStep(f); \
+	for (i=0;i<light_amount;i++) { \
+	} \
+	if (PPF) PPFEndScanStep(); \
+	SEEK(f,headerpos,camera_offset); \
+	if (PPF) PPFInitScanStep(f); \
+	for (i=0;i<camera_amount;i++) { \
+		IO ## Short(f,camera[i].distance); \
+		IO ## Short(f,(uint16_t&)camera[i].angle_x); \
+		IO ## Short(f,(uint16_t&)camera[i].angle_a); \
+		IO ## Short(f,(uint16_t&)camera[i].eye_x); \
+		IO ## Short(f,(uint16_t&)camera[i].angle_b); \
+		IO ## Short(f,(uint16_t&)camera[i].eye_y); \
+		IO ## Short(f,(uint16_t&)camera[i].eye_z); \
+		IO ## Short(f,(uint16_t&)camera[i].focal_x); \
+		IO ## Short(f,(uint16_t&)camera[i].focal_y); \
+		IO ## Short(f,(uint16_t&)camera[i].focal_z); \
+		IO ## Long(f,(uint32_t&)camera[i].offset_x); \
+		IO ## Long(f,(uint32_t&)camera[i].offset_z); \
+		IO ## Long(f,(uint32_t&)camera[i].offset_y); \
+		IO ## Short(f,(uint16_t&)camera[i].offset_centerx); \
+		IO ## Short(f,(uint16_t&)camera[i].offset_centery); \
+		IO ## Short(f,(uint16_t&)camera[i].offset_width); \
+		IO ## Short(f,(uint16_t&)camera[i].offset_height); \
+		IO ## Short(f,(uint16_t&)camera[i].min_x); \
+		IO ## Short(f,(uint16_t&)camera[i].max_x); \
+		IO ## Short(f,(uint16_t&)camera[i].min_y); \
+		IO ## Short(f,(uint16_t&)camera[i].max_y); \
+		IO ## Long(f,(uint32_t&)camera[i].depth); \
+		if (READ) { \
+			camera[i].parent = this; \
+			camera[i].id = i; \
+		} \
+	} \
+	if (PPF) PPFEndScanStep(); \
+	if (READ) { \
+		SetupDataInfos(true); \
+		for (i=0;i<camera_amount;i++) \
+			camera[i].UpdateSize(); \
 	}
 
 
-void FieldTilesDataStruct::Read(fstream& f, bool steamtitle) {
+void FieldTilesDataStruct::Read(fstream& f, unsigned int titletileamount) {
 	if (loaded)
 		return;
+	title_tile_amount = titletileamount;
 	if (GetGameType()==GAME_TYPE_PSX) {
-		MACRO_TILES_IOFUNCTION(FFIXRead,FFIXSeek,true,false,false)
-		title_tile = false;
+		MACRO_TILES_IOFUNCTION(FFIXRead,FFIXSeek,true,false)
 	} else {
-		MACRO_TILES_IOFUNCTION(SteamRead,SteamSeek,true,false,steamtitle)
-		title_tile = steamtitle;
+		MACRO_TILES_IOFUNCTION(SteamRead,SteamSeek,true,false)
 	}
 	loaded = true;
 }
 
 void FieldTilesDataStruct::Write(fstream& f) {
-	MACRO_TILES_IOFUNCTION(FFIXWrite,FFIXSeek,false,false,false)
+	MACRO_TILES_IOFUNCTION(FFIXWrite,FFIXSeek,false,false)
 	modified = false;
 }
 
 void FieldTilesDataStruct::WritePPF(fstream& f) {
-	MACRO_TILES_IOFUNCTION(PPFStepAdd,FFIXSeek,false,true,false)
+	MACRO_TILES_IOFUNCTION(PPFStepAdd,FFIXSeek,false,true)
 }
 
 void FieldTilesDataStruct::ReadHWS(fstream& f) {
-	MACRO_TILES_IOFUNCTION(HWSRead,HWSSeek,true,false,false)
+	MACRO_TILES_IOFUNCTION(HWSRead,HWSSeek,true,false)
 	MarkDataModified();
 }
 
 void FieldTilesDataStruct::WriteHWS(fstream& f) {
-	MACRO_TILES_IOFUNCTION(HWSWrite,HWSSeek,false,false,false)
+	MACRO_TILES_IOFUNCTION(HWSWrite,HWSSeek,false,false)
 }
 
 FieldTilesDataStruct::~FieldTilesDataStruct() {
@@ -562,16 +600,14 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 			delete[] tiles[i].tile_data_data3;
 		}
 		delete[] tiles;
-		if (!title_tile) {
-			for (i=0;i<anim_amount;i++) {
-				delete[] anim[i].tile_list;
-				delete[] anim[i].tile_duration;
-			}
-			delete[] anim;
-			delete[] light;
-			delete[] camera;
-			delete[] tiles_sorted;
+		for (i=0;i<anim_amount;i++) {
+			delete[] anim[i].tile_list;
+			delete[] anim[i].tile_duration;
 		}
+		delete[] anim;
+		delete[] light;
+		delete[] camera;
+		delete[] tiles_sorted;
 	}
 }
 
@@ -958,61 +994,64 @@ void FieldRoleDataStruct::WriteHWS(fstream& f) {
 	MACRO_ROLE_IOFUNCTION(HWSWrite,HWSSeek,false,false)
 }
 
-bool FieldSteamTitleInfo::UpdateTitleTileId(FieldTilesDataStruct* tileset, ConfigurationSet& config, SteamLanguage lang) {
-	unsigned int i,j,k,newtileid;
+bool FieldSteamTitleInfo::ReadTitleTileId(FieldTilesDataStruct* tileset, ConfigurationSet& config) {
+	unsigned int i,j,k,newtileid,tileindex;
+	SteamLanguage lang,langi;
 	for (i=0;i<amount;i++)
 		if (field_id[i]==tileset->object_id) {
-			if (lang==STEAM_LANGUAGE_EN && !has_uk[i])
-				lang = STEAM_LANGUAGE_US;
-			if (lang==tileset->current_lang)
-				return false;
-			tileset->current_lang = lang;
 			stringstream fnamestream;
-			FieldTilesDataStruct localbackground;
 			fnamestream << config.steam_dir_assets << "p0data1" << (unsigned int)config.field_file_id[tileset->id] << ".bin";
 			fstream ffbin(fnamestream.str().c_str(),ios::in | ios::binary);
-			ffbin.seekg(config.meta_field[config.field_file_id[tileset->id]-1].GetFileOffsetByIndex(config.field_tiles_file[tileset->id][lang]));
-			localbackground.Init(NULL,CHUNK_TYPE_FIELD_TILES,config.field_id[tileset->id]);
-//			localbackground.parent = NULL;
-//			localbackground.id = i;
-			SteamReadLong(ffbin,localbackground.size);
-			localbackground.Read(ffbin,true);
-			ffbin.close();
-			newtileid = atlas_title_pos[lang][i];
-			for (j=title_tile_start[i];j<=title_tile_last[i];j++) {
-				tileset->tiles[j].data1 = localbackground.tiles[j].data1;
-				tileset->tiles[j].height = localbackground.tiles[j].height;
-				tileset->tiles[j].width = localbackground.tiles[j].width;
-				tileset->tiles[j].default_x = localbackground.tiles[j].default_x;
-				tileset->tiles[j].default_y = localbackground.tiles[j].default_y;
-				tileset->tiles[j].pos_x = localbackground.tiles[j].pos_x;
-				tileset->tiles[j].pos_y = localbackground.tiles[j].pos_y;
-				tileset->tiles[j].pos_minx = localbackground.tiles[j].pos_minx;
-				tileset->tiles[j].pos_maxx = localbackground.tiles[j].pos_maxx;
-				tileset->tiles[j].pos_miny = localbackground.tiles[j].pos_miny;
-				tileset->tiles[j].pos_maxy = localbackground.tiles[j].pos_maxy;
-				tileset->tiles[j].screen_x = localbackground.tiles[j].screen_x;
-				tileset->tiles[j].screen_y = localbackground.tiles[j].screen_y;
-				tileset->tiles[j].pos_dx = localbackground.tiles[j].pos_dx;
-				tileset->tiles[j].pos_dy = localbackground.tiles[j].pos_dy;
-				tileset->tiles[j].pos_fracx = localbackground.tiles[j].pos_fracx;
-				tileset->tiles[j].pos_fracy = localbackground.tiles[j].pos_fracy;
-				tileset->tiles[j].camera_id = localbackground.tiles[j].camera_id;
-				tileset->tiles[j].data2 = localbackground.tiles[j].data2;
-				tileset->tiles[j].tile_amount = localbackground.tiles[j].tile_amount;
-				tileset->tiles[j].tile_pos_offset = localbackground.tiles[j].tile_pos_offset;
-				tileset->tiles[j].tile_data_offset = localbackground.tiles[j].tile_data_offset;
-				tileset->tiles[j].tile_packet_offset = localbackground.tiles[j].tile_packet_offset;
-				tileset->tiles[j].tile_tpage = localbackground.tiles[j].tile_tpage;
-				tileset->tiles[j].AllocTileData();
-				for (k=0;k<tileset->tiles[j].tile_amount;k++) {
-					tileset->tiles[j].tile_steam_id[k] = newtileid++;
-					tileset->tiles[j].tile_data_data1[k] = localbackground.tiles[j].tile_data_data1[k];
-					tileset->tiles[j].tile_data_data2[k] = localbackground.tiles[j].tile_data_data2[k];
-					tileset->tiles[j].tile_data_data3[k] = localbackground.tiles[j].tile_data_data3[k];
+			for (langi=STEAM_LANGUAGE_US;langi<STEAM_LANGUAGE_AMOUNT;langi++) {
+				if (langi==STEAM_LANGUAGE_EN && !has_uk[i])
+					lang = STEAM_LANGUAGE_US;
+				else
+					lang = langi;
+				FieldTilesDataStruct localbackground;
+				ffbin.seekg(config.meta_field[config.field_file_id[tileset->id]-1].GetFileOffsetByIndex(config.field_tiles_file[tileset->id][lang]));
+				localbackground.Init(NULL,CHUNK_TYPE_FIELD_TILES,config.field_id[tileset->id]);
+//				localbackground.parent = NULL;
+//				localbackground.id = i;
+				SteamReadLong(ffbin,localbackground.size);
+				localbackground.Read(ffbin);
+				newtileid = atlas_title_pos[lang][i];
+				for (j=title_tile_start[i];j<=title_tile_last[i];j++) {
+					tileindex = tileset->tiles_amount+langi*tileset->title_tile_amount+j-title_tile_start[i];
+					tileset->tiles[tileindex].data1 = localbackground.tiles[j].data1;
+					tileset->tiles[tileindex].height = localbackground.tiles[j].height;
+					tileset->tiles[tileindex].width = localbackground.tiles[j].width;
+					tileset->tiles[tileindex].default_x = localbackground.tiles[j].default_x;
+					tileset->tiles[tileindex].default_y = localbackground.tiles[j].default_y;
+					tileset->tiles[tileindex].pos_x = localbackground.tiles[j].pos_x;
+					tileset->tiles[tileindex].pos_y = localbackground.tiles[j].pos_y;
+					tileset->tiles[tileindex].pos_minx = localbackground.tiles[j].pos_minx;
+					tileset->tiles[tileindex].pos_maxx = localbackground.tiles[j].pos_maxx;
+					tileset->tiles[tileindex].pos_miny = localbackground.tiles[j].pos_miny;
+					tileset->tiles[tileindex].pos_maxy = localbackground.tiles[j].pos_maxy;
+					tileset->tiles[tileindex].screen_x = localbackground.tiles[j].screen_x;
+					tileset->tiles[tileindex].screen_y = localbackground.tiles[j].screen_y;
+					tileset->tiles[tileindex].pos_dx = localbackground.tiles[j].pos_dx;
+					tileset->tiles[tileindex].pos_dy = localbackground.tiles[j].pos_dy;
+					tileset->tiles[tileindex].pos_fracx = localbackground.tiles[j].pos_fracx;
+					tileset->tiles[tileindex].pos_fracy = localbackground.tiles[j].pos_fracy;
+					tileset->tiles[tileindex].camera_id = localbackground.tiles[j].camera_id;
+					tileset->tiles[tileindex].data2 = localbackground.tiles[j].data2;
+					tileset->tiles[tileindex].tile_amount = localbackground.tiles[j].tile_amount;
+					tileset->tiles[tileindex].tile_pos_offset = localbackground.tiles[j].tile_pos_offset;
+					tileset->tiles[tileindex].tile_data_offset = localbackground.tiles[j].tile_data_offset;
+					tileset->tiles[tileindex].tile_packet_offset = localbackground.tiles[j].tile_packet_offset;
+					tileset->tiles[tileindex].tile_tpage = localbackground.tiles[j].tile_tpage;
+					tileset->tiles[tileindex].AllocTileData();
+					for (k=0;k<tileset->tiles[tileindex].tile_amount;k++) {
+						tileset->tiles[tileindex].tile_steam_id[k] = newtileid++;
+						tileset->tiles[tileindex].tile_data_data1[k] = localbackground.tiles[j].tile_data_data1[k];
+						tileset->tiles[tileindex].tile_data_data2[k] = localbackground.tiles[j].tile_data_data2[k];
+						tileset->tiles[tileindex].tile_data_data3[k] = localbackground.tiles[j].tile_data_data3[k];
+					}
+					tileset->tiles[tileindex].SetupDataInfos(true);
 				}
-				tileset->tiles[j].SetupDataInfos(true);
 			}
+			ffbin.close();
 			return true;
 		}
 	return false;
@@ -1318,12 +1357,18 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 			background_data[i]->Init(false,CHUNK_TYPE_FIELD_TILES,config.field_id[i],&dummyclus[i]);
 			background_data[i]->parent = this;
 			background_data[i]->id = i;
+			unsigned int titletileamount = 0;
+			if (config.field_tiles_localized[i])
+				for (j=0;j<title_info->amount;j++)
+					if (title_info->field_id[j]==config.field_id[i]) {
+						titletileamount = title_info->title_tile_last[j]-title_info->title_tile_start[j]+1;
+						break;
+					}
 			SteamReadLong(ffbin,background_data[i]->size);
-			background_data[i]->Read(ffbin);
-			background_data[i]->current_lang = STEAM_LANGUAGE_US;
+			background_data[i]->Read(ffbin,titletileamount);
 			ffbin.close();
 			if (config.field_tiles_localized[i])
-				title_info->UpdateTitleTileId(background_data[i],config,GetSteamLanguage());
+				title_info->ReadTitleTileId(background_data[i],config);
 			LoadingDialogUpdate(i);
 		}
 		delete[] dummyclus;

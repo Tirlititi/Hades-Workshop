@@ -8169,23 +8169,29 @@ BatchExportWindow::BatchExportWindow( wxWindow* parent, wxWindowID id, const wxS
 	bSizer159->Fit( m_splitfilepanel );
 	bSizer162->Add( m_splitfilepanel, 1, wxEXPAND | wxALL, 0 );
 	
-	m_mergetilepanel = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	m_mergetilepanel->Hide();
+	m_backgroundpanel = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	m_backgroundpanel->Hide();
 	
 	wxBoxSizer* bSizer1591;
 	bSizer1591 = new wxBoxSizer( wxVERTICAL );
 	
-	m_mergetile = new wxCheckBox( m_mergetilepanel, wxID_ANY, _("Merge Tilesets"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_mergetile = new wxCheckBox( m_backgroundpanel, wxID_ANY, _("Merge Tilesets"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_mergetile->SetValue(true); 
 	m_mergetile->SetToolTip( _("When unchecked, all the datas\nare written in one big file") );
 	
 	bSizer1591->Add( m_mergetile, 0, wxALL, 5 );
 	
+	wxString m_languagetitleChoices[] = { _("All Titles"), _("English (US)"), _("English (UK)"), _("Japanese"), _("German"), _("French"), _("Italian"), _("Spanish") };
+	int m_languagetitleNChoices = sizeof( m_languagetitleChoices ) / sizeof( wxString );
+	m_languagetitle = new wxChoice( m_backgroundpanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_languagetitleNChoices, m_languagetitleChoices, 0 );
+	m_languagetitle->SetSelection( 0 );
+	bSizer1591->Add( m_languagetitle, 0, wxALL, 5 );
 	
-	m_mergetilepanel->SetSizer( bSizer1591 );
-	m_mergetilepanel->Layout();
-	bSizer1591->Fit( m_mergetilepanel );
-	bSizer162->Add( m_mergetilepanel, 1, wxEXPAND | wxALL, 0 );
+	
+	m_backgroundpanel->SetSizer( bSizer1591 );
+	m_backgroundpanel->Layout();
+	bSizer1591->Fit( m_backgroundpanel );
+	bSizer162->Add( m_backgroundpanel, 1, wxEXPAND | wxALL, 0 );
 	
 	
 	gbSizer2->Add( bSizer162, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
@@ -8405,6 +8411,20 @@ FieldTextureExportWindow::FieldTextureExportWindow( wxWindow* parent, wxWindowID
 	m_mergetiles->SetToolTip( _("If enabled, the picture is exported in one layer\nIf disabled, each tileset is exported in one layer") );
 	
 	fgSizer48->Add( m_mergetiles, 0, wxALL, 5 );
+	
+	m_staticText325 = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText325->Wrap( -1 );
+	fgSizer48->Add( m_staticText325, 0, 0, 5 );
+	
+	m_staticText326 = new wxStaticText( this, wxID_ANY, _("Language Titles"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText326->Wrap( -1 );
+	fgSizer48->Add( m_staticText326, 0, wxALL, 5 );
+	
+	wxString m_languagetitleChoices[] = { _("All Languages"), _("English (US)"), _("English (UK)"), _("Japanese"), _("German"), _("French"), _("Italian"), _("Spanish") };
+	int m_languagetitleNChoices = sizeof( m_languagetitleChoices ) / sizeof( wxString );
+	m_languagetitle = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_languagetitleNChoices, m_languagetitleChoices, 0 );
+	m_languagetitle->SetSelection( 0 );
+	fgSizer48->Add( m_languagetitle, 0, wxALL, 2 );
 	
 	
 	gbSizer2->Add( fgSizer48, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );

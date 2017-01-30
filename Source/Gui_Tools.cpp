@@ -541,11 +541,13 @@ int ToolBackgroundEditor::ShowModal(CDDataStruct* data) {
 }
 
 // imgfilename order must be the one of tiles
-// depthorder must be so that imgfilename[depthorder[i]] is of increasing depth
+// depthorder must be so that imgfilename[depthorder[i]] is of increasing depth for i<tile_amount
+// For i>=tile_amount, imgfilename[i] is the layer of a non-US title tile
 int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTilesDataStruct& tiledata, unsigned int* depthorder, int dxtflags, wxBitmapType type = wxBITMAP_TYPE_ANY) {
 	// Compute size of the atlas in order to have a roughly square image
 	unsigned int atlassize, atlasw, atlash, atlastilecolcount, atlastilerowcount, tileamount, tilesize, tilegap, tileperiod;
-	unsigned int i,j,k,x,y;
+	unsigned int tilesamountplustitle = tiledata.tiles_amount+tiledata.title_tile_amount*(STEAM_LANGUAGE_AMOUNT-1);
+	unsigned int i,j,k,x,y,tilei;
 	int imgindex;
 	int res = 0;
 	bool outputexist = wxFile::Exists(outputname);
@@ -570,12 +572,13 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 	while (atlash%4) atlash++;
 	atlassize = atlasw*atlash*4;
 	// Load the image files
-	wxImage* tblockimgarray = new wxImage[tiledata.tiles_amount];
+	wxImage* tblockimgarray = new wxImage[tilesamountplustitle];
 	unsigned int tiledefaultsize = GetGameType()==GAME_TYPE_PSX ? FIELD_TILE_BASE_SIZE : FIELD_TILE_BASE_SIZE*2;
-	for (i=0;i<tiledata.tiles_amount;i++) {
+	for (i=0;i<tilesamountplustitle;i++) {
 		if (wxFile::Exists(imgfilename[i])) {
+			tilei = i<tiledata.tiles_amount ? i : i+tiledata.title_tile_amount;
 			tblockimgarray[i].LoadFile(imgfilename[i],type);
-			FieldTilesCameraDataStruct& camera = tiledata.camera[tiledata.tiles[i].camera_id];
+			FieldTilesCameraDataStruct& camera = tiledata.camera[tiledata.tiles[tilei].camera_id];
 			if (camera.width/tiledefaultsize*tilesize>tblockimgarray[i].GetWidth() || camera.height/tiledefaultsize*tilesize>tblockimgarray[i].GetHeight()) {
 				delete[] tblockimgarray;
 				if (!outputexist)
@@ -597,8 +600,9 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 	// and (2) we should use RGB value of the pixels of the other layers
 	// Note that Steam default files use a kind of X-Y expansion of RGB instead of (2)
 	uint8_t alphalimit;
-	for (i=0;i<tiledata.tiles_amount;i++) {
-		FieldTilesTileDataStruct& tile = tiledata.tiles[i];
+	for (i=0;i<tilesamountplustitle;i++) {
+		tilei = i<tiledata.tiles_amount ? i : i+tiledata.title_tile_amount;
+		FieldTilesTileDataStruct& tile = tiledata.tiles[tilei];
 		FieldTilesCameraDataStruct& camera = tiledata.camera[tile.camera_id];
 		wxImage& tblockimg = tblockimgarray[i];
 		if (imgindex<0 || !tblockimg.IsOk())
@@ -883,20 +887,29 @@ void ToolBackgroundEditor::LoadAndMergeImages() {
 	wxFileName imgfilebasename = m_imagepicker->GetPath();
 	wxString imgfileext = _(L".")+imgfilebasename.GetExt();
 	unsigned int tileimgindex;
+	int lastdigitchar = imgfilebasename.GetName().Len()-1;
+	while (lastdigitchar>0 && isdigit(imgfilebasename.GetName().GetChar(lastdigitchar)))
+		lastdigitchar--;
 	imgfilebasename.ClearExt();
-	imgfilebasename.SetName(imgfilebasename.GetName().Mid(0,imgfilebasename.GetName().Len()-1));
-	for (i=0;i<tileset->tiles_amount;i++) {
-		for (j=0;j<tileset->tiles_amount;j++)
-			if (tileset->tiles_sorted[i] == &tileset->tiles[j]) {
-				tileimgindex = j;
-				break;
-			}
-		if (tileimgindex>m_tilelist->GetCount() || !m_tilelist->IsSelected(tileimgindex))
-			continue;
-		if (m_sortlayer->IsChecked())
+	imgfilebasename.SetName(imgfilebasename.GetName().Mid(0,lastdigitchar));
+	for (i=0;i<m_tilelist->GetCount();i++) {
+		if (i<tileset->tiles_amount) {
+			for (j=0;j<tileset->tiles_amount;j++)
+				if (tileset->tiles_sorted[i] == &tileset->tiles[j]) {
+					tileimgindex = j;
+					break;
+				}
+			if (tileimgindex>m_tilelist->GetCount() || !m_tilelist->IsSelected(tileimgindex))
+				continue;
+			if (m_sortlayer->IsChecked())
+				tileimgindex = i;
+		} else {
 			tileimgindex = i;
+			if (!m_tilelist->IsSelected(i))
+				continue;
+		}
 		if (m_revertlayer->IsChecked())
-			tileimgindex = tileset->tiles_amount-tileimgindex-1;
+			tileimgindex = m_tilelist->GetCount()-tileimgindex-1;
 		wxString imgfileindexname;
 		imgfileindexname << imgfilebasename.GetFullPath() << tileimgindex << imgfileext;
 		if (wxFile::Exists(imgfileindexname)) {
@@ -928,9 +941,7 @@ void ToolBackgroundEditor::ComputeTileFilter(int x, int y) {
 	if (x>=0 && y>=0) {
 		
 	} else {
-		unsigned int i,ti,x,y;
-		wxArrayInt tileselindexlist;
-		m_tilelist->GetSelections(tileselindexlist);
+		unsigned int i,j,x,y;
 		tile_img_base.Create(main_img_base.GetSize());
 		tile_img_base.SetAlpha();
 		for (x=0;x<tile_img_base.GetWidth();x++)
@@ -938,21 +949,27 @@ void ToolBackgroundEditor::ComputeTileFilter(int x, int y) {
 				tile_img_base.SetAlpha(x,y,0);
 		unsigned int imgtilex,imgtiley,tilesize;
 		tilesize = m_resolution->GetValue();
-		for (ti=0;ti<tileselindexlist.GetCount();ti++) {
+		for (i=0;i<m_tilelist->GetCount();i++) {
+			if (!m_tilelist->IsSelected(i))
+				continue;
 			wxImage tileimgtoken = wxImage(tile_img_base.GetSize());
 			tileimgtoken.SetAlpha();
 			for (x=0;x<tileimgtoken.GetWidth();x++)
 				for (y=0;y<tileimgtoken.GetHeight();y++)
 					tileimgtoken.SetAlpha(x,y,0);
-			FieldTilesTileDataStruct& tile = cddata->fieldset.background_data[m_fieldchoice->GetSelection()]->tiles[tileselindexlist[ti]];
-			FieldTilesCameraDataStruct& camera = cddata->fieldset.background_data[m_fieldchoice->GetSelection()]->camera[tile.camera_id];
-			for (i=0;i<tile.tile_amount;i++) {
-				imgtilex = (tile.pos_x+tile.tile_pos_x[i]-camera.pos_x)/FIELD_TILE_BASE_SIZE*tilesize;
-				imgtiley = (tile.pos_y+tile.tile_pos_y[i]-camera.pos_y)/FIELD_TILE_BASE_SIZE*tilesize;
+			FieldTilesDataStruct& tileset = *cddata->fieldset.background_data[m_fieldchoice->GetSelection()];
+			FieldTilesTileDataStruct& tile = i<tileset.tiles_amount ? tileset.tiles[i] : tileset.tiles[i+tileset.title_tile_amount];
+			FieldTilesCameraDataStruct& camera = tileset.camera[tile.camera_id];
+			for (j=0;j<tile.tile_amount;j++) {
+				imgtilex = (tile.pos_x+tile.tile_pos_x[j]-camera.pos_x)/FIELD_TILE_BASE_SIZE*tilesize;
+				imgtiley = (tile.pos_y+tile.tile_pos_y[j]-camera.pos_y)/FIELD_TILE_BASE_SIZE*tilesize;
 				tileimgtoken.SetRGB(wxRect(imgtilex,imgtiley,tilesize,tilesize),TILECOLOR_INTERIOR.Red(),TILECOLOR_INTERIOR.Green(),TILECOLOR_INTERIOR.Blue());
 				for (x=0;x<tilesize && imgtilex+x<tileimgtoken.GetWidth();x++)
-					for (y=0;y<tilesize && imgtiley+y<tileimgtoken.GetHeight();y++)
+					for (y=0;y<tilesize && imgtiley+y<tileimgtoken.GetHeight();y++) {
 						tileimgtoken.SetAlpha(imgtilex+x,imgtiley+y,TILECOLOR_INTERIOR.Alpha());
+						if (tile_img_base.GetAlpha(imgtilex+x,imgtiley+y)==0)
+							tile_img_base.SetRGB(imgtilex+x,imgtiley+y,TILECOLOR_INTERIOR.Red(),TILECOLOR_INTERIOR.Green(),TILECOLOR_INTERIOR.Blue());
+					}
 			}
 			for (x=0;x<tileimgtoken.GetWidth();x++)
 				for (y=0;y<tileimgtoken.GetHeight();y++) {
@@ -964,7 +981,7 @@ void ToolBackgroundEditor::ComputeTileFilter(int x, int y) {
 					}
 					tile_img_base.SetAlpha(x,y,min(0xFF,tile_img_base.GetAlpha(x,y)+tileimgtoken.GetAlpha(x,y)));
 				}
-			}
+		}
 	}
 }
 
@@ -990,7 +1007,7 @@ void ToolBackgroundEditor::OnFieldChoice(wxCommandEvent& event) {
 		FieldTilesDataStruct& tileset = *cddata->fieldset.background_data[event.GetSelection()];
 		unsigned int i;
 		m_tilelist->Clear();
-		for (i=0;i<tileset.tiles_amount;i++) {
+		for (i=0;i<tileset.tiles_amount+tileset.title_tile_amount*(STEAM_LANGUAGE_AMOUNT-1);i++) {
 			wxString tilelabel;
 			tilelabel << L"Tile Block " << i;
 			m_tilelist->Append(tilelabel);
@@ -1040,12 +1057,16 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 			wxFileName imgfilebasename = m_imagepicker->GetPath();
 			wxString imgfileext = _(L".")+imgfilebasename.GetExt();
 			unsigned int tileimgindex;
-			imgfilebasename.ClearExt();
-			imgfilebasename.SetName(imgfilebasename.GetName().Mid(0,imgfilebasename.GetName().Len()-1));
-			wxString* imgfilename = new wxString[tileset->tiles_amount];
+			int lastdigitchar = imgfilebasename.GetName().Len()-1;
+			while (lastdigitchar>0 && isdigit(imgfilebasename.GetName().GetChar(lastdigitchar)))
+				lastdigitchar--;
+			imgfilebasename.ClearExt(); 
+			imgfilebasename.SetName(imgfilebasename.GetName().Mid(0,lastdigitchar));
+			unsigned int tilesamountplustitle = tileset->tiles_amount+tileset->title_tile_amount*(STEAM_LANGUAGE_AMOUNT-1);
+			wxString* imgfilename = new wxString[tilesamountplustitle];
 			unsigned int* depthorder = new unsigned int[tileset->tiles_amount];
-			for (i=0;i<tileset->tiles_amount;i++) {
-				if (m_sortlayer->IsChecked()) {
+			for (i=0;i<tilesamountplustitle;i++) {
+				if (i<tileset->tiles_amount && m_sortlayer->IsChecked()) {
 					for (j=0;j<tileset->tiles_amount;j++)
 						if (&tileset->tiles[i]==tileset->tiles_sorted[j]) {
 							tileimgindex = j;
@@ -1054,15 +1075,17 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 					depthorder[i] = i;
 				} else {
 					tileimgindex = i;
-					for (j=0;j<tileset->tiles_amount;j++)
-						if (&tileset->tiles[i]==tileset->tiles_sorted[j]) {
-							depthorder[i] = j;
-							break;
-						}
+					if (i<tileset->tiles_amount)
+						for (j=0;j<tileset->tiles_amount;j++)
+							if (&tileset->tiles[i]==tileset->tiles_sorted[j]) {
+								depthorder[i] = j;
+								break;
+							}
 				}
 				if (m_revertlayer->IsChecked()) {
-					tileimgindex = tileset->tiles_amount-tileimgindex-1;
-					depthorder[i] = tileset->tiles_amount-depthorder[i]-1;
+					tileimgindex = tilesamountplustitle-tileimgindex-1;
+					if (i<tileset->tiles_amount)
+						depthorder[i] = tileset->tiles_amount-depthorder[i]-1;
 				}
 				imgfilename[i] << imgfilebasename.GetFullPath() << tileimgindex << imgfileext;
 			}
@@ -1118,13 +1141,14 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 				sourcefilenamecheck << sourcefilebase << sourcefiletoken[0] << fieldid << sourcefiletoken[1] << 0 << sourcefiletoken[2] << 0 << sourcefiletoken[3];
 				if (wxFile::Exists(sourcefilenamecheck)) {
 					FieldTilesDataStruct* tileset = cddata->fieldset.background_data[fieldindex];
-					wxString* imgfilename = new wxString[tileset->tiles_amount];
+					unsigned int tilesamountplustitle = tileset->tiles_amount+tileset->title_tile_amount*(STEAM_LANGUAGE_AMOUNT-1);
+					wxString* imgfilename = new wxString[tilesamountplustitle];
 					unsigned int* depthorder = new unsigned int[tileset->tiles_amount];
 					unsigned int tilesizebackup = tileset->parent->tile_size;
 					tileset->parent->tile_size = m_massresolution->GetValue();
 					destfilefield = destfilebase+_(SteamFieldScript[fieldindex].background_name);
-					for (i=0;i<tileset->tiles_amount;i++) {
-						if (m_masssortlayer->IsChecked()) {
+					for (i=0;i<tilesamountplustitle;i++) {
+						if (i<tileset->tiles_amount && m_masssortlayer->IsChecked()) {
 							tileimgindex = 0;
 							for (j=0;j<tileset->tiles_amount;j++) {
 								if (&tileset->tiles[i]==tileset->tiles_sorted[j])
@@ -1138,19 +1162,21 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 							for (j=0;j<i;j++)
 								if (tileset->tiles[i].camera_id==tileset->tiles[j].camera_id)
 									tileimgindex++;
-							for (j=0;j<tileset->tiles_amount;j++)
-								if (&tileset->tiles[i]==tileset->tiles_sorted[j]) {
-									depthorder[i] = j;
-									break;
-								}
+							if (i<tileset->tiles_amount)
+								for (j=0;j<tileset->tiles_amount;j++)
+									if (&tileset->tiles[i]==tileset->tiles_sorted[j]) {
+										depthorder[i] = j;
+										break;
+									}
 						}
 						if (m_massrevertlayer->IsChecked()) {
 							unsigned int camtileamount = 0;
-							for (j=0;j<tileset->tiles_amount;j++)
+							for (j=0;j<tilesamountplustitle;j++)
 								if (tileset->tiles[i].camera_id==tileset->tiles[j].camera_id)
 									camtileamount++;
 							tileimgindex = camtileamount-tileimgindex-1;
-							depthorder[i] = tileset->tiles_amount-depthorder[i]-1;
+							if (i<tileset->tiles_amount)
+								depthorder[i] = tileset->tiles_amount-depthorder[i]-1;
 						}
 						imgfilename[i] << sourcefilebase << sourcefiletoken[0] << fieldid << sourcefiletoken[1] << (unsigned int)tileset->tiles[i].camera_id << sourcefiletoken[2] << tileimgindex << sourcefiletoken[3];
 					}

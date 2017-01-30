@@ -2266,8 +2266,9 @@ class BatchExportWindow : public wxDialog
 	protected:
 		wxPanel* m_splitfilepanel;
 		wxCheckBox* m_splitfile;
-		wxPanel* m_mergetilepanel;
+		wxPanel* m_backgroundpanel;
 		wxCheckBox* m_mergetile;
+		wxChoice* m_languagetitle;
 		wxCheckListBox* m_exportlist;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
@@ -2343,14 +2344,17 @@ class FieldTextureExportWindow : public wxDialog
 	private:
 	
 	protected:
+		wxStaticText* m_staticText325;
+		wxStaticText* m_staticText326;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
 	
 	public:
 		wxFilePickerCtrl* m_filepicker;
 		wxCheckBox* m_mergetiles;
+		wxChoice* m_languagetitle;
 		
-		FieldTextureExportWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Export Background"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 275,120 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+		FieldTextureExportWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Export Background"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 275,150 ), long style = wxDEFAULT_DIALOG_STYLE ); 
 		~FieldTextureExportWindow();
 	
 };

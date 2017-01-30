@@ -635,7 +635,7 @@ int BatchExportDialog::ShowModal(int type, SaveSet* datas, wxArrayString objlist
 		m_exportlist->Check(i);
 	if (type>=10) {
 		m_splitfilepanel->Show(false);
-		m_mergetilepanel->Show();
+		m_backgroundpanel->Show();
 	}
 	return wxDialog::ShowModal();
 }
