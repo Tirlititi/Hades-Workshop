@@ -195,6 +195,7 @@ void MainFrame::OnOpenClick(wxCommandEvent& event) {
 		m_close->Enable();
 		m_closeall->Enable();
 		m_modmanager->Enable();
+		m_backgroundeditor->Enable(CDPanel[CDPanelAmount]->fieldloaded);
 		m_background->Show(false);
 		m_cdbook->Show(true);
 		m_cdbook->Layout();
@@ -714,6 +715,7 @@ void MainFrame::UpdateMenuAvailability(int panel) {
 		m_importfieldscript->Enable(false);
 		m_exportfieldbackground->Enable(false);
 		m_modmanager->Enable(false);
+		m_backgroundeditor->Enable(false);
 		return;
 	}
 	SetGameType(CDPanel[panel]->gametype);
@@ -722,6 +724,7 @@ void MainFrame::UpdateMenuAvailability(int panel) {
 	m_close->Enable(true);
 	m_closeall->Enable(true);
 	m_modmanager->Enable(true);
+	m_backgroundeditor->Enable(CDPanel[panel]->fieldloaded);
 	m_savehws->Enable(CDModifiedState[panel]);
 	m_savesteam->Enable(CDModifiedState[panel] && GetGameType()!=GAME_TYPE_PSX);
 	m_exportppf->Enable(CDModifiedState[panel] && GetGameType()==GAME_TYPE_PSX);

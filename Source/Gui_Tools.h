@@ -36,6 +36,7 @@ private:
 	wxImage main_img_base;
 	wxImage tile_img_base;
 	
+	void GetFileNamesAndDepth(wxString basename, wxString multibackseparator, wxString endofname, FieldTilesDataStruct& tiledata, bool sortlayer, bool revertorder, wxString*& resname, unsigned int*& resdepth, bool usemultibackground = true);
 	void DrawImage(wxDC& dc);
 	void UpdateImage();
 	void LoadAndMergeImages();

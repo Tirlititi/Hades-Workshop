@@ -173,6 +173,7 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	
 	m_backgroundeditor = new wxMenuItem( m_menuTools, wxID_BACKEDIT, wxString( _("Background Editor") ) , _("Convert images into field backgrounds for Steam"), wxITEM_NORMAL );
 	m_menuTools->Append( m_backgroundeditor );
+	m_backgroundeditor->Enable( false );
 	
 	m_menuBar->Append( m_menuTools, _("&Tools") ); 
 	
@@ -10121,10 +10122,12 @@ BackgroundEditorWindow::BackgroundEditorWindow( wxWindow* parent, wxWindowID id,
 	gbSizer41->Add( fgSizer81, wxGBPosition( 0, 0 ), wxGBSpan( 1, 4 ), wxEXPAND, 5 );
 	
 	m_usegametilebtn = new wxRadioButton( m_panelconverter, wxID_ANY, _("Use Game Tiling"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	m_usegametilebtn->SetValue( true ); 
 	gbSizer41->Add( m_usegametilebtn, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
 	
 	m_customtilebtn = new wxRadioButton( m_panelconverter, wxID_ANY, _("Custom Tiling"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_customtilebtn->SetValue( true ); 
+	m_customtilebtn->Enable( false );
+	
 	gbSizer41->Add( m_customtilebtn, wxGBPosition( 1, 1 ), wxGBSpan( 1, 1 ), wxALL, 5 );
 	
 	wxArrayString m_fieldchoiceChoices;

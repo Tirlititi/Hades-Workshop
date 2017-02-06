@@ -6304,6 +6304,7 @@ void CDDataStruct::InitField(void) {
 	GetTopWindow()->m_exportfieldscript->Enable();
 //	GetTopWindow()->m_importfieldscript->Enable();
 	GetTopWindow()->m_exportfieldbackground->Enable();
+	GetTopWindow()->m_backgroundeditor->Enable();
 }
 
 void CDDataStruct::InitBattleScene(void) {
