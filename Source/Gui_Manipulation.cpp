@@ -4867,25 +4867,24 @@ void CDDataStruct::OnTextCharmapPaint(wxPaintEvent &event) {
 
 void CDDataStruct::DisplayField(int fieldid) {
 	unsigned int* sortid = (unsigned int*)m_fieldlist->GetClientData(fieldid);
-	ScriptDataStruct* sc = fieldset.script_data[*sortid];
+	fieldselection = *sortid;
 	unsigned int i;
-	if (GetGameType()!=GAME_TYPE_PSX && fieldset.tim_data[*sortid]!=NULL) {
+	if (GetGameType()!=GAME_TYPE_PSX && fieldset.tim_data[fieldselection]!=NULL) {
 		fstream ftmp;
 		fieldset.tim_data[*sortid]->Read(ftmp);
 	}
-	fieldselection = *sortid;
-	m_fieldname->ChangeValue(_(sc->name.str));
-	m_fieldpreload->Enable(fieldset.preload[*sortid]!=NULL);
-	m_fieldtexturemanage->Enable(fieldset.background_data[*sortid]!=NULL);
+	m_fieldname->ChangeValue(_(fieldset.script_data[fieldselection]->name.str));
+	m_fieldpreload->Enable(fieldset.preload[fieldselection]!=NULL);
+	m_fieldtexturemanage->Enable(fieldset.background_data[fieldselection]!=NULL);
 	m_fieldtexturechoice->Clear();
-	if (fieldset.background_data[*sortid]!=NULL) {
-		for (i=0;i<fieldset.background_data[*sortid]->camera_amount;i++) {
+	if (fieldset.background_data[fieldselection]!=NULL) {
+		for (i=0;i<fieldset.background_data[fieldselection]->camera_amount;i++) {
 			wstringstream buffer;
 			buffer << "Background " << i+1 << ends;
 			m_fieldtexturechoice->Append(_(buffer.str()));
 		}
 		m_fieldtexturechoice->SetSelection(0);
-		MACRO_FIELD_DISPLAY_BACKGROUND(*sortid,0)
+		MACRO_FIELD_DISPLAY_BACKGROUND(fieldselection,0)
 	}
 	m_fieldscrolledwindow->Layout();
 	m_fieldscrolledwindow->Refresh();

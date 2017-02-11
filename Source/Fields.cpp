@@ -74,11 +74,20 @@ void FieldTilesCameraDataStruct::UpdateSize() {
 void FieldTilesDataStruct::Copy(FieldTilesDataStruct& cpy) {
 	unsigned int i,j;
 	*this = cpy;
-	tiles = new FieldTilesTileDataStruct[tiles_amount+title_tile_amount*STEAM_LANGUAGE_AMOUNT];
 	anim = new FieldTilesAnimDataStruct[anim_amount];
+	tiles = new FieldTilesTileDataStruct[tiles_amount+title_tile_amount*STEAM_LANGUAGE_AMOUNT];
+	tiles_sorted = new FieldTilesTileDataStruct*[tiles_amount];
 	light = new FieldTilesLightDataStruct[light_amount];
 	camera = new FieldTilesCameraDataStruct[camera_amount];
-	tiles_sorted = new FieldTilesTileDataStruct*[tiles_amount];
+	for (i=0;i<anim_amount;i++) {
+		anim[i] = cpy.anim[i];
+		anim[i].tile_list = new uint8_t[anim[i].tile_amount];
+		anim[i].tile_duration = new uint8_t[anim[i].tile_amount];
+		for (j=0;j<anim[i].tile_amount;j++) {
+			anim[i].tile_list[j] = cpy.anim[i].tile_list[j];
+			anim[i].tile_duration[j] = cpy.anim[i].tile_duration[j];
+		}
+	}
 	for (i=0;i<tiles_amount+title_tile_amount*STEAM_LANGUAGE_AMOUNT;i++) {
 		tiles[i] = cpy.tiles[i];
 		tiles[i].AllocTileData();
@@ -87,15 +96,6 @@ void FieldTilesDataStruct::Copy(FieldTilesDataStruct& cpy) {
 			tiles[i].tile_data_data2[j] = cpy.tiles[i].tile_data_data2[j];
 			tiles[i].tile_data_data3[j] = cpy.tiles[i].tile_data_data3[j];
 			tiles[i].tile_steam_id[j] = cpy.tiles[i].tile_steam_id[j];
-		}
-	}
-	for (i=0;i<anim_amount;i++) {
-		anim[i] = cpy.anim[i];
-		anim[i].tile_list = new uint8_t[anim[i].tile_amount];
-		anim[i].tile_duration = new uint8_t[anim[i].tile_amount];
-		for (j=0;j<anim[i].tile_amount;j++) {
-			anim[i].tile_list[j] = cpy.anim[i].tile_list[j];
-			anim[i].tile_duration[j] = cpy.anim[i].tile_duration[j];
 		}
 	}
 	for (i=0;i<light_amount;i++) {
@@ -424,11 +424,34 @@ void FieldTilesDataStruct::SetupDataInfos(bool readway) {
 	IO ## Short(f,camera_unk3); \
 	if (PPF) PPFEndScanStep(); \
 	if (READ) { \
-		tiles = new FieldTilesTileDataStruct[tiles_amount+title_tile_amount*STEAM_LANGUAGE_AMOUNT]; \
 		anim = new FieldTilesAnimDataStruct[anim_amount]; \
+		tiles = new FieldTilesTileDataStruct[tiles_amount+title_tile_amount*STEAM_LANGUAGE_AMOUNT]; \
 		tiles_sorted = new FieldTilesTileDataStruct*[tiles_amount]; \
 		light = new FieldTilesLightDataStruct[light_amount]; \
 		camera = new FieldTilesCameraDataStruct[camera_amount]; \
+	} \
+	for (i=0;i<anim_amount;i++) { \
+		SEEK(f,headerpos,anim_offset+i*0x10); \
+		if (PPF) PPFInitScanStep(f); \
+		IO ## Char(f,anim[i].flag); \
+		IO ## Long3(f,anim[i].tile_amount); \
+		IO ## Char(f,anim[i].camera_id); \
+		IO ## Long3(f,anim[i].default_frame); \
+		IO ## Short(f,(uint16_t&)anim[i].rate); \
+		IO ## Short(f,anim[i].counter); \
+		IO ## Long(f,anim[i].tile_list_offset); \
+		if (PPF) PPFEndScanStep(); \
+		if (READ) { \
+			anim[i].tile_list = new uint8_t[anim[i].tile_amount]; \
+			anim[i].tile_duration = new uint8_t[anim[i].tile_amount]; \
+		} \
+		SEEK(f,headerpos,anim[i].tile_list_offset); \
+		if (PPF) PPFInitScanStep(f); \
+		for (j=0;j<anim[i].tile_amount;j++) { \
+			IO ## Char(f,anim[i].tile_list[j]); \
+			IO ## Char(f,anim[i].tile_duration[j]); \
+		} \
+		if (PPF) PPFEndScanStep(); \
 	} \
 	k = 0; \
 	for (i=0;i<tiles_amount;i++) { \
@@ -477,29 +500,6 @@ void FieldTilesDataStruct::SetupDataInfos(bool readway) {
 			IO ## Long(f,tiles[i].tile_data_data3[j]); \
 			if (PPF) PPFEndScanStep(); \
 		} \
-	} \
-	for (i=0;i<anim_amount;i++) { \
-		SEEK(f,headerpos,anim_offset+i*0x10); \
-		if (PPF) PPFInitScanStep(f); \
-		IO ## Char(f,anim[i].flag); \
-		IO ## Long3(f,anim[i].tile_amount); \
-		IO ## Char(f,anim[i].camera_id); \
-		IO ## Long3(f,anim[i].default_frame); \
-		IO ## Short(f,(uint16_t&)anim[i].rate); \
-		IO ## Short(f,anim[i].counter); \
-		IO ## Long(f,anim[i].tile_list_offset); \
-		if (PPF) PPFEndScanStep(); \
-		if (READ) { \
-			anim[i].tile_list = new uint8_t[anim[i].tile_amount]; \
-			anim[i].tile_duration = new uint8_t[anim[i].tile_amount]; \
-		} \
-		SEEK(f,headerpos,anim[i].tile_list_offset); \
-		if (PPF) PPFInitScanStep(f); \
-		for (j=0;j<anim[i].tile_amount;j++) { \
-			IO ## Char(f,anim[i].tile_list[j]); \
-			IO ## Char(f,anim[i].tile_duration[j]); \
-		} \
-		if (PPF) PPFEndScanStep(); \
 	} \
 	SEEK(f,headerpos,light_offset); \
 	if (PPF) PPFInitScanStep(f); \
@@ -578,6 +578,11 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 	return;
 	if (loaded) {
 		unsigned int i;
+		for (i=0;i<anim_amount;i++) {
+			delete[] anim[i].tile_list;
+			delete[] anim[i].tile_duration;
+		}
+		delete[] anim;
 		for (i=0;i<tiles_amount;i++) {
 			delete[] tiles[i].tile_depth;
 			delete[] tiles[i].tile_pos_x;
@@ -600,11 +605,6 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 			delete[] tiles[i].tile_data_data3;
 		}
 		delete[] tiles;
-		for (i=0;i<anim_amount;i++) {
-			delete[] anim[i].tile_list;
-			delete[] anim[i].tile_duration;
-		}
-		delete[] anim;
 		delete[] light;
 		delete[] camera;
 		delete[] tiles_sorted;
