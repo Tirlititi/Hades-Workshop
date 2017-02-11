@@ -8,6 +8,103 @@
 #define CIL_HWS_VERSION 1
 
 //==================================================//
+//                 PRIVATE STRUCT                   //
+//==================================================//
+
+struct DllExceptionHandler {
+	uint8_t flag;
+	uint32_t count;
+	uint32_t* block_type;
+	uint32_t* block_try_start;
+	uint32_t* block_try_length;
+	uint32_t* block_start;
+	uint32_t* block_length;
+	uint32_t* block_specific;
+	
+	DllExceptionHandler* next;
+	
+	void Read(fstream& f) {
+		unsigned int i;
+		bool fatsection;
+		f.seekg(GetAlignOffset(f.tellg()),ios::cur);
+		flag = f.get();
+		fatsection = flag & 0x40;
+		if (fatsection) {
+			count = f.get();
+			count |= (ReadShort(f) << 16);
+			count /= 24;
+		} else {
+			count = f.get()/12;
+			ReadShort(f);
+		}
+		block_type = new uint32_t[count];
+		block_try_start = new uint32_t[count];
+		block_try_length = new uint32_t[count];
+		block_start = new uint32_t[count];
+		block_length = new uint32_t[count];
+		block_specific = new uint32_t[count];
+		for (i=0;i<count;i++) {
+			block_type[i] = fatsection ? ReadLong(f) : ReadShort(f);
+			block_try_start[i] = fatsection ? ReadLong(f) : ReadShort(f);
+			block_try_length[i] = fatsection ? ReadLong(f) : f.get();
+			block_start[i] = fatsection ? ReadLong(f) : ReadShort(f);
+			block_length[i] = fatsection ? ReadLong(f) : f.get();
+			block_specific[i] = ReadLong(f);
+		}
+		if (flag & 0x80) {
+			next = new DllExceptionHandler;
+			next->Read(f);
+		} else {
+			next = NULL;
+		}
+	}
+	
+	void Write(fstream& f) {
+		unsigned int i,countsize;
+		f.seekg(GetAlignOffset(f.tellg()),ios::cur);
+		f.put(flag);
+		if (flag & 0x40) {
+			countsize = count*24+4;
+			f.put(countsize & 0xFF);
+			WriteShort(f,countsize >> 16);
+			for (i=0;i<count;i++) {
+				WriteLong(f,block_type[i]);
+				WriteLong(f,block_try_start[i]);
+				WriteLong(f,block_try_length[i]);
+				WriteLong(f,block_start[i]);
+				WriteLong(f,block_length[i]);
+				WriteLong(f,block_specific[i]);
+			}
+		} else {
+			countsize = count*12+4;
+			f.put(countsize & 0xFF);
+			WriteShort(f,0);
+			for (i=0;i<count;i++) {
+				WriteShort(f,block_type[i]);
+				WriteShort(f,block_try_start[i]);
+				f.put(block_try_length[i]);
+				WriteShort(f,block_start[i]);
+				f.put(block_length[i]);
+				WriteLong(f,block_specific[i]);
+			}
+		}
+		if (flag & 0x80)
+			next->Write(f);
+	}
+	
+	~DllExceptionHandler() {
+		if (next)
+			delete[] next;
+		delete[] block_type;
+		delete[] block_try_start;
+		delete[] block_try_length;
+		delete[] block_start;
+		delete[] block_length;
+		delete[] block_specific;
+	}
+};
+
+//==================================================//
 //                   DLL HEADER                     //
 //==================================================//
 
@@ -1355,6 +1452,8 @@ int DllMetaData::Duplicate(fstream& fdest, unsigned int modifamount, DllMetaData
 	for (i=0;i<modifamount;i++) {
 		modif[i].method_id = GetMethodAtOffset(modif[i].position);
 		modif[i].tiny_fat_change = 0;
+		if (modif[i].code_block_pos==0)
+			modif[i].code_block_pos = modif[i].position;
 	}
 	modifmethinfo = ComputeTinyFatAndMethodInfo(modifamount,modif);
 	newsecvpos = new uint32_t[section_amount];
@@ -1528,6 +1627,41 @@ int DllMetaData::Duplicate(fstream& fdest, unsigned int modifamount, DllMetaData
 			dll_file.seekg(GetAlignOffset(dll_file.tellg()),ios::cur);
 			while (fdest.tellp()%4!=0)
 				fdest.put(0);
+			if (modifmethinfo[modifindex]->flags & 0x8) { // ToDo: can't add/remove exception handlers for now, nor change their count
+				DllExceptionHandler* excepthand = new DllExceptionHandler;
+				DllExceptionHandler* excepthandhead = excepthand;
+				excepthand->Read(dll_file);
+				while (excepthand!=NULL) {
+					for (i=0;i<excepthand->count;i++) {
+						int tryposmodif = 0;
+						int trysizemodif = 0;
+						int blockposmodif = 0;
+						int blocksizemodif = 0;
+						int filterposmodif = 0;
+						for (j=0;j<=modifindex;j++)
+							if (modif[j].method_id==modif[modifindex].method_id) {
+								if (modif[j].code_block_pos<modifmethinfo[j]->code_abs_offset+excepthand->block_try_start[i])
+									tryposmodif += modif[j].new_length-modif[j].base_length;
+								else if (modif[j].code_block_pos<modifmethinfo[j]->code_abs_offset+excepthand->block_try_start[i]+excepthand->block_try_length[i])
+									trysizemodif += modif[j].new_length-modif[j].base_length;
+								if (modif[j].code_block_pos<modifmethinfo[j]->code_abs_offset+excepthand->block_start[i])
+									blockposmodif += modif[j].new_length-modif[j].base_length;
+								else if (modif[j].code_block_pos<modifmethinfo[j]->code_abs_offset+excepthand->block_start[i]+excepthand->block_length[i])
+									blocksizemodif += modif[j].new_length-modif[j].base_length;
+								if (excepthand->block_type[i]==1 && modif[j].code_block_pos<modifmethinfo[j]->code_abs_offset+excepthand->block_specific[i])
+									filterposmodif += modif[j].new_length-modif[j].base_length;
+							}
+						excepthand->block_try_start[i] += tryposmodif;
+						excepthand->block_try_length[i] += trysizemodif;
+						excepthand->block_start[i] += blockposmodif;
+						excepthand->block_length[i] += blocksizemodif;
+						excepthand->block_specific[i] += filterposmodif;
+					}
+					excepthand = excepthand->next;
+				}
+				excepthandhead->Write(fdest);
+				delete excepthandhead;
+			}
 		} else if (modif[modifindex].method_id<0) { // Field modifications are assumed to change the whole field
 			dll_file.seekg(GetAlignOffset(dll_file.tellg()),ios::cur);
 			while (fdest.tellp()%4!=0)
@@ -2136,11 +2270,11 @@ void CILDataSet::Init(DllMetaData* d) {
 	macromodif = NULL;
 }
 
-bool CILDataSet::IsMacroEnabled(uint32_t macroid) {
+int CILDataSet::GetEnabledMacroIndex(uint32_t macroid) {
 	for (unsigned int i=0;i<macromodifamount;i++)
 		if (macromodif[i].type->id==macroid)
-			return true;
-	return false;
+			return i;
+	return -1;
 }
 
 uint8_t* CILDataSet::GetModifiedMethodRaw(unsigned int tid, unsigned int mid, uint32_t* length) {
@@ -2355,29 +2489,45 @@ int* CILDataSet::LoadHWS(fstream &ffhws) {
 			newmodif.new_length = newmlen;
 			newmodif.value = new uint8_t[newmlen];
 			ffhws.read((char*)newmodif.value,newmlen);
+			newmodif.code_block_pos = newmodif.position;
 			UpdateWithNewModification(newmodif);
 		} else {
 			ffhws.seekg(newmlen,ios::cur);
 		}
 	}
 	for (i=0;i<macroamount;i++) {
+		methok = true;
 		HWSReadShort(ffhws,macroflag);
 		HWSReadLong(ffhws,macrotype);
 		CILMacro macro(macrotype,data);
+		CILMacro* macrotoread = NULL;
 		if (macro.info==NULL) {
+			methok = false;
 			res[2]++;
-		} else if (IsMacroEnabled(macrotype)) {
 		} else {
-			methok = true;
+			if (GetEnabledMacroIndex(macrotype)>=0)
+				macrotoread = &macromodif[GetEnabledMacroIndex(macrotype)];
 			for (j=0;j<rawmodifamount;j++)
 				if (macro.FindMethodById(rawmodif[j].method_id)>=0) {
 					methok = false;
 					break;
 				}
-			if (methok)
-				AddMacroModif(macrotype);
-			else
+			if (!methok)
 				res[3]++;
+		}
+		if (methok) {
+			if (macrotoread==NULL) {
+				AddMacroModif(macrotype);
+				macrotoread = &macromodif[macromodifamount-1];
+			}
+			if (macroflag & 0x1)
+				macrotoread->info->ReadHWS(ffhws,macroflag);
+		} else {
+			if (macroflag & 0x1) {
+				uint16_t macrosize;
+				HWSReadShort(ffhws,macrosize);
+				ffhws.seekg(macrosize,ios::cur);
+			}
 		}
 	}
 	return res;
@@ -2386,6 +2536,7 @@ int* CILDataSet::LoadHWS(fstream &ffhws) {
 void CILDataSet::WriteHWS(fstream &ffhws) {
 	unsigned int i;
 	string s,mname,tname,nspace;
+	uint16_t flag;
 	size_t pos;
 	HWSWriteShort(ffhws,CIL_HWS_VERSION);
 	HWSWriteLong(ffhws,rawmodifamount);
@@ -2417,7 +2568,10 @@ void CILDataSet::WriteHWS(fstream &ffhws) {
 		ffhws.write((const char*)rawmodif[i].value,rawmodif[i].new_length);
 	}
 	for (i=0;i<macromodifamount;i++) {
-		HWSWriteShort(ffhws,0); // Slot reserved for flags
+		flag = macromodif[i].info->GetSaveFlag();
+		HWSWriteShort(ffhws,flag);
 		HWSWriteLong(ffhws,macromodif[i].type->id);
+		if (flag & 0x1)
+			macromodif[i].info->WriteHWS(ffhws);
 	}
 }

@@ -1,5 +1,6 @@
 #include "DllCilMacro.h"
 
+#include "File_Manipulation.h"
 #include "Assembly_Strings.h"
 
 //=============================//
@@ -54,6 +55,7 @@ static ILInstruction MACROINST_NULL[] = {
 	offsetmodif = res[modi].new_length+frompos-topos; \
 	res[modi].new_length += methinfo.code_size+frompos-topos; \
 	res[modi].value = new uint8_t[res[modi].new_length]; \
+	res[modi].code_block_pos = res[modi].position+frompos; \
 	dllfile.seekg(res[modi].position); \
 	currentpos = 0; \
 	BufferInitPosition(); \
@@ -89,7 +91,246 @@ static ILInstruction MACROINST_NULL[] = {
 //         Particular          //
 //=============================//
 
+struct CILMacroCustomBackgrounds : public CILMacroBaseStruct {
+	
+	uint16_t resolution;
+	
+	void SetParameters(uint32_t* intparam) { resolution = intparam[0]; }
+	uint16_t GetSaveFlag() { return 0x1; }
+	void ReadHWS(fstream& ffhws, uint16_t flag) {
+		uint16_t macrosize;
+		HWSReadShort(ffhws,macrosize);
+		if (macrosize<2) {
+			ffhws.seekg(macrosize,ios::cur);
+			return;
+		}
+		HWSReadShort(ffhws,resolution);
+		macrosize -= 2;
+	}
+	void WriteHWS(fstream& ffhws) {
+		HWSWriteShort(ffhws,2);
+		HWSWriteLong(ffhws,resolution);
+	}
+	
+	unsigned int GetMethodCount() {
+		return 3;
+	}
+	string GetMethodTypeName(unsigned int index) {
+		switch (index) {
+			case 0:	return "BGSCENE_DEF";
+			case 1:	return "BGSCENE_DEF";
+			case 2:	return "BGSCENE_DEF";
+		}
+		return "";
+	}
+	string GetMethodName(unsigned int index) {
+		switch (index) {
+			case 0:	return "ExtractSpriteData";
+			case 1:	return "LoadEBG";
+			case 2:	return "_LoadDummyEBG";
+		}
+		return "";
+	}
+	DllMetaDataModification* ComputeModifications(unsigned int* modifamount) {
+		MACRO_CILMACRO_COMPUTEBEG()
+		ILInstruction srchbeginstlde[] = {
+			{ 0x02 },
+			{ 0x07 },
+			{ 0x28, data->GetMethodTokenIdentifier("BGSCENE_DEF","ExtractOverlayData") }
+		};
+		ILInstruction srchendinstlde[] = {
+			{ 0x11, 12 },
+			{ 0x11, 7 },
+			{ 0x3E, 0 }
+		};
+		ILInstruction replinstlde[] = {
+			{ 0x03 },
+			{ 0x7B, data->GetFieldTokenIdentifier("BGSCENE_DEF","atlas") },
+			{ 0x6F, data->GetMemberTokenIdentifier("int UnityEngine.Texture::get_width()") },
+			{ 0x13, 4 },
+			{ 0x03 },
+			{ 0x7B, data->GetFieldTokenIdentifier("BGSCENE_DEF","atlas") },
+			{ 0x6F, data->GetMemberTokenIdentifier("int UnityEngine.Texture::get_height()") },
+			{ 0x13, 5 },
+			{ 0x0E, 4 },
+			{ 0x7B, data->GetFieldTokenIdentifier("FieldMapLocalizeAreaTitleInfo","startOvrIdx") },
+			{ 0x13, 6 },
+			{ 0x0E, 4 },
+			{ 0x7B, data->GetFieldTokenIdentifier("FieldMapLocalizeAreaTitleInfo","endOvrIdx") },
+			{ 0x13, 7 },
+			{ 0x0E, 4 },
+			{ 0x7B, data->GetFieldTokenIdentifier("FieldMapLocalizeAreaTitleInfo","hasUK") },
+			{ 0x13, 8 },
+			{ 0x0E, 4 },
+			{ 0x0E, 5 },
+			{ 0x6F, data->GetMethodTokenIdentifier("FieldMapLocalizeAreaTitleInfo","GetSpriteStartIndex") },
+			{ 0x13, 9 },
+			{ 0x11, 4 },
+			{ 0x1F, resolution+4 },
+			{ 0x5B },
+			{ 0x13, 10 },
+			{ 0x11, 9 },
+			{ 0x13, 11 },
+			{ 0x11, 6 },
+			{ 0x13, 12 },
+			{ 0x38, 0xF3 },
+			{ 0x02 },
+			{ 0x7B, data->GetFieldTokenIdentifier("BGSCENE_DEF","overlayList") },
+			{ 0x11, 12 },
+			{ 0x6F, data->GetMemberTokenIdentifier("!0 System.Collections.Generic.List`1<class BGOVERLAY_DEF>::get_Item( int )") },
+			{ 0x13, 13 },
+			{ 0x07 },
+			{ 0x6F, data->GetMemberTokenIdentifier("class System.IO.Stream System.IO.BinaryReader::get_BaseStream()") },
+			{ 0x11, 13 },
+			{ 0x7B, data->GetFieldTokenIdentifier("BGOVERLAY_DEF","prmOffset") },
+			{ 0x6E },
+			{ 0x16 },
+			{ 0x6F, data->GetMemberTokenIdentifier("long System.IO.Stream::Seek( long, valuetype System.IO.SeekOrigin )") },
+			{ 0x26 },
+			{ 0x16 },
+			{ 0x13, 14 },
+			{ 0x38, 0x23 },
+			{ 0x73, data->GetMethodTokenIdentifier("BGSPRITE_LOC_DEF",".ctor") },
+			{ 0x13, 15 },
+			{ 0x11, 15 },
+			{ 0x07 },
+			{ 0x6F, data->GetMethodTokenIdentifier("BGSPRITE_LOC_DEF","ReadData_BGSPRITE_DEF") },
+			{ 0x11, 13 },
+			{ 0x7B, data->GetFieldTokenIdentifier("BGOVERLAY_DEF","spriteList") },
+			{ 0x11, 15 },
+			{ 0x6F, data->GetMemberTokenIdentifier("void System.Collections.Generic.List`1<class BGSPRITE_LOC_DEF>::Add( !0 )") },
+			{ 0x11, 14 },
+			{ 0x17 },
+			{ 0x58 },
+			{ 0x13, 14 },
+			{ 0x11, 14 },
+			{ 0x11, 13 },
+			{ 0x7B, data->GetFieldTokenIdentifier("BGOVERLAY_DEF","spriteCount") },
+			{ 0x3F, 0xFFFFFFCF },
+			{ 0x07 },
+			{ 0x6F, data->GetMemberTokenIdentifier("class System.IO.Stream System.IO.BinaryReader::get_BaseStream()") },
+			{ 0x11, 13 },
+			{ 0x7B, data->GetFieldTokenIdentifier("BGOVERLAY_DEF","locOffset") },
+			{ 0x6E },
+			{ 0x16 },
+			{ 0x6F, data->GetMemberTokenIdentifier("long System.IO.Stream::Seek( long, valuetype System.IO.SeekOrigin )") },
+			{ 0x26 },
+			{ 0x16 },
+			{ 0x13, 16 },
+			{ 0x38, 0x65 },
+			{ 0x11, 13 },
+			{ 0x7B, data->GetFieldTokenIdentifier("BGOVERLAY_DEF","spriteList") },
+			{ 0x11, 16 },
+			{ 0x6F, data->GetMemberTokenIdentifier("!0 System.Collections.Generic.List`1<class BGSPRITE_LOC_DEF>::get_Item( int )") },
+			{ 0x13, 17 },
+			{ 0x11, 17 },
+			{ 0x07 },
+			{ 0x6F, data->GetMethodTokenIdentifier("BGSPRITE_LOC_DEF","ReadData_BGSPRITELOC_DEF") },
+			{ 0x02 },
+			{ 0x7B, data->GetFieldTokenIdentifier("BGSCENE_DEF","useUpscaleFM") },
+			{ 0x39, 0x3C },
+			{ 0x11, 17 },
+			{ 0x18 },
+			{ 0x11, 11 },
+			{ 0x11, 10 },
+			{ 0x5D },
+			{ 0x1F, resolution+4 },
+			{ 0x5A },
+			{ 0x58 },
+			{ 0xD1 },
+			{ 0x7D, data->GetFieldTokenIdentifier("BGSPRITE_LOC_DEF","atlasX") },
+			{ 0x11, 17 },
+			{ 0x18 },
+			{ 0x11, 11 },
+			{ 0x11, 10 },
+			{ 0x5B },
+			{ 0x1F, resolution+4 },
+			{ 0x5A },
+			{ 0x58 },
+			{ 0xD1 },
+			{ 0x7D, data->GetFieldTokenIdentifier("BGSPRITE_LOC_DEF","atlasY") },
+			{ 0x11, 17 },
+			{ 0x1F, resolution },
+			{ 0x7D, data->GetFieldTokenIdentifier("BGSPRITE_LOC_DEF","w") },
+			{ 0x11, 17 },
+			{ 0x1F, resolution },
+			{ 0x7D, data->GetFieldTokenIdentifier("BGSPRITE_LOC_DEF","h") },
+			{ 0x11, 11 },
+			{ 0x17 },
+			{ 0x58 },
+			{ 0x13, 11 },
+			{ 0x11, 16 },
+			{ 0x17 },
+			{ 0x58 },
+			{ 0x13, 16 },
+			{ 0x11, 16 },
+			{ 0x11, 13 },
+			{ 0x7B, data->GetFieldTokenIdentifier("BGOVERLAY_DEF","spriteCount") },
+			{ 0x3F, 0xFFFFFF8D },
+			{ 0x11, 12 },
+			{ 0x17 },
+			{ 0x58 },
+			{ 0x13, 12 },
+			{ 0x11, 12 },
+			{ 0x11, 7 },
+			{ 0x3E, 0xFFFFFF04 }
+		};
+		for (modi=0;modi<2;modi++) {
+			ILInstruction ilinst;
+			MACRO_CILMACRO_READMETHODINFO(NULL)
+			res[modi].position = dllfile.tellg();
+			res[modi].method_id = absmethid;
+			res[modi].base_length = methinfo.code_size;
+			res[modi].new_length = methinfo.code_size;
+			res[modi].value = new uint8_t[res[modi].new_length];
+			BufferInitPosition();
+			while (dllfile.tellg()<methinfo.code_abs_offset+methinfo.code_size) {
+				ilinst.Read(dllfile);
+				if (ilinst.opcode==0x1F && ilinst.param==32)
+					ilinst.param = resolution;
+				else if (ilinst.opcode==0x1F && ilinst.param==36)
+					ilinst.param = resolution+4;
+				ilinst.AppendToBuffer(res[modi].value);
+			}
+		}
+		MACRO_CILMACRO_READMETHODINFO(NULL)
+		MACRO_CILMACRO_COMPUTEREPLACE(srchbeginstlde,srchendinstlde,replinstlde)
+		if (modifamount)
+			*modifamount = modamount;
+		return res;
+	};
+};
+
 struct CILMacroDisableCheat : public CILMacroBaseStruct {
+	
+	bool disable_booster[8]; // speedup, battle assistance, etc... then speedup advantage
+	
+	uint16_t GetSaveFlag() { return 0x0; }
+	void ReadHWS(fstream& ffhws, uint16_t flag) {
+		unsigned int i;
+		uint16_t macrosize;
+		uint8_t tmp8;
+		HWSReadShort(ffhws,macrosize);
+		if (macrosize<1) {
+			disable_booster[0] = false;
+			for (i=1;i<8;i++)
+				disable_booster[i] = true;
+			ffhws.seekg(macrosize,ios::cur);
+			return;
+		}
+		HWSReadChar(ffhws,tmp8);
+		for (i=0;i<8;i++)
+			disable_booster[i] = (tmp8 & (1 << i));
+		macrosize--;
+	}
+	void WriteHWS(fstream& ffhws) {
+		unsigned int i;
+		uint8_t tmp8 = 0;
+		HWSWriteShort(ffhws,1);
+		for (i=0;i<8;i++)
+			tmp8 |= disable_booster[i] ? (1 << i) : 0;
+		HWSWriteChar(ffhws,tmp8);
+	}
 	
 	unsigned int GetMethodCount() {
 		return 4;
@@ -319,6 +560,13 @@ struct CILMacroDamageLimit : public CILMacroBaseStruct {
 /*
 struct CILMacroTEMPLATE : public CILMacroBaseStruct {
 	
+	uint16_t GetSaveFlag() { return 0x1; }
+	void ReadHWS(fstream& ffhws, uint16_t flag) {
+		uint16_t macrosize;
+		HWSReadShort(ffhws,macrosize);
+	}
+	void WriteHWS(fstream& ffhws) { HWSWriteShort(ffhws,0); }
+	
 	unsigned int GetMethodCount() {
 		return 0;
 	}
@@ -369,6 +617,7 @@ void CILMacro::Init(uint32_t macroid, DllMetaData* d) {
 			break;
 		}
 	switch (macroid) {
+		case 50: info = new CILMacroCustomBackgrounds; break;
 		case 100: info = new CILMacroDisableCheat; break;
 		case 101: info = new CILMacroUnlockAbilityAccess; break;
 		case 102: info = new CILMacroDamageLimit; break;

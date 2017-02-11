@@ -236,6 +236,7 @@ static wxString HADES_STRING_SYNTH_NAME[8] = {
 #define HADES_STRING_SCRIPT_SHOULDPARSE			L"Are you sure ?\n"\
 												L"Some function(s) have been modified but are not parsed."
 #define HADES_STRING_LOGERROR_SPACE				" - Not enough space : data is %d bytes too heavy\n"
+#define HADES_STRING_SCRIPT_RETURNMISSING		" - Line %u : Missing a 'return' or a 'loop'\n"
 #define HADES_STRING_SCRIPT_BLOCKMISSING		" - Line %u : Missing %u block delimiter(s)\n"
 #define HADES_STRING_SCRIPT_BLOCKTOOMANY		" - Line %u : Using a block delimiter out of any block\n"
 #define HADES_STRING_SCRIPT_EXPECT				" - Line %u : Expected '%s'\n"
@@ -263,6 +264,7 @@ static wxString HADES_STRING_SYNTH_NAME[8] = {
 #define HADES_STRING_SCRIPT_VARARG_OPVAMISMATCH	"Amount of operations and values don't match\n"
 #define HADES_STRING_SCRIPT_VARARG_UNKNOWN		"Unrecognized '%s' in argument\n"
 #define HADES_STRING_SCRIPT_IGNORE				" - Line %u : Ignored trailing '%s'\n"
+#define HADES_STRING_SCRIPT_IGNORE_POSTRET		" - Line %u : Unexpected code after the end of the function\n"
 #define HADES_STRING_LSCRIPT_ALLOC_NUMBER		L" - Local Variable : Expected a number after 'allocate'\n"
 #define HADES_STRING_LSCRIPT_MISS_NAME			L" - Local Variable : Expected a name for local variable\n"
 #define HADES_STRING_LSCRIPT_UNEXPECTED			" - Local Variable : Unexpected '%s'\n"

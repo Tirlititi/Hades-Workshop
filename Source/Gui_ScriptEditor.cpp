@@ -1535,42 +1535,43 @@ uint8_t* ConvertStringToVararg(wxString varstr, uint8_t& varsize, wxString& errm
 
 uint8_t GetLocalCategoryFromType(int localtype, int type, int size) {
 	if (localtype==SCRIPT_VARIABLE_LOCALTYPE_LOCAL) {
-		if (type==SCRIPT_VARIABLE_TYPE_INT && size==8)
-			return 0xD2;
-		if (type==SCRIPT_VARIABLE_TYPE_INT && size==16)
-			return 0xDA;
-		if (type==SCRIPT_VARIABLE_TYPE_INT && size==24)
-			return 0xCA;
-//		if (type==SCRIPT_VARIABLE_TYPE_INT && size==32)
-//			return 0xD2;
-		if (type==SCRIPT_VARIABLE_TYPE_UINT && size==8)
-			return 0xD6;
 		if (type==SCRIPT_VARIABLE_TYPE_UINT && size==16)
 			return 0xDE;
-//		if (type==SCRIPT_VARIABLE_TYPE_UINT && size==24)
-//			return 0xCA;
-//		if (type==SCRIPT_VARIABLE_TYPE_UINT && size==32)
-//			return 0xD2;
+		if (type==SCRIPT_VARIABLE_TYPE_INT && size==16)
+			return 0xDA;
+		if (type==SCRIPT_VARIABLE_TYPE_UINT && size==8)
+			return 0xD6;
+		if (type==SCRIPT_VARIABLE_TYPE_INT && size==8)
+			return 0xD2;
+		if (type==SCRIPT_VARIABLE_TYPE_UINT && size==24)
+			return 0xCE;
+		if (type==SCRIPT_VARIABLE_TYPE_INT && size==24)
+			return 0xCA;
+		if (type==SCRIPT_VARIABLE_TYPE_BOOL && size==1)
+			return 0xC6;
+		if (type==SCRIPT_VARIABLE_TYPE_SBOOL && size==1)
+			return 0xC2;
 		return 0xCA;
 	} else if (localtype==SCRIPT_VARIABLE_LOCALTYPE_GLOBAL) {
-		if (type==SCRIPT_VARIABLE_TYPE_INT && size==8)
-			return 0xD1;
-		if (type==SCRIPT_VARIABLE_TYPE_INT && size==16)
-			return 0xD9;
-		if (type==SCRIPT_VARIABLE_TYPE_INT && size==24)
-			return 0xC9;
-//		if (type==SCRIPT_VARIABLE_TYPE_INT && size==32)
-//			return 0xD1;
-		if (type==SCRIPT_VARIABLE_TYPE_UINT && size==8)
-			return 0xD5;
 		if (type==SCRIPT_VARIABLE_TYPE_UINT && size==16)
 			return 0xDD;
-//		if (type==SCRIPT_VARIABLE_TYPE_UINT && size==24)
-//			return 0xC9;
-//		if (type==SCRIPT_VARIABLE_TYPE_UINT && size==32)
-//			return 0xD1;
+		if (type==SCRIPT_VARIABLE_TYPE_INT && size==16)
+			return 0xD9;
+		if (type==SCRIPT_VARIABLE_TYPE_UINT && size==8)
+			return 0xD5;
+		if (type==SCRIPT_VARIABLE_TYPE_INT && size==8)
+			return 0xD1;
+		if (type==SCRIPT_VARIABLE_TYPE_UINT && size==24)
+			return 0xCD;
+		if (type==SCRIPT_VARIABLE_TYPE_INT && size==24)
+			return 0xC9;
+		if (type==SCRIPT_VARIABLE_TYPE_BOOL && size==1)
+			return 0xC5;
+		if (type==SCRIPT_VARIABLE_TYPE_SBOOL && size==1)
+			return 0xC1;
 		return 0xC9;
 	}
+	return 0xCA;
 }
 
 struct ScriptLocalVariableSetTmp {
@@ -1641,7 +1642,7 @@ ScriptLocalVariableSet* ScriptEditDialog::ParseLocal(LogStruct& log, wxString st
 				localvartmp[vari].type = SCRIPT_VARIABLE_TYPE_UINT;
 				if (token.Mid(4).IsNumber()) {
 					localvartmp[vari].size = wxAtoi(token.Mid(4));
-					if (localvartmp[vari].size!=8 && localvartmp[vari].size!=16) {
+					if (localvartmp[vari].size!=8 && localvartmp[vari].size!=16 && localvartmp[vari].size!=24) {
 						errstr.Printf(wxT(HADES_STRING_LSCRIPT_UNEXPECTED),token);
 						log.AddWarning(errstr.ToStdWstring());
 						isok = false;
@@ -1651,10 +1652,12 @@ ScriptLocalVariableSet* ScriptEditDialog::ParseLocal(LogStruct& log, wxString st
 					log.AddWarning(errstr.ToStdWstring());
 					isok = false;
 				}
-			/* DEBUG
 			} else if (token.IsSameAs(L"bool")) {
 				localvartmp[vari].type = SCRIPT_VARIABLE_TYPE_BOOL;
-				localvartmp[vari].size = 1;*/
+				localvartmp[vari].size = 1;
+			} else if (token.IsSameAs(L"sbool")) {
+				localvartmp[vari].type = SCRIPT_VARIABLE_TYPE_SBOOL;
+				localvartmp[vari].size = 1;
 			} else {
 				errstr.Printf(wxT(HADES_STRING_LSCRIPT_UNEXPECTED),token);
 				log.AddWarning(errstr.ToStdWstring());
@@ -1803,6 +1806,7 @@ LogStruct ScriptEditDialog::ParseFunction(wxString str, unsigned int entry, unsi
 	uint8_t varargbyte;
 	int tokentype;
 	bool islastarg;
+	bool isfunctionreturned = false;
 	
 	unsigned int macroi;
 	wxString macrostr;
@@ -1856,7 +1860,7 @@ LogStruct ScriptEditDialog::ParseFunction(wxString str, unsigned int entry, unsi
 		}
 	#define MACRO_CHECK_TRAILING_WARNING() \
 		linestr.Trim(false); \
-		if (linestr.Length()>0) { \
+		if (linestr.Length()>0 && !(linestr.Length()>=2 && linestr[0]==L'/' && linestr[1]==L'/')) { \
 			errstr.Printf(wxT(HADES_STRING_SCRIPT_IGNORE),line,linestr); \
 			res.AddWarning(errstr.ToStdWstring()); \
 		}
@@ -1872,8 +1876,12 @@ LogStruct ScriptEditDialog::ParseFunction(wxString str, unsigned int entry, unsi
 		line++;
 		token = GetNextThing(linestr);
 		tokentype = -1;
-		if (token==wxEmptyString)
+		if (token==wxEmptyString || (token.Length()>=2 && token[0]==L'/' && token[1]==L'/'))
 			continue;
+		if (isfunctionreturned) {
+			errstr.Printf(wxT(HADES_STRING_SCRIPT_IGNORE_POSTRET),line);
+			res.AddWarning(errstr.ToStdWstring());
+		}
 		for (i=0;i<G_N_ELEMENTS(keywords);i++)
 			if (token.IsSameAs(keywords[i])) {
 				tokentype = i+1;
@@ -1951,6 +1959,7 @@ LogStruct ScriptEditDialog::ParseFunction(wxString str, unsigned int entry, unsi
 					parseop[opi].arg[0].SetValue(-(rawpos+3));
 					MACRO_OPCODE_SIZE_DONE()
 					MACRO_CHECK_TRAILING_WARNING()
+					isfunctionreturned = true;
 					break;
 				case 6: // switch
 					token = GetNextThing(linestr);
@@ -2208,6 +2217,8 @@ LogStruct ScriptEditDialog::ParseFunction(wxString str, unsigned int entry, unsi
 					case 0x04:
 						MACRO_NEW_OPCODE(0x04)
 						MACRO_OPCODE_SIZE_DONE()
+						if (lvlamount==0)
+							isfunctionreturned = true;
 						break;
 					case 0x05:
 						token = linestr;
@@ -2336,6 +2347,10 @@ LogStruct ScriptEditDialog::ParseFunction(wxString str, unsigned int entry, unsi
 	}
 	if (lvlamount>0) {
 		errstr.Printf(wxT(HADES_STRING_SCRIPT_BLOCKMISSING),line,lvlamount);
+		res.AddError(errstr.ToStdWstring());
+	}
+	if (!isfunctionreturned) {
+		errstr.Printf(wxT(HADES_STRING_SCRIPT_RETURNMISSING),line);
 		res.AddError(errstr.ToStdWstring());
 	}
 	parseopamount = opi;

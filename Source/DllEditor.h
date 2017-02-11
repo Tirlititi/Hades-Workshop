@@ -212,6 +212,7 @@ struct DllMetaDataModification {
 	
 	int method_id;
 	int tiny_fat_change;
+	uint32_t code_block_pos = 0;
 	
 	int32_t GetSizeModification(unsigned int modifamount, DllMetaDataModification* modif, DllMethodInfo& methinfo);
 };
@@ -266,7 +267,7 @@ struct CILDataSet {
 	CILMacro* macromodif;
 	
 	void Init(DllMetaData* d);
-	bool IsMacroEnabled(uint32_t macroid);
+	int GetEnabledMacroIndex(uint32_t macroid);
 	// return a new'ed array to be deleted[]
 	uint8_t* GetModifiedMethodRaw(unsigned int tid, unsigned int mid, uint32_t* length);
 	// Assume it can be added (it's not present already and its methods have no rawmodif)

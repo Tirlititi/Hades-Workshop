@@ -1481,13 +1481,15 @@ class CDPanel : public wxPanel
 		wxButton* m_cilmethodedit;
 		wxPanel* m_panel92;
 		wxListBox* m_cilmacrolist;
-		wxScrolledWindow* m_cilmethodscrolledwindow11;
+		wxScrolledWindow* m_cilmacroscrolledwindow;
 		wxStaticText* m_staticText347;
 		wxButton* m_cilmacrobutton;
 		wxStaticText* m_staticText345;
 		wxTextCtrl* m_cilmacrodescription;
 		wxStaticText* m_staticText348;
 		wxListBox* m_cilmacromethods;
+		wxStaticText* m_staticText327;
+		wxBoxSizer* m_cilmacroparametersizer;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnNotebookMain( wxNotebookEvent& event ) { event.Skip(); }

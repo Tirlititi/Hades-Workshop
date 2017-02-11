@@ -5864,7 +5864,7 @@ void CDDataStruct::DisplayCilMacro(int cilmacroid) {
 	CILMacro macro(CILMacroIDList[cilmacroid].id,cilset.data);
 	bool canenable = true;
 	unsigned int i;
-	if (cilset.IsMacroEnabled(macro.type->id))
+	if (cilset.GetEnabledMacroIndex(macro.type->id)>=0)
 		m_cilmacrobutton->SetLabel(_(HADES_STRING_CIL_UNAPPLY_MACRO));
 	else
 		m_cilmacrobutton->SetLabel(_(HADES_STRING_CIL_APPLY_MACRO));
@@ -5880,6 +5880,13 @@ void CDDataStruct::DisplayCilMacro(int cilmacroid) {
 		wxString methodlabel;
 		methodlabel << _(macro.info->GetMethodTypeName(i)) << _(L"::") << _(macro.info->GetMethodName(i));
 		m_cilmacromethods->Append(methodlabel);
+	}
+	m_cilmacroparametersizer->Clear(true);
+	if (macro.type->id==50) {
+		wxSpinCtrl* resspin = new wxSpinCtrl(m_cilmacroscrolledwindow,wxID_ANY,wxEmptyString,wxDefaultPosition,wxDefaultSize,wxSP_ARROW_KEYS,16,123,32);
+		m_cilmacroparametersizer->Add(resspin,0,wxALL,3);
+		m_cilmacroscrolledwindow->Layout();
+		m_cilmacroscrolledwindow->Refresh();
 	}
 }
 
@@ -5916,11 +5923,15 @@ void CDDataStruct::OnCilMethodButton(wxCommandEvent& event) {
 void CDDataStruct::OnCilMacroButton(wxCommandEvent& event) {
 	int macrosel = m_cilmacrolist->GetSelection();
 	uint32_t macroid = CILMacroIDList[macrosel].id;
-	if (cilset.IsMacroEnabled(macroid)) {
+	if (cilset.GetEnabledMacroIndex(macroid)>=0) {
 		cilset.RemoveMacroModif(macroid);
 		m_cilmacrobutton->SetLabel(_(HADES_STRING_CIL_APPLY_MACRO));
 	} else {
 		cilset.AddMacroModif(macroid);
+		if (macroid==50) {
+			uint32_t param[] = {dynamic_cast<wxSpinCtrl*>(m_cilmacroparametersizer->GetItem((size_t)0)->GetWindow())->GetValue()};
+			cilset.macromodif[cilset.GetEnabledMacroIndex(macroid)].info->SetParameters(param);
+		}
 		m_cilmacrobutton->SetLabel(_(HADES_STRING_CIL_UNAPPLY_MACRO));
 	}
 	MarkDataCilModified();

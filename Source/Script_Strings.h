@@ -19,16 +19,16 @@ struct VariableOperation {
 	// 5 : get constant char
 	// 6 : get constant short
 	// 7 : get constant long
-	// 10 : get variable (unsigned char) (array byte : 1)
-	// 11 : get variable (unsigned short) (array byte : 1)
-	// 12 : get variable (unsigned long) (array byte : 1)
+	// 10 : get variable (char) (array byte : 1)
+	// 11 : get variable (short) (array byte : 1)
+	// 12 : get variable (long) (array byte : 1)
 	// 13 : get variable (bit) (array byte : 1)
-	// 19 : get variable (not tested) (array byte : 1)
-	// 20 : get variable (unsigned char) (array byte : 2)
-	// 21 : get variable (unsigned short) (array byte : 2)
-	// 22 : get variable (unsigned long) (array byte : 2)
+	// 19 : get variable (null) (array byte : 1)
+	// 20 : get variable (char) (array byte : 2)
+	// 21 : get variable (short) (array byte : 2)
+	// 22 : get variable (long) (array byte : 2)
 	// 23 : get variable (bit) (array byte : 2)
-	// 29 : get variable (not tested) (array byte : 2)
+	// 29 : get variable (null) (array byte : 2)
 	// 50 : function (1 arg)
 	// 51 : function (2 args)
 	// 55 : GetEntry functions
@@ -134,7 +134,7 @@ static VariableOperation VarOpList[] = {
 	{ 50, L"Op5C", L"A button holding check." },
 	{ 51, L"Angle", L"Calculate the angle between the entry's object position and the target position, in the XY plane.\n\n 1st argument : target position X.\n 2nd argument : target position Y." },
 	{ 51, L"Distance", L"Calculate the distance between the entry's object position and the target position, in the XY plane.\n\n 1st argument : target position X.\n 2nd argument : target position Y." },
-	{ 19, L"VAR_5F_", L"" },
+	{ 19, L"VAR_5F_", L"Retrieve an object's UID." },
 	
 	{ 50, L"Op60", L"An angle calculation." },
 	{ 50, L"Op61", L"A distance calculation." },
@@ -169,17 +169,17 @@ static VariableOperation VarOpList[] = {
 	{ 100, L"OpB0", L"" },	{ 100, L"OpB1", L"" },	{ 100, L"OpB2", L"" },	{ 100, L"OpB3", L"" },	{ 100, L"OpB4", L"" },	{ 100, L"OpB5", L"" },	{ 100, L"OpB6", L"" },	{ 100, L"OpB7", L"" },
 	{ 100, L"OpB8", L"" },	{ 100, L"OpB9", L"" },	{ 100, L"OpBA", L"" },	{ 100, L"OpBB", L"" },	{ 100, L"OpBC", L"" },	{ 100, L"OpBD", L"" },	{ 100, L"OpBE", L"" },	{ 100, L"OpBF", L"" },
 	
-	{ 10, L"VAR_A1_", L"" },	{ 19, L"VAR_A2_", L"" },	{ 19, L"VAR_A3_", L"" },	{ 19, L"VAR_A4_", L"" },	{ 19, L"VAR_A5_", L"" },	{ 19, L"VAR_A6_", L"" },	{ 19, L"VAR_A7_", L"" },	{ 19, L"VAR_A8_", L"" },
-	{ 19, L"VAR_A9_", L"" },	{ 19, L"VAR_A10_", L"" },	{ 12, L"VAR_A11_", L"" },	{ 19, L"VAR_A12_", L"" },	{ 19, L"VAR_A13_", L"" },	{ 19, L"VAR_A14_", L"" },	{ 19, L"VAR_A15_", L"" },	{ 19, L"VAR_A16_", L"" },
+	{ 13, L"VAR_GenSBool_", L"" },	{ 13, L"VAR_GlobSBool_", L"" },	{ 13, L"VAR_LocSBool_", L"" },	{ 19, L"VAR_Null1_", L"" },	{ 13, L"VAR_GenBool_", L"" },	{ 13, L"VAR_GlobBool_", L"" },		{ 13, L"VAR_LocBool_", L"" },	{ 19, L"VAR_Null2_", L"" },
+	{ 12, L"VAR_GenInt24_", L"" },	{ 12, L"VAR_GlobInt24_", L"" },	{ 12, L"VAR_LocInt24_", L"" },	{ 19, L"VAR_Null3_", L"" },	{ 12, L"VAR_GenUInt24_", L"" },	{ 12, L"VAR_GlobUInt24_", L"" },	{ 12, L"VAR_LocUInt24_", L"" },	{ 19, L"VAR_Null4_", L"" },
 	
-	{ 10, L"VAR_B1_", L"" },	{ 19, L"VAR_B2_", L"" },	{ 19, L"VAR_B3_", L"" },	{ 19, L"VAR_B4_", L"" },	{ 19, L"VAR_B5_", L"" },	{ 19, L"VAR_B6_", L"" },	{ 19, L"VAR_B7_", L"" },	{ 19, L"VAR_B8_", L"" },
-	{ 19, L"VAR_B9_", L"" },	{ 19, L"VAR_B10_", L"" },	{ 19, L"VAR_B11_", L"" },	{ 19, L"VAR_B12_", L"" },	{ 19, L"VAR_B13_", L"" },	{ 19, L"VAR_B14_", L"" },	{ 19, L"VAR_B15_", L"" },	{ 19, L"VAR_B16_", L"" },
+	{ 10, L"VAR_GenInt8_", L"" },	{ 10, L"VAR_GlobInt8_", L"" },	{ 10, L"VAR_LocInt8_", L"" },	{ 19, L"VAR_Null5_", L"" },	{ 10, L"VAR_GenUInt8_", L"" },	{ 10, L"VAR_GlobUInt8_", L"" },		{ 10, L"VAR_LocUInt8_", L"" },	{ 19, L"VAR_Null6_", L"" },
+	{ 11, L"VAR_GenInt16_", L"" },	{ 11, L"VAR_GlobInt16_", L"" },	{ 11, L"VAR_LocInt16_", L"" },	{ 19, L"VAR_Null7_", L"" },	{ 11, L"VAR_GenUInt16_", L"" },	{ 11, L"VAR_GlobUInt16_", L"" },	{ 11, L"VAR_LocUInt16_", L"" },	{ 19, L"VAR_Null8_", L"" },
 	
-	{ 29, L"VAR_C1_", L"" },	{ 29, L"VAR_C2_", L"" },	{ 29, L"VAR_C3_", L"" },	{ 29, L"VAR_C4_", L"" },	{ 24, L"VAR_C5_", L"" },	{ 29, L"VAR_C6_", L"" },	{ 29, L"VAR_C7_", L"" },	{ 29, L"VAR_C8_", L"" },
-	{ 29, L"VAR_C9_", L"" },	{ 29, L"VAR_C10_", L"" },	{ 29, L"VAR_C11_", L"" },	{ 29, L"VAR_C12_", L"" },	{ 29, L"VAR_C13_", L"" },	{ 29, L"VAR_C14_", L"" },	{ 29, L"VAR_C15_", L"" },	{ 29, L"VAR_C16_", L"" },
+	{ 23, L"VARL_GenSBool_", L"" },	{ 23, L"VARL_GlobSBool_", L"" },	{ 23, L"VARL_LocSBool_", L"" },	{ 29, L"VARL_Null1_", L"" },	{ 23, L"VARL_GenBool_", L"" },		{ 23, L"VARL_GlobBool_", L"" },		{ 23, L"VARL_LocBool_", L"" },		{ 29, L"VARL_Null2_", L"" },
+	{ 22, L"VARL_GenInt24_", L"" },	{ 22, L"VARL_GlobInt24_", L"" },	{ 22, L"VARL_LocInt24_", L"" },	{ 29, L"VARL_Null3_", L"" },	{ 22, L"VARL_GenUInt24_", L"" },	{ 22, L"VARL_GlobUInt24_", L"" },	{ 22, L"VARL_LocUInt24_", L"" },	{ 29, L"VARL_Null4_", L"" },
 	
-	{ 29, L"VAR_D1_", L"" },	{ 29, L"VAR_D2_", L"" },	{ 29, L"VAR_D3_", L"" },	{ 29, L"VAR_D4_", L"" },	{ 20, L"VAR_D5_", L"" },	{ 29, L"VAR_D6_", L"" },	{ 29, L"VAR_D7_", L"" },	{ 29, L"VAR_D8_", L"" },
-	{ 29, L"VAR_D9_", L"" },	{ 29, L"VAR_D10_", L"" },	{ 29, L"VAR_D11_", L"" },	{ 29, L"VAR_D12_", L"" },	{ 29, L"VAR_D13_", L"" },	{ 29, L"VAR_D14_", L"" },	{ 29, L"VAR_D15_", L"" },	{ 29, L"VAR_D16_", L"" }
+	{ 20, L"VARL_GenInt8_", L"" },	{ 20, L"VARL_GlobInt8_", L"" },		{ 20, L"VARL_LocInt8_", L"" },	{ 29, L"VARL_Null5_", L"" },	{ 20, L"VARL_GenUInt8_", L"" },		{ 20, L"VARL_GlobUInt8_", L"" },	{ 20, L"VARL_LocUInt8_", L"" },		{ 29, L"VARL_Null6_", L"" },
+	{ 21, L"VARL_GenInt16_", L"" },	{ 21, L"VARL_GlobInt16_", L"" },	{ 21, L"VARL_LocInt16_", L"" },	{ 29, L"VARL_Null7_", L"" },	{ 21, L"VARL_GenUInt16_", L"" },	{ 21, L"VARL_GlobUInt16_", L"" },	{ 21, L"VARL_LocUInt16_", L"" },	{ 29, L"VARL_Null8_", L"" }
 };
 
 static VariableOperation VarEntryPropList[] = {

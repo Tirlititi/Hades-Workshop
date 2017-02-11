@@ -15,6 +15,13 @@ struct CILMacroBaseStruct {
 	virtual string GetMethodName(unsigned int index) { return ""; }
 	// Return a modifamount-long pointer, to be deleted[] ; modifamount should be set on GetMethodCount() (maybe it won't be anymore in the future)
 	virtual DllMetaDataModification* ComputeModifications(unsigned int* modifamount) { return NULL; } // Require a DllMetaData access
+	
+	virtual void SetParameters(uint32_t* intparam = NULL) { }
+	virtual void SetParameters(double* floatparam = NULL) { }
+	virtual void SetParameters(wstring* strparam = NULL) { }
+	virtual uint16_t GetSaveFlag() { return 0; }
+	virtual void ReadHWS(fstream& ffhws, uint16_t flag) { }
+	virtual void WriteHWS(fstream& ffhws) { }
 };
 
 struct CILMacroID {
@@ -24,6 +31,11 @@ struct CILMacroID {
 };
 
 static CILMacroID CILMacroIDList[] = {
+	{ 50, L"Custom Backgrounds",	L"Make the engine accept custom backgrounds imported with the background editor.\n"
+									L"This macro is needed in both of the following situations:\n"
+									L" - If backgrounds with custom resolution are used (different than 32),\n"
+									L" - If backgrounds containing titles are used (examples: Alexandria's Main Street, Ice Cavern's Entrance, ...)\n\n"
+									L"Parameters: resolution of the imported backgrounds." },
 	{ 100, L"Disable Cheats",	L"Disable the Steam cheats (boosters) : Battle Assistance, Attack 9999, No Encounter, Master Skill, Level Max and Gil Max.\n"
 								L"The High Speed mode can still be activated but timed minigames countdown are speeded up as well.\n"
 								L"Game time is still unaffected by the High Speed mode." },

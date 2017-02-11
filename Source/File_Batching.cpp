@@ -572,7 +572,7 @@ int FileBatch_ExportFieldScript(wxString path, FieldDataSet& data, bool* exportl
 //           Images            //
 //=============================//
 
-int FileBatch_ExportImageBackground(wxString path, FieldDataSet& data, bool* exportlist, bool mergetile) {
+int FileBatch_ExportImageBackground(wxString path, FieldDataSet& data, bool* exportlist, bool mergetile, int steamtitlelang) {
 	unsigned int i,j;
 	bool mustflush;
 	LoadingDialogInit(data.amount,_(L"Exporting field backgrounds..."));
@@ -585,10 +585,10 @@ int FileBatch_ExportImageBackground(wxString path, FieldDataSet& data, bool* exp
 				mustflush = true;
 			}
 			if (data.background_data[i]->camera_amount==1)
-				data.background_data[i]->Export((path+wxString::Format(wxT("_%u.tiff"),i+1)).mb_str(),0,NULL,true,mergetile);
+				data.background_data[i]->Export((path+wxString::Format(wxT("_%u.tiff"),i+1)).mb_str(),0,NULL,true,mergetile,steamtitlelang);
 			else
 				for (j=0;j<data.background_data[i]->camera_amount;j++)
-					data.background_data[i]->Export((path+wxString::Format(wxT("_%u_%u.tiff"),i+1,j+1)).mb_str(),j,NULL,true,mergetile);
+					data.background_data[i]->Export((path+wxString::Format(wxT("_%u_%u.tiff"),i+1,j+1)).mb_str(),j,NULL,true,mergetile,steamtitlelang);
 			if (mustflush)
 				data.tim_data[i]->Flush();
 			LoadingDialogUpdate(i+1);
@@ -713,7 +713,7 @@ void BatchExportDialog::OnButtonClick(wxCommandEvent& event) {
 			FileBatch_ExportFieldScript(m_filepicker->GetPath(),*dataset->fieldset,exportlist,m_splitfile->IsChecked());
 			break;
 		case 10:
-			FileBatch_ExportImageBackground(m_filepicker->GetPath(),*dataset->fieldset,exportlist,m_mergetile->IsChecked());
+			FileBatch_ExportImageBackground(m_filepicker->GetPath(),*dataset->fieldset,exportlist,m_mergetile->IsChecked(),m_languagetitle->GetSelection()-1);
 			break;
 		}
 		delete[] exportlist;

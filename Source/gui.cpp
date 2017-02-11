@@ -4976,45 +4976,54 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_cilmacrolist = new wxListBox( m_panel92, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), 0, NULL, 0 ); 
 	bSizer1591111->Add( m_cilmacrolist, 0, wxALL|wxEXPAND, 5 );
 	
-	m_cilmethodscrolledwindow11 = new wxScrolledWindow( m_panel92, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
-	m_cilmethodscrolledwindow11->SetScrollRate( 5, 5 );
+	m_cilmacroscrolledwindow = new wxScrolledWindow( m_panel92, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	m_cilmacroscrolledwindow->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* fgSizer7331;
 	fgSizer7331 = new wxFlexGridSizer( 0, 2, 0, 0 );
 	fgSizer7331->AddGrowableCol( 1 );
 	fgSizer7331->SetFlexibleDirection( wxBOTH );
 	fgSizer7331->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	m_staticText347 = new wxStaticText( m_cilmethodscrolledwindow11, wxID_ANY, _("Apply/Unapply"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText347 = new wxStaticText( m_cilmacroscrolledwindow, wxID_ANY, _("Apply/Unapply"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText347->Wrap( -1 );
 	fgSizer7331->Add( m_staticText347, 0, wxALL, 5 );
 	
-	m_cilmacrobutton = new wxButton( m_cilmethodscrolledwindow11, wxID_SCRIPT, _("Apply Macro"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_cilmacrobutton = new wxButton( m_cilmacroscrolledwindow, wxID_SCRIPT, _("Apply Macro"), wxDefaultPosition, wxDefaultSize, 0 );
 	fgSizer7331->Add( m_cilmacrobutton, 0, wxALL, 2 );
 	
-	m_staticText345 = new wxStaticText( m_cilmethodscrolledwindow11, wxID_ANY, _("Description"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText345 = new wxStaticText( m_cilmacroscrolledwindow, wxID_ANY, _("Description"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText345->Wrap( -1 );
 	fgSizer7331->Add( m_staticText345, 0, wxALL, 5 );
 	
-	m_cilmacrodescription = new wxTextCtrl( m_cilmethodscrolledwindow11, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY|wxSIMPLE_BORDER );
+	m_cilmacrodescription = new wxTextCtrl( m_cilmacroscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY|wxSIMPLE_BORDER );
 	m_cilmacrodescription->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 	m_cilmacrodescription->SetMinSize( wxSize( -1,100 ) );
 	
 	fgSizer7331->Add( m_cilmacrodescription, 0, wxALL|wxEXPAND, 2 );
 	
-	m_staticText348 = new wxStaticText( m_cilmethodscrolledwindow11, wxID_ANY, _("Methods Involved"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText348 = new wxStaticText( m_cilmacroscrolledwindow, wxID_ANY, _("Methods Involved"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText348->Wrap( -1 );
 	fgSizer7331->Add( m_staticText348, 0, wxALL, 5 );
 	
-	m_cilmacromethods = new wxListBox( m_cilmethodscrolledwindow11, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 ); 
+	m_cilmacromethods = new wxListBox( m_cilmacroscrolledwindow, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 ); 
 	m_cilmacromethods->SetMinSize( wxSize( -1,100 ) );
 	
 	fgSizer7331->Add( m_cilmacromethods, 0, wxALL|wxEXPAND, 2 );
 	
+	m_staticText327 = new wxStaticText( m_cilmacroscrolledwindow, wxID_ANY, _("Parameters"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText327->Wrap( -1 );
+	fgSizer7331->Add( m_staticText327, 0, wxALL, 5 );
 	
-	m_cilmethodscrolledwindow11->SetSizer( fgSizer7331 );
-	m_cilmethodscrolledwindow11->Layout();
-	fgSizer7331->Fit( m_cilmethodscrolledwindow11 );
-	bSizer1591111->Add( m_cilmethodscrolledwindow11, 1, wxEXPAND | wxALL, 5 );
+	m_cilmacroparametersizer = new wxBoxSizer( wxVERTICAL );
+	
+	
+	fgSizer7331->Add( m_cilmacroparametersizer, 1, wxEXPAND, 5 );
+	
+	
+	m_cilmacroscrolledwindow->SetSizer( fgSizer7331 );
+	m_cilmacroscrolledwindow->Layout();
+	fgSizer7331->Fit( m_cilmacroscrolledwindow );
+	bSizer1591111->Add( m_cilmacroscrolledwindow, 1, wxEXPAND | wxALL, 5 );
 	
 	
 	m_panel92->SetSizer( bSizer1591111 );
@@ -7450,7 +7459,7 @@ AboutWindow::AboutWindow( wxWindow* parent, wxWindowID id, const wxString& title
 	wxBoxSizer* bSizer16;
 	bSizer16 = new wxBoxSizer( wxVERTICAL );
 	
-	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.35c\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_CENTRE|wxTE_MULTILINE|wxTE_READONLY|wxSIMPLE_BORDER );
+	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.36\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_CENTRE|wxTE_MULTILINE|wxTE_READONLY|wxSIMPLE_BORDER );
 	m_textCtrl13->SetMaxLength( 0 ); 
 	m_textCtrl13->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 	m_textCtrl13->SetMinSize( wxSize( -1,330 ) );
@@ -7553,7 +7562,7 @@ HelpWindow::HelpWindow( wxWindow* parent, wxWindowID id, const wxString& title, 
 	wxBoxSizer* bSizer45311111;
 	bSizer45311111 = new wxBoxSizer( wxVERTICAL );
 	
-	m_textCtrl1731 = new wxTextCtrl( m_panel201, wxID_ANY, _("The script in this section is the game's code, that handles scripted events, enemy AIs and other related stuffs.\n\nThe script is presented with a kind of C-like syntax. There are several differences though.\n\n[General]\nThe language accepts only one instruction per line.\nLines are not terminated by any punctuation character.\nFor flow control statements, the braces are mandatory.\nYou can't use braces out of a flow control statement.\nThere is no such thing as real values. Everything is done using integers (sometimes signed).\n\nOnce you have modified a function's script, you must parse it to check eventual errors.\n\n[Flow Control]\nThe different keywords for controlling the script's flow are described here.\n\nif : usual If/Then statement with an optional Else. The syntax is\n\nif ( CONDITION ) {\n    CODE\n}\n\nor\n\nif ( CONDITION ) {\n    CODE_A\n} else {\n    CODE_B\n}\n\nNote that the opening braces must be on the same line as the keywords \"if\" and \"else\".\n\nifnot : opposite control of if. It works similarly though. The syntax is\n\nifnot ( CONDITION ) {\n    CODE\n}\n\nwhile : usual While statement. You can use the keyword \"break\" to leave the control but there is no such thing as a \"continue\" instruction. The syntax is\n\nwhile ( CONDITION ) {\n    CODE\n}\n\ndo/while : usual Do/While statement. You can also use the keyword \"break\" to leave the control. The syntax is\n\ndo {\n    CODE\n} while ( CONDITION )\n\nswitch : a Switch statement with consecutive cases only. The first case's value is specified in the control, as well as the maximal amount of cases. The syntax is\n\nswitch NB ( VALUE ) from FIRST {\ncase +INC:\n    CODE_A\ncase +INC ; +INC:\n    CODE_B\ndefault:\n    CODE_C\n}\n\nwhere\nNB is the maximal amount of cases,\nVALUE is the control expression,\nFIRST is the \"+0\" case,\nINC are numbers strictly lower than NB.\nNote that, like in C, you have to use the keyword \"break\" if you want only one branch to be run and that the \"default\" case is optional.\nThe semicolon allows to make several values lead to the same code branch.\n\nswitchex : a more usual Switch statement. The exact amount of cases (default case excluded) must be provided in the control. The syntax is\n\nswitchex NB ( VALUE ) {\ncase X:\n    CODE_A\ncase Y ; Z:\n    CODE_B\ndefault:\n    CODE_C\n}\n\nNB being the amount of cases and X, Y and Z representing numbers. The keywords \"break\", \"default\" and the semicolon have the same purpose than for the \"switch\" statement.\n\nloop : rerun the whole function. It works as an alternative to a last \"return\" instruction and can only be used out of any other control block.\n\n[Variables]\nVariables are splitted into 3 categories : locals, globals and generals.\n1) Local variables must be allocated for each entry of the script codes. They are local to that entry and are initialized to 0 when the script is executed (at the start of a battle or when the player enters a field),\n2) Global variables are shared by all the entries of a single script. They are thus not shared between several fields' scripts or battles. They are also initialized to 0 when the script is executed.\n3) General variables are permanent and can be referred in any script of the game. In adition, several of them (maybe all of them) are saved in memory card saves.\n\nAlso, some of those variables are used by the deep game's mechanics. \"SV\" variables, for instance, are extensively used by the battle mechanics.\nTo finish, there are also Getters to retrieve values from the other game's mechanics and those can't be directly modified (such as the player's gils amount).\n\nNote that some variables don't use the same name but use the same position in the RAM (although with different integral size). For instance, VAR_C5_16 is a boolean located at the same position as VAR_D5_2, which is a bool list of 8 booleans (VAR_C5_16, VAR_C5_17, VAR_C5_18 and so on).\n\nLocal Variables are the following ones :\nVAR_A11 (int of size 24)\nVAR_B3 (int of size 8)\nVAR_B7 (unsigned int of size 8)\nVAR_B11 (int of size 16)\nVAR_B15 (unsigned int of size 16)\n\nGlobal Variables are the following ones :\nVAR_A10 (int of size 24)\nVAR_B2 (int of size 8)\nVAR_B6 (unsigned int of size 8)\nVAR_B10 (int of size 16)\nVAR_B14 (unsigned int of size 16)\n\nGeneral Variables are the following ones :\nVAR_A9 (int of size 24)\nVAR_A13\nVAR_B1 (int of size 8)\nVAR_B5 (unsigned int of size 8)\nVAR_B9 (int of size 16)\nVAR_B13 (unsigned int of size 16)\nVAR_C5 (boolean)\nVAR_D5 (boolean 8-tuple)\n\nThey are renamed with more suitable names when it's possible.\nMod files (.hws) can also save local and global name settings.\n\nIn order to manipulate variables, you must use the instruction \"set\" followed by a series of operations over the variables. Some of those operations are still unknown. Informations about them can be found in the script's help window.\nThe brackets are more of a structure's field accesser than a real array operator. They will be displayed differently in a next version. Their result is a list.\nNote that the minus operator can't be read as an unary operator yet. Only positive integers can be used in variable manipulation codes.\n\nWARNINGS :\n1) At the moment, the operation priorities are not respected. By default, the operations will be executed from right to left. It is advised to write all the parentheses,\n2) When you use a positive integer larger than 32768 or an integer larger than 65536, add a \"L\" to mark it as a long integer value.\n\nVariable manipulation codes can also be used in most of instructions's arguments."), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY|wxTE_WORDWRAP );
+	m_textCtrl1731 = new wxTextCtrl( m_panel201, wxID_ANY, _("The script in this section is the game's code, that handles scripted events, enemy AIs and other related stuffs.\n\nThe script is presented with a kind of C-like syntax. There are several differences though.\n\n[General]\nThe language accepts only one instruction per line.\nLines are not terminated by any punctuation character.\nFor flow control statements, the braces are mandatory.\nYou can't use braces out of a flow control statement.\nThere is no such thing as real values. Everything is done using integers (sometimes signed).\n\nOnce you have modified a function's script, you must parse it to check eventual errors.\n\n[Flow Control]\nThe different keywords for controlling the script's flow are described here.\n\nif : usual If/Then statement with an optional Else. The syntax is\n\nif ( CONDITION ) {\n    CODE\n}\n\nor\n\nif ( CONDITION ) {\n    CODE_A\n} else {\n    CODE_B\n}\n\nNote that the opening braces must be on the same line as the keywords \"if\" and \"else\".\n\nifnot : opposite control of if. It works similarly though. The syntax is\n\nifnot ( CONDITION ) {\n    CODE\n}\n\nwhile : usual While statement. You can use the keyword \"break\" to leave the control but there is no such thing as a \"continue\" instruction. The syntax is\n\nwhile ( CONDITION ) {\n    CODE\n}\n\ndo/while : usual Do/While statement. You can also use the keyword \"break\" to leave the control. The syntax is\n\ndo {\n    CODE\n} while ( CONDITION )\n\nswitch : a Switch statement with consecutive cases only. The first case's value is specified in the control, as well as the maximal amount of cases. The syntax is\n\nswitch NB ( VALUE ) from FIRST {\ncase +INC:\n    CODE_A\ncase +INC ; +INC:\n    CODE_B\ndefault:\n    CODE_C\n}\n\nwhere\nNB is the maximal amount of cases,\nVALUE is the control expression,\nFIRST is the \"+0\" case,\nINC are numbers strictly lower than NB.\nNote that, like in C, you have to use the keyword \"break\" if you want only one branch to be run and that the \"default\" case is optional.\nThe semicolon allows to make several values lead to the same code branch.\n\nswitchex : a more usual Switch statement. The exact amount of cases (default case excluded) must be provided in the control. The syntax is\n\nswitchex NB ( VALUE ) {\ncase X:\n    CODE_A\ncase Y ; Z:\n    CODE_B\ndefault:\n    CODE_C\n}\n\nNB being the amount of cases and X, Y and Z representing numbers. The keywords \"break\", \"default\" and the semicolon have the same purpose than for the \"switch\" statement.\n\nloop : rerun the whole function. It works as an alternative to a last \"return\" instruction and can only be used out of any other control block.\n\n[Variables]\nVariables are splitted into 3 categories (locals, globals and generals) and can be of 9 different types (Bool, SBool, Int8, UInt8, Int16, UInt16, Int24, UInt24 and Null).\n1) Local variables must be allocated for each entry of the script codes. They are local to that entry and are initialized to 0 when the script is executed (at the start of a battle or when the player enters a field),\n2) Global variables are shared by all the entries of a single script. They are thus not shared between several fields' scripts or battles. They are also initialized to 0 when the script is executed.\n3) General variables are permanent and can be referred in any script of the game. In adition, several of them (maybe all of them) are saved in memory card saves.\n\nThose three categories of variables each use their own RAM allocated space, and two variables of the same category use the same RAM space. The offset (or adress) of the variables are appended to their name.\nSo \"VAR_LocInt8_10\" and \"VAR_LocUInt8_10\" are the same variable (typecasted into an int of size 1 byte or an unsigned int of size 1 byte).\nHowever, \"VAR_LocInt8_10\", \"VAR_LocInt8_11\" and \"VAR_GlobInt8_10\" are all different variables.\nAlso, VAR_LocUInt16_10 == VAR_LocUInt8_10 | (VAR_LocUInt16_11 << 8).\nFinally, the offsets of boolean variables are their bit-offset and not byte-offset. For instance, VAR_LocBool_80 == VAR_LocUInt8_10 & 1.\n\nVariables are renamed with more suitable names when it's possible.\nMod files (.hws) can also save the names of local and global variables.\n\nAbout the types, note that SBool and Bool are synonyms, as well as UInt24 and Int24 (they both are signed because of an oversight from the developpers).\nAccessing to a Null type variables always return 0 and setting a Null type variable does nothing.\n\nAdditionally, some variables belong to special categories, used by the deep game's mechanics. \"SV\" variables, for instance, are extensively used by the battle mechanics.\nTo finish, there are also Getters to retrieve values from the other game's mechanics and those can't be directly modified (such as the player's gils amount).\n\nIn order to manipulate variables, you must use the instruction \"set\" followed by a series of operations over the variables. A few of those operations are still unknown. Informations about them can be found in the script's help window.\nThe brackets allow to access a structure's field. The result they send is a list (see the list operators in the function list).\n\nWARNINGS :\n1) At the moment, the operation priorities are not respected. By default, the operations will be executed from right to left. It is advised to write all the parentheses,\n2) Note that the minus operator can't be read as an unary operator yet,\n3) Only positive integers can be used in variable manipulation codes,\n4) When dealing with numbers larger than 32767 in variable manipulation codes, you must append 'L' to it ; otherwise it will be converted to a negative integer.\n\nVariable manipulation codes can also be used in most of instructions's arguments."), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY|wxTE_WORDWRAP );
 	m_textCtrl1731->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 	
 	bSizer45311111->Add( m_textCtrl1731, 1, wxALL|wxEXPAND, 5 );
@@ -10107,7 +10116,7 @@ BackgroundEditorWindow::BackgroundEditorWindow( wxWindow* parent, wxWindowID id,
 	fgSizer81->Add( m_staticText317, 0, wxALIGN_CENTER|wxALL, 5 );
 	
 	m_imagepicker = new wxFilePickerCtrl( m_panelconverter, wxID_ANY, wxEmptyString, _("Select a file"), wxT("Supported Image|*.tiff;*.tif;*.bmp;*.tga|All files|*"), wxDefaultPosition, wxDefaultSize, wxFLP_DEFAULT_STYLE );
-	m_imagepicker->SetToolTip( _("The file must be the first layer of the background image\nAll the layers must be in the same directory, named\n[name]0.tif\n[name]1.tif\n[name]2.tif\netc...") );
+	m_imagepicker->SetToolTip( _("The file must be the first layer of the background image\nAll the layers must be in the same directory, named\n[name]0.bmp\n[name]1.bmp\n[name]2.bmp\n...\n\nFor multi-background fields, use the names\n[name]0_0.bmp\n[name]0_1.bmp\n...\n[name]1_0.bmp\n[name]1_1.bmp\n...") );
 	
 	fgSizer81->Add( m_imagepicker, 0, wxALL|wxEXPAND, 5 );
 	
@@ -10205,7 +10214,7 @@ BackgroundEditorWindow::BackgroundEditorWindow( wxWindow* parent, wxWindowID id,
 	fgSizer811->Add( m_staticText325, 0, wxALIGN_CENTER|wxALL, 5 );
 	
 	m_massimageformat = new wxTextCtrl( m_panelmassconverter, wxID_ANY, _("Field%\\Background%_%.tif"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_massimageformat->SetToolTip( _("Formatted file name from Image Folder\nIt must contains '%' thrice which stand for numbers in the file names :\n1) Field ID,\n2) Background,\n3) Layer.") );
+	m_massimageformat->SetToolTip( _("Formatted file name from Image Folder\nIt must contains '%' thrice which stand for numbers in the file names :\n1) Field ID,\n2) Background (multi-background fields),\n3) Layer.") );
 	
 	fgSizer811->Add( m_massimageformat, 0, wxALL|wxEXPAND, 5 );
 	
