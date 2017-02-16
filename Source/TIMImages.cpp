@@ -276,7 +276,7 @@ ftga.write((const char*)&a,1);
 	uint64_t alphaflag;
 	a = 0xFF;
 	i = 0;
-	j = steam_width*steam_height-steam_width; // ToDo: Use Squish for decompression but beware of the y half-symetry
+	j = steam_width*steam_height-steam_width;
 	for (y=0;y<steamheight4;y++) {
 		for (k=0;k<4;k++) {
 			for (x=0;x<steamwidth4;x++) {

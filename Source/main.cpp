@@ -190,7 +190,6 @@ void MainFrame::OnOpenClick(wxCommandEvent& event) {
 		}
 		CDModifiedState[CDPanelAmount] = false;
 		m_cdbook->AddPage(CDPanel[CDPanelAmount],_(CDName[CDPanelAmount].c_str()),true,wxNullBitmap);
-		CDPanelAmount++;
 		m_openhws->Enable();
 		m_close->Enable();
 		m_closeall->Enable();
@@ -201,6 +200,7 @@ void MainFrame::OnOpenClick(wxCommandEvent& event) {
 		m_cdbook->Layout();
 		m_cdbook->GetParent()->GetSizer()->Layout();
 		m_cdbook->Refresh();
+		CDPanelAmount++;
 	}
 	openFileDialog->Destroy();
 }

@@ -542,6 +542,29 @@ int ToolBackgroundEditor::ShowModal(CDDataStruct* data) {
 	return BackgroundEditorWindow::ShowModal();
 }
 
+void GetSpiralCoordinate(int& resultx, int& resulty, unsigned int step) {
+	unsigned int i = 0;
+	bool currentisx = false;
+	int nbx = 0, nby = 0;
+	int dirx, diry;
+	while (i<step) {
+		i += ++nbx;
+		if (i>=step) {
+			currentisx = true;
+			break;
+		}
+		i += ++nby;
+	}
+	dirx = (nbx%2)*2-1;
+	diry = (nby%2)*2-1;
+	resultx = (nbx+1)/2*dirx;
+	resulty = (nby+1)/2*diry;
+	if (currentisx)
+		resultx -= (i-step)*dirx;
+	else
+		resulty -= (i-step)*diry;
+}
+
 // imgfilename order must be the one of tiles
 // depthorder must be so that imgfilename[depthorder[i]] is of increasing depth for i<tile_amount
 // For i>=tile_amount, imgfilename[i] is the layer of a non-US title tile
@@ -631,8 +654,9 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 	// DEBUG: the transparent and half-transparent border of the pictures are hard to handle...
 	// Several methods were tested to know what RGB values should be used when Alpha < 0xFF
 	// It seems that (1) Alpha < 0xFF should be made fully transparent (relicas of upscaling)
-	// and (2) we should use RGB value of the pixels of the other layers
-	// Note that Steam default files use a kind of X-Y expansion of RGB instead of (2)
+	// and (2) don't let the transparent pixels fully black.
+	// Which RGB value should be used for (2) is not clear. The default atlas use a kind of
+	// X and Y expansion of the colors.
 	uint8_t alphalimit;
 	for (i=0;i<tilesamountplustitle;i++) {
 		tilei = i<tiledata.tiles_amount ? i : i+tiledata.title_tile_amount;
@@ -668,6 +692,7 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 					atlas[atlasi+2] = imgdata[imgtilei*3+2];
 					atlas[atlasi+3] = imgalpha[imgtilei];
 					if (atlas[atlasi+3]<alphalimit) {
+					// Color transparent pixels with the color of the layer in front of these pixels
 //						if (alphalimit==0xFF)
 //							for (k=0;k<tiledata.tiles_amount;k++) {
 //								if (depthorder[k]==i)
@@ -808,6 +833,7 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 			}
 		}
 	}
+	// Expand color using average opaque colors near
 	unsigned int visiblepixcount;
 	uint32_t r,g,b;
 	int dx,dy;
@@ -828,9 +854,33 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 					atlas[(x+y*atlasw)*4] = r/visiblepixcount;
 					atlas[(x+y*atlasw)*4+1] = g/visiblepixcount;
 					atlas[(x+y*atlasw)*4+2] = b/visiblepixcount;
-//					atlas[(x+y*atlasw)*4+3] = 0;
 				}
+				atlas[(x+y*atlasw)*4+3] = 0;
 			}
+	// Expand color using nearest opaque pixel
+/*	int dx, dy;
+//	for (i=0;i<atlastilecolcount*atlastilerowcount;i++) {
+//		atlasx = (i%atlastilecolcount)*tileperiod+tilegap;
+//		atlasy = (i/atlastilecolcount)*tileperiod+tilegap;
+//		for (y=atlasy;y<atlasy+tilesize;y++)
+//			for (x=atlasx;x<atlasx+tilesize;x++) {
+		for (y=0;y<atlash;y++)
+			for (x=0;x<atlasw;x++) {
+				atlasi = (x+y*atlasw)*4;
+				if (atlas[atlasi+3]<0xFF) {
+					atlas[atlasi+3] = 0;
+					for (j=1;j<50;j++) { // search nearest visible pixel in a 3x3 neighbour
+						GetSpiralCoordinate(dx,dy,j);
+						if (x+dx>0 && x+dx<atlasw && y+dy>0 && y+dy<atlash && (x+dx)/tileperiod==x/tileperiod && (y+dy)/tileperiod==y/tileperiod && atlas[(x+dx+(y+dy)*atlasw)*4+3]==0xFF) {
+							atlas[atlasi] = atlas[(x+dx+(y+dy)*atlasw)*4];
+							atlas[atlasi+1] = atlas[(x+dx+(y+dy)*atlasw)*4+1];
+							atlas[atlasi+2] = atlas[(x+dx+(y+dy)*atlasw)*4+2];
+							break;
+						}
+					}
+				}
+			}*/
+	// Color the transparent pixels with the average color of the tile
 /*	uint32_t r,g,b;
 	unsigned int visiblepixcount;
 	for (i=0;i<atlastilecolcount;i++)
@@ -861,6 +911,7 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 						}
 			}
 		}*/
+	// Expand color by 1 pixel and repeat
 /*	for (i=0;i<5;i++)
 	for (y=0;y<atlash;y++)
 		for (x=0;x<atlasw;x++)

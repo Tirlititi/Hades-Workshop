@@ -149,7 +149,7 @@
         <IncludePath Value="."/>
         <IncludePath Value="./Squish"/>
       </Compiler>
-      <Linker Options="-s;-fopenmp">
+      <Linker Options="">
         <LibraryPath Value="."/>
       </Linker>
       <ResourceCompiler Options=""/>
