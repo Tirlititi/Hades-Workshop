@@ -43,4 +43,6 @@ uint64_t Raw_DoubleToUInt(double f);
 float Raw_UIntToFloat(uint32_t v);
 double Raw_UIntToDouble(uint64_t v);
 
+string ConvertToString(int val);
+
 #endif

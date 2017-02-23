@@ -63,8 +63,10 @@ struct SortedChoiceItemModel {
 //-- MainFrame
 #define HADES_STRING_OPEN_FRAME_NAME L"Open Final Fantasy IX binary file"
 #define HADES_STRING_OPEN_FILTERS L"Binary file (*.bin;Steam)|*.bin;FF9_Launcher.exe|All files|*"
+#define HADES_STRING_OPEN_STEAM_FILTER L"Steam Launcher|FF9_Launcher.exe"
 #define HADES_STRING_OPEN_STEAM_DEFAULT "Steam Game"
 #define HADES_STRING_OPEN_ERROR_LIMIT L"Can't open more than %u files."
+#define HADES_STRING_OPEN_ERROR_NONEXISTENT L"The file '%s' doesn't exist!"
 #define HADES_STRING_OPEN_ERROR_FAIL L"Cannot open file '%s'."
 #define HADES_STRING_OPEN_ERROR_FAIL_NF L"Cannot open the specified file."
 #define HADES_STRING_OPEN_ERROR_CREATE L"Cannot create file '%s'."
@@ -373,6 +375,7 @@ static wxString HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM[] = {
 #define HADES_STRING_BACKGROUNDIMPORT_MISSING_LAYERS	" - Missing %d layers for the field %d (%s)\n"
 #define HADES_STRING_BACKGROUNDIMPORT_ERROR_CREATE		" - Failed to convert the field %d (%s)\n"
 #define HADES_STRING_BACKGROUNDIMPORT_ERROR_DIMENSIONS	" - The dimensions of the layers don't match for the field %d (%s)\n"
+#define HADES_STRING_UNITYVIEWER_GAME_OPEN	L"This game folder is already opened in Hades Workshop's main module. Updating the assets is not possible in this situation."
 
 //-- Others
 #define HADES_STRING_FONT_ERROR L"Unsupported font."

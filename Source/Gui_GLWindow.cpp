@@ -30,7 +30,7 @@ GLWindow::~GLWindow() {
 
 void GLWindow::DisplayField(FieldTilesDataStruct* tiles, FieldWalkmeshDataStruct* walk) {
 	GLint offx, offy, offz;
-	unsigned int i;
+	unsigned int i,j;
 	display_type = DISPLAY_GL_TYPE_FIELD;
 	field_tiles = tiles;
 	field_walk = walk;
@@ -60,16 +60,41 @@ void GLWindow::DisplayField(FieldTilesDataStruct* tiles, FieldWalkmeshDataStruct
 		field_walk_triangle_pos[3*i+2][1] = offy+field_walk->vertice_y[field_walk->triangle_vertice3[i]];
 		field_walk_triangle_pos[3*i+2][2] = offz-field_walk->vertice_z[field_walk->triangle_vertice3[i]];
 	}
+/*	field_tiles_quad_pos = new GLint**[field_tiles->tiles_amount];
+	for (i=0;i<field_tiles->tiles_amount;i++) {
+		FieldTilesTileDataStruct& t = field_tiles->tiles[i];
+		FieldTilesCameraDataStruct& cam = field_tiles->camera[t.camera_id];
+		field_tiles_quad_pos[i] = new GLint*[t.tile_amount];
+		for (j=0;j<t.tile_amount;j++) {
+			offx = t.pos_x+t.tile_pos_x[j]-cam.pos_x;
+			offy = t.distance+t.tile_depth[j]-cam.distance;
+			offz = -(t.pos_y+t.tile_pos_y[j]-cam.pos_y);
+			field_tiles_quad_pos[i][j] = new GLint[3];
+			field_tiles_quad_pos[i][j][0] = offx;
+			field_tiles_quad_pos[i][j][1] = offy;
+			field_tiles_quad_pos[i][j][2] = offz;
+		}
+	}*/
 	ResetCamera();
 	Prepare3DViewport(0,0,GetSize().x,GetSize().y);
-	uint32_t* tileimg = field_tiles->ConvertAsImage(field_camera);
-	for (i=0;i<field_tiles->camera[field_camera].width*field_tiles->camera[field_camera].height;i++)
-		tileimg[i] = (tileimg[i] & 0xFF00FF00) | ((tileimg[i] & 0xFF0000) >> 16) | ((tileimg[i] & 0xFF) << 16);
-	glGenTextures(1,&texture_id);
-	glBindTexture(GL_TEXTURE_2D,texture_id);
-	glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,field_tiles->camera[field_camera].width,field_tiles->camera[field_camera].height,0,GL_RGBA,GL_UNSIGNED_BYTE,tileimg);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+/*	bool tilesel[field_tiles->tiles_amount];
+	for (i=0;i<field_tiles->tiles_amount;i++)
+		tilesel[i] = false;
+	texture_id = new GLuint[field_tiles->tiles_amount];
+	glGenTextures(field_tiles->tiles_amount,texture_id);
+	for (i=0;i<field_tiles->tiles_amount;i++) {
+		if (i>0)
+			tilesel[i-1] = false;
+		tilesel[i] = true;
+		uint32_t* backimg = field_tiles->ConvertAsImage(field_camera,tilesel,true);
+		for (j=0;j<field_tiles->camera[field_camera].width*field_tiles->camera[field_camera].height;j++)
+			backimg[j] = (backimg[j] & 0xFF00FF00) | ((backimg[j] & 0xFF0000) >> 16) | ((backimg[j] & 0xFF) << 16);
+		glBindTexture(GL_TEXTURE_2D,texture_id[i]);
+		glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,field_tiles->camera[field_camera].width,field_tiles->camera[field_camera].height,0,GL_RGBA,GL_UNSIGNED_BYTE,backimg);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		delete[] backimg;
+	}*/
 	Draw();
 }
 
@@ -263,7 +288,7 @@ void GLWindow::ResetCamera() {
 }
 
 void GLWindow::Draw() {
-	unsigned int i;
+	unsigned int i,j;
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
@@ -289,8 +314,9 @@ void GLWindow::Draw() {
 			glLoadIdentity();
 			glColor3f(1,1,1);
 			glEnable(GL_TEXTURE_2D);
-			glGenTextures(1,&texture_id);
-			glBindTexture(GL_TEXTURE_2D,texture_id);
+			GLuint textureid;
+			glGenTextures(1,&textureid);
+			glBindTexture(GL_TEXTURE_2D,textureid);
 			glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,field_tiles->camera[field_camera].width,field_tiles->camera[field_camera].height,0,GL_RGBA,GL_UNSIGNED_BYTE,tileimg);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -309,6 +335,25 @@ void GLWindow::Draw() {
 			glMatrixMode(GL_MODELVIEW);
 			glClear(GL_DEPTH_BUFFER_BIT);
 			delete[] tileimg;
+/*			glEnable( GL_TEXTURE_2D );
+			for (i=0;i<field_tiles->tiles_amount;i++) {
+				FieldTilesTileDataStruct& t = field_tiles->tiles[i];
+				if (t.camera_id!=field_camera || (!t.is_static && !t.is_first_of_anim))
+					continue;
+				glBindTexture(GL_TEXTURE_2D,texture_id[i]);
+				glPushMatrix();
+				glLoadIdentity();
+				for (j=0;j<t.tile_amount;j++) {
+					glBegin(GL_QUADS);
+					glTexCoord2f(0, 1); glVertex3iv(field_tiles_quad_pos[i][j]);
+					glTexCoord2f(0, 0); glVertex3i(field_tiles_quad_pos[i][j][0]+FIELD_TILE_BASE_SIZE,field_tiles_quad_pos[i][j][1],field_tiles_quad_pos[i][j][2]);
+					glTexCoord2f(1, 0); glVertex3i(field_tiles_quad_pos[i][j][0]+FIELD_TILE_BASE_SIZE,field_tiles_quad_pos[i][j][1],field_tiles_quad_pos[i][j][2]+FIELD_TILE_BASE_SIZE);
+					glTexCoord2f(1, 1); glVertex3i(field_tiles_quad_pos[i][j][0],field_tiles_quad_pos[i][j][1],field_tiles_quad_pos[i][j][2]+FIELD_TILE_BASE_SIZE);
+					glEnd();
+				}
+				glPopMatrix();
+			}
+			glDisable(GL_TEXTURE_2D);*/
 		}
 		if (field_showwalk) {
 			for (i=0;i<field_walk->triangle_amount;i++) {

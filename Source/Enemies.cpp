@@ -949,6 +949,9 @@ void EnemyDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 				battle[i]->spell[k].name = text[i]->text[l++];
 			UpdateBattleName(i);
 			SetupEnemyInfo(i);
+/*if (battle[i]->stat_amount>1) {
+wfstream fout("aaaa.txt",ios::app|ios::out); fout << battle[i]->stat[1].name.str_nice << L" : " << (unsigned int)battle[i]->stat[1].sound_death << endl; fout.close();
+}*/
 			LoadingDialogUpdate(i);
 		}
 		delete[] dummyclus;

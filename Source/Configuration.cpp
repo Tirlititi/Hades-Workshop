@@ -1062,6 +1062,19 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	unityarchivename = dest.steam_dir_managed+"Assembly-CSharp.dll";
 	dest.meta_dll.Load(unityarchivename.c_str());
 	
+/*UnityArchiveAssetBundle modelindexlist;
+UnityArchiveMetaData metamodel;
+unityarchivename = dest.steam_dir_assets+"p0data4.bin";
+unityarchive.open(unityarchivename.c_str(),ios::in | ios::binary);
+metamodel.Load(unityarchive);
+unityarchive.seekg(metamodel.GetFileOffset("",142));
+modelindexlist.Load(unityarchive);
+unityarchive.close();
+uint16_t debugfileid;
+subfilepath = "assets/resources/models/2/5415/5415.fbx";
+//debugfileid = metamodel.GetFileIndexByInfo(modelindexlist.GetFileInfo(subfilepath));
+debugfileid = metamodel.GetFileIndexByInfo(0xBAA34E3DDB171BC0L);
+fstream fout("aaaa.txt",ios::app|ios::out); fout << "Model FBX: " << (unsigned int)metamodel.GetFileOffsetByIndex(debugfileid) << endl; fout.close();*/
 	// Battles
 	string battlenamelower[G_N_ELEMENTS(SteamBattleScript)];
 	for (i=0;i<G_N_ELEMENTS(SteamBattleScript);i++) {

@@ -8,11 +8,13 @@
       <Project Name="HadesWorkshop" ConfigName="Debug"/>
       <Project Name="Launcher" ConfigName="Debug"/>
       <Project Name="HadesWorkshop" ConfigName="Debug"/>
+      <Project Name="HadesWorkshop" ConfigName="Debug"/>
     </WorkspaceConfiguration>
     <WorkspaceConfiguration Name="Release" Selected="yes">
       <Project Name="HadesWorkshop" ConfigName="Release"/>
       <Project Name="HadesWorkshop" ConfigName="Release"/>
       <Project Name="Launcher" ConfigName="Release"/>
+      <Project Name="HadesWorkshop" ConfigName="Release"/>
       <Project Name="HadesWorkshop" ConfigName="Release"/>
     </WorkspaceConfiguration>
   </BuildMatrix>

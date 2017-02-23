@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<CodeLite_Project Name="HadesWorkshop" InternalType="Console">
+<CodeLite_Project Name="HadesWorkshop" InternalType="GUI">
   <Plugins>
     <Plugin Name="qmake">
       <![CDATA[00010001N0005Debug000000000000]]>
@@ -35,7 +35,6 @@
     <File Name="../Hades-Workshop/Source/Gui_SpellAnimationsEditor.cpp"/>
     <File Name="../Hades-Workshop/Source/Gui_TextEditor.cpp"/>
     <File Name="../Hades-Workshop/Source/Gui_TextureEditor.cpp"/>
-    <File Name="../Hades-Workshop/Source/Gui_Tools.cpp"/>
     <File Name="../Hades-Workshop/Source/ImageMaps.cpp"/>
     <File Name="../Hades-Workshop/Source/Items.cpp"/>
     <File Name="../Hades-Workshop/Source/main.cpp"/>
@@ -52,6 +51,9 @@
     <File Name="../Hades-Workshop/Source/TIMImages.cpp"/>
     <File Name="../Hades-Workshop/Source/UnityArchiver.cpp"/>
     <File Name="../Hades-Workshop/Source/WorldMaps.cpp"/>
+    <File Name="Source/Tool_UnityViewer.cpp"/>
+    <File Name="Source/Tool_BackgroundEditor.cpp"/>
+    <File Name="Source/Tool_ModManager.cpp"/>
   </VirtualDirectory>
   <VirtualDirectory Name="include">
     <File Name="../Hades-Workshop/Source/Assembly_Strings.h"/>
@@ -82,7 +84,6 @@
     <File Name="../Hades-Workshop/Source/Gui_SpellAnimationsEditor.h"/>
     <File Name="../Hades-Workshop/Source/Gui_TextEditor.h"/>
     <File Name="../Hades-Workshop/Source/Gui_TextureEditor.h"/>
-    <File Name="../Hades-Workshop/Source/Gui_Tools.h"/>
     <File Name="../Hades-Workshop/Source/Hades_Strings.h"/>
     <File Name="../Hades-Workshop/Source/ImageMaps.h"/>
     <File Name="../Hades-Workshop/Source/Items.h"/>
@@ -102,6 +103,9 @@
     <File Name="../Hades-Workshop/Source/TIMImages.h"/>
     <File Name="../Hades-Workshop/Source/UnityArchiver.h"/>
     <File Name="../Hades-Workshop/Source/WorldMaps.h"/>
+    <File Name="Source/Tool_UnityViewer.h"/>
+    <File Name="Source/Tool_BackgroundEditor.h"/>
+    <File Name="Source/Tool_ModManager.h"/>
   </VirtualDirectory>
   <VirtualDirectory Name="resources">
     <File Name="../Hades-Workshop/Source/gui.fbp"/>

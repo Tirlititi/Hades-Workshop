@@ -125,7 +125,7 @@ void FieldTilesDataStruct::AddTilesetToImage(uint32_t* imgdest, FieldTilesTileDa
 			timtiley = (t.tile_steam_id[i]/(steamimgwidth/tileperiod))*tileperiod+tilegap;
 			pixely *= 2;
 		}
-		switch (t.tile_abr[i]) {
+		switch (t.tile_alpha[i]) {
 		case 0:
 			alpha = t.tile_trans[i] ? 0x80000000 : 0xFF000000;
 			bm = TIM_BLENDMODE_ALPHA;

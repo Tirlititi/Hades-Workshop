@@ -10,7 +10,9 @@
 #include <string>
 #include "Gui_LoadingDialog.h"
 #include "Gui_Preferences.h"
-#include "Gui_Tools.h"
+#include "Tool_ModManager.h"
+#include "Tool_BackgroundEditor.h"
+#include "Tool_UnityViewer.h"
 #include "File_Batching.h"
 #include "File_Manipulation.h"
 #include "Configuration.h"
@@ -113,7 +115,7 @@ void MainFrame::OnOpenClick(wxCommandEvent& event) {
 			}
 	else
 		for (i=0;i<CDPanelAmount;i++)
-			if (filename.substr(0,dirsep)==CDPanel[i]->filename) {
+			if (filename.substr(0,dirsep).compare(CDPanel[i]->filename)==0) {
 				m_cdbook->SetSelection(i);
 				openFileDialog->Destroy();
 				return;
@@ -175,11 +177,10 @@ void MainFrame::OnOpenClick(wxCommandEvent& event) {
 		success = true;
 	}
 	if (success) {
-		string filenameshort = filename.substr(dirsep);
 		SetGameType(gt);
 		if (gt==GAME_TYPE_PSX) {
 			CDPanel[CDPanelAmount] = new CDDataStruct(m_cdbook,filename,config);
-			CDName[CDPanelAmount] = filenameshort;
+			CDName[CDPanelAmount] = filename.substr(dirsep);
 		} else {
 			SteamLanguageMessage langmess(this);
 			langmess.ShowModal();
@@ -645,6 +646,9 @@ void MainFrame::OnToolClick( wxCommandEvent& event ) {
 	} else if (id==wxID_BACKEDIT) {
 		ToolBackgroundEditor dial(this);
 		dial.ShowModal(currentpanel!=wxNOT_FOUND ? CDPanel[currentpanel] : NULL);
+	} else if (id==wxID_ASSETS) {
+		ToolUnityViewer* unityviewer = new ToolUnityViewer(this);
+		unityviewer->Show();
 	}
 }
 

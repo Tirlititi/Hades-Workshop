@@ -18,6 +18,7 @@ public:
 	unsigned int field_camera;
 	bool field_showtiles;
 	bool field_showwalk;
+	
 	GLint** field_walk_triangle_pos;
 	int field_walk_path_highlight;
 	int field_walk_triangle_highlight;
@@ -29,6 +30,9 @@ public:
 	GLint field_pointz[GL_WINDOW_FIELD_MAX_POINTS];
 	unsigned int field_showplane;
 	GLint field_plane_coord;
+	
+	GLint*** field_tiles_quad_pos;
+	int field_tiles_highlight;
 	
 	unsigned int display_type;
 	GLfloat camera_eye_x;
@@ -43,7 +47,7 @@ public:
 	bool mouse_righton;
 	int mouse_x;
 	int mouse_y;
-	GLuint texture_id;
+	GLuint* texture_id;
 	
 	void DisplayField(FieldTilesDataStruct* tiles, FieldWalkmeshDataStruct* walk);
 	void DisplayFieldRegion(unsigned int vertamount, int16_t* vert);

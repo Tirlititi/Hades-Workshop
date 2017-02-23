@@ -1,5 +1,46 @@
 #include "UnityArchiver.h"
 
+#define X64_FOLDER "x64\\"
+#define X86_FOLDER "x86\\"
+#define STREAMING_FILE_BASE "StreamingAssets\\p0data"
+#define LEVEL_FILE_BASE "FF9_Data\\level"
+#define SHARED_FILE_BASE "FF9_Data\\sharedassets"
+#define MAINDATA_FILE_NAME "FF9_Data\\mainData"
+#define RESOURCES_FILE_NAME "FF9_Data\\resources.assets"
+#define STREAMING_FILE_EXT ".bin"
+#define SHARED_FILE_EXT ".assets"
+
+string UnityArchiveMetaData::GetArchiveName(UnityArchiveFile file, bool x86) {
+	string result = "";
+	if (file>=UNITY_ARCHIVE_DATA11 && file<=UNITY_ARCHIVE_DATA7) {
+		result = STREAMING_FILE_BASE;
+		if (file<=UNITY_ARCHIVE_DATA19)
+			result += ConvertToString(10+file-UNITY_ARCHIVE_DATA11+1);
+		else if (file>=UNITY_ARCHIVE_DATA2 && file<=UNITY_ARCHIVE_DATA5)
+			result += ConvertToString(file-UNITY_ARCHIVE_DATA2+2);
+		else if (file>=UNITY_ARCHIVE_DATA61 && file<=UNITY_ARCHIVE_DATA63)
+			result += ConvertToString(60+file-UNITY_ARCHIVE_DATA61+1);
+		else
+			result += ConvertToString(7);
+		result += STREAMING_FILE_EXT;
+	} else if (file<UNITY_ARCHIVE_AMOUNT) {
+		result = x86 ? X86_FOLDER : X64_FOLDER;
+		if (file==UNITY_ARCHIVE_MAINDATA) {
+			result += MAINDATA_FILE_NAME;
+		} else if (file==UNITY_ARCHIVE_RESOURCES) {
+			result += RESOURCES_FILE_NAME;
+		} else if (file>=UNITY_ARCHIVE_LEVEL0 && file<=UNITY_ARCHIVE_LEVEL27) {
+			result += LEVEL_FILE_BASE;
+			result += ConvertToString(file-UNITY_ARCHIVE_LEVEL0);
+		} else {
+			result += SHARED_FILE_BASE;
+			result += ConvertToString(file-UNITY_ARCHIVE_SHARED0);
+			result += SHARED_FILE_EXT;
+		}
+	}
+	return result;
+}
+
 bool HasFileTypeName(uint32_t type) {
 	return type==21 || type==28 || type==43 || type==48 || type==49 || type==109 || type==115 || type==213;
 }
@@ -79,6 +120,14 @@ int UnityArchiveMetaData::Load(fstream& f) {
 		}
 	}
 	return 0;
+}
+
+uint32_t UnityArchiveMetaData::GetFileSizeById(unsigned int id) {
+	if (id>=header_file_amount)
+		return 0;
+	if (HasFileTypeName(file_type1[id]))
+		return file_size[id]-file_name_len[id]-4;
+	return file_size[id];
 }
 
 uint32_t UnityArchiveMetaData::GetFileOffset(string filename, uint32_t filetype, unsigned int num, string folder) {

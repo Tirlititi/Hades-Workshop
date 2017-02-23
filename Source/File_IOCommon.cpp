@@ -1,5 +1,7 @@
 #include "File_IOCommon.h"
 
+#include <sstream>
+
 uint64_t ReadLongLong(fstream& f) {
 	uint64_t res = (uint64_t)ReadLong(f);
 	res |= ((uint64_t)ReadLong(f) << 32);
@@ -206,4 +208,10 @@ float Raw_UIntToFloat(uint32_t v) {
 double Raw_UIntToDouble(uint64_t v) {
 	double* res = (double*)&v;
 	return *res;
+}
+
+string ConvertToString(int val) {
+	std::ostringstream stm;
+	stm << val;
+	return stm.str();
 }
