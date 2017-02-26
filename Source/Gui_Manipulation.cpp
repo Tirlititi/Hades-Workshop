@@ -12,7 +12,12 @@
 #include "Gui_TextEditor.h"
 #include "Gui_TextureEditor.h"
 #include "Hades_Strings.h"
-#include "Script_Strings.h"
+#include "Database_Script.h"
+#include "Database_Item.h"
+#include "Database_Text.h"
+#include "Database_Spell.h"
+#include "Database_SpellAnimation.h"
+#include "Database_Resource.h"
 
 //=============================//
 //          Strings            //

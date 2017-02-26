@@ -16,7 +16,7 @@ struct EnemyDataSet;
 #include <inttypes.h>
 #include <fstream>
 #include "Configuration.h"
-#include "Script_Strings.h"
+#include "Database_Script.h"
 using namespace std;
 
 #define BATTLE_FLAG_SCRIPTED_END	0x0001

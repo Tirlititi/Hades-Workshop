@@ -6,7 +6,7 @@
 #include <string>
 #include "Gui_LoadingDialog.h"
 #include "Hades_Strings.h"
-#include "Steam_Strings.h"
+#include "Database_Steam.h"
 using namespace std;
 
 SaveSet::SaveSet(SpellDataSet* sp, CommandDataSet* cmd, EnemyDataSet* enmy, ShopDataSet* shop, TextDataSet* text,/*
@@ -1608,6 +1608,10 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 	// ToDo : p0data11 to 19
 	
 	// resources.assets : text and card files
+/*uint32_t debugfsize;
+{fstream fsounddebug("SoundEffectMetaData.txt",ios::in|ios::binary);
+fsounddebug.seekg(0,ios::end); debugfsize = fsounddebug.tellg(); fsounddebug.close();
+}*/
 	{
 		fname = config.steam_dir_data+"resources.assets";
 		fstream filebase(fname.c_str(),ios::in | ios::binary);
@@ -1664,6 +1668,10 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			for (j=0;j<SPELL_ANIMATION_AMOUNT;j++) {
 				MACRO_STEAM_CHECKFILEUPDATE(spellanim_steam_file[j],section[DATA_SECTION_SPELL_ANIM],saveset.spellanimset->spell[j].raw_size)
 			}
+/*if (i==3443) {
+copylist[i] = false;
+filenewsize[i] = debugfsize+4;
+}*/
 		}
 		uint32_t* unitydataoff = config.meta_res.Duplicate(filebase,filedest,copylist,filenewsize);
 		for (i=0;i<config.meta_res.header_file_amount;i++) {
@@ -1734,6 +1742,16 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 				MACRO_STEAM_WRITEFILEUPDATE(spetext_tetramaster_file[GetSteamLanguage()],saveset.ffuiset->special_text->text_block[5].space_used,ffuiset->special_text->WriteSteam(filedest,5),false)
 				MACRO_STEAM_WRITEFILEUPDATE(spetext_localization_file,saveset.ffuiset->special_text->text_block[6].space_used,ffuiset->special_text->WriteSteam(filedest,6),false)
 			}
+/*if (i==3443) {
+filedest.seekg(unitydataoff[i]);
+SteamWriteLong(filedest,debugfsize);
+fstream fsounddebug("SoundEffectMetaData.txt",ios::in|ios::binary);
+char fsounddebugval[debugfsize];
+fsounddebug.read(fsounddebugval,debugfsize);
+filedest.write(fsounddebugval,debugfsize);
+fstream fout("SoundEffectMetaDataRes.txt",ios::out|ios::binary); fout.write(fsounddebugval,debugfsize); fout.close();
+fsounddebug.close();
+}*/
 		}
 		filebase.close();
 		filedest.close();

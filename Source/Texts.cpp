@@ -2,6 +2,7 @@
 
 #include "Gui_LoadingDialog.h"
 #include "Hades_Strings.h"
+#include "Database_Text.h"
 #include "main.h"
 
 //=============================//

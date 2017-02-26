@@ -32,8 +32,8 @@ struct CILDataSet;
 
 #include "File_IOCommon.h"
 #include "DllCilMacro.h"
-#include "Assembly_Strings.h"
-#include "Steam_Strings.h"
+#include "Database_Assembly.h"
+#include "Database_Steam.h"
 
 struct DllDataDirectory {
 	uint32_t virtual_address;

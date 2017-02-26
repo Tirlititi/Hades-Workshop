@@ -1,7 +1,8 @@
 #ifndef _SPELL_ANIMATIONS_H
 #define _SPELL_ANIMATIONS_H
 
-#define SPELL_ANIMATION_AMOUNT	511
+#define SPELL_ANIMATION_AMOUNT			511
+#define SPELL_ANIMATION_SEQUENCE_ARG	2
 
 struct SpellAnimSequenceCodeLine;
 struct SpellAnimationDataStruct;
@@ -11,7 +12,7 @@ struct SpellAnimationDataSet;
 #include <fstream>
 #include "Configuration.h"
 #include "ImageMaps.h"
-#include "Script_Strings.h"
+#include "Database_Script.h"
 using namespace std;
 
 typedef uint32_t Spell_Animation_Data_Type;

@@ -4,6 +4,7 @@
 #include "Gui_LoadingDialog.h"
 #include "Gui_ScriptEditor.h"
 #include "Hades_Strings.h"
+#include "Database_Text.h"
 #include "main.h"
 
 #define TXTBATCH_MAX_STRUCT G_N_ELEMENTS(HADES_STRING_TEXT_BLOCK_NAME)

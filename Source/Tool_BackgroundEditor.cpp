@@ -6,7 +6,7 @@
 #include "Gui_TextureEditor.h"
 #include "Gui_LoadingDialog.h"
 #include "Hades_Strings.h"
-#include "Steam_Strings.h"
+#include "Database_Steam.h"
 
 #define CONVERTER_MEMORY_LIMIT	100000000L
 

@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include "Gui_LoadingDialog.h"
-#include "Steam_Strings.h"
+#include "Database_Steam.h"
+#include "Database_Resource.h"
+#include "Database_SpellAnimation.h"
 
 #define HWS_BATTLE_SCENE_MOD_ID		0xFFF0
 
@@ -949,9 +951,10 @@ void EnemyDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 				battle[i]->spell[k].name = text[i]->text[l++];
 			UpdateBattleName(i);
 			SetupEnemyInfo(i);
-/*if (battle[i]->stat_amount>1) {
-wfstream fout("aaaa.txt",ios::app|ios::out); fout << battle[i]->stat[1].name.str_nice << L" : " << (unsigned int)battle[i]->stat[1].sound_death << endl; fout.close();
-}*/
+/*wfstream fout("aaaa.txt",ios::app|ios::out);
+for (j=0;j<battle[i]->stat_amount;j++)
+fout << battle[i]->stat[j].name.str_nice << L" : " << (unsigned int)battle[i]->stat[j].model << L" : " << (unsigned int)battle[i]->stat[j].sound_engage << L" : " << (unsigned int)battle[i]->stat[j].sound_death << endl;
+fout.close();*/
 			LoadingDialogUpdate(i);
 		}
 		delete[] dummyclus;
@@ -994,9 +997,9 @@ wfstream fout("aaaa.txt",ios::app|ios::out); fout << battle[i]->stat[1].name.str
 				}
 			} else if (ilinst.opcode==0x6F) { // callvirt Dictionary::Add
 				if (curbattleid!=0xFFFF && curscenename.length()>0) {
-					for (i=0;i<G_N_ELEMENTS(SteamBattleScenePSXId);i++)
-						if (SteamBattleScenePSXId[i].name.compare(curscenename)==0) {
-							battle[curbattleid]->scene_id = SteamBattleScenePSXId[i].id;
+					for (i=0;i<G_N_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME);i++)
+						if (HADES_STRING_BATTLE_SCENE_NAME[i].steamid.compare(curscenename)==0) {
+							battle[curbattleid]->scene_id = HADES_STRING_BATTLE_SCENE_NAME[i].id;
 							break;
 						}
 				}
@@ -1048,9 +1051,9 @@ DllMetaDataModification* EnemyDataSet::ComputeSteamMod(ConfigurationSet& config,
 				for (i=0;i<modified_battle_scene_amount;i++)
 					if (modified_battle_id[i]==curbattleid) {
 						tmpstr = L"BBG_";
-						for (j=0;j<G_N_ELEMENTS(SteamBattleScenePSXId);j++)
-							if (SteamBattleScenePSXId[j].id==modified_scene_id[i]) {
-								tmpstr += SteamBattleScenePSXId[j].name;
+						for (j=0;j<G_N_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME);j++)
+							if (HADES_STRING_BATTLE_SCENE_NAME[j].id==modified_scene_id[i]) {
+								tmpstr += HADES_STRING_BATTLE_SCENE_NAME[j].steamid;
 								break;
 							}
 						ilinst.param = dlldata.GetStringToken(tmpstr);

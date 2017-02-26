@@ -19,6 +19,7 @@ public:
 	
 	bool SetupRootPath(wxString path);
 	bool DisplayArchive(UnityArchiveFile filetype);
+	wxString GetInfoString(wxString filename, uint32_t filetype, UnityArchiveFile archive);
 
 private:
 	void OnMenuSelection(wxCommandEvent& event);

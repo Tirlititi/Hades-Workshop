@@ -3,7 +3,8 @@
 #include <wx/tokenzr.h>
 #include "Gui_Manipulation.h"
 #include "Hades_Strings.h"
-#include "Assembly_Strings.h"
+#include "Database_Assembly.h"
+#include "Database_Spell.h"
 
 //=============================//
 //            MIPS             //

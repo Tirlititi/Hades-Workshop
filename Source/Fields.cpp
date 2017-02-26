@@ -1,7 +1,7 @@
 #include "Fields.h"
 
 #include <sstream>
-#include "Steam_Strings.h"
+#include "Database_Steam.h"
 #include "Gui_LoadingDialog.h"
 #include "TIMImages.h"
 #include "main.h"

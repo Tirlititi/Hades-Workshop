@@ -4,8 +4,8 @@
 #include <sstream>
 #include <string>
 #include <wx/string.h>
+#include "Database_Text.h"
 #include "main.h"
-#include "Hades_Strings.h"
 #include "makeppf3.h"
 using namespace std;
 

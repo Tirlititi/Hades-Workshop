@@ -3,7 +3,7 @@
 #include <vector>
 #include <sstream>
 #include "Gui_LoadingDialog.h"
-#include "Hades_Strings.h"
+#include "Database_Resource.h"
 
 #define MACRO_BATTLESCENE_IOFUNCTION(IO,SEEK,READ,PPF) \
 	unsigned int i,j; \

@@ -1,6 +1,7 @@
 #include "Gui_Preferences.h"
 
 #include "Hades_Strings.h"
+#include "Database_Text.h"
 
 #define PREFERENCE_FILE_NAME "HadesWorkshop.conf"
 #define UNKNOWN_CHAR L'?'

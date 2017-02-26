@@ -127,6 +127,7 @@ struct UnityArchiveMetaData {
 	uint32_t* Duplicate(fstream& fbase, fstream& fdest, bool* copylist, uint32_t* filenewsize);
 	
 	static string GetArchiveName(UnityArchiveFile file, bool x86 = false);
+	static string GetTypeName(uint32_t type);
 };
 
 struct UnityArchiveIndexListData {

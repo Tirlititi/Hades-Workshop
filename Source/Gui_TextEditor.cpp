@@ -1,6 +1,7 @@
 #include "Gui_TextEditor.h"
 
 #include <cstdarg>
+#include "Database_Text.h"
 #include "Hades_Strings.h"
 #include "main.h"
 

@@ -1,5 +1,6 @@
 #include "Gui_SpellAnimationsEditor.h"
 
+#include "Database_SpellAnimation.h"
 #include "Hades_Strings.h"
 #include "main.h"
 

@@ -4,7 +4,10 @@
 #include <wx/tokenzr.h>
 #include "Gui_Manipulation.h"
 #include "Hades_Strings.h"
-#include "Script_Strings.h"
+#include "Database_Script.h"
+#include "Database_Resource.h"
+#include "Database_Item.h"
+#include "Database_Spell.h"
 
 #define SCRIPT_ID_NO_ENTRY			0xFFFF
 #define POSITION_PANEL_SIZE			200

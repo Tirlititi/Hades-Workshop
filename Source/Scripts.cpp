@@ -2,7 +2,7 @@
 
 #include <sstream>
 #include "Hades_Strings.h"
-#include "Script_Strings.h"
+#include "Database_Script.h"
 
 uint8_t opcodetmp[0x800];
 ScriptOperation scriptoptmp[0x8000];
