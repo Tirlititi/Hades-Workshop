@@ -826,7 +826,7 @@ void SpecialTextDataSet::Load(fstream& ffbin, ConfigurationSet& configset) {
 		MACRO_READ_SPETEXT_STEAM(3,chocomenu)
 		MACRO_READ_SPETEXT_STEAM(4,cardrank)
 		MACRO_READ_SPETEXT_STEAM(5,tetramaster)
-		// Warning : Steam version is buggy for texts in Localization.txt
+		// DEBUG : Steam version is buggy for texts in Localization.txt
 		// commas are used both inside texts and as language separator
 		uint32_t posbeg,poslen;
 		char* buffer, *bufferstr;

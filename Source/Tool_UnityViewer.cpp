@@ -1,7 +1,9 @@
 #include "Tool_UnityViewer.h"
 
 #include <wx/tokenzr.h>
+#include "Squish/squish.h"
 #include "Hades_Strings.h"
+#include "Database_Text.h"
 #include "Database_Resource.h"
 #include "Database_SpellAnimation.h"
 #include "main.h"
@@ -44,44 +46,80 @@ int wxCALLBACK SortItemCompare(wxIntPtr item1, wxIntPtr item2, wxIntPtr infoptr)
 
 ToolUnityViewer::ToolUnityViewer(wxWindow* parent) :
 	UnityViewerWindow(parent) {
+	m_loadgauge->SetRange(100);
 	m_assetlist->AppendColumn(_(ASSET_COLUMN_INDEX),wxLIST_FORMAT_LEFT,40);
 	m_assetlist->AppendColumn(_(ASSET_COLUMN_NAME),wxLIST_FORMAT_LEFT,300);
 	m_assetlist->AppendColumn(_(ASSET_COLUMN_INTERNAME),wxLIST_FORMAT_LEFT,120);
 	m_assetlist->AppendColumn(_(ASSET_COLUMN_TYPE),wxLIST_FORMAT_LEFT,90);
 	m_assetlist->AppendColumn(_(ASSET_COLUMN_SIZE),wxLIST_FORMAT_LEFT,50);
 	m_assetlist->AppendColumn(_(ASSET_COLUMN_INFO),wxLIST_FORMAT_LEFT,200);
+	current_archive = UNITY_ARCHIVE_AMOUNT;
+	archive_name = wxEmptyString;
 	root_path = wxEmptyString;
+	root_path_ok = false;
 	column_sort = 0;
 	column_sort_ascending = true;
+	use_x86 = false;
+	assetmenu = new wxMenu();
+	assetmenuexport = new wxMenuItem(assetmenu,wxID_EXPORT,HADES_STRING_GENERIC_EXPORT_SEL);
+	assetmenuimport = new wxMenuItem(assetmenu,wxID_IMPORT,HADES_STRING_GENERIC_IMPORT_SEL);
+	assetmenu->Append(assetmenuexport);
+	assetmenu->Append(assetmenuimport);
+	assetmenu->Connect(wxEVT_COMMAND_MENU_SELECTED,wxCommandEventHandler(ToolUnityViewer::OnAssetRightClickMenu),NULL,this);
+	UpdateMenuAvailability();
 }
 
-bool ToolUnityViewer::SetupRootPath(wxString path) {
+ToolUnityViewer::~ToolUnityViewer() {
+	assetmenu->Disconnect(wxEVT_COMMAND_MENU_SELECTED,wxCommandEventHandler(ToolUnityViewer::OnAssetRightClickMenu),NULL,this);
+}
+
+bool ToolUnityViewer::SetupRootPath(wxString path, bool ignorestreaming) {
 	wxString filename;
 	uint32_t offset;
 	unsigned int i,j;
+	unsigned int starti = ignorestreaming ? (unsigned int)UNITY_ARCHIVE_DATA7+1 : 0;
 	if (path.Last()!=L'\\')
 		path += L"\\";
+	// Unload the previous root path
+	if (root_path_ok) {
+		m_assetlist->DeleteAllItems();
+		archive_name = wxEmptyString;
+		for (i=starti;i<UNITY_ARCHIVE_AMOUNT;i++) {
+			meta_data[i].Flush();
+			if (i>=UNITY_ARCHIVE_DATA11 && i<=UNITY_ARCHIVE_DATA7)
+				bundle_data[i-UNITY_ARCHIVE_DATA11].Flush();
+		}
+		if (starti<=UNITY_ARCHIVE_MAINDATA) {
+			list_data.Flush();
+			list_data_filename.Empty();
+		}
+	}
 	// Verify that the required files are available
-	for (i=0;i<UNITY_ARCHIVE_AMOUNT;i++) {
-		filename = path+UnityArchiveMetaData::GetArchiveName((UnityArchiveFile)i);
+	for (i=starti;i<UNITY_ARCHIVE_AMOUNT;i++) {
+		filename = path+UnityArchiveMetaData::GetArchiveName((UnityArchiveFile)i,use_x86);
 		if (!wxFile::Exists(filename)) {
 			wxLogError(HADES_STRING_OPEN_ERROR_NONEXISTENT,filename);
-			return false;
+			root_path_ok = false;
+			UpdateMenuAvailability();
+			return root_path_ok;
 		} else if (!wxFile::Access(filename,wxFile::read)) {
 			wxLogError(HADES_STRING_OPEN_ERROR_FAIL,filename);
-			return false;
+			root_path_ok = false;
+			UpdateMenuAvailability();
+			return root_path_ok;
 		}
 	}
 	// Popup a warning if the game is opened in HW's main module
 	for (i=0;i<GetTopWindow()->CDPanelAmount;i++)
-		if (path.Cmp(GetTopWindow()->CDPanel[i]->filename)==0) {
+		if (path.IsSameAs(GetTopWindow()->CDPanel[i]->filename)) {
 			wxMessageDialog popupwarning(this,HADES_STRING_UNITYVIEWER_GAME_OPEN,HADES_STRING_WARNING,wxOK|wxCENTRE);
 			popupwarning.ShowModal();
 		}
 	// Read the asset lists
 	root_path = path;
-	for (i=0;i<UNITY_ARCHIVE_AMOUNT;i++) {
-		filename = path+UnityArchiveMetaData::GetArchiveName((UnityArchiveFile)i);
+	m_loadgauge->SetValue(0);
+	for (i=starti;i<UNITY_ARCHIVE_AMOUNT;i++) {
+		filename = path+UnityArchiveMetaData::GetArchiveName((UnityArchiveFile)i,use_x86);
 		fstream unityarchive(filename.c_str(),ios::in | ios::binary);
 		meta_data[i].Load(unityarchive);
 		if (i>=UNITY_ARCHIVE_DATA11 && i<=UNITY_ARCHIVE_DATA7) {
@@ -95,24 +133,28 @@ bool ToolUnityViewer::SetupRootPath(wxString path) {
 			if (offset>0) {
 				unityarchive.seekg(offset);
 				list_data.Load(unityarchive);
-				list_data_filename.Empty();
 				list_data_filename.Alloc(list_data.amount);
 				for (j=0;j<list_data.amount;j++)
 					list_data_filename.Add(_(list_data.path[j]).AfterLast(L'/'));
 			}
 		}
 		unityarchive.close();
+		m_loadgauge->SetValue((i+1-starti)*100/(UNITY_ARCHIVE_AMOUNT-starti));
 	}
-	return true;
+	m_loadgauge->SetValue(100);
+	root_path_ok = true;
+	UpdateMenuAvailability();
+	return root_path_ok;
 }
 
 bool ToolUnityViewer::DisplayArchive(UnityArchiveFile archivetype) {
-	unsigned int unkcounter = 0;
 	unsigned int i,j;
 	long itemid;
 	bool foundfullname;
 	wxString fullname,infostr,typestr;
 	m_assetlist->DeleteAllItems();
+	current_archive = archivetype;
+	archive_name = _(UnityArchiveMetaData::GetArchiveName((UnityArchiveFile)current_archive,use_x86));
 	for (i=0;i<meta_data[archivetype].header_file_amount;i++) {
 		fullname = _(meta_data[archivetype].file_name[i]);
 		foundfullname = false;
@@ -143,11 +185,11 @@ bool ToolUnityViewer::DisplayArchive(UnityArchiveFile archivetype) {
 			} else if (meta_data[archivetype].file_name_len[i]>0) {
 				foundfullname = true;
 			} else {
-				fullname = _(L"NoName")+_(ConvertToString(++unkcounter));
+				fullname = _(L"NoName")+_(ConvertToString(i+1));
 			}
 		}
 		if (foundfullname)
-			infostr = GetInfoString(fullname,meta_data[archivetype].file_type1[i],archivetype);
+			infostr = GetInfoString(fullname,meta_data[archivetype].file_type1[i],current_archive);
 		else
 			infostr = _(L"");
 		typestr = _(UnityArchiveMetaData::GetTypeName(meta_data[archivetype].file_type1[i]));
@@ -156,10 +198,10 @@ bool ToolUnityViewer::DisplayArchive(UnityArchiveFile archivetype) {
 		else
 			typestr = _(ConvertToString(meta_data[archivetype].file_type1[i]));
 		itemid = m_assetlist->InsertItem(i,_(ConvertToString(i+1)));
-		m_assetlist->SetItem(itemid,1,m_menudisplaypath->IsChecked() ? fullname : fullname.AfterLast(L'/'));
+		m_assetlist->SetItem(itemid,1,fullname);
 		m_assetlist->SetItem(itemid,2,_(meta_data[archivetype].file_name[i]));
 		m_assetlist->SetItem(itemid,3,typestr);
-		m_assetlist->SetItem(itemid,4,_(ConvertToString(meta_data[archivetype].GetFileSizeById(i))));
+		m_assetlist->SetItem(itemid,4,_(ConvertToString(meta_data[archivetype].GetFileSizeByIndex(i))));
 		m_assetlist->SetItem(itemid,5,infostr);
 		m_assetlist->SetItemData(itemid,itemid);
 	}
@@ -176,13 +218,29 @@ wxString ToolUnityViewer::GetInfoString(wxString filename, uint32_t filetype, Un
 	wxString ext = name.AfterFirst(L'.');
 	if (name.IsSameAs(L"AssetBundle")) return _(L"Bundle of assets, contains informations about the assets of this archive and how they relate to each other");
 	if (name.IsSameAs(L"ResourceManager")) return _(L"Contains the file full paths of other assets from other archives");
-	if (archive==UNITY_ARCHIVE_DATA2) {
+	if (archive>=UNITY_ARCHIVE_DATA11 && archive<=UNITY_ARCHIVE_DATA19) {
+		if (patharray.Count()>=5 && patharray[2].IsSameAs(L"fieldmaps",false)) {
+			wxString fldid = patharray[3];
+			wxString partstr = _(L"[Unknown Field]");
+			for (unsigned int i=0;i<G_N_ELEMENTS(SteamFieldScript);i++)
+				if (fldid.IsSameAs(SteamFieldScript[i].background_name,false)) {
+					partstr = _(SteamFieldScript[i].default_name)+_(L" (")+_(ConvertToString(SteamFieldScript[i].script_id))+_(L")");
+					break;
+				}
+			if (ext.IsSameAs(L"bgs.bytes",false)) return _(L"Tileset (BG_SCENE) of the field ")+partstr;
+			if (ext.IsSameAs(L"bgi.bytes",false)) return _(L"Walkmesh of the field ")+partstr;
+			if (ext.IsSameAs(L"sps.bytes",false)) return _(L"Special Effect Model for the field ")+partstr;
+			if (ext.IsSameAs(L"tcb.bytes",false)) return _(L"Texture of Special Effects for the field ")+partstr;
+			if (ext.IsSameAs(L"png",false)) return _(L"Atlas Texture of the field ")+partstr;
+			return _(UnityArchiveMetaData::GetTypeName(filetype))+_(L" of the field ")+partstr;
+		}
+	} else if (archive==UNITY_ARCHIVE_DATA2) {
 		if (patharray.Count()>=7 && patharray[2].IsSameAs(L"battlemap",false) && patharray[3].IsSameAs(L"battlemodel",false) && patharray[4].IsSameAs(L"6",false)) {
 			unsigned int id = wxAtoi(patharray[5]);
 			wxString partstr = _(L"[Unknown Model]");
 			for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_MODEL_NAME);i++)
 				if (HADES_STRING_MODEL_NAME[i].id==id) {
-					partstr = _(HADES_STRING_MODEL_NAME[i].label);
+					partstr = HADES_STRING_MODEL_NAME[i].label;
 					break;
 				}
 			return _(UnityArchiveMetaData::GetTypeName(filetype))+_(L" of the weapon model ")+partstr;
@@ -193,11 +251,11 @@ wxString ToolUnityViewer::GetInfoString(wxString filename, uint32_t filetype, Un
 			wxString partstr = _(L"[Unknown Battle Scene]");
 			for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME);i++)
 				if (btlid.IsSameAs(HADES_STRING_BATTLE_SCENE_NAME[i].steamid,false)) {
-					partstr = _(HADES_STRING_BATTLE_SCENE_NAME[i].label);
+					partstr = HADES_STRING_BATTLE_SCENE_NAME[i].label;
 					break;
 				}
 			if (patharray.Count()==5 && patharray[3].IsSameAs(L"battleinfo",false)) return _(L"Info for the battle scene ")+partstr;
-			else if (patharray.Count()==5) return _(L"Texture Animation for the battle scene ")+partstr;
+			if (patharray.Count()==5) return _(L"Texture Animation for the battle scene ")+partstr;
 			return _(UnityArchiveMetaData::GetTypeName(filetype))+_(L" for the battle scene ")+partstr;
 		} else if (patharray.Count()==6 && patharray[2].IsSameAs(L"battlemap",false) && patharray[3].IsSameAs(L"battlescene",false)) {
 			wxString btlid = patharray[4];
@@ -210,44 +268,161 @@ wxString ToolUnityViewer::GetInfoString(wxString filename, uint32_t filetype, Un
 			if (ext.IsSameAs(L"raw17.bytes",false)) return _(L"Animation Sequencing and Cameras for the battle ")+partstr;
 			return _(L"Enemy Stats, Attacks and Groups for the battle ")+partstr;
 		}
+	} else if (archive==UNITY_ARCHIVE_DATA4) {
+		if (patharray.Count()>=6 && patharray[2].IsSameAs(L"models",false) && wxAtoi(patharray[3])>0) {
+			unsigned int modeltype = wxAtoi(patharray[3])<G_N_ELEMENTS(DATABASE_MODEL_TYPE) ? wxAtoi(patharray[3]) : 0;
+			unsigned int id = wxAtoi(patharray[4]);
+			wxString partstr = _(L"[Unknown Model]");
+			for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_MODEL_NAME);i++)
+				if (HADES_STRING_MODEL_NAME[i].id==id) {
+					partstr = HADES_STRING_MODEL_NAME[i].label;
+					break;
+				}
+			return _(UnityArchiveMetaData::GetTypeName(filetype))+_(L" for the ")+DATABASE_MODEL_TYPE[modeltype]+_(L" model ")+partstr;
+		} else if (patharray.Count()==5 && patharray[2].IsSameAs(L"models",false) && patharray[3].IsSameAs(L"geotexanim",false)) {
+			if (name.Mid(0,4).IsSameAs(L"geo_",false)) {
+				wxString partstr = _(L"[Unknown Model]");
+				// ToDo
+				return _(L"Texture Animation for the model ")+partstr;
+			} else if (name.Mid(0,4).IsSameAs(L"tam_",false)) {
+				wxString btlid = name.Mid(4).BeforeFirst(L'_').BeforeFirst(L'.');
+				wxString partstr = _(L"[Unknown Battle Scene]");
+				for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME);i++)
+					if (btlid.IsSameAs(HADES_STRING_BATTLE_SCENE_NAME[i].steamid,false)) {
+						partstr = HADES_STRING_BATTLE_SCENE_NAME[i].label;
+						break;
+					}
+				return _(L"Texture Animation for the battle scene ")+partstr;
+			}
+		}
+	} else if (archive==UNITY_ARCHIVE_DATA5) {
+		if (patharray.Count()==5 && patharray[2].IsSameAs(L"animations",false)) {
+			unsigned int modelid = wxAtoi(patharray[3]);
+			unsigned int animid = wxAtoi(patharray[4]);
+			wxString partstrmodel = _(L"[Unknown Model]");
+			wxString partstranim = _(L"[Unknown Animation]");
+			for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_MODEL_NAME);i++)
+				if (HADES_STRING_MODEL_NAME[i].id==modelid) {
+					partstrmodel = HADES_STRING_MODEL_NAME[i].label;
+					break;
+				}
+			// ToDo
+			return _(L"Animation ")+partstranim+_(L" of the model ")+partstrmodel;
+		}
+	} else if (archive==UNITY_ARCHIVE_DATA7) {
+		if (patharray.Count()>=4 && patharray[2].IsSameAs(L"commonasset",false) && /*
+		*/ ((patharray.Count()==5 && patharray[3].IsSameAs(L"vibrationdata",false)) || /*
+		*/ (patharray.Count()==5 && patharray[3].IsSameAs(L"mapconfigdata",false)) || /*
+		*/ (patharray.Count()==6 && patharray[3].IsSameAs(L"eventengine",false) && patharray[4].IsSameAs(L"eventanimation",false)) || /*
+		*/ (patharray.Count()==8 && patharray[3].IsSameAs(L"eventengine",false) && patharray[4].IsSameAs(L"eventbinary",false) && patharray[5].IsSameAs(L"field",false)))) {
+			wxString fldid = name.BeforeFirst(L'.');
+			wxString partstr = _(L"[Unknown Field]");
+			for (unsigned int i=0;i<G_N_ELEMENTS(SteamFieldScript);i++)
+				if (fldid.IsSameAs(SteamFieldScript[i].script_name,false)) {
+					partstr = _(SteamFieldScript[i].default_name)+_(L" (")+_(ConvertToString(SteamFieldScript[i].script_id))+_(L")");
+					break;
+				}
+			if (patharray.Count()==8) return _(L"Script of the field ")+partstr;
+			if (patharray.Count()==6) return _(L"Model and Animation preloading list for the field ")+partstr;
+			if (patharray[3].IsSameAs(L"vibrationdata",false)) return _(L"Vibration data for the field ")+partstr;
+			return _(L"MCF Service of the field ")+partstr;
+		} else if (patharray.Count()==8 && patharray[3].IsSameAs(L"eventengine",false) && patharray[4].IsSameAs(L"eventbinary",false) && patharray[5].IsSameAs(L"battle",false)) {
+			wxString btlid = name.BeforeFirst(L'.');
+			wxString partstr = _(L"[Unknown Battle]");
+			for (unsigned int i=0;i<G_N_ELEMENTS(SteamBattleScript);i++)
+				if (btlid.IsSameAs(SteamBattleScript[i].name,false)) {
+					partstr = _(ConvertToString(SteamBattleScript[i].battle_id));
+					break;
+				}
+			return _(L"AI Script of the battle ")+partstr;
+		} else if (patharray.Count()==8 && patharray[3].IsSameAs(L"eventengine",false) && patharray[4].IsSameAs(L"eventbinary",false) && patharray[5].IsSameAs(L"world",false)) {
+			wxString wldid = name.BeforeFirst(L'.');
+			wxString partstr = _(L"[Unknown World Map]");
+			for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME);i++)
+				if (wldid.IsSameAs(HADES_STRING_WORLD_BLOCK_NAME[i].steamid,false)) {
+					partstr = HADES_STRING_WORLD_BLOCK_NAME[i].label;
+					break;
+				}
+			return _(L"Script of the ")+partstr;
+		}
 	} else if (archive==UNITY_ARCHIVE_RESOURCES) {
-		if (name.IsSameAs(L"AnimationFolderMapping.txt",false)) return _(L"");
-		if (name.IsSameAs(L"BattleMapList.txt",false)) return _(L"");
-		if (name.IsSameAs(L"BtlEncountBgmMetaData.txt",false)) return _(L"");
-		if (name.IsSameAs(L"IconPathMap.txt",false)) return _(L"");
-		if (name.IsSameAs(L"Licence_Amazon.txt",false)) return _(L"");
-		if (name.IsSameAs(L"Licence_Android.txt",false)) return _(L"");
-		if (name.IsSameAs(L"Licence_EStore.txt",false)) return _(L"");
-		if (name.IsSameAs(L"Licence_Steam.txt",false)) return _(L"");
-		if (name.IsSameAs(L"Licence_iOS.txt",false)) return _(L"");
-		if (name.IsSameAs(L"Localization.txt",false)) return _(L"UI texts in multi-languages");
-		if (name.IsSameAs(L"MovieAudioMetaData.txt",false)) return _(L"Dictionary <Audio File Name, Audio ID> used by SoundMetaData");
-		if (name.IsSameAs(L"MusicMetaData.txt",false)) return _(L"Dictionary <Music ID, Music File Name> used by SoundMetaData");
-		if (name.IsSameAs(L"ResidentSpecialEffectMetaData.txt",false)) return _(L"Dictionary <??? ID, ??? File Name, ??? Type> used by SoundMetaData");
-		if (name.IsSameAs(L"SongMetaData.txt",false)) return _(L"Dictionary <Song ID, Song File Name> used by SoundMetaData");
-		if (name.IsSameAs(L"SoundEffectExtendedMetaData.txt",false)) return _(L"Dictionary <Sound ID, Sound File Name> used by SoundMetaData");
-		if (name.IsSameAs(L"SoundEffectMetaData.txt",false)) return _(L"Dictionary <Sound ID, Sound File Name> used by SoundMetaData");
-		if (name.IsSameAs(L"SpecialEffectMetaData.txt",false)) return _(L"Dictionary <Sound ID, Sound File Name, Sound Type> used by SoundMetaData");
-		if (name.IsSameAs(L"StaffCredits_Amazon.txt",false)) return _(L"");
-		if (name.IsSameAs(L"StaffCredits_EStore.txt",false)) return _(L"");
-		if (name.IsSameAs(L"StaffCredits_Mobile.txt",false)) return _(L"");
-		if (name.IsSameAs(L"StaffCredits_Steam.txt",false)) return _(L"");
-		if (name.IsSameAs(L"WldBtlEncountBgmMetaData.txt",false)) return _(L"");
-		if (name.IsSameAs(L"mapExtraOffsetList.txt",false)) return _(L"");
-		if (name.IsSameAs(L"mapList.txt",false)) return _(L"");
-		if (name.IsSameAs(L"mapLocalizeAreaTitle.txt",false)) return _(L"Multi-language tile informations for Field Backgrounds containing titles");
-		if (name.IsSameAs(L"mapSPSExtraOffsetList.txt",false)) return _(L"");
-		if (name.IsSameAs(L"models.txt",false)) return _(L"");
-		if (name.IsSameAs(L"settingUtils.txt",false)) return _(L"");
-		if (name.IsSameAs(L"MINIGAME_CARD_DATA_ADDRESS",false)) return _(L"Tetra Master card statistics used by CardPool");
-		if (name.IsSameAs(L"MINIGAME_STAGE_ADDRESS",false)) return _(L"Tetra Master [Deck ID, Difficulty] informations used by EnemyData");
-		if (name.IsSameAs(L"MINIGAME_CARD_LEVEL_ADDRESS",false)) return _(L"Tetra Master lists of cards played by opponents used by EnemyData");
-		if (patharray.Count()==2 && patharray[0].IsSameAs(L"specialeffects",false) && name.Mid(0,2).IsSameAs(L"ef",false)) {
+		if (patharray.Count()==4) {
+			if (name.IsSameAs(L"AnimationFolderMapping.txt",false)) return _(L"");
+			if (name.IsSameAs(L"aaaaBattleMapList.txt",false)) return _(L"");
+			if (name.IsSameAs(L"BattleMapList.txt",false)) return _(L"");
+			if (name.IsSameAs(L"BtlEncountBgmMetaData.txt",false)) return _(L"");
+			if (name.IsSameAs(L"IconPathMap.txt",false)) return _(L"");
+			if (name.IsSameAs(L"Licence_Amazon.txt",false)) return _(L"");
+			if (name.IsSameAs(L"Licence_Android.txt",false)) return _(L"");
+			if (name.IsSameAs(L"Licence_AndroidSqExMarket.txt",false)) return _(L"");
+			if (name.IsSameAs(L"Licence_EStore.txt",false)) return _(L"");
+			if (name.IsSameAs(L"Licence_Steam.txt",false)) return _(L"");
+			if (name.IsSameAs(L"Licence_iOS.txt",false)) return _(L"");
+			if (name.IsSameAs(L"Localization.txt",false)) return _(L"UI texts in multi-languages");
+			if (name.IsSameAs(L"MovieAudioMetaData.txt",false)) return _(L"Dictionary <Audio File Name, Audio ID> used by SoundMetaData");
+			if (name.IsSameAs(L"MusicMetaData.txt",false)) return _(L"Dictionary <Music ID, Music File Name> used by SoundMetaData");
+			if (name.IsSameAs(L"ResidentSpecialEffectMetaData.txt",false)) return _(L"Dictionary <??? ID, ??? File Name, ??? Type> used by SoundMetaData");
+			if (name.IsSameAs(L"SongMetaData.txt",false)) return _(L"Dictionary <Song ID, Song File Name> used by SoundMetaData");
+			if (name.IsSameAs(L"SoundEffectExtendedMetaData.txt",false)) return _(L"Dictionary <Sound ID, Sound File Name> used by SoundMetaData");
+			if (name.IsSameAs(L"SoundEffectMetaData.txt",false)) return _(L"Dictionary <Sound ID, Sound File Name> used by SoundMetaData");
+			if (name.IsSameAs(L"SpecialEffectMetaData.txt",false)) return _(L"Dictionary <Sound ID, Sound File Name, Sound Type> used by SoundMetaData");
+			if (name.IsSameAs(L"StaffCredits_Amazon.txt",false)) return _(L"");
+			if (name.IsSameAs(L"StaffCredits_AndroidSqExMarket.txt",false)) return _(L"");
+			if (name.IsSameAs(L"StaffCredits_EStore.txt",false)) return _(L"");
+			if (name.IsSameAs(L"StaffCredits_Mobile.txt",false)) return _(L"");
+			if (name.IsSameAs(L"StaffCredits_Steam.txt",false)) return _(L"");
+			if (name.IsSameAs(L"WldBtlEncountBgmMetaData.txt",false)) return _(L"");
+			if (name.IsSameAs(L"mapExtraOffsetList.txt",false)) return _(L"");
+			if (name.IsSameAs(L"mapList.txt",false)) return _(L"");
+			if (name.IsSameAs(L"mapLocalizeAreaTitle.txt",false)) return _(L"Multi-language tile informations for Field Backgrounds containing titles");
+			if (name.IsSameAs(L"mapSPSExtraOffsetList.txt",false)) return _(L"");
+			if (name.IsSameAs(L"models.txt",false)) return _(L"");
+			if (name.IsSameAs(L"settingUtils.txt",false)) return _(L"");
+		} else if (patharray.Count()==3) {
+			if (name.IsSameAs(L"MINIGAME_CARD_DATA_ADDRESS",false)) return _(L"Tetra Master card statistics used by CardPool");
+			if (name.IsSameAs(L"MINIGAME_STAGE_ADDRESS",false)) return _(L"Tetra Master [Deck ID, Difficulty] informations used by EnemyData");
+			if (name.IsSameAs(L"MINIGAME_CARD_LEVEL_ADDRESS",false)) return _(L"Tetra Master lists of cards played by opponents used by EnemyData");
+		} else if (patharray.Count()==5 && ext.IsSameAs(L"mes",false)) {
+			if (name.IsSameAs(L"aa_name.mes",false)) return _(L"Names of the party's Active Abilities");
+			if (name.IsSameAs(L"aa_help.mes",false)) return _(L"Helps of the party's Active Abilities");
+			if (name.IsSameAs(L"sa_name.mes",false)) return _(L"Names of the party's Supporting Abilities");
+			if (name.IsSameAs(L"sa_help.mes",false)) return _(L"Helps of the party's Supporting Abilities");
+			if (name.IsSameAs(L"com_name.mes",false)) return _(L"Names of the party's Commands");
+			if (name.IsSameAs(L"com_help.mes",false)) return _(L"Helps of the party's Commands");
+			if (name.IsSameAs(L"follow.mes",false)) return _(L"UI texts in the category: ")+HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM[0];
+			if (name.IsSameAs(L"libra.mes",false)) return _(L"UI texts in the category: ")+HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM[1];
+			if (name.IsSameAs(L"cmdtitle.mes",false)) return _(L"UI texts in the category: ")+HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM[2];
+			if (name.IsSameAs(L"ff9choco.mes",false)) return _(L"UI texts in the category: ")+HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM[3];
+			if (name.IsSameAs(L"card.mes",false)) return _(L"UI texts in the category: ")+HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM[4];
+			if (name.IsSameAs(L"minigame.mes",false)) return _(L"UI texts in the category: ")+HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM[5];
+			if (name.IsSameAs(L"minista.mes",false)) return _(L"Names of the Tetra Master cards");
+			if (name.IsSameAs(L"worldloc.mes",false)) return _(L"Names of the World Map locations");
+			if (name.IsSameAs(L"itm_name.mes",false)) return _(L"Names of the regular items");
+			if (name.IsSameAs(L"itm_help.mes",false)) return _(L"Helps of the regular items");
+			if (name.IsSameAs(L"itm_btl.mes",false)) return _(L"Battle helps of the regular items");
+			if (name.IsSameAs(L"imp_name.mes",false)) return _(L"Names of the key items");
+			if (name.IsSameAs(L"imp_help.mes",false)) return _(L"Helps of the key items");
+			if (name.IsSameAs(L"imp_skin.mes",false)) return _(L"Descriptions of the key items");
+			if (name.IsSameAs(L"loc_name.mes",false)) return _(L"Names of the different fields");
+			if (patharray[3].IsSameAs(L"field",false)) {
+				unsigned int id = wxAtoi(name.BeforeFirst(L'.'));
+				wxString partstr = _(L"[Unknown Text Block]");
+				for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_TEXT_BLOCK_NAME);i++)
+					if (HADES_STRING_TEXT_BLOCK_NAME[i].id==id) {
+						partstr = HADES_STRING_TEXT_BLOCK_NAME[i].label;
+						break;
+					}
+				return _(L"Dialogs and Texts of ")+partstr;
+			} else if (patharray[3].IsSameAs(L"battle",false)) {
+				unsigned int id = wxAtoi(name.BeforeFirst(L'.'));
+				return _(L"Texts from the battle ")+_(ConvertToString(id));
+			}
+		} else if (patharray.Count()==2 && patharray[0].IsSameAs(L"specialeffects",false) && name.Mid(0,2).IsSameAs(L"ef",false)) {
 			unsigned int id = wxAtoi(name.Mid(2));
 			wxString partstr = _(L"[Unknown Spell Animation]");
 			for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_SPELL_MODEL);i++)
 				if (HADES_STRING_SPELL_MODEL[i].id==id) {
-					partstr = _(HADES_STRING_SPELL_MODEL[i].label);
+					partstr = HADES_STRING_SPELL_MODEL[i].label;
 					break;
 				}
 			return _(L"Special Effect of the spell animation ")+partstr;
@@ -255,6 +430,14 @@ wxString ToolUnityViewer::GetInfoString(wxString filename, uint32_t filetype, Un
 	}
 	
 	return _(L"");
+}
+
+void ToolUnityViewer::UpdateMenuAvailability() {
+	wxMenuItemList& menuassets = m_menuassets->GetMenuItems();
+	wxMenuItemList::iterator iter;
+	for (iter=menuassets.begin();iter!=menuassets.end();iter++)
+		(*iter)->Enable(root_path_ok);
+	m_menureopen->Enable(root_path_ok);
 }
 
 void ToolUnityViewer::OnMenuSelection(wxCommandEvent& event) {
@@ -270,10 +453,14 @@ void ToolUnityViewer::OnMenuSelection(wxCommandEvent& event) {
 		SetupRootPath(dirname);
 		openFileDialog->Destroy();
 	} else if (id==wxID_REOPEN) {
-		if (root_path.Len()>0)
+		if (root_path_ok)
 			SetupRootPath(root_path);
 	} else if (id==wxID_CLOSE) {
 		Close();
+	} else if (id==wxID_FOLDER64 || id==wxID_FOLDER86) {
+		use_x86 = id==wxID_FOLDER86;
+		if (root_path_ok)
+			SetupRootPath(root_path,true);
 	} else {
 		
 		#define MACRO_OPENARCHIVE(PREFIX,SUFFIX) \
@@ -290,7 +477,7 @@ void ToolUnityViewer::OnMenuSelection(wxCommandEvent& event) {
 		MACRO_OPENARCHIVE(wxID_P,DATA7)
 		MACRO_OPENARCHIVE(wxID_,MAINDATA)
 		MACRO_OPENARCHIVE(wxID_,RESOURCES)
-/*		MACRO_OPENARCHIVE(wxID_,LEVEL0)		MACRO_OPENARCHIVE(wxID_,LEVEL1)		MACRO_OPENARCHIVE(wxID_,LEVEL2)		MACRO_OPENARCHIVE(wxID_,LEVEL3)
+		MACRO_OPENARCHIVE(wxID_,LEVEL0)		MACRO_OPENARCHIVE(wxID_,LEVEL1)		MACRO_OPENARCHIVE(wxID_,LEVEL2)		MACRO_OPENARCHIVE(wxID_,LEVEL3)
 		MACRO_OPENARCHIVE(wxID_,LEVEL4)		MACRO_OPENARCHIVE(wxID_,LEVEL5)		MACRO_OPENARCHIVE(wxID_,LEVEL6)		MACRO_OPENARCHIVE(wxID_,LEVEL7)
 		MACRO_OPENARCHIVE(wxID_,LEVEL8)		MACRO_OPENARCHIVE(wxID_,LEVEL9)		MACRO_OPENARCHIVE(wxID_,LEVEL10)	MACRO_OPENARCHIVE(wxID_,LEVEL11)
 		MACRO_OPENARCHIVE(wxID_,LEVEL12)	MACRO_OPENARCHIVE(wxID_,LEVEL13)	MACRO_OPENARCHIVE(wxID_,LEVEL14)	MACRO_OPENARCHIVE(wxID_,LEVEL15)
@@ -304,8 +491,86 @@ void ToolUnityViewer::OnMenuSelection(wxCommandEvent& event) {
 		MACRO_OPENARCHIVE(wxID_,SHARED16)	MACRO_OPENARCHIVE(wxID_,SHARED17)	MACRO_OPENARCHIVE(wxID_,SHARED18)	MACRO_OPENARCHIVE(wxID_,SHARED19)
 		MACRO_OPENARCHIVE(wxID_,SHARED20)	MACRO_OPENARCHIVE(wxID_,SHARED21)	MACRO_OPENARCHIVE(wxID_,SHARED22)	MACRO_OPENARCHIVE(wxID_,SHARED23)
 		MACRO_OPENARCHIVE(wxID_,SHARED24)	MACRO_OPENARCHIVE(wxID_,SHARED25)	MACRO_OPENARCHIVE(wxID_,SHARED26)	MACRO_OPENARCHIVE(wxID_,SHARED27)
-		MACRO_OPENARCHIVE(wxID_,SHARED28)*/
+		MACRO_OPENARCHIVE(wxID_,SHARED28)
 	}
+}
+
+void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
+	int id = event.GetId();
+	if (id==wxID_EXPORT) {
+		fstream filebase((root_path+archive_name).c_str(),ios::in|ios::binary);
+		if (!filebase.is_open()) {
+			wxLogError(HADES_STRING_OPEN_ERROR_FAIL,root_path+archive_name);
+			return;
+		}
+		unsigned int expfileid, expfilesize;
+		wxString basepath = root_path+_(L"HadesWorkshopAssets\\")+archive_name.AfterLast(L'\\').BeforeFirst(L'.')+_(L"\\");
+		wxString path;
+		char* buffer;
+		long it = -1;
+		for (;;) {
+			it = m_assetlist->GetNextItem(it,wxLIST_NEXT_ALL,wxLIST_STATE_SELECTED);
+			if (it==-1) break;
+			path = basepath+m_assetlist->GetItemText(it,1);
+			path.Replace(_(L"/"),_(L"\\"));
+			if (!m_menuexportpath->IsChecked()) path = path.AfterLast(L'\\');
+			wxFileName::Mkdir(path.BeforeLast(L'\\'),wxS_DIR_DEFAULT,wxPATH_MKDIR_FULL);
+			fstream filedest(path.c_str(),ios::out|ios::binary);
+			if (!filedest.is_open()) {
+				wxLogError(HADES_STRING_OPEN_ERROR_CREATE,path);
+				continue;
+			}
+			expfileid = wxAtoi(m_assetlist->GetItemText(it,0))-1;
+			expfilesize = meta_data[current_archive].GetFileSizeByIndex(expfileid);
+			filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(expfileid));
+			buffer = new char[expfilesize];
+			filebase.read(buffer,expfilesize);
+			if (meta_data[current_archive].file_type1[expfileid]==28 && !m_menuconvertimgnone->IsChecked()) {
+				uint32_t imgw, imgh;
+				uint8_t* imgrgba;
+				bool success = TIMImageDataStruct::ConvertFromSteamTexture((uint8_t*)buffer,&imgw,&imgh,&imgrgba);
+				delete[] buffer;
+				filedest.close();
+				if (!success) {
+					wxLogError(_(L"Format of '%s' not supported"),m_assetlist->GetItemText(it,1));
+					continue;
+				}
+				unsigned char* imgrgb = (unsigned char*)malloc(3*imgw*imgh*sizeof(unsigned char));
+				unsigned char* imgalpha = (unsigned char*)malloc(imgw*imgh*sizeof(unsigned char));
+				for (unsigned int i=0;i<imgw*imgh;i++) {
+					imgrgb[3*i] = imgrgba[4*i];
+					imgrgb[3*i+1] = imgrgba[4*i+1];
+					imgrgb[3*i+2] = imgrgba[4*i+2];
+					imgalpha[i] = imgrgba[4*i+3];
+				}
+				delete[] imgrgba;
+				wxImage img(imgw,imgh,imgrgb,imgalpha);
+				if (m_menuconvertimgpng->IsChecked())		img.SaveFile(path,wxBITMAP_TYPE_PNG);
+				else if (m_menuconvertimgtga->IsChecked())	img.SaveFile(path,wxBITMAP_TYPE_TGA);
+				else if (m_menuconvertimgtiff->IsChecked())	img.SaveFile(path,wxBITMAP_TYPE_TIFF);
+				else										img.SaveFile(path,wxBITMAP_TYPE_BMP);
+			} else {
+				filedest.write(buffer,expfilesize);
+				filedest.close();
+				delete[] buffer;
+			}
+		}
+		filebase.close();
+	} else if (id==wxID_IMPORT) {
+		
+	}
+}
+
+void ToolUnityViewer::OnAssetRightClick(wxListEvent& event) {
+	unsigned int i;
+	bool enableimport = true;
+	for (i=0;i<GetTopWindow()->CDPanelAmount;i++)
+		if (root_path.IsSameAs(GetTopWindow()->CDPanel[i]->filename)) {
+			enableimport = false;
+			break;
+		}
+	assetmenuimport->Enable(enableimport);
+	m_assetlist->PopupMenu(assetmenu);
 }
 
 void ToolUnityViewer::OnSortColumn(wxListEvent& event) {

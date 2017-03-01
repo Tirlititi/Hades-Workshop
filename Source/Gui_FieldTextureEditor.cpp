@@ -386,8 +386,8 @@ void ManageFieldTextureDialog::OnButtonClick(wxCommandEvent& event) {
 			unsigned int i;
 			bool tileflag[field.tiles_amount];
 			for (i=0;i<field.tiles_amount;i++)
-				tileflag[i] = m_tilechecklist->IsChecked(i);
-			if (field.Export(dial.m_filepicker->GetPath().mb_str(),camera_id,tileflag,true,dial.m_mergetiles->IsChecked(),dial.m_languagetitle->GetSelection()-1)) {
+				tileflag[i] = m_tilechecklist->IsChecked(i) || !dial.m_onlyselected->IsChecked();
+			if (field.Export(dial.m_filepicker->GetPath().mb_str(),camera_id,tileflag,true,dial.m_mergetiles->IsChecked(),dial.m_exportorder->IsChecked(),dial.m_languagetitle->GetSelection()-1)) {
 				wxLogError(HADES_STRING_OPEN_ERROR_CREATE,dial.m_filepicker->GetPath());
 				return;
 			}

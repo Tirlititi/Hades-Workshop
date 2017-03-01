@@ -89,6 +89,7 @@ enum UnityArchiveFile {
 
 struct UnityArchiveMetaData {
 	uint8_t archive_type; // p0data[n].bin or .assets
+	bool loaded;
 	
 	uint32_t header_size;
 	uint32_t header_file_size;
@@ -115,7 +116,8 @@ struct UnityArchiveMetaData {
 	string* file_name;
 	
 	int Load(fstream& f);
-	uint32_t GetFileSizeById(unsigned int id);
+	void Flush();
+	uint32_t GetFileSizeByIndex(unsigned int fileid);
 	uint32_t GetFileOffset(string filename, uint32_t filetype = 0xFFFFFFFF, unsigned int num = 0, string folder = "");
 	uint32_t GetFileOffsetByInfo(uint64_t info, uint32_t filetype = 0xFFFFFFFF, string folder = "");
 	uint32_t GetFileOffsetByIndex(unsigned int fileid, string folder = "");
@@ -126,11 +128,15 @@ struct UnityArchiveMetaData {
 	// Arrays must be of length header_file_amount
 	uint32_t* Duplicate(fstream& fbase, fstream& fdest, bool* copylist, uint32_t* filenewsize);
 	
+	UnityArchiveMetaData() : loaded(false) {}
+	~UnityArchiveMetaData() { Flush(); }
+	
 	static string GetArchiveName(UnityArchiveFile file, bool x86 = false);
 	static string GetTypeName(uint32_t type);
 };
 
 struct UnityArchiveIndexListData {
+	bool loaded;
 	uint32_t amount;
 	string* path;
 	uint32_t* unk1;
@@ -138,10 +144,15 @@ struct UnityArchiveIndexListData {
 	uint32_t* unk2;
 	
 	int Load(fstream& f);
+	void Flush();
 	uint32_t GetFileIndex(string filepath);
+	
+	UnityArchiveIndexListData() : loaded(false) {}
+	~UnityArchiveIndexListData() { Flush(); }
 };
 
 struct UnityArchiveAssetBundle {
+	bool loaded;
 	uint32_t amount;
 	string* path;
 	uint32_t* index;
@@ -150,8 +161,12 @@ struct UnityArchiveAssetBundle {
 	uint64_t* info;
 	
 	int Load(fstream& f);
+	void Flush();
 	uint32_t GetFileIndex(string filepath);
 	uint64_t GetFileInfo(string filepath);
+	
+	UnityArchiveAssetBundle() : loaded(false) {}
+	~UnityArchiveAssetBundle() { Flush(); }
 };
 
 #endif

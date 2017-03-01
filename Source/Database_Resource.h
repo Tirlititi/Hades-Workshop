@@ -3,14 +3,14 @@
 
 #include "Database_Common.h"
 
-struct SortedChoiceItemBattleScene {
+struct SortedChoiceSteamItem {
 	unsigned int id;
 	wxString steamid;
 	wxString label;
 };
 
 //-- Battle Scenes
-static SortedChoiceItemBattleScene HADES_STRING_BATTLE_SCENE_NAME[] = {
+static SortedChoiceSteamItem HADES_STRING_BATTLE_SCENE_NAME[] = {
 	{ 0x0,	L"B065",	L"Alexandria Castle, Hidden passage's lower level" },
 	{ 0x4,	L"B008",	L"Alexandria Castle, Hidden passage's stairs" },
 	{ 0x5,	L"B009",	L"Alexandria Castle, Extraction altar" },
@@ -191,6 +191,31 @@ static SortedChoiceItemBattleScene HADES_STRING_BATTLE_SCENE_NAME[] = {
 	{ 0xB1,	L"NOFUJII",	L"??? (Empty battlefield)" }
 };
 
+//-- World Maps
+#define WORLD_BLOCK_VALID_AMOUNT 13
+static SortedChoiceSteamItem HADES_STRING_WORLD_BLOCK_NAME[] = {
+	{ 9000, L"EVT_WORLD_WORLD00", L"World Map: No Transport" },
+	{ 9001, L"EVT_WORLD_WORLD01", L"World Map/Event: Cargo Ship" },
+	{ 9002, L"EVT_WORLD_WORLD02", L"World Map: Dagger" },
+	{ 9003, L"EVT_WORLD_WORLD03", L"World Map: Blue Narciss" },
+	{ 9004, L"EVT_WORLD_WORLD04", L"World Map/Event: Hilda Garde 1" },
+	{ 9005, L"EVT_WORLD_WORLD05", L"World Map: Hilda Garde 1" },
+	{ 9006, L"EVT_WORLD_WORLD06", L"World Map/Event: Track Kuja" },
+	{ 9007, L"EVT_WORLD_WORLD07", L"World Map: Hilda Garde 3" },
+	{ 9008, L"EVT_WORLD_WORLD08", L"World Map: Invincible" },
+	{ 9009, L"EVT_WORLD_WORLD09", L"World Map: ???" },
+	{ 9010, L"EVT_WORLD_WORLD10", L"World Map: Flying Airships" },
+	{ 9011, L"EVT_WORLD_WORLD11", L"World Map: Around Dali" },
+	{ 9012, L"EVT_WORLD_WORLD12", L"World Map/Event: Chocobo Treasure" },
+	{ 9100, L"EVT_WORLD_WORLDTS", L"14th World Map" },
+	{ 9101, L"EVT_WORLD_WORLDSV", L"15th World Map" }
+/*	{ 234, "EVT_WORLD_PAGE_1" },
+	{ 598, "EVT_WORLD_WM_LND00" },
+	{ 599, "EVT_WORLD_WM_TRE00" },
+	{ 286, "EVT_WORLD_WORLD_LND00" },
+	{ 287, "EVT_WORLD_WORLD_TRE00" }*/
+};
+
 //-- Music
 static SortedChoiceItem HADES_STRING_MUSIC_NAME[] = {
 	{ 60,	L"Ice Cavern" },
@@ -232,6 +257,16 @@ static SortedChoiceItem HADES_STRING_AUDIO_NAME[] = {
 };
 
 //-- Model
+static wxString DATABASE_MODEL_TYPE[] = {
+	L"untyped",
+	L"accessory",
+	L"main",
+	L"enemy",
+	L"NPC",
+	L"sub",
+	L"weapon",
+};
+
 static SortedChoiceItem HADES_STRING_MODEL_NAME[] = {
 	{ 0,	L"Enemy_Deathguise" },
 	{ 1,	L"Enemy_Ozma" },

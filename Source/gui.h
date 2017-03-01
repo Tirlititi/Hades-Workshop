@@ -51,6 +51,7 @@ class PreviewTextCtrl;
 #include <wx/statline.h>
 #include <wx/treelist.h>
 #include <wx/radiobut.h>
+#include <wx/gauge.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -542,11 +543,67 @@ class PreviewTextCtrl;
 #define wxID_PDATA63 1485
 #define wxID_PDATA7 1486
 #define wxID_LEVEL0 1487
-#define wxID_RESOURCES 1488
-#define wxID_MAINDATA 1489
-#define wxID_PATH 1490
-#define wxID_FOLDER64 1491
-#define wxID_FOLDER86 1492
+#define wxID_LEVEL1 1488
+#define wxID_LEVEL2 1489
+#define wxID_LEVEL3 1490
+#define wxID_LEVEL4 1491
+#define wxID_LEVEL5 1492
+#define wxID_LEVEL6 1493
+#define wxID_LEVEL7 1494
+#define wxID_LEVEL8 1495
+#define wxID_LEVEL9 1496
+#define wxID_LEVEL10 1497
+#define wxID_LEVEL11 1498
+#define wxID_LEVEL12 1499
+#define wxID_LEVEL13 1500
+#define wxID_LEVEL14 1501
+#define wxID_LEVEL15 1502
+#define wxID_LEVEL16 1503
+#define wxID_LEVEL17 1504
+#define wxID_LEVEL18 1505
+#define wxID_LEVEL19 1506
+#define wxID_LEVEL20 1507
+#define wxID_LEVEL21 1508
+#define wxID_LEVEL22 1509
+#define wxID_LEVEL23 1510
+#define wxID_LEVEL24 1511
+#define wxID_LEVEL25 1512
+#define wxID_LEVEL26 1513
+#define wxID_LEVEL27 1514
+#define wxID_RESOURCES 1515
+#define wxID_MAINDATA 1516
+#define wxID_SHARED0 1517
+#define wxID_SHARED1 1518
+#define wxID_SHARED2 1519
+#define wxID_SHARED3 1520
+#define wxID_SHARED4 1521
+#define wxID_SHARED5 1522
+#define wxID_SHARED6 1523
+#define wxID_SHARED7 1524
+#define wxID_SHARED8 1525
+#define wxID_SHARED9 1526
+#define wxID_SHARED10 1527
+#define wxID_SHARED11 1528
+#define wxID_SHARED12 1529
+#define wxID_SHARED13 1530
+#define wxID_SHARED14 1531
+#define wxID_SHARED15 1532
+#define wxID_SHARED16 1533
+#define wxID_SHARED17 1534
+#define wxID_SHARED18 1535
+#define wxID_SHARED19 1536
+#define wxID_SHARED20 1537
+#define wxID_SHARED21 1538
+#define wxID_SHARED22 1539
+#define wxID_SHARED23 1540
+#define wxID_SHARED24 1541
+#define wxID_SHARED25 1542
+#define wxID_SHARED26 1543
+#define wxID_SHARED27 1544
+#define wxID_SHARED28 1545
+#define wxID_PATH 1546
+#define wxID_FOLDER64 1547
+#define wxID_FOLDER86 1548
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class MainFrameBase
@@ -2310,6 +2367,7 @@ class BatchExportWindow : public wxDialog
 	
 	public:
 		wxFilePickerCtrl* m_filepicker;
+		wxCheckBox* m_exportorder;
 		
 		BatchExportWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Export Data"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE ); 
 		~BatchExportWindow();
@@ -2372,7 +2430,7 @@ class FieldTextureExportWindow : public wxDialog
 	private:
 	
 	protected:
-		wxStaticText* m_staticText325;
+		wxStaticText* m_staticText328;
 		wxStaticText* m_staticText326;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
@@ -2380,9 +2438,11 @@ class FieldTextureExportWindow : public wxDialog
 	public:
 		wxFilePickerCtrl* m_filepicker;
 		wxCheckBox* m_mergetiles;
+		wxCheckBox* m_exportorder;
+		wxCheckBox* m_onlyselected;
 		wxChoice* m_languagetitle;
 		
-		FieldTextureExportWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Export Background"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 275,150 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+		FieldTextureExportWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Export Background"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 300,185 ), long style = wxDEFAULT_DIALOG_STYLE ); 
 		~FieldTextureExportWindow();
 	
 };
@@ -2988,6 +3048,7 @@ class UnityViewerWindow : public wxFrame
 	protected:
 		wxMenuBar* m_menubar;
 		wxMenu* m_menufile;
+		wxMenuItem* m_menureopen;
 		wxMenu* m_menuassets;
 		wxMenu* m_submenudata;
 		wxMenu* m_submenufield;
@@ -2995,14 +3056,22 @@ class UnityViewerWindow : public wxFrame
 		wxMenu* m_submenulevel;
 		wxMenu* m_submenushared;
 		wxMenu* m_menuoptions;
-		wxMenuItem* m_menudisplaypath;
+		wxMenuItem* m_menuexportpath;
+		wxMenu* m_menuconvertimg;
+		wxMenuItem* m_menuconvertimgnone;
+		wxMenuItem* m_menuconvertimgbmp;
+		wxMenuItem* m_menuconvertimgpng;
+		wxMenuItem* m_menuconvertimgtga;
+		wxMenuItem* m_menuconvertimgtiff;
 		wxMenuItem* m_menufolderx64;
 		wxMenuItem* m_menufolderx86;
+		wxGauge* m_loadgauge;
 		wxListCtrl* m_assetlist;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnMenuSelection( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnSortColumn( wxListEvent& event ) { event.Skip(); }
+		virtual void OnAssetRightClick( wxListEvent& event ) { event.Skip(); }
 		
 	
 	public:

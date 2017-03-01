@@ -7,6 +7,7 @@
 #include "Gui_LoadingDialog.h"
 #include "Hades_Strings.h"
 #include "Database_Steam.h"
+#include "Database_Resource.h"
 using namespace std;
 
 SaveSet::SaveSet(SpellDataSet* sp, CommandDataSet* cmd, EnemyDataSet* enmy, ShopDataSet* shop, TextDataSet* text,/*
@@ -1033,7 +1034,7 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	dest.field_tiles_localized = new bool[dest.field_amount];
 	dest.field_file_id = new uint8_t[dest.field_amount];
 	dest.field_id = new uint16_t[dest.field_amount];
-	dest.world_amount = G_N_ELEMENTS(SteamWorldScript);
+	dest.world_amount = WORLD_BLOCK_VALID_AMOUNT; // Both EVT_WORLD_WORLDTS and EVT_WORLD_WORLDSV are japanese-only and are leftovers
 	dest.world_id = new uint16_t[dest.world_amount];
 	UnityArchiveAssetBundle enmyindexlist;
 	unityarchivename = dest.steam_dir_assets+"p0data2.bin";
@@ -1161,10 +1162,10 @@ fstream fout("aaaa.txt",ios::app|ios::out); fout << "Model FBX: " << (unsigned i
 	}
 	
 	// Worlds
-	string worldnamelower[G_N_ELEMENTS(SteamWorldScript)];
-	for (i=0;i<G_N_ELEMENTS(SteamWorldScript);i++) {
-		dest.world_id[i] = SteamWorldScript[i].id;
-		worldnamelower[i] = SteamWorldScript[i].name;
+	string worldnamelower[WORLD_BLOCK_VALID_AMOUNT];
+	for (i=0;i<WORLD_BLOCK_VALID_AMOUNT;i++) {
+		dest.world_id[i] = HADES_STRING_WORLD_BLOCK_NAME[i].id;
+		worldnamelower[i] = HADES_STRING_WORLD_BLOCK_NAME[i].steamid.ToStdString();
 		transform(worldnamelower[i].begin(),worldnamelower[i].end(),worldnamelower[i].begin(),::tolower);
 	}
 	for (i=0;i<STEAM_LANGUAGE_AMOUNT;i++) {

@@ -1810,31 +1810,7 @@ static SteamBattleDictionary SteamBattleScript[] = {
 	{ 4159, "EVT_BTL_TEST_SEQ_11" }*/
 };
 
-static SteamDictionary SteamWorldScript[] = {
-	{ 9000, "EVT_WORLD_WORLD00" },
-	{ 9001, "EVT_WORLD_WORLD01" },
-	{ 9002, "EVT_WORLD_WORLD02" },
-	{ 9003, "EVT_WORLD_WORLD03" },
-	{ 9004, "EVT_WORLD_WORLD04" },
-	{ 9005, "EVT_WORLD_WORLD05" },
-	{ 9006, "EVT_WORLD_WORLD06" },
-	{ 9007, "EVT_WORLD_WORLD07" },
-	{ 9008, "EVT_WORLD_WORLD08" },
-	{ 9009, "EVT_WORLD_WORLD09" },
-	{ 9010, "EVT_WORLD_WORLD10" },
-	{ 9011, "EVT_WORLD_WORLD11" },
-	{ 9012, "EVT_WORLD_WORLD12" }
-//	{ 9101, "EVT_WORLD_WORLDSV" },
-//	{ 9100, "EVT_WORLD_WORLDTS" },
-/*	{ 234, "EVT_WORLD_PAGE_1" },
-	{ 598, "EVT_WORLD_WM_LND00" },
-	{ 599, "EVT_WORLD_WM_TRE00" },
-	{ 286, "EVT_WORLD_WORLD_LND00" },
-	{ 287, "EVT_WORLD_WORLD_TRE00" }*/
-};
-
 // Text files
-
 static SteamDictionary SteamTextFile[] = {
 	{ 1029, "MES_AA" },
 	{ 55, "MES_AA_DATA" },

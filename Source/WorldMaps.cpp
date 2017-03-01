@@ -1,7 +1,7 @@
 #include "WorldMaps.h"
 
 #include "Gui_LoadingDialog.h"
-#include "Hades_Strings.h"
+#include "Database_Resource.h"
 
 #define WM_DATA_CHUNK_ID	0x41B
 

@@ -3637,6 +3637,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	fgSizer91->Add( m_staticText246, 0, wxALL, 5 );
 	
 	m_enemygroupcamera = new wxSpinCtrl( m_enemygroupscrolledwindow, wxID_CAMERA, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	m_enemygroupcamera->SetToolTip( _("Opening camera ID\nMust be one of the 3 first cameras (0, 1 or 2)\nFor other values, a random camera is chosen among the first 3") );
+	
 	fgSizer91->Add( m_enemygroupcamera, 0, wxALL, 2 );
 	
 	m_enemygroupidlabel = new wxStaticText( m_enemygroupscrolledwindow, wxID_ANY, _("Enemies"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -7464,7 +7466,7 @@ AboutWindow::AboutWindow( wxWindow* parent, wxWindowID id, const wxString& title
 	wxBoxSizer* bSizer16;
 	bSizer16 = new wxBoxSizer( wxVERTICAL );
 	
-	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.36b\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_CENTRE|wxTE_MULTILINE|wxTE_READONLY|wxSIMPLE_BORDER );
+	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.37\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_CENTRE|wxTE_MULTILINE|wxTE_READONLY|wxSIMPLE_BORDER );
 	m_textCtrl13->SetMaxLength( 0 ); 
 	m_textCtrl13->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 	m_textCtrl13->SetMinSize( wxSize( -1,330 ) );
@@ -8196,6 +8198,12 @@ BatchExportWindow::BatchExportWindow( wxWindow* parent, wxWindowID id, const wxS
 	
 	bSizer1591->Add( m_mergetile, 0, wxALL, 5 );
 	
+	m_exportorder = new wxCheckBox( m_backgroundpanel, wxID_ANY, _("Sort Tilesets by Depth"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_exportorder->SetValue(true); 
+	m_exportorder->SetToolTip( _("If disabled, the tilesets are exported using their internal ordering\nIgnored if the tilesets are merged") );
+	
+	bSizer1591->Add( m_exportorder, 0, wxALL, 5 );
+	
 	wxString m_languagetitleChoices[] = { _("All Titles"), _("English (US)"), _("English (UK)"), _("Japanese"), _("German"), _("French"), _("Italian"), _("Spanish") };
 	int m_languagetitleNChoices = sizeof( m_languagetitleChoices ) / sizeof( wxString );
 	m_languagetitle = new wxChoice( m_backgroundpanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_languagetitleNChoices, m_languagetitleChoices, 0 );
@@ -8215,7 +8223,7 @@ BatchExportWindow::BatchExportWindow( wxWindow* parent, wxWindowID id, const wxS
 	sbSizer2 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, _("Export List") ), wxVERTICAL );
 	
 	wxArrayString m_exportlistChoices;
-	m_exportlist = new wxCheckListBox( this, wxID_ANY, wxDefaultPosition, wxSize( 230,150 ), m_exportlistChoices, wxLB_HSCROLL|wxLB_SINGLE );
+	m_exportlist = new wxCheckListBox( this, wxID_ANY, wxDefaultPosition, wxSize( 230,140 ), m_exportlistChoices, wxLB_HSCROLL|wxLB_SINGLE );
 	sbSizer2->Add( m_exportlist, 0, wxALL, 5 );
 	
 	
@@ -8427,9 +8435,20 @@ FieldTextureExportWindow::FieldTextureExportWindow( wxWindow* parent, wxWindowID
 	
 	fgSizer48->Add( m_mergetiles, 0, wxALL, 5 );
 	
-	m_staticText325 = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText325->Wrap( -1 );
-	fgSizer48->Add( m_staticText325, 0, 0, 5 );
+	m_exportorder = new wxCheckBox( this, wxID_ANY, _("Sort Tilesets by Depth"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_exportorder->SetValue(true); 
+	m_exportorder->SetToolTip( _("If disabled, the tilesets are exported using their internal ordering\nIgnored if the tilesets are merged") );
+	
+	fgSizer48->Add( m_exportorder, 0, wxALL, 5 );
+	
+	m_onlyselected = new wxCheckBox( this, wxID_ANY, _("Export Selected Only"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_onlyselected->SetToolTip( _("Export only the tilesets enabled in the preview") );
+	
+	fgSizer48->Add( m_onlyselected, 0, wxALL, 5 );
+	
+	m_staticText328 = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText328->Wrap( -1 );
+	fgSizer48->Add( m_staticText328, 0, 0, 5 );
 	
 	m_staticText326 = new wxStaticText( this, wxID_ANY, _("Language Titles"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText326->Wrap( -1 );
@@ -10380,6 +10399,7 @@ BackgroundEditorWindow::~BackgroundEditorWindow()
 UnityViewerWindow::UnityViewerWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxFrame( parent, id, title, pos, size, style )
 {
 	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	this->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_MENU ) );
 	
 	m_menubar = new wxMenuBar( 0 );
 	m_menufile = new wxMenu();
@@ -10387,7 +10407,6 @@ UnityViewerWindow::UnityViewerWindow( wxWindow* parent, wxWindowID id, const wxS
 	m_menuopen = new wxMenuItem( m_menufile, wxID_OPEN, wxString( _("Open") ) + wxT('\t') + wxT("Ctrl+O"), wxEmptyString, wxITEM_NORMAL );
 	m_menufile->Append( m_menuopen );
 	
-	wxMenuItem* m_menureopen;
 	m_menureopen = new wxMenuItem( m_menufile, wxID_REOPEN, wxString( _("Reload") ) + wxT('\t') + wxT("F5"), wxEmptyString, wxITEM_NORMAL );
 	m_menufile->Append( m_menureopen );
 	
@@ -10482,6 +10501,114 @@ UnityViewerWindow::UnityViewerWindow( wxWindow* parent, wxWindowID id, const wxS
 	m_menulevel0 = new wxMenuItem( m_submenulevel, wxID_LEVEL0, wxString( _("level0") ) , wxEmptyString, wxITEM_NORMAL );
 	m_submenulevel->Append( m_menulevel0 );
 	
+	wxMenuItem* m_menulevel1;
+	m_menulevel1 = new wxMenuItem( m_submenulevel, wxID_LEVEL1, wxString( _("level1") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel1 );
+	
+	wxMenuItem* m_menulevel2;
+	m_menulevel2 = new wxMenuItem( m_submenulevel, wxID_LEVEL2, wxString( _("level2") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel2 );
+	
+	wxMenuItem* m_menulevel3;
+	m_menulevel3 = new wxMenuItem( m_submenulevel, wxID_LEVEL3, wxString( _("level3") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel3 );
+	
+	wxMenuItem* m_menulevel4;
+	m_menulevel4 = new wxMenuItem( m_submenulevel, wxID_LEVEL4, wxString( _("level4") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel4 );
+	
+	wxMenuItem* m_menulevel5;
+	m_menulevel5 = new wxMenuItem( m_submenulevel, wxID_LEVEL5, wxString( _("level5") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel5 );
+	
+	wxMenuItem* m_menulevel6;
+	m_menulevel6 = new wxMenuItem( m_submenulevel, wxID_LEVEL6, wxString( _("level6") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel6 );
+	
+	wxMenuItem* m_menulevel7;
+	m_menulevel7 = new wxMenuItem( m_submenulevel, wxID_LEVEL7, wxString( _("level7") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel7 );
+	
+	wxMenuItem* m_menulevel8;
+	m_menulevel8 = new wxMenuItem( m_submenulevel, wxID_LEVEL8, wxString( _("level8") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel8 );
+	
+	wxMenuItem* m_menulevel9;
+	m_menulevel9 = new wxMenuItem( m_submenulevel, wxID_LEVEL9, wxString( _("level9") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel9 );
+	
+	wxMenuItem* m_menulevel10;
+	m_menulevel10 = new wxMenuItem( m_submenulevel, wxID_LEVEL10, wxString( _("level10") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel10 );
+	
+	wxMenuItem* m_menulevel11;
+	m_menulevel11 = new wxMenuItem( m_submenulevel, wxID_LEVEL11, wxString( _("level11") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel11 );
+	
+	wxMenuItem* m_menulevel12;
+	m_menulevel12 = new wxMenuItem( m_submenulevel, wxID_LEVEL12, wxString( _("level12") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel12 );
+	
+	wxMenuItem* m_menulevel13;
+	m_menulevel13 = new wxMenuItem( m_submenulevel, wxID_LEVEL13, wxString( _("level13") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel13 );
+	
+	wxMenuItem* m_menulevel14;
+	m_menulevel14 = new wxMenuItem( m_submenulevel, wxID_LEVEL14, wxString( _("level14") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel14 );
+	
+	wxMenuItem* m_menulevel15;
+	m_menulevel15 = new wxMenuItem( m_submenulevel, wxID_LEVEL15, wxString( _("level15") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel15 );
+	
+	wxMenuItem* m_menulevel16;
+	m_menulevel16 = new wxMenuItem( m_submenulevel, wxID_LEVEL16, wxString( _("level16") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel16 );
+	
+	wxMenuItem* m_menulevel17;
+	m_menulevel17 = new wxMenuItem( m_submenulevel, wxID_LEVEL17, wxString( _("level17") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel17 );
+	
+	wxMenuItem* m_menulevel18;
+	m_menulevel18 = new wxMenuItem( m_submenulevel, wxID_LEVEL18, wxString( _("level18") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel18 );
+	
+	wxMenuItem* m_menulevel19;
+	m_menulevel19 = new wxMenuItem( m_submenulevel, wxID_LEVEL19, wxString( _("level19") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel19 );
+	
+	wxMenuItem* m_menulevel20;
+	m_menulevel20 = new wxMenuItem( m_submenulevel, wxID_LEVEL20, wxString( _("level20") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel20 );
+	
+	wxMenuItem* m_menulevel21;
+	m_menulevel21 = new wxMenuItem( m_submenulevel, wxID_LEVEL21, wxString( _("level21") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel21 );
+	
+	wxMenuItem* m_menulevel22;
+	m_menulevel22 = new wxMenuItem( m_submenulevel, wxID_LEVEL22, wxString( _("level22") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel22 );
+	
+	wxMenuItem* m_menulevel23;
+	m_menulevel23 = new wxMenuItem( m_submenulevel, wxID_LEVEL23, wxString( _("level23") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel23 );
+	
+	wxMenuItem* m_menulevel24;
+	m_menulevel24 = new wxMenuItem( m_submenulevel, wxID_LEVEL24, wxString( _("level24") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel24 );
+	
+	wxMenuItem* m_menulevel25;
+	m_menulevel25 = new wxMenuItem( m_submenulevel, wxID_LEVEL25, wxString( _("level25") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel25 );
+	
+	wxMenuItem* m_menulevel26;
+	m_menulevel26 = new wxMenuItem( m_submenulevel, wxID_LEVEL26, wxString( _("level26") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel26 );
+	
+	wxMenuItem* m_menulevel27;
+	m_menulevel27 = new wxMenuItem( m_submenulevel, wxID_LEVEL27, wxString( _("level27") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenulevel->Append( m_menulevel27 );
+	
 	m_menuassets->Append( -1, _("Level"), m_submenulevel );
 	
 	m_submenushared = new wxMenu();
@@ -10493,14 +10620,151 @@ UnityViewerWindow::UnityViewerWindow( wxWindow* parent, wxWindowID id, const wxS
 	m_menumaindata = new wxMenuItem( m_submenushared, wxID_MAINDATA, wxString( _("mainData") ) , wxEmptyString, wxITEM_NORMAL );
 	m_submenushared->Append( m_menumaindata );
 	
+	wxMenuItem* m_menushared0;
+	m_menushared0 = new wxMenuItem( m_submenushared, wxID_SHARED0, wxString( _("sharedassets0") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared0 );
+	
+	wxMenuItem* m_menushared1;
+	m_menushared1 = new wxMenuItem( m_submenushared, wxID_SHARED1, wxString( _("sharedassets1") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared1 );
+	
+	wxMenuItem* m_menushared2;
+	m_menushared2 = new wxMenuItem( m_submenushared, wxID_SHARED2, wxString( _("sharedassets2") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared2 );
+	
+	wxMenuItem* m_menushared3;
+	m_menushared3 = new wxMenuItem( m_submenushared, wxID_SHARED3, wxString( _("sharedassets3") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared3 );
+	
+	wxMenuItem* m_menushared4;
+	m_menushared4 = new wxMenuItem( m_submenushared, wxID_SHARED4, wxString( _("sharedassets4") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared4 );
+	
+	wxMenuItem* m_menushared5;
+	m_menushared5 = new wxMenuItem( m_submenushared, wxID_SHARED5, wxString( _("sharedassets5") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared5 );
+	
+	wxMenuItem* m_menushared6;
+	m_menushared6 = new wxMenuItem( m_submenushared, wxID_SHARED6, wxString( _("sharedassets6") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared6 );
+	
+	wxMenuItem* m_menushared7;
+	m_menushared7 = new wxMenuItem( m_submenushared, wxID_SHARED7, wxString( _("sharedassets7") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared7 );
+	
+	wxMenuItem* m_menushared8;
+	m_menushared8 = new wxMenuItem( m_submenushared, wxID_SHARED8, wxString( _("sharedassets8") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared8 );
+	
+	wxMenuItem* m_menushared9;
+	m_menushared9 = new wxMenuItem( m_submenushared, wxID_SHARED9, wxString( _("sharedassets9") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared9 );
+	
+	wxMenuItem* m_menushared10;
+	m_menushared10 = new wxMenuItem( m_submenushared, wxID_SHARED10, wxString( _("sharedassets10") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared10 );
+	
+	wxMenuItem* m_menushared11;
+	m_menushared11 = new wxMenuItem( m_submenushared, wxID_SHARED11, wxString( _("sharedassets11") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared11 );
+	
+	wxMenuItem* m_menushared12;
+	m_menushared12 = new wxMenuItem( m_submenushared, wxID_SHARED12, wxString( _("sharedassets12") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared12 );
+	
+	wxMenuItem* m_menushared13;
+	m_menushared13 = new wxMenuItem( m_submenushared, wxID_SHARED13, wxString( _("sharedassets13") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared13 );
+	
+	wxMenuItem* m_menushared14;
+	m_menushared14 = new wxMenuItem( m_submenushared, wxID_SHARED14, wxString( _("sharedassets14") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared14 );
+	
+	wxMenuItem* m_menushared15;
+	m_menushared15 = new wxMenuItem( m_submenushared, wxID_SHARED15, wxString( _("sharedassets15") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared15 );
+	
+	wxMenuItem* m_menushared16;
+	m_menushared16 = new wxMenuItem( m_submenushared, wxID_SHARED16, wxString( _("sharedassets16") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared16 );
+	
+	wxMenuItem* m_menushared17;
+	m_menushared17 = new wxMenuItem( m_submenushared, wxID_SHARED17, wxString( _("sharedassets17") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared17 );
+	
+	wxMenuItem* m_menushared18;
+	m_menushared18 = new wxMenuItem( m_submenushared, wxID_SHARED18, wxString( _("sharedassets18") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared18 );
+	
+	wxMenuItem* m_menushared19;
+	m_menushared19 = new wxMenuItem( m_submenushared, wxID_SHARED19, wxString( _("sharedassets19") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared19 );
+	
+	wxMenuItem* m_menushared20;
+	m_menushared20 = new wxMenuItem( m_submenushared, wxID_SHARED20, wxString( _("sharedassets20") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared20 );
+	
+	wxMenuItem* m_menushared21;
+	m_menushared21 = new wxMenuItem( m_submenushared, wxID_SHARED21, wxString( _("sharedassets21") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared21 );
+	
+	wxMenuItem* m_menushared22;
+	m_menushared22 = new wxMenuItem( m_submenushared, wxID_SHARED22, wxString( _("sharedassets22") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared22 );
+	
+	wxMenuItem* m_menushared23;
+	m_menushared23 = new wxMenuItem( m_submenushared, wxID_SHARED23, wxString( _("sharedassets23") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared23 );
+	
+	wxMenuItem* m_menushared24;
+	m_menushared24 = new wxMenuItem( m_submenushared, wxID_SHARED24, wxString( _("sharedassets24") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared24 );
+	
+	wxMenuItem* m_menushared25;
+	m_menushared25 = new wxMenuItem( m_submenushared, wxID_SHARED25, wxString( _("sharedassets25") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared25 );
+	
+	wxMenuItem* m_menushared26;
+	m_menushared26 = new wxMenuItem( m_submenushared, wxID_SHARED26, wxString( _("sharedassets26") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared26 );
+	
+	wxMenuItem* m_menushared27;
+	m_menushared27 = new wxMenuItem( m_submenushared, wxID_SHARED27, wxString( _("sharedassets27") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared27 );
+	
+	wxMenuItem* m_menushared28;
+	m_menushared28 = new wxMenuItem( m_submenushared, wxID_SHARED28, wxString( _("sharedassets28") ) , wxEmptyString, wxITEM_NORMAL );
+	m_submenushared->Append( m_menushared28 );
+	
 	m_menuassets->Append( -1, _("Shared Assets"), m_submenushared );
 	
 	m_menubar->Append( m_menuassets, _("Archive") ); 
 	
 	m_menuoptions = new wxMenu();
-	m_menudisplaypath = new wxMenuItem( m_menuoptions, wxID_PATH, wxString( _("Show Full Path") ) , wxEmptyString, wxITEM_CHECK );
-	m_menuoptions->Append( m_menudisplaypath );
-	m_menudisplaypath->Check( true );
+	m_menuexportpath = new wxMenuItem( m_menuoptions, wxID_PATH, wxString( _("Export/Import with Full Path") ) , wxEmptyString, wxITEM_CHECK );
+	m_menuoptions->Append( m_menuexportpath );
+	m_menuexportpath->Check( true );
+	
+	m_menuoptions->AppendSeparator();
+	
+	m_menuconvertimg = new wxMenu();
+	m_menuconvertimgnone = new wxMenuItem( m_menuconvertimg, wxID_ANY, wxString( _("Don't Convert") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertimg->Append( m_menuconvertimgnone );
+	
+	m_menuconvertimgbmp = new wxMenuItem( m_menuconvertimg, wxID_ANY, wxString( _("BMP") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertimg->Append( m_menuconvertimgbmp );
+	
+	m_menuconvertimgpng = new wxMenuItem( m_menuconvertimg, wxID_ANY, wxString( _("PNG") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertimg->Append( m_menuconvertimgpng );
+	m_menuconvertimgpng->Check( true );
+	
+	m_menuconvertimgtga = new wxMenuItem( m_menuconvertimg, wxID_ANY, wxString( _("TGA") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertimg->Append( m_menuconvertimgtga );
+	
+	m_menuconvertimgtiff = new wxMenuItem( m_menuconvertimg, wxID_ANY, wxString( _("TIFF") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertimg->Append( m_menuconvertimgtiff );
+	
+	m_menuoptions->Append( -1, _("Automatically Convert Images"), m_menuconvertimg );
 	
 	m_menuoptions->AppendSeparator();
 	
@@ -10516,11 +10780,18 @@ UnityViewerWindow::UnityViewerWindow( wxWindow* parent, wxWindowID id, const wxS
 	this->SetMenuBar( m_menubar );
 	
 	wxFlexGridSizer* fgSizer85;
-	fgSizer85 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer85 = new wxFlexGridSizer( 0, 1, 0, 0 );
 	fgSizer85->AddGrowableCol( 0 );
-	fgSizer85->AddGrowableRow( 0 );
+	fgSizer85->AddGrowableRow( 1 );
 	fgSizer85->SetFlexibleDirection( wxBOTH );
 	fgSizer85->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	m_loadgauge = new wxGauge( this, wxID_ANY, 100, wxDefaultPosition, wxDefaultSize, wxGA_HORIZONTAL|wxGA_SMOOTH );
+	m_loadgauge->SetValue( 0 ); 
+	m_loadgauge->SetForegroundColour( wxColour( 28, 153, 255 ) );
+	m_loadgauge->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_WINDOW ) );
+	
+	fgSizer85->Add( m_loadgauge, 0, wxALL|wxEXPAND, 5 );
 	
 	m_assetlist = new wxListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxNO_BORDER );
 	fgSizer85->Add( m_assetlist, 0, wxALL|wxEXPAND, 1 );
@@ -10553,12 +10824,68 @@ UnityViewerWindow::UnityViewerWindow( wxWindow* parent, wxWindowID id, const wxS
 	this->Connect( m_menupdata63->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
 	this->Connect( m_menupdata7->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
 	this->Connect( m_menulevel0->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel1->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel2->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel3->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel4->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel5->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel6->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel7->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel8->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel9->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel10->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel11->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel12->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel13->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel14->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel15->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel16->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel17->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel18->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel19->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel20->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel21->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel22->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel23->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel24->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel25->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel26->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menulevel27->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
 	this->Connect( m_menuresources->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
 	this->Connect( m_menumaindata->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
-	this->Connect( m_menudisplaypath->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared0->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared1->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared2->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared3->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared4->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared5->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared6->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared7->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared8->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared9->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared10->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared11->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared12->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared13->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared14->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared15->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared16->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared17->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared18->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared19->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared20->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared21->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared22->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared23->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared24->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared25->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared26->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared27->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Connect( m_menushared28->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
 	this->Connect( m_menufolderx64->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
 	this->Connect( m_menufolderx86->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
 	m_assetlist->Connect( wxEVT_COMMAND_LIST_COL_CLICK, wxListEventHandler( UnityViewerWindow::OnSortColumn ), NULL, this );
+	m_assetlist->Connect( wxEVT_COMMAND_LIST_ITEM_RIGHT_CLICK, wxListEventHandler( UnityViewerWindow::OnAssetRightClick ), NULL, this );
 }
 
 UnityViewerWindow::~UnityViewerWindow()
@@ -10585,12 +10912,68 @@ UnityViewerWindow::~UnityViewerWindow()
 	this->Disconnect( wxID_PDATA63, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
 	this->Disconnect( wxID_PDATA7, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
 	this->Disconnect( wxID_LEVEL0, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL1, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL2, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL3, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL4, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL5, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL6, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL7, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL8, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL9, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL10, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL11, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL12, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL13, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL14, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL15, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL16, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL17, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL18, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL19, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL20, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL21, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL22, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL23, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL24, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL25, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL26, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_LEVEL27, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
 	this->Disconnect( wxID_RESOURCES, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
 	this->Disconnect( wxID_MAINDATA, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
-	this->Disconnect( wxID_PATH, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED0, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED1, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED2, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED3, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED4, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED5, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED6, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED7, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED8, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED9, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED10, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED11, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED12, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED13, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED14, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED15, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED16, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED17, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED18, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED19, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED20, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED21, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED22, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED23, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED24, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED25, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED26, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED27, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
+	this->Disconnect( wxID_SHARED28, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
 	this->Disconnect( wxID_FOLDER64, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
 	this->Disconnect( wxID_FOLDER86, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
 	m_assetlist->Disconnect( wxEVT_COMMAND_LIST_COL_CLICK, wxListEventHandler( UnityViewerWindow::OnSortColumn ), NULL, this );
+	m_assetlist->Disconnect( wxEVT_COMMAND_LIST_ITEM_RIGHT_CLICK, wxListEventHandler( UnityViewerWindow::OnAssetRightClick ), NULL, this );
 	
 }
 

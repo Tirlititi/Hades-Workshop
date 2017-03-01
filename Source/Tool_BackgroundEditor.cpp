@@ -1,6 +1,7 @@
 #include "Tool_BackgroundEditor.h"
 
 #include <wx/tokenzr.h>
+#include <wx/filefn.h>
 #include <algorithm>
 #include "main.h"
 #include "Gui_TextureEditor.h"
@@ -8,7 +9,7 @@
 #include "Hades_Strings.h"
 #include "Database_Steam.h"
 
-#define CONVERTER_MEMORY_LIMIT	100000000L
+#define CONVERTER_MEMORY_LIMIT	100000000L // DEBUG: unused now ; layers are always loaded individually
 
 const static wxColor TILECOLOR_BOUNDARY = wxColor(0,0,0,255);
 const static wxColor TILECOLOR_INTERIOR = wxColor(80,80,80,50);
@@ -75,7 +76,7 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 	unsigned int i,j,k,x,y,tilei;
 	int imgindex;
 	int res = 0;
-	wxFile atlasout(outputname,wxFile::write);
+	wxFile atlasout(outputname+_(L".tmp"),wxFile::write);
 	if (!atlasout.IsOpened())
 		return 1;
 	tilesize = tiledata.parent->tile_size;
@@ -101,7 +102,7 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 	wxImage* tblockimgarray = new wxImage[tilesamountplustitle];
 	unsigned int tiledefaultsize = GetGameType()==GAME_TYPE_PSX ? FIELD_TILE_BASE_SIZE : FIELD_TILE_BASE_SIZE*2;
 	unsigned int expectmemoryusage = 0;
-	bool loadallimage = true; // If the images are too big, we don't load them all in the RAM simultaneously
+	bool loadallimage = false; // If the images are too big, we don't load them all in the RAM simultaneously
 	for (i=0;i<tilesamountplustitle;i++) {
 		if (wxFile::Exists(imgfilename[i])) {
 			tblockimgarray[i].LoadFile(imgfilename[i],type);
@@ -109,7 +110,7 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 			FieldTilesCameraDataStruct& camera = tiledata.camera[tiledata.tiles[tilei].camera_id];
 			if (camera.width/tiledefaultsize*tilesize>tblockimgarray[i].GetWidth() || camera.height/tiledefaultsize*tilesize>tblockimgarray[i].GetHeight()) {
 				delete[] tblockimgarray;
-				remove(outputname.c_str());
+				remove((outputname+_(L".tmp")).c_str());
 				return 2;
 			}
 			expectmemoryusage += (tblockimgarray[i].GetWidth()*tblockimgarray[i].GetHeight())*4;
@@ -158,8 +159,17 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 	// Which RGB value should be used for (2) is not clear. The default atlas use a kind of
 	// X and Y expansion of the colors.
 	uint8_t alphalimit;
+	bool skipuk = false;
+	if (tilesamountplustitle>tiledata.tiles_amount)
+		for (i=0;i<tiledata.parent->title_info->amount;i++)
+			if (tiledata.parent->title_info->field_id[i]==tiledata.object_id) {
+				skipuk = !tiledata.parent->title_info->has_uk[i];
+				break;
+			}
 	for (i=0;i<tilesamountplustitle;i++) {
 		tilei = i<tiledata.tiles_amount ? i : i+tiledata.title_tile_amount;
+		if (skipuk && tilei>=tiledata.tiles_amount+STEAM_LANGUAGE_EN*tiledata.title_tile_amount && tilei<tiledata.tiles_amount+(STEAM_LANGUAGE_EN+1)*tiledata.title_tile_amount)
+			continue;
 		FieldTilesTileDataStruct& tile = tiledata.tiles[tilei];
 		FieldTilesCameraDataStruct& camera = tiledata.camera[tile.camera_id];
 		if (!loadallimage)
@@ -459,6 +469,7 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 	atlasout.Close();
 	delete[] dxtatlas;
 	delete[] atlas;
+	wxRenameFile(outputname+_(L".tmp"),outputname,true);
 	return res;
 }
 
@@ -522,7 +533,6 @@ void ToolBackgroundEditor::DrawImage(wxDC& dc) {
 void ToolBackgroundEditor::UpdateImage() {
 	wxImage img = main_img_base.Copy();
 	wxImage tileimg = tile_img_base.Copy();
-	
 	main_img = wxBitmap(img);
 	tile_img = wxBitmap(tileimg);
 	wxClientDC dc(m_texturewindow);
@@ -649,7 +659,7 @@ void ToolBackgroundEditor::OnDirPick(wxFileDirPickerEvent& event) {
 }
 
 void ToolBackgroundEditor::OnRadioClick(wxCommandEvent& event) {
-	
+	// ToDo: Create custom tiling
 }
 
 void ToolBackgroundEditor::OnFieldChoice(wxCommandEvent& event) {
@@ -727,16 +737,29 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 			GetFileNamesAndDepth(imgfilebasename.GetFullPath(),_(L"_"),imgfileext,*tileset,m_sortlayer->IsChecked(),m_revertlayer->IsChecked(),imgfilelist,imgorderlist,usemultiback);
 			int res = CreateBackgroundImage(imgfilelist,destfilebase+_(L".tex"),*tileset,imgorderlist,m_dxtflagchoice->GetSelection());
 			tileset->parent->tile_size = tilesizebackup;
-			if (res<=0) {
-				wxMessageDialog popupsuccess(this,HADES_STRING_STEAM_SAVE_SUCCESS,HADES_STRING_SUCCESS,wxOK|wxCENTRE);
-				popupsuccess.ShowModal();
-			} else if (res==1) {
-				wxLogError(HADES_STRING_OPEN_ERROR_CREATE,destfilebase+_(L".tex"));
-			} else if (res==2) {
-				wxLogError(HADES_STRING_INVALID_IMAGE_DIMENSIONS);
-			}
 			delete[] imgfilelist;
 			delete[] imgorderlist;
+			if (res==0) {
+				wxMessageDialog popupsuccess(this,HADES_STRING_STEAM_SAVE_SUCCESS,HADES_STRING_SUCCESS,wxOK|wxCENTRE);
+				popupsuccess.ShowModal();
+			} else {
+				LogStruct log;
+				if (res<0) {
+					wxString warnstr;
+					warnstr.Printf(wxT(HADES_STRING_BACKGROUNDIMPORT_MISSING_LAYERS),-res,m_fieldchoice->GetSelection(),GetFieldNameOrDefault(cddata,m_fieldchoice->GetSelection()));
+					log.AddWarning(warnstr.wc_str());
+				} else if (res==1) {
+					wxString errstr;
+					errstr.Printf(wxT(HADES_STRING_BACKGROUNDIMPORT_ERROR_CREATE),m_fieldchoice->GetSelection(),GetFieldNameOrDefault(cddata,m_fieldchoice->GetSelection()));
+					log.AddError(errstr.wc_str());
+				} else if (res==2) {
+					wxString errstr;
+					errstr.Printf(wxT(HADES_STRING_BACKGROUNDIMPORT_ERROR_DIMENSIONS),m_fieldchoice->GetSelection(),GetFieldNameOrDefault(cddata,m_fieldchoice->GetSelection()));
+					log.AddError(errstr.wc_str());
+				}
+				LogDialog logdial(this,log);
+				logdial.ShowModal();
+			}
 		} else if (m_auinotebook->GetSelection()==1) { // Mass Converter
 			wxString destfilebase = m_massexportdir->GetPath()+_(L"\\");
 			wxString sourcefilebase = m_massimageimporter->GetPath()+_(L"\\");

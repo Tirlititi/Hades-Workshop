@@ -90,6 +90,7 @@ void FieldTilesDataStruct::Copy(FieldTilesDataStruct& cpy) {
 	}
 	for (i=0;i<tiles_amount+title_tile_amount*STEAM_LANGUAGE_AMOUNT;i++) {
 		tiles[i] = cpy.tiles[i];
+		tiles[i].tile_data_data1 = NULL;
 		tiles[i].AllocTileData();
 		for (j=0;j<tiles[i].tile_amount;j++) {
 			tiles[i].tile_data_data1[j] = cpy.tiles[i].tile_data_data1[j];
@@ -214,7 +215,7 @@ uint32_t* FieldTilesDataStruct::ConvertAsImage(unsigned int cameraid, bool tilef
 	return res;
 }
 
-int FieldTilesDataStruct::Export(const char* outputfile, unsigned int cameraid, bool tileflag[], bool showtp, bool mergetiles, int steamtitlelang) {
+int FieldTilesDataStruct::Export(const char* outputfile, unsigned int cameraid, bool tileflag[], bool showtp, bool mergetiles, bool depthorder, int steamtitlelang) {
 	fstream ftiff(outputfile,ios::out|ios::binary);
 	if (!ftiff.is_open())
 		return 1;
@@ -298,9 +299,9 @@ int FieldTilesDataStruct::Export(const char* outputfile, unsigned int cameraid, 
 		for (i=0;i<tiles_amount+title_tile_amount*STEAM_LANGUAGE_AMOUNT;i++) {
 			FieldTilesTileDataStruct* tptr;
 			if (i<tiles_amount && steamtitlelang<0)
-				tptr = tiles_sorted[i];
+				tptr = depthorder ? tiles_sorted[i] : &tiles[i];
 			else if (i<tiles_amount)
-				tptr = &tiles[GetRelatedTitleTileById(tiles_sorted[i]->id,steamtitlelang)];
+				tptr = &tiles[GetRelatedTitleTileById(depthorder ? tiles_sorted[i]->id : i,steamtitlelang)];
 			else if (i>=tiles_amount+title_tile_amount && steamtitlelang<0)
 				tptr = &tiles[i];
 			else
@@ -1014,7 +1015,12 @@ bool FieldSteamTitleInfo::ReadTitleTileId(FieldTilesDataStruct* tileset, Configu
 //				localbackground.id = i;
 				SteamReadLong(ffbin,localbackground.size);
 				localbackground.Read(ffbin);
-				newtileid = atlas_title_pos[lang][i];
+				if (langi==STEAM_LANGUAGE_EN && !has_uk[i]) {
+					newtileid = atlas_title_pos[STEAM_LANGUAGE_US][i];
+					for (j=0;j<title_tile_start[i];j++)
+						newtileid += tileset->tiles[j].tile_amount;
+				} else
+					newtileid = atlas_title_pos[langi][i];
 				for (j=title_tile_start[i];j<=title_tile_last[i];j++) {
 					tileindex = tileset->tiles_amount+langi*tileset->title_tile_amount+j-title_tile_start[i];
 					tileset->tiles[tileindex].data1 = localbackground.tiles[j].data1;

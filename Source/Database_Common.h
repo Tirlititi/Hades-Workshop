@@ -3,9 +3,7 @@
 
 #include <wx/arrstr.h>
 
-#ifndef G_N_ELEMENTS
-#define G_N_ELEMENTS(arr) ((sizeof(arr))/(sizeof(arr[0])))
-#endif
+#define G_N_ELEMENTS(ARRAY) ((sizeof(ARRAY))/(sizeof(ARRAY[0])))
 
 struct SortedChoiceItem {
 	unsigned int id;

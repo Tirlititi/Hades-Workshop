@@ -17,7 +17,7 @@ int FileBatch_ExportEnemyScript(wxString path, EnemyDataSet& data, bool* exportl
 int FileBatch_ExportWorldScript(wxString path, WorldMapDataSet& data, bool* exportlist = NULL, bool splitfile = true);
 int FileBatch_ExportFieldScript(wxString path, FieldDataSet& data, bool* exportlist = NULL, bool splitfile = true);
 
-int FileBatch_ExportImageBackground(wxString path, FieldDataSet& data, bool* exportlist = NULL, bool mergetile = true, int steamtitlelang = -1);
+int FileBatch_ExportImageBackground(wxString path, FieldDataSet& data, bool* exportlist = NULL, bool mergetile = true, bool depthorder = true, int steamtitlelang = -1);
 
 //int FileBatch_ExportSceneModel(wxString path, BattleSceneDataSet& data, bool* exportlist = NULL);
 

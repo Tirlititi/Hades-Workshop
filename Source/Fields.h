@@ -189,7 +189,7 @@ public:
 	void Copy(FieldTilesDataStruct& cpy);
 	int GetRelatedTitleTileById(int tileid, SteamLanguage lang);
 	uint32_t* ConvertAsImage(unsigned int cameraid, bool tileflag[] = NULL, bool showtp = false); // delete[] it
-	int Export(const char* outputfile, unsigned int cameraid, bool tileflag[] = NULL, bool showtp = false, bool mergetiles = false, int steamtitlelang = -1);
+	int Export(const char* outputfile, unsigned int cameraid, bool tileflag[] = NULL, bool showtp = false, bool mergetiles = false, bool depthorder = true, int steamtitlelang = -1);
 	
 	void Read(fstream& f, unsigned int titletileamount);
 	void Read(fstream& f) { Read(f,0); }

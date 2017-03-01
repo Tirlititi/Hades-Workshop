@@ -17,9 +17,12 @@
 #define HADES_STRING_GENERIC_PROPERTIES L"Properties..."
 #define HADES_STRING_GENERIC_SELECT_ALL L"Select All"
 #define HADES_STRING_GENERIC_DESELECT_ALL L"Deselect All"
+#define HADES_STRING_GENERIC_EXPORT_SEL L"Export Selection"
+#define HADES_STRING_GENERIC_IMPORT_SEL L"Import Selection"
 #define HADES_STRING_NYI L"Not yet implemented"
 #define HADES_STRING_NO_STEAM L"This feature is disabled for the Steam version"
 #define HADES_STRING_VOID L"_"
+
 //-- MainFrame
 #define HADES_STRING_OPEN_FRAME_NAME L"Open Final Fantasy IX binary file"
 #define HADES_STRING_OPEN_FILTERS L"Binary file (*.bin;Steam)|*.bin;FF9_Launcher.exe|All files|*"
@@ -329,7 +332,6 @@ static wxString HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM[] = {
 #define HADES_STRING_UNKNOWN_FIELD L"UNKNOWN_FIELD"
 #define HADES_STRING_INVALID_FF9LAUNCHER L"Select a valid FF9_Launcher.exe"
 #define HADES_STRING_INVALID_IMAGE_NAME_FORMAT L"The file name format must contain three '%%'"
-#define HADES_STRING_INVALID_IMAGE_DIMENSIONS L"The dimensions of the layers don't match"
 #define HADES_STRING_IMPORT_BACKGROUND_RESULT	"%d background importations succeeded\n"\
 												"%d background importations failed"
 #define HADES_STRING_BACKGROUNDIMPORT_MISSING_LAYERS	" - Missing %d layers for the field %d (%s)\n"
@@ -339,24 +341,5 @@ static wxString HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM[] = {
 
 //-- Others
 #define HADES_STRING_FONT_ERROR L"Unsupported font."
-
-//-- World Maps
-static SortedChoiceItem HADES_STRING_WORLD_BLOCK_NAME[] = {
-	{ 9000, L"World Map: No Transport" },
-	{ 9001, L"World Map/Event: Cargo Ship" },
-	{ 9002, L"World Map: Dagger" },
-	{ 9003, L"World Map: Blue Narciss" },
-	{ 9004, L"World Map/Event: Hilda Garde 1" },
-	{ 9005, L"World Map: Hilda Garde 1" },
-	{ 9006, L"World Map/Event: Track Kuja" },
-	{ 9007, L"World Map: Hilda Garde 3" },
-	{ 9008, L"World Map: Invincible" },
-	{ 9009, L"World Map: ???" },
-	{ 9010, L"World Map: Flying Airships" },
-	{ 9011, L"World Map: Around Dali" },
-	{ 9012, L"World Map/Event: Chocobo Treasure" },
-	{ 9100, L"14th World Map" },
-	{ 9101, L"15th World Map" }
-};
 
 #endif

@@ -113,6 +113,8 @@ public:
 	static TIMImageDataStruct& GetTIMPaletteStruct(TIMImageDataStruct& tim1, TIMImageDataStruct& tim2);
 	static TIMImageDataStruct& GetTIMTextureStruct(TIMImageDataStruct& tim1, TIMImageDataStruct& tim2);
 	
+	// Create a RGBA image from the Unity-formatted texture imgbuffer (header must be included) ; destrgba must be deleted[]
+	static bool ConvertFromSteamTexture(uint8_t* imgbuffer, uint32_t* destw, uint32_t* desth, uint8_t** destrgba);
 	// Create a Unity-formatted texture (DXT5) ; result must be deleted[]
 	static uint8_t* CreateSteamTextureFile(uint32_t& datasize, uint32_t w, uint32_t h, uint8_t* rgba, uint32_t textformat = 0x0C, int quality = -1);
 };

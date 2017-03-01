@@ -6,9 +6,13 @@
 
 class ToolUnityViewer : public UnityViewerWindow {
 public:
+	UnityArchiveFile current_archive;
+	wxString archive_name;
 	wxString root_path;
+	bool root_path_ok;
 	int column_sort;
 	bool column_sort_ascending;
+	bool use_x86;
 	
 	UnityArchiveMetaData meta_data[UNITY_ARCHIVE_AMOUNT];
 	UnityArchiveAssetBundle bundle_data[UNITY_ARCHIVE_DATA7-UNITY_ARCHIVE_DATA11+1];
@@ -16,13 +20,22 @@ public:
 	wxArrayString list_data_filename;
 	
 	ToolUnityViewer(wxWindow* parent);
+	~ToolUnityViewer();
 	
-	bool SetupRootPath(wxString path);
+	bool SetupRootPath(wxString path, bool ignorestreaming = false);
 	bool DisplayArchive(UnityArchiveFile filetype);
 	wxString GetInfoString(wxString filename, uint32_t filetype, UnityArchiveFile archive);
 
 private:
+	wxMenu* assetmenu;
+	wxMenuItem* assetmenuexport;
+	wxMenuItem* assetmenuimport;
+	
+	void UpdateMenuAvailability();
+	
 	void OnMenuSelection(wxCommandEvent& event);
+	void OnAssetRightClickMenu(wxCommandEvent& event);
+	void OnAssetRightClick(wxListEvent& event);
 	void OnSortColumn(wxListEvent& event);
 };
 

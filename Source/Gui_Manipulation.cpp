@@ -5035,9 +5035,10 @@ walkbmp.SaveFile(_(L"aaaa.bmp"),wxBITMAP_TYPE_BMP);*/
 			}
 		} else { // DEBUG
 			FieldTextureExportWindow dial(this);
+			dial.m_onlyselected->Enable(false);
 			dial.m_languagetitle->Enable(fieldset.background_data[*sortid]->title_tile_amount>0);
 			if (dial.ShowModal()==wxID_OK) {
-				if (fieldset.background_data[*sortid]->Export(dial.m_filepicker->GetPath().mb_str(),m_fieldtexturechoice->GetSelection(),NULL,true,dial.m_mergetiles->IsChecked(),dial.m_languagetitle->GetSelection()-1)) {
+				if (fieldset.background_data[*sortid]->Export(dial.m_filepicker->GetPath().mb_str(),m_fieldtexturechoice->GetSelection(),NULL,true,dial.m_mergetiles->IsChecked(),dial.m_exportorder->IsChecked(),dial.m_languagetitle->GetSelection()-1)) {
 					wxLogError(HADES_STRING_OPEN_ERROR_CREATE,dial.m_filepicker->GetPath());
 					return;
 				}

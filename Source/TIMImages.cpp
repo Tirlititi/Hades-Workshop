@@ -39,7 +39,7 @@ uint8_t TIMImageDataStruct::color[32] = { 0,  8, 16, 24,
 	for (i=0;i+0xC<img_size;i++) \
 		IO ## Char(f,pixel_value[i]); \
 	if (PPF) PPFEndScanStep();
-	
+
 
 
 void TIMImageDataStruct::Read(fstream& f) {
@@ -48,12 +48,11 @@ void TIMImageDataStruct::Read(fstream& f) {
 	if (GetGameType()==GAME_TYPE_PSX) {
 		MACRO_TIM_IOFUNCTION(FFIXRead,FFIXSeek,true,false)
 	} else {
-		unsigned int i,pixelamount;
+		unsigned int i;
 		f.open(data_file_name.c_str(),ios::in | ios::binary);
 		f.seekg(data_file_offset);
 		SteamReadLong(f,steam_width);
 		SteamReadLong(f,steam_height);
-		pixelamount = steam_width*steam_height/16; // each pixel is a 4x4 square with color and alpha variations inside
 		SteamReadLong(f,steam_size1);
 		SteamReadLong(f,steam_format); // Assume 0x0C = DXT5 format
 		SteamReadLong(f,(uint32_t&)steam_mip_count);
@@ -70,24 +69,6 @@ void TIMImageDataStruct::Read(fstream& f) {
 		pixel_value = new uint8_t[steam_width*steam_height]; // DXT5 : 1 bpp
 		for (i=0;i<steam_width*steam_height;i++)
 			SteamReadChar(f,pixel_value[i]);
-/*		steam_pixel_alpha = new uint8_t[pixelamount];
-		steam_pixel_alpha_ex = new uint8_t[pixelamount];
-		steam_pixel_alpha_flag1 = new uint16_t[pixelamount];
-		steam_pixel_alpha_flag2 = new uint16_t[pixelamount];
-		steam_pixel_alpha_flag3 = new uint16_t[pixelamount];
-		steam_pixel_color = new uint16_t[pixelamount];
-		steam_pixel_color_ex = new uint16_t[pixelamount];
-		steam_pixel_color_flag = new uint32_t[pixelamount];
-		for (i=0;i<pixelamount;i++) {
-			SteamReadChar(f,steam_pixel_alpha[i]);
-			SteamReadChar(f,steam_pixel_alpha_ex[i]);
-			SteamReadShort(f,steam_pixel_alpha_flag1[i]);
-			SteamReadShort(f,steam_pixel_alpha_flag2[i]);
-			SteamReadShort(f,steam_pixel_alpha_flag3[i]);
-			SteamReadShort(f,steam_pixel_color[i]);
-			SteamReadShort(f,steam_pixel_color_ex[i]);
-			SteamReadLong(f,steam_pixel_color_flag[i]);
-		}*/
 		f.close();
 	}
 	loaded = true;
@@ -786,6 +767,91 @@ TIMImageDataStruct& TIMImageDataStruct::GetTIMTextureStruct(TIMImageDataStruct& 
 	if (tim1.height<256)
 		return tim2;
 	return tim1;
+}
+
+bool TIMImageDataStruct::ConvertFromSteamTexture(uint8_t* imgbuffer, uint32_t* destw, uint32_t* desth, uint8_t** destrgba) {
+	uint32_t tmp32;
+	uint8_t tmp8;
+	int dxtflag;
+	BufferInitPosition();
+	BufferReadLong(imgbuffer,*destw);
+	BufferReadLong(imgbuffer,*desth);
+	BufferReadLong(imgbuffer,tmp32);
+	BufferReadLong(imgbuffer,tmp32);
+	if (tmp32==0x0C)
+		dxtflag = squish::kDxt5;
+	else if (tmp32==0x0A)
+		dxtflag = squish::kDxt1;
+	else if (tmp32==0x01)
+		dxtflag = -1; // Alpha8
+	else if (tmp32==0x03)
+		dxtflag = -3; // RGB24
+	else if (tmp32==0x04)
+		dxtflag = -4; // RGBA32
+	else if (tmp32==0x05)
+		dxtflag = -5; // ARGB32
+	else
+		return false;
+	BufferReadLong(imgbuffer,tmp32);
+	BufferReadLong(imgbuffer,tmp32);
+	BufferReadLong(imgbuffer,tmp32);
+	BufferReadLong(imgbuffer,tmp32);
+	BufferReadLong(imgbuffer,tmp32);
+	BufferReadLong(imgbuffer,tmp32);
+	BufferReadLong(imgbuffer,tmp32);
+	BufferReadLong(imgbuffer,tmp32);
+	BufferReadLong(imgbuffer,tmp32);
+	BufferReadLong(imgbuffer,tmp32);
+	BufferReadLong(imgbuffer,tmp32);
+	uint32_t w = *destw, h = *desth;
+	uint8_t* imgrgba = new uint8_t[w*h*4];
+	unsigned int x,y;
+	*destrgba = imgrgba;
+	if (dxtflag==-1) {
+		for (y=0;y<h;y++)
+			for (x=0;x<w;x++) {
+				imgrgba[(x+y*w)*4] = 0xFF;
+				imgrgba[(x+y*w)*4+1] = 0xFF;
+				imgrgba[(x+y*w)*4+2] = 0xFF;
+				BufferReadChar(imgbuffer,imgrgba[(x+y*w)*4+3]);
+			}
+	} else if (dxtflag==-3) {
+		for (y=0;y<h;y++)
+			for (x=0;x<w;x++) {
+				BufferReadChar(imgbuffer,imgrgba[(x+y*w)*4]);
+				BufferReadChar(imgbuffer,imgrgba[(x+y*w)*4+1]);
+				BufferReadChar(imgbuffer,imgrgba[(x+y*w)*4+2]);
+				imgrgba[(x+y*w)*4+3] = 0xFF;
+			}
+	} else if (dxtflag==-4) {
+		memcpy(imgrgba,&imgbuffer[BufferGetPosition()],w*h*4);
+	} else if (dxtflag==-5) {
+		for (y=0;y<h;y++)
+			for (x=0;x<w;x++) {
+				BufferReadChar(imgbuffer,imgrgba[(x+y*w)*4+3]);
+				BufferReadChar(imgbuffer,imgrgba[(x+y*w)*4]);
+				BufferReadChar(imgbuffer,imgrgba[(x+y*w)*4+1]);
+				BufferReadChar(imgbuffer,imgrgba[(x+y*w)*4+2]);
+			}
+	} else {
+		squish::DecompressImage(imgrgba,w,h,&imgbuffer[BufferGetPosition()],dxtflag);
+	}
+	for (y=0;2*y+1<h;y++)
+		for (x=0;x<w;x++) {
+			tmp8 = imgrgba[(x+y*w)*4];
+			imgrgba[(x+y*w)*4] = imgrgba[(x+(h-y-1)*w)*4];
+			imgrgba[(x+(h-y-1)*w)*4] = tmp8;
+			tmp8 = imgrgba[(x+y*w)*4+1];
+			imgrgba[(x+y*w)*4+1] = imgrgba[(x+(h-y-1)*w)*4+1];
+			imgrgba[(x+(h-y-1)*w)*4+1] = tmp8;
+			tmp8 = imgrgba[(x+y*w)*4+2];
+			imgrgba[(x+y*w)*4+2] = imgrgba[(x+(h-y-1)*w)*4+2];
+			imgrgba[(x+(h-y-1)*w)*4+2] = tmp8;
+			tmp8 = imgrgba[(x+y*w)*4+3];
+			imgrgba[(x+y*w)*4+3] = imgrgba[(x+(h-y-1)*w)*4+3];
+			imgrgba[(x+(h-y-1)*w)*4+3] = tmp8;
+		}
+	return true;
 }
 
 uint8_t* TIMImageDataStruct::CreateSteamTextureFile(uint32_t& datasize, uint32_t w, uint32_t h, uint8_t* rgba, uint32_t textformat, int quality) {
