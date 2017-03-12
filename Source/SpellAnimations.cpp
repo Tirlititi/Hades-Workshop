@@ -196,7 +196,7 @@ void SpellAnimationDataSet::Load(fstream& ffbin, ConfigurationSet& config, Globa
 			if (config.spellanim_steam_file[i]>=0) {
 				spell[i].is_empty = false;
 				ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.spellanim_steam_file[i]));
-				SteamReadLong(ffbin,spell[i].raw_size);
+				spell[i].raw_size = config.meta_res.GetFileSizeByIndex(config.spellanim_steam_file[i]);
 				spell[i].Read(ffbin);
 			} else
 				spell[i].is_empty = true;

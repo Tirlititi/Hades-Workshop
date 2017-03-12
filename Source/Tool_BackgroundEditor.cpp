@@ -452,16 +452,7 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 		delete[] allimgwidth;
 		delete[] allimgheight;
 	}*/
-	// Atlas are y-symetrized
 	delete[] tblockimgarray;
-	uint8_t tmp8;
-	for (y=0;2*y<atlash;y++)
-		for (x=0;x<atlasw;x++)
-			for (i=0;i<4;i++) {
-				tmp8 = atlas[(x+y*atlasw)*4+i];
-				atlas[(x+y*atlasw)*4+i] = atlas[(x+(atlash-y-1)*atlasw)*4+i];
-				atlas[(x+(atlash-y-1)*atlasw)*4+i] = tmp8;
-			}
 	// Convert the RGBA atlas into DXT5 compressed atlas
 	uint32_t dxtatlassize;
 	uint8_t* dxtatlas = TIMImageDataStruct::CreateSteamTextureFile(dxtatlassize,atlasw,atlash,atlas,0x0C,dxtflags);

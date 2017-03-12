@@ -237,7 +237,7 @@ void WorldMapDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 		fname += "resources.assets";
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
 		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.world_text_file[GetSteamLanguage()]));
-		SteamReadLong(ffbin,fsize);
+		fsize = config.meta_res.GetFileSizeByIndex(config.world_text_file[GetSteamLanguage()]);
 		buffer = new char[fsize];
 		ffbin.read(buffer,fsize);
 		text_data = new TextDataStruct*[amount];
@@ -245,25 +245,25 @@ void WorldMapDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 		text_data[0]->Init(true,CHUNK_TYPE_TEXT,STEAM_WORLD_MAP_TEXT_ID,&dummyclus[0],CLUSTER_TYPE_WORLD_MAP);
 		text_data[0]->amount = FF9String::CountSteamTextAmount(buffer,fsize);
 		text_data[0]->text = new FF9String[text_data[0]->amount];
+		text_data[0]->size = fsize;
 		text_data[0]->loaded = true;
 		delete[] buffer;
 		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.world_text_file[GetSteamLanguage()]));
-		SteamReadLong(ffbin,text_data[0]->size);
 		for (i=0;i<text_data[0]->amount;i++)
 			SteamReadFF9String(ffbin,text_data[0]->text[i]);
 		for (i=1;i<amount;i++)
 			text_data[i] = text_data[0];
+		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.world_worldplace_name_file[GetSteamLanguage()]));
 		world_data = new WorldMapDataStruct[1];
 		world_data->Init(false,CHUNK_TYPE_VARIOUS,STEAM_WORLD_MAP_TEXT_ID,&dummyclus[0]);
-		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.world_worldplace_name_file[GetSteamLanguage()]));
-		SteamReadLong(ffbin,world_data->place_name_size);
+		world_data->place_name_size = config.meta_res.GetFileSizeByIndex(config.world_worldplace_name_file[GetSteamLanguage()]);
 		for (i=0;i<WORLD_MAP_PLACE_AMOUNT;i++)
 			SteamReadFF9String(ffbin,world_data->place_name[i]);
 		ffbin.close();
 		fname = config.steam_dir_assets + "p0data3.bin";
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
 		ffbin.seekg(config.meta_world.GetFileOffsetByIndex(config.world_fxfile_file[0]));
-		SteamReadLong(ffbin,world_data->size);
+		world_data->size = config.meta_world.GetFileSizeByIndex(config.world_fxfile_file[0]);
 		world_data->Read(ffbin);
 		ffbin.close();
 		fname = config.steam_dir_assets + "p0data7.bin";
@@ -276,7 +276,7 @@ void WorldMapDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 				script[i]->Init(false,CHUNK_TYPE_SCRIPT,config.world_id[i],&dummyclus[i]);
 			else
 				script[i]->Init(true,CHUNK_TYPE_SCRIPT,config.world_id[i],&dummyclus[i],CLUSTER_TYPE_WORLD_MAP);
-			SteamReadLong(ffbin,script[i]->size);
+			script[i]->size = config.meta_script.GetFileSizeByIndex(config.world_script_file[GetSteamLanguage()][i]);
 			script[i]->Read(ffbin);
 			script[i]->related_charmap_id = 0;
 			for (j=0;j<G_N_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME);j++)

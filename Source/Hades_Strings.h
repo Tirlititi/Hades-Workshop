@@ -23,7 +23,7 @@
 #define HADES_STRING_NO_STEAM L"This feature is disabled for the Steam version"
 #define HADES_STRING_VOID L"_"
 
-//-- MainFrame
+//-- Main Frame
 #define HADES_STRING_OPEN_FRAME_NAME L"Open Final Fantasy IX binary file"
 #define HADES_STRING_OPEN_FILTERS L"Binary file (*.bin;Steam)|*.bin;FF9_Launcher.exe|All files|*"
 #define HADES_STRING_OPEN_STEAM_FILTER L"Steam Launcher|FF9_Launcher.exe"
@@ -32,6 +32,7 @@
 #define HADES_STRING_OPEN_ERROR_NONEXISTENT L"The file '%s' doesn't exist!"
 #define HADES_STRING_OPEN_ERROR_FAIL L"Cannot open file '%s'."
 #define HADES_STRING_OPEN_ERROR_FAIL_NF L"Cannot open the specified file."
+#define HADES_STRING_OPEN_ERROR_FAIL_FORMAT L"Unsupported format for '%s'."
 #define HADES_STRING_OPEN_ERROR_CREATE L"Cannot create file '%s'."
 #define HADES_STRING_OPEN_WARNING_UNKNOWN	L"Configuration file not found for this binary file.\n"\
 											L"The program will perform a scan in order to open it.\n"\
@@ -107,6 +108,7 @@
 #define HADES_STRING_TEXTURE_SAVE_SUCCESS L"Texture successfully exported !"
 #define HADES_STRING_FIELDTEXTURE_SAVE_SUCCESS L"Background successfully exported !"
 #define HADES_STRING_SCENE_SAVE_SUCCESS L"Battle Scene model successfully exported !"
+
 //-- HWS Frame
 #define HADES_STRING_HWS_OPEN_TITLE L"Open hws..."
 #define HADES_STRING_HWS_OPEN_MESSAGE L"Open..."
@@ -114,6 +116,7 @@
 #define HADES_STRING_HWS_SAVE_TITLE L"Save hws..."
 #define HADES_STRING_HWS_SAVE_MESSAGE L"Save..."
 #define HADES_STRING_HWS_SAVE_CONFIRM L"Save"
+
 //-- Common
 static wxString HADES_STRING_PRINTABLE_CHARTABLE_CHAR[] = {	L"0",L"1",L"2",L"3",L"4",L"5",L"6",L"7",L"8",L"9",L"+",L"-",L"=",L"*",L"%",L" ",
 															L"A",L"B",L"C",L"D",L"E",L"F",L"G",L"H",L"I",L"J",L"K",L"L",L"M",L"N",L"O",L"P",
@@ -135,6 +138,7 @@ static wxArrayString HADES_STRING_PRINTABLE_CHARTABLE(G_N_ELEMENTS(HADES_STRING_
 										L"Maybe you can try to remove unused text\n"\
 										L"to increase the limit here."
 #define HADES_STRING_DATA_REACH_LIMIT	L"The data size has reached his limit."
+
 //-- Spell Panel
 #define HADES_STRING_SPELL_TARGET_INFO_BASE L"Recommanded compatibility\n with : "
 static wxString HADES_STRING_SPELL_TARGET_INFO[5][4] = {
@@ -144,6 +148,7 @@ static wxString HADES_STRING_SPELL_TARGET_INFO[5][4] = {
 	{ L"",				L"Everyone",		L"",				L"" },
 	{ L"Self targeting",L"",				L"",				L"" }
 };
+
 //-- Command Panel
 #define HADES_STRING_COMMAND_ADD_SPELL_ADD	L"Add Spell"
 #define HADES_STRING_COMMAND_ADD_SPELL_EDIT	L"Set Spell"
@@ -338,6 +343,14 @@ static wxString HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM[] = {
 #define HADES_STRING_BACKGROUNDIMPORT_ERROR_CREATE		" - Failed to convert the field %d (%s)\n"
 #define HADES_STRING_BACKGROUNDIMPORT_ERROR_DIMENSIONS	" - The dimensions of the layers don't match for the field %d (%s)\n"
 #define HADES_STRING_UNITYVIEWER_GAME_OPEN	L"This game folder is already opened in Hades Workshop's main module. Updating the assets is not possible in this situation."
+#define HADES_STRING_UNITYVIEWER_IMPORT_ERROR_FORMAT	"Default format could not be retrieved for '%s'"
+#define HADES_STRING_UNITYVIEWER_MISSING_AKB	"Expected an AKB header in '%s' but none was found"
+#define HADES_STRING_UNITYVIEWER_MISSING_OGG	"Expected an OGG format for '%s'"
+#define HADES_STRING_UNITYVIEWER_IMPORT_SUCCESS	"Successfully imported %d asset(s)."
+#define HADES_STRING_UNITYVIEWER_IMPORT_ERROR	"Successfully imported %d asset(s).\n"\
+												"Failed to import %d asset(s)."
+
+
 
 //-- Others
 #define HADES_STRING_FONT_ERROR L"Unsupported font."

@@ -208,11 +208,11 @@ void SpellDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 		fname += "resources.assets";
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
 		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.spell_name_file[GetSteamLanguage()]));
-		name_space_used = ReadLong(ffbin);
+		name_space_used = config.meta_res.GetFileSizeByIndex(config.spell_name_file[GetSteamLanguage()]);
 		for (i=0;i<SPELL_AMOUNT;i++)
 			SteamReadFF9String(ffbin,spell[i].name);
 		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.spell_help_file[GetSteamLanguage()]));
-		help_space_used = ReadLong(ffbin);
+		help_space_used = config.meta_res.GetFileSizeByIndex(config.spell_help_file[GetSteamLanguage()]);
 		for (i=0;i<SPELL_AMOUNT;i++)
 			SteamReadFF9String(ffbin,spell[i].help);
 		ffbin.close();

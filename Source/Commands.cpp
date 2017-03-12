@@ -199,11 +199,11 @@ void CommandDataSet::Load(fstream &ffbin, ConfigurationSet& config) {
 		fname += "resources.assets";
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
 		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.cmd_name_file[GetSteamLanguage()]));
-		name_space_used = ReadLong(ffbin);
+		name_space_used = config.meta_res.GetFileSizeByIndex(config.cmd_name_file[GetSteamLanguage()]);
 		for (i=0;i<COMMAND_AMOUNT;i++)
 			SteamReadFF9String(ffbin,cmd[i].name);
 		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.cmd_help_file[GetSteamLanguage()]));
-		help_space_used = ReadLong(ffbin);
+		help_space_used = config.meta_res.GetFileSizeByIndex(config.cmd_help_file[GetSteamLanguage()]);
 		for (i=0;i<COMMAND_AMOUNT;i++)
 			SteamReadFF9String(ffbin,cmd[i].help);
 		ffbin.close();

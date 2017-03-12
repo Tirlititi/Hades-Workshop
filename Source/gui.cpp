@@ -10766,6 +10766,55 @@ UnityViewerWindow::UnityViewerWindow( wxWindow* parent, wxWindowID id, const wxS
 	
 	m_menuoptions->Append( -1, _("Automatically Convert Images"), m_menuconvertimg );
 	
+	m_menuconvertimgquality = new wxMenu();
+	m_menuconvertimgqualitysame = new wxMenuItem( m_menuconvertimgquality, wxID_ANY, wxString( _("Default Compression Method") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertimgquality->Append( m_menuconvertimgqualitysame );
+	m_menuconvertimgqualitysame->Check( true );
+	
+	m_menuconvertimgqualityalpha = new wxMenuItem( m_menuconvertimgquality, wxID_ANY, wxString( _("Alpha Only") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertimgquality->Append( m_menuconvertimgqualityalpha );
+	
+	m_menuconvertimgqualityrgb = new wxMenuItem( m_menuconvertimgquality, wxID_ANY, wxString( _("RGB") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertimgquality->Append( m_menuconvertimgqualityrgb );
+	
+	m_menuconvertimgqualityrgba = new wxMenuItem( m_menuconvertimgquality, wxID_ANY, wxString( _("RGBA") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertimgquality->Append( m_menuconvertimgqualityrgba );
+	
+	m_menuconvertimgqualityargb = new wxMenuItem( m_menuconvertimgquality, wxID_ANY, wxString( _("ARGB") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertimgquality->Append( m_menuconvertimgqualityargb );
+	
+	m_menuconvertimgqualitydxt1 = new wxMenuItem( m_menuconvertimgquality, wxID_ANY, wxString( _("DXT1") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertimgquality->Append( m_menuconvertimgqualitydxt1 );
+	
+	m_menuconvertimgqualitydxt5 = new wxMenuItem( m_menuconvertimgquality, wxID_ANY, wxString( _("DXT5") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertimgquality->Append( m_menuconvertimgqualitydxt5 );
+	
+	m_menuconvertimgquality->AppendSeparator();
+	
+	m_menuconvertimgqualitylow = new wxMenuItem( m_menuconvertimgquality, wxID_ANY, wxString( _("Low Quality Algorithm") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertimgquality->Append( m_menuconvertimgqualitylow );
+	
+	m_menuconvertimgqualitymedium = new wxMenuItem( m_menuconvertimgquality, wxID_ANY, wxString( _("Medium Quality Algorithm") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertimgquality->Append( m_menuconvertimgqualitymedium );
+	
+	m_menuconvertimgqualityhigh = new wxMenuItem( m_menuconvertimgquality, wxID_ANY, wxString( _("High Quality Algorithm") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertimgquality->Append( m_menuconvertimgqualityhigh );
+	m_menuconvertimgqualityhigh->Check( true );
+	
+	m_menuoptions->Append( -1, _("Image Quality Conversion"), m_menuconvertimgquality );
+	
+	m_menuoptions->AppendSeparator();
+	
+	m_menuconvertaudio = new wxMenu();
+	m_menuconvertaudionone = new wxMenuItem( m_menuconvertaudio, wxID_ANY, wxString( _("Don't Convert") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertaudio->Append( m_menuconvertaudionone );
+	
+	m_menuconvertaudioakb = new wxMenuItem( m_menuconvertaudio, wxID_ANY, wxString( _("Remove AKB Header") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertaudio->Append( m_menuconvertaudioakb );
+	m_menuconvertaudioakb->Check( true );
+	
+	m_menuoptions->Append( -1, _("Automatically Convert Audio"), m_menuconvertaudio );
+	
 	m_menuoptions->AppendSeparator();
 	
 	m_menufolderx64 = new wxMenuItem( m_menuoptions, wxID_FOLDER64, wxString( _("Folder x64") ) , wxEmptyString, wxITEM_RADIO );

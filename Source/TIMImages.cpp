@@ -854,44 +854,114 @@ bool TIMImageDataStruct::ConvertFromSteamTexture(uint8_t* imgbuffer, uint32_t* d
 	return true;
 }
 
+uint32_t TIMImageDataStruct::GetSteamTextureFileSize(uint32_t imgwidth, uint32_t imgheight, uint32_t textformat) {
+	if (textformat==0x0C) // DXT5
+		return 0x3C+squish::GetStorageRequirements(imgwidth,imgheight,squish::kDxt5);
+	if (textformat==0x0A) // DXT1
+		return 0x3C+squish::GetStorageRequirements(imgwidth,imgheight,squish::kDxt1);
+	if (textformat==0x01) // Alpha8
+		return 0x3C+imgwidth*imgheight;
+	if (textformat==0x03) // RGB24
+		return 0x3C+3*imgwidth*imgheight;
+	if (textformat==0x04) // RGBA32
+		return 0x3C+4*imgwidth*imgheight;
+	if (textformat==0x05) // ARGB32
+		return 0x3C+4*imgwidth*imgheight;
+	return 0;
+}
+
 uint8_t* TIMImageDataStruct::CreateSteamTextureFile(uint32_t& datasize, uint32_t w, uint32_t h, uint8_t* rgba, uint32_t textformat, int quality) {
-	if (textformat!=0x0C) { // Only DXT5 supported for now
+	int dxtflag;
+	if (textformat==0x0C) {
+		dxtflag = squish::kDxt5;
+	} else if (textformat==0x0A) {
+		dxtflag = squish::kDxt1;
+	} else if (textformat==0x01) {
+		dxtflag = -1; // Alpha8
+	} else if (textformat==0x03) {
+		dxtflag = -3; // RGB24
+	} else if (textformat==0x04) {
+		dxtflag = -4; // RGBA32
+	} else if (textformat==0x05) {
+		dxtflag = -5; // ARGB32
+	} else { // unsupported format
 		datasize = 0;
 		return NULL;
 	}
-	int dxtflag = squish::kDxt5;
-	switch (quality) {
-	case 0:
-		dxtflag |= squish::kColourRangeFit;
-		break;
-	case 1:
-		dxtflag |= squish::kColourClusterFit;
-		break;
-	case 2:
-		dxtflag |= squish::kColourIterativeClusterFit;
-		break;
+	if (dxtflag>=0) {
+		switch (quality) {
+		case 0:
+			dxtflag |= squish::kColourRangeFit;
+			break;
+		case 1:
+			dxtflag |= squish::kColourClusterFit;
+			break;
+		case 2:
+			dxtflag |= squish::kColourIterativeClusterFit;
+			break;
+		}
 	}
-	uint32_t pixam = w*h/16;
-	uint32_t filesize = 0x3C+squish::GetStorageRequirements(w,h,dxtflag);
+	uint32_t filesize = GetSteamTextureFileSize(w,h,textformat);
 	uint8_t* raw = new uint8_t[filesize];
 	unsigned int i;
 	BufferInitPosition();
 	BufferWriteLong(raw,w); // width
 	BufferWriteLong(raw,h); // height
-	BufferWriteLong(raw,w*h); // image size
+	BufferWriteLong(raw,filesize-0x3C); // image size
 	BufferWriteLong(raw,textformat); // format
 	BufferWriteLong(raw,1); // mip count
 	BufferWriteLong(raw,0x100); // flags
 	BufferWriteLong(raw,1); // image count
 	BufferWriteLong(raw,2); // dimension
 	BufferWriteLong(raw,1); // filter mode
-	BufferWriteLong(raw,0); // anisotropic
+	BufferWriteLong(raw,0); // anisotropic - DEBUG: may be 1
 	BufferWriteLong(raw,0); // mip bias
 	BufferWriteLong(raw,1); // wrap mode
-	BufferWriteLong(raw,0); // lightmap format
+	BufferWriteLong(raw,0); // lightmap format - DEBUG: may be 6
 	BufferWriteLong(raw,1); // color space
-	BufferWriteLong(raw,w*h); // image size
-	squish::CompressImage(rgba,w,h,&raw[BufferGetPosition()],dxtflag);
+	BufferWriteLong(raw,filesize-0x3C); // image size
+	unsigned int x,y; // Y-symmetry
+	uint8_t tmp8;
+	for (y=0;2*y+1<h;y++)
+		for (x=0;x<w;x++) {
+			tmp8 = rgba[(x+y*w)*4];
+			rgba[(x+y*w)*4] = rgba[(x+(h-y-1)*w)*4];
+			rgba[(x+(h-y-1)*w)*4] = tmp8;
+			tmp8 = rgba[(x+y*w)*4+1];
+			rgba[(x+y*w)*4+1] = rgba[(x+(h-y-1)*w)*4+1];
+			rgba[(x+(h-y-1)*w)*4+1] = tmp8;
+			tmp8 = rgba[(x+y*w)*4+2];
+			rgba[(x+y*w)*4+2] = rgba[(x+(h-y-1)*w)*4+2];
+			rgba[(x+(h-y-1)*w)*4+2] = tmp8;
+			tmp8 = rgba[(x+y*w)*4+3];
+			rgba[(x+y*w)*4+3] = rgba[(x+(h-y-1)*w)*4+3];
+			rgba[(x+(h-y-1)*w)*4+3] = tmp8;
+		}
+	uint8_t* rawimg = &raw[BufferGetPosition()];
+	if (dxtflag==-1) {
+		for (y=0;y<h;y++)
+			for (x=0;x<w;x++)
+				rawimg[x+y*w] = rgba[(x+y*w)*4+3];
+	} else if (dxtflag==-3) {
+		for (y=0;y<h;y++)
+			for (x=0;x<w;x++) {
+				rawimg[(x+y*w)*3] = rgba[(x+y*w)*4];
+				rawimg[(x+y*w)*3+1] = rgba[(x+y*w)*4+1];
+				rawimg[(x+y*w)*3+2] = rgba[(x+y*w)*4+2];
+			}
+	} else if (dxtflag==-4) {
+		memcpy(rawimg,rgba,w*h*4);
+	} else if (dxtflag==-5) {
+		for (y=0;y<h;y++)
+			for (x=0;x<w;x++) {
+				rawimg[(x+y*w)*4] = rgba[(x+y*w)*4+3];
+				rawimg[(x+y*w)*4+1] = rgba[(x+y*w)*4];
+				rawimg[(x+y*w)*4+2] = rgba[(x+y*w)*4+1];
+				rawimg[(x+y*w)*4+3] = rgba[(x+y*w)*4+2];
+			}
+	} else {
+		squish::CompressImage(rgba,w,h,rawimg,dxtflag);
+	}
 	datasize = filesize;
 	return raw;
 }

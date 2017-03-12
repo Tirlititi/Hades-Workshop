@@ -899,7 +899,7 @@ void EnemyDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
 		for (i=0;i<battle_amount;i++) {
 			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.enmy_text_file[GetSteamLanguage()][i]));
-			SteamReadLong(ffbin,fsize);
+			fsize = config.meta_res.GetFileSizeByIndex(config.enmy_text_file[GetSteamLanguage()][i]);
 			buffer = new char[fsize];
 			ffbin.read(buffer,fsize);
 			text[i] = new TextDataStruct[1];
@@ -909,7 +909,7 @@ void EnemyDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 			text[i]->loaded = true;
 			delete[] buffer;
 			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.enmy_text_file[GetSteamLanguage()][i]));
-			SteamReadLong(ffbin,text[i]->size);
+			text[i]->size = config.meta_res.GetFileSizeByIndex(config.enmy_text_file[GetSteamLanguage()][i]);
 			for (j=0;j<text[i]->amount;j++)
 				SteamReadFF9String(ffbin,text[i]->text[j]);
 			LoadingDialogUpdate(i);
@@ -923,14 +923,14 @@ void EnemyDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 			battle_data[i]->Init(false,CHUNK_TYPE_BATTLE_DATA,config.enmy_id[i],&dummyclus[i]);
 			battle_data[i]->parent = this;
 			battle_data[i]->id = i;
-			SteamReadLong(ffbin,battle_data[i]->size);
+			battle_data[i]->size = config.meta_battle.GetFileSizeByIndex(config.enmy_battle_file[i]);
 			battle_data[i]->Read(ffbin);
 			ffbin.seekg(config.meta_battle.GetFileOffsetByIndex(config.enmy_stat_file[i]));
 			battle[i] = new EnemyDataStruct[1];
 			battle[i]->Init(false,CHUNK_TYPE_ENEMY_STATS,config.enmy_id[i],&dummyclus[i]);
 			battle[i]->parent = this;
 			battle[i]->id = i;
-			SteamReadLong(ffbin,battle[i]->size);
+			battle[i]->size = config.meta_battle.GetFileSizeByIndex(config.enmy_stat_file[i]);
 			battle[i]->Read(ffbin);
 			battle[i]->scene_id = 0;
 			LoadingDialogUpdate(i);
@@ -942,7 +942,7 @@ void EnemyDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 			ffbin.seekg(config.meta_script.GetFileOffsetByIndex(config.enmy_script_file[GetSteamLanguage()][i]));
 			script[i] = new ScriptDataStruct[1];
 			script[i]->Init(false,CHUNK_TYPE_SCRIPT,config.enmy_id[i],&dummyclus[i]);
-			SteamReadLong(ffbin,script[i]->size);
+			script[i]->size = config.meta_battle.GetFileSizeByIndex(config.enmy_script_file[GetSteamLanguage()][i]);
 			script[i]->Read(ffbin);
 			l = 0;
 			for (k=0;k<battle[i]->stat_amount && l<text[i]->amount;k++)

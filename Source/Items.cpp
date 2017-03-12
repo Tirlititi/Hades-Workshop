@@ -435,27 +435,27 @@ void ItemDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 		fname += "resources.assets";
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
 		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.item_name_file[GetSteamLanguage()]));
-		name_space_used = ReadLong(ffbin);
+		name_space_used = config.meta_res.GetFileSizeByIndex(config.item_name_file[GetSteamLanguage()]);
 		for (i=0;i<ITEM_AMOUNT;i++)
 			SteamReadFF9String(ffbin,item[i].name);
 		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.item_help_file[GetSteamLanguage()]));
-		help_space_used = ReadLong(ffbin);
+		help_space_used = config.meta_res.GetFileSizeByIndex(config.item_help_file[GetSteamLanguage()]);
 		for (i=0;i<ITEM_AMOUNT;i++)
 			SteamReadFF9String(ffbin,item[i].help);
 		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.item_help2_file[GetSteamLanguage()]));
-		help2_space_used = ReadLong(ffbin);
+		help2_space_used = config.meta_res.GetFileSizeByIndex(config.item_help2_file[GetSteamLanguage()]);
 		for (i=0;i<ITEM_AMOUNT;i++)
 			SteamReadFF9String(ffbin,item[i].battle_help);
 		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.itemkey_name_file[GetSteamLanguage()]));
-		key_name_space_used = ReadLong(ffbin);
+		key_name_space_used = config.meta_res.GetFileSizeByIndex(config.itemkey_name_file[GetSteamLanguage()]);
 		for (i=0;i<KEY_ITEM_AMOUNT;i++)
 			SteamReadFF9String(ffbin,key_item[i].name);
 		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.itemkey_help_file[GetSteamLanguage()]));
-		key_help_space_used = ReadLong(ffbin);
+		key_help_space_used = config.meta_res.GetFileSizeByIndex(config.itemkey_help_file[GetSteamLanguage()]);
 		for (i=0;i<KEY_ITEM_AMOUNT;i++)
 			SteamReadFF9String(ffbin,key_item[i].help);
 		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.itemkey_desc_file[GetSteamLanguage()]));
-		key_desc_space_used = ReadLong(ffbin);
+		key_desc_space_used = config.meta_res.GetFileSizeByIndex(config.itemkey_desc_file[GetSteamLanguage()]);
 		for (i=0;i<KEY_ITEM_AMOUNT;i++)
 			SteamReadFF9String(ffbin,key_item[i].description);
 		ffbin.close();

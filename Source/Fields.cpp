@@ -1013,7 +1013,7 @@ bool FieldSteamTitleInfo::ReadTitleTileId(FieldTilesDataStruct* tileset, Configu
 				localbackground.Init(NULL,CHUNK_TYPE_FIELD_TILES,config.field_id[tileset->id]);
 //				localbackground.parent = NULL;
 //				localbackground.id = i;
-				SteamReadLong(ffbin,localbackground.size);
+				localbackground.size = config.meta_field[config.field_file_id[tileset->id]-1].GetFileSizeByIndex(config.field_tiles_file[tileset->id][lang]);
 				localbackground.Read(ffbin);
 				if (langi==STEAM_LANGUAGE_EN && !has_uk[i]) {
 					newtileid = atlas_title_pos[STEAM_LANGUAGE_US][i];
@@ -1068,7 +1068,6 @@ void FieldSteamTitleInfo::Read(fstream& f) {
 	char* buffer;
 	string line,file;
 	stringstream bufferstr,filestr;
-	SteamReadLong(f,size);
 	buffer = new char[size+1];
 	f.read(buffer,size);
 	buffer[size] = 0;
@@ -1267,7 +1266,7 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 		fname += "resources.assets";
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
 		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.field_text_file[GetSteamLanguage()]));
-		SteamReadLong(ffbin,name_space_used);
+		name_space_used = config.meta_res.GetFileSizeByIndex(config.field_text_file[GetSteamLanguage()]);
 		for (i=0;i<amount;i++) {
 			j = 0;
 			do SteamReadChar(ffbin,strbuffer[j]);
@@ -1278,6 +1277,7 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 		}
 		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.field_title_info));
 		title_info = new FieldSteamTitleInfo[1];
+		title_info->size = config.meta_res.GetFileSizeByIndex(config.field_title_info);
 		title_info->Read(ffbin);
 		ffbin.close();
 		fname = config.steam_dir_assets + "p0data7.bin";
@@ -1310,7 +1310,7 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 			script_data[i] = new ScriptDataStruct[1];
 			script_data[i]->related_charmap_id = 0;
 			script_data[i]->Init(true,CHUNK_TYPE_SCRIPT,config.field_id[i],&dummyclus[i],CLUSTER_TYPE_FIELD);
-			SteamReadLong(ffbin,script_data[i]->size);
+			script_data[i]->size = config.meta_script.GetFileSizeByIndex(config.field_script_file[GetSteamLanguage()][i]);
 			script_data[i]->Read(ffbin);
 			for (j=0;j<amount;j++)
 				if (fieldnameid[j]==script_data[i]->object_id) {
@@ -1320,13 +1320,13 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 			ffbin.seekg(config.meta_script.GetFileOffsetByIndex(config.field_role_file[i]));
 			role[i] = new FieldRoleDataStruct[1];
 			role[i]->Init(false,CHUNK_TYPE_FIELD_ROLE,config.field_id[i],&dummyclus[i]);
-			SteamReadLong(ffbin,role[i]->size);
+			role[i]->size = config.meta_script.GetFileSizeByIndex(config.field_role_file[i]);
 			role[i]->Read(ffbin);
 			if (config.field_preload_file[i]>=0) {
 				ffbin.seekg(config.meta_script.GetFileOffsetByIndex(config.field_preload_file[i]));
 				preload[i] = new ImageMapDataStruct[1];
 				preload[i]->Init(false,CHUNK_TYPE_IMAGE_MAP,config.field_id[i],&dummyclus[i]);
-				SteamReadLong(ffbin,preload[i]->size);
+				preload[i]->size = config.meta_script.GetFileSizeByIndex(config.field_preload_file[i]);
 				preload[i]->Read(ffbin);
 			} else
 				preload[i] = NULL;
@@ -1349,7 +1349,7 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 			ffbin.seekg(config.meta_field[config.field_file_id[i]-1].GetFileOffsetByIndex(config.field_walkmesh_file[i]));
 			walkmesh[i] = new FieldWalkmeshDataStruct[1];
 			walkmesh[i]->Init(false,CHUNK_TYPE_FIELD_WALK,config.field_id[i],&dummyclus[i]);
-			SteamReadLong(ffbin,walkmesh[i]->size);
+			walkmesh[i]->size = config.meta_field[config.field_file_id[i]-1].GetFileSizeByIndex(config.field_walkmesh_file[i]);
 			walkmesh[i]->Read(ffbin);
 //			ffbin.seekg(config.meta_field[config.field_file_id[i]-1].GetFileOffsetByIndex(config.field_image_file[i]));
 			tim_data[i] = new TIMImageDataStruct[1];
@@ -1370,7 +1370,7 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 						titletileamount = title_info->title_tile_last[j]-title_info->title_tile_start[j]+1;
 						break;
 					}
-			SteamReadLong(ffbin,background_data[i]->size);
+			background_data[i]->size = config.meta_field[config.field_file_id[i]-1].GetFileSizeByIndex(config.field_tiles_file[i][0]);
 			background_data[i]->Read(ffbin,titletileamount);
 			ffbin.close();
 			if (config.field_tiles_localized[i])

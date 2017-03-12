@@ -463,7 +463,7 @@ void TextDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 			tim_amount[i] = 0;
 			struct_id[i] = config.text_id[i];
 			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.text_file[GetSteamLanguage()][i]));
-			SteamReadLong(ffbin,fsize);
+			fsize = config.meta_res.GetFileSizeByIndex(config.text_file[GetSteamLanguage()][i]);
 			buffer = new char[fsize];
 			ffbin.read(buffer,fsize);
 			text_data[i] = new TextDataStruct[1];
@@ -481,7 +481,7 @@ void TextDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 			text_data[i]->loaded = true;
 			delete[] buffer;
 			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.text_file[GetSteamLanguage()][i]));
-			SteamReadLong(ffbin,text_data[i]->size);
+			text_data[i]->size = config.meta_res.GetFileSizeByIndex(config.text_file[GetSteamLanguage()][i]);
 			for (j=0;j<text_data[i]->amount;j++) { // ToDo: handle the sizes etc...
 				SteamReadFF9String(ffbin,text_data[i]->text[j]);
 /*				text_data[i]->size_y[j] = 0;
@@ -813,7 +813,7 @@ void SpecialTextDataSet::Load(fstream& ffbin, ConfigurationSet& configset) {
 		
 		#define MACRO_READ_SPETEXT_STEAM(INDEX,TYPE) \
 			ffbin.seekg(configset.meta_res.GetFileOffsetByIndex(configset.spetext_ ## TYPE ## _file[GetSteamLanguage()])); \
-			SteamReadLong(ffbin,text_block[INDEX].space_used); \
+			text_block[INDEX].space_used = configset.meta_res.GetFileSizeByIndex(configset.spetext_ ## TYPE ## _file[GetSteamLanguage()]); \
 			text_block[INDEX].amount = configset.spetext_ ## TYPE ## _amount; \
 			text_block[INDEX].localizationfile = false; \
 			text_block[INDEX].text = new FF9String[text_block[INDEX].amount]; \
@@ -834,7 +834,7 @@ void SpecialTextDataSet::Load(fstream& ffbin, ConfigurationSet& configset) {
 		text_block[6].amount = configset.spetext_localization_amount;
 		text_block[6].localizationfile = true;
 		text_block[6].text = new FF9String[text_block[6].amount];
-		SteamReadLong(ffbin,text_block[6].space_used);
+		text_block[6].space_used = configset.meta_res.GetFileSizeByIndex(configset.spetext_localization_file);
 		bufferstr = new char[text_block[6].space_used];
 		buffer = new char[text_block[6].space_used];
 		ffbin.read(buffer,text_block[6].space_used);

@@ -503,6 +503,7 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 			wxLogError(HADES_STRING_OPEN_ERROR_FAIL,root_path+archive_name);
 			return;
 		}
+		unsigned int itcounter = 0, itamount = m_assetlist->GetSelectedItemCount();
 		unsigned int expfileid, expfilesize;
 		wxString basepath = root_path+_(L"HadesWorkshopAssets\\")+archive_name.AfterLast(L'\\').BeforeFirst(L'.')+_(L"\\");
 		wxString path;
@@ -511,9 +512,10 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 		for (;;) {
 			it = m_assetlist->GetNextItem(it,wxLIST_NEXT_ALL,wxLIST_STATE_SELECTED);
 			if (it==-1) break;
-			path = basepath+m_assetlist->GetItemText(it,1);
+			path = m_assetlist->GetItemText(it,1);
 			path.Replace(_(L"/"),_(L"\\"));
 			if (!m_menuexportpath->IsChecked()) path = path.AfterLast(L'\\');
+			path = basepath+path;
 			wxFileName::Mkdir(path.BeforeLast(L'\\'),wxS_DIR_DEFAULT,wxPATH_MKDIR_FULL);
 			fstream filedest(path.c_str(),ios::out|ios::binary);
 			if (!filedest.is_open()) {
@@ -549,15 +551,279 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				else if (m_menuconvertimgtga->IsChecked())	img.SaveFile(path,wxBITMAP_TYPE_TGA);
 				else if (m_menuconvertimgtiff->IsChecked())	img.SaveFile(path,wxBITMAP_TYPE_TIFF);
 				else										img.SaveFile(path,wxBITMAP_TYPE_BMP);
+			} else if (meta_data[current_archive].file_type1[expfileid]==49 && path.Len()>=10 && path.Mid(path.Len()-10).IsSameAs(L".akb.bytes",false) && !m_menuconvertaudionone->IsChecked()) {
+				uint32_t magicakb;
+				BufferInitPosition();
+				BufferReadLong((uint8_t*)buffer,magicakb);
+				if (magicakb==0x32424B41)
+					filedest.write(&buffer[0x130],expfilesize-0x130);
+				else
+					filedest.write(buffer,expfilesize);
+				filedest.close();
+				delete[] buffer;
 			} else {
 				filedest.write(buffer,expfilesize);
 				filedest.close();
 				delete[] buffer;
 			}
+			m_loadgauge->SetValue((++itcounter)*100/itamount);
 		}
 		filebase.close();
+		m_loadgauge->SetValue(100);
 	} else if (id==wxID_IMPORT) {
-		
+		fstream filebase((root_path+archive_name).c_str(),ios::in|ios::binary);
+		fstream filedest((root_path+archive_name+_(L".tmp")).c_str(),ios::out|ios::binary);
+		bool overwritefile = true;
+		if (!filebase.is_open()) {
+			wxLogError(HADES_STRING_OPEN_ERROR_FAIL,root_path+archive_name);
+			return;
+		}
+		if (!filedest.is_open()) {
+			wxLogError(HADES_STRING_OPEN_ERROR_CREATE,root_path+archive_name+_(L".tmp"));
+			return;
+		}
+		m_loadgauge->SetValue(0);
+		unsigned int itcounter = 0, itsuccesscounter = 0, itamount = m_assetlist->GetSelectedItemCount();
+		unsigned int expfileid, expfilesize;
+		unsigned int i;
+		wxString basepath = root_path+_(L"HadesWorkshopAssets\\")+archive_name.AfterLast(L'\\').BeforeFirst(L'.')+_(L"\\");
+		wxString path;
+		char* buffer;
+		bool* copylist = new bool[meta_data[current_archive].header_file_amount];
+		uint32_t* filenewsize = new uint32_t[meta_data[current_archive].header_file_amount];
+		for (i=0;i<meta_data[current_archive].header_file_amount;i++) {
+			copylist[i] = true;
+			filenewsize[i] = meta_data[current_archive].file_size[i];
+		}
+		long it = -1;
+		for (;;) {
+			it = m_assetlist->GetNextItem(it,wxLIST_NEXT_ALL,wxLIST_STATE_SELECTED);
+			if (it==-1) break;
+			path = m_assetlist->GetItemText(it,1);
+			path.Replace(_(L"/"),_(L"\\"));
+			if (!m_menuexportpath->IsChecked()) path = path.AfterLast(L'\\');
+			path = basepath+path;
+			if (!wxFileName::FileExists(path))
+				continue;
+			expfileid = wxAtoi(m_assetlist->GetItemText(it,0))-1;
+			if (meta_data[current_archive].file_type1[expfileid]==28 && !m_menuconvertimgnone->IsChecked()) {
+				wxImage img;
+				bool success;
+				if (m_menuconvertimgpng->IsChecked())		success = img.LoadFile(path,wxBITMAP_TYPE_PNG);
+				else if (m_menuconvertimgtga->IsChecked())	success = img.LoadFile(path,wxBITMAP_TYPE_TGA);
+				else if (m_menuconvertimgtiff->IsChecked())	success = img.LoadFile(path,wxBITMAP_TYPE_TIFF);
+				else										success = img.LoadFile(path,wxBITMAP_TYPE_BMP);
+				if (!success)								success = img.LoadFile(path,wxBITMAP_TYPE_ANY);
+				if (!success) {
+					wxLogError(HADES_STRING_OPEN_ERROR_FAIL_FORMAT,path);
+					continue;
+				}
+				uint32_t textureformat = 0;
+				if (m_menuconvertimgqualityalpha->IsChecked())		textureformat = 0x01;
+				else if (m_menuconvertimgqualityrgb->IsChecked())	textureformat = 0x03;
+				else if (m_menuconvertimgqualityrgba->IsChecked())	textureformat = 0x04;
+				else if (m_menuconvertimgqualityargb->IsChecked())	textureformat = 0x05;
+				else if (m_menuconvertimgqualitydxt1->IsChecked())	textureformat = 0x0A;
+				else if (m_menuconvertimgqualitydxt5->IsChecked())	textureformat = 0x0C;
+				else if (meta_data[current_archive].GetFileSizeByIndex(expfileid)>=0x10) {
+					filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(expfileid)+0xC);
+					textureformat = ReadLong(filebase);
+				}
+				uint32_t newsizetmp = TIMImageDataStruct::GetSteamTextureFileSize(img.GetWidth(),img.GetHeight(),textureformat);
+				if (newsizetmp==0) {
+					wxLogError(HADES_STRING_UNITYVIEWER_IMPORT_ERROR_FORMAT,path);
+					continue;
+				}
+				filenewsize[expfileid] = newsizetmp;
+			} else if (meta_data[current_archive].file_type1[expfileid]==49 && path.Len()>=10 && path.Mid(path.Len()-10).IsSameAs(L".akb.bytes",false) && !m_menuconvertaudionone->IsChecked()) {
+				filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(expfileid));
+				uint32_t magicakb = ReadLong(filebase);
+				if (magicakb!=0x32424B41) {
+					wxLogError(HADES_STRING_UNITYVIEWER_IMPORT_ERROR_FORMAT,path);
+					continue;
+				}
+				fstream fileasset(path.c_str(),ios::in|ios::binary);
+				if (!fileasset.is_open()) {
+					wxLogError(HADES_STRING_OPEN_ERROR_FAIL,path);
+					continue;
+				}
+				uint32_t magicogg = ReadLong(fileasset);
+				if (magicogg!=0x5367674F) {
+					wxLogError(HADES_STRING_UNITYVIEWER_MISSING_OGG,path);
+					continue;
+				}
+				fileasset.seekg(0,ios::end);
+				filenewsize[expfileid] = (uint32_t)fileasset.tellg()+0x130;
+				fileasset.close();
+			} else {
+				fstream fileasset(path.c_str(),ios::in|ios::binary);
+				if (!fileasset.is_open()) {
+					wxLogError(HADES_STRING_OPEN_ERROR_FAIL,path);
+					continue;
+				}
+				fileasset.seekg(0,ios::end);
+				filenewsize[expfileid] = fileasset.tellg();
+				fileasset.close();
+			}
+			copylist[expfileid] = false;
+		}
+		m_loadgauge->SetValue(10);
+		filebase.seekg(0);
+		uint32_t* unityfileoff = meta_data[current_archive].Duplicate(filebase,filedest,copylist,filenewsize,overwritefile);
+		m_loadgauge->SetValue(50);
+		for (it = -1;;) {
+			it = m_assetlist->GetNextItem(it,wxLIST_NEXT_ALL,wxLIST_STATE_SELECTED);
+			if (it==-1) break;
+			itcounter++;
+			expfileid = wxAtoi(m_assetlist->GetItemText(it,0))-1;
+			if (copylist[expfileid])
+				continue;
+			path = m_assetlist->GetItemText(it,1);
+			path.Replace(_(L"/"),_(L"\\"));
+			if (!m_menuexportpath->IsChecked()) path = path.AfterLast(L'\\');
+			path = basepath+path;
+			if (meta_data[current_archive].file_type1[expfileid]==28 && !m_menuconvertimgnone->IsChecked()) {
+				wxImage img;
+				bool success;
+				if (m_menuconvertimgpng->IsChecked())		success = img.LoadFile(path,wxBITMAP_TYPE_PNG);
+				else if (m_menuconvertimgtga->IsChecked())	success = img.LoadFile(path,wxBITMAP_TYPE_TGA);
+				else if (m_menuconvertimgtiff->IsChecked())	success = img.LoadFile(path,wxBITMAP_TYPE_TIFF);
+				else										success = img.LoadFile(path,wxBITMAP_TYPE_BMP);
+				if (!success)								success = img.LoadFile(path,wxBITMAP_TYPE_ANY);
+				if (!success) {
+					wxLogError(HADES_STRING_OPEN_ERROR_FAIL_FORMAT,path);
+					overwritefile = false;
+					continue;
+				}
+				uint32_t datasize, pixelindex;
+				unsigned int x,y,w = img.GetWidth(), h = img.GetHeight();
+				uint8_t* rgba = new uint8_t[w*h*4];
+				bool hasalpha = img.HasAlpha();
+				for (x=0;x<w;x++)
+					for (y=0;y<h;y++) {
+						pixelindex = (x+(y*w))*4;
+						rgba[pixelindex] = img.GetRed(x,y);
+						rgba[pixelindex+1] = img.GetGreen(x,y);
+						rgba[pixelindex+2] = img.GetBlue(x,y);
+						rgba[pixelindex+3] = hasalpha ? img.GetAlpha(x,y) : 0xFF;
+					}
+				uint32_t textureformat = 0;
+				int quality =	m_menuconvertimgqualitylow->IsChecked() ? 0 :
+								m_menuconvertimgqualitymedium->IsChecked() ? 1 :
+								m_menuconvertimgqualityhigh->IsChecked() ? 2 : -1;
+				if (m_menuconvertimgqualityalpha->IsChecked())		textureformat = 0x01;
+				else if (m_menuconvertimgqualityrgb->IsChecked())	textureformat = 0x03;
+				else if (m_menuconvertimgqualityrgba->IsChecked())	textureformat = 0x04;
+				else if (m_menuconvertimgqualityargb->IsChecked())	textureformat = 0x05;
+				else if (m_menuconvertimgqualitydxt1->IsChecked())	textureformat = 0x0A;
+				else if (m_menuconvertimgqualitydxt5->IsChecked())	textureformat = 0x0C;
+				else if (meta_data[current_archive].GetFileSizeByIndex(expfileid)>=0x10) {
+					filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(expfileid)+0xC);
+					textureformat = ReadLong(filebase);
+				}
+				buffer = (char*)TIMImageDataStruct::CreateSteamTextureFile(datasize,w,h,rgba,textureformat,quality);
+				delete[] rgba;
+				filedest.seekg(unityfileoff[expfileid]);
+				filedest.write(buffer,datasize);
+				delete[] buffer;
+			} else if (meta_data[current_archive].file_type1[expfileid]==49 && path.Len()>=10 && path.Mid(path.Len()-10).IsSameAs(L".akb.bytes",false) && !m_menuconvertaudionone->IsChecked()) {
+				fstream fileasset(path.c_str(),ios::in|ios::binary);
+				if (!fileasset.is_open()) {
+					wxLogError(HADES_STRING_OPEN_ERROR_FAIL,path);
+					overwritefile = false;
+					continue;
+				}
+				uint32_t newsizeogg = filenewsize[expfileid]-0x130;
+				uint32_t newsizeoggreal = newsizeogg;
+				filedest.seekg(unityfileoff[expfileid]);
+				filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(expfileid));
+				buffer = new char[filenewsize[expfileid]];
+				filebase.read(buffer,0x130);
+				fileasset.read(&buffer[0x130],newsizeogg);
+				for (i=filenewsize[expfileid]-1;buffer[i]==0 && i>0x130;i--)
+					newsizeoggreal--;
+				BufferInitPosition(8);		BufferWriteLong((uint8_t*)buffer,filenewsize[expfileid]);
+//				BufferInitPosition(0x28);	BufferWriteLong((uint8_t*)buffer,akbid); // ToDo: be able to retrieve this kind of info without the old file
+//				BufferInitPosition(0xE2);	BufferWriteShort((uint8_t*)buffer,sound/music?);
+//				BufferInitPosition(0xE6);	BufferWriteShort((uint8_t*)buffer,samplerate at 0x28 of Ogg);
+				BufferInitPosition(0xE8);	BufferWriteLong((uint8_t*)buffer,newsizeoggreal);
+/*				BufferWriteLong((uint8_t*)buffer,newsizeoggreal); // ???
+				BufferWriteLong((uint8_t*)buffer,newsizeoggreal); // LoopStart
+				BufferWriteLong((uint8_t*)buffer,newsizeoggreal); // LoopEnd
+				BufferInitPosition(0x124);	BufferWriteLong((uint8_t*)buffer,newsizeoggreal); // ???*/
+				filedest.write(buffer,filenewsize[expfileid]);
+				fileasset.close();
+				delete[] buffer;
+			} else {
+				fstream fileasset(path.c_str(),ios::in|ios::binary);
+				if (!fileasset.is_open()) {
+					wxLogError(HADES_STRING_OPEN_ERROR_FAIL,path);
+					overwritefile = false;
+					continue;
+				}
+				buffer = new char[filenewsize[expfileid]];
+				fileasset.read(buffer,filenewsize[expfileid]);
+				filedest.seekg(unityfileoff[expfileid]);
+				filedest.write(buffer,filenewsize[expfileid]);
+				fileasset.close();
+				delete[] buffer;
+			}
+			m_loadgauge->SetValue(50+itcounter*50/itamount);
+			itsuccesscounter++;
+		}
+		delete[] copylist;
+		delete[] filenewsize;
+		delete[] unityfileoff;
+		filebase.close();
+		filedest.close();
+		m_loadgauge->SetValue(100);
+		if (overwritefile)
+			overwritefile = wxRenameFile(root_path+archive_name+_(L".tmp"),root_path+archive_name,true);
+		if (!overwritefile) {
+			meta_data[current_archive].Flush();
+			fstream unityarchive((root_path+archive_name).c_str(),ios::in | ios::binary);
+			meta_data[current_archive].Load(unityarchive);
+			if (current_archive>=UNITY_ARCHIVE_DATA11 && current_archive<=UNITY_ARCHIVE_DATA7) {
+				bundle_data[current_archive-UNITY_ARCHIVE_DATA11].Flush();
+				uint32_t offset = meta_data[current_archive].GetFileOffset("",142);
+				if (offset>0) {
+					unityarchive.seekg(offset);
+					bundle_data[current_archive-UNITY_ARCHIVE_DATA11].Load(unityarchive);
+				}
+			}
+			if (current_archive==UNITY_ARCHIVE_MAINDATA) {
+				list_data.Flush();
+				list_data_filename.Empty();
+				uint32_t offset = meta_data[current_archive].GetFileOffset("",147);
+				if (offset>0) {
+					unityarchive.seekg(offset);
+					list_data.Load(unityarchive);
+					list_data_filename.Alloc(list_data.amount);
+					for (i=0;i<list_data.amount;i++)
+						list_data_filename.Add(_(list_data.path[i]).AfterLast(L'/'));
+				}
+			}
+			unityarchive.close();
+		}
+		for (it = -1;;) {
+			it = m_assetlist->GetNextItem(it,wxLIST_NEXT_ALL,wxLIST_STATE_SELECTED);
+			if (it==-1) break;
+			expfileid = wxAtoi(m_assetlist->GetItemText(it,0))-1;
+			if (copylist[expfileid])
+				continue;
+			m_assetlist->SetItem(it,4,_(ConvertToString(meta_data[current_archive].GetFileSizeByIndex(expfileid))));
+		}
+		if (itsuccesscounter==itamount) {
+			wxString successtring;
+			successtring.Printf(wxT(HADES_STRING_UNITYVIEWER_IMPORT_SUCCESS),itsuccesscounter);
+			wxMessageDialog popupsuccess(this,successtring,HADES_STRING_SUCCESS,wxOK|wxCENTRE);
+			popupsuccess.ShowModal();
+		} else {
+			wxString failstring;
+			failstring.Printf(wxT(HADES_STRING_UNITYVIEWER_IMPORT_ERROR),itsuccesscounter,itamount-itsuccesscounter);
+			wxMessageDialog popupfail(this,failstring,HADES_STRING_WARNING,wxOK|wxCENTRE);
+			popupfail.ShowModal();
+		}
 	}
 }
 

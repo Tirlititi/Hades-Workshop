@@ -340,6 +340,7 @@ int UnityArchiveMetaData::Load(fstream& f) {
 	file_unknown2 = new uint32_t[header_file_amount];
 	file_name_len = new uint32_t[header_file_amount];
 	file_name = new string[header_file_amount];
+	text_file_size = new uint32_t[header_file_amount];
 	for (i=0;i<header_file_amount;i++) {
 		file_info[i] = ReadLongLong(f);
 		file_offset_start[i] = ReadLong(f);
@@ -354,10 +355,17 @@ int UnityArchiveMetaData::Load(fstream& f) {
 			file_name[i] = "";
 			for (j=0;j<file_name_len[i];j++)
 				file_name[i].push_back(f.get());
+			if (file_type1[i]==49) {
+				f.seekg(GetAlignOffset(f.tellg()),ios::cur);
+				text_file_size[i] = ReadLong(f);
+			} else {
+				text_file_size[i] = 0;
+			}
 			f.seekg(curpos);
 		} else {
 			file_name_len[i] = 0;
 			file_name[i] = "";
+			text_file_size[i] = 0;
 		}
 	}
 	loaded = true;
@@ -379,6 +387,7 @@ void UnityArchiveMetaData::Flush() {
 		delete[] file_unknown2;
 		delete[] file_name_len;
 		delete[] file_name;
+		delete[] text_file_size;
 		loaded = false;
 	}
 }
@@ -386,6 +395,8 @@ void UnityArchiveMetaData::Flush() {
 uint32_t UnityArchiveMetaData::GetFileSizeByIndex(unsigned int fileid) {
 	if (fileid>=header_file_amount)
 		return 0;
+	if (file_type1[fileid]==49)
+		return text_file_size[fileid];
 	if (HasFileTypeName(file_type1[fileid]))
 		return file_size[fileid]-file_name_len[fileid]-GetAlignOffset(file_name_len[fileid])-4;
 	return file_size[fileid];
@@ -412,6 +423,8 @@ uint32_t UnityArchiveMetaData::GetFileOffsetByIndex(unsigned int fileid, string 
 	res += header_file_offset+file_offset_start[fileid];
 	if (HasFileTypeName(file_type1[fileid]))
 		res += file_name_len[fileid]+GetAlignOffset(file_name_len[fileid])+4;
+	if (file_type1[fileid]==49)
+		res += 4;
 	return res;
 }
 
@@ -435,7 +448,7 @@ int32_t UnityArchiveMetaData::GetFileIndexByInfo(uint64_t info, uint32_t filetyp
 	return -1;
 }
 
-uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* copylist, uint32_t* filenewsize) {
+uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* copylist, uint32_t* filenewsize, bool updatedata) {
 	uint32_t archivestart = archive_type==1 ? 0x70 : 0;
 	uint32_t* res = new uint32_t[header_file_amount];
 	uint32_t copysize, offstart, offtmp, filenewsizetmp;
@@ -459,6 +472,8 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 	offstart = 0;
 	for (i=0;i<header_file_amount;i++) {
 		filenewsizetmp = filenewsize[i];
+		if (file_type1[i]==49)
+			filenewsizetmp += 4;
 		WriteLongLong(fdest,file_info[i]);
 		WriteLong(fdest,offstart);
 		if (copylist[i]) {
@@ -466,8 +481,10 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 		} else {
 			if (HasFileTypeName(file_type1[i]))
 				filenewsizetmp += 4+file_name_len[i]+GetAlignOffset(file_name_len[i]);
-			filenewsizetmp++; // DEBUG : text files and some others use this kind of padding but not all files do
-			filenewsizetmp += GetAlignOffset(filenewsizetmp,8);
+			if (file_type1[i]==49) { // DEBUG : verify that text files are the only ones using this kind of padding
+				filenewsizetmp++;
+				filenewsizetmp += GetAlignOffset(filenewsizetmp,8);
+			}
 			WriteLong(fdest,filenewsizetmp);
 		}
 		WriteLong(fdest,file_type1[i]);
@@ -480,12 +497,12 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 			for (j=0;j<file_name_len[i];j++)
 				fdest.put(file_name[i].at(j));
 			fdest.seekp(GetAlignOffset(fdest.tellp()),ios::cur);
+			if (file_type1[i]==49)
+				WriteLong(fdest,copylist[i] ? text_file_size[i] : filenewsize[i]);
 		}
 		res[i] = fdest.tellp();
 		if (copylist[i]) {
-			copysize = file_size[i];
-			if (HasFileTypeName(file_type1[i]))
-				copysize -= 4+file_name_len[i]+GetAlignOffset(file_name_len[i]);
+			copysize = GetFileSizeByIndex(i);
 			fbase.seekg(GetFileOffsetByIndex(i));
 			buffer = new char[copysize];
 			fbase.read(buffer,copysize);
@@ -493,6 +510,14 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 			delete[] buffer;
 		}
 		fdest.seekp(offtmp);
+		if (updatedata) {
+			file_offset_start[i] = offstart;
+			if (!copylist[i]) {
+				file_size[i] = filenewsizetmp;
+				if (file_type1[i]==49)
+					text_file_size[i] = filenewsize[i];
+			}
+		}
 		if (copylist[i])
 			offstart += file_size[i];
 		else
@@ -508,12 +533,13 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 		delete[] buffer;
 	}
 	fdest.seekp(0,ios::end);
-	while (fdest.tellp()%4!=0)
+	while (fdest.tellp()%8!=0)
 		fdest.put(0);
 	uint32_t fdestsize = fdest.tellp();
 	if (archive_type==0) {
 		fdest.seekp(4);
 		WriteLongBE(fdest,fdestsize);
+		if (updatedata) header_file_size = fdestsize;
 	} else {
 		uint32_t size;
 		fdest.seekp(0x1B);
@@ -528,6 +554,7 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 		WriteLongBE(fdest,size);
 		fdest.seekp(archivestart+4);
 		WriteLongBE(fdest,size);
+		if (updatedata) header_file_size = fdestsize;
 	}
 	return res;
 }

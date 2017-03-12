@@ -102,14 +102,14 @@ void CardDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 		fname += "resources.assets";
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
 		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.card_name_file[GetSteamLanguage()]));
-		name_space_used = ReadLong(ffbin);
+		name_space_used = config.meta_res.GetFileSizeByIndex(config.card_name_file[GetSteamLanguage()]);
 		for (i=0;i<CARD_AMOUNT;i++)
 			SteamReadFF9String(ffbin,card[i].name);
-		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.card_stat_file)+4);
+		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.card_stat_file));
 		MACRO_CARD_IOFUNCTIONCARDDATA(SteamRead,SteamSeek,true,false,false)
-		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.card_deck_file)+4);
+		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.card_deck_file));
 		MACRO_CARD_IOFUNCTIONDECK(SteamRead,SteamSeek,true,false)
-		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.card_set_file)+4);
+		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.card_set_file));
 		MACRO_CARD_IOFUNCTIONSET(SteamRead,SteamSeek,true,false)
 		ffbin.close();
 	}
