@@ -17,9 +17,14 @@ typedef uint32_t TIM_Format;
 #define TIM_FORMAT_8BPP				0x9 // Used by models (except Battle Scenes') and few generic UI
 
 typedef uint8_t TIM_BlendMode;
-#define TIM_BLENDMODE_ALPHA		0x0
+#define TIM_BLENDMODE_ALPHA		0x0 // Old ones
 #define TIM_BLENDMODE_LIGHT		0x1
 #define TIM_BLENDMODE_SHADE		0x2
+#define TIM_BLENDMODE_ABR_NONE	0x3 // Based on Steam shaders
+#define TIM_BLENDMODE_ABR_0		0x4
+#define TIM_BLENDMODE_ABR_1		0x5
+#define TIM_BLENDMODE_ABR_2		0x6
+#define TIM_BLENDMODE_ABR_3		0x7
 
 struct TIMImageDataStruct : public ChunkChild {
 public:

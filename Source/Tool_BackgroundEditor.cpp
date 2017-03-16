@@ -158,7 +158,7 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 	// and (2) don't let the transparent pixels fully black.
 	// Which RGB value should be used for (2) is not clear. The default atlas use a kind of
 	// X and Y expansion of the colors.
-	uint8_t alphalimit;
+	uint8_t alphalimit = 0xFF;
 	bool skipuk = false;
 	if (tilesamountplustitle>tiledata.tiles_amount)
 		for (i=0;i<tiledata.parent->title_info->amount;i++)
@@ -182,12 +182,13 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 		imgwidth = tblockimg.GetWidth();
 		imgheight = tblockimg.GetHeight();
 		for (j=0;j<tile.tile_amount;j++) {
+			/* Old Blend Modes
 			switch (tile.tile_alpha[j]) {
 				case 0: alphalimit = tile.tile_trans[j] ? 0x7E : 0xFF; break;
 				case 1: alphalimit = tile.tile_trans[j] ? 0x7E : 0xFF; break;
 				case 2: alphalimit = 0x18; break;
 				case 3: alphalimit = 0x7E; break;
-			}
+			}*/
 			imgtilex = (tile.pos_x+tile.tile_pos_x[j]-camera.pos_x)/FIELD_TILE_BASE_SIZE*tilesize;
 			imgtiley = (tile.pos_y+tile.tile_pos_y[j]-camera.pos_y)/FIELD_TILE_BASE_SIZE*tilesize;
 			atlasx = (tile.tile_steam_id[j]%atlastilecolcount)*tileperiod+tilegap;
@@ -201,7 +202,7 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 					atlas[atlasi+1] = imgdata[imgtilei*3+1];
 					atlas[atlasi+2] = imgdata[imgtilei*3+2];
 					atlas[atlasi+3] = imgalpha[imgtilei];
-					if (atlas[atlasi+3]<alphalimit) {
+					// Old Blend Modes: if (atlas[atlasi+3]<alphalimit) {
 					// Color transparent pixels with the color of the layer in front of these pixels
 //						if (alphalimit==0xFF)
 //							for (k=0;k<tiledata.tiles_amount;k++) {
@@ -228,13 +229,14 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 //									tblockimgarray[depthorder[k]].Destroy();
 //								break;
 //							}
-					} else if (alphalimit<0xFF && atlas[atlasi+3]>0/* && tile.tile_alpha[j]!=0*/) {
+					/* Old Blend Modes
+					} else if (alphalimit<0xFF && atlas[atlasi+3]>0) {
 						// Convert pre-multiplied alpha colors to real colors
 						atlas[atlasi] = atlas[atlasi]*0xFF/atlas[atlasi+3];
 						atlas[atlasi+1] = atlas[atlasi+1]*0xFF/atlas[atlasi+3];
 						atlas[atlasi+2] = atlas[atlasi+2]*0xFF/atlas[atlasi+3];
 						atlas[atlasi+3] = 0xFF;
-					}
+					}*/
 				}
 			// vertical and horizontal borders of the tile : (2*bordercolor_interior + bordercolor_exterior)/3
 			for (y=0;y<tilesize;y++)
@@ -344,17 +346,17 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 		}
 	}
 	// Expand color using average opaque colors near
-	unsigned int visiblepixcount;
+/*	unsigned int visiblepixcount;
 	uint32_t r,g,b;
 	int dx,dy;
 	for (y=0;y<atlash;y++)
 		for (x=0;x<atlasw;x++)
-			if (atlas[(x+y*atlasw)*4+3]<0xFF) {
+			if (atlas[(x+y*atlasw)*4+3]==0) { // Old Blend Mode: <0xFF
 				visiblepixcount = 0;
 				r = 0; g = 0; b = 0;
 				for (dx=-3;dx<=3;dx++)
 					for (dy=-3;dy<=3;dy++)
-						if (x+dx>0 && x+dx<atlasw && y+dy>0 && y+dy<atlash && (x+dx)/tileperiod==x/tileperiod && (y+dy)/tileperiod==y/tileperiod && atlas[(x+dx+(y+dy)*atlasw)*4+3]==0xFF) {
+						if (x+dx>0 && x+dx<atlasw && y+dy>0 && y+dy<atlash && (x+dx)/tileperiod==x/tileperiod && (y+dy)/tileperiod==y/tileperiod && atlas[(x+dx+(y+dy)*atlasw)*4+3]>0) {
 							r += atlas[(x+dx+(y+dy)*atlasw)*4];
 							g += atlas[(x+dx+(y+dy)*atlasw)*4+1];
 							b += atlas[(x+dx+(y+dy)*atlasw)*4+2];
@@ -366,7 +368,7 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 					atlas[(x+y*atlasw)*4+2] = b/visiblepixcount;
 				}
 				atlas[(x+y*atlasw)*4+3] = 0;
-			}
+			}*/
 	// Expand color using nearest opaque pixel
 /*	int dx, dy;
 //	for (i=0;i<atlastilecolcount*atlastilerowcount;i++) {

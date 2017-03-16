@@ -80,13 +80,12 @@ public:
 	uint8_t* tile_clut_x;
 	uint8_t* tile_page_y;
 	uint8_t* tile_page_x;
-	uint8_t* tile_tp;
+	uint8_t* tile_res;
 	uint8_t* tile_alpha;
 	uint8_t* tile_source_v;
 	uint8_t* tile_source_u;
 	uint16_t* tile_h;
 	uint16_t* tile_w;
-	uint8_t* tile_abr;
 	bool* tile_trans;
 	unsigned int* tile_steam_id;
 	

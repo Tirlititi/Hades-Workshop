@@ -18,13 +18,12 @@ void FieldTilesTileDataStruct::AllocTileData() {
 		delete[] tile_clut_x;
 		delete[] tile_page_y;
 		delete[] tile_page_x;
-		delete[] tile_tp;
+		delete[] tile_res;
 		delete[] tile_alpha;
 		delete[] tile_source_v;
 		delete[] tile_source_u;
 		delete[] tile_h;
 		delete[] tile_w;
-		delete[] tile_abr;
 		delete[] tile_trans;
 		delete[] tile_steam_id;
 	}
@@ -38,13 +37,12 @@ void FieldTilesTileDataStruct::AllocTileData() {
 	tile_clut_x = new uint8_t[tile_amount];
 	tile_page_y = new uint8_t[tile_amount];
 	tile_page_x = new uint8_t[tile_amount];
-	tile_tp = new uint8_t[tile_amount];
+	tile_res = new uint8_t[tile_amount];
 	tile_alpha = new uint8_t[tile_amount];
 	tile_source_v = new uint8_t[tile_amount];
 	tile_source_u = new uint8_t[tile_amount];
 	tile_h = new uint16_t[tile_amount];
 	tile_w = new uint16_t[tile_amount];
-	tile_abr = new uint8_t[tile_amount];
 	tile_trans = new bool[tile_amount];
 	tile_steam_id = new unsigned int[tile_amount];
 }
@@ -126,47 +124,54 @@ void FieldTilesDataStruct::AddTilesetToImage(uint32_t* imgdest, FieldTilesTileDa
 			timtiley = (t.tile_steam_id[i]/(steamimgwidth/tileperiod))*tileperiod+tilegap;
 			pixely *= 2;
 		}
-		switch (t.tile_alpha[i]) {
-		case 0:
-			alpha = t.tile_trans[i] ? 0x80000000 : 0xFF000000;
-			bm = TIM_BLENDMODE_ALPHA;
-			break;
-		case 1:
-			alpha = t.tile_trans[i] ? 0x80000000 : 0xFF000000;
-			bm = TIM_BLENDMODE_LIGHT;
-			break;
-		case 2:
-			alpha = 0x1A000000;
-			bm = TIM_BLENDMODE_SHADE;
-			break;
-		case 3:
-			alpha = 0x80000000;
-			bm = TIM_BLENDMODE_LIGHT;
-			break;
+		if (t.tile_trans[i]) {
+			switch (t.tile_alpha[i]) { // Before using ABR modes, default transparency was 0x80 before except for ABR 2 that was 0x1A
+			case 0:
+				alpha = 0x7F000000;
+				bm = TIM_BLENDMODE_ABR_0;
+				break;
+			case 1:
+				alpha = 0xFF000000;
+				bm = TIM_BLENDMODE_ABR_1;
+				break;
+			case 2:
+				alpha = 0xFF000000;
+				bm = TIM_BLENDMODE_ABR_2;
+				break;
+			case 3:
+				alpha = 0x3F000000;
+				bm = TIM_BLENDMODE_ABR_3;
+				break;
+			}
+		} else {
+			alpha = 0xFF000000;
+			bm = TIM_BLENDMODE_ABR_NONE;
 		}
+		if (object_id==2259 && t.id==14) // Specially handled for some reason: Oeilvert/Star Display
+			bm = TIM_BLENDMODE_ABR_NONE;
 		for (y=0;y<tilesize;y++) {
 			pixelx = t.pos_x+t.tile_pos_x[i]-camera[t.camera_id].pos_x;
 			if (psx) {
-				timtilex = t.tile_tp[i]>0 ? t.tile_page_x[i]*128 + t.tile_source_u[i] : t.tile_page_x[i]*128*2 + t.tile_source_u[i];
+				timtilex = t.tile_res[i]>0 ? t.tile_page_x[i]*128 + t.tile_source_u[i] : t.tile_page_x[i]*128*2 + t.tile_source_u[i];
 			} else {
 				timtilex = (t.tile_steam_id[i]%(steamimgwidth/tileperiod))*tileperiod+tilegap;
 				pixelx *= 2;
 			}
 			for (x=0;x<tilesize;x++) {
-				if (t.tile_tp[i]>0) {
+				if (t.tile_res[i]>0) {
 					if (psx)
-						pix = TIMImageDataStruct::GetVRamPixel(timtilex,timtiley,t.tile_clut_x[i],t.tile_clut_y[i],false);
+						pix = (TIMImageDataStruct::GetVRamPixel(timtilex,timtiley,t.tile_clut_x[i],t.tile_clut_y[i],false) & 0xFFFFFF) | alpha;
 					else
 						pix = steamimg[timtilex+timtiley*steamimgwidth];
 					if (pix & 0xFF000000)
-						imgdest[pixelx+pixely*camera[t.camera_id].width] = ImageMergePixels(imgdest[pixelx+pixely*camera[t.camera_id].width],(pix & 0xFFFFFF) | alpha,bm);
+						imgdest[pixelx+pixely*camera[t.camera_id].width] = ImageMergePixels(imgdest[pixelx+pixely*camera[t.camera_id].width],pix,bm);
 				} else {
 					if (psx)
-						pix = TIMImageDataStruct::GetVRamPixel(timtilex,timtiley,t.tile_clut_x[i],t.tile_clut_y[i],true);
+						pix = (TIMImageDataStruct::GetVRamPixel(timtilex,timtiley,t.tile_clut_x[i],t.tile_clut_y[i],true) & 0xFFFFFF) | alpha;
 					else
 						pix = steamimg[timtilex+timtiley*steamimgwidth];
 					if (showtp && (pix & 0xFF000000) && (pix!=0xFF000000))
-						imgdest[pixelx+pixely*camera[t.camera_id].width] = ImageMergePixels(imgdest[pixelx+pixely*camera[t.camera_id].width],(pix & 0xFFFFFF) | alpha,bm);
+						imgdest[pixelx+pixely*camera[t.camera_id].width] = ImageMergePixels(imgdest[pixelx+pixely*camera[t.camera_id].width],pix,bm);
 				}
 				timtilex++;
 				pixelx++;
@@ -207,11 +212,13 @@ uint32_t* FieldTilesDataStruct::ConvertAsImage(unsigned int cameraid, bool tilef
 		rawimg = tim->ConvertAsSteamImage();
 	for (i=0;i<imgsize;i++)
 		res[i] = 0;
-	for (i=0;i<tiles_amount;i++) {
+	for (i=0;i<tiles_amount;i++) { // ToDo: mind the shader layering order ("QUEUE")
 		FieldTilesTileDataStruct& t = tiles[GetRelatedTitleTileById(tiles_sorted[i]->id,GetSteamLanguage())];
 		if (t.camera_id==cameraid && (tileflag==NULL || tileflag[t.id]) && (tileflag!=NULL || t.is_static || t.is_first_of_anim))
 			AddTilesetToImage(res,t,showtp,rawimg,tim->steam_width);
 	}
+	if (GetGameType()!=GAME_TYPE_PSX)
+		delete[] rawimg;
 	return res;
 }
 
@@ -337,6 +344,9 @@ int FieldTilesDataStruct::Export(const char* outputfile, unsigned int cameraid, 
 		ftiff.seekg(lastifdp);
 		MACRO_WL(0)
 	}
+	delete[] img;
+	if (GetGameType()!=GAME_TYPE_PSX)
+		delete[] rawimg;
 	ftiff.close();
 	return 0;
 }
@@ -358,7 +368,7 @@ void FieldTilesTileDataStruct::SetupDataInfos(bool readway) {
 		tile_clut_x[i] = (tile_data_data1[i] >> 9) & 0x3F;
 		tile_page_y[i] = (tile_data_data1[i] >> 15) & 0x1;
 		tile_page_x[i] = (tile_data_data1[i] >> 16) & 0xF;
-		tile_tp[i] = (tile_data_data1[i] >> 20) & 0x3;
+		tile_res[i] = (tile_data_data1[i] >> 20) & 0x3;
 		tile_alpha[i] = (tile_data_data1[i] >> 22) & 0x3;
 		tile_source_v[i] = (tile_data_data1[i] >> 24) & 0xFF;
 		tile_source_u[i] = tile_data_data2[i] & 0xFF;
@@ -369,7 +379,6 @@ void FieldTilesTileDataStruct::SetupDataInfos(bool readway) {
 		tile_pos_y[i] = (tile_data_data3[i] >> 12) & 0x3FF;
 		tile_pos_x[i] = (tile_data_data3[i] >> 22) & 0x3FF;
 		// Unused 3 bits
-		tile_abr[i] = tile_trans[i] ? 1 : 0;
 	}
 }
 
@@ -592,13 +601,12 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 			delete[] tiles[i].tile_clut_x;
 			delete[] tiles[i].tile_page_y;
 			delete[] tiles[i].tile_page_x;
-			delete[] tiles[i].tile_tp;
+			delete[] tiles[i].tile_res;
 			delete[] tiles[i].tile_alpha;
 			delete[] tiles[i].tile_source_v;
 			delete[] tiles[i].tile_source_u;
 			delete[] tiles[i].tile_h;
 			delete[] tiles[i].tile_w;
-			delete[] tiles[i].tile_abr;
 			delete[] tiles[i].tile_trans;
 			delete[] tiles[i].tile_steam_id;
 			delete[] tiles[i].tile_data_data1;
@@ -1015,7 +1023,7 @@ bool FieldSteamTitleInfo::ReadTitleTileId(FieldTilesDataStruct* tileset, Configu
 //				localbackground.id = i;
 				localbackground.size = config.meta_field[config.field_file_id[tileset->id]-1].GetFileSizeByIndex(config.field_tiles_file[tileset->id][lang]);
 				localbackground.Read(ffbin);
-				if (langi==STEAM_LANGUAGE_EN && !has_uk[i]) {
+				if (lang==STEAM_LANGUAGE_US) {
 					newtileid = atlas_title_pos[STEAM_LANGUAGE_US][i];
 					for (j=0;j<title_tile_start[i];j++)
 						newtileid += tileset->tiles[j].tile_amount;

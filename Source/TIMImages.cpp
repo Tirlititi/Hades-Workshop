@@ -248,115 +248,6 @@ ftga.write((const char*)&r,1);
 ftga.write((const char*)&a,1);
 }*/
 	return (uint32_t*)res;
-	// DEBUG: old version...
-/*	uint32_t* res = new uint32_t[steam_width*steam_height];
-	uint32_t steamheight4 = steam_height/4;
-	uint32_t steamwidth4 = steam_width/4;
-	unsigned int i,j,x,y,k,l;
-	uint8_t r,g,b,a,colorflag;
-	uint64_t alphaflag;
-	a = 0xFF;
-	i = 0;
-	j = steam_width*steam_height-steam_width;
-	for (y=0;y<steamheight4;y++) {
-		for (k=0;k<4;k++) {
-			for (x=0;x<steamwidth4;x++) {
-				for (l=0;l<4;l++) {
-					colorflag = ((steam_pixel_color_flag[i] >> (2*(4*k+l))) & 3);
-					alphaflag = steam_pixel_alpha_flag1[i] | (steam_pixel_alpha_flag2[i] << 16) | (steam_pixel_alpha_flag3[i] << 32);
-					alphaflag = ((alphaflag >> (3*(4*k+l))) & 7);
-					if (colorflag==0) {
-						r = (steam_pixel_color[i] >> 11) & 0x1F;
-						g = (steam_pixel_color[i] >> 6) & 0x1F;
-						b = steam_pixel_color[i] & 0x1F;
-					} else if (colorflag==1) {
-						r = (steam_pixel_color_ex[i] >> 11) & 0x1F;
-						g = (steam_pixel_color_ex[i] >> 6) & 0x1F;
-						b = steam_pixel_color_ex[i] & 0x1F;*/
-/*					} else if (steam_pixel_color[i]<=steam_pixel_color_ex[i]) {
-						if (colorflag==2) {
-							r = (((steam_pixel_color[i] >> 11) & 0x1F)+((steam_pixel_color_ex[i] >> 11) & 0x1F))/2;
-							g = (((steam_pixel_color[i] >> 6) & 0x1F)+((steam_pixel_color_ex[i] >> 6) & 0x1F))/2;
-							b = ((steam_pixel_color[i] & 0x1F)+(steam_pixel_color_ex[i] & 0x1F))/2;
-						} else {
-							r = 0;
-							g = 0;
-							b = 0;
-							a = 0;
-						}*/
-/*					} else if (colorflag==2) {
-						r = (2*((steam_pixel_color[i] >> 11) & 0x1F)+((steam_pixel_color_ex[i] >> 11) & 0x1F))/3;
-						g = (2*((steam_pixel_color[i] >> 6) & 0x1F)+((steam_pixel_color_ex[i] >> 6) & 0x1F))/3;
-						b = (2*(steam_pixel_color[i] & 0x1F)+(steam_pixel_color_ex[i] & 0x1F))/3;
-					} else {
-						r = (((steam_pixel_color[i] >> 11) & 0x1F)+2*((steam_pixel_color_ex[i] >> 11) & 0x1F))/3;
-						g = (((steam_pixel_color[i] >> 6) & 0x1F)+2*((steam_pixel_color_ex[i] >> 6) & 0x1F))/3;
-						b = ((steam_pixel_color[i] & 0x1F)+2*(steam_pixel_color_ex[i] & 0x1F))/3;
-					}
-					if (usealpha && !(steam_pixel_color[i]<=steam_pixel_color_ex[i] && colorflag==3)) {
-						if (alphaflag==0) {
-							a = steam_pixel_alpha[i];
-						} else if (alphaflag==1) {
-							a = steam_pixel_alpha_ex[i];
-						} else if (steam_pixel_alpha[i]<=steam_pixel_alpha_ex[i]) {
-							if (alphaflag==6) {
-								a = steam_pixel_alpha[i]; //0
-							} else if (alphaflag==7) {
-								a = steam_pixel_alpha_ex[i]; //0xFF
-							} else {
-								a = ((6-alphaflag)*steam_pixel_alpha[i]+(alphaflag-1)*steam_pixel_alpha_ex[i])/5;
-							}
-						} else {
-								a = ((8-alphaflag)*steam_pixel_alpha[i]+(alphaflag-1)*steam_pixel_alpha_ex[i])/7;
-						}
-					}*/
-/*if (y+1==steamheight4 && x>=20 && x<=23) {
-fstream fout("aaaa.txt",ios::app|ios::out); fout << "Position: " << (unsigned int)x << ", " << (unsigned int)y << " (" << (unsigned int)l  << "," << (unsigned int)k << ")" << endl;
-fout << "Colors: " << (unsigned int)steam_pixel_color[i] << " " << (unsigned int)steam_pixel_color_ex[i] << endl;
-fout << "Alphas: " << (unsigned int)steam_pixel_alpha[i] << " " << (unsigned int)steam_pixel_alpha_ex[i] << endl;
-fout << "Flags: " << (unsigned int)colorflag << " " << (unsigned int)alphaflag << endl;
-fout << endl; fout.close(); }*/
-/*					res[j++] = (a << 24) | (color[r] << 16) | (color[g] << 8) | color[b];
-				}
-				i++;
-			}
-			j -= 2*steam_width;
-			i -= steamwidth4;
-		}
-		i += steamwidth4;
-	}*/
-// TGA then Unity RGBA32
-/*fstream ftga("aaaa.tga",ios::out|ios::binary);
-if (!ftga.is_open()) return res;
-uint32_t tmp = 0x20000; ftga.write((const char*)&tmp,4);
-tmp = 0; ftga.write((const char*)&tmp,4); ftga.write((const char*)&tmp,4);
-tmp = steam_width; ftga.write((const char*)&tmp,2);
-tmp = steam_height; ftga.write((const char*)&tmp,2);
-tmp = 0x2020; ftga.write((const char*)&tmp,2);
-/*uint32_t tmp = steam_width; ftga.write((const char*)&tmp,4);
-tmp = steam_height; ftga.write((const char*)&tmp,4);
-tmp = steam_width*steam_height; ftga.write((const char*)&tmp,4);
-tmp = 4; ftga.write((const char*)&tmp,4);
-tmp = 1; ftga.write((const char*)&tmp,4);
-tmp = 0x100; ftga.write((const char*)&tmp,4);
-tmp = 1; ftga.write((const char*)&tmp,4);
-tmp = 2; ftga.write((const char*)&tmp,4);
-tmp = 1; ftga.write((const char*)&tmp,4);
-tmp = 0; ftga.write((const char*)&tmp,4);
-tmp = 1; ftga.write((const char*)&tmp,4); ftga.write((const char*)&tmp,4);
-tmp = 0; ftga.write((const char*)&tmp,4);
-tmp = 1; ftga.write((const char*)&tmp,4);
-tmp = steam_width*steam_height; ftga.write((const char*)&tmp,4);
-for (i=0;i<steam_height*steam_width;i++) {
-int x = i%steam_width;
-int y = i/steam_width;
-a = (res[i] >> 24) & 0xFF; r = (res[i] >> 16) & 0xFF; g = (res[i] >> 8) & 0xFF; b = res[i] & 0xFF;
-ftga.write((const char*)&b,1);
-ftga.write((const char*)&g,1);
-ftga.write((const char*)&r,1);
-ftga.write((const char*)&a,1);
-}*/
-//	return res;
 }
 
 uint32_t* TIMImageDataStruct::ConvertAsFullImage(uint32_t* pal, uint16_t palpos, bool usealpha) {
@@ -790,6 +681,8 @@ bool TIMImageDataStruct::ConvertFromSteamTexture(uint8_t* imgbuffer, uint32_t* d
 		dxtflag = -4; // RGBA32
 	else if (tmp32==0x05)
 		dxtflag = -5; // ARGB32
+	else if (tmp32==0x07)
+		dxtflag = -7; // RGB565
 	else
 		return false;
 	BufferReadLong(imgbuffer,tmp32);
@@ -833,6 +726,16 @@ bool TIMImageDataStruct::ConvertFromSteamTexture(uint8_t* imgbuffer, uint32_t* d
 				BufferReadChar(imgbuffer,imgrgba[(x+y*w)*4+1]);
 				BufferReadChar(imgbuffer,imgrgba[(x+y*w)*4+2]);
 			}
+	} else if (dxtflag==-7) {
+		uint16_t pixval;
+		for (y=0;y<h;y++)
+			for (x=0;x<w;x++) {
+				BufferReadShort(imgbuffer,pixval);
+				imgrgba[(x+y*w)*4] = (pixval & 0xF800) >> 8;
+				imgrgba[(x+y*w)*4+1] = (pixval & 0x7E0) >> 3;
+				imgrgba[(x+y*w)*4+2] = (pixval & 0x1F) << 3;
+				imgrgba[(x+y*w)*4+3] = 0xFF;
+			}
 	} else {
 		squish::DecompressImage(imgrgba,w,h,&imgbuffer[BufferGetPosition()],dxtflag);
 	}
@@ -867,6 +770,8 @@ uint32_t TIMImageDataStruct::GetSteamTextureFileSize(uint32_t imgwidth, uint32_t
 		return 0x3C+4*imgwidth*imgheight;
 	if (textformat==0x05) // ARGB32
 		return 0x3C+4*imgwidth*imgheight;
+	if (textformat==0x07) // RGB565
+		return 0x3C+2*imgwidth*imgheight;
 	return 0;
 }
 
@@ -884,6 +789,8 @@ uint8_t* TIMImageDataStruct::CreateSteamTextureFile(uint32_t& datasize, uint32_t
 		dxtflag = -4; // RGBA32
 	} else if (textformat==0x05) {
 		dxtflag = -5; // ARGB32
+	} else if (textformat==0x07) {
+		dxtflag = -7; // RGB565
 	} else { // unsupported format
 		datasize = 0;
 		return NULL;
@@ -959,6 +866,12 @@ uint8_t* TIMImageDataStruct::CreateSteamTextureFile(uint32_t& datasize, uint32_t
 				rawimg[(x+y*w)*4+2] = rgba[(x+y*w)*4+1];
 				rawimg[(x+y*w)*4+3] = rgba[(x+y*w)*4+2];
 			}
+	} else if (dxtflag==-7) {
+		for (y=0;y<h;y++)
+			for (x=0;x<w;x++) {
+				rawimg[(x+y*w)*2] = (rgba[(x+y*w)*4+2] >> 3) | ((rgba[(x+y*w)*4+1] & 0x1C) << 3);
+				rawimg[(x+y*w)*2+1] = (rgba[(x+y*w)*4+1] >> 5) | (rgba[(x+y*w)*4] & 0xF8);
+			}
 	} else {
 		squish::CompressImage(rgba,w,h,rawimg,dxtflag);
 	}
@@ -989,6 +902,31 @@ uint32_t ImageMergePixels(uint32_t pix1, uint32_t pix2, TIM_BlendMode mode) {
 	case TIM_BLENDMODE_SHADE:
 		ar = max(a1,a2);
 		rr = (a1*r1+a2*r2)/(a1+a2);		gr = (a1*g1+a2*g2)/(a1+a2);		br = (a1*b1+a2*b2)/(a1+a2);
+		break;
+	case TIM_BLENDMODE_ABR_NONE: // Blend One OneMinusSrcAlpha ; Queue Transparent
+		rr = min(255,r2+(255-a2)*r1/255);	gr = min(255,g2+(255-a2)*g1/255);	br = min(255,b2+(255-a2)*b1/255);
+		ar = min(255,a2+(255-a2)*a1/255);
+		break;
+	case TIM_BLENDMODE_ABR_0: // Blend One OneMinusSrcAlpha ; Queue Transparent+1
+		rr = min(255,r2+(255-a2)*r1/255);	gr = min(255,g2+(255-a2)*g1/255);	br = min(255,b2+(255-a2)*b1/255);
+		ar = min(255,a2+(255-a2)*a1/255);
+		break;
+	case TIM_BLENDMODE_ABR_1: // Blend One One ; ZWrite Off ; Queue Transparent+3
+		rr = min(255,r2+r1);	gr = min(255,g2+g1);	br = min(255,b2+b1);
+		ar = min(255,a2+a1);
+		break;
+	case TIM_BLENDMODE_ABR_2: // Blend One One ; BlendOp RevSub ; Queue Transparent+3
+		if (a1>0) { // Save the true color when the tilesets are splitted
+			rr = max(0,r1-r2);	gr = max(0,g1-g2);	br = max(0,b1-b2);
+		} else {
+			rr = r2;	gr = g2;	br = b2;
+		}
+		ar = min(255,a2+a1);
+//		ar = max(0,a1-a2);
+		break;
+	case TIM_BLENDMODE_ABR_3: // Blend One One ; Queue Transparent+3
+		rr = min(255,r2+r1);	gr = min(255,g2+g1);	br = min(255,b2+b1);
+		ar = min(255,a2+a1);
 		break;
 	default:
 		rr = r2;	gr = g2;	br = b2;	ar = a2;

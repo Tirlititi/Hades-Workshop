@@ -5027,24 +5027,10 @@ walkbmp.SaveFile(_(L"aaaa.bmp"),wxBITMAP_TYPE_BMP);*/
 			}
 		}
 	} else if (id==wxID_TEXTURE) {
-		if (GetGameType()==GAME_TYPE_PSX) {
-			ManageFieldTextureDialog dial(this,*fieldset.background_data[*sortid]);
-			if (dial.ShowModal(m_fieldtexturechoice->GetSelection())==wxID_OK) {
-				// ToDo
-				MarkDataFieldModified(*sortid,CHUNK_TYPE_FIELD_TILES);
-			}
-		} else { // DEBUG
-			FieldTextureExportWindow dial(this);
-			dial.m_onlyselected->Enable(false);
-			dial.m_languagetitle->Enable(fieldset.background_data[*sortid]->title_tile_amount>0);
-			if (dial.ShowModal()==wxID_OK) {
-				if (fieldset.background_data[*sortid]->Export(dial.m_filepicker->GetPath().mb_str(),m_fieldtexturechoice->GetSelection(),NULL,true,dial.m_mergetiles->IsChecked(),dial.m_exportorder->IsChecked(),dial.m_languagetitle->GetSelection()-1)) {
-					wxLogError(HADES_STRING_OPEN_ERROR_CREATE,dial.m_filepicker->GetPath());
-					return;
-				}
-				wxMessageDialog popupsuccess(this,HADES_STRING_FIELDTEXTURE_SAVE_SUCCESS,HADES_STRING_SUCCESS,wxOK|wxCENTRE);
-				popupsuccess.ShowModal();
-			}
+		ManageFieldTextureDialog dial(this,*fieldset.background_data[*sortid]);
+		if (dial.ShowModal(m_fieldtexturechoice->GetSelection())==wxID_OK) {
+			// ToDo
+			MarkDataFieldModified(*sortid,CHUNK_TYPE_FIELD_TILES);
 		}
 	}
 }

@@ -555,10 +555,14 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				uint32_t magicakb;
 				BufferInitPosition();
 				BufferReadLong((uint8_t*)buffer,magicakb);
-				if (magicakb==0x32424B41)
-					filedest.write(&buffer[0x130],expfilesize-0x130);
-				else
+				if (magicakb==0x32424B41) {
+					uint32_t oggsize;
+					BufferInitPosition(0xE8);
+					BufferReadLong((uint8_t*)buffer,oggsize);
+					filedest.write(&buffer[0x130],oggsize);
+				} else {
 					filedest.write(buffer,expfilesize);
+				}
 				filedest.close();
 				delete[] buffer;
 			} else {
@@ -654,6 +658,7 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				}
 				fileasset.seekg(0,ios::end);
 				filenewsize[expfileid] = (uint32_t)fileasset.tellg()+0x130;
+				filenewsize[expfileid] += GetAlignOffset(filenewsize[expfileid],0x10);
 				fileasset.close();
 			} else {
 				fstream fileasset(path.c_str(),ios::in|ios::binary);
@@ -733,24 +738,34 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 					overwritefile = false;
 					continue;
 				}
-				uint32_t newsizeogg = filenewsize[expfileid]-0x130;
-				uint32_t newsizeoggreal = newsizeogg;
+				uint32_t loopstart = 0;
+				uint32_t loopend = 0;
+				uint32_t newsizeogg;
+				fileasset.seekg(0,ios::end);
+				newsizeogg = fileasset.tellg();
+				fileasset.seekg(0);
 				filedest.seekg(unityfileoff[expfileid]);
 				filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(expfileid));
 				buffer = new char[filenewsize[expfileid]];
 				filebase.read(buffer,0x130);
 				fileasset.read(&buffer[0x130],newsizeogg);
-				for (i=filenewsize[expfileid]-1;buffer[i]==0 && i>0x130;i--)
-					newsizeoggreal--;
+				for (i=newsizeogg+0x130;i<filenewsize[expfileid];i++)
+					buffer[i] = 0;
+				for (i=0x130;i<newsizeogg;i++) {
+					if (i+10<newsizeogg && strncmp(&buffer[i],"LoopStart=",10)==0)
+						loopstart = atoi(&buffer[i+10]);
+					else if (i+8<newsizeogg && strncmp(&buffer[i],"LoopEnd=",8)==0)
+						loopend = atoi(&buffer[i+8]);
+				}
 				BufferInitPosition(8);		BufferWriteLong((uint8_t*)buffer,filenewsize[expfileid]);
 //				BufferInitPosition(0x28);	BufferWriteLong((uint8_t*)buffer,akbid); // ToDo: be able to retrieve this kind of info without the old file
 //				BufferInitPosition(0xE2);	BufferWriteShort((uint8_t*)buffer,sound/music?);
 //				BufferInitPosition(0xE6);	BufferWriteShort((uint8_t*)buffer,samplerate at 0x28 of Ogg);
-				BufferInitPosition(0xE8);	BufferWriteLong((uint8_t*)buffer,newsizeoggreal);
-/*				BufferWriteLong((uint8_t*)buffer,newsizeoggreal); // ???
-				BufferWriteLong((uint8_t*)buffer,newsizeoggreal); // LoopStart
-				BufferWriteLong((uint8_t*)buffer,newsizeoggreal); // LoopEnd
-				BufferInitPosition(0x124);	BufferWriteLong((uint8_t*)buffer,newsizeoggreal); // ???*/
+				BufferInitPosition(0xE8);	BufferWriteLong((uint8_t*)buffer,newsizeogg);
+//				BufferWriteLong((uint8_t*)buffer,samplecount);
+				BufferInitPosition(0xF0);	BufferWriteLong((uint8_t*)buffer,loopstart);
+				BufferWriteLong((uint8_t*)buffer,loopend);
+//				BufferInitPosition(0x124);	BufferWriteLong((uint8_t*)buffer,???);
 				filedest.write(buffer,filenewsize[expfileid]);
 				fileasset.close();
 				delete[] buffer;
