@@ -458,9 +458,9 @@ ftga.write((const char*)&tmp,4);
 tmp = 0;
 ftga.write((const char*)&tmp,4);
 ftga.write((const char*)&tmp,4);
-tmp = steam_width;
+tmp = 1024;
 ftga.write((const char*)&tmp,2);
-tmp = steam_height;
+tmp = 512;
 ftga.write((const char*)&tmp,2);
 tmp = 0x2020;
 ftga.write((const char*)&tmp,2);
@@ -489,20 +489,21 @@ ftga.write((const char*)&tmp,1);
 uint32_t TIMImageDataStruct::GetVRamPixel(unsigned int x, unsigned int y, unsigned int px, unsigned int py, bool shortformat) {
 	uint8_t pal;
 	if (shortformat) {
-		pal = vram[x/4][y][x&2];
+		pal = vram[x >> 2][y][(x >> 1) & 1];
 		if (x&1)
 			pal = (pal & 0xF0) >> 4;
 		else
 			pal &= 0x0F;
 	} else {
-		pal = vram[x/2][y][x&1];
+		pal = vram[x >> 1][y][x & 1];
 	}
 	uint16_t pix = vram[px+pal][py][0] | (vram[px+pal][py][1] << 8);
 	uint8_t r = color[pix & 0x1F];
 	uint8_t g = color[(pix >> 5) & 0x1F];
 	uint8_t b = color[(pix >> 10) & 0x1F];
 	uint32_t res = (r << 16) | (g << 8) | b;
-	if (pix & 0x8000)
+//	if (pix & 0x8000)
+	if (pix!=0)
 		res |= 0xFF000000;
 	return res;
 }
@@ -916,13 +917,18 @@ uint32_t ImageMergePixels(uint32_t pix1, uint32_t pix2, TIM_BlendMode mode) {
 		ar = min(255,a2+a1);
 		break;
 	case TIM_BLENDMODE_ABR_2: // Blend One One ; BlendOp RevSub ; Queue Transparent+3
-		if (a1>0) { // Save the true color when the tilesets are splitted
-			rr = max(0,r1-r2);	gr = max(0,g1-g2);	br = max(0,b1-b2);
+		if (a1==0) { // Save the true color when the tilesets are splitted
+			rr = r2;	gr = g2;	br = b2;	ar = a2;
 		} else {
-			rr = r2;	gr = g2;	br = b2;
+			if (GetGameType()==GAME_TYPE_PSX) {
+				rr = r1*r2/255;	gr = g1*g2/255;	br = b1*b2/255;
+//				ar = a1*a2/255;
+			} else {
+				rr = max(0,r1-r2);	gr = max(0,g1-g2);	br = max(0,b1-b2);
+//				ar = max(0,a1-a2);
+			}
+			ar = min(255,a2+a1);
 		}
-		ar = min(255,a2+a1);
-//		ar = max(0,a1-a2);
 		break;
 	case TIM_BLENDMODE_ABR_3: // Blend One One ; Queue Transparent+3
 		rr = min(255,r2+r1);	gr = min(255,g2+g1);	br = min(255,b2+b1);

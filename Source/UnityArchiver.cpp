@@ -448,7 +448,7 @@ int32_t UnityArchiveMetaData::GetFileIndexByInfo(uint64_t info, uint32_t filetyp
 	return -1;
 }
 
-uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* copylist, uint32_t* filenewsize, bool updatedata) {
+uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* copylist, uint32_t* filenewsize) {
 	uint32_t archivestart = archive_type==1 ? 0x70 : 0;
 	uint32_t* res = new uint32_t[header_file_amount];
 	uint32_t copysize, offstart, offtmp, filenewsizetmp;
@@ -510,14 +510,6 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 			delete[] buffer;
 		}
 		fdest.seekp(offtmp);
-		if (updatedata) {
-			file_offset_start[i] = offstart;
-			if (!copylist[i]) {
-				file_size[i] = filenewsizetmp;
-				if (file_type1[i]==49)
-					text_file_size[i] = filenewsize[i];
-			}
-		}
 		if (copylist[i])
 			offstart += file_size[i];
 		else
@@ -539,7 +531,6 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 	if (archive_type==0) {
 		fdest.seekp(4);
 		WriteLongBE(fdest,fdestsize);
-		if (updatedata) header_file_size = fdestsize;
 	} else {
 		uint32_t size;
 		fdest.seekp(0x1B);
@@ -554,7 +545,6 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 		WriteLongBE(fdest,size);
 		fdest.seekp(archivestart+4);
 		WriteLongBE(fdest,size);
-		if (updatedata) header_file_size = fdestsize;
 	}
 	return res;
 }

@@ -128,7 +128,7 @@ struct UnityArchiveMetaData {
 	
 	// Return the starting offset of the files in the duplicate (must be deleted[])
 	// Arrays must be of length header_file_amount
-	uint32_t* Duplicate(fstream& fbase, fstream& fdest, bool* copylist, uint32_t* filenewsize, bool updatedata = false);
+	uint32_t* Duplicate(fstream& fbase, fstream& fdest, bool* copylist, uint32_t* filenewsize);
 	
 	UnityArchiveMetaData() : loaded(false) {}
 	~UnityArchiveMetaData() { Flush(); }

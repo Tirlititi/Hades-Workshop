@@ -271,12 +271,13 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 						atlas[atlasi+2] = imgdata[(imgtilex+tilesize-1+(imgtiley+y)*imgwidth)*3+2];
 						atlas[atlasi+3] = imgalpha[imgtilex+tilesize-1+(imgtiley+y)*imgwidth];
 					}
+					/* Old Blend Modes
 					if (alphalimit<0xFF && atlas[atlasi+3]>=alphalimit) {
 						atlas[atlasi] = atlas[atlasi]*0xFF/atlas[atlasi+3];
 						atlas[atlasi+1] = atlas[atlasi+1]*0xFF/atlas[atlasi+3];
 						atlas[atlasi+2] = atlas[atlasi+2]*0xFF/atlas[atlasi+3];
 						atlas[atlasi+3] = 0xFF;
-					}
+					}*/
 				}
 			for (x=0;x<tilesize;x++)
 				for (y=0;y<tilegap;y++) {
@@ -310,12 +311,13 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 						atlas[atlasi+2] = imgdata[(imgtilex+x+(imgtiley+tilesize-1)*imgwidth)*3+2];
 						atlas[atlasi+3] = imgalpha[imgtilex+x+(imgtiley+tilesize-1)*imgwidth];
 					}
+					/* Old Blend Modes
 					if (alphalimit<0xFF && atlas[atlasi+3]>=alphalimit) {
 						atlas[atlasi] = atlas[atlasi]*0xFF/atlas[atlasi+3];
 						atlas[atlasi+1] = atlas[atlasi+1]*0xFF/atlas[atlasi+3];
 						atlas[atlasi+2] = atlas[atlasi+2]*0xFF/atlas[atlasi+3];
 						atlas[atlasi+3] = 0xFF;
-					}
+					}*/
 				}
 			// corners of the tile : (bordercolor_exterior1 + bordercolor_exterior2)/2 ; only the nearest pixel is non-transparent
 			for (x=0;x<tilegap;x++)
@@ -346,7 +348,7 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 		}
 	}
 	// Expand color using average opaque colors near
-/*	unsigned int visiblepixcount;
+	unsigned int visiblepixcount;
 	uint32_t r,g,b;
 	int dx,dy;
 	for (y=0;y<atlash;y++)
@@ -367,8 +369,8 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 					atlas[(x+y*atlasw)*4+1] = g/visiblepixcount;
 					atlas[(x+y*atlasw)*4+2] = b/visiblepixcount;
 				}
-				atlas[(x+y*atlasw)*4+3] = 0;
-			}*/
+//				atlas[(x+y*atlasw)*4+3] = 0;
+			}
 	// Expand color using nearest opaque pixel
 /*	int dx, dy;
 //	for (i=0;i<atlastilecolcount*atlastilerowcount;i++) {

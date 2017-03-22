@@ -1,5 +1,8 @@
 #include "Fields.h"
 
+#define PSX_SCREEN_SIZE_X	640u
+#define PSX_SCREEN_SIZE_Y	480u
+
 #include <sstream>
 #include "Database_Steam.h"
 #include "Gui_LoadingDialog.h"
@@ -49,6 +52,7 @@ void FieldTilesTileDataStruct::AllocTileData() {
 
 void FieldTilesCameraDataStruct::UpdateSize() {
 	unsigned int i,j;
+	bool usescreen = false;
 	int maxx = -0xFFFF;
 	int maxy = -0xFFFF;
 	pos_x = 0xFFFF;
@@ -60,12 +64,16 @@ void FieldTilesCameraDataStruct::UpdateSize() {
 				pos_y = min(pos_y,parent->tiles[i].pos_y+parent->tiles[i].tile_pos_y[j]);
 				maxx = max(maxx,parent->tiles[i].pos_x+parent->tiles[i].tile_pos_x[j]+FIELD_TILE_BASE_SIZE);
 				maxy = max(maxy,parent->tiles[i].pos_y+parent->tiles[i].tile_pos_y[j]+FIELD_TILE_BASE_SIZE);
+//				usescreen = usescreen || (parent->tiles[i].tile_res[j]==0 && parent->tiles[i].tile_trans[j] && parent->tiles[i].tile_alpha[j]==2);
 			}
 	width = pos_x<0xFFFF ? maxx-pos_x : 0;
 	height = pos_y<0xFFFF ? maxy-pos_y : 0;
 	if (GetGameType()!=GAME_TYPE_PSX) {
 		width *= 2;
 		height *= 2;
+//	} else if (usescreen) {
+//		width = max(width,PSX_SCREEN_SIZE_X);
+//		height = max(height,PSX_SCREEN_SIZE_Y);
 	}
 }
 
@@ -110,7 +118,7 @@ void FieldTilesDataStruct::Copy(FieldTilesDataStruct& cpy) {
 
 void FieldTilesDataStruct::AddTilesetToImage(uint32_t* imgdest, FieldTilesTileDataStruct& t, bool showtp, uint32_t* steamimg, uint32_t steamimgwidth) {
 	unsigned int i,x,y,pixelx,pixely,timtilex,timtiley,tilesize,tilegap,tileperiod,steamfactor;
-	uint32_t pix,alpha;
+	uint32_t pix,psxalpha;
 	TIM_BlendMode bm;
 	bool psx = GetGameType()==GAME_TYPE_PSX;
 	tilesize = parent->tile_size;
@@ -124,27 +132,28 @@ void FieldTilesDataStruct::AddTilesetToImage(uint32_t* imgdest, FieldTilesTileDa
 			timtiley = (t.tile_steam_id[i]/(steamimgwidth/tileperiod))*tileperiod+tilegap;
 			pixely *= 2;
 		}
+//		if (psx && t.tile_trans[i] && t.tile_alpha[i]==2) // pixelpos or timtile is wrongly placed...
 		if (t.tile_trans[i]) {
 			switch (t.tile_alpha[i]) { // Before using ABR modes, default transparency was 0x80 before except for ABR 2 that was 0x1A
 			case 0:
-				alpha = 0x7F000000;
+				psxalpha = 0x7F000000;
 				bm = TIM_BLENDMODE_ABR_0;
 				break;
 			case 1:
-				alpha = 0xFF000000;
+				psxalpha = 0xFF000000;
 				bm = TIM_BLENDMODE_ABR_1;
 				break;
 			case 2:
-				alpha = 0xFF000000;
+				psxalpha = 0xFF000000;
 				bm = TIM_BLENDMODE_ABR_2;
 				break;
 			case 3:
-				alpha = 0x3F000000;
+				psxalpha = 0x3F000000;
 				bm = TIM_BLENDMODE_ABR_3;
 				break;
 			}
 		} else {
-			alpha = 0xFF000000;
+			psxalpha = 0xFF000000;
 			bm = TIM_BLENDMODE_ABR_NONE;
 		}
 		if (object_id==2259 && t.id==14) // Specially handled for some reason: Oeilvert/Star Display
@@ -160,18 +169,26 @@ void FieldTilesDataStruct::AddTilesetToImage(uint32_t* imgdest, FieldTilesTileDa
 			for (x=0;x<tilesize;x++) {
 				if (t.tile_res[i]>0) {
 					if (psx)
-						pix = (TIMImageDataStruct::GetVRamPixel(timtilex,timtiley,t.tile_clut_x[i],t.tile_clut_y[i],false) & 0xFFFFFF) | alpha;
+						pix = TIMImageDataStruct::GetVRamPixel(timtilex,timtiley,t.tile_clut_x[i],t.tile_clut_y[i],false);
 					else
 						pix = steamimg[timtilex+timtiley*steamimgwidth];
-					if (pix & 0xFF000000)
-						imgdest[pixelx+pixely*camera[t.camera_id].width] = ImageMergePixels(imgdest[pixelx+pixely*camera[t.camera_id].width],pix,bm);
+					if (pix & 0xFF000000) {
+						if (psx)
+							imgdest[pixelx+pixely*camera[t.camera_id].width] = ImageMergePixels(imgdest[pixelx+pixely*camera[t.camera_id].width],(pix & 0xFFFFFF) | psxalpha,bm);
+						else
+							imgdest[pixelx+pixely*camera[t.camera_id].width] = ImageMergePixels(imgdest[pixelx+pixely*camera[t.camera_id].width],pix,bm);
+					}
 				} else {
 					if (psx)
-						pix = (TIMImageDataStruct::GetVRamPixel(timtilex,timtiley,t.tile_clut_x[i],t.tile_clut_y[i],true) & 0xFFFFFF) | alpha;
+						pix = TIMImageDataStruct::GetVRamPixel(timtilex,timtiley,t.tile_clut_x[i],t.tile_clut_y[i],true);
 					else
 						pix = steamimg[timtilex+timtiley*steamimgwidth];
-					if (showtp && (pix & 0xFF000000) && (pix!=0xFF000000))
-						imgdest[pixelx+pixely*camera[t.camera_id].width] = ImageMergePixels(imgdest[pixelx+pixely*camera[t.camera_id].width],pix,bm);
+					if (showtp && (pix & 0xFF000000) && (pix!=0xFF000000)) {
+						if (psx)
+							imgdest[pixelx+pixely*camera[t.camera_id].width] = ImageMergePixels(imgdest[pixelx+pixely*camera[t.camera_id].width],(pix & 0xFFFFFF) | psxalpha,bm);
+						else
+							imgdest[pixelx+pixely*camera[t.camera_id].width] = ImageMergePixels(imgdest[pixelx+pixely*camera[t.camera_id].width],pix,bm);
+					}
 				}
 				timtilex++;
 				pixelx++;

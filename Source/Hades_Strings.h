@@ -349,6 +349,7 @@ static wxString HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM[] = {
 #define HADES_STRING_UNITYVIEWER_IMPORT_SUCCESS	"Successfully imported %d asset(s)."
 #define HADES_STRING_UNITYVIEWER_IMPORT_ERROR	"Successfully imported %d asset(s).\n"\
 												"Failed to import %d asset(s)."
+#define HADES_STRING_UNITYVIEWER_IMPORT_NO_REPLACE	"\nArchive not updated: saved the output as tmp file."
 
 
 

@@ -674,7 +674,7 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 		}
 		m_loadgauge->SetValue(10);
 		filebase.seekg(0);
-		uint32_t* unityfileoff = meta_data[current_archive].Duplicate(filebase,filedest,copylist,filenewsize,overwritefile);
+		uint32_t* unityfileoff = meta_data[current_archive].Duplicate(filebase,filedest,copylist,filenewsize);
 		m_loadgauge->SetValue(50);
 		for (it = -1;;) {
 			it = m_assetlist->GetNextItem(it,wxLIST_NEXT_ALL,wxLIST_STATE_SELECTED);
@@ -706,12 +706,13 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				bool hasalpha = img.HasAlpha();
 				for (x=0;x<w;x++)
 					for (y=0;y<h;y++) {
-						pixelindex = (x+(y*w))*4;
+						pixelindex = (x+y*w)*4;
 						rgba[pixelindex] = img.GetRed(x,y);
 						rgba[pixelindex+1] = img.GetGreen(x,y);
 						rgba[pixelindex+2] = img.GetBlue(x,y);
 						rgba[pixelindex+3] = hasalpha ? img.GetAlpha(x,y) : 0xFF;
 					}
+				img.Destroy();
 				uint32_t textureformat = 0;
 				int quality =	m_menuconvertimgqualitylow->IsChecked() ? 0 :
 								m_menuconvertimgqualitymedium->IsChecked() ? 1 :
@@ -794,7 +795,7 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 		m_loadgauge->SetValue(100);
 		if (overwritefile)
 			overwritefile = wxRenameFile(root_path+archive_name+_(L".tmp"),root_path+archive_name,true);
-		if (!overwritefile) {
+		if (overwritefile) {
 			meta_data[current_archive].Flush();
 			fstream unityarchive((root_path+archive_name).c_str(),ios::in | ios::binary);
 			meta_data[current_archive].Load(unityarchive);
@@ -819,23 +820,25 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				}
 			}
 			unityarchive.close();
-		}
-		for (it = -1;;) {
-			it = m_assetlist->GetNextItem(it,wxLIST_NEXT_ALL,wxLIST_STATE_SELECTED);
-			if (it==-1) break;
-			expfileid = wxAtoi(m_assetlist->GetItemText(it,0))-1;
-			if (copylist[expfileid])
-				continue;
-			m_assetlist->SetItem(it,4,_(ConvertToString(meta_data[current_archive].GetFileSizeByIndex(expfileid))));
+			for (it = -1;;) {
+				it = m_assetlist->GetNextItem(it,wxLIST_NEXT_ALL,wxLIST_STATE_SELECTED);
+				if (it==-1) break;
+				expfileid = wxAtoi(m_assetlist->GetItemText(it,0))-1;
+				if (copylist[expfileid])
+					continue;
+				m_assetlist->SetItem(it,4,_(ConvertToString(meta_data[current_archive].GetFileSizeByIndex(expfileid))));
+			}
 		}
 		if (itsuccesscounter==itamount) {
 			wxString successtring;
 			successtring.Printf(wxT(HADES_STRING_UNITYVIEWER_IMPORT_SUCCESS),itsuccesscounter);
+			if (!overwritefile) successtring += _(HADES_STRING_UNITYVIEWER_IMPORT_NO_REPLACE);
 			wxMessageDialog popupsuccess(this,successtring,HADES_STRING_SUCCESS,wxOK|wxCENTRE);
 			popupsuccess.ShowModal();
 		} else {
 			wxString failstring;
 			failstring.Printf(wxT(HADES_STRING_UNITYVIEWER_IMPORT_ERROR),itsuccesscounter,itamount-itsuccesscounter);
+			if (!overwritefile) failstring += _(HADES_STRING_UNITYVIEWER_IMPORT_NO_REPLACE);
 			wxMessageDialog popupfail(this,failstring,HADES_STRING_WARNING,wxOK|wxCENTRE);
 			popupfail.ShowModal();
 		}
