@@ -1,0 +1,10 @@
+*.d
+*.o
+HadesWorkshop.mk
+HadesWorkshop.txt
+Build/HadesWorkshop.exe
+Build/aaaa.txt
+Build/HadesWorkshop + Russian.conf
+Build/HadesWorkshop - Copie.conf
+Build/HadesWorkshop.conf
+Build/Launcher.exe

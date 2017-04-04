@@ -5,6 +5,7 @@ struct UnityArchiveMetaData;
 struct UnityArchiveIndexListData;
 struct UnityArchiveAssetBundle;
 
+#include <vector>
 #include "File_IOCommon.h"
 
 enum UnityArchiveFile {
@@ -169,6 +170,16 @@ struct UnityArchiveAssetBundle {
 	
 	UnityArchiveAssetBundle() : loaded(false) {}
 	~UnityArchiveAssetBundle() { Flush(); }
+};
+
+struct UnityArchiveDictionary {
+	vector<string> parameter_name;
+	vector< vector<string> > object;
+	
+	int GetObjectIndex(string keyparameter, string id); // return -1 if not found
+	string GetObjectValue(string valueparameter, unsigned int index);
+	void Load(fstream& f, bool append = false);
+	void Flush() { parameter_name.clear(); object.clear(); }
 };
 
 #endif

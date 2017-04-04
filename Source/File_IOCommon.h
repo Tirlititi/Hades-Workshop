@@ -12,12 +12,16 @@ uint32_t ReadLongBE(fstream& f);
 uint32_t ReadLong3(fstream& f);
 uint16_t ReadShort(fstream& f);
 uint16_t ReadShortBE(fstream& f);
+float ReadFloat(fstream& f);
+double ReadDouble(fstream& f);
 void WriteLongLong(fstream& f, uint64_t value);
 void WriteLong(fstream& f, uint32_t value);
 void WriteLongBE(fstream& f, uint32_t value);
 void WriteLong3(fstream& f, uint32_t value);
 void WriteShort(fstream& f, uint16_t value);
 void WriteShortBE(fstream& f, uint16_t value);
+void WriteFloat(fstream& f, float value);
+void WriteDouble(fstream& f, double value);
 
 uint32_t GetAlignOffset(uint32_t baseoffset, uint32_t align = 4);
 

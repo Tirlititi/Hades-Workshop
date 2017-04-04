@@ -43,6 +43,16 @@ uint16_t ReadShortBE(fstream& f) {
 	return res;
 }
 
+float ReadFloat(fstream& f) {
+	uint32_t res = ReadLong(f);
+	return *reinterpret_cast<float*>(&res);
+}
+
+double ReadDouble(fstream& f) {
+	uint64_t res = ReadLongLong(f);
+	return *reinterpret_cast<double*>(&res);
+}
+
 void WriteLongLong(fstream& f, uint64_t value) {
 	f.put(value & 0xFF);
 	f.put((value >> 8) & 0xFF);
@@ -82,6 +92,14 @@ void WriteShort(fstream& f, uint16_t value) {
 void WriteShortBE(fstream& f, uint16_t value) {
 	f.put((value >> 8) & 0xFF);
 	f.put(value & 0xFF);
+}
+
+void WriteFloat(fstream& f, float value) {
+	WriteLong(f,*reinterpret_cast<uint32_t*>(&value));
+}
+
+void WriteDouble(fstream& f, double value) {
+	WriteLongLong(f,*reinterpret_cast<uint64_t*>(&value));
 }
 
 uint32_t GetAlignOffset(uint32_t baseoffset, uint32_t align) {

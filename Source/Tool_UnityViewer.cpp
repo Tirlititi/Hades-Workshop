@@ -6,6 +6,7 @@
 #include "Database_Text.h"
 #include "Database_Resource.h"
 #include "Database_SpellAnimation.h"
+#include "ModelMesh.h"
 #include "main.h"
 
 #define ASSET_COLUMN_INDEX		L"#"
@@ -14,6 +15,14 @@
 #define ASSET_COLUMN_TYPE		L"Type"
 #define ASSET_COLUMN_SIZE		L"Size"
 #define ASSET_COLUMN_INFO		L"Infos"
+
+static string AudioFileNames[] = {
+	"MusicMetaData.txt",
+	"SongMetaData.txt",
+	"SoundEffectMetaData.txt",
+	"SoundEffectExtendedMetaData.txt",
+	"MovieAudioMetaData.txt"
+};
 
 struct SortItemInfo {
     wxListCtrl* assetlist;
@@ -93,6 +102,9 @@ bool ToolUnityViewer::SetupRootPath(wxString path, bool ignorestreaming) {
 			list_data.Flush();
 			list_data_filename.Empty();
 		}
+		if (starti<=UNITY_ARCHIVE_RESOURCES) {
+			audio_data.Flush();
+		}
 	}
 	// Verify that the required files are available
 	for (i=starti;i<UNITY_ARCHIVE_AMOUNT;i++) {
@@ -137,6 +149,14 @@ bool ToolUnityViewer::SetupRootPath(wxString path, bool ignorestreaming) {
 				for (j=0;j<list_data.amount;j++)
 					list_data_filename.Add(_(list_data.path[j]).AfterLast(L'/'));
 			}
+		} else if (i==UNITY_ARCHIVE_RESOURCES) {
+			for (j=0;j<G_N_ELEMENTS(AudioFileNames);j++) {
+				offset = meta_data[i].GetFileOffset(AudioFileNames[j],49);
+				if (offset>0) {
+					unityarchive.seekg(offset);
+					audio_data.Load(unityarchive,true);
+				}
+			}
 		}
 		unityarchive.close();
 		m_loadgauge->SetValue((i+1-starti)*100/(UNITY_ARCHIVE_AMOUNT-starti));
@@ -156,38 +176,7 @@ bool ToolUnityViewer::DisplayArchive(UnityArchiveFile archivetype) {
 	current_archive = archivetype;
 	archive_name = _(UnityArchiveMetaData::GetArchiveName((UnityArchiveFile)current_archive,use_x86));
 	for (i=0;i<meta_data[archivetype].header_file_amount;i++) {
-		fullname = _(meta_data[archivetype].file_name[i]);
-		foundfullname = false;
-		if (archivetype>=UNITY_ARCHIVE_DATA11 && archivetype<=UNITY_ARCHIVE_DATA7) {
-			UnityArchiveAssetBundle& bundle = bundle_data[archivetype-UNITY_ARCHIVE_DATA11];
-			for (j=0;j<bundle.amount;j++)
-				if (bundle.info[j]==meta_data[archivetype].file_info[i]) {
-					fullname = _(bundle.path[j]);
-					foundfullname = true;
-					break;
-				}
-		}
-		if (!foundfullname) {
-			for (j=0;j<list_data.amount;j++)
-				if (list_data_filename[j].IsSameAs(fullname,false) && list_data.index[j]==i+1) {
-					fullname = _(list_data.path[j]);
-					foundfullname = true;
-					break;
-				}
-		}
-		if (!foundfullname) {
-			if (meta_data[archivetype].file_type1[i]==142) {
-				fullname = _(L"AssetBundle");
-				foundfullname = true;
-			} else if (meta_data[archivetype].file_type1[i]==147) {
-				fullname = _(L"ResourceManager");
-				foundfullname = true;
-			} else if (meta_data[archivetype].file_name_len[i]>0) {
-				foundfullname = true;
-			} else {
-				fullname = _(L"NoName")+_(ConvertToString(i+1));
-			}
-		}
+		fullname = GetFullName(archivetype,i,&foundfullname);
 		if (foundfullname)
 			infostr = GetInfoString(fullname,meta_data[archivetype].file_type1[i],current_archive);
 		else
@@ -206,6 +195,46 @@ bool ToolUnityViewer::DisplayArchive(UnityArchiveFile archivetype) {
 		m_assetlist->SetItemData(itemid,itemid);
 	}
 	return true;
+}
+
+wxString ToolUnityViewer::GetFullName(UnityArchiveFile archivetype, unsigned int fileid, bool* found) {
+	wxString fullname;
+	bool searchfullname = true;
+	unsigned int i;
+	if (archivetype>=UNITY_ARCHIVE_DATA11 && archivetype<=UNITY_ARCHIVE_DATA7) {
+		UnityArchiveAssetBundle& bundle = bundle_data[archivetype-UNITY_ARCHIVE_DATA11];
+		for (i=0;i<bundle.amount;i++)
+			if (bundle.info[i]==meta_data[archivetype].file_info[fileid]) {
+				fullname = _(bundle.path[i]);
+				searchfullname = false;
+				break;
+			}
+	}
+	if (searchfullname) {
+		for (i=0;i<list_data.amount;i++)
+			if (list_data_filename[i].IsSameAs(fullname,false) && list_data.index[i]==fileid+1) {
+				fullname = _(list_data.path[i]);
+				searchfullname = false;
+				break;
+			}
+	}
+	if (searchfullname) {
+		if (meta_data[archivetype].file_type1[fileid]==142) {
+			fullname = _(L"AssetBundle");
+			searchfullname = false;
+		} else if (meta_data[archivetype].file_type1[fileid]==147) {
+			fullname = _(L"ResourceManager");
+			searchfullname = false;
+		} else if (meta_data[archivetype].file_name_len[fileid]>0) {
+			fullname = _(meta_data[archivetype].file_name[fileid]);
+			searchfullname = false;
+		} else {
+			fullname = _(L"NoName")+_(ConvertToString(fileid+1));
+		}
+	}
+	if (found)
+		*found = !searchfullname;
+	return fullname;
 }
 
 wxString ToolUnityViewer::GetInfoString(wxString filename, uint32_t filetype, UnityArchiveFile archive) {
@@ -309,6 +338,16 @@ wxString ToolUnityViewer::GetInfoString(wxString filename, uint32_t filetype, Un
 			// ToDo
 			return _(L"Animation ")+partstranim+_(L" of the model ")+partstrmodel;
 		}
+	} else if (archive>=UNITY_ARCHIVE_DATA61 && archive<=UNITY_ARCHIVE_DATA63) {
+		if (patharray.Count()==6 && patharray[2].IsSameAs(L"sounds",false)) {
+			unsigned int modeltype = wxAtoi(patharray[3])<G_N_ELEMENTS(DATABASE_MODEL_TYPE) ? wxAtoi(patharray[3]) : 0;
+			wxString id = patharray[3]+'/'+patharray[4]+'/'+name.BeforeFirst(L'.');
+			if (patharray[4].IsSameAs(L"song_",false) && id[id.Len()-2]==L'_')
+				id[id.Len()-1] = '0';
+			int soundid = audio_data.GetObjectIndex("name",id.ToStdString());
+			if (soundid>=0) return _(audio_data.GetObjectValue("type",soundid))+_(L" of index ")+_(audio_data.GetObjectValue("soundIndex",soundid));
+			return _(L"[Unknown Sound]");
+		}
 	} else if (archive==UNITY_ARCHIVE_DATA7) {
 		if (patharray.Count()>=4 && patharray[2].IsSameAs(L"commonasset",false) && /*
 		*/ ((patharray.Count()==5 && patharray[3].IsSameAs(L"vibrationdata",false)) || /*
@@ -350,7 +389,6 @@ wxString ToolUnityViewer::GetInfoString(wxString filename, uint32_t filetype, Un
 			if (name.IsSameAs(L"AnimationFolderMapping.txt",false)) return _(L"");
 			if (name.IsSameAs(L"aaaaBattleMapList.txt",false)) return _(L"");
 			if (name.IsSameAs(L"BattleMapList.txt",false)) return _(L"");
-			if (name.IsSameAs(L"BtlEncountBgmMetaData.txt",false)) return _(L"");
 			if (name.IsSameAs(L"IconPathMap.txt",false)) return _(L"");
 			if (name.IsSameAs(L"Licence_Amazon.txt",false)) return _(L"");
 			if (name.IsSameAs(L"Licence_Android.txt",false)) return _(L"");
@@ -371,7 +409,8 @@ wxString ToolUnityViewer::GetInfoString(wxString filename, uint32_t filetype, Un
 			if (name.IsSameAs(L"StaffCredits_EStore.txt",false)) return _(L"");
 			if (name.IsSameAs(L"StaffCredits_Mobile.txt",false)) return _(L"");
 			if (name.IsSameAs(L"StaffCredits_Steam.txt",false)) return _(L"");
-			if (name.IsSameAs(L"WldBtlEncountBgmMetaData.txt",false)) return _(L"");
+			if (name.IsSameAs(L"BtlEncountBgmMetaData.txt",false)) return _(L"List of background musics played during the field encounters");
+			if (name.IsSameAs(L"WldBtlEncountBgmMetaData.txt",false)) return _(L"List of background musics played during the World Map encounters");
 			if (name.IsSameAs(L"mapExtraOffsetList.txt",false)) return _(L"");
 			if (name.IsSameAs(L"mapList.txt",false)) return _(L"");
 			if (name.IsSameAs(L"mapLocalizeAreaTitle.txt",false)) return _(L"Multi-language tile informations for Field Backgrounds containing titles");
@@ -497,6 +536,7 @@ void ToolUnityViewer::OnMenuSelection(wxCommandEvent& event) {
 
 void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 	int id = event.GetId();
+	unsigned int i;
 	if (id==wxID_EXPORT) {
 		fstream filebase((root_path+archive_name).c_str(),ios::in|ios::binary);
 		if (!filebase.is_open()) {
@@ -539,7 +579,7 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				}
 				unsigned char* imgrgb = (unsigned char*)malloc(3*imgw*imgh*sizeof(unsigned char));
 				unsigned char* imgalpha = (unsigned char*)malloc(imgw*imgh*sizeof(unsigned char));
-				for (unsigned int i=0;i<imgw*imgh;i++) {
+				for (i=0;i<imgw*imgh;i++) {
 					imgrgb[3*i] = imgrgba[4*i];
 					imgrgb[3*i+1] = imgrgba[4*i+1];
 					imgrgb[3*i+2] = imgrgba[4*i+2];
@@ -565,6 +605,74 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				}
 				filedest.close();
 				delete[] buffer;
+			} else if (meta_data[current_archive].file_type1[expfileid]==1 && path.AfterLast(L'.').IsSameAs(L"fbx",false)/* && !m_menuconvertaudionone->IsChecked()*/) {
+				filedest.write(buffer,expfilesize);
+				filedest.close();
+/*				uint32_t objamount;
+				uint64_t objinfo;
+				BufferInitPosition();
+				BufferReadLong((uint8_t*)buffer,objamount);
+				for (i=0;i<objamount;i++) {
+					BufferInitPosition(BufferGetPosition()+8);
+					BufferReadLongLong((uint8_t*)buffer,objinfo);
+					// From GameObject
+					// -> 111 (animation) : parent ^
+					// -> 4 (transform) : parent ^
+					// --> transform
+					// --> transform
+					// ---> transform
+					// ----> transform
+					// ---> transform
+					// ----> transform
+					// ---> ?
+					// ---> ?
+				}*/
+				delete[] buffer;
+				wxString modelfilepath, filepathbase = m_assetlist->GetItemText(it,1).BeforeLast(L'.');
+				long modelit = -1;
+				unsigned int modelfileid;
+				vector<ModelMeshData> modelmeshlist;
+				vector<ModelMaterialData> modelmateriallist;
+				for (;;) {
+					modelit = m_assetlist->GetNextItem(modelit,wxLIST_NEXT_ALL,wxLIST_STATE_DONTCARE);
+					if (modelit==-1) break;
+					modelfilepath = m_assetlist->GetItemText(modelit,1);
+					modelfileid = wxAtoi(m_assetlist->GetItemText(modelit,0))-1;
+					if (meta_data[current_archive].file_type1[modelfileid]==43 && modelfilepath.IsSameAs(filepathbase+_(L".fbx"),false)) {
+						ModelMeshData model;
+						filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(modelfileid));
+						model.Read(filebase);
+						modelmeshlist.push_back(model);
+					} else if (meta_data[current_archive].file_type1[modelfileid]==21 && modelfilepath.BeforeLast(L'/').BeforeLast(L'/').IsSameAs(filepathbase.BeforeLast(L'/'),false)) {
+						ModelMaterialData material;
+						filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(modelfileid));
+						material.Read(filebase);
+						modelmateriallist.push_back(material);
+					} // ToDo: AnimationClip
+				}
+				fstream fobj((path.BeforeLast(L'.')+_(L".obj")).c_str(),ios::out);
+				if (!fobj.is_open())
+					continue;
+				fstream fmtl((path.BeforeLast(L'.')+_(L".mtl")).c_str(),ios::out);
+				if (!fmtl.is_open()) {
+					fobj.close();
+					continue;
+				}
+				fobj << "mtllib " << (filepathbase.AfterLast(L'/')+_(L".mtl")).c_str() << endl;
+				for (i=0;i<modelmateriallist.size();i++) {
+					int32_t texfileid = meta_data[current_archive].GetFileIndexByInfo(modelmateriallist[i].maintex_file_info);
+					wxString texfilename;
+					if (texfileid>=0)
+						texfilename = _(meta_data[current_archive].file_name[texfileid])+_(".png");
+					else
+						texfilename = _(L"UnknownImage");
+					modelmateriallist[i].Export(fmtl,wxString::Format(wxT("mat%d"),i).c_str(),texfilename.c_str());
+				}
+				for (i=0;i<modelmeshlist.size();i++) {
+					modelmeshlist[i].Export(fobj,wxString::Format(wxT("Object_%d"),i).c_str(),i==0);
+				}
+				fobj.close();
+				fmtl.close();
 			} else {
 				filedest.write(buffer,expfilesize);
 				filedest.close();
@@ -589,7 +697,6 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 		m_loadgauge->SetValue(0);
 		unsigned int itcounter = 0, itsuccesscounter = 0, itamount = m_assetlist->GetSelectedItemCount();
 		unsigned int expfileid, expfilesize;
-		unsigned int i;
 		wxString basepath = root_path+_(L"HadesWorkshopAssets\\")+archive_name.AfterLast(L'\\').BeforeFirst(L'.')+_(L"\\");
 		wxString path;
 		char* buffer;

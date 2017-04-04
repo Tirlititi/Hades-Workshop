@@ -1,5 +1,7 @@
 #include "UnityArchiver.h"
 
+#include <algorithm>
+
 #define X64_FOLDER "x64\\"
 #define X86_FOLDER "x86\\"
 #define STREAMING_FILE_BASE "StreamingAssets\\p0data"
@@ -640,4 +642,81 @@ uint64_t UnityArchiveAssetBundle::GetFileInfo(string filepath) {
 		if (filepath.compare(path[i])==0)
 			return info[i];
 	return 0;
+}
+
+int UnityArchiveDictionary::GetObjectIndex(string keyparameter, string id) {
+	unsigned int i,paramindex;
+	transform(keyparameter.begin(),keyparameter.end(),keyparameter.begin(),::tolower);
+	for (i=0;i<parameter_name.size();i++)
+		if (keyparameter.compare(parameter_name[i])==0) {
+			paramindex = i;
+			break;
+		}
+	if (i==parameter_name.size())
+		return -1;
+	transform(id.begin(),id.end(),id.begin(),::tolower);
+	for (i=0;i<object.size();i++)
+		if (id.compare(object[i][paramindex])==0)
+			return i;
+	return -1;
+}
+
+string UnityArchiveDictionary::GetObjectValue(string valueparameter, unsigned int index) {
+	unsigned int i,paramindex;
+	transform(valueparameter.begin(),valueparameter.end(),valueparameter.begin(),::tolower);
+	for (i=0;i<parameter_name.size();i++)
+		if (valueparameter.compare(parameter_name[i])==0) {
+			paramindex = i;
+			break;
+		}
+	if (i==parameter_name.size())
+		return "";
+	return object[index][paramindex];
+}
+
+void UnityArchiveDictionary::Load(fstream& f, bool append) {
+	bool insideobject = false;
+	int curvalueindex = -1;
+	unsigned int i;
+	vector<string> cur;
+	string bufferstr;
+	char buffer[100];
+	char c = 0;
+	if (!append)
+		Flush();
+	while (f.get()!='[') {}
+	while (c!=']') {
+		if (c=='{') {
+			cur.assign(parameter_name.size(),"");
+			curvalueindex = -1;
+			insideobject = true;
+		} else if (c=='}') {
+			object.push_back(cur);
+			insideobject = false;
+		} else if (insideobject && c=='\"') {
+			f.get(buffer,100,'\"');
+			if (f.gcount()<100)
+				f.get();
+			bufferstr = buffer;
+			transform(bufferstr.begin(),bufferstr.end(),bufferstr.begin(),::tolower);
+			if (curvalueindex>=0) {
+				cur[curvalueindex] = bufferstr;
+				curvalueindex = -1;
+			} else if (f.gcount()<100 && f.get()==':') {
+				for (i=0;i<parameter_name.size();i++)
+					if (bufferstr.compare(parameter_name[i])==0) {
+						curvalueindex = i;
+						break;
+					}
+				if (i==parameter_name.size()) {
+					curvalueindex = parameter_name.size();
+					parameter_name.push_back(bufferstr);
+					for (i=0;i<object.size();i++)
+						object[i].push_back("");
+					cur.push_back("");
+				}
+			}
+		}
+		c = f.get();
+	}
 }

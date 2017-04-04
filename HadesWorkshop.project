@@ -54,6 +54,7 @@
     <File Name="Source/Tool_UnityViewer.cpp"/>
     <File Name="Source/Tool_BackgroundEditor.cpp"/>
     <File Name="Source/Tool_ModManager.cpp"/>
+    <File Name="Source/ModelMesh.cpp"/>
   </VirtualDirectory>
   <VirtualDirectory Name="include">
     <File Name="Source/BattleScenes.h"/>
@@ -112,6 +113,7 @@
     <File Name="Source/Database_Text.h"/>
     <File Name="Source/Database_Item.h"/>
     <File Name="Source/Database_SpellAnimation.h"/>
+    <File Name="Source/ModelMesh.h"/>
   </VirtualDirectory>
   <VirtualDirectory Name="resources">
     <File Name="Source/gui.fbp"/>
