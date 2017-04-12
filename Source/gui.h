@@ -524,86 +524,88 @@ class PreviewTextCtrl;
 #define wxID_SORTLAYER 1466
 #define wxID_REVERTLAYER 1467
 #define wxID_RESOLUTION 1468
-#define wxID_REOPEN 1469
-#define wxID_PDATA11 1470
-#define wxID_PDATA12 1471
-#define wxID_PDATA13 1472
-#define wxID_PDATA14 1473
-#define wxID_PDATA15 1474
-#define wxID_PDATA16 1475
-#define wxID_PDATA17 1476
-#define wxID_PDATA18 1477
-#define wxID_PDATA19 1478
-#define wxID_PDATA2 1479
-#define wxID_PDATA3 1480
-#define wxID_PDATA4 1481
-#define wxID_PDATA5 1482
-#define wxID_PDATA61 1483
-#define wxID_PDATA62 1484
-#define wxID_PDATA63 1485
-#define wxID_PDATA7 1486
-#define wxID_LEVEL0 1487
-#define wxID_LEVEL1 1488
-#define wxID_LEVEL2 1489
-#define wxID_LEVEL3 1490
-#define wxID_LEVEL4 1491
-#define wxID_LEVEL5 1492
-#define wxID_LEVEL6 1493
-#define wxID_LEVEL7 1494
-#define wxID_LEVEL8 1495
-#define wxID_LEVEL9 1496
-#define wxID_LEVEL10 1497
-#define wxID_LEVEL11 1498
-#define wxID_LEVEL12 1499
-#define wxID_LEVEL13 1500
-#define wxID_LEVEL14 1501
-#define wxID_LEVEL15 1502
-#define wxID_LEVEL16 1503
-#define wxID_LEVEL17 1504
-#define wxID_LEVEL18 1505
-#define wxID_LEVEL19 1506
-#define wxID_LEVEL20 1507
-#define wxID_LEVEL21 1508
-#define wxID_LEVEL22 1509
-#define wxID_LEVEL23 1510
-#define wxID_LEVEL24 1511
-#define wxID_LEVEL25 1512
-#define wxID_LEVEL26 1513
-#define wxID_LEVEL27 1514
-#define wxID_RESOURCES 1515
-#define wxID_MAINDATA 1516
-#define wxID_SHARED0 1517
-#define wxID_SHARED1 1518
-#define wxID_SHARED2 1519
-#define wxID_SHARED3 1520
-#define wxID_SHARED4 1521
-#define wxID_SHARED5 1522
-#define wxID_SHARED6 1523
-#define wxID_SHARED7 1524
-#define wxID_SHARED8 1525
-#define wxID_SHARED9 1526
-#define wxID_SHARED10 1527
-#define wxID_SHARED11 1528
-#define wxID_SHARED12 1529
-#define wxID_SHARED13 1530
-#define wxID_SHARED14 1531
-#define wxID_SHARED15 1532
-#define wxID_SHARED16 1533
-#define wxID_SHARED17 1534
-#define wxID_SHARED18 1535
-#define wxID_SHARED19 1536
-#define wxID_SHARED20 1537
-#define wxID_SHARED21 1538
-#define wxID_SHARED22 1539
-#define wxID_SHARED23 1540
-#define wxID_SHARED24 1541
-#define wxID_SHARED25 1542
-#define wxID_SHARED26 1543
-#define wxID_SHARED27 1544
-#define wxID_SHARED28 1545
-#define wxID_PATH 1546
-#define wxID_FOLDER64 1547
-#define wxID_FOLDER86 1548
+#define wxID_FORMAT 1469
+#define wxID_MASSFORMAT 1470
+#define wxID_REOPEN 1471
+#define wxID_PDATA11 1472
+#define wxID_PDATA12 1473
+#define wxID_PDATA13 1474
+#define wxID_PDATA14 1475
+#define wxID_PDATA15 1476
+#define wxID_PDATA16 1477
+#define wxID_PDATA17 1478
+#define wxID_PDATA18 1479
+#define wxID_PDATA19 1480
+#define wxID_PDATA2 1481
+#define wxID_PDATA3 1482
+#define wxID_PDATA4 1483
+#define wxID_PDATA5 1484
+#define wxID_PDATA61 1485
+#define wxID_PDATA62 1486
+#define wxID_PDATA63 1487
+#define wxID_PDATA7 1488
+#define wxID_LEVEL0 1489
+#define wxID_LEVEL1 1490
+#define wxID_LEVEL2 1491
+#define wxID_LEVEL3 1492
+#define wxID_LEVEL4 1493
+#define wxID_LEVEL5 1494
+#define wxID_LEVEL6 1495
+#define wxID_LEVEL7 1496
+#define wxID_LEVEL8 1497
+#define wxID_LEVEL9 1498
+#define wxID_LEVEL10 1499
+#define wxID_LEVEL11 1500
+#define wxID_LEVEL12 1501
+#define wxID_LEVEL13 1502
+#define wxID_LEVEL14 1503
+#define wxID_LEVEL15 1504
+#define wxID_LEVEL16 1505
+#define wxID_LEVEL17 1506
+#define wxID_LEVEL18 1507
+#define wxID_LEVEL19 1508
+#define wxID_LEVEL20 1509
+#define wxID_LEVEL21 1510
+#define wxID_LEVEL22 1511
+#define wxID_LEVEL23 1512
+#define wxID_LEVEL24 1513
+#define wxID_LEVEL25 1514
+#define wxID_LEVEL26 1515
+#define wxID_LEVEL27 1516
+#define wxID_RESOURCES 1517
+#define wxID_MAINDATA 1518
+#define wxID_SHARED0 1519
+#define wxID_SHARED1 1520
+#define wxID_SHARED2 1521
+#define wxID_SHARED3 1522
+#define wxID_SHARED4 1523
+#define wxID_SHARED5 1524
+#define wxID_SHARED6 1525
+#define wxID_SHARED7 1526
+#define wxID_SHARED8 1527
+#define wxID_SHARED9 1528
+#define wxID_SHARED10 1529
+#define wxID_SHARED11 1530
+#define wxID_SHARED12 1531
+#define wxID_SHARED13 1532
+#define wxID_SHARED14 1533
+#define wxID_SHARED15 1534
+#define wxID_SHARED16 1535
+#define wxID_SHARED17 1536
+#define wxID_SHARED18 1537
+#define wxID_SHARED19 1538
+#define wxID_SHARED20 1539
+#define wxID_SHARED21 1540
+#define wxID_SHARED22 1541
+#define wxID_SHARED23 1542
+#define wxID_SHARED24 1543
+#define wxID_SHARED25 1544
+#define wxID_SHARED26 1545
+#define wxID_SHARED27 1546
+#define wxID_SHARED28 1547
+#define wxID_PATH 1548
+#define wxID_FOLDER64 1549
+#define wxID_FOLDER86 1550
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class MainFrameBase
@@ -2995,7 +2997,8 @@ class BackgroundEditorWindow : public wxDialog
 		wxListBox* m_tilelist;
 		wxStaticText* m_staticText314;
 		wxSpinCtrl* m_resolution;
-		wxStaticText* m_staticText326;
+		wxStaticText* m_staticText328;
+		wxChoice* m_convertformat;
 		wxChoice* m_dxtflagchoice;
 		wxPanel* m_panelmassconverter;
 		wxStaticText* m_staticText3171;
@@ -3010,6 +3013,7 @@ class BackgroundEditorWindow : public wxDialog
 		wxStaticText* m_staticText3141;
 		wxSpinCtrl* m_massresolution;
 		wxStaticText* m_staticText31411;
+		wxChoice* m_massconvertformat;
 		wxChoice* m_massdxtflagchoice;
 		wxPanel* m_panelimporter;
 		wxStaticText* m_staticText316;
@@ -3028,12 +3032,13 @@ class BackgroundEditorWindow : public wxDialog
 		virtual void OnCheckBox( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnTileSelect( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnSpinChange( wxSpinEvent& event ) { event.Skip(); }
+		virtual void OnChoice( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
 		
 	
 	public:
 		
-		BackgroundEditorWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Background Editor"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 650,600 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER ); 
+		BackgroundEditorWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Background Editor"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 650,650 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER ); 
 		~BackgroundEditorWindow();
 	
 };
@@ -3077,6 +3082,9 @@ class UnityViewerWindow : public wxFrame
 		wxMenu* m_menuconvertaudio;
 		wxMenuItem* m_menuconvertaudionone;
 		wxMenuItem* m_menuconvertaudioakb;
+		wxMenu* m_menuconvertmodel;
+		wxMenuItem* m_menuconvertmodelnone;
+		wxMenuItem* m_menuconvertmodelobj;
 		wxMenuItem* m_menufolderx64;
 		wxMenuItem* m_menufolderx86;
 		wxGauge* m_loadgauge;

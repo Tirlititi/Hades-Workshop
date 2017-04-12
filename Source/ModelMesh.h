@@ -2,6 +2,7 @@
 #define _MODELMESH_H
 
 struct ModelMeshVertex;
+struct ModelMeshMaterialInfo;
 struct ModelMeshData;
 struct ModelMaterialData;
 
@@ -23,14 +24,40 @@ struct ModelMeshVertex {
 	float v;
 };
 
+struct ModelMeshMaterialInfo {
+	uint32_t vert_list_start;
+	uint32_t vert_list_amount;
+	uint32_t unk0; // mostly 0
+	uint32_t vert_start;
+	uint32_t vert_amount;
+	float unk1; // ToDo: bounding box?
+	float unk2;
+	float unk3;
+	float unk4;
+	float unk5;
+	float unk6;
+};
+
 struct ModelMeshData {
-	unsigned int vertice_amount;
-	unsigned int vertex_list_amount;
+	uint32_t material_info_amount;
+	uint32_t vertice_amount;
+	uint32_t vertex_list_amount;
+	vector<ModelMeshMaterialInfo> mat_info;
 	vector<ModelMeshVertex> vert;
 	vector<uint16_t> vert_list;
 	
+	uint32_t vert_format1;
+	uint32_t vert_format2;
+	uint32_t vert_format3;
+	uint32_t vert_format4;
+	uint32_t vert_format5;
+	uint32_t vert_format6;
+	uint32_t vert_format7;
+	uint32_t vert_format8;
+	uint32_t vert_format9;
+	
 	void Read(fstream& f);
-	void Export(fstream& output, const char* objname, bool firstobject = true);
+	void Export(fstream& output, const char* objname, const char* mtlbasename, bool firstobject = true);
 };
 
 struct ModelMaterialData {

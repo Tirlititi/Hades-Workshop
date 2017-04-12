@@ -7466,7 +7466,7 @@ AboutWindow::AboutWindow( wxWindow* parent, wxWindowID id, const wxString& title
 	wxBoxSizer* bSizer16;
 	bSizer16 = new wxBoxSizer( wxVERTICAL );
 	
-	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.37b\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_CENTRE|wxTE_MULTILINE|wxTE_READONLY|wxSIMPLE_BORDER );
+	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.37c\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_CENTRE|wxTE_MULTILINE|wxTE_READONLY|wxSIMPLE_BORDER );
 	m_textCtrl13->SetMaxLength( 0 ); 
 	m_textCtrl13->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 	m_textCtrl13->SetMinSize( wxSize( -1,330 ) );
@@ -10193,15 +10193,31 @@ BackgroundEditorWindow::BackgroundEditorWindow( wxWindow* parent, wxWindowID id,
 	m_resolution = new wxSpinCtrl( m_panelconverter, wxID_RESOLUTION, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 16, 123, 32 );
 	bSizer186->Add( m_resolution, 0, wxALL, 5 );
 	
-	m_staticText326 = new wxStaticText( m_panelconverter, wxID_ANY, _("Compression Quality"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText326->Wrap( -1 );
-	bSizer186->Add( m_staticText326, 0, wxALL, 5 );
+	m_staticText328 = new wxStaticText( m_panelconverter, wxID_ANY, _("Compression"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText328->Wrap( -1 );
+	bSizer186->Add( m_staticText328, 0, wxALL, 5 );
+	
+	wxBoxSizer* bSizer189;
+	bSizer189 = new wxBoxSizer( wxHORIZONTAL );
+	
+	wxString m_convertformatChoices[] = { _("RGB"), _("RGBA"), _("ARGB"), _("DXT1"), _("DXT5") };
+	int m_convertformatNChoices = sizeof( m_convertformatChoices ) / sizeof( wxString );
+	m_convertformat = new wxChoice( m_panelconverter, wxID_FORMAT, wxDefaultPosition, wxDefaultSize, m_convertformatNChoices, m_convertformatChoices, 0 );
+	m_convertformat->SetSelection( 4 );
+	m_convertformat->SetToolTip( _("Compression Method\nDXT5 is the default\nRGBA and ARGB are not compressed") );
+	
+	bSizer189->Add( m_convertformat, 0, wxALL, 5 );
 	
 	wxString m_dxtflagchoiceChoices[] = { _("Low"), _("Medium"), _("High") };
 	int m_dxtflagchoiceNChoices = sizeof( m_dxtflagchoiceChoices ) / sizeof( wxString );
 	m_dxtflagchoice = new wxChoice( m_panelconverter, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_dxtflagchoiceNChoices, m_dxtflagchoiceChoices, 0 );
 	m_dxtflagchoice->SetSelection( 2 );
-	bSizer186->Add( m_dxtflagchoice, 0, wxALL, 5 );
+	m_dxtflagchoice->SetToolTip( _("Compression Quality\nOnly change the algorithm speed\nnot the compressed image size") );
+	
+	bSizer189->Add( m_dxtflagchoice, 0, wxALL, 5 );
+	
+	
+	bSizer186->Add( bSizer189, 1, wxEXPAND, 5 );
 	
 	
 	gbSizer41->Add( bSizer186, wxGBPosition( 2, 3 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
@@ -10288,15 +10304,31 @@ BackgroundEditorWindow::BackgroundEditorWindow( wxWindow* parent, wxWindowID id,
 	m_massresolution = new wxSpinCtrl( m_panelmassconverter, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 16, 123, 32 );
 	fgSizer85->Add( m_massresolution, 0, wxALL, 3 );
 	
-	m_staticText31411 = new wxStaticText( m_panelmassconverter, wxID_ANY, _("Compression Quality"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText31411 = new wxStaticText( m_panelmassconverter, wxID_ANY, _("Compression"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText31411->Wrap( -1 );
 	fgSizer85->Add( m_staticText31411, 0, wxALL, 5 );
+	
+	wxBoxSizer* bSizer190;
+	bSizer190 = new wxBoxSizer( wxHORIZONTAL );
+	
+	wxString m_massconvertformatChoices[] = { _("RGB"), _("RGBA"), _("ARGB"), _("DXT1"), _("DXT5") };
+	int m_massconvertformatNChoices = sizeof( m_massconvertformatChoices ) / sizeof( wxString );
+	m_massconvertformat = new wxChoice( m_panelmassconverter, wxID_MASSFORMAT, wxDefaultPosition, wxDefaultSize, m_massconvertformatNChoices, m_massconvertformatChoices, 0 );
+	m_massconvertformat->SetSelection( 4 );
+	m_massconvertformat->SetToolTip( _("Compression Method\nDXT5 is the default\nRGBA and ARGB are not compressed") );
+	
+	bSizer190->Add( m_massconvertformat, 0, wxALL, 3 );
 	
 	wxString m_massdxtflagchoiceChoices[] = { _("Low"), _("Medium"), _("High") };
 	int m_massdxtflagchoiceNChoices = sizeof( m_massdxtflagchoiceChoices ) / sizeof( wxString );
 	m_massdxtflagchoice = new wxChoice( m_panelmassconverter, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_massdxtflagchoiceNChoices, m_massdxtflagchoiceChoices, 0 );
 	m_massdxtflagchoice->SetSelection( 2 );
-	fgSizer85->Add( m_massdxtflagchoice, 0, wxALL, 5 );
+	m_massdxtflagchoice->SetToolTip( _("Compression Quality\nOnly change the algorithm speed\nnot the compressed image size") );
+	
+	bSizer190->Add( m_massdxtflagchoice, 0, wxALL, 3 );
+	
+	
+	fgSizer85->Add( bSizer190, 1, wxEXPAND, 5 );
 	
 	
 	fgSizer84->Add( fgSizer85, 1, wxEXPAND, 5 );
@@ -10370,7 +10402,9 @@ BackgroundEditorWindow::BackgroundEditorWindow( wxWindow* parent, wxWindowID id,
 	m_revertlayer->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnCheckBox ), NULL, this );
 	m_tilelist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( BackgroundEditorWindow::OnTileSelect ), NULL, this );
 	m_resolution->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( BackgroundEditorWindow::OnSpinChange ), NULL, this );
+	m_convertformat->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( BackgroundEditorWindow::OnChoice ), NULL, this );
 	m_massexportdir->Connect( wxEVT_COMMAND_DIRPICKER_CHANGED, wxFileDirPickerEventHandler( BackgroundEditorWindow::OnDirPick ), NULL, this );
+	m_massconvertformat->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( BackgroundEditorWindow::OnChoice ), NULL, this );
 	m_importdir->Connect( wxEVT_COMMAND_DIRPICKER_CHANGED, wxFileDirPickerEventHandler( BackgroundEditorWindow::OnDirPick ), NULL, this );
 	m_buttonapply->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnButtonClick ), NULL, this );
 	m_buttonclose->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnButtonClick ), NULL, this );
@@ -10389,7 +10423,9 @@ BackgroundEditorWindow::~BackgroundEditorWindow()
 	m_revertlayer->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnCheckBox ), NULL, this );
 	m_tilelist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( BackgroundEditorWindow::OnTileSelect ), NULL, this );
 	m_resolution->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( BackgroundEditorWindow::OnSpinChange ), NULL, this );
+	m_convertformat->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( BackgroundEditorWindow::OnChoice ), NULL, this );
 	m_massexportdir->Disconnect( wxEVT_COMMAND_DIRPICKER_CHANGED, wxFileDirPickerEventHandler( BackgroundEditorWindow::OnDirPick ), NULL, this );
+	m_massconvertformat->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( BackgroundEditorWindow::OnChoice ), NULL, this );
 	m_importdir->Disconnect( wxEVT_COMMAND_DIRPICKER_CHANGED, wxFileDirPickerEventHandler( BackgroundEditorWindow::OnDirPick ), NULL, this );
 	m_buttonapply->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnButtonClick ), NULL, this );
 	m_buttonclose->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BackgroundEditorWindow::OnButtonClick ), NULL, this );
@@ -10814,6 +10850,18 @@ UnityViewerWindow::UnityViewerWindow( wxWindow* parent, wxWindowID id, const wxS
 	m_menuconvertaudioakb->Check( true );
 	
 	m_menuoptions->Append( -1, _("Automatically Convert Audio"), m_menuconvertaudio );
+	
+	m_menuoptions->AppendSeparator();
+	
+	m_menuconvertmodel = new wxMenu();
+	m_menuconvertmodelnone = new wxMenuItem( m_menuconvertmodel, wxID_ANY, wxString( _("No Exportation") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertmodel->Append( m_menuconvertmodelnone );
+	
+	m_menuconvertmodelobj = new wxMenuItem( m_menuconvertmodel, wxID_ANY, wxString( _("Export OBJ with .fbx GameObjects") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertmodel->Append( m_menuconvertmodelobj );
+	m_menuconvertmodelobj->Check( true );
+	
+	m_menuoptions->Append( -1, _("Automatically Export 3D Models"), m_menuconvertmodel );
 	
 	m_menuoptions->AppendSeparator();
 	

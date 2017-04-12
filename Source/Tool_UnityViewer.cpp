@@ -534,9 +534,123 @@ void ToolUnityViewer::OnMenuSelection(wxCommandEvent& event) {
 	}
 }
 
+// ToDo: Make a real GameObject/Transform/etc... reader
+static vector<unsigned int> listedfileobject;
+static vector<unsigned int> modelfilemesh;
+static vector< vector<unsigned int> > modelfilematerial;
+void ListModelFiles_Rec(fstream& f, UnityArchiveMetaData& meta, unsigned int fileindex) {
+	if (meta.file_type1[fileindex]!=1 && meta.file_type1[fileindex]!=4 && meta.file_type1[fileindex]!=23 && meta.file_type1[fileindex]!=33 && meta.file_type1[fileindex]!=137)
+		return;
+	for (unsigned int k=0;k<listedfileobject.size();k++)
+		if (listedfileobject[k]==fileindex)
+			return;
+	listedfileobject.push_back(fileindex);
+	size_t prevpos = f.tellg();
+	f.seekg(meta.GetFileOffsetByIndex(fileindex));
+	uint32_t objam;
+	unsigned int i;
+//{fstream fout("aaaa.txt",ios::app|ios::out); fout << "NEWFILE: " << fileindex << " (" << (unsigned int)meta.file_type1[fileindex] << ")" << endl; fout.close();}
+	if (meta.file_type1[fileindex]==1) {
+		objam = ReadLong(f);
+		for (i=0;i<objam;i++) {
+			uint32_t objtype = ReadLong(f);
+			f.seekg(4,ios::cur);
+			uint64_t objinfo = ReadLongLong(f);
+			int32_t objindex = meta.GetFileIndexByInfo(objinfo);
+			if (objindex>=0)
+				ListModelFiles_Rec(f,meta,objindex);
+		}
+	} else if (meta.file_type1[fileindex]==4) {
+		{
+			f.seekg(0x4,ios::cur);
+			uint64_t objinfo = ReadLongLong(f);
+			int32_t objindex = meta.GetFileIndexByInfo(objinfo);
+			if (objindex>=0)
+				ListModelFiles_Rec(f,meta,objindex);
+		}
+		f.seekg(0x28,ios::cur);
+		objam = ReadLong(f)+1;
+		for (i=0;i<objam;i++) {
+			f.seekg(4,ios::cur);
+			uint64_t objinfo = ReadLongLong(f);
+			int32_t objindex = meta.GetFileIndexByInfo(objinfo);
+			if (objindex>=0)
+				ListModelFiles_Rec(f,meta,objindex);
+		}
+	} else if (meta.file_type1[fileindex]==33) {
+		f.seekg(4,ios::cur);
+		uint64_t objinfo = ReadLongLong(f);
+		int32_t objindex = meta.GetFileIndexByInfo(objinfo);
+//fstream fout("aaaa.txt",ios::app|ios::out); fout << "1ST OBJ " << (int)objindex << endl; fout.close();
+		if (objindex>=0) {
+			if (meta.file_type1[objindex]==43)
+				modelfilemesh.push_back(objindex);
+			else
+				ListModelFiles_Rec(f,meta,objindex);
+		}
+		f.seekg(4,ios::cur);
+		objinfo = ReadLongLong(f);
+		objindex = meta.GetFileIndexByInfo(objinfo);
+//fout.open("aaaa.txt",ios::app|ios::out); fout << "2ND OBJ " << (int)objindex << endl; fout.close();
+		if (objindex>=0) {
+			if (meta.file_type1[objindex]==43)
+				modelfilemesh.push_back(objindex);
+			else
+				ListModelFiles_Rec(f,meta,objindex);
+		}
+	} else if (meta.file_type1[fileindex]==23 || meta.file_type1[fileindex]==137) {
+		size_t filepos = (unsigned int)f.tellg();
+		uint64_t objinfo;
+		int32_t meshindex, matindex;
+//		f.seekg(filepos+0x4);
+		f.seekg(filepos+0x38);
+		uint32_t meshamount = ReadLong(f);
+		vector<unsigned int> newmatlist;
+//fstream fout("aaaa.txt",ios::app|ios::out);
+		for (i=0;i<meshamount;i++) {
+			f.seekg(4,ios::cur);
+			objinfo = ReadLongLong(f);
+			meshindex = meta.GetFileIndexByInfo(objinfo);
+/*fout << (int)meshindex;
+if (meshindex>=0) fout << " (" << (int)meta.file_type1[meshindex] << ")";
+fout << ", ";*/
+			if (meshindex>=0) {
+				if (meta.file_type1[meshindex]==21)
+					newmatlist.push_back(meshindex);
+				else if (meta.file_type1[meshindex]==43)
+					modelfilemesh.push_back(meshindex);
+			}
+		}
+//fout << endl; fout.close();
+		if (meta.file_type1[fileindex]==137) {
+			f.seekg(0x38,ios::cur);
+			objinfo = ReadLongLong(f);
+			matindex = meta.GetFileIndexByInfo(objinfo);
+			if (matindex>=0) {
+				if (meta.file_type1[matindex]==21)
+					newmatlist.push_back(matindex);
+				else if (meta.file_type1[matindex]==43)
+					modelfilemesh.push_back(matindex);
+			}
+		}
+		modelfilematerial.push_back(newmatlist);
+//		f.seekg(filepos+0x90);
+//		f.seekg(filepos+0x9C);
+//		f.seekg(filepos+0xAC);
+	}
+	f.seekg(prevpos);
+}
+
+void ListModelFiles(fstream& f, UnityArchiveMetaData& meta, unsigned int fileindex) {
+	listedfileobject.clear();
+	modelfilemesh.clear();
+	modelfilematerial.clear();
+	ListModelFiles_Rec(f,meta,fileindex);
+}
+
 void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 	int id = event.GetId();
-	unsigned int i;
+	unsigned int i,j;
 	if (id==wxID_EXPORT) {
 		fstream filebase((root_path+archive_name).c_str(),ios::in|ios::binary);
 		if (!filebase.is_open()) {
@@ -605,51 +719,36 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				}
 				filedest.close();
 				delete[] buffer;
-			} else if (meta_data[current_archive].file_type1[expfileid]==1 && path.AfterLast(L'.').IsSameAs(L"fbx",false)/* && !m_menuconvertaudionone->IsChecked()*/) {
+			} else if (meta_data[current_archive].file_type1[expfileid]==1 && path.AfterLast(L'.').IsSameAs(L"fbx",false) && !m_menuconvertmodelnone->IsChecked()) {
 				filedest.write(buffer,expfilesize);
 				filedest.close();
-/*				uint32_t objamount;
-				uint64_t objinfo;
-				BufferInitPosition();
-				BufferReadLong((uint8_t*)buffer,objamount);
-				for (i=0;i<objamount;i++) {
-					BufferInitPosition(BufferGetPosition()+8);
-					BufferReadLongLong((uint8_t*)buffer,objinfo);
-					// From GameObject
-					// -> 111 (animation) : parent ^
-					// -> 4 (transform) : parent ^
-					// --> transform
-					// --> transform
-					// ---> transform
-					// ----> transform
-					// ---> transform
-					// ----> transform
-					// ---> ?
-					// ---> ?
-				}*/
 				delete[] buffer;
+				ListModelFiles(filebase,meta_data[current_archive],expfileid);
+				// Models in p0data4: From GameObject
+				// -> Transform (type 4)
+				// --> Transform (from 2nd? ; one for each mesh)
+				// ---> GameObject (begin)
+				// ----> SkinnedMeshRenderer (type 137)
+				// -----> Material (0x40)
+				// -----> Mesh (0x80)
 				wxString modelfilepath, filepathbase = m_assetlist->GetItemText(it,1).BeforeLast(L'.');
-				long modelit = -1;
-				unsigned int modelfileid;
 				vector<ModelMeshData> modelmeshlist;
 				vector<ModelMaterialData> modelmateriallist;
-				for (;;) {
-					modelit = m_assetlist->GetNextItem(modelit,wxLIST_NEXT_ALL,wxLIST_STATE_DONTCARE);
-					if (modelit==-1) break;
-					modelfilepath = m_assetlist->GetItemText(modelit,1);
-					modelfileid = wxAtoi(m_assetlist->GetItemText(modelit,0))-1;
-					if (meta_data[current_archive].file_type1[modelfileid]==43 && modelfilepath.IsSameAs(filepathbase+_(L".fbx"),false)) {
-						ModelMeshData model;
-						filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(modelfileid));
-						model.Read(filebase);
-						modelmeshlist.push_back(model);
-					} else if (meta_data[current_archive].file_type1[modelfileid]==21 && modelfilepath.BeforeLast(L'/').BeforeLast(L'/').IsSameAs(filepathbase.BeforeLast(L'/'),false)) {
+				for (i=0;i<modelfilemesh.size();i++) {
+					ModelMeshData model;
+					filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(modelfilemesh[i]));
+					model.Read(filebase);
+					modelmeshlist.push_back(model);
+				}
+				for (i=0;i<modelfilematerial.size();i++) {
+					for (j=0;j<modelfilematerial[i].size();j++) {
 						ModelMaterialData material;
-						filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(modelfileid));
+						filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(modelfilematerial[i][j]));
 						material.Read(filebase);
 						modelmateriallist.push_back(material);
-					} // ToDo: AnimationClip
+					}
 				}
+				// ToDo: AnimationClip
 				fstream fobj((path.BeforeLast(L'.')+_(L".obj")).c_str(),ios::out);
 				if (!fobj.is_open())
 					continue;
@@ -659,17 +758,21 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 					continue;
 				}
 				fobj << "mtllib " << (filepathbase.AfterLast(L'/')+_(L".mtl")).c_str() << endl;
-				for (i=0;i<modelmateriallist.size();i++) {
-					int32_t texfileid = meta_data[current_archive].GetFileIndexByInfo(modelmateriallist[i].maintex_file_info);
+				unsigned int matcounter = 0;
+				for (i=0;i<modelmeshlist.size();i++) { // DEBUG: assume modelfilematerial.size()==modelfilemesh.size()
+					wxString mtlname = modelfilematerial.size()==1 ? _(L"mat") : wxString::Format(wxT("mat%d_"),i);
+					wxString objname = wxString::Format(wxT("Object_%d"),i);
 					wxString texfilename;
-					if (texfileid>=0)
-						texfilename = _(meta_data[current_archive].file_name[texfileid])+_(".png");
-					else
-						texfilename = _(L"UnknownImage");
-					modelmateriallist[i].Export(fmtl,wxString::Format(wxT("mat%d"),i).c_str(),texfilename.c_str());
-				}
-				for (i=0;i<modelmeshlist.size();i++) {
-					modelmeshlist[i].Export(fobj,wxString::Format(wxT("Object_%d"),i).c_str(),i==0);
+					int32_t texfileid;
+					for (j=0;j<modelfilematerial[i].size();j++) {
+						texfileid = meta_data[current_archive].GetFileIndexByInfo(modelmateriallist[matcounter].maintex_file_info);
+						if (texfileid>=0)
+							texfilename = _(meta_data[current_archive].file_name[texfileid])+_(".png");
+						else
+							texfilename = _(L"TextureNotFound");
+						modelmateriallist[matcounter++].Export(fmtl,wxString::Format(wxT("%s%d"),mtlname,j).c_str(),texfilename.c_str());
+					}
+					modelmeshlist[i].Export(fobj,objname.c_str(),mtlname.c_str(),i==0);
 				}
 				fobj.close();
 				fmtl.close();

@@ -9,7 +9,24 @@ void ModelMeshData::Read(fstream& f) {
 	unsigned int i;
 	uint32_t tmp32;
 	size_t headerpos = f.tellg();
-	f.seekg(headerpos+0x40);
+	material_info_amount = ReadLong(f);
+	mat_info.reserve(material_info_amount);
+	ModelMeshMaterialInfo matinfobuffer;
+	for (i=0;i<material_info_amount;i++) {
+		matinfobuffer.vert_list_start = ReadLong(f);
+		matinfobuffer.vert_list_amount = ReadLong(f);
+		matinfobuffer.unk0 = ReadLong(f);
+		matinfobuffer.vert_start = ReadLong(f);
+		matinfobuffer.vert_amount = ReadLong(f);
+		matinfobuffer.unk1 = ReadFloat(f);
+		matinfobuffer.unk2 = ReadFloat(f);
+		matinfobuffer.unk3 = ReadFloat(f);
+		matinfobuffer.unk4 = ReadFloat(f);
+		matinfobuffer.unk5 = ReadFloat(f);
+		matinfobuffer.unk6 = ReadFloat(f);
+		mat_info.push_back(matinfobuffer);
+	}
+	f.seekg(0x10,ios::cur);
 	unsigned int numunk1 = ReadLong(f);
 	f.seekg(numunk1*0x40,ios::cur);
 	unsigned int numunk2 = ReadLong(f);
@@ -23,7 +40,15 @@ void ModelMeshData::Read(fstream& f) {
 	unsigned int numunk3 = ReadLong(f); // ==vertice_amount ?
 	f.seekg(numunk3*0x20+4,ios::cur);
 	vertice_amount = ReadLong(f);
-	f.seekg(0x24,ios::cur);
+	vert_format1 = ReadLong(f);
+	vert_format2 = ReadLong(f);
+	vert_format3 = ReadLong(f);
+	vert_format4 = ReadLong(f);
+	vert_format5 = ReadLong(f);
+	vert_format6 = ReadLong(f);
+	vert_format7 = ReadLong(f);
+	vert_format8 = ReadLong(f);
+	vert_format9 = ReadLong(f);
 	unsigned int sizevert = ReadLong(f);
 	size_t vertpos = f.tellg();
 	vert.reserve(vertice_amount);
@@ -35,20 +60,31 @@ void ModelMeshData::Read(fstream& f) {
 		vertbuffer.nx = ReadFloat(f);
 		vertbuffer.ny = ReadFloat(f);
 		vertbuffer.nz = ReadFloat(f);
+		if (vert_format9==0x4002000) { // DEBUG
+			vertbuffer.u = ReadFloat(f);
+			vertbuffer.v = ReadFloat(f);
+		}
 		tmp32 = ReadLong(f);
 		tmp32 = ReadLong(f);
 		tmp32 = ReadLong(f);
 		tmp32 = ReadLong(f);
 		vert.push_back(vertbuffer);
 	}
-	f.seekg(vertpos+sizevert-vertice_amount*8);
-	for (i=0;i<vertice_amount;i++) {
-		vert[i].u = ReadFloat(f);
-		vert[i].v = ReadFloat(f);
+	if (vert_format9!=0x4002000) {
+		if (vert_format6==0x2000801) // DEBUG
+			f.seekg(vertpos+sizevert-vertice_amount*0x10);
+		else
+			f.seekg(vertpos+sizevert-vertice_amount*0x8);
+		for (i=0;i<vertice_amount;i++) {
+			vert[i].u = ReadFloat(f);
+			vert[i].v = ReadFloat(f);
+			if (vert_format6==0x2000801)
+				f.seekg(0x8,ios::cur);
+		}
 	}
 }
 
-void ModelMeshData::Export(fstream& output, const char* objname, bool firstobject) {
+void ModelMeshData::Export(fstream& output, const char* objname, const char* mtlbasename, bool firstobject) {
 	unsigned int i,j;
 	if (firstobject) {
 		vert_count_origin = 1;
@@ -56,75 +92,27 @@ void ModelMeshData::Export(fstream& output, const char* objname, bool firstobjec
 	}
 	output << "o " << objname << endl;
 	output << std::showpoint;
-	uint8_t prevtex = (uint8_t)-1;
-	uint8_t newtex;
 	for (i=0;i<vert.size();i++)
 		output << "v " << vert[i].x << " " << vert[i].y << " " << vert[i].z << endl;
 	for (i=0;i<vert.size();i++)
 		output << "vt " << vert[i].u << " " << vert[i].v << endl;
-	newtex = 0; // DEBUG
-	output << "usemtl mat" << (int)newtex << endl;
+	for (i=0;i<vert.size();i++)
+		output << "vn " << vert[i].nx << " " << vert[i].ny << " " << vert[i].nz << endl;
+	int mtlidcur = -1, mtlidnew = -1;
 	for (i=0;i<vert_list.size();) {
+		for (j=0;j<mat_info.size();j++)
+			if (i>=mat_info[j].vert_list_start/2 && i<mat_info[j].vert_list_start/2+mat_info[j].vert_list_amount) {
+				mtlidnew = j;
+				break;
+			}
+		if (mtlidnew!=mtlidcur) {
+			mtlidcur = mtlidnew;
+			output << "usemtl " << mtlbasename << mtlidcur << endl;
+		}
 		output << "f " << (unsigned int)vert_list[i]+vert_count_origin << "/" << (unsigned int)vert_list[i]+tvert_count_origin; i++;
 		output << " " << (unsigned int)vert_list[i]+vert_count_origin << "/" << (unsigned int)vert_list[i]+tvert_count_origin; i++;
 		output << " " << (unsigned int)vert_list[i]+vert_count_origin << "/" << (unsigned int)vert_list[i]+tvert_count_origin << endl; i++;
 	}
-/*	uint16_t vertcount = 1;
-	uint16_t tvertcount = 1;
-	for (i=0;i<obj_amount;i++) {
-		fobj << "o Object_" << i+1 << endl;
-		for (j=0;j<obj_vert_amount[i];j++) {
-			double xx = int16_t(vert_x[obj_vert_index[i]+j])/100.0;
-			double yy = int16_t(vert_y[obj_vert_index[i]+j])/100.0;
-			double zz = int16_t(vert_z[obj_vert_index[i]+j])/100.0;
-			fobj << "v " << xx << " " << -yy << " " << zz << endl;
-		}
-		for (j=0;j<obj_quad_amount[i]*4;j++) {
-			double txx = obj_tvert_quadx[i][j]/255.0;
-			double tyy = 1.0-obj_tvert_quady[i][j]/255.0;
-			fobj << "vt " << txx << " " << tyy << endl;
-		}
-		for (j=0;j<obj_trgl_amount[i]*3;j++) {
-			double txx = obj_tvert_trglx[i][j]/255.0;
-			double tyy = 1.0-obj_tvert_trgly[i][j]/255.0;
-			fobj << "vt " << txx << " " << tyy << endl;
-		}
-		uint8_t prevtex = (uint8_t)-1;
-		uint8_t newtex;
-		for (j=0;j<obj_quad_amount[i];j++) {
-			newtex = obj_tex_id[i][j] & 0x1F;
-			if (prevtex!=newtex) {
-				prevtex = newtex;
-				fobj << "usemtl tex" << (int)newtex+1 << endl;
-			}
-			if (usequads) {
-				fobj << "f " << obj_face_quadp[i][j*4+2]/4+vertcount << "/" << tvertcount+2;
-				fobj << " " << obj_face_quadp[i][j*4]/4+vertcount << "/" << tvertcount;
-				fobj << " " << obj_face_quadp[i][j*4+1]/4+vertcount << "/" << tvertcount+1;
-				fobj << " " << obj_face_quadp[i][j*4+3]/4+vertcount << "/" << tvertcount+3 << endl;
-				tvertcount += 4;
-			} else {
-				fobj << "f " << obj_face_quadp[i][j*4]/4+vertcount << "/" << tvertcount++;
-				fobj << " " << obj_face_quadp[i][j*4+1]/4+vertcount << "/" << tvertcount++;
-				fobj << " " << obj_face_quadp[i][j*4+2]/4+vertcount << "/" << tvertcount++ << endl;
-				fobj << "f " << obj_face_quadp[i][j*4+3]/4+vertcount << "/" << tvertcount--;
-				fobj << " " << obj_face_quadp[i][j*4+2]/4+vertcount << "/" << tvertcount--;
-				fobj << " " << obj_face_quadp[i][j*4+1]/4+vertcount << "/" << tvertcount << endl;
-				tvertcount += 3;
-			}
-		}
-		for (j=0;j<obj_trgl_amount[i];j++) {
-			newtex = obj_tex_id[i][j+obj_quad_amount[i]] & 0x1F;
-			if (prevtex!=newtex) {
-				prevtex = newtex;
-				fobj << "usemtl tex" << (int)newtex+1 << endl;
-			}
-			fobj << "f " << obj_face_trglp[i][j*3]/4+vertcount << "/" << tvertcount++;
-			fobj << " " << obj_face_trglp[i][j*3+1]/4+vertcount << "/" << tvertcount++;
-			fobj << " " << obj_face_trglp[i][j*3+2]/4+vertcount << "/" << tvertcount++ << endl;
-		}
-		vertcount += obj_vert_amount[i];
-	}*/
 	output << endl;
 	vert_count_origin += vertice_amount;
 	tvert_count_origin += vertice_amount;

@@ -69,7 +69,7 @@ void GetSpiralCoordinate(int& resultx, int& resulty, unsigned int step) {
 // imgfilename order must be the one of tiles
 // depthorder must be so that imgfilename[depthorder[i]] is of increasing depth for i<tile_amount
 // For i>=tile_amount, imgfilename[i] is the layer of a non-US title tile
-int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTilesDataStruct& tiledata, unsigned int* depthorder, int dxtflags, wxBitmapType type = wxBITMAP_TYPE_ANY) {
+int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTilesDataStruct& tiledata, unsigned int* depthorder, uint32_t textformat, int dxtflags, wxBitmapType type = wxBITMAP_TYPE_ANY) {
 	// Compute size of the atlas in order to have a roughly square image
 	unsigned int atlassize, atlasw, atlash, atlastilecolcount, atlastilerowcount, tileamount, tilesize, tilegap, tileperiod;
 	unsigned int tilesamountplustitle = tiledata.tiles_amount+tiledata.title_tile_amount*(STEAM_LANGUAGE_AMOUNT-1);
@@ -95,7 +95,7 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 	atlastilerowcount = atlash;
 	atlasw *= tileperiod;
 	atlash *= tileperiod;
-	while (atlasw%4) atlasw++; // For DXT5 compression, it is better to have sizes multiple of 4
+	while (atlasw%4) atlasw++; // For DXT compression, it is better to have sizes multiple of 4
 	while (atlash%4) atlash++;
 	atlassize = atlasw*atlash*4;
 	// Load the image files
@@ -158,7 +158,7 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 	// and (2) don't let the transparent pixels fully black.
 	// Which RGB value should be used for (2) is not clear. The default atlas use a kind of
 	// X and Y expansion of the colors.
-	uint8_t alphalimit = 0xFF;
+//	uint8_t alphalimit = 0xFF;
 	bool skipuk = false;
 	if (tilesamountplustitle>tiledata.tiles_amount)
 		for (i=0;i<tiledata.parent->title_info->amount;i++)
@@ -253,14 +253,15 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 						atlas[atlasi+2] = imgdata[(imgtilex+(imgtiley+y)*imgwidth)*3+2];
 						atlas[atlasi+3] = imgalpha[imgtilex+(imgtiley+y)*imgwidth];
 					}
+					/* Old Blend Modes
 					if (alphalimit<0xFF && atlas[atlasi+3]>=alphalimit) {
 						atlas[atlasi] = atlas[atlasi]*0xFF/atlas[atlasi+3];
 						atlas[atlasi+1] = atlas[atlasi+1]*0xFF/atlas[atlasi+3];
 						atlas[atlasi+2] = atlas[atlasi+2]*0xFF/atlas[atlasi+3];
 						atlas[atlasi+3] = 0xFF;
-					}
+					}*/
 					atlasi = (atlasx+tilesize+x+(atlasy+y)*atlasw)*4;
-					if (/*false && */imgtilex+1<imgwidth && imgalpha[imgtilex+tilesize+(imgtiley+y)*imgwidth]>0) {
+					if (/*false && */imgtilex+tilesize<imgwidth && imgalpha[imgtilex+tilesize+(imgtiley+y)*imgwidth]>0) {
 						atlas[atlasi] = (2*imgdata[(imgtilex+tilesize-1+(imgtiley+y)*imgwidth)*3]+imgdata[(imgtilex+tilesize+(imgtiley+y)*imgwidth)*3])/3;
 						atlas[atlasi+1] = (2*imgdata[(imgtilex+tilesize-1+(imgtiley+y)*imgwidth)*3+1]+imgdata[(imgtilex+tilesize+(imgtiley+y)*imgwidth)*3+1])/3;
 						atlas[atlasi+2] = (2*imgdata[(imgtilex+tilesize-1+(imgtiley+y)*imgwidth)*3+2]+imgdata[(imgtilex+tilesize+(imgtiley+y)*imgwidth)*3+2])/3;
@@ -293,14 +294,15 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 						atlas[atlasi+2] = imgdata[(imgtilex+x+imgtiley*imgwidth)*3+2];
 						atlas[atlasi+3] = imgalpha[imgtilex+x+imgtiley*imgwidth];
 					}
+					/* Old Blend Modes
 					if (alphalimit<0xFF && atlas[atlasi+3]>=alphalimit) {
 						atlas[atlasi] = atlas[atlasi]*0xFF/atlas[atlasi+3];
 						atlas[atlasi+1] = atlas[atlasi+1]*0xFF/atlas[atlasi+3];
 						atlas[atlasi+2] = atlas[atlasi+2]*0xFF/atlas[atlasi+3];
 						atlas[atlasi+3] = 0xFF;
-					}
+					}*/
 					atlasi = (atlasx+x+(atlasy+tilesize+y)*atlasw)*4;
-					if (/*false && */imgtiley+1<imgheight && imgalpha[imgtilex+x+(imgtiley+tilesize)*imgwidth]>0) {
+					if (/*false && */imgtiley+tilesize<imgheight && imgalpha[imgtilex+x+(imgtiley+tilesize)*imgwidth]>0) {
 						atlas[atlasi] = (2*imgdata[(imgtilex+x+(imgtiley+tilesize-1)*imgwidth)*3]+imgdata[(imgtilex+x+(imgtiley+tilesize)*imgwidth)*3])/3;
 						atlas[atlasi+1] = (2*imgdata[(imgtilex+x+(imgtiley+tilesize-1)*imgwidth)*3+1]+imgdata[(imgtilex+x+(imgtiley+tilesize)*imgwidth)*3+1])/3;
 						atlas[atlasi+2] = (2*imgdata[(imgtilex+x+(imgtiley+tilesize-1)*imgwidth)*3+2]+imgdata[(imgtilex+x+(imgtiley+tilesize)*imgwidth)*3+2])/3;
@@ -459,7 +461,7 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 	delete[] tblockimgarray;
 	// Convert the RGBA atlas into DXT5 compressed atlas
 	uint32_t dxtatlassize;
-	uint8_t* dxtatlas = TIMImageDataStruct::CreateSteamTextureFile(dxtatlassize,atlasw,atlash,atlas,0x0C,dxtflags);
+	uint8_t* dxtatlas = TIMImageDataStruct::CreateSteamTextureFile(dxtatlassize,atlasw,atlash,atlas,textformat,dxtflags);
 	atlasout.Write(dxtatlas,dxtatlassize);
 	atlasout.Close();
 	delete[] dxtatlas;
@@ -670,6 +672,14 @@ void ToolBackgroundEditor::OnFieldChoice(wxCommandEvent& event) {
 	} // ToDo: else
 }
 
+void ToolBackgroundEditor::OnChoice(wxCommandEvent& event) {
+	int id = event.GetId();
+	if (id==wxID_FORMAT)
+		m_dxtflagchoice->Enable(event.GetSelection()>=3);
+	else if (id==wxID_MASSFORMAT)
+		m_massdxtflagchoice->Enable(event.GetSelection()>=3);
+}
+
 void ToolBackgroundEditor::OnTileSelect(wxCommandEvent& event) {
 	LoadAndMergeImages();
 	ComputeTileFilter();
@@ -698,6 +708,12 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 	unsigned int i,j;
 	if (id==wxID_APPLY) {
 		if (m_auinotebook->GetSelection()==0) { // Converter
+			uint32_t textureformat;
+			if (m_convertformat->GetSelection()==0)			textureformat = 0x03;
+			else if (m_convertformat->GetSelection()==1)	textureformat = 0x04;
+			else if (m_convertformat->GetSelection()==2)	textureformat = 0x05;
+			else if (m_convertformat->GetSelection()==3)	textureformat = 0x0A;
+			else											textureformat = 0x0C;
 			wxString destfilebase = m_exportdir->GetPath()+_(L"\\");
 			for (i=0;i<G_N_ELEMENTS(SteamFieldScript);i++)
 				if (SteamFieldScript[i].script_id==cddata->fieldset.struct_id[m_fieldchoice->GetSelection()]) {
@@ -730,7 +746,7 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 			wxString* imgfilelist;
 			unsigned int* imgorderlist;
 			GetFileNamesAndDepth(imgfilebasename.GetFullPath(),_(L"_"),imgfileext,*tileset,m_sortlayer->IsChecked(),m_revertlayer->IsChecked(),imgfilelist,imgorderlist,usemultiback);
-			int res = CreateBackgroundImage(imgfilelist,destfilebase+_(L".tex"),*tileset,imgorderlist,m_dxtflagchoice->GetSelection());
+			int res = CreateBackgroundImage(imgfilelist,destfilebase+_(L".tex"),*tileset,imgorderlist,textureformat,m_dxtflagchoice->GetSelection());
 			tileset->parent->tile_size = tilesizebackup;
 			delete[] imgfilelist;
 			delete[] imgorderlist;
@@ -756,6 +772,12 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 				logdial.ShowModal();
 			}
 		} else if (m_auinotebook->GetSelection()==1) { // Mass Converter
+			uint32_t textureformat;
+			if (m_massconvertformat->GetSelection()==0)			textureformat = 0x03;
+			else if (m_massconvertformat->GetSelection()==1)	textureformat = 0x04;
+			else if (m_massconvertformat->GetSelection()==2)	textureformat = 0x05;
+			else if (m_massconvertformat->GetSelection()==3)	textureformat = 0x0A;
+			else												textureformat = 0x0C;
 			wxString destfilebase = m_massexportdir->GetPath()+_(L"\\");
 			wxString sourcefilebase = m_massimageimporter->GetPath()+_(L"\\");
 			wxStringTokenizer sourcefileformat(m_massimageformat->GetValue(),_(L"%"),wxTOKEN_RET_EMPTY_ALL);
@@ -804,7 +826,7 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 					wxString* imgfilelist;
 					unsigned int* imgorderlist;
 					GetFileNamesAndDepth(imgfilebase,sourcefiletoken[2],sourcefiletoken[3],*tileset,m_masssortlayer->IsChecked(),m_massrevertlayer->IsChecked(),imgfilelist,imgorderlist,true);
-					int res = CreateBackgroundImage(imgfilelist,destfilefield+_(L".tex"),*tileset,imgorderlist,m_massdxtflagchoice->GetSelection());
+					int res = CreateBackgroundImage(imgfilelist,destfilefield+_(L".tex"),*tileset,imgorderlist,textureformat,m_massdxtflagchoice->GetSelection());
 					tileset->parent->tile_size = tilesizebackup;
 					if (res<0) {
 						wxString warnstr;

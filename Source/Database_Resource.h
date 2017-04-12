@@ -553,7 +553,7 @@ static SortedChoiceItem HADES_STRING_MODEL_NAME[] = {
 	{ 278,	L"Enemy_BlackWaltz3" },
 	{ 279,	L"Fishing_Rod" },
 	{ 281,	L"Battle_DaggerLongHairA" },
-	{ 282,	L"Tapir" }, // Translate
+	{ 282,	L"Engineer" },
 	{ 283,	L"Battle_DaggerLongHairB" },
 	{ 284,	L"Battle_EikoA" },
 	{ 285,	L"Battle_ZidaneA" },
@@ -660,7 +660,7 @@ static SortedChoiceItem HADES_STRING_MODEL_NAME[] = {
 	{ 393,	L"LibraryA" }, // Precise
 	{ 394,	L"LibraryB" }, // Precise
 //	{ 395,	L"" }, // Special effect like a blue magic light
-	{ 396,	L"Moogle_LetterOpened" }, // Verify
+	{ 396,	L"Letter" },
 //	{ 397,	L"" }, // Kind of ticket
 	{ 398,	L"Enemy_FriendlyMu" },
 	{ 399,	L"Enemy_WraithRed" },
@@ -675,7 +675,7 @@ static SortedChoiceItem HADES_STRING_MODEL_NAME[] = {
 	{ 408,	L"GarganRoo_Lever" },
 	{ 409,	L"Camp_Fire" },
 	{ 410,	L"Enemy_Lani" },
-	{ 411,	L"Bowl" }, // Verify translation
+	{ 411,	L"Bowl" },
 	{ 412,	L"ThugB" },
 	{ 413,	L"Weapon_Dragon_Hair" },
 	{ 414,	L"Daguerreo_ElevatorA" },
@@ -877,7 +877,7 @@ static SortedChoiceItem HADES_STRING_MODEL_NAME[] = {
 	{ 625,	L"Palace_Scale" },
 	{ 626,	L"Palace_WeightWood" },
 	{ 627,	L"Plank" },
-	{ 628,	L"Poutre" }, // Translate
+	{ 628,	L"WoodBeam" },
 	{ 629,	L"Weapon_Defender" },
 	{ 630,	L"Palace_WeightIron" },
 	{ 631,	L"Palace_WeightStone" },
