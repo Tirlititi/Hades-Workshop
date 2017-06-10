@@ -485,8 +485,10 @@ int FindConfiguration(string filepath, ConfigurationSet& dest) {
 	FFIXReadChar(f,dest.cd);
 	FFIXReadChar(f,tmp8);
 	FFIXReadShort(f,tmp16);
-	uint32_t metadatatype[metadataamount], metadatadataamount[metadataamount];
-	uint32_t metadatasector[metadataamount], metafirstdatasector[metadataamount];
+	uint32_t* metadatatype = new uint32_t[metadataamount];
+	uint32_t* metadatadataamount = new uint32_t[metadataamount];
+	uint32_t* metadatasector = new uint32_t[metadataamount];
+	uint32_t* metafirstdatasector = new uint32_t[metadataamount];
 	for (i=0;i<metadataamount;i++) {
 		FFIXReadLong(f,metadatatype[i]);
 		FFIXReadLong(f,metadatadataamount[i]);
@@ -496,8 +498,9 @@ int FindConfiguration(string filepath, ConfigurationSet& dest) {
 	if (fsize<IMG_HEADER_OFFSET+metadatasector[metadataamount-1]*FILE_IGNORE_DATA_PERIOD)
 		return -2;
 	f.seekg(IMG_HEADER_OFFSET+metadatasector[0]*FILE_IGNORE_DATA_PERIOD);
-	uint16_t firstmetadataid[metadatadataamount[0]], firstmetadatatype[metadatadataamount[0]];
-	uint32_t firstmetadatasector[metadatadataamount[0]];
+	uint16_t* firstmetadataid = new uint16_t[metadatadataamount[0]];
+	uint16_t* firstmetadatatype = new uint16_t[metadatadataamount[0]];
+	uint32_t* firstmetadatasector = new uint32_t[metadatadataamount[0]];
 	for (i=0;i<metadatadataamount[0];i++) {
 		FFIXReadShort(f,firstmetadataid[i]);
 		FFIXReadShort(f,firstmetadatatype[i]);
@@ -985,6 +988,13 @@ int FindConfiguration(string filepath, ConfigurationSet& dest) {
 	dest.cluster_offset = new uint32_t[dest.cluster_amount];
 	copy(tmpclusteroffset,tmpclusteroffset+dest.cluster_amount,dest.cluster_offset);
 	f.close();
+	delete[] metadatatype;
+	delete[] metadatadataamount;
+	delete[] metadatasector;
+	delete[] metafirstdatasector;
+	delete[] firstmetadataid;
+	delete[] firstmetadatatype;
+	delete[] firstmetadatasector;
 	return 0;
 }
 
@@ -994,7 +1004,7 @@ int FindConfiguration(string filepath, ConfigurationSet& dest) {
 
 int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	static string langdir[STEAM_LANGUAGE_AMOUNT] = { "us", "uk", "jp", "gr", "fr", "it", "es" };
-	unsigned int i,j,k;
+	unsigned int i,j;
 	uint32_t fid;
 	fstream unityarchive;
 	string unityarchivename,token;

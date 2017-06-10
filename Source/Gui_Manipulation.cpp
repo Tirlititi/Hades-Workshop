@@ -2472,7 +2472,6 @@ void CDDataStruct::OnStatChangeList(wxCommandEvent& event) {
 //=============================//
 
 void CDDataStruct::DisplayPartySpecial(int specialid) {
-	unsigned int i;
 	if (specialid==0) {
 		m_partyspecialmagicswordlist->SetSelection(0);
 		m_partyspecialmagicswordspell->SetSelection(partyspecialset.magic_sword_requirement[0]);
@@ -4468,9 +4467,9 @@ void CDDataStruct::OnListBoxText(wxCommandEvent& event) {
 }
 
 void CDDataStruct::OnTextEditText(wxCommandEvent& event) {
-	wxListBox* itemlist;
-	wxListBox* subitemlist;
-	TextDataStruct** strlist;
+	wxListBox* itemlist = NULL;
+	wxListBox* subitemlist = NULL;
+	TextDataStruct** strlist = NULL;
 	CharmapDataStruct* chmap = NULL, *chmapext = NULL;
 	void (CDDataStruct::*markmodified)(unsigned int, Chunk_Type, unsigned int);
 	if (event.GetId()==wxID_TEXT) {
@@ -4528,9 +4527,9 @@ TextExportDialog* TheTextExportDialog;
 void CDDataStruct::OnTextExportText(wxCommandEvent& event) {
 	if (!TheTextExportDialog)
 		TheTextExportDialog = new TextExportDialog(GetTopWindow());
-	wxListBox* itemlist;
-	TextDataStruct** strlist;
-	wstring* namelist;
+	wxListBox* itemlist = NULL;
+	TextDataStruct** strlist = NULL;
+	wstring* namelist = NULL;
 	if (event.GetId()==wxID_TEXT) {
 		itemlist = m_textlist;
 		strlist = textset.text_data;
@@ -4570,12 +4569,12 @@ void CDDataStruct::OnTextExportText(wxCommandEvent& event) {
 }
 
 void CDDataStruct::OnTextCharmapListSelection(wxCommandEvent& event) {
-	wxListBox* itemlist;
-	wxListBox* subitemlist;
-	wxChoice* palchoice;
-	wxScrolledWindow* previewwindow;
-	wxBitmap* previewbmp;
-	TIMImageDataStruct** timlist;
+	wxListBox* itemlist = NULL;
+	wxListBox* subitemlist = NULL;
+	wxChoice* palchoice = NULL;
+	wxScrolledWindow* previewwindow = NULL;
+	wxBitmap* previewbmp = NULL;
+	TIMImageDataStruct** timlist = NULL;
 	if (event.GetId()==wxID_TEXT) {
 		itemlist = m_textlist;
 		subitemlist = m_textcharmaplist;
@@ -4608,12 +4607,12 @@ void CDDataStruct::OnTextCharmapListSelection(wxCommandEvent& event) {
 }
 
 void CDDataStruct::OnTextCharmapPaletteChoice(wxCommandEvent& event) {
-	wxListBox* itemlist;
-	wxListBox* subitemlist;
-	wxChoice* palchoice;
-	wxScrolledWindow* previewwindow;
-	wxBitmap* previewbmp;
-	TIMImageDataStruct** timlist;
+	wxListBox* itemlist = NULL;
+	wxListBox* subitemlist = NULL;
+	wxChoice* palchoice = NULL;
+	wxScrolledWindow* previewwindow = NULL;
+	wxBitmap* previewbmp = NULL;
+	TIMImageDataStruct** timlist = NULL;
 	if (event.GetId()==wxID_TEXT) {
 		itemlist = m_textlist;
 		subitemlist = m_textcharmaplist;
@@ -4641,10 +4640,10 @@ void CDDataStruct::OnTextCharmapPaletteChoice(wxCommandEvent& event) {
 
 CharmapTextureExportWindow* TheCharmapTextureExportDialog;
 void CDDataStruct::OnTextExportCharmap(wxCommandEvent& event) {
-	wxListBox* itemlist;
-	wxListBox* subitemlist;
-	wxChoice* palchoice;
-	TIMImageDataStruct** timlist;
+	wxListBox* itemlist = NULL;
+	wxListBox* subitemlist = NULL;
+	wxChoice* palchoice = NULL;
+	TIMImageDataStruct** timlist = NULL;
 	if (event.GetId()==wxID_TEXT) {
 		itemlist = m_textlist;
 		subitemlist = m_textcharmaplist;
@@ -4678,12 +4677,12 @@ void CDDataStruct::OnTextExportCharmap(wxCommandEvent& event) {
 }
 
 void CDDataStruct::OnTextManageCharmap(wxCommandEvent& event) {
-	wxListBox* itemlist;
-	wxListBox* subitemlist;
-	CharmapDataStruct** chlist;
-	TIMImageDataStruct** timlist;
-	wxScrolledWindow* previewwindow;
-	wxBitmap* previewbmp;
+	wxListBox* itemlist = NULL;
+	wxListBox* subitemlist = NULL;
+	CharmapDataStruct** chlist = NULL;
+	TIMImageDataStruct** timlist = NULL;
+	wxScrolledWindow* previewwindow = NULL;
+	wxBitmap* previewbmp = NULL;
 	void (CDDataStruct::*markmodified)(unsigned int, Chunk_Type, unsigned int);
 	if (event.GetId()==wxID_TEXT) {
 		itemlist = m_textlist;
@@ -4837,8 +4836,8 @@ void CDDataStruct::OnTextRightClickMenu(wxCommandEvent& event) {
 }
 
 void CDDataStruct::OnTextCharmapPaint(wxPaintEvent &event) {
-	wxScrolledWindow* previewwindow;
-	wxBitmap* previewbmp;
+	wxScrolledWindow* previewwindow = NULL;
+	wxBitmap* previewbmp = NULL;
 	if (event.GetId()==wxID_TEXT) {
 		previewwindow = m_textcharmapwindow;
 		previewbmp = &chartexpreview;
@@ -4922,7 +4921,6 @@ void CDDataStruct::OnFieldChangeChoice(wxCommandEvent& event) {
 	ScriptDataStruct* sc = fieldset.script_data[*sortid];
 //	TIMImageDataStruct* tdtex = fieldset.background_data[*sortid];
 	int id = event.GetId();
-	unsigned int i;
 	if (id==wxID_TEXTURE) {
 		MACRO_FIELD_DISPLAY_BACKGROUND(*sortid,event.GetSelection())
 	}
@@ -5920,7 +5918,7 @@ void CDDataStruct::OnCilMacroButton(wxCommandEvent& event) {
 	} else {
 		cilset.AddMacroModif(macroid);
 		if (macroid==50) {
-			uint32_t param[] = {dynamic_cast<wxSpinCtrl*>(m_cilmacroparametersizer->GetItem((size_t)0)->GetWindow())->GetValue()};
+			uint32_t param[] = {(uint32_t)dynamic_cast<wxSpinCtrl*>(m_cilmacroparametersizer->GetItem((size_t)0)->GetWindow())->GetValue()};
 			cilset.macromodif[cilset.GetEnabledMacroIndex(macroid)].info->SetParameters(param);
 		}
 		m_cilmacrobutton->SetLabel(_(HADES_STRING_CIL_UNAPPLY_MACRO));

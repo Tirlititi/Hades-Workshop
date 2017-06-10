@@ -159,6 +159,7 @@ namespace hades {
 	extern wxColour TEXT_WINDOW_COLOR;
 	extern wxFont TEXT_DISPLAY_FONT;
 	extern int TEXT_PREVIEW_TYPE;
+	extern int FIELD_BACKGROUND_RESOLUTION;
 	extern wchar_t* SPECIAL_STRING_CHARMAP_DEFAULT;
 	extern wchar_t* SPECIAL_STRING_CHARMAP_A;
 	extern wchar_t* SPECIAL_STRING_CHARMAP_B;

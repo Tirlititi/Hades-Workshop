@@ -333,7 +333,7 @@ int UnityArchiveMetaData::Load(fstream& f) {
 		}
 	}
 	header_file_amount = ReadLong(f);
-	f.seekg(GetAlignOffset(f.tellg()),ios::cur);
+	f.seekg(GetAlignOffset(f.tellg()), ios::cur);
 	file_info = new uint64_t[header_file_amount];
 	file_offset_start = new uint32_t[header_file_amount];
 	file_size = new uint32_t[header_file_amount];
@@ -510,6 +510,9 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 			fbase.read(buffer,copysize);
 			fdest.write(buffer,copysize);
 			delete[] buffer;
+		} else {
+			fdest.seekp(res[i]+filenewsize[i]-1);
+			fdest.put(0);
 		}
 		fdest.seekp(offtmp);
 		if (copylist[i])
@@ -527,6 +530,8 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 		delete[] buffer;
 	}
 	fdest.seekp(0,ios::end);
+	if (copylist[header_file_amount-1] && file_type1[header_file_amount-1]==49)
+		fdest.put(0);
 	while (fdest.tellp()%8!=0)
 		fdest.put(0);
 	uint32_t fdestsize = fdest.tellp();

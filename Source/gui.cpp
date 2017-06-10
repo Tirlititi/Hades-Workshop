@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////
-// C++ code generated with wxFormBuilder (version Oct  8 2012)
+// C++ code generated with wxFormBuilder (version Apr 24 2017)
 // http://www.wxformbuilder.org/
 //
 // PLEASE DO "NOT" EDIT THIS FILE!
@@ -62,58 +62,58 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	
 	m_menuBar->Append( m_menuFile, _("&File") ); 
 	
-	m_menuDisplay = new wxMenu();
-	m_sortspell = new wxMenuItem( m_menuDisplay, wxID_ANY, wxString( _("Sort &Spells") ) , _("Sort spells by name or by ID"), wxITEM_CHECK );
-	m_menuDisplay->Append( m_sortspell );
+	m_menuOption = new wxMenu();
+	m_sortspell = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Sort &Spells") ) , _("Sort spells by name or by ID"), wxITEM_CHECK );
+	m_menuOption->Append( m_sortspell );
 	
-	m_sortsupport = new wxMenuItem( m_menuDisplay, wxID_ANY, wxString( _("Sort Supporting &Abilities") ) , _("Sort supporting abilities by name or by ID"), wxITEM_CHECK );
-	m_menuDisplay->Append( m_sortsupport );
+	m_sortsupport = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Sort Supporting &Abilities") ) , _("Sort supporting abilities by name or by ID"), wxITEM_CHECK );
+	m_menuOption->Append( m_sortsupport );
 	
-	m_sortcmd = new wxMenuItem( m_menuDisplay, wxID_ANY, wxString( _("Sort &Commands") ) , _("Sort commands by name or by ID"), wxITEM_CHECK );
-	m_menuDisplay->Append( m_sortcmd );
+	m_sortcmd = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Sort &Commands") ) , _("Sort commands by name or by ID"), wxITEM_CHECK );
+	m_menuOption->Append( m_sortcmd );
 	
-	m_menuDisplay->AppendSeparator();
+	m_menuOption->AppendSeparator();
 	
-	m_sortitem = new wxMenuItem( m_menuDisplay, wxID_ANY, wxString( _("Sort &Items") ) , _("Sort regular items by name or by ID"), wxITEM_CHECK );
-	m_menuDisplay->Append( m_sortitem );
+	m_sortitem = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Sort &Items") ) , _("Sort regular items by name or by ID"), wxITEM_CHECK );
+	m_menuOption->Append( m_sortitem );
 	
-	m_sortkeyitem = new wxMenuItem( m_menuDisplay, wxID_ANY, wxString( _("Sort &Key Items") ) , _("Sort key items by name or by ID"), wxITEM_CHECK );
-	m_menuDisplay->Append( m_sortkeyitem );
+	m_sortkeyitem = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Sort &Key Items") ) , _("Sort key items by name or by ID"), wxITEM_CHECK );
+	m_menuOption->Append( m_sortkeyitem );
 	
-	m_menuDisplay->AppendSeparator();
+	m_menuOption->AppendSeparator();
 	
-	m_sortenemy = new wxMenuItem( m_menuDisplay, wxID_ANY, wxString( _("Sort &Enemies") ) , _("Sort enemies by name or by ID"), wxITEM_CHECK );
-	m_menuDisplay->Append( m_sortenemy );
+	m_sortenemy = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Sort &Enemies") ) , _("Sort enemies by name or by ID"), wxITEM_CHECK );
+	m_menuOption->Append( m_sortenemy );
 	
-	m_enemyshowid = new wxMenuItem( m_menuDisplay, wxID_ANY, wxString( _("Show Enem&y IDs") ) + wxT('\t') + wxT("Ctrl+I"), _("Display the battles identifiers"), wxITEM_CHECK );
-	m_menuDisplay->Append( m_enemyshowid );
+	m_enemyshowid = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Show Enem&y IDs") ) + wxT('\t') + wxT("Ctrl+I"), _("Display the battles identifiers"), wxITEM_CHECK );
+	m_menuOption->Append( m_enemyshowid );
 	
-	m_editsimilarenemy = new wxMenuItem( m_menuDisplay, wxID_ANY, wxString( _("Edit Si&milar Enemies") ) + wxT('\t') + wxT("Ctrl+D"), _("Edit stats (not attacks yet) of enemies sharing the same name and level"), wxITEM_CHECK );
-	m_menuDisplay->Append( m_editsimilarenemy );
+	m_editsimilarenemy = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Edit Si&milar Enemies") ) + wxT('\t') + wxT("Ctrl+D"), _("Edit stats (not attacks yet) of enemies sharing the same name and level"), wxITEM_CHECK );
+	m_menuOption->Append( m_editsimilarenemy );
 	
-	m_menuDisplay->AppendSeparator();
+	m_menuOption->AppendSeparator();
 	
-	m_sortcard = new wxMenuItem( m_menuDisplay, wxID_ANY, wxString( _("Sort Ca&rds") ) , _("Sort cards by name or by ID"), wxITEM_CHECK );
-	m_menuDisplay->Append( m_sortcard );
+	m_sortcard = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Sort Ca&rds") ) , _("Sort cards by name or by ID"), wxITEM_CHECK );
+	m_menuOption->Append( m_sortcard );
 	
-	m_menuDisplay->AppendSeparator();
+	m_menuOption->AppendSeparator();
 	
-	m_sorttext = new wxMenuItem( m_menuDisplay, wxID_ANY, wxString( _("Sort &Text Blocks") ) , _("Sort text blocks by name or by ID"), wxITEM_CHECK );
-	m_menuDisplay->Append( m_sorttext );
+	m_sorttext = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Sort &Text Blocks") ) , _("Sort text blocks by name or by ID"), wxITEM_CHECK );
+	m_menuOption->Append( m_sorttext );
 	
-	m_sortworld = new wxMenuItem( m_menuDisplay, wxID_ANY, wxString( _("Sort &World Maps") ) , _("Sort world maps by name or by ID"), wxITEM_CHECK );
-	m_menuDisplay->Append( m_sortworld );
+	m_sortworld = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Sort &World Maps") ) , _("Sort world maps by name or by ID"), wxITEM_CHECK );
+	m_menuOption->Append( m_sortworld );
 	
-	m_sortfield = new wxMenuItem( m_menuDisplay, wxID_ANY, wxString( _("Sort &Fields") ) , _("Sort fields by name or by ID"), wxITEM_CHECK );
-	m_menuDisplay->Append( m_sortfield );
+	m_sortfield = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Sort &Fields") ) , _("Sort fields by name or by ID"), wxITEM_CHECK );
+	m_menuOption->Append( m_sortfield );
 	
-	m_sortbattlescene = new wxMenuItem( m_menuDisplay, wxID_ANY, wxString( _("Sort &Battle Scenes") ) , _("Sort battle scenes by name or by ID"), wxITEM_CHECK );
-	m_menuDisplay->Append( m_sortbattlescene );
+	m_sortbattlescene = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Sort &Battle Scenes") ) , _("Sort battle scenes by name or by ID"), wxITEM_CHECK );
+	m_menuOption->Append( m_sortbattlescene );
 	
-	m_sortspellanim = new wxMenuItem( m_menuDisplay, wxID_ANY, wxString( _("Sort &Spell Animations") ) , _("Sort spell animations by name or by ID"), wxITEM_CHECK );
-	m_menuDisplay->Append( m_sortspellanim );
+	m_sortspellanim = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Sort &Spell Animations") ) , _("Sort spell animations by name or by ID"), wxITEM_CHECK );
+	m_menuOption->Append( m_sortspellanim );
 	
-	m_menuBar->Append( m_menuDisplay, _("&Display") ); 
+	m_menuBar->Append( m_menuOption, _("&Option") ); 
 	
 	m_menuBatch = new wxMenu();
 	m_exporttext = new wxMenuItem( m_menuBatch, wxID_TEXT, wxString( _("Export Texts") ) , _("Export all the text blocks at once"), wxITEM_NORMAL );
@@ -197,7 +197,7 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	mainSizer = new wxBoxSizer( wxVERTICAL );
 	
 	m_cdbook = new wxAuiNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxAUI_NB_SCROLL_BUTTONS|wxAUI_NB_TAB_FIXED_WIDTH|wxAUI_NB_TAB_SPLIT );
-	m_cdbook->SetFont( wxFont( wxNORMAL_FONT->GetPointSize(), 70, 90, 90, false, wxEmptyString ) );
+	m_cdbook->SetFont( wxFont( wxNORMAL_FONT->GetPointSize(), wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 	m_cdbook->Hide();
 	
 	
@@ -340,11 +340,10 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer22 = new wxBoxSizer( wxHORIZONTAL );
 	
 	m_spellname = new wxTextCtrl( m_spellscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
-	m_spellname->SetMaxLength( 0 ); 
 	bSizer22->Add( m_spellname, 0, wxALL, 2 );
 	
 	m_spellnamebutton = new wxButton( m_spellscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	m_spellnamebutton->SetFont( wxFont( 6, 70, 90, 90, false, wxEmptyString ) );
+	m_spellnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 	
 	bSizer22->Add( m_spellnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
 	
@@ -370,13 +369,12 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer23 = new wxBoxSizer( wxHORIZONTAL );
 	
 	m_spellhelp = new wxTextCtrl( m_spellscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), wxTE_MULTILINE );
-	m_spellhelp->SetMaxLength( 0 ); 
 	m_spellhelp->SetToolTip( _("The spell's description shown with [Select]") );
 	
 	bSizer23->Add( m_spellhelp, 1, wxALL|wxEXPAND, 2 );
 	
 	m_spellhelpbutton = new wxButton( m_spellscrolledwindow, wxID_HELP, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	m_spellhelpbutton->SetFont( wxFont( 6, 70, 90, 90, false, wxEmptyString ) );
+	m_spellhelpbutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 	
 	bSizer23->Add( m_spellhelpbutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
 	
@@ -701,11 +699,10 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer221 = new wxBoxSizer( wxHORIZONTAL );
 	
 	m_supportname = new wxTextCtrl( m_supportscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
-	m_supportname->SetMaxLength( 0 ); 
 	bSizer221->Add( m_supportname, 0, wxALL, 2 );
 	
 	m_supportnamebutton = new wxButton( m_supportscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	m_supportnamebutton->SetFont( wxFont( 6, 70, 90, 90, false, wxEmptyString ) );
+	m_supportnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 	
 	bSizer221->Add( m_supportnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
 	
@@ -720,14 +717,13 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer231 = new wxBoxSizer( wxHORIZONTAL );
 	
 	m_supporthelp = new wxTextCtrl( m_supportscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), wxTE_MULTILINE );
-	m_supporthelp->SetMaxLength( 0 ); 
 	m_supporthelp->SetToolTip( _("The ability's description shown with [Select]") );
 	m_supporthelp->SetMinSize( wxSize( 250,-1 ) );
 	
 	bSizer231->Add( m_supporthelp, 1, wxALL|wxEXPAND, 2 );
 	
 	m_supporthelpbutton = new wxButton( m_supportscrolledwindow, wxID_HELP, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	m_supporthelpbutton->SetFont( wxFont( 6, 70, 90, 90, false, wxEmptyString ) );
+	m_supporthelpbutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 	
 	bSizer231->Add( m_supporthelpbutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
 	
@@ -774,11 +770,10 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer24 = new wxBoxSizer( wxHORIZONTAL );
 	
 	m_cmdname = new wxTextCtrl( m_cmdscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), wxTE_PROCESS_ENTER );
-	m_cmdname->SetMaxLength( 0 ); 
 	bSizer24->Add( m_cmdname, 0, wxALL, 2 );
 	
 	m_cmdnamebutton = new wxButton( m_cmdscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	m_cmdnamebutton->SetFont( wxFont( 6, 70, 90, 90, false, wxEmptyString ) );
+	m_cmdnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 	
 	bSizer24->Add( m_cmdnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
 	
@@ -793,13 +788,12 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer25 = new wxBoxSizer( wxHORIZONTAL );
 	
 	m_cmdhelp = new wxTextCtrl( m_cmdscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), wxTE_MULTILINE|wxTE_PROCESS_ENTER );
-	m_cmdhelp->SetMaxLength( 0 ); 
 	m_cmdhelp->SetToolTip( _("The command's description shown with [Select]") );
 	
 	bSizer25->Add( m_cmdhelp, 1, wxALL|wxEXPAND, 2 );
 	
 	m_cmdhelpbutton = new wxButton( m_cmdscrolledwindow, wxID_HELP, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	m_cmdhelpbutton->SetFont( wxFont( 6, 70, 90, 90, false, wxEmptyString ) );
+	m_cmdhelpbutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 	
 	bSizer25->Add( m_cmdhelpbutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
 	
@@ -952,13 +946,20 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer2211 = new wxBoxSizer( wxHORIZONTAL );
 	
 	m_statchardefaultname = new wxTextCtrl( m_statcharscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
-	m_statchardefaultname->SetMaxLength( 7 ); 
+	#ifdef __WXGTK__
+	if ( !m_statchardefaultname->HasFlag( wxTE_MULTILINE ) )
+	{
+	m_statchardefaultname->SetMaxLength( 7 );
+	}
+	#else
+	m_statchardefaultname->SetMaxLength( 7 );
+	#endif
 	m_statchardefaultname->SetToolTip( _("The character's name by default when naming a character\nUnused for temporary playable characters") );
 	
 	bSizer2211->Add( m_statchardefaultname, 0, wxALL, 2 );
 	
 	m_statchardefaultnamebutton = new wxButton( m_statcharscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	m_statchardefaultnamebutton->SetFont( wxFont( 6, 70, 90, 90, false, wxEmptyString ) );
+	m_statchardefaultnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 	
 	bSizer2211->Add( m_statchardefaultnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
 	
@@ -1387,11 +1388,10 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer2212 = new wxBoxSizer( wxHORIZONTAL );
 	
 	m_itemname = new wxTextCtrl( m_itemscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
-	m_itemname->SetMaxLength( 0 ); 
 	bSizer2212->Add( m_itemname, 0, wxALL, 2 );
 	
 	m_itemnamebutton = new wxButton( m_itemscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	m_itemnamebutton->SetFont( wxFont( 6, 70, 90, 90, false, wxEmptyString ) );
+	m_itemnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 	
 	bSizer2212->Add( m_itemnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
 	
@@ -1406,13 +1406,12 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer2311 = new wxBoxSizer( wxHORIZONTAL );
 	
 	m_itemhelp = new wxTextCtrl( m_itemscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), wxTE_MULTILINE );
-	m_itemhelp->SetMaxLength( 0 ); 
 	m_itemhelp->SetToolTip( _("The ability's description shown with [Select] inside menus") );
 	
 	bSizer2311->Add( m_itemhelp, 1, wxALL|wxEXPAND, 2 );
 	
 	m_itemhelpbutton = new wxButton( m_itemscrolledwindow, wxID_HELP, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	m_itemhelpbutton->SetFont( wxFont( 6, 70, 90, 90, false, wxEmptyString ) );
+	m_itemhelpbutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 	
 	bSizer2311->Add( m_itemhelpbutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
 	
@@ -1427,13 +1426,12 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer2312 = new wxBoxSizer( wxHORIZONTAL );
 	
 	m_itemhelp2 = new wxTextCtrl( m_itemscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), wxTE_MULTILINE );
-	m_itemhelp2->SetMaxLength( 0 ); 
 	m_itemhelp2->SetToolTip( _("The ability's description shown with [Select] inside battles") );
 	
 	bSizer2312->Add( m_itemhelp2, 1, wxALL|wxEXPAND, 2 );
 	
 	m_itemhelp2button = new wxButton( m_itemscrolledwindow, wxID_BATTLEHELP, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	m_itemhelp2button->SetFont( wxFont( 6, 70, 90, 90, false, wxEmptyString ) );
+	m_itemhelp2button->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 	
 	bSizer2312->Add( m_itemhelp2button, 0, wxALIGN_CENTER_VERTICAL, 5 );
 	
@@ -2164,11 +2162,10 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer22121 = new wxBoxSizer( wxHORIZONTAL );
 	
 	m_keyitemname = new wxTextCtrl( m_keyitemscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
-	m_keyitemname->SetMaxLength( 0 ); 
 	bSizer22121->Add( m_keyitemname, 0, wxALL, 2 );
 	
 	m_keyitemnamebutton = new wxButton( m_keyitemscrolledwindow, wxID_KEYNAME, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	m_keyitemnamebutton->SetFont( wxFont( 6, 70, 90, 90, false, wxEmptyString ) );
+	m_keyitemnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 	
 	bSizer22121->Add( m_keyitemnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
 	
@@ -2183,14 +2180,13 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer23111 = new wxBoxSizer( wxHORIZONTAL );
 	
 	m_keyitemhelp = new wxTextCtrl( m_keyitemscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), wxTE_MULTILINE );
-	m_keyitemhelp->SetMaxLength( 0 ); 
 	m_keyitemhelp->SetToolTip( _("The ability's description shown with [Select] inside menus") );
 	m_keyitemhelp->SetMinSize( wxSize( 250,-1 ) );
 	
 	bSizer23111->Add( m_keyitemhelp, 1, wxALL|wxEXPAND, 2 );
 	
 	m_keyitemhelpbutton = new wxButton( m_keyitemscrolledwindow, wxID_KEYHELP, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	m_keyitemhelpbutton->SetFont( wxFont( 6, 70, 90, 90, false, wxEmptyString ) );
+	m_keyitemhelpbutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 	
 	bSizer23111->Add( m_keyitemhelpbutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
 	
@@ -2205,14 +2201,13 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer23121 = new wxBoxSizer( wxHORIZONTAL );
 	
 	m_keyitemdescription = new wxTextCtrl( m_keyitemscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), wxTE_MULTILINE );
-	m_keyitemdescription->SetMaxLength( 0 ); 
 	m_keyitemdescription->SetToolTip( _("The ability's description shown with [Select] inside battles") );
 	m_keyitemdescription->SetMinSize( wxSize( 250,-1 ) );
 	
 	bSizer23121->Add( m_keyitemdescription, 1, wxALL|wxEXPAND, 2 );
 	
 	m_keyitemdescriptionbutton = new wxButton( m_keyitemscrolledwindow, wxID_KEYDESCRIPTION, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	m_keyitemdescriptionbutton->SetFont( wxFont( 6, 70, 90, 90, false, wxEmptyString ) );
+	m_keyitemdescriptionbutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 	
 	bSizer23121->Add( m_keyitemdescriptionbutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
 	
@@ -2614,11 +2609,10 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer26 = new wxBoxSizer( wxHORIZONTAL );
 	
 	m_enemystatname = new wxTextCtrl( m_enemystatpanel1, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	m_enemystatname->SetMaxLength( 0 ); 
 	bSizer26->Add( m_enemystatname, 0, wxALL, 2 );
 	
 	m_enemystatnamebutton = new wxButton( m_enemystatpanel1, wxID_STATNAME, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	m_enemystatnamebutton->SetFont( wxFont( 6, 70, 90, 90, false, wxEmptyString ) );
+	m_enemystatnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 	
 	bSizer26->Add( m_enemystatnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
 	
@@ -3374,11 +3368,10 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer27 = new wxBoxSizer( wxHORIZONTAL );
 	
 	m_enemyspellname = new wxTextCtrl( m_enemyspellscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
-	m_enemyspellname->SetMaxLength( 0 ); 
 	bSizer27->Add( m_enemyspellname, 0, wxALL, 2 );
 	
 	m_enemyspellnamebutton = new wxButton( m_enemyspellscrolledwindow, wxID_SPELLNAME, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	m_enemyspellnamebutton->SetFont( wxFont( 6, 70, 90, 90, false, wxEmptyString ) );
+	m_enemyspellnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 	
 	bSizer27->Add( m_enemyspellnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
 	
@@ -3901,11 +3894,10 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer222 = new wxBoxSizer( wxHORIZONTAL );
 	
 	m_cardname = new wxTextCtrl( m_cardscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
-	m_cardname->SetMaxLength( 0 ); 
 	bSizer222->Add( m_cardname, 0, wxALL, 2 );
 	
 	m_cardnamebutton = new wxButton( m_cardscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	m_cardnamebutton->SetFont( wxFont( 6, 70, 90, 90, false, wxEmptyString ) );
+	m_cardnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 	
 	bSizer222->Add( m_cardnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
 	
@@ -4428,11 +4420,10 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer221221 = new wxBoxSizer( wxHORIZONTAL );
 	
 	m_worldplacename = new wxTextCtrl( m_worldplacescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
-	m_worldplacename->SetMaxLength( 0 ); 
 	bSizer221221->Add( m_worldplacename, 0, wxALL, 2 );
 	
 	m_worldplacenamebutton = new wxButton( m_worldplacescrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	m_worldplacenamebutton->SetFont( wxFont( 6, 70, 90, 90, false, wxEmptyString ) );
+	m_worldplacenamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 	
 	bSizer221221->Add( m_worldplacenamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
 	
@@ -4595,11 +4586,10 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer22122 = new wxBoxSizer( wxHORIZONTAL );
 	
 	m_fieldname = new wxTextCtrl( m_fieldscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
-	m_fieldname->SetMaxLength( 0 ); 
 	bSizer22122->Add( m_fieldname, 0, wxALL, 2 );
 	
 	m_fieldnamebutton = new wxButton( m_fieldscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	m_fieldnamebutton->SetFont( wxFont( 6, 70, 90, 90, false, wxEmptyString ) );
+	m_fieldnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 	
 	bSizer22122->Add( m_fieldnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
 	
@@ -6997,23 +6987,6 @@ PreferencesWindow::PreferencesWindow( wxWindow* parent, wxWindowID id, const wxS
 	fgSizer18->SetFlexibleDirection( wxBOTH );
 	fgSizer18->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	m_staticText89 = new wxStaticText( m_panel17, wxID_ANY, _("Game Alphabet"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText89->Wrap( -1 );
-	fgSizer18->Add( m_staticText89, 0, wxALL, 5 );
-	
-	wxArrayString m_gamealphabetChoices;
-	m_gamealphabet = new wxChoice( m_panel17, wxID_ALPHABET, wxDefaultPosition, wxDefaultSize, m_gamealphabetChoices, 0 );
-	m_gamealphabet->SetSelection( 0 );
-	fgSizer18->Add( m_gamealphabet, 1, wxALL, 2 );
-	
-	m_staticText891 = new wxStaticText( m_panel17, wxID_ANY, _("Opcode Character"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText891->Wrap( -1 );
-	fgSizer18->Add( m_staticText891, 0, wxALL, 5 );
-	
-	m_opcodechar = new wxTextCtrl( m_panel17, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	m_opcodechar->SetMaxLength( 1 ); 
-	fgSizer18->Add( m_opcodechar, 0, wxALL, 2 );
-	
 	m_staticText90 = new wxStaticText( m_panel17, wxID_ANY, _("Game Window Color"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText90->Wrap( -1 );
 	fgSizer18->Add( m_staticText90, 0, wxALL, 5 );
@@ -7041,7 +7014,76 @@ PreferencesWindow::PreferencesWindow( wxWindow* parent, wxWindowID id, const wxS
 	m_panel17->SetSizer( bSizer42 );
 	m_panel17->Layout();
 	bSizer42->Fit( m_panel17 );
-	m_auinotebook2->AddPage( m_panel17, _("Text Display"), false, wxNullBitmap );
+	m_auinotebook2->AddPage( m_panel17, _("Common"), false, wxNullBitmap );
+	m_panel172 = new wxPanel( m_auinotebook2, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer422;
+	bSizer422 = new wxBoxSizer( wxVERTICAL );
+	
+	wxFlexGridSizer* fgSizer182;
+	fgSizer182 = new wxFlexGridSizer( 2, 2, 0, 0 );
+	fgSizer182->AddGrowableCol( 1 );
+	fgSizer182->SetFlexibleDirection( wxBOTH );
+	fgSizer182->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	m_staticText901 = new wxStaticText( m_panel172, wxID_ANY, _("Background Resolution"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText901->Wrap( -1 );
+	fgSizer182->Add( m_staticText901, 0, wxALL, 5 );
+	
+	m_backgroundresolution = new wxSpinCtrl( m_panel172, wxID_RESOLUTION, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 16, 123, 32 );
+	m_backgroundresolution->SetToolTip( _("Expected resolution of the Field backgrounds\n32 is the default Steam resolution\nOnly a background mod can increase it") );
+	
+	fgSizer182->Add( m_backgroundresolution, 0, wxALL, 2 );
+	
+	
+	bSizer422->Add( fgSizer182, 1, wxEXPAND, 5 );
+	
+	
+	m_panel172->SetSizer( bSizer422 );
+	m_panel172->Layout();
+	bSizer422->Fit( m_panel172 );
+	m_auinotebook2->AddPage( m_panel172, _("Steam"), false, wxNullBitmap );
+	m_panel171 = new wxPanel( m_auinotebook2, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer421;
+	bSizer421 = new wxBoxSizer( wxVERTICAL );
+	
+	wxFlexGridSizer* fgSizer181;
+	fgSizer181 = new wxFlexGridSizer( 2, 2, 0, 0 );
+	fgSizer181->AddGrowableCol( 1 );
+	fgSizer181->SetFlexibleDirection( wxBOTH );
+	fgSizer181->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	m_staticText892 = new wxStaticText( m_panel171, wxID_ANY, _("Game Alphabet"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText892->Wrap( -1 );
+	fgSizer181->Add( m_staticText892, 0, wxALL, 5 );
+	
+	wxArrayString m_gamealphabetChoices;
+	m_gamealphabet = new wxChoice( m_panel171, wxID_ALPHABET, wxDefaultPosition, wxDefaultSize, m_gamealphabetChoices, 0 );
+	m_gamealphabet->SetSelection( 0 );
+	fgSizer181->Add( m_gamealphabet, 1, wxALL, 2 );
+	
+	m_staticText8911 = new wxStaticText( m_panel171, wxID_ANY, _("Opcode Character"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText8911->Wrap( -1 );
+	fgSizer181->Add( m_staticText8911, 0, wxALL, 5 );
+	
+	m_opcodechar = new wxTextCtrl( m_panel171, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	#ifdef __WXGTK__
+	if ( !m_opcodechar->HasFlag( wxTE_MULTILINE ) )
+	{
+	m_opcodechar->SetMaxLength( 1 );
+	}
+	#else
+	m_opcodechar->SetMaxLength( 1 );
+	#endif
+	fgSizer181->Add( m_opcodechar, 0, wxALL, 2 );
+	
+	
+	bSizer421->Add( fgSizer181, 1, wxEXPAND, 5 );
+	
+	
+	m_panel171->SetSizer( bSizer421 );
+	m_panel171->Layout();
+	bSizer421->Fit( m_panel171 );
+	m_auinotebook2->AddPage( m_panel171, _("PSX"), false, wxNullBitmap );
 	
 	bSizer34->Add( m_auinotebook2, 1, wxEXPAND | wxALL, 5 );
 	
@@ -7374,8 +7416,15 @@ ExportPPFWindow::ExportPPFWindow( wxWindow* parent, wxWindowID id, const wxStrin
 	wxStaticBoxSizer* sbSizer1;
 	sbSizer1 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, _("Description") ), wxVERTICAL );
 	
-	m_description = new wxTextCtrl( this, wxID_ANY, _("Generated by Hades Workshop"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_description->SetMaxLength( 50 ); 
+	m_description = new wxTextCtrl( sbSizer1->GetStaticBox(), wxID_ANY, _("Generated by Hades Workshop"), wxDefaultPosition, wxDefaultSize, 0 );
+	#ifdef __WXGTK__
+	if ( !m_description->HasFlag( wxTE_MULTILINE ) )
+	{
+	m_description->SetMaxLength( 50 );
+	}
+	#else
+	m_description->SetMaxLength( 50 );
+	#endif
 	sbSizer1->Add( m_description, 0, wxALL|wxEXPAND, 0 );
 	
 	
@@ -7467,7 +7516,6 @@ AboutWindow::AboutWindow( wxWindow* parent, wxWindowID id, const wxString& title
 	bSizer16 = new wxBoxSizer( wxVERTICAL );
 	
 	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.37c\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_CENTRE|wxTE_MULTILINE|wxTE_READONLY|wxSIMPLE_BORDER );
-	m_textCtrl13->SetMaxLength( 0 ); 
 	m_textCtrl13->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 	m_textCtrl13->SetMinSize( wxSize( -1,330 ) );
 	
@@ -7607,10 +7655,13 @@ HelpWindow::HelpWindow( wxWindow* parent, wxWindowID id, const wxString& title, 
 	m_panel202->Layout();
 	bSizer45311112->Fit( m_panel202 );
 	m_helpbook->AddPage( m_panel202, _("About Mods and Saves"), false );
-	#ifndef __WXGTK__ // Small icon style not supported in GTK
+	#ifdef __WXGTK__ // Small icon style not supported in GTK
 	wxListView* m_helpbookListView = m_helpbook->GetListView();
 	long m_helpbookFlags = m_helpbookListView->GetWindowStyleFlag();
-	m_helpbookFlags = ( m_helpbookFlags & ~wxLC_ICON ) | wxLC_SMALL_ICON;
+	if( m_helpbookFlags & wxLC_SMALL_ICON )
+	{
+		m_helpbookFlags = ( m_helpbookFlags & ~wxLC_SMALL_ICON ) | wxLC_ICON;
+	}
 	m_helpbookListView->SetWindowStyleFlag( m_helpbookFlags );
 	#endif
 	
@@ -7640,28 +7691,24 @@ LogWindow::LogWindow( wxWindow* parent, wxWindowID id, const wxString& title, co
 	gbSizer2->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_NONE );
 	
 	m_errornum = new wxTextCtrl( this, wxID_ANY, _("Error(s) : "), wxDefaultPosition, wxDefaultSize, wxTE_READONLY|wxNO_BORDER );
-	m_errornum->SetMaxLength( 0 ); 
 	m_errornum->SetForegroundColour( wxColour( 255, 0, 0 ) );
 	m_errornum->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_MENU ) );
 	
 	gbSizer2->Add( m_errornum, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxLEFT|wxTOP, 4 );
 	
 	m_errorctrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 200,80 ), wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY|wxDOUBLE_BORDER );
-	m_errorctrl->SetMaxLength( 0 ); 
 	m_errorctrl->SetForegroundColour( wxColour( 255, 0, 0 ) );
 	m_errorctrl->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INACTIVECAPTION ) );
 	
 	gbSizer2->Add( m_errorctrl, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
 	
 	m_warningnum = new wxTextCtrl( this, wxID_ANY, _("Warning(s) : "), wxDefaultPosition, wxDefaultSize, wxTE_READONLY|wxNO_BORDER );
-	m_warningnum->SetMaxLength( 0 ); 
 	m_warningnum->SetForegroundColour( wxColour( 255, 150, 0 ) );
 	m_warningnum->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_MENU ) );
 	
 	gbSizer2->Add( m_warningnum, wxGBPosition( 2, 0 ), wxGBSpan( 1, 1 ), wxLEFT|wxTOP, 4 );
 	
 	m_warningctrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 200,80 ), wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY|wxDOUBLE_BORDER );
-	m_warningctrl->SetMaxLength( 0 ); 
 	m_warningctrl->SetForegroundColour( wxColour( 255, 150, 0 ) );
 	m_warningctrl->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INACTIVECAPTION ) );
 	
@@ -7702,7 +7749,6 @@ TextEditWindow::TextEditWindow( wxWindow* parent, wxWindowID id, const wxString&
 	gbSizer2->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_NONE );
 	
 	m_textctrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE );
-	m_textctrl->SetMaxLength( 0 ); 
 	gbSizer2->Add( m_textctrl, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 0 );
 	
 	m_panel14 = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), wxTAB_TRAVERSAL );
@@ -7773,7 +7819,6 @@ TextEditWindow::TextEditWindow( wxWindow* parent, wxWindowID id, const wxString&
 	gbSizer2->Add( m_richtextctrl, wxGBPosition( 2, 0 ), wxGBSpan( 1, 2 ), wxEXPAND | wxALL, 2 );
 	
 	m_textcharmap = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_NO_VSCROLL|wxTE_READONLY );
-	m_textcharmap->SetMaxLength( 0 ); 
 	m_textcharmap->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_3DLIGHT ) );
 	
 	gbSizer2->Add( m_textcharmap, wxGBPosition( 3, 0 ), wxGBSpan( 1, 2 ), wxALL|wxEXPAND, 0 );
@@ -8093,8 +8138,15 @@ TextExportWindow::TextExportWindow( wxWindow* parent, wxWindowID id, const wxStr
 	wxStaticBoxSizer* sbSizer2;
 	sbSizer2 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, _("Text Header") ), wxVERTICAL );
 	
-	m_textheader = new wxTextCtrl( this, wxID_ANY, _("//======================================\n//\tFinal Fantasy IX Text Block : %s\n//======================================\n"), wxDefaultPosition, wxSize( -1,90 ), wxHSCROLL|wxTE_MULTILINE );
-	m_textheader->SetMaxLength( 1900 ); 
+	m_textheader = new wxTextCtrl( sbSizer2->GetStaticBox(), wxID_ANY, _("//======================================\n//\tFinal Fantasy IX Text Block : %s\n//======================================\n"), wxDefaultPosition, wxSize( -1,90 ), wxHSCROLL|wxTE_MULTILINE );
+	#ifdef __WXGTK__
+	if ( !m_textheader->HasFlag( wxTE_MULTILINE ) )
+	{
+	m_textheader->SetMaxLength( 1900 );
+	}
+	#else
+	m_textheader->SetMaxLength( 1900 );
+	#endif
 	m_textheader->SetToolTip( _("This text will be added at the beginning of the file") );
 	
 	sbSizer2->Add( m_textheader, 0, wxALL|wxEXPAND, 0 );
@@ -8105,8 +8157,15 @@ TextExportWindow::TextExportWindow( wxWindow* parent, wxWindowID id, const wxStr
 	wxStaticBoxSizer* sbSizer6;
 	sbSizer6 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, _("Text Separator") ), wxVERTICAL );
 	
-	m_textseparator = new wxTextCtrl( this, wxID_ANY, _("\n// New Text : %d"), wxDefaultPosition, wxSize( -1,60 ), wxHSCROLL|wxTE_MULTILINE );
-	m_textseparator->SetMaxLength( 1900 ); 
+	m_textseparator = new wxTextCtrl( sbSizer6->GetStaticBox(), wxID_ANY, _("\n// New Text : %d"), wxDefaultPosition, wxSize( -1,60 ), wxHSCROLL|wxTE_MULTILINE );
+	#ifdef __WXGTK__
+	if ( !m_textseparator->HasFlag( wxTE_MULTILINE ) )
+	{
+	m_textseparator->SetMaxLength( 1900 );
+	}
+	#else
+	m_textseparator->SetMaxLength( 1900 );
+	#endif
 	m_textseparator->SetToolTip( _("This text will be added before every text unit") );
 	
 	sbSizer6->Add( m_textseparator, 0, wxALL|wxEXPAND, 0 );
@@ -8154,7 +8213,7 @@ TextExportWindow::~TextExportWindow()
 
 BatchExportWindow::BatchExportWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
 {
-	this->SetSizeHints( wxSize( 275,-1 ), wxDefaultSize );
+	this->SetSizeHints( wxSize( 275,340 ), wxDefaultSize );
 	
 	wxBoxSizer* bSizer18;
 	bSizer18 = new wxBoxSizer( wxVERTICAL );
@@ -8196,13 +8255,13 @@ BatchExportWindow::BatchExportWindow( wxWindow* parent, wxWindowID id, const wxS
 	m_mergetile->SetValue(true); 
 	m_mergetile->SetToolTip( _("When unchecked, all the datas\nare written in one big file") );
 	
-	bSizer1591->Add( m_mergetile, 0, wxALL, 5 );
+	bSizer1591->Add( m_mergetile, 0, wxALL, 2 );
 	
 	m_exportorder = new wxCheckBox( m_backgroundpanel, wxID_ANY, _("Sort Tilesets by Depth"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_exportorder->SetValue(true); 
 	m_exportorder->SetToolTip( _("If disabled, the tilesets are exported using their internal ordering\nIgnored if the tilesets are merged") );
 	
-	bSizer1591->Add( m_exportorder, 0, wxALL, 5 );
+	bSizer1591->Add( m_exportorder, 0, wxALL, 2 );
 	
 	wxString m_languagetitleChoices[] = { _("All Titles"), _("English (US)"), _("English (UK)"), _("Japanese"), _("German"), _("French"), _("Italian"), _("Spanish") };
 	int m_languagetitleNChoices = sizeof( m_languagetitleChoices ) / sizeof( wxString );
@@ -8223,8 +8282,8 @@ BatchExportWindow::BatchExportWindow( wxWindow* parent, wxWindowID id, const wxS
 	sbSizer2 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, _("Export List") ), wxVERTICAL );
 	
 	wxArrayString m_exportlistChoices;
-	m_exportlist = new wxCheckListBox( this, wxID_ANY, wxDefaultPosition, wxSize( 230,140 ), m_exportlistChoices, wxLB_HSCROLL|wxLB_SINGLE );
-	sbSizer2->Add( m_exportlist, 0, wxALL, 5 );
+	m_exportlist = new wxCheckListBox( sbSizer2->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxSize( 230,140 ), m_exportlistChoices, wxLB_HSCROLL|wxLB_SINGLE );
+	sbSizer2->Add( m_exportlist, 0, wxALL|wxEXPAND, 5 );
 	
 	
 	gbSizer2->Add( sbSizer2, wxGBPosition( 2, 0 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
@@ -8318,7 +8377,7 @@ BatchImportWindow::BatchImportWindow( wxWindow* parent, wxWindowID id, const wxS
 	sbSizer2 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, _("Import List") ), wxVERTICAL );
 	
 	wxArrayString m_importlistChoices;
-	m_importlist = new wxCheckListBox( this, wxID_ANY, wxDefaultPosition, wxSize( 230,150 ), m_importlistChoices, wxLB_HSCROLL|wxLB_SINGLE );
+	m_importlist = new wxCheckListBox( sbSizer2->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxSize( 230,150 ), m_importlistChoices, wxLB_HSCROLL|wxLB_SINGLE );
 	sbSizer2->Add( m_importlist, 0, wxALL, 5 );
 	
 	
@@ -9533,11 +9592,11 @@ ScriptHelpWindow::ScriptHelpWindow( wxWindow* parent, wxWindowID id, const wxStr
 	gbSizer29->Add( m_searchbtn, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxALIGN_CENTER_VERTICAL, 5 );
 	
 	m_listbook = new wxAuiNotebook( this, wxID_ANY, wxDefaultPosition, wxSize( 165,-1 ), wxAUI_NB_TOP );
-	m_listbook->SetFont( wxFont( 6, 70, 90, 90, false, wxEmptyString ) );
+	m_listbook->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 	m_listbook->SetMinSize( wxSize( 165,-1 ) );
 	
 	m_panel94 = new wxPanel( m_listbook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	m_panel94->SetFont( wxFont( wxNORMAL_FONT->GetPointSize(), 70, 90, 90, false, wxEmptyString ) );
+	m_panel94->SetFont( wxFont( wxNORMAL_FONT->GetPointSize(), wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 	
 	wxGridBagSizer* gbSizer30;
 	gbSizer30 = new wxGridBagSizer( 0, 0 );
@@ -9556,7 +9615,7 @@ ScriptHelpWindow::ScriptHelpWindow( wxWindow* parent, wxWindowID id, const wxStr
 	gbSizer30->Fit( m_panel94 );
 	m_listbook->AddPage( m_panel94, _("Function"), false, wxNullBitmap );
 	m_panel95 = new wxPanel( m_listbook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	m_panel95->SetFont( wxFont( wxNORMAL_FONT->GetPointSize(), 70, 90, 90, false, wxEmptyString ) );
+	m_panel95->SetFont( wxFont( wxNORMAL_FONT->GetPointSize(), wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 	
 	wxGridBagSizer* gbSizer301;
 	gbSizer301 = new wxGridBagSizer( 0, 0 );
@@ -9575,7 +9634,7 @@ ScriptHelpWindow::ScriptHelpWindow( wxWindow* parent, wxWindowID id, const wxStr
 	gbSizer301->Fit( m_panel95 );
 	m_listbook->AddPage( m_panel95, _("Variable"), false, wxNullBitmap );
 	m_panel951 = new wxPanel( m_listbook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	m_panel951->SetFont( wxFont( wxNORMAL_FONT->GetPointSize(), 70, 90, 90, false, wxEmptyString ) );
+	m_panel951->SetFont( wxFont( wxNORMAL_FONT->GetPointSize(), wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 	
 	wxGridBagSizer* gbSizer302;
 	gbSizer302 = new wxGridBagSizer( 0, 0 );
@@ -10456,7 +10515,9 @@ UnityViewerWindow::UnityViewerWindow( wxWindow* parent, wxWindowID id, const wxS
 	
 	m_menuassets = new wxMenu();
 	m_submenudata = new wxMenu();
+	wxMenuItem* m_submenudataItem = new wxMenuItem( m_menuassets, wxID_ANY, _("Streaming Assets"), wxEmptyString, wxITEM_NORMAL, m_submenudata );
 	m_submenufield = new wxMenu();
+	wxMenuItem* m_submenufieldItem = new wxMenuItem( m_submenudata, wxID_ANY, _("p0data1"), wxEmptyString, wxITEM_NORMAL, m_submenufield );
 	wxMenuItem* m_menupdata11;
 	m_menupdata11 = new wxMenuItem( m_submenufield, wxID_PDATA11, wxString( _("p0data11") ) , wxEmptyString, wxITEM_NORMAL );
 	m_submenufield->Append( m_menupdata11 );
@@ -10493,7 +10554,7 @@ UnityViewerWindow::UnityViewerWindow( wxWindow* parent, wxWindowID id, const wxS
 	m_menupdata19 = new wxMenuItem( m_submenufield, wxID_PDATA19, wxString( _("p0data19") ) , wxEmptyString, wxITEM_NORMAL );
 	m_submenufield->Append( m_menupdata19 );
 	
-	m_submenudata->Append( -1, _("p0data1"), m_submenufield );
+	m_submenudata->Append( m_submenufieldItem );
 	
 	wxMenuItem* m_menupdata2;
 	m_menupdata2 = new wxMenuItem( m_submenudata, wxID_PDATA2, wxString( _("p0data2") ) , wxEmptyString, wxITEM_NORMAL );
@@ -10512,6 +10573,7 @@ UnityViewerWindow::UnityViewerWindow( wxWindow* parent, wxWindowID id, const wxS
 	m_submenudata->Append( m_menupdata5 );
 	
 	m_submenuaudio = new wxMenu();
+	wxMenuItem* m_submenuaudioItem = new wxMenuItem( m_submenudata, wxID_ANY, _("p0data6"), wxEmptyString, wxITEM_NORMAL, m_submenuaudio );
 	wxMenuItem* m_menupdata61;
 	m_menupdata61 = new wxMenuItem( m_submenuaudio, wxID_PDATA61, wxString( _("p0data61") ) , wxEmptyString, wxITEM_NORMAL );
 	m_submenuaudio->Append( m_menupdata61 );
@@ -10524,15 +10586,16 @@ UnityViewerWindow::UnityViewerWindow( wxWindow* parent, wxWindowID id, const wxS
 	m_menupdata63 = new wxMenuItem( m_submenuaudio, wxID_PDATA63, wxString( _("p0data63") ) , wxEmptyString, wxITEM_NORMAL );
 	m_submenuaudio->Append( m_menupdata63 );
 	
-	m_submenudata->Append( -1, _("p0data6"), m_submenuaudio );
+	m_submenudata->Append( m_submenuaudioItem );
 	
 	wxMenuItem* m_menupdata7;
 	m_menupdata7 = new wxMenuItem( m_submenudata, wxID_PDATA7, wxString( _("p0data7") ) , wxEmptyString, wxITEM_NORMAL );
 	m_submenudata->Append( m_menupdata7 );
 	
-	m_menuassets->Append( -1, _("Streaming Assets"), m_submenudata );
+	m_menuassets->Append( m_submenudataItem );
 	
 	m_submenulevel = new wxMenu();
+	wxMenuItem* m_submenulevelItem = new wxMenuItem( m_menuassets, wxID_ANY, _("Level"), wxEmptyString, wxITEM_NORMAL, m_submenulevel );
 	wxMenuItem* m_menulevel0;
 	m_menulevel0 = new wxMenuItem( m_submenulevel, wxID_LEVEL0, wxString( _("level0") ) , wxEmptyString, wxITEM_NORMAL );
 	m_submenulevel->Append( m_menulevel0 );
@@ -10645,9 +10708,10 @@ UnityViewerWindow::UnityViewerWindow( wxWindow* parent, wxWindowID id, const wxS
 	m_menulevel27 = new wxMenuItem( m_submenulevel, wxID_LEVEL27, wxString( _("level27") ) , wxEmptyString, wxITEM_NORMAL );
 	m_submenulevel->Append( m_menulevel27 );
 	
-	m_menuassets->Append( -1, _("Level"), m_submenulevel );
+	m_menuassets->Append( m_submenulevelItem );
 	
 	m_submenushared = new wxMenu();
+	wxMenuItem* m_submenusharedItem = new wxMenuItem( m_menuassets, wxID_ANY, _("Shared Assets"), wxEmptyString, wxITEM_NORMAL, m_submenushared );
 	wxMenuItem* m_menuresources;
 	m_menuresources = new wxMenuItem( m_submenushared, wxID_RESOURCES, wxString( _("resources") ) , wxEmptyString, wxITEM_NORMAL );
 	m_submenushared->Append( m_menuresources );
@@ -10772,7 +10836,7 @@ UnityViewerWindow::UnityViewerWindow( wxWindow* parent, wxWindowID id, const wxS
 	m_menushared28 = new wxMenuItem( m_submenushared, wxID_SHARED28, wxString( _("sharedassets28") ) , wxEmptyString, wxITEM_NORMAL );
 	m_submenushared->Append( m_menushared28 );
 	
-	m_menuassets->Append( -1, _("Shared Assets"), m_submenushared );
+	m_menuassets->Append( m_submenusharedItem );
 	
 	m_menubar->Append( m_menuassets, _("Archive") ); 
 	
@@ -10784,6 +10848,7 @@ UnityViewerWindow::UnityViewerWindow( wxWindow* parent, wxWindowID id, const wxS
 	m_menuoptions->AppendSeparator();
 	
 	m_menuconvertimg = new wxMenu();
+	wxMenuItem* m_menuconvertimgItem = new wxMenuItem( m_menuoptions, wxID_ANY, _("Automatically Convert Images"), wxEmptyString, wxITEM_NORMAL, m_menuconvertimg );
 	m_menuconvertimgnone = new wxMenuItem( m_menuconvertimg, wxID_ANY, wxString( _("Don't Convert") ) , wxEmptyString, wxITEM_RADIO );
 	m_menuconvertimg->Append( m_menuconvertimgnone );
 	
@@ -10800,9 +10865,10 @@ UnityViewerWindow::UnityViewerWindow( wxWindow* parent, wxWindowID id, const wxS
 	m_menuconvertimgtiff = new wxMenuItem( m_menuconvertimg, wxID_ANY, wxString( _("TIFF") ) , wxEmptyString, wxITEM_RADIO );
 	m_menuconvertimg->Append( m_menuconvertimgtiff );
 	
-	m_menuoptions->Append( -1, _("Automatically Convert Images"), m_menuconvertimg );
+	m_menuoptions->Append( m_menuconvertimgItem );
 	
 	m_menuconvertimgquality = new wxMenu();
+	wxMenuItem* m_menuconvertimgqualityItem = new wxMenuItem( m_menuoptions, wxID_ANY, _("Image Quality Conversion"), wxEmptyString, wxITEM_NORMAL, m_menuconvertimgquality );
 	m_menuconvertimgqualitysame = new wxMenuItem( m_menuconvertimgquality, wxID_ANY, wxString( _("Default Compression Method") ) , wxEmptyString, wxITEM_RADIO );
 	m_menuconvertimgquality->Append( m_menuconvertimgqualitysame );
 	m_menuconvertimgqualitysame->Check( true );
@@ -10837,11 +10903,12 @@ UnityViewerWindow::UnityViewerWindow( wxWindow* parent, wxWindowID id, const wxS
 	m_menuconvertimgquality->Append( m_menuconvertimgqualityhigh );
 	m_menuconvertimgqualityhigh->Check( true );
 	
-	m_menuoptions->Append( -1, _("Image Quality Conversion"), m_menuconvertimgquality );
+	m_menuoptions->Append( m_menuconvertimgqualityItem );
 	
 	m_menuoptions->AppendSeparator();
 	
 	m_menuconvertaudio = new wxMenu();
+	wxMenuItem* m_menuconvertaudioItem = new wxMenuItem( m_menuoptions, wxID_ANY, _("Automatically Convert Audio"), wxEmptyString, wxITEM_NORMAL, m_menuconvertaudio );
 	m_menuconvertaudionone = new wxMenuItem( m_menuconvertaudio, wxID_ANY, wxString( _("Don't Convert") ) , wxEmptyString, wxITEM_RADIO );
 	m_menuconvertaudio->Append( m_menuconvertaudionone );
 	
@@ -10849,19 +10916,32 @@ UnityViewerWindow::UnityViewerWindow( wxWindow* parent, wxWindowID id, const wxS
 	m_menuconvertaudio->Append( m_menuconvertaudioakb );
 	m_menuconvertaudioakb->Check( true );
 	
-	m_menuoptions->Append( -1, _("Automatically Convert Audio"), m_menuconvertaudio );
+	m_menuoptions->Append( m_menuconvertaudioItem );
 	
 	m_menuoptions->AppendSeparator();
 	
 	m_menuconvertmodel = new wxMenu();
-	m_menuconvertmodelnone = new wxMenuItem( m_menuconvertmodel, wxID_ANY, wxString( _("No Exportation") ) , wxEmptyString, wxITEM_RADIO );
+	wxMenuItem* m_menuconvertmodelItem = new wxMenuItem( m_menuoptions, wxID_ANY, _("Automatically Convert 3D Models"), wxEmptyString, wxITEM_NORMAL, m_menuconvertmodel );
+	m_menuconvertmodelnone = new wxMenuItem( m_menuconvertmodel, wxID_ANY, wxString( _("Don't Convert") ) , wxEmptyString, wxITEM_RADIO );
 	m_menuconvertmodel->Append( m_menuconvertmodelnone );
 	
-	m_menuconvertmodelobj = new wxMenuItem( m_menuconvertmodel, wxID_ANY, wxString( _("Export OBJ with .fbx GameObjects") ) , wxEmptyString, wxITEM_RADIO );
-	m_menuconvertmodel->Append( m_menuconvertmodelobj );
-	m_menuconvertmodelobj->Check( true );
+	m_menuconvertmodelfbxbin = new wxMenuItem( m_menuconvertmodel, wxID_ANY, wxString( _("Convert as Binary FBX") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertmodel->Append( m_menuconvertmodelfbxbin );
+	m_menuconvertmodelfbxbin->Check( true );
 	
-	m_menuoptions->Append( -1, _("Automatically Export 3D Models"), m_menuconvertmodel );
+	m_menuconvertmodelfbxtext = new wxMenuItem( m_menuconvertmodel, wxID_ANY, wxString( _("Convert as ASCII FBX") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertmodel->Append( m_menuconvertmodelfbxtext );
+	
+	m_menuconvertmodelautocad = new wxMenuItem( m_menuconvertmodel, wxID_ANY, wxString( _("Convert as AutoCAD DXF") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertmodel->Append( m_menuconvertmodelautocad );
+	
+	m_menuconvertmodelcollada = new wxMenuItem( m_menuconvertmodel, wxID_ANY, wxString( _("Convert as Collada") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertmodel->Append( m_menuconvertmodelcollada );
+	
+	m_menuconvertmodelwave = new wxMenuItem( m_menuconvertmodel, wxID_ANY, wxString( _("Convert as Wavefront OBJ") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertmodel->Append( m_menuconvertmodelwave );
+	
+	m_menuoptions->Append( m_menuconvertmodelItem );
 	
 	m_menuoptions->AppendSeparator();
 	

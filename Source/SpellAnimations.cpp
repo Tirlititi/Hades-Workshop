@@ -226,7 +226,7 @@ void SpellAnimationDataSet::WritePPF(fstream& ffbin, ConfigurationSet& config, G
 }
 
 int* SpellAnimationDataSet::LoadHWS(fstream& ffhws) {
-	uint32_t spam,spamsize,tmp32;
+	uint32_t spam,tmp32;
 	uint16_t spamid,i;
 	int* res = new int[1];
 	res[0] = 0;

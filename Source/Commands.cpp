@@ -176,7 +176,7 @@ void CommandDataStruct::BreakLink() {
 
 
 void CommandDataSet::Load(fstream &ffbin, ConfigurationSet& config) {
-	unsigned int i,j;
+	unsigned int i;
 	uint32_t txtpos;
 	uint8_t zero8 = 0;
 	uint16_t zero16 = 0;
@@ -278,7 +278,7 @@ void CommandDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype) {
 }
 
 void CommandDataSet::Write(fstream &ffbin, ConfigurationSet& config) {
-	unsigned int i,j;
+	unsigned int i;
 	uint32_t txtpos;
 	uint8_t zero8 = 0;
 	uint16_t zero16 = 0;
@@ -299,7 +299,7 @@ void CommandDataSet::Write(fstream &ffbin, ConfigurationSet& config) {
 }
 
 void CommandDataSet::WritePPF(fstream &ffbin, ConfigurationSet& config) {
-	unsigned int i,j;
+	unsigned int i;
 	uint32_t txtpos;
 	uint8_t zero8 = 0;
 	uint16_t zero16 = 0;
@@ -320,7 +320,7 @@ void CommandDataSet::WritePPF(fstream &ffbin, ConfigurationSet& config) {
 }
 
 int CommandDataSet::LoadHWS(fstream &ffbin, bool usetext) {
-	unsigned int i,j;
+	unsigned int i;
 	uint32_t txtpos;
 	uint8_t zero8 = 0;
 	uint16_t zero16 = 0;
@@ -425,7 +425,7 @@ int CommandDataSet::LoadHWS(fstream &ffbin, bool usetext) {
 }
 
 void CommandDataSet::WriteHWS(fstream &ffbin) {
-	unsigned int i,j;
+	unsigned int i;
 	uint32_t txtpos;
 	uint8_t zero8 = 0;
 	uint16_t zero16 = 0;

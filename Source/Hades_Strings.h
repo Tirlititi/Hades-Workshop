@@ -1,4 +1,4 @@
-#ifndef _HADES_STRINGS_H
+﻿#ifndef _HADES_STRINGS_H
 #define _HADES_STRINGS_H
 
 #include "Database_Common.h"

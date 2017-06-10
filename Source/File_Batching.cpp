@@ -261,7 +261,7 @@ LogStruct FileBatch_ImportSpecialText(wxString filetext, SpecialTextDataSet& dat
 	wxString line,linebuf,errstr,token,txtvalue,inputstr = filetext;
 	int currenttextstruct = -1, currenttext = -1;
 	int nexttextstruct = 0, nexttext;
-	unsigned int i,j,linenum = 0;
+	unsigned int i,linenum = 0;
 	bool end,filetypeok = false;
 	unsigned long value;
 	wstring strvalue;
@@ -737,7 +737,6 @@ BatchImportDialog::~BatchImportDialog() {
 }
 
 int BatchImportDialog::ShowModal(int type, SaveSet* datas, bool isjapan) {
-	unsigned int i;
 	datatype = type;
 	dataset = datas;
 	japanversion = isjapan;
@@ -789,7 +788,7 @@ void BatchImportDialog::OnSelectRightClickMenu(wxCommandEvent& event) {
 
 void BatchImportDialog::OnButtonClick(wxCommandEvent& event) {
 	int id = event.GetId();
-	unsigned int i,j,k;
+	unsigned int i;
 	bool ret = true;
 	if (id==wxID_OK) {
 		for (i=0;i<m_importlist->GetCount();i++) {

@@ -61,10 +61,10 @@ int EnemyDataStruct::AddStat(EnemyStatDataStruct* copystat) {
 	EnemyStatDataStruct* newstat = new EnemyStatDataStruct[stat_amount+1];
 	for (i=0;i<stat_amount;i++) { // DEBUG: memcpy on wstring bugs ; this is a solution (the usual one is to copy fields 1 by 1)
 		newstat[i].name = stat[i].name;
-		memcpy((void*)(&newstat[i])+sizeof(FF9String),(void*)(&stat[i])+sizeof(FF9String),sizeof(EnemyStatDataStruct)-sizeof(FF9String));
+		memcpy(&newstat[i]+sizeof(FF9String),&stat[i]+sizeof(FF9String),sizeof(EnemyStatDataStruct)-sizeof(FF9String));
 	}
 	newstat[stat_amount].name = copystat->name;
-	memcpy((void*)(&newstat[stat_amount])+sizeof(FF9String),(void*)(copystat)+sizeof(FF9String),sizeof(EnemyStatDataStruct)-sizeof(FF9String));
+	memcpy(&newstat[stat_amount]+sizeof(FF9String),copystat+sizeof(FF9String),sizeof(EnemyStatDataStruct)-sizeof(FF9String));
 	newstat[stat_amount].default_attack = 0;
 	newstat[stat_amount].text_amount = 0;
 	newstat[stat_amount].sequence_anim_base = bd.animation_amount;
@@ -110,7 +110,7 @@ int EnemyDataStruct::AddStat(EnemyStatDataStruct* copystat) {
 	EnemyStatDataStruct* newstat = new EnemyStatDataStruct[stat_amount+1];
 	for (i=0;i<stat_amount;i++) { // DEBUG: memcpy on wstring bugs ; this is a solution (the usual one is to copy fields 1 by 1)
 		newstat[i].name = stat[i].name;
-		memcpy((void*)(&newstat[i])+sizeof(FF9String),(void*)(&stat[i])+sizeof(FF9String),sizeof(EnemyStatDataStruct)-sizeof(FF9String));
+		memcpy(&newstat[i]+sizeof(FF9String),&stat[i]+sizeof(FF9String),sizeof(EnemyStatDataStruct)-sizeof(FF9String));
 	}
 	modelinfo.ApplyToEnemyStat(newstat[stat_amount]);
 	newstat[stat_amount].name = newname;
@@ -192,11 +192,11 @@ void EnemyDataStruct::RemoveStat(uint16_t statid) {
 	EnemyStatDataStruct* newstat = new EnemyStatDataStruct[stat_amount-1];
 	for (i=0;i<statid;i++) {
 		newstat[i].name = stat[i].name;
-		memcpy((void*)(&newstat[i])+sizeof(FF9String),(void*)(&stat[i])+sizeof(FF9String),sizeof(EnemyStatDataStruct)-sizeof(FF9String));
+		memcpy(&newstat[i]+sizeof(FF9String),&stat[i]+sizeof(FF9String),sizeof(EnemyStatDataStruct)-sizeof(FF9String));
 	}
 	for (i=statid;i+1<stat_amount;i++) {
 		newstat[i].name = stat[i+1].name;
-		memcpy((void*)(&newstat[i])+sizeof(FF9String),(void*)(&stat[i+1])+sizeof(FF9String),sizeof(EnemyStatDataStruct)-sizeof(FF9String));
+		memcpy(&newstat[i]+sizeof(FF9String),&stat[i+1]+sizeof(FF9String),sizeof(EnemyStatDataStruct)-sizeof(FF9String));
 	}
 	delete[] stat;
 	stat = newstat;
@@ -230,10 +230,10 @@ int EnemyDataStruct::AddSpell(EnemySpellDataStruct* copyspell) {
 	EnemySpellDataStruct* newspell = new EnemySpellDataStruct[spell_amount+1];
 	for (i=0;i<spell_amount;i++) {
 		newspell[i].name = spell[i].name;
-		memcpy((void*)(&newspell[i])+sizeof(FF9String),(void*)(&spell[i])+sizeof(FF9String),sizeof(EnemySpellDataStruct)-sizeof(FF9String));
+		memcpy(&newspell[i]+sizeof(FF9String),&spell[i]+sizeof(FF9String),sizeof(EnemySpellDataStruct)-sizeof(FF9String));
 	}
 	newspell[spell_amount].name = copyspell->name;
-	memcpy((void*)(&newspell[spell_amount])+sizeof(FF9String),(void*)(copyspell)+sizeof(FF9String),sizeof(EnemySpellDataStruct)-sizeof(FF9String));
+	memcpy(&newspell[spell_amount]+sizeof(FF9String),copyspell+sizeof(FF9String),sizeof(EnemySpellDataStruct)-sizeof(FF9String));
 	newspell[spell_amount].id = spell_amount;
 	newspell[spell_amount].parent = this;
 	delete[] spell;
@@ -1268,7 +1268,7 @@ void EnemyDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsign
 	unsigned int i,j;
 	uint16_t nbmodified = 0;
 	uint32_t chunkpos, nboffset = ffhws.tellg();
-	ClusterData* clus;
+	ClusterData* clus = NULL;
 	bool savemain = localflag & 1;
 	bool savelocal = localflag & 2;
 	HWSWriteShort(ffhws,nbmodified);
@@ -1438,6 +1438,7 @@ int EnemyDataSet::ChangeBattleScene(uint16_t battleid, uint16_t newsceneid, uint
 		modified_scene_size[modified_battle_scene_amount] = newscenesize;
 		modified_battle_scene_amount++;
 	}
+	return 0;
 }
 
 int EnemyDataSet::ChangeBattleModel(uint16_t battleid, uint8_t enemyid, BattleModelLinks& newmodelinfo) {

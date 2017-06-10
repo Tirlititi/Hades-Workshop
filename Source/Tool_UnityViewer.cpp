@@ -6,6 +6,7 @@
 #include "Database_Text.h"
 #include "Database_Resource.h"
 #include "Database_SpellAnimation.h"
+#include "Gui_Preferences.h"
 #include "ModelMesh.h"
 #include "main.h"
 
@@ -55,6 +56,7 @@ int wxCALLBACK SortItemCompare(wxIntPtr item1, wxIntPtr item2, wxIntPtr infoptr)
 
 ToolUnityViewer::ToolUnityViewer(wxWindow* parent) :
 	UnityViewerWindow(parent) {
+	PreferencesDialog::LoadToolUnityConfig(this);
 	m_loadgauge->SetRange(100);
 	m_assetlist->AppendColumn(_(ASSET_COLUMN_INDEX),wxLIST_FORMAT_LEFT,40);
 	m_assetlist->AppendColumn(_(ASSET_COLUMN_NAME),wxLIST_FORMAT_LEFT,300);
@@ -68,7 +70,7 @@ ToolUnityViewer::ToolUnityViewer(wxWindow* parent) :
 	root_path_ok = false;
 	column_sort = 0;
 	column_sort_ascending = true;
-	use_x86 = false;
+	use_x86 = m_menufolderx86->IsEnabled();
 	assetmenu = new wxMenu();
 	assetmenuexport = new wxMenuItem(assetmenu,wxID_EXPORT,HADES_STRING_GENERIC_EXPORT_SEL);
 	assetmenuimport = new wxMenuItem(assetmenu,wxID_IMPORT,HADES_STRING_GENERIC_IMPORT_SEL);
@@ -79,6 +81,7 @@ ToolUnityViewer::ToolUnityViewer(wxWindow* parent) :
 }
 
 ToolUnityViewer::~ToolUnityViewer() {
+	PreferencesDialog::SaveToolUnityConfig(this);
 	assetmenu->Disconnect(wxEVT_COMMAND_MENU_SELECTED,wxCommandEventHandler(ToolUnityViewer::OnAssetRightClickMenu),NULL,this);
 }
 
@@ -132,7 +135,7 @@ bool ToolUnityViewer::SetupRootPath(wxString path, bool ignorestreaming) {
 	m_loadgauge->SetValue(0);
 	for (i=starti;i<UNITY_ARCHIVE_AMOUNT;i++) {
 		filename = path+UnityArchiveMetaData::GetArchiveName((UnityArchiveFile)i,use_x86);
-		fstream unityarchive(filename.c_str(),ios::in | ios::binary);
+		fstream unityarchive((const char*)filename.c_str(),ios::in | ios::binary);
 		meta_data[i].Load(unityarchive);
 		if (i>=UNITY_ARCHIVE_DATA11 && i<=UNITY_ARCHIVE_DATA7) {
 			offset = meta_data[i].GetFileOffset("",142);
@@ -168,7 +171,7 @@ bool ToolUnityViewer::SetupRootPath(wxString path, bool ignorestreaming) {
 }
 
 bool ToolUnityViewer::DisplayArchive(UnityArchiveFile archivetype) {
-	unsigned int i,j;
+	unsigned int i;
 	long itemid;
 	bool foundfullname;
 	wxString fullname,infostr,typestr;
@@ -194,6 +197,8 @@ bool ToolUnityViewer::DisplayArchive(UnityArchiveFile archivetype) {
 		m_assetlist->SetItem(itemid,5,infostr);
 		m_assetlist->SetItemData(itemid,itemid);
 	}
+	column_sort = 0;
+	column_sort_ascending = true;
 	return true;
 }
 
@@ -652,7 +657,7 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 	int id = event.GetId();
 	unsigned int i,j;
 	if (id==wxID_EXPORT) {
-		fstream filebase((root_path+archive_name).c_str(),ios::in|ios::binary);
+		fstream filebase((const char*)(root_path+archive_name).c_str(),ios::in|ios::binary);
 		if (!filebase.is_open()) {
 			wxLogError(HADES_STRING_OPEN_ERROR_FAIL,root_path+archive_name);
 			return;
@@ -671,11 +676,6 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 			if (!m_menuexportpath->IsChecked()) path = path.AfterLast(L'\\');
 			path = basepath+path;
 			wxFileName::Mkdir(path.BeforeLast(L'\\'),wxS_DIR_DEFAULT,wxPATH_MKDIR_FULL);
-			fstream filedest(path.c_str(),ios::out|ios::binary);
-			if (!filedest.is_open()) {
-				wxLogError(HADES_STRING_OPEN_ERROR_CREATE,path);
-				continue;
-			}
 			expfileid = wxAtoi(m_assetlist->GetItemText(it,0))-1;
 			expfilesize = meta_data[current_archive].GetFileSizeByIndex(expfileid);
 			filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(expfileid));
@@ -686,7 +686,6 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				uint8_t* imgrgba;
 				bool success = TIMImageDataStruct::ConvertFromSteamTexture((uint8_t*)buffer,&imgw,&imgh,&imgrgba);
 				delete[] buffer;
-				filedest.close();
 				if (!success) {
 					wxLogError(_(L"Format of '%s' not supported"),m_assetlist->GetItemText(it,1));
 					continue;
@@ -701,11 +700,21 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				}
 				delete[] imgrgba;
 				wxImage img(imgw,imgh,imgrgb,imgalpha);
-				if (m_menuconvertimgpng->IsChecked())		img.SaveFile(path,wxBITMAP_TYPE_PNG);
-				else if (m_menuconvertimgtga->IsChecked())	img.SaveFile(path,wxBITMAP_TYPE_TGA);
-				else if (m_menuconvertimgtiff->IsChecked())	img.SaveFile(path,wxBITMAP_TYPE_TIFF);
-				else										img.SaveFile(path,wxBITMAP_TYPE_BMP);
+				if (m_menuconvertimgpng->IsChecked())		success = img.SaveFile(path,wxBITMAP_TYPE_PNG);
+				else if (m_menuconvertimgtga->IsChecked())	success = img.SaveFile(path,wxBITMAP_TYPE_TGA);
+				else if (m_menuconvertimgtiff->IsChecked())	success = img.SaveFile(path,wxBITMAP_TYPE_TIFF);
+				else										success = img.SaveFile(path,wxBITMAP_TYPE_BMP);
+				if (!success) {
+					wxLogError(HADES_STRING_OPEN_ERROR_CREATE, path);
+					continue;
+				}
 			} else if (meta_data[current_archive].file_type1[expfileid]==49 && path.Len()>=10 && path.Mid(path.Len()-10).IsSameAs(L".akb.bytes",false) && !m_menuconvertaudionone->IsChecked()) {
+				fstream filedest((const char*)path.c_str(), ios::out | ios::binary);
+				if (!filedest.is_open()) {
+					delete[] buffer;
+					wxLogError(HADES_STRING_OPEN_ERROR_CREATE, path);
+					continue;
+				}
 				uint32_t magicakb;
 				BufferInitPosition();
 				BufferReadLong((uint8_t*)buffer,magicakb);
@@ -720,8 +729,6 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				filedest.close();
 				delete[] buffer;
 			} else if (meta_data[current_archive].file_type1[expfileid]==1 && path.AfterLast(L'.').IsSameAs(L"fbx",false) && !m_menuconvertmodelnone->IsChecked()) {
-				filedest.write(buffer,expfilesize);
-				filedest.close();
 				delete[] buffer;
 				ListModelFiles(filebase,meta_data[current_archive],expfileid);
 				// Models in p0data4: From GameObject
@@ -731,24 +738,72 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				// ----> SkinnedMeshRenderer (type 137)
 				// -----> Material (0x40)
 				// -----> Mesh (0x80)
-				wxString modelfilepath, filepathbase = m_assetlist->GetItemText(it,1).BeforeLast(L'.');
-				vector<ModelMeshData> modelmeshlist;
-				vector<ModelMaterialData> modelmateriallist;
+                if (modelfilemesh.size()!=modelfilematerial.size()) {
+                    wxLogError(_(L"Error: can't export '%s' ; materials and meshes don't match"),m_assetlist->GetItemText(it,1));
+                    continue;
+                }
+				wxString filepathbase = m_assetlist->GetItemText(it,1).BeforeLast(L'.');
+				ModelDataStruct model(modelfilemesh.size());
+				wxString descriptionstr = m_assetlist->GetItemText(it, 5);
+				descriptionstr.Replace(_(UnityArchiveMetaData::GetTypeName(meta_data[current_archive].file_type1[expfileid])), _(L"Full Model"));
+				model.description = descriptionstr.ToStdString();
 				for (i=0;i<modelfilemesh.size();i++) {
-					ModelMeshData model;
 					filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(modelfilemesh[i]));
-					model.Read(filebase);
-					modelmeshlist.push_back(model);
-				}
-				for (i=0;i<modelfilematerial.size();i++) {
+					model.mesh[i].Read(filebase);
 					for (j=0;j<modelfilematerial[i].size();j++) {
 						ModelMaterialData material;
 						filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(modelfilematerial[i][j]));
 						material.Read(filebase);
-						modelmateriallist.push_back(material);
+						model.material[i].push_back(material);
+                        int32_t texfileid = meta_data[current_archive].GetFileIndexByInfo(model.material[i][j].maintex_file_info);
+                        wxString texfilename = (texfileid>=0 ? _(meta_data[current_archive].file_name[texfileid])+_(".png") : _(L"TextureNotFound"));
+                        model.material[i][j].maintex_file_name = texfilename.ToStdString();
 					}
 				}
-				// ToDo: AnimationClip
+				long itclip = -1;
+				wxString fileobjectid,gameobjectid = GetFullName(current_archive,expfileid);
+				for (;;) {
+					itclip = m_assetlist->GetNextItem(itclip,wxLIST_NEXT_ALL,wxLIST_STATE_DONTCARE);
+					if (itclip==-1) break;
+					if (meta_data[current_archive].file_type1[wxAtoi(m_assetlist->GetItemText(itclip,0))-1]==74) {
+						fileobjectid = GetFullName(current_archive,wxAtoi(m_assetlist->GetItemText(itclip,0))-1);
+						if (gameobjectid.IsSameAs(fileobjectid)) {
+							ModelAnimationData animation;
+							filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(wxAtoi(m_assetlist->GetItemText(itclip,0))-1));
+							animation.Read(filebase);
+							model.animation.push_back(animation);
+						}
+					}
+				}
+				if (current_archive!=UNITY_ARCHIVE_DATA5) {
+					wxString animarchivefilename, animsearchpath;
+					wxString fileanimname = _(UnityArchiveMetaData::GetArchiveName(UNITY_ARCHIVE_DATA5,use_x86));
+					bool foundanimarchivefilename;
+					fstream fileanimbase((const char*)(root_path+fileanimname).c_str(),ios::in|ios::binary);
+					if (!fileanimbase.is_open()) {
+						wxLogError(HADES_STRING_OPEN_ERROR_FAIL,root_path+fileanimname);
+						continue;
+					}
+					animsearchpath = _(L"assets/resources/animations/")+filepathbase.AfterLast(L'/').AfterLast(L'\\')+_(L"/");
+					for (i=0;i<meta_data[UNITY_ARCHIVE_DATA5].header_file_amount;i++) {
+						animarchivefilename = GetFullName(UNITY_ARCHIVE_DATA5,i,&foundanimarchivefilename);
+						if (foundanimarchivefilename && animsearchpath.IsSameAs(animarchivefilename.Mid(0,animsearchpath.Len()))) {
+							ModelAnimationData animation;
+							fileanimbase.seekg(meta_data[UNITY_ARCHIVE_DATA5].GetFileOffsetByIndex(i));
+							animation.Read(fileanimbase);
+							animation.anim_id = wxAtoi(animarchivefilename.Mid(animsearchpath.Len()));
+							model.animation.push_back(animation);
+						}
+					}
+					fileanimbase.close();
+				}
+				if (m_menuconvertmodelfbxtext->IsChecked())			model.Export(path.BeforeLast(L'.').c_str(), MODEL_FILE_FORMAT_FBX_ASCII);
+				else if (m_menuconvertmodelautocad->IsChecked())	model.Export(path.BeforeLast(L'.').c_str(), MODEL_FILE_FORMAT_AUTOCAD);
+				else if (m_menuconvertmodelcollada->IsChecked())	model.Export(path.BeforeLast(L'.').c_str(), MODEL_FILE_FORMAT_COLLADA);
+				else if (m_menuconvertmodelwave->IsChecked())		model.Export(path.BeforeLast(L'.').c_str(), MODEL_FILE_FORMAT_WAVEFRONT);
+//				else if (m_menuconvertmodel3ds->IsChecked())		model.Export(path.BeforeLast(L'.').c_str(), MODEL_FILE_FORMAT_3DS_MAX);
+				else												model.Export(path.BeforeLast(L'.').c_str(), MODEL_FILE_FORMAT_FBX_BINARY);
+                /* Old version: OBJ Exporter
 				fstream fobj((path.BeforeLast(L'.')+_(L".obj")).c_str(),ios::out);
 				if (!fobj.is_open())
 					continue;
@@ -759,24 +814,31 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				}
 				fobj << "mtllib " << (filepathbase.AfterLast(L'/')+_(L".mtl")).c_str() << endl;
 				unsigned int matcounter = 0;
-				for (i=0;i<modelmeshlist.size();i++) { // DEBUG: assume modelfilematerial.size()==modelfilemesh.size()
+				for (i=0;i<modellist.size();i++) {
 					wxString mtlname = modelfilematerial.size()==1 ? _(L"mat") : wxString::Format(wxT("mat%d_"),i);
 					wxString objname = wxString::Format(wxT("Object_%d"),i);
 					wxString texfilename;
 					int32_t texfileid;
-					for (j=0;j<modelfilematerial[i].size();j++) {
-						texfileid = meta_data[current_archive].GetFileIndexByInfo(modelmateriallist[matcounter].maintex_file_info);
+					for (j=0;j<modellist[i].material.size();j++) {
+						texfileid = meta_data[current_archive].GetFileIndexByInfo(modellist[i].material[j].maintex_file_info);
 						if (texfileid>=0)
 							texfilename = _(meta_data[current_archive].file_name[texfileid])+_(".png");
 						else
 							texfilename = _(L"TextureNotFound");
-						modelmateriallist[matcounter++].Export(fmtl,wxString::Format(wxT("%s%d"),mtlname,j).c_str(),texfilename.c_str());
+						modellist[i].material[j].Export(fmtl,wxString::Format(wxT("%s%d"),mtlname,j).c_str(),texfilename.c_str());
 					}
-					modelmeshlist[i].Export(fobj,objname.c_str(),mtlname.c_str(),i==0);
+					modellist[i].mesh.Export(fobj,objname.c_str(),mtlname.c_str(),i==0);
 				}
 				fobj.close();
 				fmtl.close();
+                */
 			} else {
+				fstream filedest((const char*)path.c_str(), ios::out | ios::binary);
+				if (!filedest.is_open()) {
+					delete[] buffer;
+					wxLogError(HADES_STRING_OPEN_ERROR_CREATE, path);
+					continue;
+				}
 				filedest.write(buffer,expfilesize);
 				filedest.close();
 				delete[] buffer;
@@ -786,8 +848,8 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 		filebase.close();
 		m_loadgauge->SetValue(100);
 	} else if (id==wxID_IMPORT) {
-		fstream filebase((root_path+archive_name).c_str(),ios::in|ios::binary);
-		fstream filedest((root_path+archive_name+_(L".tmp")).c_str(),ios::out|ios::binary);
+		fstream filebase((const char*)(root_path+archive_name).c_str(),ios::in|ios::binary);
+		fstream filedest((const char*)(root_path+archive_name+_(L".tmp")).c_str(),ios::out|ios::binary);
 		bool overwritefile = true;
 		if (!filebase.is_open()) {
 			wxLogError(HADES_STRING_OPEN_ERROR_FAIL,root_path+archive_name);
@@ -799,7 +861,7 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 		}
 		m_loadgauge->SetValue(0);
 		unsigned int itcounter = 0, itsuccesscounter = 0, itamount = m_assetlist->GetSelectedItemCount();
-		unsigned int expfileid, expfilesize;
+		unsigned int expfileid;
 		wxString basepath = root_path+_(L"HadesWorkshopAssets\\")+archive_name.AfterLast(L'\\').BeforeFirst(L'.')+_(L"\\");
 		wxString path;
 		char* buffer;
@@ -856,7 +918,7 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 					wxLogError(HADES_STRING_UNITYVIEWER_IMPORT_ERROR_FORMAT,path);
 					continue;
 				}
-				fstream fileasset(path.c_str(),ios::in|ios::binary);
+				fstream fileasset((const char*)path.c_str(),ios::in|ios::binary);
 				if (!fileasset.is_open()) {
 					wxLogError(HADES_STRING_OPEN_ERROR_FAIL,path);
 					continue;
@@ -871,7 +933,7 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				filenewsize[expfileid] += GetAlignOffset(filenewsize[expfileid],0x10);
 				fileasset.close();
 			} else {
-				fstream fileasset(path.c_str(),ios::in|ios::binary);
+				fstream fileasset((const char*)path.c_str(),ios::in|ios::binary);
 				if (!fileasset.is_open()) {
 					wxLogError(HADES_STRING_OPEN_ERROR_FAIL,path);
 					continue;
@@ -943,7 +1005,7 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				filedest.write(buffer,datasize);
 				delete[] buffer;
 			} else if (meta_data[current_archive].file_type1[expfileid]==49 && path.Len()>=10 && path.Mid(path.Len()-10).IsSameAs(L".akb.bytes",false) && !m_menuconvertaudionone->IsChecked()) {
-				fstream fileasset(path.c_str(),ios::in|ios::binary);
+				fstream fileasset((const char*)path.c_str(),ios::in|ios::binary);
 				if (!fileasset.is_open()) {
 					wxLogError(HADES_STRING_OPEN_ERROR_FAIL,path);
 					overwritefile = false;
@@ -981,7 +1043,7 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				fileasset.close();
 				delete[] buffer;
 			} else {
-				fstream fileasset(path.c_str(),ios::in|ios::binary);
+				fstream fileasset((const char*)path.c_str(),ios::in|ios::binary);
 				if (!fileasset.is_open()) {
 					wxLogError(HADES_STRING_OPEN_ERROR_FAIL,path);
 					overwritefile = false;
@@ -1007,7 +1069,7 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 			overwritefile = wxRenameFile(root_path+archive_name+_(L".tmp"),root_path+archive_name,true);
 		if (overwritefile) {
 			meta_data[current_archive].Flush();
-			fstream unityarchive((root_path+archive_name).c_str(),ios::in | ios::binary);
+			fstream unityarchive((const char*)(root_path+archive_name).c_str(),ios::in | ios::binary);
 			meta_data[current_archive].Load(unityarchive);
 			if (current_archive>=UNITY_ARCHIVE_DATA11 && current_archive<=UNITY_ARCHIVE_DATA7) {
 				bundle_data[current_archive-UNITY_ARCHIVE_DATA11].Flush();

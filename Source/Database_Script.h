@@ -21,6 +21,9 @@ struct SortedChoiceItemScriptOpcode {
 //             Game Script            //
 //====================================//
 
+#define FIELD_ENDING_ID		16000
+#define FIELD_ENDING_NAME	L"SPECIAL: End Game"
+
 #define AT_NONE				0
 #define AT_JUMP				1
 #define AT_SPIN				2
@@ -132,7 +135,7 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0x39, L"ShowObject", L"Show an object.\n\n1st argument : object.\n2nd argument : unknown.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Object", L"Unknown" }, new uint8_t[2]{ AT_ENTRY, AT_USPIN }, 0 },
 	{ 0x3A, L"HideObject", L"Hide an object.\n\n1st argument : object.\n2nd argument : unknown.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Object", L"Unknown" }, new uint8_t[2]{ AT_ENTRY, AT_USPIN }, 0 },
 	{ 0x3B, L"SetObjectIndex", L"Redefine the current object's index.\n\n1st argument : new index.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Index" }, new uint8_t[1]{ AT_USPIN }, 0 },
-	{ 0x3C, L"SetRandomBattles", L"Define random battles.\n\n1st argument : pattern, deciding the encounter chances and the topography (World Map only).\n 0 : {0.375, 0.28, 0.22, 0.125}\n 1 : {0.25, 0.25, 0.25, 0.25}\n 2 : {0.35, 0.3, 0.3, 0.05}\n 3 : {0.45, 0.4, 0.1, 0.05}\n2nd to 5th arguments : random battles possible.", true, 5, new uint8_t[5]{ 1, 2, 2, 2, 2 }, new wstring[5]{ L"Pattern", L"Battle 1", L"Battle 2", L"Battle 3", L"Battle 4" }, new uint8_t[5]{ AT_USPIN, AT_BATTLE, AT_BATTLE, AT_BATTLE, AT_BATTLE }, 0 },
+	{ 0x3C, L"SetRandomBattles", L"Define random battles.\n\n1st argument : pattern, deciding the encounter chances and the topography (World Map only).\n 0 : {0.375, 0.28, 0.22, 0.125}\n 1 : {0.25, 0.25, 0.25, 0.25}\n 2 : {0.35, 0.3, 0.3, 0.05}\n 3 : {0.45, 0.4, 0.1, 0.05}\n2nd to 5th arguments : possible random battles.", true, 5, new uint8_t[5]{ 1, 2, 2, 2, 2 }, new wstring[5]{ L"Pattern", L"Battle 1", L"Battle 2", L"Battle 3", L"Battle 4" }, new uint8_t[5]{ AT_USPIN, AT_BATTLE, AT_BATTLE, AT_BATTLE, AT_BATTLE }, 0 },
 	{ 0x3D, L"0x3D", L"Some animation flags.\n\n1st argument : unknown.\n2nd argument : unknown.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"In-Frame",  L"Out-Frame" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 },
 	{ 0x3E, L"SetAnimationSpeed", L"Set the current object's animation speed.\n\n1st argument : speed.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Speed" }, new uint8_t[1]{ AT_USPIN }, 0 },
 	{ 0x3F, L"SetAnimationFlags", L"Set the current object's next animation looping flags.\n\n1st argument : looping flag list.\n 1 : freeze at end\n 2 : loop\n 3 : loop back and forth\n2nd arguments : times to repeat.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Flag", L"Repeat" }, new uint8_t[2]{ AT_ANIMFLAG, AT_USPIN }, 0 },
@@ -154,7 +157,7 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0x4F, L"0x4F", L"Unknown Opcode.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Unknown" }, new uint8_t[1]{ AT_SPIN }, 0 },
 	{ 0x50, L"WaitTurn", L"Wait until the character has turned.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x51, L"TurnTowardObject", L"Turn the character toward an entry object (animated).\n\n1st argument : object.\n2nd argument : turn speed (1 is slowest).", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Object", L"Speed" }, new uint8_t[2]{ AT_ENTRY, AT_USPIN }, 0 },
-	{ 0x52, L"SetInactiveAnimation", L"Change the animation played when inactive for a long time. The inaction time required is :\nFirst Time = 200 + 4 * Random[0, 255]\Following Times = 200 + 2 * Random[0, 255]\n\n1st argument : animation ID.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Animation" }, new uint8_t[1]{ AT_ANIMATION }, 0 },
+	{ 0x52, L"SetInactiveAnimation", L"Change the animation played when inactive for a long time. The inaction time required is :\nFirst Time = 200 + 4 * Random[0, 255]\nFollowing Times = 200 + 2 * Random[0, 255]\n\n1st argument : animation ID.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Animation" }, new uint8_t[1]{ AT_ANIMATION }, 0 },
 	{ 0x53, L"0x53", L"Seems to prevent new windows to close older ones.", false, 0, NULL, NULL, NULL, 0 }, // NOINITMES
 	{ 0x54, L"WaitWindow", L"Wait until the window is closed.\n\n1st argument : window ID determined at its creation.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Window ID" }, new uint8_t[1]{ AT_USPIN }, 0 },
 	{ 0x55, L"SetWalkTurnSpeed", L"Change the turn speed of the object when it walks or runs (default is 16).\n\n1st argument : turn speed (with 0, the object doesn't turn while moving).\n\nSpecial treatments:\nVivi's in Iifa Tree/Eidolon Moun (field 1656) is initialized to 48.\nChoco's in Chocobo's Paradise (field 2954) is initialized to 96.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Turn Speed" }, new uint8_t[1]{ AT_USPIN }, 0 },
@@ -310,7 +313,7 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0xEB, L"CloseAllWindows", L"Close all the dialogs and UI windows.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xEC, L"FadeFilter", L"Apply a fade filter on the screen.\n\n1st argument : fade mode (0 to add, 2 to remove).\n2nd argument : fading time.\n3rd argument : unknown.\n4th to 6th arguments : color of the filter in (Cyan, Magenta, Yellow) format.", true, 6, new uint8_t[6]{ 1, 1, 1, 1, 1, 1 }, new wstring[4]{ L"Fade In/Out", L"Fading Time", L"Unknown", L"Color" }, new uint8_t[6]{ AT_USPIN, AT_USPIN, AT_SPIN, AT_COLOR_CYAN, AT_COLOR_MAGENTA, AT_COLOR_YELLOW }, 0 },
 	{ 0xED, L"0xED", L"Unknown Opcode.", true, 3, new uint8_t[3]{ 1, 2, 2 }, new wstring[3]{ L"Unknown", L"Unknown", L"Unknown" }, new uint8_t[3]{ AT_USPIN, AT_SPIN, AT_SPIN }, 0 }, // EBG_overlayDefineViewportAlpha
-	{ 0xEE, L"EnableInactiveAnimation", L"Allow the player's character to play its inactive animation. The inaction time required is :\nFirst Time = 200 + 4 * Random[0, 255]\Following Times = 200 + 2 * Random[0, 255]", false, 0, NULL, NULL, NULL, 0 },
+	{ 0xEE, L"EnableInactiveAnimation", L"Allow the player's character to play its inactive animation. The inaction time required is :\nFirst Time = 200 + 4 * Random[0, 255]\nFollowing Times = 200 + 2 * Random[0, 255]", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xEF, L"ShowHereIcon", L"Show the Here icon over player's chatacter.\n\n1st argument : display type (0 to hide, 3 to show unconditionally)", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Show" }, new uint8_t[1]{ AT_SPIN }, 0 },
 	{ 0xF0, L"EnableRun", L"Allow the player's character to run.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xF1, L"SetHP", L"Change the HP of a party's member.\n\n1st argument : character.\n2nd argument : new HP value.", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Character", L"HP" }, new uint8_t[2]{ AT_LCHARACTER, AT_USPIN }, 0 },
@@ -574,111 +577,136 @@ struct VariableName {
 // -- Physical attack : 1,3,6,8,9,10,11,15,25,26,27,28,29,30,31,32,33,52
 // -- Magic attack : 16,17,18,19,20,21,22,23,24,34
 
+#define VARCODE_SHARED	0x79
+#define VARCODE_ENGINE	0x7A
+#define VARCODE_INT24	0xC8
+#define VARCODE_UINT24	0xCC
+#define VARCODE_INT8	0xD0
+#define VARCODE_UINT8	0xD4
+#define VARCODE_INT16	0xD8
+#define VARCODE_UINT16	0xDC
+#define VARCODE_LBOOL	0xE4
+#define VARCODE_LINT24	0xE8
+#define VARCODE_LUINT24	0xEC
+#define VARCODE_LINT8	0xF0
+#define VARCODE_LUINT8	0xF4
+#define VARCODE_LINT16	0xF8
+#define VARCODE_LUINT16	0xFC
+
 static VariableName VarNameList[] = {
-	{ 0x79, 0,		L"SV_Target",				L"Shared variable with the battle system.\nTarget of the enemy's attack for a further Attack call.\n\nThe target is a list of 8 bits, first 4 bits being the party members and last 4 bits being the enemies." },
-	{ 0x79, 1,		L"SV_FunctionEnemy",		L"Shared variable with the battle system.\nReturn the enemy's identifying bit." },
-	{ 0x79, 2,		L"SV_PlayerTeam",			L"Shared variable with the battle system.\nReturn bits identifying the fighting party characters." },
-	{ 0x79, 3,		L"SV_EnemyTeam",			L"Shared variable with the battle system.\nReturn bits identifying the fighting enemies." },
-	{ 0x7A, 0,		L"GetRandom",				L"Return a random number between 0 and 255." },
-	{ 0x7A, 1,		L"GetFieldCamera",			L"Return the ID of the current field camera." },
-	{ 0x7A, 2,		L"IsMovementEnabled",		L"Check if the player's movement is on." },
-	{ 0x7A, 3,		L"SyncSounds",				L"Synchronise field sounds and return 0." },
-	{ 0x7A, 4,		L"GetCollisionAngle",		L"Return the angle between the player's character and the NPC for collision events." },
-	{ 0x7A, 5,		L"GetScriptCharacter",		L"Return the ID of the character whose script has called this. Return a negative value if it's not a playable character or if the current entry wasn't run by another function." },
-	{ 0x7A, 6,		L"GetGil",					L"Return the player's Gil amount." },
-	{ 0x7A, 7,		L"GetTotalSteps",			L"Return the total amount of steps walked." },
-	{ 0x7A, 8,		L"GetDialogProgression",	L"Return the progression counter set by dialog's [PROGRESSION] code." },
-	{ 0x7A, 9,		L"GetDialogChoice",			L"Return the choice selected in a multichoice dialog." },
-	{ 0x7A, 10,		L"GetFieldExitX",			L"Return the field activated exit position." },
-	{ 0x7A, 11,		L"GetFieldExitY",			L"Return the field activated exit position." },
-//	{ 0x7A, 12,		L"",		L"." },		sSysX
-//	{ 0x7A, 13,		L"",		L"." },
-	{ 0x7A, 14,		L"GetCinematicFrame",		L"Return the frame of the currently running cinematic." },
-	{ 0x7A, 15,		L"SyncCinematic",			L"Synchronise cinematic." },
-	{ 0x7A, 16,		L"GetFrogAmount",			L"Return the amount of frogs catched." },
-	{ 0x7A, 17,		L"GetTimerTime",			L"Return the time left for the timer of the timer window, in seconds." },
-	{ 0x7A, 18,		L"GetTetraMasterResult",	L"Return the result of the last Tetra Master game.\n\n0 stands for a win.\n1 stands for a defeat.\n2 stands for a draw." },
-	{ 0x7A, 19,		L"GetCardAmount",			L"Return the amount of cards owned by the player." },
-	{ 0x7A, 20,		L"GetTime",					L"Return the time clock, in seconds." },
-	{ 0x7A, 21,		L"IsTimerShown",			L"Check if the timer window is currently displayed." },
-	{ 0x7A, 22,		L"GetSoundDistance",		L"Seem to return some distance about 3D sounds." },
-	{ 0x7A, 23,		L"GetSoundVolume",			L"Seem to return the volume of some 3D sounds." },
-	{ 0x7A, 24,		L"GetLastBattleId",			L"Return the last battle ID." },
-	{ 0x7A, 25,		L"IsAttacking",				L"Check if the function's enemy is attacking." },
-	{ 0x7A, 26,		L"IsBattleInitialized",		L"Check if the current running module is a battle." },
-	{ 0x7A, 27,		L"GetBattleResult",			L"Return the result of the last battle.\n\n0 stands for a defeat.\n1 stands for a win.\n5 stands for an interrupted battle.\n7 stands for an enemy escape." },
-	{ 0x7A, 28,		L"GetAttackCommandId",		L"Return the command ID of the current attack." },
-	{ 0x7A, 29,		L"GetAttackId",				L"Return the attack ID of the current attack." },
-	{ 0x7A, 30,		L"GetBattleState",			L"Return the battle's state.\n\n0 stands for system initialization.\n1 stands for frozen battle.\n2 stands for the starting camera movements.\n3 stands for a normal state.\n4 stands for state turning to the normal state.\n5 stands for a normal state.\n6 stands for the victory fanfare.\n7 stands for a game over state.\n8 stands for the closing screen fading." },
-	{ 0x7A, 31,		L"GetBattleGroupId",		L"Return the chosen group ID of the current battle." },
-	{ 0x7A, 32,		L"GetBattleStartType",		L"Return the back attack state of the start of the battle.\n\n0 stands for a back attack.\n1 stands for a preemptive strike.\n2 stands for a normal state." },
-	{ 0x7A, 33,		L"GetBattleGil",			L"Return the player's Gil amount. Should be used in battles only." },
-	{ 0x7A, 34,		L"GetCurrentBattleState",	L"Return the battle's current state. Should be used in battles only.\n\n0 stands for system initialization.\n1 stands for frozen battle.\n2 stands for the starting camera movements.\n3 stands for a normal state.\n4 stands for state turning to the normal state.\n5 stands for a normal state.\n6 stands for the victory fanfare.\n7 stands for a game over state.\n8 stands for the closing screen fading." },
-//	{ 0x7A, 35,		L"",		L"." },		btl_seq
-	{ 0x7A, 36,		L"GetAttacker",				L"Return the bit identifying the attacker." },
-	{ 0x7A, 37,		L"GetTarget",				L"Return the bit identifying the target." },
-	{ 0x7A, 38,		L"GetAttackerWeaponElement",L"Return the element of attacker's weapon for a standard attack." },
-	{ 0x7A, 39,		L"GetAttackElement",		L"Return the element of the attack.\nWorks even when the effect doesn't take the element into account but return 0 if the caster has Element Null." },
-	{ 0x7A, 40,		L"GetBattleLoadState",		L"Return the bitflags of battle loading state.\n\n8 stands for enemy data loaded.\n16 stands for player characters loaded." },
-	{ 0x7A, 41,		L"GetExpGain",				L"Return the experience gain of the current battle so far." },
-	{ 0x7A, 42,		L"IsRebirthFlameCasted",	L"Check if Eiko is in the party and if she casts the automatic Rebirth Flame." },
-	{ 0x7A, 192,	L"GetWorldArea",			L"Return the area ID at player's position." },
-	{ 0x7A, 193,	L"GetWorldTerrainType",		L"Return the terrain type at player's position." },
-//	{ 0x7A, 194,	L"",		L"." },		Maybe GetHeight
-//	{ 0x7A, 195,	L"",		L"." },		Some position ; maybe of the town left?
-//	{ 0x7A, 196,	L"",		L"." },
-//	{ 0x7A, 197,	L"",		L"." },
-	{ 0x7A, 198,	L"GetCurrentChocograph",	L"Return the current selected chocograph." },
-//	{ 0x7A, 199,	L"",		L"." },		Get camera rotation?
-//	{ 0x7A, 200,	L"",		L"." },		Return 0 on Steam
-	{ 0x7A, 201,	L"GetWorldRealPositionX",	L"Return the player's character position X." },
-	{ 0x7A, 202,	L"GetWorldRealPositionZ",	L"Return the player's character position Z." },
-	{ 0x7A, 203,	L"GetWorldRealPositionY",	L"Return the player's character position Y." },
-//	{ 0x7A, 204,	L"",		L"." },		w_weatherDistanceEva
-	{ 0x7A, 205,	L"IsMouseEncounterable",	L"Check if the player is walking in a forest, is on the World Map since more than 400 frames and if the encounter odds are favorable. Return 1 in this case and 0 else." },
-	{ 0x7A, 207,	L"GetWorldZone",			L"Return the zone ID at player's position." },
-//	{ 0x7A, 208,	L"",		L"." },		Maybe GetHeight on the floor
-	{ 0x7A, 209,	L"IsWorldInitialized",		L"Check if the World Map event loop is already running." },
-	{ 0x7A, 210,	L"GetWorldTitleDisplay",	L"Return the state of the continent's name display.\n\n0 stands for a title waiting for display.\n1 stands for a fading in title.\n2 stands for a fading out title.\n3 stands for nothing displayed." },
-//	{ 0xC5, 184,	L"General_SaveFlag",		L"." },
-	{ 0xCC, 182,	L"Chocobo_PeapperSpotFound",L"Bit flags for dead peapper spots already found." },
-	{ 0xC8, 184,	L"Chocobo_ChocographFound",	L"Bit flags for chocographs already found." },
-	{ 0xD8, 2,		L"General_FieldEntrance",	L"Variable shared between field transition to know where the player comes from." },
-	{ 0xD4, 4,		L"Setting_OptionalQuina",	L"Flag checking if Quina is in the party.\nUsed for the part where s/he is an optional character." },
-	{ 0xD4, 16,		L"Setting_TranceOn",		L"Flag enabling or disabling the trance system." },
-	{ 0xD4, 17,		L"Setting_DaggerDepresses",	L"Flag enabling or disabling Dagger depression state." },
-	{ 0xD4, 18,		L"Setting_MPx4",			L"Flag enabling or disabling the MP cost boost." },
-//	{ 0xD5, 24,		L"World_CloseLocationFoot" },
-//	{ 0xD5, 26,		L"World_CloseLocationChocobo" },
-//	{ 0xD5, 28,		L"World_CloseLocationShip" },
-//	{ 0xD5, 35,		L"World_MegamapShow" },
-//	{ 0xD5, 38,		L"World_CloseLocationKnown" },
-//	{ 0xD5, 39,		L"World_CloseLocation" },
-	{ 0xDC, 92,		L"World_LocationKnown1",	L"Bit flags for World Map locations already known." },
-	{ 0xDC, 94,		L"World_LocationKnown2",	L"Bit flags for World Map locations already known." },
-	{ 0xDC, 96,		L"World_LocationKnown3",	L"Bit flags for World Map locations already known." },
-	{ 0xDC, 98,		L"World_LocationKnown4",	L"Bit flags for World Map locations already known." },
-	{ 0xD4, 100,	L"World_MinimapShow",		L"Flag enabling or disabling the World Minimap." },
-	{ 0xD4, 103,	L"World_LocationSelection",	L"Location currently selected by the player on the World Minimap." },
-	{ 0xDC, 136,	L"Chocobo_BeakExp",			L"Choco's total beak experience." },
-	{ 0xD4, 139,	L"Chocobo_BeakLevel",		L"Choco's current beak level." },
-	{ 0xD8, 140,	L"Chocobo_BeakNextLevel",	L"Choco's current beak experience needed to level up." },
-	{ 0xD4, 190,	L"World_CurrentTransport",	L"Current transport used by the player on the World Map." },
-	{ 0xD4, 191,	L"Chocobo_ChocoColor",		L"Choco's current evolution." },
-	{ 0xD4, 192,	L"General_TonberryCounter",	L"Counter of twice the Tonberries killed.\nUsed for Grudge's damage formula :\nDamage = 2 ^ General_TonberryCounter." },
-	{ 0xD4, 193,	L"General_SummonMadeen",	L"Flag checking if Madeen has already been summoned at least once." },
-	{ 0xD4, 194,	L"FriendlyMonster_Progress",L"Bit flags for friendly monsters met and satisfied." },
-	{ 0xD4, 195,	L"Ragtime_QuizzDone1",		L"Bit flags for Ragtime Mouse questions already answered." },
-	{ 0xD4, 196,	L"Ragtime_QuizzDone2",		L"Bit flags for Ragtime Mouse questions already answered." },
-	{ 0xD4, 197,	L"Ragtime_QuizzDone3",		L"Bit flags for Ragtime Mouse questions already answered." },
-	{ 0xD4, 198,	L"Ragtime_QuizzSuccess",	L"Bit flags and integer mainly used for Ragtime Mouse questions already successfully answered.\n\n 2nd bit : Dagger reacted to Eiko summoning in the Mountain Path.\n 4th to 8th bits : amount of Ragtime Mouse questions rightfully answered." },
-	{ 0xD4, 207,	L"General_SummonFlag",		L"Bit flags for each summon checking if it has already been summoned at least once." },
-	{ 0xDC, 0,		L"General_ScenarioCounter",	L"Scenario counter, increasing at various point of the game." },
-//	{ 0xE5, 324,	L"Setting_AllowPartySwitch",L"." },
-	{ 0xE4, 1460,	L"Chocobo_FoundGarden",		L"Flag checking if the Flying Garden has been found." },
-	{ 0xE4, 1584,	L"FriendlyMonster_Complete",L"Flag checking if the Friendly Monster quest has been totaly completed (Friendly Yan has been satisfied)." },
-	{ 0xE4, 1816,	L"Setting_MagicOff",		L"Flag enabling or disabling the use of magic in the player's menu." },
-	{ 0xF4, 509,	L"Stiltzkin_ItemBought",	L"Bit flags for Stiltzkin items bought." },
+	{ VARCODE_SHARED,    0,	L"SV_Target",				L"Shared variable with the battle system.\nTarget of the enemy's attack for a further Attack call.\n\nThe target is a list of 8 bits, first 4 bits being the party members and last 4 bits being the enemies." },
+	{ VARCODE_SHARED,    1,	L"SV_FunctionEnemy",		L"Shared variable with the battle system.\nReturn the enemy's identifying bit." },
+	{ VARCODE_SHARED,    2,	L"SV_PlayerTeam",			L"Shared variable with the battle system.\nReturn bits identifying the fighting party characters." },
+	{ VARCODE_SHARED,    3,	L"SV_EnemyTeam",			L"Shared variable with the battle system.\nReturn bits identifying the fighting enemies." },
+	{ VARCODE_ENGINE,    0,	L"GetRandom",				L"Return a random number between 0 and 255." },
+	{ VARCODE_ENGINE,    1,	L"GetFieldCamera",			L"Return the ID of the current field camera." },
+	{ VARCODE_ENGINE,    2,	L"IsMovementEnabled",		L"Check if the player's movement is on." },
+	{ VARCODE_ENGINE,    3,	L"SyncSounds",				L"Synchronise field sounds and return 0." },
+	{ VARCODE_ENGINE,    4,	L"GetCollisionAngle",		L"Return the angle between the player's character and the NPC for collision events." },
+	{ VARCODE_ENGINE,    5,	L"GetScriptCharacter",		L"Return the ID of the character whose script has called this. Return a negative value if it's not a playable character or if the current entry wasn't run by another function." },
+	{ VARCODE_ENGINE,    6,	L"GetGil",					L"Return the player's Gil amount." },
+	{ VARCODE_ENGINE,    7,	L"GetTotalSteps",			L"Return the total amount of steps walked." },
+	{ VARCODE_ENGINE,    8,	L"GetDialogProgression",	L"Return the progression counter set by dialog's [PROGRESSION] code." },
+	{ VARCODE_ENGINE,    9,	L"GetDialogChoice",			L"Return the choice selected in a multichoice dialog." },
+	{ VARCODE_ENGINE,   10,	L"GetFieldExitX",			L"Return the field activated exit position." },
+	{ VARCODE_ENGINE,   11,	L"GetFieldExitY",			L"Return the field activated exit position." },
+//	{ VARCODE_ENGINE,   12,	L"",		L"." },		sSysX
+//	{ VARCODE_ENGINE,   13,	L"",		L"." },
+	{ VARCODE_ENGINE,   14,	L"GetCinematicFrame",		L"Return the frame of the currently running cinematic." },
+	{ VARCODE_ENGINE,   15,	L"SyncCinematic",			L"Synchronise cinematic." },
+	{ VARCODE_ENGINE,   16,	L"GetFrogAmount",			L"Return the amount of frogs catched." },
+	{ VARCODE_ENGINE,   17,	L"GetTimerTime",			L"Return the time left for the timer of the timer window, in seconds." },
+	{ VARCODE_ENGINE,   18,	L"GetTetraMasterResult",	L"Return the result of the last Tetra Master game.\n\n0 stands for a win.\n1 stands for a defeat.\n2 stands for a draw." },
+	{ VARCODE_ENGINE,   19,	L"GetCardAmount",			L"Return the amount of cards owned by the player." },
+	{ VARCODE_ENGINE,   20,	L"GetTime",					L"Return the time clock, in seconds." },
+	{ VARCODE_ENGINE,   21,	L"IsTimerShown",			L"Check if the timer window is currently displayed." },
+	{ VARCODE_ENGINE,   22,	L"GetSoundDistance",		L"Seem to return some distance about 3D sounds." },
+	{ VARCODE_ENGINE,   23,	L"GetSoundVolume",			L"Seem to return the volume of some 3D sounds." },
+	{ VARCODE_ENGINE,   24,	L"GetLastBattleId",			L"Return the last battle ID." },
+	{ VARCODE_ENGINE,   25,	L"IsAttacking",				L"Check if the function's enemy is attacking." },
+	{ VARCODE_ENGINE,   26,	L"IsBattleInitialized",		L"Check if the current running module is a battle." },
+	{ VARCODE_ENGINE,   27,	L"GetBattleResult",			L"Return the result of the last battle.\n\n0 stands for a defeat.\n1 stands for a win.\n5 stands for an interrupted battle.\n7 stands for an enemy escape." },
+	{ VARCODE_ENGINE,   28,	L"GetAttackCommandId",		L"Return the command ID of the current attack." },
+	{ VARCODE_ENGINE,   29,	L"GetAttackId",				L"Return the attack ID of the current attack." },
+	{ VARCODE_ENGINE,   30,	L"GetBattleState",			L"Return the battle's state.\n\n0 stands for system initialization.\n1 stands for frozen battle.\n2 stands for the starting camera movements.\n3 stands for a normal state.\n4 stands for state turning to the normal state.\n5 stands for a normal state.\n6 stands for the victory fanfare.\n7 stands for a game over state.\n8 stands for the closing screen fading." },
+	{ VARCODE_ENGINE,   31,	L"GetBattleGroupId",		L"Return the chosen group ID of the current battle." },
+	{ VARCODE_ENGINE,   32,	L"GetBattleStartType",		L"Return the back attack state of the start of the battle.\n\n0 stands for a back attack.\n1 stands for a preemptive strike.\n2 stands for a normal state." },
+	{ VARCODE_ENGINE,   33,	L"GetBattleGil",			L"Return the player's Gil amount. Should be used in battles only." },
+	{ VARCODE_ENGINE,   34,	L"GetCurrentBattleState",	L"Return the battle's current state. Should be used in battles only.\n\n0 stands for system initialization.\n1 stands for frozen battle.\n2 stands for the starting camera movements.\n3 stands for a normal state.\n4 stands for state turning to the normal state.\n5 stands for a normal state.\n6 stands for the victory fanfare.\n7 stands for a game over state.\n8 stands for the closing screen fading." },
+//	{ VARCODE_ENGINE,   35,	L"",		L"." },		btl_seq
+	{ VARCODE_ENGINE,   36,	L"GetAttacker",				L"Return the bit identifying the attacker." },
+	{ VARCODE_ENGINE,   37,	L"GetTarget",				L"Return the bit identifying the target." },
+	{ VARCODE_ENGINE,   38,	L"GetAttackerWeaponElement",L"Return the element of attacker's weapon for a standard attack." },
+	{ VARCODE_ENGINE,   39,	L"GetAttackElement",		L"Return the element of the attack.\nWorks even when the effect doesn't take the element into account but return 0 if the caster has Element Null." },
+	{ VARCODE_ENGINE,   40,	L"GetBattleLoadState",		L"Return the bitflags of battle loading state.\n\n8 stands for enemy data loaded.\n16 stands for player characters loaded." },
+	{ VARCODE_ENGINE,   41,	L"GetExpGain",				L"Return the experience gain of the current battle so far." },
+	{ VARCODE_ENGINE,   42,	L"IsRebirthFlameCasted",	L"Check if Eiko is in the party and if she casts the automatic Rebirth Flame." },
+	{ VARCODE_ENGINE,  192,	L"GetWorldArea",			L"Return the area ID at player's position." },
+	{ VARCODE_ENGINE,  193,	L"GetWorldTerrainType",		L"Return the terrain type at player's position." },
+//	{ VARCODE_ENGINE,  194,	L"",		L"." },		Maybe GetHeight
+//	{ VARCODE_ENGINE,  195,	L"",		L"." },		Some position ; maybe of the town left?
+//	{ VARCODE_ENGINE,  196,	L"",		L"." },
+//	{ VARCODE_ENGINE,  197,	L"",		L"." },
+	{ VARCODE_ENGINE,  198,	L"GetCurrentChocograph",	L"Return the current selected chocograph." },
+//	{ VARCODE_ENGINE,  199,	L"",		L"." },		Get camera rotation?
+//	{ VARCODE_ENGINE,  200,	L"",		L"." },		Return 0 on Steam
+	{ VARCODE_ENGINE,  201,	L"GetWorldRealPositionX",	L"Return the player's character position X." },
+	{ VARCODE_ENGINE,  202,	L"GetWorldRealPositionZ",	L"Return the player's character position Z." },
+	{ VARCODE_ENGINE,  203,	L"GetWorldRealPositionY",	L"Return the player's character position Y." },
+//	{ VARCODE_ENGINE,  204,	L"",		L"." },		w_weatherDistanceEva
+	{ VARCODE_ENGINE,  205,	L"IsMouseEncounterable",	L"Check if the player is walking in a forest, is on the World Map since more than 400 frames and if the encounter odds are favorable. Return 1 in this case and 0 else." },
+	{ VARCODE_ENGINE,  207,	L"GetWorldZone",			L"Return the zone ID at player's position." },
+//	{ VARCODE_ENGINE,  208,	L"",		L"." },		Maybe GetHeight on the floor
+	{ VARCODE_ENGINE,  209,	L"IsWorldInitialized",		L"Check if the World Map event loop is already running." },
+	{ VARCODE_ENGINE,  210,	L"GetWorldTitleDisplay",	L"Return the state of the continent's name display.\n\n0 stands for a title waiting for display.\n1 stands for a fading in title.\n2 stands for a fading out title.\n3 stands for nothing displayed." },
+	{ VARCODE_UINT16,    0,	L"General_ScenarioCounter",	L"Scenario counter, increasing at various point of the game." },
+	{ VARCODE_INT16,     2,	L"General_FieldEntrance",	L"Variable shared between field transition to know where the player comes from." },
+	{ VARCODE_UINT8,     4,	L"Setting_OptionalQuina",	L"Flag checking if Quina is in the party.\nUsed for the part where s/he is an optional character." },
+	{ VARCODE_UINT8,    16,	L"Setting_TranceOn",		L"Flag enabling or disabling the trance system." },
+	{ VARCODE_UINT8,    17,	L"Setting_DaggerDepresses",	L"Flag enabling or disabling Dagger depression state." },
+	{ VARCODE_UINT8,    18,	L"Setting_MPx4",			L"Flag enabling or disabling the MP cost boost." },
+//	{ VARCODE_UINT8,    24,	L"World_CloseLocationFoot" },
+//	{ VARCODE_UINT8,    26,	L"World_CloseLocationChocobo" },
+//	{ VARCODE_UINT8,    28,	L"World_CloseLocationShip" },
+//	{ VARCODE_UINT8,    35,	L"World_MegamapShow" },
+//	{ VARCODE_UINT8,    38,	L"World_CloseLocationKnown" },
+//	{ VARCODE_UINT8,    39,	L"World_CloseLocation" },
+	{ VARCODE_UINT16,   92,	L"World_LocationKnown1",	L"Bit flags for World Map locations already known." },
+	{ VARCODE_UINT16,   94,	L"World_LocationKnown2",	L"Bit flags for World Map locations already known." },
+	{ VARCODE_UINT16,   96,	L"World_LocationKnown3",	L"Bit flags for World Map locations already known." },
+	{ VARCODE_UINT16,   98,	L"World_LocationKnown4",	L"Bit flags for World Map locations already known." },
+	{ VARCODE_UINT8,   100,	L"World_MinimapShow",		L"Flag enabling or disabling the World Minimap." },
+	{ VARCODE_UINT8,   103,	L"World_LocationSelection",	L"Location currently selected by the player on the World Minimap." },
+	{ VARCODE_INT16,   107,	L"Chocobo_BeachVisited1",	L"Bit flags for the visited world beaches." }, // Also exist in VARCODE_LBOOL format (16 of them)
+	{ VARCODE_INT16,   109,	L"Chocobo_BeachVisited2",	L"Bit flags for the visited world beaches." }, // Also exist in VARCODE_LBOOL format (5 of them)
+	{ VARCODE_UINT16,  136,	L"Chocobo_BeakExp",			L"Choco's total beak experience." },
+	{ VARCODE_UINT8,   139,	L"Chocobo_BeakLevel",		L"Choco's current beak level." },
+	{ VARCODE_INT16,   140,	L"Chocobo_BeakNextLevel",	L"Choco's current beak experience needed to level up." },
+	{ VARCODE_UINT8,   181,	L"Chocobo_EatingGreens",	L"Flag enabled between the moment the player selects a Gysahl Green and the moment Choco arrives." },
+	{ VARCODE_UINT16,  182,	L"Chocobo_PeapperSpotFound",L"Bit flags for dead peapper spots already found." },
+	{ VARCODE_INT24,   184,	L"Chocobo_WorldChestFound",	L"Bit flags for chocograph treasures found on the World Map." },
+	{ VARCODE_INT24,   187,	L"Chocobo_ChocographFound",	L"Bit flags for chocographs found in the Hot and Cold minigame." },
+	{ VARCODE_UINT8,   190,	L"World_CurrentTransport",	L"Current transport used by the player on the World Map." },
+	{ VARCODE_UINT8,   191,	L"Chocobo_ChocoColor",		L"Choco's current evolution." },
+	{ VARCODE_UINT8,   192,	L"General_TonberryCounter",	L"Counter of twice the Tonberries killed.\nUsed for Grudge's damage formula :\nDamage = 2 ^ General_TonberryCounter." },
+	{ VARCODE_UINT8,   193,	L"General_SummonMadeen",	L"Flag checking if Madeen has already been summoned at least once." },
+	{ VARCODE_UINT8,   194,	L"FriendlyMonster_Progress",L"Bit flags for friendly monsters met and satisfied." },
+	{ VARCODE_UINT8,   195,	L"Ragtime_QuizzDone1",		L"Bit flags for Ragtime Mouse questions already answered." },
+	{ VARCODE_UINT8,   196,	L"Ragtime_QuizzDone2",		L"Bit flags for Ragtime Mouse questions already answered." },
+	{ VARCODE_UINT8,   197,	L"Ragtime_QuizzDone3",		L"Bit flags for Ragtime Mouse questions already answered." },
+	{ VARCODE_UINT8,   198,	L"Ragtime_QuizzSuccess",	L"Bit flags and integer mainly used for Ragtime Mouse questions already successfully answered.\n\n 2nd bit : Dagger reacted to Eiko summoning in the Mountain Path.\n 4th to 8th bits : amount of Ragtime Mouse questions rightfully answered." },
+	{ VARCODE_UINT8,   207,	L"General_SummonFlag",		L"Bit flags for each summon checking if it has already been summoned at least once." },
+//	{ VARCODE_LBOOL,   324,	L"Setting_AllowPartySwitch",L"." },
+	{ VARCODE_LUINT8,  475,	L"Minigame_BlankFightScore",L"Best score (number of acclaiming nobles) obtained for the Blank Sword Fight minigame." },
+	{ VARCODE_LUINT8,  491,	L"Minigame_HippaulLevel",	L"Hippaul level for the Hippaul Race minigame." },
+	{ VARCODE_LUINT8,  509,	L"Stiltzkin_ItemBought",	L"Bit flags for Stiltzkin items bought." },
+	{ VARCODE_LBOOL,  1042,	L"Chocobo_BeachAvailable",	L"Flag enabling or disabling the quest to visit the world beaches." },
+	{ VARCODE_LBOOL,  1064,	L"Chocobo_PepperFound",		L"Flag checking if a Dead Pepper was found during the Hot and Cold minigame." },
+	{ VARCODE_LBOOL,  1460,	L"Chocobo_FoundGarden",		L"Flag checking if the Flying Garden has been found." },
+	{ VARCODE_LBOOL,  1584,	L"FriendlyMonster_Complete",L"Flag checking if the Friendly Monster quest has been totaly completed (Friendly Yan has been satisfied)." },
+	{ VARCODE_LBOOL,  1816,	L"Setting_MagicOff",		L"Flag enabling or disabling the use of magic in the player's menu." },
+	{ VARCODE_LBOOL,  7627,	L"Mognet_SuperslickFound",	L"Flag checking if the Superslick was given to the player." },
+	{ VARCODE_LBOOL,  8495,	L"Mognet_SuperslickKnown",	L"Flag checking if the Superslick is heard of, and available for picking." },
 };
 
 static wstring FunctionTypeName[] {

@@ -648,8 +648,8 @@ void DllMetaData::GetMethodSignatureString(uint8_t callingconvention, string* re
 }
 
 string DllMetaData::GetSignatureString(uint32_t signpos) {
-	uint32_t sigsize,rid,arity,token = 0;
-	uint8_t elemtype,toktype;
+	uint32_t sigsize,arity,token = 0;
+	uint8_t elemtype;
 	unsigned int i;
 	string tmpstr,res = "";
 	if (signpos>0) {
@@ -1206,7 +1206,7 @@ int DllMetaData::GetCodedIndexSize(unsigned int codedindex) {
 		return coded_index_size[codedindex];
 	uint32_t maxlen = 0;
 	uint8_t relamount,bits;
-	unsigned int* relevantid;
+	unsigned int* relevantid = NULL;
 	unsigned int i;
 	switch (codedindex) {
 	case CodedIndex_TypeDefOrRef:
@@ -2002,7 +2002,7 @@ uint8_t* DllMetaData::ConvertScriptToRaw_Object(unsigned int objamount, unsigned
 }
 
 int64_t** DllMetaData::ConvertScriptToRaw_Array2(unsigned int objamount, unsigned int arrayamount) {
-	unsigned int i,j,curobjpos,objsize = 0;
+	unsigned int i,j,objsize = 0;
 	uint8_t code;
 	int64_t** res;
 	int64_t arrindex1,arrindex2,argvalue;
@@ -2034,7 +2034,6 @@ DllMetaDataModification DllMetaData::ConvertRawToScript_Object(uint32_t** newfie
 	uint16_t minusone16 = 0xFFFF;
 	uint8_t minusone8 = 0xFF;
 	uint8_t code;
-	char* buffer;
 	DllMetaDataModification res;
 	for (i=0;i<fieldamount;i++)
 		objsize += fieldsize[i];
@@ -2161,7 +2160,6 @@ DllMetaDataModification DllMetaData::ConvertRawToScript_Array2(uint32_t** newfie
 	unsigned int i,j,posbuffer;
 	uint32_t minusone32 = 0xFFFFFFFF;
 	DllMetaDataModification res;
-	char* buffer;
 	posbuffer = 0;
 	for (i=0;i<objamount;i++) {
 		for (j=0;j<arrayamount;j++) {

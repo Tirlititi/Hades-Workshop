@@ -689,7 +689,7 @@ uint32_t GetFFIXNextIgnore(uint32_t fromoffset) {
 }
 
 void SteamReadFF9String(fstream& f, FF9String& deststr) {
-	unsigned int i = 0,len;
+	unsigned int i = 0;
 	bool reachend = false;
 	deststr.code_amount = 0;
 	if (deststr.raw)

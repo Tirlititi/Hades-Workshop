@@ -120,6 +120,8 @@ public:
 	
 	// Create a RGBA image from the Unity-formatted texture imgbuffer (header must be included) ; destrgba must be deleted[]
 	static bool ConvertFromSteamTexture(uint8_t* imgbuffer, uint32_t* destw, uint32_t* desth, uint8_t** destrgba);
+	// Create a RGBA image from the Unity-formatted texture imgbuffer (without header) ; destrgba must be deleted[] ; also do not y-symetry unlike the above
+	static bool ConvertFromSteamTextureNoHeader(uint8_t* imgbuffer, uint32_t textformat, uint32_t width, uint32_t height, uint8_t** destrgba);
 	// Compute the file size of an Unity-formatted texture
 	static uint32_t GetSteamTextureFileSize(uint32_t imgwidth, uint32_t imgheight, uint32_t textformat = 0x0C);
 	// Create a Unity-formatted texture (DXT5) ; result must be deleted[]

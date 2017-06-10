@@ -1,0 +1,436 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="extinclude">
+      <UniqueIdentifier>{20449a8d-ab2a-4e72-925f-2dac7b64de9c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="extsrc">
+      <UniqueIdentifier>{9b5feadd-f7d3-478c-bf50-d002c5b40020}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="extsrc\Squish">
+      <UniqueIdentifier>{7773b65c-dd18-4753-892e-9edb61a293f1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="extinclude\Squish">
+      <UniqueIdentifier>{41b2a2eb-c87c-4c67-a1f1-0cfc2e501a3c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="resources">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source\WorldMaps.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\UnityArchiver.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Tool_UnityViewer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Tool_ModManager.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Tool_BackgroundEditor.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\TIMImages.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Texts.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Supports.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Stats.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Spells.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SpellAnimations.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Shops.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Scripts.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\PartySpecials.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\ModelMesh.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\MIPS.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\MenuUI.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Items.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\ImageMaps.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Gui_TextureEditor.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Gui_TextEditor.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Gui_SpellAnimationsEditor.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Gui_ScriptEditor.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Gui_Preferences.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Gui_Manipulation.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Gui_LoadingDialog.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Gui_GLWindow.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Gui_FieldTextureEditor.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Gui_CurveEditor.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Gui_AssemblyEditor.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\gui.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\File_Recreation.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\File_Manipulation.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\File_IOCommon.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\File_Batching.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Fields.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Enemies.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DllEditor.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DllCilMacro.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Configuration.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Commands.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Cluts.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\ClusterData.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Charmaps.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Cards.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\BattleScenes.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\makeppf3.cpp">
+      <Filter>extsrc</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Squish\singlecolourfit.cpp">
+      <Filter>extsrc\Squish</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Squish\squish.cpp">
+      <Filter>extsrc\Squish</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Squish\rangefit.cpp">
+      <Filter>extsrc\Squish</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Squish\maths.cpp">
+      <Filter>extsrc\Squish</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Squish\colourset.cpp">
+      <Filter>extsrc\Squish</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Squish\colourfit.cpp">
+      <Filter>extsrc\Squish</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Squish\colourblock.cpp">
+      <Filter>extsrc\Squish</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Squish\clusterfit.cpp">
+      <Filter>extsrc\Squish</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Squish\alpha.cpp">
+      <Filter>extsrc\Squish</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Source\BattleScenes.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Cards.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Charmaps.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\ClusterData.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Cluts.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Commands.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Configuration.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Database_Assembly.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Database_Common.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Database_Item.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Database_Resource.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Database_Script.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Database_Spell.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Database_SpellAnimation.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Database_Steam.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Database_Text.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DllCilMacro.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DllEditor.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Enemies.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Fields.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\File_Batching.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\File_IOCommon.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\File_Manipulation.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\File_Recreation.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\gui.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Gui_AssemblyEditor.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Gui_CurveEditor.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Gui_FieldTextureEditor.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Gui_GLWindow.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Gui_LoadingDialog.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Gui_Manipulation.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Gui_Preferences.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Gui_ScriptEditor.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Gui_SpellAnimationsEditor.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Gui_TextEditor.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Gui_TextureEditor.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Hades_Strings.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\ImageMaps.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Items.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\main.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\MenuUI.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\MIPS.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\ModelMesh.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\PartySpecials.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Scripts.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Shops.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\SpellAnimations.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Spells.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Stats.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Supports.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Texts.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\TIMImages.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Tool_BackgroundEditor.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Tool_ModManager.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Tool_UnityViewer.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\UnityArchiver.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\WorldMaps.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\makeppf3.h">
+      <Filter>extinclude</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Squish\alpha.h">
+      <Filter>extinclude\Squish</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Squish\clusterfit.h">
+      <Filter>extinclude\Squish</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Squish\colourblock.h">
+      <Filter>extinclude\Squish</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Squish\colourfit.h">
+      <Filter>extinclude\Squish</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Squish\colourset.h">
+      <Filter>extinclude\Squish</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Squish\config.h">
+      <Filter>extinclude\Squish</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Squish\maths.h">
+      <Filter>extinclude\Squish</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Squish\rangefit.h">
+      <Filter>extinclude\Squish</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Squish\simd.h">
+      <Filter>extinclude\Squish</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Squish\simd_float.h">
+      <Filter>extinclude\Squish</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Squish\simd_sse.h">
+      <Filter>extinclude\Squish</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Squish\simd_ve.h">
+      <Filter>extinclude\Squish</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Squish\singlecolourfit.h">
+      <Filter>extinclude\Squish</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Squish\squish.h">
+      <Filter>extinclude\Squish</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\fbxsdk.h">
+      <Filter>extinclude</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Source\resource.rc">
+      <Filter>resources</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Source\gui.fbp">
+      <Filter>resources</Filter>
+    </None>
+    <None Include="Source\Squish\singlecolourlookup.inl">
+      <Filter>extinclude\Squish</Filter>
+    </None>
+  </ItemGroup>
+</Project>

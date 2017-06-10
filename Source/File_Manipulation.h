@@ -1,4 +1,4 @@
-#ifndef _FILE_MANIPULATION_H
+﻿#ifndef _FILE_MANIPULATION_H
 #define _FILE_MANIPULATION_H
 
 struct ExtendedCharmap;

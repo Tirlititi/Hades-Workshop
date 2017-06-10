@@ -792,7 +792,7 @@ void SpecialTextDataStruct::UpdateOffset() {
 
 
 void SpecialTextDataSet::Load(fstream& ffbin, ConfigurationSet& configset) {
-	unsigned int i,j,k,l;
+	unsigned int i,j,k;
 	amount = configset.spetext_amount;
 	text_block = new SpecialTextDataStruct[amount];
 	if (GetGameType()==GAME_TYPE_PSX) {

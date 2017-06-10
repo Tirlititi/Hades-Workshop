@@ -1,0 +1,334 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release staticdll|Win32">
+      <Configuration>Release staticdll</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release staticdll|x64">
+      <Configuration>Release staticdll</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{BCD21BD4-6F89-448D-9446-32C378734880}</ProjectGuid>
+    <RootNamespace>HadesWorkshop</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release staticdll|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release staticdll|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release staticdll|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release staticdll|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release staticdll|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;WXUSINGDLL;wxMSVC_VERSION_AUTO;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>opengl32.lib;glu32.lib;libfbxsdk.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(VCInstallDir)lib\wxdll\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_SCL_SECURE_NO_WARNINGS;WXUSINGDLL;wxMSVC_VERSION_AUTO;_UNICODE;UNICODE;_WINDOWS;NDEBUG;_WIN32;FBXSDK_SHARED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(VCInstallDir)lib\wxdll\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glu32.lib;libfbxsdk.lib;wxbase31u.lib;wxbase31ud.lib;wxbase31ud_net.lib;wxbase31ud_xml.lib;wxbase31u_net.lib;wxbase31u_xml.lib;wxexpat.lib;wxexpatd.lib;wxjpeg.lib;wxjpegd.lib;wxmsw31ud_adv.lib;wxmsw31ud_aui.lib;wxmsw31ud_core.lib;wxmsw31ud_gl.lib;wxmsw31ud_html.lib;wxmsw31ud_media.lib;wxmsw31ud_propgrid.lib;wxmsw31ud_qa.lib;wxmsw31ud_ribbon.lib;wxmsw31ud_richtext.lib;wxmsw31ud_stc.lib;wxmsw31ud_webview.lib;wxmsw31ud_xrc.lib;wxmsw31u_adv.lib;wxmsw31u_aui.lib;wxmsw31u_core.lib;wxmsw31u_gl.lib;wxmsw31u_html.lib;wxmsw31u_media.lib;wxmsw31u_propgrid.lib;wxmsw31u_qa.lib;wxmsw31u_ribbon.lib;wxmsw31u_richtext.lib;wxmsw31u_stc.lib;wxmsw31u_webview.lib;wxmsw31u_xrc.lib;wxpng.lib;wxpngd.lib;wxregexu.lib;wxregexud.lib;wxscintilla.lib;wxscintillad.lib;wxtiff.lib;wxtiffd.lib;wxzlib.lib;wxzlibd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release staticdll|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_SCL_SECURE_NO_WARNINGS;FBXSDK_SHARED;wxMSVC_VERSION_AUTO;_UNICODE;UNICODE;_WINDOWS;NDEBUG;WIN32;_WIN32;__WXMSW__;WXUSINGDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(VCInstallDir)lib\vc_dll\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glu32.lib;libfbxsdk.lib;wxbase31u.lib;wxbase31u_net.lib;wxbase31u_xml.lib;comctl32.lib;rpcrt4.lib;winmm.lib;advapi32.lib;wsock32.lib;wxexpat.lib;wxjpeg.lib;wxmsw31u_adv.lib;wxmsw31u_aui.lib;wxmsw31u_core.lib;wxmsw31u_gl.lib;wxmsw31u_html.lib;wxmsw31u_media.lib;wxmsw31u_propgrid.lib;wxmsw31u_qa.lib;wxmsw31u_ribbon.lib;wxmsw31u_richtext.lib;wxmsw31u_stc.lib;wxmsw31u_webview.lib;wxmsw31u_xrc.lib;wxpng.lib;wxregexu.lib;wxscintilla.lib;wxtiff.lib;wxzlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release staticdll|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="Source\BattleScenes.cpp" />
+    <ClCompile Include="Source\Cards.cpp" />
+    <ClCompile Include="Source\Charmaps.cpp" />
+    <ClCompile Include="Source\ClusterData.cpp" />
+    <ClCompile Include="Source\Cluts.cpp" />
+    <ClCompile Include="Source\Commands.cpp" />
+    <ClCompile Include="Source\Configuration.cpp" />
+    <ClCompile Include="Source\DllCilMacro.cpp" />
+    <ClCompile Include="Source\DllEditor.cpp" />
+    <ClCompile Include="Source\Enemies.cpp" />
+    <ClCompile Include="Source\Fields.cpp" />
+    <ClCompile Include="Source\File_Batching.cpp" />
+    <ClCompile Include="Source\File_IOCommon.cpp" />
+    <ClCompile Include="Source\File_Manipulation.cpp" />
+    <ClCompile Include="Source\File_Recreation.cpp" />
+    <ClCompile Include="Source\gui.cpp" />
+    <ClCompile Include="Source\Gui_AssemblyEditor.cpp" />
+    <ClCompile Include="Source\Gui_CurveEditor.cpp" />
+    <ClCompile Include="Source\Gui_FieldTextureEditor.cpp" />
+    <ClCompile Include="Source\Gui_GLWindow.cpp" />
+    <ClCompile Include="Source\Gui_LoadingDialog.cpp" />
+    <ClCompile Include="Source\Gui_Manipulation.cpp" />
+    <ClCompile Include="Source\Gui_Preferences.cpp" />
+    <ClCompile Include="Source\Gui_ScriptEditor.cpp" />
+    <ClCompile Include="Source\Gui_SpellAnimationsEditor.cpp" />
+    <ClCompile Include="Source\Gui_TextEditor.cpp" />
+    <ClCompile Include="Source\Gui_TextureEditor.cpp" />
+    <ClCompile Include="Source\ImageMaps.cpp" />
+    <ClCompile Include="Source\Items.cpp" />
+    <ClCompile Include="Source\main.cpp" />
+    <ClCompile Include="Source\makeppf3.cpp" />
+    <ClCompile Include="Source\MenuUI.cpp" />
+    <ClCompile Include="Source\MIPS.cpp" />
+    <ClCompile Include="Source\ModelMesh.cpp" />
+    <ClCompile Include="Source\PartySpecials.cpp" />
+    <ClCompile Include="Source\Scripts.cpp" />
+    <ClCompile Include="Source\Shops.cpp" />
+    <ClCompile Include="Source\SpellAnimations.cpp" />
+    <ClCompile Include="Source\Spells.cpp" />
+    <ClCompile Include="Source\Squish\alpha.cpp" />
+    <ClCompile Include="Source\Squish\clusterfit.cpp" />
+    <ClCompile Include="Source\Squish\colourblock.cpp" />
+    <ClCompile Include="Source\Squish\colourfit.cpp" />
+    <ClCompile Include="Source\Squish\colourset.cpp" />
+    <ClCompile Include="Source\Squish\maths.cpp" />
+    <ClCompile Include="Source\Squish\rangefit.cpp" />
+    <ClCompile Include="Source\Squish\singlecolourfit.cpp" />
+    <ClCompile Include="Source\Squish\squish.cpp" />
+    <ClCompile Include="Source\Stats.cpp" />
+    <ClCompile Include="Source\Supports.cpp" />
+    <ClCompile Include="Source\Texts.cpp" />
+    <ClCompile Include="Source\TIMImages.cpp" />
+    <ClCompile Include="Source\Tool_BackgroundEditor.cpp" />
+    <ClCompile Include="Source\Tool_ModManager.cpp" />
+    <ClCompile Include="Source\Tool_UnityViewer.cpp" />
+    <ClCompile Include="Source\UnityArchiver.cpp" />
+    <ClCompile Include="Source\WorldMaps.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Source\BattleScenes.h" />
+    <ClInclude Include="Source\Cards.h" />
+    <ClInclude Include="Source\Charmaps.h" />
+    <ClInclude Include="Source\ClusterData.h" />
+    <ClInclude Include="Source\Cluts.h" />
+    <ClInclude Include="Source\Commands.h" />
+    <ClInclude Include="Source\Configuration.h" />
+    <ClInclude Include="Source\Database_Assembly.h" />
+    <ClInclude Include="Source\Database_Common.h" />
+    <ClInclude Include="Source\Database_Item.h" />
+    <ClInclude Include="Source\Database_Resource.h" />
+    <ClInclude Include="Source\Database_Script.h" />
+    <ClInclude Include="Source\Database_Spell.h" />
+    <ClInclude Include="Source\Database_SpellAnimation.h" />
+    <ClInclude Include="Source\Database_Steam.h" />
+    <ClInclude Include="Source\Database_Text.h" />
+    <ClInclude Include="Source\DllCilMacro.h" />
+    <ClInclude Include="Source\DllEditor.h" />
+    <ClInclude Include="Source\Enemies.h" />
+    <ClInclude Include="Source\fbxsdk.h" />
+    <ClInclude Include="Source\Fields.h" />
+    <ClInclude Include="Source\File_Batching.h" />
+    <ClInclude Include="Source\File_IOCommon.h" />
+    <ClInclude Include="Source\File_Manipulation.h" />
+    <ClInclude Include="Source\File_Recreation.h" />
+    <ClInclude Include="Source\gui.h" />
+    <ClInclude Include="Source\Gui_AssemblyEditor.h" />
+    <ClInclude Include="Source\Gui_CurveEditor.h" />
+    <ClInclude Include="Source\Gui_FieldTextureEditor.h" />
+    <ClInclude Include="Source\Gui_GLWindow.h" />
+    <ClInclude Include="Source\Gui_LoadingDialog.h" />
+    <ClInclude Include="Source\Gui_Manipulation.h" />
+    <ClInclude Include="Source\Gui_Preferences.h" />
+    <ClInclude Include="Source\Gui_ScriptEditor.h" />
+    <ClInclude Include="Source\Gui_SpellAnimationsEditor.h" />
+    <ClInclude Include="Source\Gui_TextEditor.h" />
+    <ClInclude Include="Source\Gui_TextureEditor.h" />
+    <ClInclude Include="Source\Hades_Strings.h" />
+    <ClInclude Include="Source\ImageMaps.h" />
+    <ClInclude Include="Source\Items.h" />
+    <ClInclude Include="Source\main.h" />
+    <ClInclude Include="Source\makeppf3.h" />
+    <ClInclude Include="Source\MenuUI.h" />
+    <ClInclude Include="Source\MIPS.h" />
+    <ClInclude Include="Source\ModelMesh.h" />
+    <ClInclude Include="Source\PartySpecials.h" />
+    <ClInclude Include="Source\Scripts.h" />
+    <ClInclude Include="Source\Shops.h" />
+    <ClInclude Include="Source\SpellAnimations.h" />
+    <ClInclude Include="Source\Spells.h" />
+    <ClInclude Include="Source\Squish\alpha.h" />
+    <ClInclude Include="Source\Squish\clusterfit.h" />
+    <ClInclude Include="Source\Squish\colourblock.h" />
+    <ClInclude Include="Source\Squish\colourfit.h" />
+    <ClInclude Include="Source\Squish\colourset.h" />
+    <ClInclude Include="Source\Squish\config.h" />
+    <ClInclude Include="Source\Squish\maths.h" />
+    <ClInclude Include="Source\Squish\rangefit.h" />
+    <ClInclude Include="Source\Squish\simd.h" />
+    <ClInclude Include="Source\Squish\simd_float.h" />
+    <ClInclude Include="Source\Squish\simd_sse.h" />
+    <ClInclude Include="Source\Squish\simd_ve.h" />
+    <ClInclude Include="Source\Squish\singlecolourfit.h" />
+    <ClInclude Include="Source\Squish\squish.h" />
+    <ClInclude Include="Source\Stats.h" />
+    <ClInclude Include="Source\Supports.h" />
+    <ClInclude Include="Source\Texts.h" />
+    <ClInclude Include="Source\TIMImages.h" />
+    <ClInclude Include="Source\Tool_BackgroundEditor.h" />
+    <ClInclude Include="Source\Tool_ModManager.h" />
+    <ClInclude Include="Source\Tool_UnityViewer.h" />
+    <ClInclude Include="Source\UnityArchiver.h" />
+    <ClInclude Include="Source\WorldMaps.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Source\resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Source\gui.fbp" />
+    <None Include="Source\Squish\singlecolourlookup.inl" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

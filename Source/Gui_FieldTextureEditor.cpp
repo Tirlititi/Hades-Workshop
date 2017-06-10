@@ -20,7 +20,7 @@ ManageFieldTextureDialog::ManageFieldTextureDialog(wxWindow* parent, FieldTilesD
 	timer(new wxTimer(this)),
 	color_selected(-1),
 	prevent_event(false) {
-	unsigned int i,j;
+	unsigned int i;
 	tim = f.parent->tim_data[f.id]; // Unused now
 	field.Copy(f);
 	for (i=0;i<field.tiles_amount;i++) {
@@ -72,13 +72,14 @@ ManageFieldTextureDialog::~ManageFieldTextureDialog() {
 
 int ManageFieldTextureDialog::ShowModal(unsigned int camera) {
 	unsigned int i;
-	bool tileflag[field.tiles_amount];
+	bool* tileflag = new bool[field.tiles_amount];
 	camera_id = camera;
 	for (i=0;i<field.tiles_amount;i++)
 		tileflag[i] = m_tilechecklist->IsChecked(i);
 	uint32_t* imgdata = field.ConvertAsImage(camera_id,tileflag,true);
 	main_img_base = ConvertDataToImage(imgdata,field.camera[camera_id].width,field.camera[camera_id].height);
 	delete[] imgdata;
+	delete[] tileflag;
 	scale_ratio = main_img_base.GetHeight()/DEFAULT_HEIGHT;
 	UpdateImage();
 	return wxDialog::ShowModal();
@@ -132,12 +133,13 @@ void ManageFieldTextureDialog::UpdateImage() {
 
 void ManageFieldTextureDialog::UpdateTexturePreview(int changeid) {
 	unsigned int i;
-	bool tileflag[field.tiles_amount];
+	bool* tileflag = new bool[field.tiles_amount];
 	for (i=0;i<field.tiles_amount;i++)
 		tileflag[i] = m_tilechecklist->IsChecked(i);
 	uint32_t* imgdata = field.ConvertAsImage(camera_id,tileflag,true);
 	main_img_base = ConvertDataToImage(imgdata,field.camera[camera_id].width,field.camera[camera_id].height);
 	delete[] imgdata;
+	delete[] tileflag;
 	UpdateImage();
 }
 
@@ -384,13 +386,15 @@ void ManageFieldTextureDialog::OnButtonClick(wxCommandEvent& event) {
 		dial.m_languagetitle->Enable(field.title_tile_amount>0);
 		if (dial.ShowModal()==wxID_OK) {
 			unsigned int i;
-			bool tileflag[field.tiles_amount];
+			bool* tileflag = new bool[field.tiles_amount];
 			for (i=0;i<field.tiles_amount;i++)
 				tileflag[i] = m_tilechecklist->IsChecked(i) || !dial.m_onlyselected->IsChecked();
 			if (field.Export(dial.m_filepicker->GetPath().mb_str(),camera_id,tileflag,true,dial.m_mergetiles->IsChecked(),dial.m_exportorder->IsChecked(),dial.m_languagetitle->GetSelection()-1)) {
 				wxLogError(HADES_STRING_OPEN_ERROR_CREATE,dial.m_filepicker->GetPath());
+				delete[] tileflag;
 				return;
 			}
+			delete[] tileflag;
 			wxMessageDialog popupsuccess(this,HADES_STRING_FIELDTEXTURE_SAVE_SUCCESS,HADES_STRING_SUCCESS,wxOK|wxCENTRE);
 			popupsuccess.ShowModal();
 		}

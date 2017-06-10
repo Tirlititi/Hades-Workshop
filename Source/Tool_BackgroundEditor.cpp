@@ -6,6 +6,7 @@
 #include "main.h"
 #include "Gui_TextureEditor.h"
 #include "Gui_LoadingDialog.h"
+#include "Gui_Preferences.h"
 #include "Hades_Strings.h"
 #include "Database_Steam.h"
 
@@ -22,10 +23,11 @@ wxString GetFieldNameOrDefault(CDDataStruct* cddata, unsigned int fieldindex) {
 
 ToolBackgroundEditor::ToolBackgroundEditor(wxWindow* p) :
 	BackgroundEditorWindow(p) {
-	
+	PreferencesDialog::LoadToolBackgroundConfig(this);
 }
 
 ToolBackgroundEditor::~ToolBackgroundEditor() {
+	PreferencesDialog::SaveToolBackgroundConfig(this);
 }
 
 int ToolBackgroundEditor::ShowModal(CDDataStruct* data) {
@@ -73,8 +75,7 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 	// Compute size of the atlas in order to have a roughly square image
 	unsigned int atlassize, atlasw, atlash, atlastilecolcount, atlastilerowcount, tileamount, tilesize, tilegap, tileperiod;
 	unsigned int tilesamountplustitle = tiledata.tiles_amount+tiledata.title_tile_amount*(STEAM_LANGUAGE_AMOUNT-1);
-	unsigned int i,j,k,x,y,tilei;
-	int imgindex;
+	unsigned int i,j,x,y,tilei;
 	int res = 0;
 	wxFile atlasout(outputname+_(L".tmp"),wxFile::write);
 	if (!atlasout.IsOpened())
@@ -175,7 +176,7 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 		if (!loadallimage)
 			tblockimgarray[i].LoadFile(imgfilename[i],type);
 		wxImage& tblockimg = tblockimgarray[i];
-		if (imgindex<0 || !tblockimg.IsOk())
+		if (!tblockimg.IsOk())
 			continue;
 		uint8_t* imgdata = tblockimg.GetData();
 		uint8_t* imgalpha = tblockimg.GetAlpha();
@@ -348,6 +349,8 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 				atlas[(atlasx+tilesize+(atlasy+tilesize)*atlasw)*4+3] = max(atlas[(atlasx+tilesize+(atlasy+tilesize-1)*atlasw)*4+3],atlas[(atlasx+tilesize-1+(atlasy+tilesize)*atlasw)*4+3]);
 			}
 		}
+		if (!loadallimage)
+			tblockimgarray[i].Destroy();
 	}
 	// Expand color using average opaque colors near
 	unsigned int visiblepixcount;
@@ -541,7 +544,7 @@ void ToolBackgroundEditor::LoadAndMergeImages() {
 		main_img_base.Destroy();
 		return;
 	}
-	unsigned int i,j,x,y;
+	unsigned int i,x,y;
 	uint32_t pix,pix1,pix2;
 	bool mainimgisempty = true;
 	FieldTilesDataStruct* tileset = cddata->fieldset.background_data[m_fieldchoice->GetSelection()];
@@ -727,7 +730,6 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 			tileset->parent->tile_size = m_resolution->GetValue();
 			wxFileName imgfilebasename = m_imagepicker->GetPath();
 			wxString imgfileext = _(L".")+imgfilebasename.GetExt();
-			unsigned int tileimgindex;
 			int lastdigitchar = imgfilebasename.GetName().Len()-1;
 			bool usemultiback;
 			while (lastdigitchar>=0 && isdigit(imgfilebasename.GetName().GetChar(lastdigitchar)))
@@ -791,7 +793,6 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 			for (i=0;i<4;i++)
 				sourcefiletoken[i] = sourcefileformat.GetNextToken();
 			unsigned int fieldindex,fieldid;
-			unsigned int tileimgindex;
 			unsigned int counter = 0, countermax = 0;
 			for (fieldindex=0;fieldindex<cddata->fieldset.amount;fieldindex++) {
 				if (m_massfieldid->IsChecked())
@@ -919,7 +920,7 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 			for (i=0;i<G_N_ELEMENTS(SteamFieldScript);i++) {
 				importfilename = importdirname+_(SteamFieldScript[i].background_name);
 				if (wxFile::Exists(importfilename+_(L".tex")) && SteamFieldScript[i].file_id>0) {
-					fstream importatlas(importfilename+_(L".tex").mb_str(),ios::in | ios::binary);
+					fstream importatlas((const char*)(importfilename+_(L".tex")).mb_str(),ios::in | ios::binary);
 					if (!importatlas.is_open()) {
 						importfail++;
 						continue;
@@ -942,7 +943,7 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 			for (i=0;i<G_N_ELEMENTS(SteamFieldScript);i++) {
 				importfilename = importdirname+_(SteamFieldScript[i].background_name);
 				if (wxFile::Exists(importfilename+_(L".tex")) && SteamFieldScript[i].file_id>0) {
-					fstream importatlas(importfilename+_(L".tex").mb_str(),ios::in | ios::binary);
+					fstream importatlas((const char*)(importfilename+_(L".tex")).mb_str(),ios::in | ios::binary);
 					if (!importatlas.is_open()) {
 						importfail++;
 						continue;

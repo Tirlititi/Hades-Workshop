@@ -96,7 +96,7 @@ int64_t ScriptArgument::GetValue() {
 		value = 0; \
 		for (i=0;i<size;i++) { \
 			IO ## Char(f,opcodetmp[i]); \
-			value += (opcodetmp[i] << i*8); \
+			value |= (opcodetmp[i] << i*8); \
 		} \
 	}
 
@@ -713,7 +713,7 @@ void ScriptDataStruct::WriteHWS(fstream& f) {
 
 void ScriptDataStruct::ReadLocalHWS(fstream& f) {
 	unsigned int i,j;
-	uint32_t localpos, entrypos, vardatapos, localsize, localsizepart1;
+	uint32_t localpos, entrypos, vardatapos, localsize;
 	uint16_t entryheadersize, vardatasize, tmp16;
 	uint8_t entryam, vardatatype, localam;
 	localpos = f.tellg();

@@ -69,8 +69,8 @@ void FieldTilesCameraDataStruct::UpdateSize() {
 	width = pos_x<0xFFFF ? maxx-pos_x : 0;
 	height = pos_y<0xFFFF ? maxy-pos_y : 0;
 	if (GetGameType()!=GAME_TYPE_PSX) {
-		width *= 2;
-		height *= 2;
+		width = (width*parent->parent->tile_size)/FIELD_TILE_BASE_SIZE;
+		height = (height*parent->parent->tile_size)/FIELD_TILE_BASE_SIZE;
 //	} else if (usescreen) {
 //		width = max(width,PSX_SCREEN_SIZE_X);
 //		height = max(height,PSX_SCREEN_SIZE_Y);
@@ -116,8 +116,8 @@ void FieldTilesDataStruct::Copy(FieldTilesDataStruct& cpy) {
 	SetupDataInfos(true);
 }
 
-void FieldTilesDataStruct::AddTilesetToImage(uint32_t* imgdest, FieldTilesTileDataStruct& t, bool showtp, uint32_t* steamimg, uint32_t steamimgwidth) {
-	unsigned int i,x,y,pixelx,pixely,timtilex,timtiley,tilesize,tilegap,tileperiod,steamfactor;
+void FieldTilesDataStruct::AddTilesetToImage(uint32_t* imgdest, FieldTilesTileDataStruct& t, bool showtp, uint32_t* steamimg, uint32_t steamimgwidth, uint32_t steamimgheight) {
+	unsigned int i,x,y,pixelx,pixely,timtilex,timtiley,tilesize,tilegap,tileperiod;
 	uint32_t pix,psxalpha;
 	TIM_BlendMode bm;
 	bool psx = GetGameType()==GAME_TYPE_PSX;
@@ -130,7 +130,7 @@ void FieldTilesDataStruct::AddTilesetToImage(uint32_t* imgdest, FieldTilesTileDa
 			timtiley = t.tile_page_y[i]*256 + t.tile_source_v[i];
 		} else {
 			timtiley = (t.tile_steam_id[i]/(steamimgwidth/tileperiod))*tileperiod+tilegap;
-			pixely *= 2;
+			pixely = (pixely*tilesize)/FIELD_TILE_BASE_SIZE;
 		}
 //		if (psx && t.tile_trans[i] && t.tile_alpha[i]==2) // pixelpos or timtile is wrongly placed...
 		if (t.tile_trans[i]) {
@@ -164,30 +164,38 @@ void FieldTilesDataStruct::AddTilesetToImage(uint32_t* imgdest, FieldTilesTileDa
 				timtilex = t.tile_res[i]>0 ? t.tile_page_x[i]*128 + t.tile_source_u[i] : t.tile_page_x[i]*128*2 + t.tile_source_u[i];
 			} else {
 				timtilex = (t.tile_steam_id[i]%(steamimgwidth/tileperiod))*tileperiod+tilegap;
-				pixelx *= 2;
+				pixelx = (pixelx*tilesize)/FIELD_TILE_BASE_SIZE;
 			}
 			for (x=0;x<tilesize;x++) {
 				if (t.tile_res[i]>0) {
 					if (psx)
 						pix = TIMImageDataStruct::GetVRamPixel(timtilex,timtiley,t.tile_clut_x[i],t.tile_clut_y[i],false);
-					else
+					else if (timtilex<steamimgwidth && timtiley<steamimgheight)
 						pix = steamimg[timtilex+timtiley*steamimgwidth];
+					else
+						pix = 0;
 					if (pix & 0xFF000000) {
-						if (psx)
-							imgdest[pixelx+pixely*camera[t.camera_id].width] = ImageMergePixels(imgdest[pixelx+pixely*camera[t.camera_id].width],(pix & 0xFFFFFF) | psxalpha,bm);
-						else
-							imgdest[pixelx+pixely*camera[t.camera_id].width] = ImageMergePixels(imgdest[pixelx+pixely*camera[t.camera_id].width],pix,bm);
+						if (pixelx<camera[t.camera_id].width && pixely<camera[t.camera_id].height) {
+							if (psx)
+								imgdest[pixelx+pixely*camera[t.camera_id].width] = ImageMergePixels(imgdest[pixelx+pixely*camera[t.camera_id].width],(pix & 0xFFFFFF) | psxalpha,bm);
+							else
+								imgdest[pixelx+pixely*camera[t.camera_id].width] = ImageMergePixels(imgdest[pixelx+pixely*camera[t.camera_id].width],pix,bm);
+						}
 					}
 				} else {
 					if (psx)
 						pix = TIMImageDataStruct::GetVRamPixel(timtilex,timtiley,t.tile_clut_x[i],t.tile_clut_y[i],true);
-					else
+					else if (timtilex<steamimgwidth && timtiley<steamimgheight)
 						pix = steamimg[timtilex+timtiley*steamimgwidth];
+					else
+						pix = 0;
 					if (showtp && (pix & 0xFF000000) && (pix!=0xFF000000)) {
-						if (psx)
-							imgdest[pixelx+pixely*camera[t.camera_id].width] = ImageMergePixels(imgdest[pixelx+pixely*camera[t.camera_id].width],(pix & 0xFFFFFF) | psxalpha,bm);
-						else
-							imgdest[pixelx+pixely*camera[t.camera_id].width] = ImageMergePixels(imgdest[pixelx+pixely*camera[t.camera_id].width],pix,bm);
+						if (pixelx<camera[t.camera_id].width && pixely<camera[t.camera_id].height) {
+							if (psx)
+								imgdest[pixelx+pixely*camera[t.camera_id].width] = ImageMergePixels(imgdest[pixelx+pixely*camera[t.camera_id].width],(pix & 0xFFFFFF) | psxalpha,bm);
+							else
+								imgdest[pixelx+pixely*camera[t.camera_id].width] = ImageMergePixels(imgdest[pixelx+pixely*camera[t.camera_id].width],pix,bm);
+						}
 					}
 				}
 				timtilex++;
@@ -232,7 +240,7 @@ uint32_t* FieldTilesDataStruct::ConvertAsImage(unsigned int cameraid, bool tilef
 	for (i=0;i<tiles_amount;i++) { // ToDo: mind the shader layering order ("QUEUE")
 		FieldTilesTileDataStruct& t = tiles[GetRelatedTitleTileById(tiles_sorted[i]->id,GetSteamLanguage())];
 		if (t.camera_id==cameraid && (tileflag==NULL || tileflag[t.id]) && (tileflag!=NULL || t.is_static || t.is_first_of_anim))
-			AddTilesetToImage(res,t,showtp,rawimg,tim->steam_width);
+			AddTilesetToImage(res,t,showtp,rawimg,tim->steam_width,tim->steam_height);
 	}
 	if (GetGameType()!=GAME_TYPE_PSX)
 		delete[] rawimg;
@@ -300,18 +308,18 @@ int FieldTilesDataStruct::Export(const char* outputfile, unsigned int cameraid, 
 			for (i=0;i<tiles_amount;i++) {
 				FieldTilesTileDataStruct& t = *tiles_sorted[i];
 				if (cameraid==t.camera_id && (tileflag==NULL || tileflag[t.id]))
-					AddTilesetToImage(img,t,true,rawimg,tim->steam_width);
+					AddTilesetToImage(img,t,true,rawimg,tim->steam_width,tim->steam_height);
 			}
 			for (i=title_tile_amount;i<title_tile_amount*STEAM_LANGUAGE_AMOUNT;i++) {
 				FieldTilesTileDataStruct& t = tiles[tiles_amount+i];
 				if (cameraid==t.camera_id && (tileflag==NULL || tileflag[t.id]))
-					AddTilesetToImage(img,t,true,rawimg,tim->steam_width);
+					AddTilesetToImage(img,t,true,rawimg,tim->steam_width,tim->steam_height);
 			}
 		} else {
 			for (i=0;i<tiles_amount;i++) {
 				FieldTilesTileDataStruct& t = tiles[GetRelatedTitleTileById(tiles_sorted[i]->id,steamtitlelang)];
 				if (cameraid==t.camera_id && (tileflag==NULL || tileflag[t.id]))
-					AddTilesetToImage(img,t,true,rawimg,tim->steam_width);
+					AddTilesetToImage(img,t,true,rawimg,tim->steam_width,tim->steam_height);
 			}
 		}
 		for (y=0;y<height;y++)
@@ -351,7 +359,7 @@ int FieldTilesDataStruct::Export(const char* outputfile, unsigned int cameraid, 
 				MACRO_WL(ifdoff)
 				for (j=0;j<width*height;j++)
 					img[j] = 0;
-				AddTilesetToImage(img,t,true,rawimg,tim->steam_width);
+				AddTilesetToImage(img,t,true,rawimg,tim->steam_width,tim->steam_height);
 				for (y=0;y<height;y++)
 					for (x=0;x<width;x++) {
 						MACRO_WC(img[y*width+x])
@@ -1036,7 +1044,7 @@ bool FieldSteamTitleInfo::ReadTitleTileId(FieldTilesDataStruct* tileset, Configu
 				FieldTilesDataStruct localbackground;
 				ffbin.seekg(config.meta_field[config.field_file_id[tileset->id]-1].GetFileOffsetByIndex(config.field_tiles_file[tileset->id][lang]));
 				localbackground.Init(NULL,CHUNK_TYPE_FIELD_TILES,config.field_id[tileset->id]);
-//				localbackground.parent = NULL;
+				localbackground.parent = tileset->parent;
 //				localbackground.id = i;
 				localbackground.size = config.meta_field[config.field_file_id[tileset->id]-1].GetFileSizeByIndex(config.field_tiles_file[tileset->id][lang]);
 				localbackground.Read(ffbin);
@@ -1210,7 +1218,7 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 	tim_data = new TIMImageDataStruct*[amount];
 	role = new FieldRoleDataStruct*[amount];
 	related_text = new TextDataStruct*[amount];
-	tile_size = GetGameType()==GAME_TYPE_PSX ? 16 : 32;
+	tile_size = GetGameType()==GAME_TYPE_PSX ? FIELD_TILE_BASE_SIZE : hades::FIELD_BACKGROUND_RESOLUTION;
 	tile_gap = GetGameType()==GAME_TYPE_PSX ? 0 : 2;
 	j = 0;
 	LoadingDialogInit(amount,_(L"Reading fields..."));
@@ -1284,7 +1292,6 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 		ClusterData** dummyclus = new ClusterData*[amount];
 		ConfigurationSet& config = *clusset.config;
 		string fname = config.steam_dir_data;
-		uint32_t fsize;
 		FF9String* fieldname = new FF9String[amount];
 		uint16_t* fieldnameid = new uint16_t[amount];
 		uint8_t strbuffer[10];

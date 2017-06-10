@@ -8,6 +8,7 @@
 //=============================//
 
 static ILInstruction MACROINST_NULL[] = {
+	{}
 };
 
 #define MACRO_CILMACRO_COMPUTEBEG() \
@@ -166,7 +167,7 @@ struct CILMacroCustomBackgrounds : public CILMacroBaseStruct {
 			{ 0x6F, data->GetMethodTokenIdentifier("FieldMapLocalizeAreaTitleInfo","GetSpriteStartIndex") },
 			{ 0x13, 9 },
 			{ 0x11, 4 },
-			{ 0x1F, resolution+4 },
+			{ 0x1F, resolution+4u },
 			{ 0x5B },
 			{ 0x13, 10 },
 			{ 0x11, 9 },
@@ -234,7 +235,7 @@ struct CILMacroCustomBackgrounds : public CILMacroBaseStruct {
 			{ 0x11, 11 },
 			{ 0x11, 10 },
 			{ 0x5D },
-			{ 0x1F, resolution+4 },
+			{ 0x1F, resolution+4u },
 			{ 0x5A },
 			{ 0x58 },
 			{ 0xD1 },
@@ -244,7 +245,7 @@ struct CILMacroCustomBackgrounds : public CILMacroBaseStruct {
 			{ 0x11, 11 },
 			{ 0x11, 10 },
 			{ 0x5B },
-			{ 0x1F, resolution+4 },
+			{ 0x1F, resolution+4u },
 			{ 0x5A },
 			{ 0x58 },
 			{ 0xD1 },

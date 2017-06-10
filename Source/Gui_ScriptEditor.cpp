@@ -281,8 +281,8 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 //fout.open("aaaa.txt",ios::app|ios::out); fout << "2" << endl; fout.close();
 	if (script_type==SCRIPT_TYPE_FIELD) {
 		gl_window = new GLWindow(m_fielddisplaypanel,NULL);
-		FieldTilesDataStruct* tiles;
-		FieldWalkmeshDataStruct* walk;
+		FieldTilesDataStruct* tiles = NULL;
+		FieldWalkmeshDataStruct* walk = NULL;
 		if (GetGameType()==GAME_TYPE_PSX) {
 			tiles = (FieldTilesDataStruct*)&script.parent_cluster->chunk[script.parent_cluster->SearchChunkType(CHUNK_TYPE_FIELD_TILES)].GetObject(0);
 			walk = (FieldWalkmeshDataStruct*)&script.parent_cluster->chunk[script.parent_cluster->SearchChunkType(CHUNK_TYPE_FIELD_WALK)].GetObject(0);
@@ -334,8 +334,8 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 		use_battle = true;
 	} else
 		use_battle = false;
-	m_intvalueattack->Enable(enemy);
-	m_intvalueattacklabel->Enable(enemy);
+	m_intvalueattack->Enable(enemy!=NULL);
+	m_intvalueattacklabel->Enable(enemy!=NULL);
 	if (enemy) {
 		attack_str.Alloc(enemy->spell_amount);
 		for (i=0;i<enemy->spell_amount;i++)
@@ -344,13 +344,16 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 	} else
 		use_attack = false;
 	if (dataloaded[2]) {
-		field_str.Alloc(datas->fieldset->amount);
-		field_id = new uint16_t*[datas->fieldset->amount];
+		field_str.Alloc(datas->fieldset->amount+1);
+		field_id = new uint16_t*[datas->fieldset->amount+1];
 		for (i=0;i<datas->fieldset->amount;i++) {
 			field_str.Add(_(datas->fieldset->script_data[i]->name.str));
 			field_id[i] = new uint16_t[1];
 			field_id[i][0] = datas->fieldset->script_data[i]->object_id;
 		}
+		field_str.Add(_(FIELD_ENDING_NAME));
+		field_id[datas->fieldset->amount] = new uint16_t[1];
+		field_id[datas->fieldset->amount][0] = FIELD_ENDING_ID;
 		use_field = true;
 	} else
 		use_field = false;
@@ -614,7 +617,7 @@ void ScriptEditDialog::DisplayFunctionList(bool firsttime, int newfunc, int remo
 	if (!firsttime)
 		m_functionlist->ClearAll();
 	m_functionlist->AppendColumn(_(L"Functions"),wxLIST_FORMAT_LEFT,202);
-	bool* newshouldparse;
+	bool* newshouldparse = NULL;
 	if (firsttime)
 		func_should_parse = new bool[funcamount];
 	else if (newfunc>=0)
@@ -1959,7 +1962,7 @@ LogStruct ScriptEditDialog::ParseFunction(wxString str, unsigned int entry, unsi
 						break;
 					}
 					MACRO_NEW_OPCODE(0x01)
-					parseop[opi].arg[0].SetValue(-(rawpos+3));
+					parseop[opi].arg[0].SetValue(-((long long)rawpos+3));
 					MACRO_OPCODE_SIZE_DONE()
 					MACRO_CHECK_TRAILING_WARNING()
 					isfunctionreturned = true;
@@ -2360,7 +2363,6 @@ LogStruct ScriptEditDialog::ParseFunction(wxString str, unsigned int entry, unsi
 	parseoplength = rawpos;
 	if (res.ok) {
 		unsigned int localam = 0, globalam = 0;
-		bool newglobal;
 		for (i=0;i<localvar->amount;i++)
 			if (localvar->local_type[i]==SCRIPT_VARIABLE_LOCALTYPE_LOCAL)
 				localam++;
@@ -2637,7 +2639,7 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 	wxString tmpstr;
 	uint16_t opcode = 0xFFFF;
 	unsigned int argi;
-	int helpsx,helpsy,i;
+	int i;
 	bool cleanarg = true;
 	if (arg_control_type && refreshargcontrol) {
 		for (i=0;i<arg_amount;i++) {
@@ -3209,7 +3211,7 @@ wxTextCtrl* ScriptEditDialog::ArgCreateText(wxString& arg, unsigned int id) {
 
 wxSpinCtrl* ScriptEditDialog::ArgCreateSpin(wxString& arg, unsigned int id, int size, bool sign) {
 	wxSpinCtrl* res = new wxSpinCtrl(m_argpanel,SS_ARG_ID+id);
-	long long range = (1 << (8*size));
+	long long range = (1LL << (size*8));
 	if (sign)
 		res->SetRange(-range/2,range/2-1);
 	else
@@ -3293,15 +3295,14 @@ wxPanel* ScriptEditDialog::ArgCreateFlags(wxString& arg, unsigned int id, unsign
 	wxPanel* res = new wxPanel(m_argpanel);
 	wxGridSizer* grid = new wxGridSizer(0,4,0,0);
 	FlagsStruct* datagroup = new FlagsStruct;
-	wxCheckBox* box[amount];
 	unsigned int i;
 	datagroup->amount = amount;
 	datagroup->box = new wxCheckBox*[amount];
+	wxCheckBox**& box = datagroup->box;
 	for (i=0;i<amount;i++) {
 		box[i] = new wxCheckBox(res,SS_ARG_ID+id*SS_ARGBOX_MAXID+i,wxEmptyString);
 		box[i]->SetLabel(flagstr[i]);
 		grid->Add(box[i],0,wxALL,5);
-		datagroup->box[i] = box[i];
 		box[i]->SetClientData((void*)datagroup);
 		box[i]->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED,wxCommandEventHandler(ScriptEditDialog::OnArgFlags),NULL,this);
 	}

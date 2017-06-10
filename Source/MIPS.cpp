@@ -218,6 +218,7 @@ int MipsDataSet::LoadHWS(fstream& ffbin) {
 		}
 		HWSReadChar(ffbin,datatype);
 	}
+	return 0;
 }
 
 void MipsDataSet::WriteHWS(fstream& ffbin) {

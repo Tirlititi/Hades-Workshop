@@ -66,7 +66,6 @@ MipsScriptSizer::MipsScriptSizer(MipsScriptEditDialog* p, unsigned int l, MipsIn
 	codeline(c),
 	line_nb(l),
 	m_arg(NULL) {
-	unsigned int i;
 	m_code = new wxChoice(parent->m_mipswindow,MIPS_MAX_ARGUMENTS*line_nb,wxDefaultPosition,wxDefaultSize,parent->code_list,0);
 	m_code->SetSelection(codeline->mips_code_index);
 	this->Add(m_code,0,wxALL,5);
@@ -293,7 +292,7 @@ void MipsScriptEditDialog::OnMipsScroll(wxScrollEvent& event) {
 }
 
 void MipsScriptEditDialog::OnChangeCode(wxCommandEvent& event) {
-	unsigned int i, newcode;
+	unsigned int newcode;
 	MipsScriptSizer* sizer = code_sizer[event.GetId()/MIPS_MAX_ARGUMENTS];
 	newcode = event.GetSelection();
 	sizer->codeline->opcode = MIPS_CODE_LIST[newcode].opcode;
@@ -701,13 +700,13 @@ bool CilScriptEditDialog::WriteArgumentToRawCode(LogStruct& log, unsigned int il
 		if (argstr.ToCULong(&arglong,ishexa ? 16 : 10)) {
 			switch (code.size) {
 			case 1:
-				BufferWriteChar(raw,isneg ? (int8_t)-arglong : arglong);
+				BufferWriteChar(raw,isneg ? -(int8_t)arglong : arglong);
 				return true;
 			case 2:
-				BufferWriteShort(raw,isneg ? (int16_t)-arglong : arglong);
+				BufferWriteShort(raw,isneg ? -(int16_t)arglong : arglong);
 				return true;
 			case 4:
-				BufferWriteLong(raw,isneg ? (int32_t)-arglong : arglong);
+				BufferWriteLong(raw,isneg ? -(int32_t)arglong : arglong);
 				return true;
 			}
 		}

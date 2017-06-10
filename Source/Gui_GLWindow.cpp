@@ -30,7 +30,7 @@ GLWindow::~GLWindow() {
 
 void GLWindow::DisplayField(FieldTilesDataStruct* tiles, FieldWalkmeshDataStruct* walk) {
 	GLint offx, offy, offz;
-	unsigned int i,j;
+	unsigned int i;
 	display_type = DISPLAY_GL_TYPE_FIELD;
 	field_tiles = tiles;
 	field_walk = walk;
@@ -103,7 +103,6 @@ void GLWindow::DisplayFieldRegion(unsigned int vertamount,int16_t* vert) {
 		return;
 	DisplayFieldClear();
 	unsigned int i,j;
-	bool intriangle;
 	GLint zpos = -0x7FFF;
 	field_region_vertice_amount = vertamount;
 	field_region_vertice_pos = new GLint*[field_region_vertice_amount];
@@ -288,7 +287,7 @@ void GLWindow::ResetCamera() {
 }
 
 void GLWindow::Draw() {
-	unsigned int i,j;
+	unsigned int i;
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);

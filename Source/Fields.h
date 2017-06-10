@@ -202,7 +202,7 @@ public:
 	
 private:
 	void SetupDataInfos(bool readway);
-	void AddTilesetToImage(uint32_t* imgdest, FieldTilesTileDataStruct& t, bool showtp = false, uint32_t* steamimg = NULL, uint32_t steamimgwidth = 1);
+	void AddTilesetToImage(uint32_t* imgdest, FieldTilesTileDataStruct& t, bool showtp = false, uint32_t* steamimg = NULL, uint32_t steamimgwidth = 1, uint32_t steamimgheight = 1);
 };
 
 struct FieldWalkmeshDataStruct : public ChunkChild {

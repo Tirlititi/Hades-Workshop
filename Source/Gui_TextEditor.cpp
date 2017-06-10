@@ -6,7 +6,7 @@
 #include "main.h"
 
 #define DEFAULT_SPEED 5
-#define NEW_PAGE_CHAR L'¶'
+#define NEW_PAGE_CHAR L'\xB6' // ¶
 
 wxBitmap InitButton(wxBitmap bmp) {
 	wxImage tmpimg = bmp.ConvertToImage();
@@ -320,17 +320,17 @@ PreviewTextCtrl::PreviewTextCtrl(wxWindow* parent, wxWindowID id, const wxString
 }
 
 void PreviewTextCtrl::PaintBackground(wxDC& dc) {
-	dc.SetBrush(wxBrush(wxColour(70,70,70),wxSOLID));
-	dc.SetPen(wxPen(wxColour(0,0,0),0,wxSOLID));
+	dc.SetBrush(wxBrush(wxColour(70,70,70)));
+	dc.SetPen(wxPen(wxColour(0,0,0),0));
 	dc.DrawRectangle(0,0,1000,1000);
 	if (parent_dialog->charmap) {
 		if (parent_dialog->text_style==TEXT_STYLE_DEFAULT)
-			dc.SetBrush(wxBrush(hades::TEXT_WINDOW_COLOR,wxSOLID));
+			dc.SetBrush(wxBrush(hades::TEXT_WINDOW_COLOR));
 		else if (parent_dialog->text_style==TEXT_STYLE_HELP)
-			dc.SetBrush(wxBrush(wxColour(127,255,255),wxSOLID));
+			dc.SetBrush(wxBrush(wxColour(127,255,255)));
 		else
-			dc.SetBrush(wxBrush(wxColour(190,190,190),wxSOLID));
-		dc.SetPen(wxPen(wxColour(255,255,255),1,wxSOLID));
+			dc.SetBrush(wxBrush(wxColour(190,190,190)));
+		dc.SetPen(wxPen(wxColour(255,255,255),1));
 		wxCoord width, height;
 		width = (int)parent_dialog->m_sizex->GetValue()*1.1;
 		height = parent_dialog->m_sizey->GetValue()*19+4;
@@ -468,8 +468,8 @@ void TextOpcodeDialog::DisplayTokens(wxDC& dc) {
 		int x = 6+dc.GetTextExtent(token_str.Mid(0,stri)).GetWidth();
 		if (i==token_sel) {
 			int selw = dc.GetTextExtent(token_str.Mid(stri,token_str.find(_(L"•"),stri)-stri)).GetWidth();
-			dc.SetBrush(wxBrush(wxColour(255,0,0),wxSOLID));
-			dc.SetPen(wxPen(wxColour(255,0,0),0,wxSOLID));
+			dc.SetBrush(wxBrush(wxColour(255,0,0)));
+			dc.SetPen(wxPen(wxColour(255,0,0),0));
 			dc.DrawRectangle(x+4,7,selw,13);
 			dc.SetBrush(wxBrush(wxColour(255,255,255)));
 			dc.SetPen(wxPen(wxColour(255,255,255)));

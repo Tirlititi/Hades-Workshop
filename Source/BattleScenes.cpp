@@ -323,10 +323,10 @@ void ObjectModelImage::Read(wstring& line, LogStruct& log, uint32_t linenum) {
 int BattleSceneDataStruct::Export(const char* outputbase, bool usequads) {
 	unsigned int i,j;
 	char buffer[256];
-	char* filename;
+	const char* filename = outputbase;
 	for (i=strlen(outputbase)-1;i>0;i--)
 		if (outputbase[i] == '/' || outputbase[i]=='\\') {
-			filename = (char*)outputbase+i+1;
+			filename = outputbase+i+1;
 			break;
 		}
 	if (parent->image[id])
@@ -341,7 +341,7 @@ int BattleSceneDataStruct::Export(const char* outputbase, bool usequads) {
 			}
 			sprintf(buffer,"%s_tex%d.tga",outputbase,i+1);
 			if (parent->image[id][texloc].Export(buffer,false,tim_texpos[i],imgpal))
-				return -i-1;
+				return -(int)i-1;
 		}
 	sprintf(buffer,"%s.obj",outputbase);
 	fstream fobj(buffer,ios::out);

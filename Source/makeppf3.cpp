@@ -19,6 +19,12 @@
 #include <sys/stat.h>
 #include "makeppf3.h"
 
+#ifdef _MSC_VER // transform IO functions to there VS equivalent
+#define fseeko64 _fseeki64
+#define ftello64 _ftelli64
+#define fopen64 fopen
+#endif
+
 //////////////////////////////////////////////////////////////////////
 // Macros for little to big Endian conversion.
 

@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////
-// C++ code generated with wxFormBuilder (version Oct  8 2012)
+// C++ code generated with wxFormBuilder (version Apr 24 2017)
 // http://www.wxformbuilder.org/
 //
 // PLEASE DO "NOT" EDIT THIS FILE!
@@ -472,58 +472,58 @@ class PreviewTextCtrl;
 #define wxID_EB6 1414
 #define wxID_EB7 1415
 #define wxID_EB8 1416
-#define wxID_ALPHABET 1417
-#define wxID_WINCOLOR 1418
-#define wxID_TEXTPREVIEW 1419
-#define wxID_SPELL 1420
-#define wxID_SUPPORT 1421
-#define wxID_CMD 1422
-#define wxID_PARTY_SPECIAL 1423
-#define wxID_ITEM 1424
-#define wxID_SHOP 1425
-#define wxID_ENMY 1426
-#define wxID_FIELD 1427
-#define wxID_SPELL_ANIM 1428
-#define wxID_MENU_UI 1429
-#define wxID_ASSEMBLY 1430
-#define wxID_SET 1431
-#define wxID_BUBBLE 1432
-#define wxID_OPCODE 1433
-#define wxID_DEFAULTARG1 1434
-#define wxID_DEFAULTARG2 1435
-#define wxID_DEFAULTARG3 1436
-#define wxID_TOKENIZE 1437
-#define wxID_48 1438
-#define wxID_PALETTE 1439
-#define wxID_PALSEL 1440
-#define wxID_MODIFY 1441
-#define wxID_IMPORT 1442
-#define wxID_POSX 1443
-#define wxID_POSY 1444
-#define wxID_SIZEX 1445
-#define wxID_SIZEY 1446
-#define wxID_TILE 1447
-#define wxID_EXPORT 1448
-#define wxID_INT 1449
-#define wxID_LONG 1450
-#define wxID_HEXA 1451
-#define wxID_BUTTON 1452
-#define wxID_LIST 1453
-#define wxID_SPLIST 1454
-#define wxID_STATUSA 1455
-#define wxID_STATUSB 1456
-#define wxID_FBACK 1457
-#define wxID_FWALK 1458
-#define wxID_PARSE 1459
-#define wxID_FUNCTION 1460
-#define wxID_VARIABLE 1461
-#define wxID_VARCODE 1462
-#define wxID_TYPE 1463
-#define wxID_FULLLIST 1464
-#define wxID_MAPLIST 1465
-#define wxID_SORTLAYER 1466
-#define wxID_REVERTLAYER 1467
-#define wxID_RESOLUTION 1468
+#define wxID_WINCOLOR 1417
+#define wxID_TEXTPREVIEW 1418
+#define wxID_RESOLUTION 1419
+#define wxID_ALPHABET 1420
+#define wxID_SPELL 1421
+#define wxID_SUPPORT 1422
+#define wxID_CMD 1423
+#define wxID_PARTY_SPECIAL 1424
+#define wxID_ITEM 1425
+#define wxID_SHOP 1426
+#define wxID_ENMY 1427
+#define wxID_FIELD 1428
+#define wxID_SPELL_ANIM 1429
+#define wxID_MENU_UI 1430
+#define wxID_ASSEMBLY 1431
+#define wxID_SET 1432
+#define wxID_BUBBLE 1433
+#define wxID_OPCODE 1434
+#define wxID_DEFAULTARG1 1435
+#define wxID_DEFAULTARG2 1436
+#define wxID_DEFAULTARG3 1437
+#define wxID_TOKENIZE 1438
+#define wxID_48 1439
+#define wxID_PALETTE 1440
+#define wxID_PALSEL 1441
+#define wxID_MODIFY 1442
+#define wxID_IMPORT 1443
+#define wxID_POSX 1444
+#define wxID_POSY 1445
+#define wxID_SIZEX 1446
+#define wxID_SIZEY 1447
+#define wxID_TILE 1448
+#define wxID_EXPORT 1449
+#define wxID_INT 1450
+#define wxID_LONG 1451
+#define wxID_HEXA 1452
+#define wxID_BUTTON 1453
+#define wxID_LIST 1454
+#define wxID_SPLIST 1455
+#define wxID_STATUSA 1456
+#define wxID_STATUSB 1457
+#define wxID_FBACK 1458
+#define wxID_FWALK 1459
+#define wxID_PARSE 1460
+#define wxID_FUNCTION 1461
+#define wxID_VARIABLE 1462
+#define wxID_VARCODE 1463
+#define wxID_TYPE 1464
+#define wxID_FULLLIST 1465
+#define wxID_MAPLIST 1466
+#define wxID_SORTLAYER 1467
+#define wxID_REVERTLAYER 1468
 #define wxID_FORMAT 1469
 #define wxID_MASSFORMAT 1470
 #define wxID_REOPEN 1471
@@ -617,7 +617,7 @@ class MainFrameBase : public wxFrame
 	protected:
 		wxMenuBar* m_menuBar;
 		wxMenu* m_menuFile;
-		wxMenu* m_menuDisplay;
+		wxMenu* m_menuOption;
 		wxMenu* m_menuBatch;
 		wxMenu* m_menuTools;
 		wxMenu* m_menuHelp;
@@ -1786,7 +1786,7 @@ class SteamLanguageMessage : public wxDialog
 	public:
 		wxChoice* m_choice;
 		
-		SteamLanguageMessage( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Language"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 140,120 ), long style = wxCAPTION ); 
+		SteamLanguageMessage( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Language"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 150,130 ), long style = wxCAPTION ); 
 		~SteamLanguageMessage();
 	
 };
@@ -1815,7 +1815,7 @@ class SpellAnimationWindow : public wxDialog
 		wxChoice* m_modelall;
 		wxCheckBox* m_enableall;
 		
-		SpellAnimationWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Choose Animation"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 400,130 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+		SpellAnimationWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Choose Animation"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 400,140 ), long style = wxDEFAULT_DIALOG_STYLE ); 
 		~SpellAnimationWindow();
 	
 };
@@ -2024,13 +2024,17 @@ class PreferencesWindow : public wxDialog
 	protected:
 		wxAuiNotebook* m_auinotebook2;
 		wxPanel* m_panel17;
-		wxStaticText* m_staticText89;
-		wxStaticText* m_staticText891;
-		wxTextCtrl* m_opcodechar;
 		wxStaticText* m_staticText90;
 		wxChoice* m_gamewindowcolor;
 		wxStaticText* m_staticText218;
 		wxChoice* m_textpreviewtype;
+		wxPanel* m_panel172;
+		wxStaticText* m_staticText901;
+		wxSpinCtrl* m_backgroundresolution;
+		wxPanel* m_panel171;
+		wxStaticText* m_staticText892;
+		wxStaticText* m_staticText8911;
+		wxTextCtrl* m_opcodechar;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
 		
@@ -2338,7 +2342,7 @@ class TextExportWindow : public wxDialog
 		wxTextCtrl* m_textheader;
 		wxTextCtrl* m_textseparator;
 		
-		TextExportWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Export Text"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 275,330 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+		TextExportWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Export Text"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 275,340 ), long style = wxDEFAULT_DIALOG_STYLE ); 
 		~TextExportWindow();
 	
 };
@@ -2419,7 +2423,7 @@ class CharmapTextureExportWindow : public wxDialog
 	public:
 		wxFilePickerCtrl* m_filepicker;
 		
-		CharmapTextureExportWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Export Texture"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 275,100 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+		CharmapTextureExportWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Export Texture"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 275,110 ), long style = wxDEFAULT_DIALOG_STYLE ); 
 		~CharmapTextureExportWindow();
 	
 };
@@ -2946,7 +2950,7 @@ class SteamImageMapEditWindow : public wxDialog
 	
 	public:
 		
-		SteamImageMapEditWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("File Associations"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 200,300 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER ); 
+		SteamImageMapEditWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("File Associations"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 210,300 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER ); 
 		~SteamImageMapEditWindow();
 	
 };
@@ -2985,41 +2989,20 @@ class BackgroundEditorWindow : public wxDialog
 		wxAuiNotebook* m_auinotebook;
 		wxPanel* m_panelconverter;
 		wxStaticText* m_staticText317;
-		wxFilePickerCtrl* m_imagepicker;
 		wxStaticText* m_staticText318;
-		wxDirPickerCtrl* m_exportdir;
-		wxRadioButton* m_usegametilebtn;
-		wxRadioButton* m_customtilebtn;
-		wxChoice* m_fieldchoice;
 		wxScrolledWindow* m_texturewindow;
-		wxCheckBox* m_sortlayer;
-		wxCheckBox* m_revertlayer;
 		wxListBox* m_tilelist;
 		wxStaticText* m_staticText314;
-		wxSpinCtrl* m_resolution;
 		wxStaticText* m_staticText328;
-		wxChoice* m_convertformat;
-		wxChoice* m_dxtflagchoice;
 		wxPanel* m_panelmassconverter;
 		wxStaticText* m_staticText3171;
-		wxDirPickerCtrl* m_massimageimporter;
 		wxStaticText* m_staticText325;
-		wxTextCtrl* m_massimageformat;
 		wxStaticText* m_staticText3181;
-		wxDirPickerCtrl* m_massexportdir;
-		wxCheckBox* m_massfieldid;
-		wxCheckBox* m_masssortlayer;
-		wxCheckBox* m_massrevertlayer;
 		wxStaticText* m_staticText3141;
-		wxSpinCtrl* m_massresolution;
 		wxStaticText* m_staticText31411;
-		wxChoice* m_massconvertformat;
-		wxChoice* m_massdxtflagchoice;
 		wxPanel* m_panelimporter;
 		wxStaticText* m_staticText316;
-		wxFilePickerCtrl* m_importlauncher;
 		wxStaticText* m_staticText319;
-		wxDirPickerCtrl* m_importdir;
 		wxButton* m_buttonapply;
 		wxButton* m_buttonclose;
 		
@@ -3037,6 +3020,27 @@ class BackgroundEditorWindow : public wxDialog
 		
 	
 	public:
+		wxFilePickerCtrl* m_imagepicker;
+		wxDirPickerCtrl* m_exportdir;
+		wxRadioButton* m_usegametilebtn;
+		wxRadioButton* m_customtilebtn;
+		wxChoice* m_fieldchoice;
+		wxCheckBox* m_sortlayer;
+		wxCheckBox* m_revertlayer;
+		wxSpinCtrl* m_resolution;
+		wxChoice* m_convertformat;
+		wxChoice* m_dxtflagchoice;
+		wxDirPickerCtrl* m_massimageimporter;
+		wxTextCtrl* m_massimageformat;
+		wxDirPickerCtrl* m_massexportdir;
+		wxCheckBox* m_massfieldid;
+		wxCheckBox* m_masssortlayer;
+		wxCheckBox* m_massrevertlayer;
+		wxSpinCtrl* m_massresolution;
+		wxChoice* m_massconvertformat;
+		wxChoice* m_massdxtflagchoice;
+		wxFilePickerCtrl* m_importlauncher;
+		wxDirPickerCtrl* m_importdir;
 		
 		BackgroundEditorWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Background Editor"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 650,650 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER ); 
 		~BackgroundEditorWindow();
@@ -3061,32 +3065,10 @@ class UnityViewerWindow : public wxFrame
 		wxMenu* m_submenulevel;
 		wxMenu* m_submenushared;
 		wxMenu* m_menuoptions;
-		wxMenuItem* m_menuexportpath;
 		wxMenu* m_menuconvertimg;
-		wxMenuItem* m_menuconvertimgnone;
-		wxMenuItem* m_menuconvertimgbmp;
-		wxMenuItem* m_menuconvertimgpng;
-		wxMenuItem* m_menuconvertimgtga;
-		wxMenuItem* m_menuconvertimgtiff;
 		wxMenu* m_menuconvertimgquality;
-		wxMenuItem* m_menuconvertimgqualitysame;
-		wxMenuItem* m_menuconvertimgqualityalpha;
-		wxMenuItem* m_menuconvertimgqualityrgb;
-		wxMenuItem* m_menuconvertimgqualityrgba;
-		wxMenuItem* m_menuconvertimgqualityargb;
-		wxMenuItem* m_menuconvertimgqualitydxt1;
-		wxMenuItem* m_menuconvertimgqualitydxt5;
-		wxMenuItem* m_menuconvertimgqualitylow;
-		wxMenuItem* m_menuconvertimgqualitymedium;
-		wxMenuItem* m_menuconvertimgqualityhigh;
 		wxMenu* m_menuconvertaudio;
-		wxMenuItem* m_menuconvertaudionone;
-		wxMenuItem* m_menuconvertaudioakb;
 		wxMenu* m_menuconvertmodel;
-		wxMenuItem* m_menuconvertmodelnone;
-		wxMenuItem* m_menuconvertmodelobj;
-		wxMenuItem* m_menufolderx64;
-		wxMenuItem* m_menufolderx86;
 		wxGauge* m_loadgauge;
 		wxListCtrl* m_assetlist;
 		
@@ -3097,6 +3079,32 @@ class UnityViewerWindow : public wxFrame
 		
 	
 	public:
+		wxMenuItem* m_menuexportpath;
+		wxMenuItem* m_menuconvertimgnone;
+		wxMenuItem* m_menuconvertimgbmp;
+		wxMenuItem* m_menuconvertimgpng;
+		wxMenuItem* m_menuconvertimgtga;
+		wxMenuItem* m_menuconvertimgtiff;
+		wxMenuItem* m_menuconvertimgqualitysame;
+		wxMenuItem* m_menuconvertimgqualityalpha;
+		wxMenuItem* m_menuconvertimgqualityrgb;
+		wxMenuItem* m_menuconvertimgqualityrgba;
+		wxMenuItem* m_menuconvertimgqualityargb;
+		wxMenuItem* m_menuconvertimgqualitydxt1;
+		wxMenuItem* m_menuconvertimgqualitydxt5;
+		wxMenuItem* m_menuconvertimgqualitylow;
+		wxMenuItem* m_menuconvertimgqualitymedium;
+		wxMenuItem* m_menuconvertimgqualityhigh;
+		wxMenuItem* m_menuconvertaudionone;
+		wxMenuItem* m_menuconvertaudioakb;
+		wxMenuItem* m_menuconvertmodelnone;
+		wxMenuItem* m_menuconvertmodelfbxbin;
+		wxMenuItem* m_menuconvertmodelfbxtext;
+		wxMenuItem* m_menuconvertmodelautocad;
+		wxMenuItem* m_menuconvertmodelcollada;
+		wxMenuItem* m_menuconvertmodelwave;
+		wxMenuItem* m_menufolderx64;
+		wxMenuItem* m_menufolderx86;
 		
 		UnityViewerWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Unity Assets Viewer"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 700,700 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
 		

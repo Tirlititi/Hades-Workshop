@@ -24,8 +24,9 @@ IMPLEMENT_APP(MainApp);
 
 namespace hades {
 	wxColour TEXT_WINDOW_COLOR = wxColour(190,190,190);
-	wxFont TEXT_DISPLAY_FONT = wxFont(wxNORMAL_FONT->GetPointSize(),70,90,90,false,wxT("Arial"));
+	wxFont TEXT_DISPLAY_FONT = wxFont(wxNORMAL_FONT->GetPointSize(), wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("Arial"));
 	int TEXT_PREVIEW_TYPE = 0;
+	int FIELD_BACKGROUND_RESOLUTION = 32;
 	wchar_t* SPECIAL_STRING_CHARMAP_DEFAULT = DEFAULT_CHARMAP;
 	wchar_t* SPECIAL_STRING_CHARMAP_A = DEFAULT_SECONDARY_CHARMAP;
 	wchar_t* SPECIAL_STRING_CHARMAP_B = DEFAULT_SECONDARY_CHARMAP;
@@ -64,10 +65,12 @@ MainFrame::MainFrame(wxWindow *parent) :
 	dc.DrawBitmap(wxBitmap(img),0,0);
 	PreferenceWindow = new PreferencesDialog(this);
 	PreferencesUpdate();
+	PreferencesDialog::LoadMainFrameConfig(this);
 	LoadingDialogCreate(this);
 }
 
 MainFrame::~MainFrame() {
+	PreferencesDialog::SaveMainFrameConfig(this);
 }
 
 void MainFrame::MarkDataModified() {
@@ -536,7 +539,7 @@ wchar_t PrefCharmapA[256];
 wchar_t PrefCharmapB[256];
 
 void MainFrame::PreferencesUpdate() {
-	unsigned int i;
+	unsigned int i,j,k;
 	bool changechmap = false;
 	if (PreferenceWindow->m_gamealphabet->GetSelection()==0) {
 		if (hades::SPECIAL_STRING_CHARMAP_DEFAULT!=DEFAULT_CHARMAP) {
@@ -576,6 +579,17 @@ void MainFrame::PreferencesUpdate() {
 	else
 		hades::TEXT_WINDOW_COLOR.Set(0,60,255);
 	hades::TEXT_PREVIEW_TYPE = PreferenceWindow->text_preview_type;
+	if (hades::FIELD_BACKGROUND_RESOLUTION!=PreferenceWindow->background_resolution) {
+		hades::FIELD_BACKGROUND_RESOLUTION = PreferenceWindow->background_resolution;
+		for (i=0;i<CDPanelAmount;i++)
+			if (CDPanel[i]->gametype!=GAME_TYPE_PSX && CDPanel[i]->fieldloaded) {
+				CDPanel[i]->fieldset.tile_size = hades::FIELD_BACKGROUND_RESOLUTION;
+				for (j=0;j<CDPanel[i]->fieldset.amount;j++)
+					if (CDPanel[i]->fieldset.background_data[j]!=NULL)
+						for (k=0;k<CDPanel[i]->fieldset.background_data[j]->camera_amount;k++)
+							CDPanel[i]->fieldset.background_data[j]->camera[k].UpdateSize();
+			}
+	}
 }
 
 void MainFrame::OnPreferencesClick( wxCommandEvent& event ) {
