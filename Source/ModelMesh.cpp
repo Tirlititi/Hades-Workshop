@@ -363,6 +363,102 @@ fout.close();
 	// ToDo: read the end
 }
 
+bool ModelDataStruct::Read(fstream& f, GameObjectHierarchy* gohier) {
+	hierarchy = gohier;
+	UnityArchiveMetaData& meta = *hierarchy->meta_data;
+	unsigned int i,j,k;
+	vector<string> materialrelatedmeshname;
+	for (i=0;i<hierarchy->node_list.size();i++) {
+		if (hierarchy->node_list[i]->node_type==23) {
+			// Read material list ; TODO: do not duplicates the same materials
+			MeshRendererStruct* node = static_cast<MeshRendererStruct*>(hierarchy->node_list[i]);
+			vector<ModelMaterialData> matdatalist;
+			for (j=0;j<node->child_material_amount;j++) {
+				ModelMaterialData matdata;
+				if (!node->child_material[j]) return false;
+				f.seekg(meta.GetFileOffsetByIndex(node->child_material[j]->file_index));
+				matdata.Read(f);
+				matdata.name = meta.file_name[node->child_material[j]->file_index];
+				int32_t texfileid = meta.GetFileIndexByInfo(matdata.maintex_file_info);
+				matdata.maintex_file_name = (texfileid>=0 ? meta.file_name[texfileid]+".png" : "TextureNotFound");
+				matdatalist.push_back(matdata);
+			}
+			// Remember the name of the parent Game Object for the mesh-material link
+			if (!node->parent_object) return false;
+			if (node->parent_object->node_type==1)
+				materialrelatedmeshname.push_back(static_cast<GameObjectStruct*>(node->parent_object)->GetScopedName());
+			else
+				materialrelatedmeshname.push_back("");
+			material.push_back(matdatalist);
+		} else if (hierarchy->node_list[i]->node_type==33) {
+			// Read mesh
+			MeshFilterStruct* node = static_cast<MeshFilterStruct*>(hierarchy->node_list[i]);
+			ModelMeshData meshdata;
+			if (!node->child_mesh) return false;
+			f.seekg(meta.GetFileOffsetByIndex(node->child_mesh->file_index));
+			meshdata.Read(f);
+			if (!node->parent_object) return false;
+			if (node->parent_object->node_type==1) {
+				meshdata.name = static_cast<GameObjectStruct*>(node->parent_object)->name;
+				meshdata.scoped_name = static_cast<GameObjectStruct*>(node->parent_object)->GetScopedName();
+			}
+			mesh.push_back(meshdata);
+		} else if (hierarchy->node_list[i]->node_type==137) {
+			// Read mesh + material list + node names
+			SkinnedMeshRendererStruct* node = static_cast<SkinnedMeshRendererStruct*>(hierarchy->node_list[i]);
+			ModelMeshData meshdata;
+			vector<ModelMaterialData> matdatalist;
+			if (!node->child_mesh) return false;
+			f.seekg(meta.GetFileOffsetByIndex(node->child_mesh->file_index));
+			meshdata.Read(f);
+			if (!node->parent_object) return false;
+			if (node->parent_object->node_type==1) {
+				meshdata.name = static_cast<GameObjectStruct*>(node->parent_object)->name;
+				meshdata.scoped_name = static_cast<GameObjectStruct*>(node->parent_object)->GetScopedName();
+			}
+			for (j=0;j<node->child_material_amount;j++) {
+				ModelMaterialData matdata;
+				if (!node->child_material[j]) return false;
+				f.seekg(meta.GetFileOffsetByIndex(node->child_material[j]->file_index));
+				matdata.Read(f);
+				matdata.name = meta.file_name[node->child_material[j]->file_index];
+				int32_t texfileid = meta.GetFileIndexByInfo(matdata.maintex_file_info);
+				matdata.maintex_file_name = (texfileid>=0 ? meta.file_name[texfileid]+".png" : "TextureNotFound");
+				matdatalist.push_back(matdata);
+			}
+			k = 0;
+			for (j=0;j<node->child_bone_amount && k<meshdata.bone_amount;j++) {
+				if (!node->child_bone[j]) return false;
+				if (node->child_bone[j]->node_type==4) {
+					TransformStruct* transfbone = static_cast<TransformStruct*>(node->child_bone[j]);
+					if (!transfbone->child_object) return false;
+					if (transfbone->child_object->node_type==1) {
+						meshdata.bone[k].name = static_cast<GameObjectStruct*>(transfbone->child_object)->name;
+						meshdata.bone[k].scoped_name = static_cast<GameObjectStruct*>(transfbone->child_object)->GetScopedName();
+						k++;
+					}
+				}
+			}
+			mesh.push_back(meshdata);
+			material.push_back(matdatalist);
+			materialrelatedmeshname.push_back(meshdata.scoped_name);
+		}
+	}
+	if (mesh.size()!=material.size()) return false;
+	for (i=0;i<materialrelatedmeshname.size();i++)
+		if (materialrelatedmeshname[i]!=mesh[i].scoped_name) {
+			for (j=i+1;j<mesh.size();j++)
+				if (materialrelatedmeshname[i]==mesh[j].scoped_name) {
+					ModelMeshData tmp = mesh[i];
+					mesh[i] = mesh[j];
+					mesh[j] = tmp;
+					break;
+				}
+			if (j>=mesh.size()) return false;
+		}
+	return true;
+}
+
 int ModelDataStruct::Export(const char* outputname, int format) {
     FbxManager* sdkmanager = NULL;
     FbxScene* sdkscene = NULL;
@@ -394,7 +490,229 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 	sceneInfo->mKeywords = "";
 	sceneInfo->mComment = model.description.c_str();
 	sdkscene->SetSceneInfo(sceneInfo);
+	// Construct the basis for the skeleton
 	FbxNode* lRootNode = sdkscene->GetRootNode();
+	FbxSkin* lSkin = NULL;
+	FbxSkeleton* lSingleSkeleton = NULL;
+	FbxNode* lSingleSkeletonNode = NULL;
+	FbxCluster* lSingleSkeletonCluster = NULL;
+	vector<FbxSkeleton*> lMultiSkeleton;
+	vector<FbxCluster*> lMultiSkeletonCluster;
+	vector<string> lMultiSkeletonName;
+	bool hasbones = false;
+	for (i=0;i<model.mesh.size();i++)
+		if (model.mesh[i].bone_amount>0) {
+			hasbones = true;
+			break;
+		}
+	if (model.animation.size()>0 || hasbones) {
+		lSkin = FbxSkin::Create(sdkscene, "");
+	}
+	if (model.animation.size()>0 && !hasbones) {
+		lSingleSkeleton = FbxSkeleton::Create(sdkscene, "");
+		lSingleSkeletonNode = FbxNode::Create(sdkscene, "");
+		lSingleSkeletonCluster = FbxCluster::Create(sdkscene, "");
+		lSingleSkeleton->SetSkeletonType(FbxSkeleton::eRoot);
+		lSingleSkeletonNode->SetNodeAttribute(lSingleSkeleton);
+		lSingleSkeletonCluster->SetLink(lSingleSkeletonNode);
+		lSingleSkeletonCluster->SetLinkMode(FbxCluster::eTotalOne);
+		lSkin->AddCluster(lSingleSkeletonCluster);
+	}
+	// Construct all the Fbx nodes
+	vector<FbxNode*> lNodeList;
+	vector<GameObjectNode*> hierarchynode = model.hierarchy->node_list;
+	for (i=0;i<hierarchynode.size();i++) {
+		if (hierarchynode[i]==model.hierarchy->root_node) {
+			if (hierarchynode[i]->node_type==4) { // Should be always true
+				TransformStruct* nodespec = static_cast<TransformStruct*>(hierarchynode[i]);
+				lRootNode->LclRotation.Set(FbxDouble3(nodespec->rot.GetRoll(), nodespec->rot.GetPitch(), nodespec->rot.GetYaw()));
+				lRootNode->LclTranslation.Set(FbxDouble3(nodespec->x, nodespec->y, nodespec->z));
+				lRootNode->LclScaling.Set(FbxDouble3(nodespec->scale_x, nodespec->scale_y, nodespec->scale_z));
+			}
+			lNodeList.push_back(lRootNode);
+			continue;
+		}
+		if (hierarchynode[i]->node_type==4) {
+			// Simple node
+			string nodename = "";
+			TransformStruct* nodespec = static_cast<TransformStruct*>(hierarchynode[i]);
+			if (nodespec->child_object && nodespec->child_object->node_type==1)
+				nodename = static_cast<GameObjectStruct*>(nodespec->child_object)->name;
+			FbxNode* lNode = FbxNode::Create(sdkscene, FbxString(nodename.c_str()));
+			lNode->LclRotation.Set(FbxDouble3(nodespec->rot.GetRoll(), nodespec->rot.GetPitch(), nodespec->rot.GetYaw()));
+			lNode->LclTranslation.Set(FbxDouble3(nodespec->x, nodespec->y, nodespec->z));
+			lNode->LclScaling.Set(FbxDouble3(nodespec->scale_x, nodespec->scale_y, nodespec->scale_z));
+			lNodeList.push_back(lNode);
+		} else {
+			lNodeList.push_back(NULL);
+		}
+	}
+	// Link the nodes constructed so far and construct the bones
+	for (i=0;i<hierarchynode.size();i++) {
+		if (hierarchynode[i]->node_type==4 && lNodeList[i]) {
+			TransformStruct* nodespec = static_cast<TransformStruct*>(hierarchynode[i]);
+			if (nodespec->parent_transform && nodespec->parent_transform->node_type==4)
+				for (j=0;j<hierarchynode.size();j++)
+					if (nodespec->parent_transform==hierarchynode[j] && lNodeList[j]) {
+						lNodeList[j]->AddChild(lNodeList[i]);
+						break;
+					}
+		} else if (hierarchynode[i]->node_type==137) {
+			SkinnedMeshRendererStruct* nodespec = static_cast<SkinnedMeshRendererStruct*>(hierarchynode[i]);
+			for (j=0;j<nodespec->child_bone_amount;j++) {
+				string bonename = static_cast<GameObjectStruct*>(static_cast<TransformStruct*>(nodespec->child_bone[j])->child_object)->GetScopedName();
+				bool newbone = true;
+				for (k=0;k<lMultiSkeletonName.size();k++)
+					if (lMultiSkeletonName[k]==bonename) {
+						newbone = false;
+						break;
+					}
+				if (newbone) {
+					TransformStruct* parenttransf = static_cast<GameObjectStruct*>(nodespec->parent_object)->GetParentTransform();
+					FbxSkeleton* lSkeleton = FbxSkeleton::Create(sdkscene, static_cast<GameObjectStruct*>(static_cast<TransformStruct*>(nodespec->child_bone[j])->child_object)->name.c_str());
+					FbxCluster* lSkeletonCluster = FbxCluster::Create(sdkscene, "");
+					if (parenttransf->parent_transform==NULL || parenttransf->parent_transform==model.hierarchy->root_node)
+						lSkeleton->SetSkeletonType(FbxSkeleton::eRoot);
+					else
+						lSkeleton->SetSkeletonType(FbxSkeleton::eLimbNode);
+					for (k=0;k<hierarchynode.size();k++)
+						if (parenttransf==hierarchynode[k] && lNodeList[k]) {
+							lNodeList[k]->SetNodeAttribute(lSkeleton);
+							lSkeletonCluster->SetLink(lNodeList[k]);
+							break;
+						}
+					lSkeleton->Size.Set(1.0);
+					lSkeletonCluster->SetLinkMode(FbxCluster::eTotalOne);
+					lSkin->AddCluster(lSkeletonCluster);
+					lMultiSkeleton.push_back(lSkeleton);
+					lMultiSkeletonCluster.push_back(lSkeletonCluster);
+					lMultiSkeletonName.push_back(bonename);
+				}
+			}
+		}
+	}
+	// Construct the meshes
+	for (i=0;i<hierarchynode.size();i++) {
+		if (hierarchynode[i]->node_type==1) {
+			GameObjectStruct* nodespec = static_cast<GameObjectStruct*>(hierarchynode[i]);
+			string nodescopedname = nodespec->GetScopedName();
+			bool isskinnedmesh = false;
+			bool hasmeshfilter = false;
+			bool hasmeshrender = false;
+			bool hasanimation = false;
+			for (j=0;j<nodespec->child_amount;j++)
+				if (nodespec->child[j]) {
+					if (nodespec->child[j]->node_type==23)
+						hasmeshrender = true;
+					else if (nodespec->child[j]->node_type==33)
+						hasmeshfilter = true;
+					else if (nodespec->child[j]->node_type==111)
+						hasanimation = true;
+					else if (nodespec->child[j]->node_type==137)
+						isskinnedmesh = true;
+				}
+			int meshindex = -1;
+			if (isskinnedmesh || hasmeshfilter) {
+				for (j=0;j<model.mesh.size();j++)
+					if (model.mesh[j].scoped_name==nodescopedname) {
+						meshindex = j;
+						break;
+					}
+			}
+			if (meshindex>=0) {
+				// Mesh
+				ModelMeshData& mesh = model.mesh[meshindex];
+				FbxMesh* lMesh = FbxMesh::Create(sdkscene, mesh.name.c_str());
+				FbxNode* lMeshNode = NULL;
+				for (j=0;j<hierarchynode.size();j++)
+					if (nodespec->GetParentTransform()==hierarchynode[j] && lNodeList[j]) {
+						lMeshNode = lNodeList[j];
+						break;
+					}
+				lMesh->InitControlPoints(mesh.vertice_amount);
+				FbxVector4* lControlPoints = lMesh->GetControlPoints();
+				FbxGeometryElementNormal* lGeometryElementNormal = lMesh->CreateElementNormal();
+				lGeometryElementNormal->SetMappingMode(FbxGeometryElement::eByControlPoint);
+				lGeometryElementNormal->SetReferenceMode(FbxGeometryElement::eDirect);
+				FbxVector4 lNormal;
+				FbxGeometryElementUV* lUVDiffuseElement = lMesh->CreateElementUV("DiffuseUV");
+				lUVDiffuseElement->SetMappingMode(FbxGeometryElement::eByControlPoint);
+				lUVDiffuseElement->SetReferenceMode(FbxGeometryElement::eDirect);
+				FbxVector2 lUVPoint;
+				for (j = 0; j<mesh.vert.size(); j++) {
+					lControlPoints[j].Set(mesh.vert[j].x, mesh.vert[j].y, mesh.vert[j].z);
+					lNormal.Set(mesh.vert[j].nx, mesh.vert[j].ny, mesh.vert[j].nz);
+					lGeometryElementNormal->GetDirectArray().Add(lNormal);
+					lUVPoint.Set(mesh.vert[j].u, mesh.vert[j].v);
+					lUVDiffuseElement->GetDirectArray().Add(lUVPoint);
+				}
+				lMesh->InitMaterialIndices(FbxLayerElement::EMappingMode::eByPolygon);
+				uint16_t vertid[3];
+				for (j = 0; 3 * j<mesh.vert_list.size(); j++) {
+					int mtlidcur = -1;
+					for (k = 0; k <mesh.mat_info.size(); k++) {
+						if (3 * j >= mesh.mat_info[k].vert_list_start / 2 && 3 * j < mesh.mat_info[k].vert_list_start / 2 + mesh.mat_info[k].vert_list_amount) {
+							mtlidcur = k;
+							break;
+						}
+					}
+					vertid[0] = mesh.vert_list[3 * j];
+					vertid[1] = mesh.vert_list[3 * j + 1];
+					vertid[2] = mesh.vert_list[3 * j + 2];
+					lMesh->BeginPolygon(mtlidcur);
+					lMesh->AddPolygon(vertid[0], vertid[0]);
+					lMesh->AddPolygon(vertid[1], vertid[1]);
+					lMesh->AddPolygon(vertid[2], vertid[2]);
+					lMesh->EndPolygon();
+				}
+				lMesh->GenerateNormals(false,true);
+				lMeshNode->SetNodeAttribute(lMesh);
+				lMeshNode->SetShadingMode(FbxNode::eTextureShading);
+				// Materials and Textures
+				vector<ModelMaterialData>& material = model.material[meshindex];
+				for (j = 0; j < material.size(); j++) {
+					FbxString lTextureName = material[j].maintex_file_name.c_str();
+					FbxSurfacePhong* lMaterial = FbxSurfacePhong::Create(sdkscene, material[j].name.c_str());
+					lMeshNode->AddMaterial(lMaterial);
+					FbxFileTexture* lFileTex = FbxFileTexture::Create(sdkscene, lTextureName);
+					lFileTex->SetFileName(lTextureName);
+					lFileTex->SetRelativeFileName(lTextureName);
+					lFileTex->SetTextureUse(FbxTexture::eStandard);
+					lFileTex->SetMappingType(FbxTexture::eUV);
+					lFileTex->SetMaterialUse(FbxFileTexture::eModelMaterial);
+					lFileTex->UVSet.Set(FbxString("DiffuseUV"));
+					lMaterial->Diffuse.ConnectSrcObject(lFileTex);
+//					FbxProperty lProp = FbxProperty::Create(lMaterial, FbxDouble3DT, "EnvSampler", "SamplerTexture");
+//					FbxDouble3 lSampleVal(0, 0, 0);
+//					lProp.Set(lSampleVal);
+//					lFileTex->ConnectDstProperty(lProp);
+//					lMaterial->ConnectSrcObject(lFileTex);
+				}
+				if (model.animation.size()>0 && !hasbones) {
+					for (j = 0; j<mesh.vert.size(); j++)
+						lSingleSkeletonCluster->AddControlPointIndex(j, 1.0);
+				} else {
+					for (j = 0; j < mesh.bone_amount; j++) {
+						FbxCluster* lSkeletonCluster = NULL;
+						for (k=0;k<lMultiSkeleton.size();k++)
+							if (lMultiSkeletonName[k]==mesh.bone[j].scoped_name) {
+								lSkeletonCluster = lMultiSkeletonCluster[k];
+								break;
+							}
+						if (lSkeletonCluster) {
+							for (k = 0; k < mesh.vertice_attachment_amount; k++)
+								for (l = 0; l < 4; l++)
+									if (mesh.vert_attachment[k].bone_id[l]==j && mesh.vert_attachment[k].bone_factor[l] > 0.0)
+										lSkeletonCluster->AddControlPointIndex(k, mesh.vert_attachment[k].bone_factor[l]);
+						}
+					}
+				}
+				FbxGeometry* lPatchAttribute = (FbxGeometry*)lMeshNode->GetNodeAttribute();
+				lPatchAttribute->AddDeformer(lSkin);
+			}
+		}
+	}
+	/*
 	int* lMeshNodeIndex = new int[model.mesh.size()];
 	int* lSkeletonNodeIndex = new int[model.mesh.size()];
 	for (i = 0; i<model.mesh.size(); i++) {
@@ -454,10 +772,10 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 			lFileTex->SetMaterialUse(FbxFileTexture::eModelMaterial);
 			lFileTex->UVSet.Set(FbxString("DiffuseUV"));
 			lMaterial->Diffuse.ConnectSrcObject(lFileTex);
-/*			FbxProperty lProp = FbxProperty::Create(lMaterial, FbxDouble3DT, "EnvSampler", "SamplerTexture");
-			FbxDouble3 lSampleVal(0, 0, 0);
-			lProp.Set(lSampleVal);
-			lFileTex->ConnectDstProperty(lProp);*/
+//			FbxProperty lProp = FbxProperty::Create(lMaterial, FbxDouble3DT, "EnvSampler", "SamplerTexture");
+//			FbxDouble3 lSampleVal(0, 0, 0);
+//			lProp.Set(lSampleVal);
+//			lFileTex->ConnectDstProperty(lProp);
 //			lMaterial->ConnectSrcObject(lFileTex);
 		}
 		if (lRootNode->AddChild(lMeshNode))
@@ -501,7 +819,7 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 			FbxGeometry* lPatchAttribute = (FbxGeometry*)lMeshNode->GetNodeAttribute();
 			lPatchAttribute->AddDeformer(lSkin);
 		}
-	}
+	}*/
 	// Animations
 	FbxTime lTime;
 	int lKeyIndex;
@@ -511,13 +829,6 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 		FbxAnimCurve* lCurve;
 		lAnimStack->AddMember(lAnimLayer);
 		for (j=0;j<model.animation[i].localw_amount;j++) {
-			FbxNode* lSkeletonNode = NULL;
-			if (j==0)
-				lSkeletonNode = lRootNode->GetChild(lSkeletonNodeIndex[0]);
-			else
-				lSkeletonNode = lRootNode->GetChild(lSkeletonNodeIndex[0])->GetChild(j-1);
-			if (lSkeletonNode==NULL)
-				continue;
 
 			#define MACRO_FBX_APPLY_SINGLETRANSFORMATION(LOCALTYPE,LCLTYPE,COMPONENTNAME,VALUE) \
 				lCurve = lSkeletonNode->LCLTYPE.GetCurve(lAnimLayer, COMPONENTNAME, true); \
@@ -533,6 +844,17 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 				}
 
 			#define MACRO_FBX_APPLY_TRANSFORMATION(LOCALTYPE,LCLTYPE,X,Y,Z) \
+				FbxNode* lSkeletonNode = NULL; \
+				if (!hasbones) \
+					lSkeletonNode = lSingleSkeletonNode; \
+				else \
+					for (k=0;k<lMultiSkeletonName.size();k++) \
+						if (model.animation[i].LOCALTYPE[j].object_name==lMultiSkeletonName[k]) { \
+							lSkeletonNode = lMultiSkeleton[k]->GetNode(); \
+							break; \
+						} \
+				if (lSkeletonNode==NULL) \
+					continue; \
 				MACRO_FBX_APPLY_SINGLETRANSFORMATION(LOCALTYPE,LCLTYPE,FBXSDK_CURVENODE_COMPONENT_X,X) \
 				MACRO_FBX_APPLY_SINGLETRANSFORMATION(LOCALTYPE,LCLTYPE,FBXSDK_CURVENODE_COMPONENT_Y,Y) \
 				MACRO_FBX_APPLY_SINGLETRANSFORMATION(LOCALTYPE,LCLTYPE,FBXSDK_CURVENODE_COMPONENT_Z,Z)
@@ -540,28 +862,12 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 			MACRO_FBX_APPLY_TRANSFORMATION(localw,LclRotation,rot.GetRoll(),rot.GetPitch(),rot.GetYaw())
 		}
 		for (j=0;j<model.animation[i].localt_amount;j++) {
-			FbxNode* lSkeletonNode = NULL;
-			if (j==0)
-				lSkeletonNode = lRootNode->GetChild(lSkeletonNodeIndex[0]);
-			else
-				lSkeletonNode = lRootNode->GetChild(lSkeletonNodeIndex[0])->GetChild(j-1);
-			if (lSkeletonNode==NULL)
-				continue;
 			MACRO_FBX_APPLY_TRANSFORMATION(localt,LclTranslation,transx,transy,transz)
 		}
 		for (j=0;j<model.animation[i].locals_amount;j++) {
-			FbxNode* lSkeletonNode = NULL;
-			if (j==0)
-				lSkeletonNode = lRootNode->GetChild(lSkeletonNodeIndex[0]);
-			else
-				lSkeletonNode = lRootNode->GetChild(lSkeletonNodeIndex[0])->GetChild(j-1);
-			if (lSkeletonNode==NULL)
-				continue;
 			MACRO_FBX_APPLY_TRANSFORMATION(locals,LclScaling,scalex,scaley,scalez)
 		}
 	}
-	delete[] lMeshNodeIndex;
-	delete[] lSkeletonNodeIndex;
     return true;
 }
 

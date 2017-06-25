@@ -85,6 +85,8 @@ struct Quaternion {
 	static void QuaternionToEuler(const Quaternion q, float& roll, float& pitch, float& yaw);
 };
 
+#include "GameObject.h"
+
 struct ModelMeshVertex {
 	// Position
 	float x;
@@ -123,6 +125,9 @@ struct ModelMeshBone {
 	uint32_t unk_z2; // mostly 0
 	uint32_t unk_z3; // mostly 0
 	float unk_one; // mostly 1.0
+
+	string name;
+	string scoped_name;
 };
 
 struct ModelMeshVertexAttachment {
@@ -186,6 +191,9 @@ struct ModelMeshData {
 	uint32_t unk_num1;
 	uint32_t unk_num2;
 	uint32_t unk_num3;
+
+	string name;
+	string scoped_name;
 	
 	void Read(fstream& f);
 	// Deprecated (bone data loss) ; use ModelDataStruct::Export
@@ -215,7 +223,7 @@ struct ModelMaterialData {
 	float metallic_value = 0.0;
 	float mode_value = 0.0;
 	float occlusionstrength_value = 1.0;
-	float parallax_value = 0.02;
+	float parallax_value = 0.02f;
 	float srcblend_value = 1.0;
 	float uvsec_value = 0.0;
 	float zwrite_factor = 1.0;
@@ -230,6 +238,7 @@ struct ModelMaterialData {
 	float emissioncolor_alpha = 1.0;
 	
     string maintex_file_name;
+	string name;
     
 	void Read(fstream& f);
 	// Deprecated ; use ModelDataStruct::Export
@@ -319,10 +328,11 @@ struct ModelDataStruct {
     vector<ModelMeshData> mesh;
     vector< vector<ModelMaterialData> > material;
 	vector<ModelAnimationData> animation;
+	GameObjectHierarchy* hierarchy;
 
 	string description;
     
-    ModelDataStruct(unsigned int num) : mesh(num), material(num) {}
+    bool Read(fstream& f, GameObjectHierarchy* gohier);
 	int Export(const char* outputname, int format);
 };
 

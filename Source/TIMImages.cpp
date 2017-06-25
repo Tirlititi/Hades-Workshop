@@ -667,7 +667,6 @@ TIMImageDataStruct& TIMImageDataStruct::GetTIMTextureStruct(TIMImageDataStruct& 
 bool TIMImageDataStruct::ConvertFromSteamTexture(uint8_t* imgbuffer, uint32_t* destw, uint32_t* desth, uint8_t** destrgba) {
 	uint32_t tmp32, fmt;
 	uint8_t tmp8;
-	int dxtflag;
 	BufferInitPosition();
 	BufferReadLong(imgbuffer,*destw);
 	BufferReadLong(imgbuffer,*desth);
@@ -689,6 +688,7 @@ bool TIMImageDataStruct::ConvertFromSteamTexture(uint8_t* imgbuffer, uint32_t* d
 	uint8_t* imgrgba = NULL;
 	if (!ConvertFromSteamTextureNoHeader(&imgbuffer[BufferGetPosition()],fmt,w,h,&imgrgba))
 		return false;
+	*destrgba = imgrgba;
 	for (y=0;2*y+1<h;y++)
 		for (x=0;x<w;x++) {
 			tmp8 = imgrgba[(x+y*w)*4];

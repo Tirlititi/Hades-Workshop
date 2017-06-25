@@ -7,6 +7,7 @@
 #include "Database_Resource.h"
 #include "Database_SpellAnimation.h"
 #include "Gui_Preferences.h"
+#include "GameObject.h"
 #include "ModelMesh.h"
 #include "main.h"
 
@@ -543,6 +544,7 @@ void ToolUnityViewer::OnMenuSelection(wxCommandEvent& event) {
 static vector<unsigned int> listedfileobject;
 static vector<unsigned int> modelfilemesh;
 static vector< vector<unsigned int> > modelfilematerial;
+string debugspaces = "";
 void ListModelFiles_Rec(fstream& f, UnityArchiveMetaData& meta, unsigned int fileindex) {
 	if (meta.file_type1[fileindex]!=1 && meta.file_type1[fileindex]!=4 && meta.file_type1[fileindex]!=23 && meta.file_type1[fileindex]!=33 && meta.file_type1[fileindex]!=137)
 		return;
@@ -554,9 +556,19 @@ void ListModelFiles_Rec(fstream& f, UnityArchiveMetaData& meta, unsigned int fil
 	f.seekg(meta.GetFileOffsetByIndex(fileindex));
 	uint32_t objam;
 	unsigned int i;
+fstream fout("aaaa.txt",ios::app|ios::out); fout << debugspaces.c_str() << UnityArchiveMetaData::GetTypeName(meta.file_type1[fileindex]);
+debugspaces += "  ";
+if (meta.file_type1[fileindex]!=1) { fout << endl; fout.close(); }
 //{fstream fout("aaaa.txt",ios::app|ios::out); fout << "NEWFILE: " << fileindex << " (" << (unsigned int)meta.file_type1[fileindex] << ")" << endl; fout.close();}
 	if (meta.file_type1[fileindex]==1) {
 		objam = ReadLong(f);
+size_t debugpos = f.tellg();
+f.seekg(objam*0x10+4,ios::cur);
+string debugname;
+uint32_t debugnamesize = ReadLong(f);
+for (i=0;i<debugnamesize;i++) debugname.push_back(f.get());
+f.seekg(debugpos);
+fout << " (" << debugname.c_str() << ")" << endl; fout.close();
 		for (i=0;i<objam;i++) {
 			uint32_t objtype = ReadLong(f);
 			f.seekg(4,ios::cur);
@@ -643,6 +655,7 @@ fout << ", ";*/
 //		f.seekg(filepos+0x9C);
 //		f.seekg(filepos+0xAC);
 	}
+debugspaces = debugspaces.substr(2);
 	f.seekg(prevpos);
 }
 
@@ -687,7 +700,7 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				bool success = TIMImageDataStruct::ConvertFromSteamTexture((uint8_t*)buffer,&imgw,&imgh,&imgrgba);
 				delete[] buffer;
 				if (!success) {
-					wxLogError(_(L"Format of '%s' not supported"),m_assetlist->GetItemText(it,1));
+					wxLogError(_(HADES_STRING_UNITYVIEWER_UNKNOWN_FORMAT),m_assetlist->GetItemText(it,1));
 					continue;
 				}
 				unsigned char* imgrgb = (unsigned char*)malloc(3*imgw*imgh*sizeof(unsigned char));
@@ -729,15 +742,39 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				filedest.close();
 				delete[] buffer;
 			} else if (meta_data[current_archive].file_type1[expfileid]==1 && path.AfterLast(L'.').IsSameAs(L"fbx",false) && !m_menuconvertmodelnone->IsChecked()) {
+				int32_t modelrootid;
+				uint32_t childamount;
+				uint32_t childtype;
+				uint64_t rootinfo = 0;
+				BufferInitPosition();
+				BufferReadLong((uint8_t*)buffer,childamount);
+				for (i=0;i<childamount;i++) {
+					BufferReadLong((uint8_t*)buffer,childtype);
+					if (childtype==4) {
+						BufferInitPosition(BufferGetPosition()+4);
+						BufferReadLongLong((uint8_t*)buffer,rootinfo);
+						break;
+					}
+					BufferInitPosition(BufferGetPosition()+0xC);
+				}
 				delete[] buffer;
-				ListModelFiles(filebase,meta_data[current_archive],expfileid);
-				// Models in p0data4: From GameObject
-				// -> Transform (type 4)
-				// --> Transform (from 2nd? ; one for each mesh)
-				// ---> GameObject (begin)
-				// ----> SkinnedMeshRenderer (type 137)
-				// -----> Material (0x40)
-				// -----> Mesh (0x80)
+				modelrootid = meta_data[current_archive].GetFileIndexByInfo(rootinfo);
+				if (modelrootid<0) {
+					wxLogError(HADES_STRING_UNITYVIEWER_MODEL_BAD_HIERARCHY);
+					continue;
+				}
+				GameObjectHierarchy modelhierarchy;
+				modelhierarchy.BuildHierarchy(filebase,meta_data[current_archive],modelrootid);
+				wxString filepathbase = m_assetlist->GetItemText(it,1).BeforeLast(L'.');
+				ModelDataStruct model;
+				wxString descriptionstr = m_assetlist->GetItemText(it, 5);
+				descriptionstr.Replace(_(UnityArchiveMetaData::GetTypeName(meta_data[current_archive].file_type1[expfileid])), _(L"Full Model"));
+				model.description = descriptionstr.ToStdString();
+				if (!model.Read(filebase,&modelhierarchy)) {
+					wxLogError(HADES_STRING_UNITYVIEWER_MODEL_BAD_HIERARCHY);
+					continue;
+				}
+/*				ListModelFiles(filebase,meta_data[current_archive],expfileid);
                 if (modelfilemesh.size()!=modelfilematerial.size()) {
                     wxLogError(_(L"Error: can't export '%s' ; materials and meshes don't match"),m_assetlist->GetItemText(it,1));
                     continue;
@@ -759,7 +796,7 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
                         wxString texfilename = (texfileid>=0 ? _(meta_data[current_archive].file_name[texfileid])+_(".png") : _(L"TextureNotFound"));
                         model.material[i][j].maintex_file_name = texfilename.ToStdString();
 					}
-				}
+				}*/
 				long itclip = -1;
 				wxString fileobjectid,gameobjectid = GetFullName(current_archive,expfileid);
 				for (;;) {

@@ -198,6 +198,9 @@
     <ClCompile Include="Source\Squish\alpha.cpp">
       <Filter>extsrc\Squish</Filter>
     </ClCompile>
+    <ClCompile Include="Source\GameObject.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\BattleScenes.h">
@@ -418,6 +421,9 @@
     </ClInclude>
     <ClInclude Include="Source\fbxsdk.h">
       <Filter>extinclude</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\GameObject.h">
+      <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

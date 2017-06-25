@@ -506,6 +506,57 @@ int FindConfiguration(string filepath, ConfigurationSet& dest) {
 		FFIXReadShort(f,firstmetadatatype[i]);
 		FFIXReadLong(f,firstmetadatasector[i]);
 	}
+	/* DEBUG: Exporting AKAO sounds...
+	f.seekg(IMG_HEADER_OFFSET+metadatasector[11]*FILE_IGNORE_DATA_PERIOD);
+	uint16_t* dbgsoundid = new uint16_t[metadatadataamount[11]];
+	uint16_t* dbgsoundtype = new uint16_t[metadatadataamount[11]];
+	uint32_t* dbgsoundsector = new uint32_t[metadatadataamount[11]];
+	for (i=0;i<metadatadataamount[11];i++) {
+		FFIXReadShort(f,dbgsoundid[i]);
+		FFIXReadShort(f,dbgsoundtype[i]);
+		FFIXReadLong(f,dbgsoundsector[i]);
+		uint32_t dbgtmpoffset = f.tellg();
+		f.seekg(IMG_HEADER_OFFSET+dbgsoundsector[i]*FILE_IGNORE_DATA_PERIOD+0x14);
+		uint32_t dbgsoundsize;
+		FFIXReadLong(f,dbgsoundsize);
+		dbgsoundsize -= 0x30;
+		FFIXSeek(f,f.tellg(),0x28);
+		uint8_t dbgbuffer;
+		stringstream foutname;
+		foutname << "Sound\\" << (unsigned int)dbgsoundid[i];
+		fstream fout(foutname.str().c_str(),ios::out|ios::binary);
+		for (unsigned int j=0;j<dbgsoundsize;j++) {
+			FFIXReadChar(f,dbgbuffer);
+			fout.put(dbgbuffer);
+		}
+		fout.close();
+		f.seekg(dbgtmpoffset);
+	}
+	f.seekg(IMG_HEADER_OFFSET+metadatasector[9]*FILE_IGNORE_DATA_PERIOD);
+	uint16_t* dbgmusicid = new uint16_t[metadatadataamount[9]];
+	uint16_t* dbgmusictype = new uint16_t[metadatadataamount[9]];
+	uint32_t* dbgmusicsector = new uint32_t[metadatadataamount[9]];
+	for (i=0;i<metadatadataamount[9];i++) {
+		FFIXReadShort(f,dbgmusicid[i]);
+		FFIXReadShort(f,dbgmusictype[i]);
+		FFIXReadLong(f,dbgmusicsector[i]);
+		uint32_t dbgtmpoffset = f.tellg();
+		f.seekg(IMG_HEADER_OFFSET+dbgmusicsector[i]*FILE_IGNORE_DATA_PERIOD+0x54);
+		uint32_t dbgmusicsize;
+		FFIXReadLong(f,dbgmusicsize);
+		dbgmusicsize -= 0x30;
+		FFIXSeek(f,f.tellg(),0x28);
+		uint8_t dbgbuffer;
+		stringstream foutname;
+		foutname << "Music\\" << (unsigned int)dbgmusicid[i];
+		fstream fout(foutname.str().c_str(),ios::out|ios::binary);
+		for (unsigned int j=0;j<dbgmusicsize;j++) {
+			FFIXReadChar(f,dbgbuffer);
+			fout.put(dbgbuffer);
+		}
+		fout.close();
+		f.seekg(dbgtmpoffset);
+	}*/
 	// (BIN HEADER)
 	//-- Get language version from the top-level header
 	FFIXSeek(f,BIN_HEADER,0x330);

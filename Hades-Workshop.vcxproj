@@ -203,6 +203,7 @@
     <ClCompile Include="Source\File_IOCommon.cpp" />
     <ClCompile Include="Source\File_Manipulation.cpp" />
     <ClCompile Include="Source\File_Recreation.cpp" />
+    <ClCompile Include="Source\GameObject.cpp" />
     <ClCompile Include="Source\gui.cpp" />
     <ClCompile Include="Source\Gui_AssemblyEditor.cpp" />
     <ClCompile Include="Source\Gui_CurveEditor.cpp" />
@@ -272,6 +273,7 @@
     <ClInclude Include="Source\File_IOCommon.h" />
     <ClInclude Include="Source\File_Manipulation.h" />
     <ClInclude Include="Source\File_Recreation.h" />
+    <ClInclude Include="Source\GameObject.h" />
     <ClInclude Include="Source\gui.h" />
     <ClInclude Include="Source\Gui_AssemblyEditor.h" />
     <ClInclude Include="Source\Gui_CurveEditor.h" />

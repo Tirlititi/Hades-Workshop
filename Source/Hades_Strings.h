@@ -350,6 +350,8 @@ static wxString HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM[] = {
 #define HADES_STRING_UNITYVIEWER_IMPORT_ERROR	"Successfully imported %d asset(s).\n"\
 												"Failed to import %d asset(s)."
 #define HADES_STRING_UNITYVIEWER_IMPORT_NO_REPLACE	"\nArchive not updated: saved the output as tmp file."
+#define HADES_STRING_UNITYVIEWER_UNKNOWN_FORMAT	L"Format of '%s' not supported"
+#define HADES_STRING_UNITYVIEWER_MODEL_BAD_HIERARCHY	L"Failed to read the asset's file hierarchy"
 
 
 
