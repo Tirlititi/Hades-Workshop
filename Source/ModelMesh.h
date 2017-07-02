@@ -72,6 +72,7 @@ enum ModelFileFormat {
 using namespace std;
 
 struct Quaternion {
+public:
 	float x;
 	float y;
 	float z;
@@ -81,8 +82,18 @@ struct Quaternion {
 	float GetPitch();
 	float GetYaw();
 
+	void SetValue(float newx, float newy, float newz, float neww);
+	void Apply(float& posx, float& posy, float& posz);
+
+	void Read(fstream& f);
+	void Write(fstream& f);
+	static Quaternion Product(Quaternion lfactor, Quaternion rfactor);
 	static Quaternion EulerToQuaternion(float roll, float pitch, float yaw);
 	static void QuaternionToEuler(const Quaternion q, float& roll, float& pitch, float& yaw);
+
+private:
+	bool apply_matrix_updated;
+	double apply_matrix[9];
 };
 
 #include "GameObject.h"
@@ -248,27 +259,21 @@ struct ModelMaterialData {
 struct ModelAnimationTransformW {
 	float time;
 	Quaternion rot;
-	float x1; // any float but small
-	float y1;
-	float z1;
-	float w1;
-	float x2; // duplicates?
-	float y2;
-	float z2;
-	float w2;
+	Quaternion rot1;
+	Quaternion rot2;
 };
 
 struct ModelAnimationTransformT {
 	float time;
-	float rotx;
 	float transx;
-	float unkx;
-	float roty;
 	float transy;
-	float unky;
-	float rotz;
 	float transz;
-	float unkz;
+	float transx1;
+	float transy1;
+	float transz1;
+	float transx2;
+	float transy2;
+	float transz2;
 };
 
 struct ModelAnimationTransformS {
@@ -276,12 +281,12 @@ struct ModelAnimationTransformS {
 	float scalex;
 	float scaley;
 	float scalez;
-	float unkx1;
-	float unky1;
-	float unkz1;
-	float unkx2; // duplicates?
-	float unky2;
-	float unkz2;
+	float scalex1;
+	float scaley1;
+	float scalez1;
+	float scalex2;
+	float scaley2;
+	float scalez2;
 };
 
 template<typename Transf>
@@ -321,7 +326,7 @@ struct ModelAnimationData {
     
 	uint32_t anim_id;
 
-	void Read(fstream& f);
+	void Read(fstream& f, GameObjectHierarchy* gohier = NULL);
 };
 
 struct ModelDataStruct {
@@ -332,6 +337,17 @@ struct ModelDataStruct {
 
 	string description;
     
+	// In Steam's assets, the coordinate system is:
+	//  1st coord: right to left
+	//  2nd coord: up to bottom
+	//  3rd coord: front to back
+	// It is converted here into:
+	//  x: left to right
+	//  y: bottom to up
+	//  z: front to back
+	static void ReadCoordinates(fstream& f, float& x, float& y, float& z, bool swapsign = true);
+	static void WriteCoordinates(fstream& f, float x, float y, float z, bool swapsign = true);
+
     bool Read(fstream& f, GameObjectHierarchy* gohier);
 	int Export(const char* outputname, int format);
 };

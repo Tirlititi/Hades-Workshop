@@ -807,7 +807,7 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 						if (gameobjectid.IsSameAs(fileobjectid)) {
 							ModelAnimationData animation;
 							filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(wxAtoi(m_assetlist->GetItemText(itclip,0))-1));
-							animation.Read(filebase);
+							animation.Read(filebase,&modelhierarchy);
 							model.animation.push_back(animation);
 						}
 					}

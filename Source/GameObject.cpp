@@ -78,16 +78,9 @@ GameObjectNode* BuildHierarchy_Rec(GameObjectNode* parent, GameObjectHierarchy& 
 		roothierarchy.node_list.push_back(res);
 		MACRO_READCHILDOBJ(restransf,false)
 		restransf->child_object = childobj;
-		restransf->rot.x = ReadFloat(f); // DEBUG: Verify order
-		restransf->rot.y = ReadFloat(f);
-		restransf->rot.z = ReadFloat(f);
-		restransf->rot.w = ReadFloat(f);
-		restransf->x = ReadFloat(f);
-		restransf->y = ReadFloat(f);
-		restransf->z = ReadFloat(f);
-		restransf->scale_x = ReadFloat(f);
-		restransf->scale_y = ReadFloat(f);
-		restransf->scale_z = ReadFloat(f);
+		restransf->rot.Read(f);
+		ModelDataStruct::ReadCoordinates(f,restransf->x,restransf->y,restransf->z);
+		ModelDataStruct::ReadCoordinates(f,restransf->scale_x,restransf->scale_y,restransf->scale_z,false);
 		restransf->child_transform_amount = ReadLong(f);
 		for (i=0;i<restransf->child_transform_amount;i++) {
 			MACRO_READCHILDOBJ(restransf,false)
@@ -95,6 +88,13 @@ GameObjectNode* BuildHierarchy_Rec(GameObjectNode* parent, GameObjectHierarchy& 
 		}
 		MACRO_READCHILDOBJ(restransf,false)
 		restransf->parent_transform = childobj;
+		GameObjectNode* parentnoderec = restransf->parent_transform;
+		Quaternion rotationquat = restransf->rot;
+		while (parentnoderec && parentnoderec->node_type==4) {
+			rotationquat = Quaternion::Product(static_cast<TransformStruct*>(parentnoderec)->rot,rotationquat);
+			parentnoderec = static_cast<TransformStruct*>(parentnoderec)->parent_transform;
+		}
+		rotationquat.Apply(restransf->x,restransf->y,restransf->z);
 		res = restransf;
 	} else if (meta.file_type1[fileindex]==23) {
 		MeshRendererStruct* resmeshren = new MeshRendererStruct(parent,roothierarchy,objtype,objunk,objinfo);

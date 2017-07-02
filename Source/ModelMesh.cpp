@@ -4,6 +4,7 @@
 
 void InitializeSdkObjects(FbxManager*& pManager, FbxScene*& pScene);
 void DestroySdkObjects(FbxManager* pManager);
+void SetupAxisSystem(FbxScene*& sdkscene);
 bool SaveScene(const char* pFilename, FbxManager* pManager, FbxDocument* pScene, int format = MODEL_FILE_FORMAT_FBX_ASCII, bool pEmbedMedia = false);
 bool LoadScene(const char* pFilename, FbxManager* pManager, FbxDocument* pScene);
 bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene*& sdkscene);
@@ -22,9 +23,9 @@ void ModelMeshData::Read(fstream& f) {
 	ModelMeshBone bonebuffer;
 	unsigned int i;
 	size_t headerpos = f.tellg();
-fstream fout("aaaa.txt",ios::out|ios::app);
+//fstream fout("aaaa.txt",ios::out|ios::app);
 	material_info_amount = ReadLong(f);
-fout << "material_info_amount: " << (unsigned int)material_info_amount << endl;
+//fout << "material_info_amount: " << (unsigned int)material_info_amount << endl;
 	mat_info.reserve(material_info_amount);
 	for (i=0;i<material_info_amount;i++) {
 		matinfobuffer.vert_list_start = ReadLong(f);
@@ -32,17 +33,13 @@ fout << "material_info_amount: " << (unsigned int)material_info_amount << endl;
 		matinfobuffer.unk0 = ReadLong(f);
 		matinfobuffer.vert_start = ReadLong(f);
 		matinfobuffer.vert_amount = ReadLong(f);
-		matinfobuffer.center_x = ReadFloat(f);
-		matinfobuffer.center_y = ReadFloat(f);
-		matinfobuffer.center_z = ReadFloat(f);
-		matinfobuffer.radius_x = ReadFloat(f);
-		matinfobuffer.radius_y = ReadFloat(f);
-		matinfobuffer.radius_z = ReadFloat(f);
+		ModelDataStruct::ReadCoordinates(f,matinfobuffer.center_x,matinfobuffer.center_y,matinfobuffer.center_z);
+		ModelDataStruct::ReadCoordinates(f,matinfobuffer.radius_x,matinfobuffer.radius_y,matinfobuffer.radius_z,false);
 		mat_info.push_back(matinfobuffer);
 	}
 	f.seekg(0x10,ios::cur);
 	bone_amount = ReadLong(f);
-fout << "bone_amount: " << (unsigned int)bone_amount << endl;
+//fout << "bone_amount: " << (unsigned int)bone_amount << endl;
 	bone.reserve(bone_amount);
 	for (i=0;i<bone_amount;i++) {
 		bonebuffer.unk_p1 = ReadFloat(f);
@@ -64,7 +61,7 @@ fout << "bone_amount: " << (unsigned int)bone_amount << endl;
 		bone.push_back(bonebuffer);
 	}
 	bone_unk_amount = ReadLong(f);
-fout << "bone_unk_amount: " << (unsigned int)bone_unk_amount << endl;
+//fout << "bone_unk_amount: " << (unsigned int)bone_unk_amount << endl;
 	bone_unk_list.reserve(bone_unk_amount);
 	for (i=0;i<bone_unk_amount;i++)
 		bone_unk_list.push_back(ReadLong(f));
@@ -75,13 +72,13 @@ fout << "bone_unk_amount: " << (unsigned int)bone_unk_amount << endl;
 	unk_flag4 = f.get();
 	unsigned int sizevertlist = ReadLong(f);
 	vertex_list_amount = sizevertlist/2;
-fout << "vertex_list_amount: " << (unsigned int)vertex_list_amount << endl;
+//fout << "vertex_list_amount: " << (unsigned int)vertex_list_amount << endl;
 	vert_list.reserve(vertex_list_amount);
 	for (i=0;i<vertex_list_amount;i++)
 		vert_list.push_back(ReadShort(f));
 	f.seekg(GetAlignOffset(f.tellg()),ios::cur);
 	vertice_attachment_amount = ReadLong(f);
-fout << "vertice_attachment_amount: " << (unsigned int)vertice_attachment_amount << endl;
+//fout << "vertice_attachment_amount: " << (unsigned int)vertice_attachment_amount << endl;
 	vert_attachment.reserve(vertice_attachment_amount);
 	for (i=0;i<vertice_attachment_amount;i++) {
 		vertattachbuffer.bone_factor[0] = ReadFloat(f);
@@ -96,7 +93,7 @@ fout << "vertice_attachment_amount: " << (unsigned int)vertice_attachment_amount
 	}
 	vert_format0 = ReadLong(f);
 	vertice_amount = ReadLong(f);
-fout << "vertice_attachment_amount: " << (unsigned int)vertice_amount << endl;
+//fout << "vertice_attachment_amount: " << (unsigned int)vertice_amount << endl;
 	vert_format1 = ReadLong(f);
 	vert_format2 = ReadLong(f);
 	vert_format3 = ReadLong(f);
@@ -110,12 +107,8 @@ fout << "vertice_attachment_amount: " << (unsigned int)vertice_amount << endl;
 	size_t vertpos = f.tellg();
 	vert.reserve(vertice_amount);
 	for (i=0;i<vertice_amount;i++) {
-		vertbuffer.x = ReadFloat(f);
-		vertbuffer.y = ReadFloat(f);
-		vertbuffer.z = ReadFloat(f);
-		vertbuffer.nx = ReadFloat(f);
-		vertbuffer.ny = ReadFloat(f);
-		vertbuffer.nz = ReadFloat(f);
+		ModelDataStruct::ReadCoordinates(f,vertbuffer.x,vertbuffer.y,vertbuffer.z);
+		ModelDataStruct::ReadCoordinates(f,vertbuffer.nx,vertbuffer.ny,vertbuffer.nz);
 		if (vert_format9==0x4002000) { // DEBUG
 			vertbuffer.u = ReadFloat(f);
 			vertbuffer.v = ReadFloat(f);
@@ -141,16 +134,12 @@ fout << "vertice_attachment_amount: " << (unsigned int)vertice_amount << endl;
 		}
 	}
 	f.seekg(vertpos+vert_datasize+0xA4);
-	center_x = ReadFloat(f);
-	center_y = ReadFloat(f);
-	center_z = ReadFloat(f);
-	radius_x = ReadFloat(f);
-	radius_y = ReadFloat(f);
-	radius_z = ReadFloat(f);
+	ModelDataStruct::ReadCoordinates(f,center_x,center_y,center_z);
+	ModelDataStruct::ReadCoordinates(f,radius_x,radius_y,radius_z,false);
 	unk_num1 = ReadLong(f);
 	unk_num2 = ReadLong(f);
 	unk_num3 = ReadLong(f);
-fout.close();
+//fout.close();
 }
 
 void ModelMeshData::Export(fstream& output, const char* objname, const char* mtlbasename, bool firstobject) {
@@ -282,8 +271,8 @@ void ModelMaterialData::Export(fstream& output, const char* mtlname, const char*
 	output << maintexname << endl << endl;
 }
 
-void ModelAnimationData::Read(fstream& f) {
-	unsigned int i,j;
+void ModelAnimationData::Read(fstream& f, GameObjectHierarchy* gohier) {
+	unsigned int i,j,k,t;
 	name_len = ReadLong(f);
 	name = "";
 	for (i=0;i<name_len;i++)
@@ -291,76 +280,197 @@ void ModelAnimationData::Read(fstream& f) {
 	f.seekg(GetAlignOffset(f.tellg()),ios::cur);
 	num_unk1 = ReadShort(f);
 	num_unk2 = ReadShort(f);
-fstream fout("aaaa.txt",ios::out|ios::app);
+//fstream fout("aaaa.txt",ios::out|ios::app);
 
 	#define MACRO_IOTRANSFORM_BEGIN(LOCALTYPE) \
-	LOCALTYPE ## _amount = ReadLong(f); \
-fout << #LOCALTYPE": " << (unsigned int)LOCALTYPE ## _amount << endl; \
-	LOCALTYPE.resize(LOCALTYPE ## _amount); \
-	for (i=0;i<LOCALTYPE ## _amount;i++) { \
-		LOCALTYPE[i].transform_amount = ReadLong(f); \
-fout << #LOCALTYPE" transform: " << (unsigned int)LOCALTYPE[i].transform_amount << endl; \
-		LOCALTYPE[i].transform.resize(LOCALTYPE[i].transform_amount); \
-		for (j=0;j<LOCALTYPE[i].transform_amount;j++) {
+		LOCALTYPE ## _amount = ReadLong(f); \
+/*fout << #LOCALTYPE": " << (unsigned int)LOCALTYPE ## _amount << endl;*/ \
+		LOCALTYPE.resize(LOCALTYPE ## _amount); \
+		for (i=0;i<LOCALTYPE ## _amount;i++) { \
+			LOCALTYPE[i].transform_amount = ReadLong(f); \
+/*fout << #LOCALTYPE" transform: " << (unsigned int)LOCALTYPE[i].transform_amount << endl;*/ \
+			LOCALTYPE[i].transform.resize(LOCALTYPE[i].transform_amount); \
+			for (j=0;j<LOCALTYPE[i].transform_amount;j++) {
 
 	#define MACRO_IOTRANSFORM_END(LOCALTYPE) \
-		} \
-		LOCALTYPE[i].unkint1 = ReadLong(f); \
-		LOCALTYPE[i].unkint2 = ReadLong(f); \
-		LOCALTYPE[i].object_name_len = ReadLong(f); \
-		LOCALTYPE[i].object_name = ""; \
-		for (j=0;j<LOCALTYPE[i].object_name_len;j++) \
-			LOCALTYPE[i].object_name.push_back(f.get()); \
-		f.seekg(GetAlignOffset(f.tellg()),ios::cur); \
-fout << #LOCALTYPE" name: " << LOCALTYPE[i].object_name.c_str() << endl; \
-	}
+			} \
+			LOCALTYPE[i].unkint1 = ReadLong(f); \
+			LOCALTYPE[i].unkint2 = ReadLong(f); \
+			LOCALTYPE[i].object_name_len = ReadLong(f); \
+			LOCALTYPE[i].object_name = ""; \
+			for (j=0;j<LOCALTYPE[i].object_name_len;j++) \
+				LOCALTYPE[i].object_name.push_back(f.get()); \
+			f.seekg(GetAlignOffset(f.tellg()),ios::cur); \
+/*fout << #LOCALTYPE" name: " << LOCALTYPE[i].object_name.c_str() << endl;*/ \
+		}
 
 	MACRO_IOTRANSFORM_BEGIN(localw)
 		localw[i].transform[j].time = ReadFloat(f);
-		localw[i].transform[j].rot.x = ReadFloat(f);
-		localw[i].transform[j].rot.y = ReadFloat(f);
-		localw[i].transform[j].rot.z = ReadFloat(f);
-		localw[i].transform[j].rot.w = ReadFloat(f);
-		localw[i].transform[j].x1 = ReadFloat(f);
-		localw[i].transform[j].y1 = ReadFloat(f);
-		localw[i].transform[j].z1 = ReadFloat(f);
-		localw[i].transform[j].w1 = ReadFloat(f);
-		localw[i].transform[j].x2 = ReadFloat(f);
-		localw[i].transform[j].y2 = ReadFloat(f);
-		localw[i].transform[j].z2 = ReadFloat(f);
-		localw[i].transform[j].w2 = ReadFloat(f);
+		localw[i].transform[j].rot.Read(f);
+		localw[i].transform[j].rot1.Read(f);
+		localw[i].transform[j].rot2.Read(f);
 	MACRO_IOTRANSFORM_END(localw)
 	num_unk3 = ReadLong(f);
 	MACRO_IOTRANSFORM_BEGIN(localt)
 		localt[i].transform[j].time = ReadFloat(f);
-		localt[i].transform[j].rotx = ReadFloat(f);
-		localt[i].transform[j].transx = ReadFloat(f);
-		localt[i].transform[j].unkx = ReadFloat(f);
-		localt[i].transform[j].roty = ReadFloat(f);
-		localt[i].transform[j].transy = ReadFloat(f);
-		localt[i].transform[j].unky = ReadFloat(f);
-		localt[i].transform[j].rotz = ReadFloat(f);
-		localt[i].transform[j].transz = ReadFloat(f);
-		localt[i].transform[j].unkz = ReadFloat(f);
+		ModelDataStruct::ReadCoordinates(f,localt[i].transform[j].transx,localt[i].transform[j].transy,localt[i].transform[j].transz);
+		ModelDataStruct::ReadCoordinates(f,localt[i].transform[j].transx1,localt[i].transform[j].transy1,localt[i].transform[j].transz1);
+		ModelDataStruct::ReadCoordinates(f,localt[i].transform[j].transx2,localt[i].transform[j].transy2,localt[i].transform[j].transz2);
 	MACRO_IOTRANSFORM_END(localt)
 	MACRO_IOTRANSFORM_BEGIN(locals)
 		locals[i].transform[j].time = ReadFloat(f);
-		locals[i].transform[j].scalex = ReadFloat(f);
-		locals[i].transform[j].scaley = ReadFloat(f);
-		locals[i].transform[j].scalez = ReadFloat(f);
-		locals[i].transform[j].unkx1 = ReadFloat(f);
-		locals[i].transform[j].unky1 = ReadFloat(f);
-		locals[i].transform[j].unkz1 = ReadFloat(f);
-		locals[i].transform[j].unkx2 = ReadFloat(f);
-		locals[i].transform[j].unky2 = ReadFloat(f);
-		locals[i].transform[j].unkz2 = ReadFloat(f);
+		ModelDataStruct::ReadCoordinates(f,locals[i].transform[j].scalex,locals[i].transform[j].scaley,locals[i].transform[j].scalez,false);
+		ModelDataStruct::ReadCoordinates(f,locals[i].transform[j].scalex1,locals[i].transform[j].scaley1,locals[i].transform[j].scalez1,false);
+		ModelDataStruct::ReadCoordinates(f,locals[i].transform[j].scalex2,locals[i].transform[j].scaley2,locals[i].transform[j].scalez2,false);
 	MACRO_IOTRANSFORM_END(locals)
 	num_unk4 = ReadLong(f);
 	num_unk5 = ReadLong(f);
 	float_unk = ReadFloat(f);
 	num_unk6 = ReadLong(f);
-fout.close();
+//fout.close();
 	// ToDo: read the end
+	// In FBX, the translations are done using the global coordinates
+	// In Steam assets, they are done using the node's orientation
+	vector<int> nodeparentindex;
+	vector<FbxString> nodename;
+	vector<Quaternion> nodedefaultglobalrot;
+	vector<Quaternion> nodeglobalrot;
+	FbxString nodefullname, nodenewname;
+	unsigned int tokenamount;
+	bool foundflag;
+	// 1st step: create the list of needed nodes and parent hierarchy
+	// Note: a parent node is always before a child in the vector lists
+	vector<unsigned int> localtnodeindex;
+	localtnodeindex.resize(localt_amount);
+	for (i=0;i<localt_amount;i++) {
+		nodefullname = FbxString(localt[i].object_name.c_str());
+		tokenamount = nodefullname.GetTokenCount("/");
+		for (j=0;j<tokenamount;j++) {
+			nodenewname = nodefullname.GetToken(j,"/");
+			foundflag = false;
+			for (k=0;k<nodename.size();k++)
+				if (nodename[k]==nodenewname) {
+					foundflag = true;
+					if (j+1==tokenamount)
+						localtnodeindex[i] = k;
+					break;
+				}
+			if (!foundflag) {
+				if (j+1==tokenamount)
+					localtnodeindex[i] = nodename.size();
+				nodename.push_back(nodenewname);
+			}
+		}
+		if (tokenamount<=1) {
+			nodeparentindex.push_back(-1);
+		} else {
+			nodenewname = nodefullname.GetToken(tokenamount-2,"/");
+			foundflag = false;
+			for (k=0;k<nodename.size();k++)
+				if (nodenewname==nodename[k]) {
+					nodeparentindex.push_back(k);
+					foundflag = true;
+					break;
+				}
+			if (!foundflag)
+				nodeparentindex.push_back(-1);
+		}
+	}
+	// 2nd step: retrieve the default orientation from GameObjectHierarchy
+	nodedefaultglobalrot.resize(nodename.size());
+	if (gohier) {
+		for (i=0;i<nodedefaultglobalrot.size();i++) {
+			foundflag = false;
+			for (j=0;gohier->node_list.size();j++)
+				if (gohier->node_list[j]->node_type==4 /*
+				*/ && static_cast<TransformStruct*>(gohier->node_list[j])->child_object && static_cast<TransformStruct*>(gohier->node_list[j])->child_object->node_type==1 /*
+				*/ && nodename[i]==FbxString(static_cast<GameObjectStruct*>(static_cast<TransformStruct*>(gohier->node_list[j])->child_object)->name.c_str())) {
+					nodedefaultglobalrot[i] = static_cast<TransformStruct*>(gohier->node_list[j])->rot;
+					foundflag = true;
+					break;
+				}
+			if (!foundflag) {
+				nodedefaultglobalrot[i].x = 0.0;
+				nodedefaultglobalrot[i].y = 0.0;
+				nodedefaultglobalrot[i].z = 0.0;
+				nodedefaultglobalrot[i].w = 1.0;
+			}
+		}
+	} else {
+		for (i=0;i<nodedefaultglobalrot.size();i++) {
+			nodedefaultglobalrot[i].x = 0.0;
+			nodedefaultglobalrot[i].y = 0.0;
+			nodedefaultglobalrot[i].z = 0.0;
+			nodedefaultglobalrot[i].w = 1.0;
+		}
+	}
+	// 3rd step: compute the orientation at each time and apply it to the translation
+	vector<float> timelist;
+	float newtime;
+	for (i=0;i<localt_amount;i++)
+		for (j=0;j<localt[i].transform_amount;j++) {
+			newtime = localt[i].transform[j].time;
+			foundflag = false;
+			for (k=0;k<timelist.size();k++)
+				if (newtime==timelist[k]) {
+					foundflag = true;
+					break;
+				}
+			if (!foundflag)
+				timelist.push_back(newtime);
+		}
+	for (t=0;t<timelist.size();t++) {
+		nodeglobalrot.clear();
+		nodeglobalrot.resize(nodename.size());
+		for (k=0;k<nodeglobalrot.size();k++) {
+			nodeglobalrot[k] = nodedefaultglobalrot[k];
+			for (i=0;i<localw_amount;i++)
+				if (FbxString(localw[i].object_name.c_str()).GetToken(FbxString(localw[i].object_name.c_str()).GetTokenCount("/"),"/")==nodename[k]) {
+					for (j=0;j<localw[i].transform_amount;j++)
+						if (localw[i].transform[j].time==timelist[t]) {
+							nodeglobalrot[k] = localw[i].transform[j].rot;
+							break;
+						}
+					break;
+				}
+			if (nodeparentindex[k]>=0)
+				nodeglobalrot[k] = Quaternion::Product(nodeglobalrot[nodeparentindex[k]],nodeglobalrot[k]);
+		}
+		for (i=0;i<localt_amount;i++)
+			for (j=0;j<localt[i].transform_amount;j++)
+				if (localt[i].transform[j].time==timelist[t]) {
+					nodeglobalrot[localtnodeindex[i]].Apply(localt[i].transform[j].transx,localt[i].transform[j].transy,localt[i].transform[j].transz);
+					nodeglobalrot[localtnodeindex[i]].Apply(localt[i].transform[j].transx1,localt[i].transform[j].transy1,localt[i].transform[j].transz1);
+					nodeglobalrot[localtnodeindex[i]].Apply(localt[i].transform[j].transx2,localt[i].transform[j].transy2,localt[i].transform[j].transz2);
+				}
+	}
+/*	for (i=0;i<localt_amount;i++)
+		for (k=0;k<localw_amount;k++)
+			if (localw[k].object_name==localt[i].object_name) {
+				for (j=0;j<localt[i].transform_amount;j++)
+					for (l=0;l<localw[k].transform_amount;l++)
+						if (localw[k].transform[l].time==localt[i].transform[j].time) {
+							localw[k].transform[l].rot.Apply(localt[i].transform[j].transx,localt[i].transform[j].transy,localt[i].transform[j].transz);
+							localw[k].transform[l].rot.Apply(localt[i].transform[j].transx1,localt[i].transform[j].transy1,localt[i].transform[j].transz1);
+							localw[k].transform[l].rot.Apply(localt[i].transform[j].transx2,localt[i].transform[j].transy2,localt[i].transform[j].transz2);
+							break;
+						}
+				break;
+			}*/
+}
+
+void ModelDataStruct::ReadCoordinates(fstream& f, float& x, float& y, float& z, bool swapsign) {
+	float sign = swapsign ? 1.0 : 1.0;
+	x = sign*ReadFloat(f);
+	y = sign*ReadFloat(f);
+	z = sign*ReadFloat(f);
+}
+
+void ModelDataStruct::WriteCoordinates(fstream& f, float x, float y, float z, bool swapsign) {
+	float sign = swapsign ? -1.0 : 1.0;
+	WriteFloat(f,sign*x);
+	WriteFloat(f,sign*z);
+	WriteFloat(f,sign*y);
 }
 
 bool ModelDataStruct::Read(fstream& f, GameObjectHierarchy* gohier) {
@@ -464,6 +574,7 @@ int ModelDataStruct::Export(const char* outputname, int format) {
     FbxScene* sdkscene = NULL;
     InitializeSdkObjects(sdkmanager, sdkscene);
     ConvertModelToFBX(*this, sdkmanager, sdkscene);
+//	SetupAxisSystem(sdkscene);
 	bool exportresult = SaveScene(outputname, sdkmanager, sdkscene, format);
     DestroySdkObjects(sdkmanager);
     if (!exportresult)
@@ -492,12 +603,12 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 	sdkscene->SetSceneInfo(sceneInfo);
 	// Construct the basis for the skeleton
 	FbxNode* lRootNode = sdkscene->GetRootNode();
-	FbxSkin* lSkin = NULL;
 	FbxSkeleton* lSingleSkeleton = NULL;
-	FbxNode* lSingleSkeletonNode = NULL;
 	FbxCluster* lSingleSkeletonCluster = NULL;
+	FbxNode* lSingleSkeletonNode = NULL;
+	vector<FbxSkin*> lMultiSkin;
 	vector<FbxSkeleton*> lMultiSkeleton;
-	vector<FbxCluster*> lMultiSkeletonCluster;
+/*	vector<FbxCluster*> lMultiSkeletonCluster;*/
 	vector<string> lMultiSkeletonName;
 	bool hasbones = false;
 	for (i=0;i<model.mesh.size();i++)
@@ -505,9 +616,6 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 			hasbones = true;
 			break;
 		}
-	if (model.animation.size()>0 || hasbones) {
-		lSkin = FbxSkin::Create(sdkscene, "");
-	}
 	if (model.animation.size()>0 && !hasbones) {
 		lSingleSkeleton = FbxSkeleton::Create(sdkscene, "");
 		lSingleSkeletonNode = FbxNode::Create(sdkscene, "");
@@ -516,7 +624,6 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 		lSingleSkeletonNode->SetNodeAttribute(lSingleSkeleton);
 		lSingleSkeletonCluster->SetLink(lSingleSkeletonNode);
 		lSingleSkeletonCluster->SetLinkMode(FbxCluster::eTotalOne);
-		lSkin->AddCluster(lSingleSkeletonCluster);
 	}
 	// Construct all the Fbx nodes
 	vector<FbxNode*> lNodeList;
@@ -525,6 +632,7 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 		if (hierarchynode[i]==model.hierarchy->root_node) {
 			if (hierarchynode[i]->node_type==4) { // Should be always true
 				TransformStruct* nodespec = static_cast<TransformStruct*>(hierarchynode[i]);
+//{fstream fout("aaaa.txt",ios::app|ios::out); fout << "ROOT NODE : " << (unsigned int)nodespec->file_index << endl; fout.close();}
 				lRootNode->LclRotation.Set(FbxDouble3(nodespec->rot.GetRoll(), nodespec->rot.GetPitch(), nodespec->rot.GetYaw()));
 				lRootNode->LclTranslation.Set(FbxDouble3(nodespec->x, nodespec->y, nodespec->z));
 				lRootNode->LclScaling.Set(FbxDouble3(nodespec->scale_x, nodespec->scale_y, nodespec->scale_z));
@@ -538,6 +646,7 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 			TransformStruct* nodespec = static_cast<TransformStruct*>(hierarchynode[i]);
 			if (nodespec->child_object && nodespec->child_object->node_type==1)
 				nodename = static_cast<GameObjectStruct*>(nodespec->child_object)->name;
+//{fstream fout("aaaa.txt",ios::app|ios::out); fout << nodename.c_str() << " : " << (unsigned int)nodespec->file_index << endl; fout.close();}
 			FbxNode* lNode = FbxNode::Create(sdkscene, FbxString(nodename.c_str()));
 			lNode->LclRotation.Set(FbxDouble3(nodespec->rot.GetRoll(), nodespec->rot.GetPitch(), nodespec->rot.GetYaw()));
 			lNode->LclTranslation.Set(FbxDouble3(nodespec->x, nodespec->y, nodespec->z));
@@ -560,35 +669,62 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 		} else if (hierarchynode[i]->node_type==137) {
 			SkinnedMeshRendererStruct* nodespec = static_cast<SkinnedMeshRendererStruct*>(hierarchynode[i]);
 			for (j=0;j<nodespec->child_bone_amount;j++) {
-				string bonename = static_cast<GameObjectStruct*>(static_cast<TransformStruct*>(nodespec->child_bone[j])->child_object)->GetScopedName();
-				bool newbone = true;
-				for (k=0;k<lMultiSkeletonName.size();k++)
-					if (lMultiSkeletonName[k]==bonename) {
-						newbone = false;
-						break;
+
+				#define MACRO_CONSTRUCT_NEWBONE(BONENAME) \
+					bool newbone = true; \
+					for (k=0;k<lMultiSkeletonName.size();k++) \
+						if (lMultiSkeletonName[k]==BONENAME) { \
+							newbone = false; \
+							break; \
+						} \
+					if (newbone) { \
+						GameObjectStruct* boneobj = NULL; \
+						TransformStruct* parenttransf = NULL; \
+						for (k=0;k<hierarchynode.size();k++) \
+							if (hierarchynode[k]->node_type==1 && static_cast<GameObjectStruct*>(hierarchynode[k])->GetScopedName()==BONENAME) { \
+								boneobj = static_cast<GameObjectStruct*>(hierarchynode[k]); \
+								parenttransf = boneobj->GetParentTransform(); \
+								break; \
+							} \
+						if (boneobj) { \
+							FbxSkeleton* lSkeleton = FbxSkeleton::Create(sdkscene, boneobj->name.c_str()); \
+							/*FbxCluster* lSkeletonCluster = FbxCluster::Create(sdkscene, "");*/ \
+							if (parenttransf->parent_transform==NULL || parenttransf->parent_transform==model.hierarchy->root_node) \
+								lSkeleton->SetSkeletonType(FbxSkeleton::eRoot); \
+							else \
+								lSkeleton->SetSkeletonType(FbxSkeleton::eLimbNode); \
+							for (k=0;k<hierarchynode.size();k++) \
+								if (parenttransf==hierarchynode[k] && lNodeList[k]) { \
+									lNodeList[k]->SetNodeAttribute(lSkeleton); \
+									/*lSkeletonCluster->SetLink(lNodeList[k]);*/ \
+									break; \
+								} \
+							lSkeleton->Size.Set(1.0); \
+							/*lSkeletonCluster->SetLinkMode(FbxCluster::eTotalOne);*/ \
+							lMultiSkeleton.push_back(lSkeleton); \
+							/*lMultiSkeletonCluster.push_back(lSkeletonCluster);*/ \
+							lMultiSkeletonName.push_back(BONENAME); \
+						} \
 					}
-				if (newbone) {
-					TransformStruct* parenttransf = static_cast<GameObjectStruct*>(nodespec->parent_object)->GetParentTransform();
-					FbxSkeleton* lSkeleton = FbxSkeleton::Create(sdkscene, static_cast<GameObjectStruct*>(static_cast<TransformStruct*>(nodespec->child_bone[j])->child_object)->name.c_str());
-					FbxCluster* lSkeletonCluster = FbxCluster::Create(sdkscene, "");
-					if (parenttransf->parent_transform==NULL || parenttransf->parent_transform==model.hierarchy->root_node)
-						lSkeleton->SetSkeletonType(FbxSkeleton::eRoot);
-					else
-						lSkeleton->SetSkeletonType(FbxSkeleton::eLimbNode);
-					for (k=0;k<hierarchynode.size();k++)
-						if (parenttransf==hierarchynode[k] && lNodeList[k]) {
-							lNodeList[k]->SetNodeAttribute(lSkeleton);
-							lSkeletonCluster->SetLink(lNodeList[k]);
-							break;
-						}
-					lSkeleton->Size.Set(1.0);
-					lSkeletonCluster->SetLinkMode(FbxCluster::eTotalOne);
-					lSkin->AddCluster(lSkeletonCluster);
-					lMultiSkeleton.push_back(lSkeleton);
-					lMultiSkeletonCluster.push_back(lSkeletonCluster);
-					lMultiSkeletonName.push_back(bonename);
-				}
+
+				string bonename = static_cast<GameObjectStruct*>(static_cast<TransformStruct*>(nodespec->child_bone[j])->child_object)->GetScopedName();
+				MACRO_CONSTRUCT_NEWBONE(bonename)
 			}
+		}
+	}
+	// Construct more bones
+	for (i=0;i<model.animation.size();i++) {
+		for (j=0;j<model.animation[i].localw_amount;j++) {
+			string bonename = model.animation[i].localw[j].object_name;
+			MACRO_CONSTRUCT_NEWBONE(bonename)
+		}
+		for (j=0;j<model.animation[i].localt_amount;j++) {
+			string bonename = model.animation[i].localt[j].object_name;
+			MACRO_CONSTRUCT_NEWBONE(bonename)
+		}
+		for (j=0;j<model.animation[i].locals_amount;j++) {
+			string bonename = model.animation[i].locals[j].object_name;
+			MACRO_CONSTRUCT_NEWBONE(bonename)
 		}
 	}
 	// Construct the meshes
@@ -688,138 +824,50 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 //					lFileTex->ConnectDstProperty(lProp);
 //					lMaterial->ConnectSrcObject(lFileTex);
 				}
-				if (model.animation.size()>0 && !hasbones) {
-					for (j = 0; j<mesh.vert.size(); j++)
-						lSingleSkeletonCluster->AddControlPointIndex(j, 1.0);
-				} else {
-					for (j = 0; j < mesh.bone_amount; j++) {
-						FbxCluster* lSkeletonCluster = NULL;
-						for (k=0;k<lMultiSkeleton.size();k++)
-							if (lMultiSkeletonName[k]==mesh.bone[j].scoped_name) {
-								lSkeletonCluster = lMultiSkeletonCluster[k];
-								break;
+				// Link points to Skeleton Clusters
+				if (model.animation.size()>0 || hasbones) {
+					FbxSkin* lSkin = FbxSkin::Create(sdkscene, "");
+					lSkin->SetGeometry(lMesh);
+					if (model.animation.size()>0 && !hasbones) {
+						for (j = 0; j<mesh.vert.size(); j++)
+							lSingleSkeletonCluster->AddControlPointIndex(j, 1.0);
+						lSkin->AddCluster(lSingleSkeletonCluster);
+					} else {
+						for (j = 0; j < mesh.bone_amount; j++) {
+/*							FbxCluster* lSkeletonCluster = NULL;
+							for (k=0;k<lMultiSkeleton.size();k++)
+								if (lMultiSkeletonName[k]==mesh.bone[j].scoped_name) {
+									lSkeletonCluster = lMultiSkeletonCluster[k];
+									break;
+								}*/
+							FbxCluster* lSkeletonCluster = FbxCluster::Create(sdkscene, ""); // DEBUG
+							for (k=0;k<lMultiSkeletonName.size();k++) // DEBUG
+								if (lMultiSkeletonName[k]==mesh.bone[j].scoped_name) { // DEBUG
+									lSkeletonCluster->SetLink(lMultiSkeleton[k]->GetNode());
+									break;
+								}
+							lSkeletonCluster->SetLinkMode(FbxCluster::eTotalOne); // DEBUG
+							if (lSkeletonCluster) {
+								for (k = 0; k < mesh.vertice_attachment_amount; k++)
+									for (l = 0; l < 4; l++)
+										if (mesh.vert_attachment[k].bone_id[l]==j && mesh.vert_attachment[k].bone_factor[l] > 0.0)
+											lSkeletonCluster->AddControlPointIndex(k, mesh.vert_attachment[k].bone_factor[l]);
+								lSkin->AddCluster(lSkeletonCluster);
 							}
-						if (lSkeletonCluster) {
-							for (k = 0; k < mesh.vertice_attachment_amount; k++)
-								for (l = 0; l < 4; l++)
-									if (mesh.vert_attachment[k].bone_id[l]==j && mesh.vert_attachment[k].bone_factor[l] > 0.0)
-										lSkeletonCluster->AddControlPointIndex(k, mesh.vert_attachment[k].bone_factor[l]);
 						}
 					}
+					FbxAMatrix lTransformMatrix = lMeshNode->EvaluateGlobalTransform();
+					for (j=0;j<lSkin->GetClusterCount();j++)
+						lSkin->GetCluster(j)->SetTransformMatrix(lTransformMatrix);
+					for (j=0;j<lSkin->GetClusterCount();j++) {
+						lTransformMatrix = lSkin->GetCluster(j)->GetLink()->EvaluateGlobalTransform();
+						lSkin->GetCluster(j)->SetTransformLinkMatrix(lTransformMatrix);
+					}
+					lMesh->AddDeformer(lSkin);
 				}
-				FbxGeometry* lPatchAttribute = (FbxGeometry*)lMeshNode->GetNodeAttribute();
-				lPatchAttribute->AddDeformer(lSkin);
 			}
 		}
 	}
-	/*
-	int* lMeshNodeIndex = new int[model.mesh.size()];
-	int* lSkeletonNodeIndex = new int[model.mesh.size()];
-	for (i = 0; i<model.mesh.size(); i++) {
-		// Meshes
-		FbxString lMeshName = FbxString("mesh") + FbxString((int)i);
-		FbxMesh* lMesh = FbxMesh::Create(sdkscene, lMeshName);
-		lMesh->InitControlPoints(model.mesh[i].vertice_amount);
-		FbxVector4* lControlPoints = lMesh->GetControlPoints();
-		FbxGeometryElementNormal* lGeometryElementNormal = lMesh->CreateElementNormal();
-		lGeometryElementNormal->SetMappingMode(FbxGeometryElement::eByControlPoint);
-		lGeometryElementNormal->SetReferenceMode(FbxGeometryElement::eDirect);
-		FbxVector4 lNormal;
-		FbxGeometryElementUV* lUVDiffuseElement = lMesh->CreateElementUV("DiffuseUV");
-		lUVDiffuseElement->SetMappingMode(FbxGeometryElement::eByControlPoint);
-		lUVDiffuseElement->SetReferenceMode(FbxGeometryElement::eDirect);
-		FbxVector2 lUVPoint;
-		for (j = 0; j<model.mesh[i].vert.size(); j++) {
-			lControlPoints[j].Set(model.mesh[i].vert[j].x, model.mesh[i].vert[j].y, model.mesh[i].vert[j].z);
-			lNormal.Set(model.mesh[i].vert[j].nx, model.mesh[i].vert[j].ny, model.mesh[i].vert[j].nz);
-			lGeometryElementNormal->GetDirectArray().Add(lNormal);
-			lUVPoint.Set(model.mesh[i].vert[j].u, model.mesh[i].vert[j].v);
-			lUVDiffuseElement->GetDirectArray().Add(lUVPoint);
-		}
-		lMesh->InitMaterialIndices(FbxLayerElement::EMappingMode::eByPolygon);
-		uint16_t vertid[3];
-		for (j = 0; 3 * j<model.mesh[i].vert_list.size(); j++) {
-			int mtlidcur = -1;
-			for (k = 0; k <model.mesh[i].mat_info.size(); k++) {
-				if (3 * j >= model.mesh[i].mat_info[k].vert_list_start / 2 && 3 * j < model.mesh[i].mat_info[k].vert_list_start / 2 + model.mesh[i].mat_info[k].vert_list_amount) {
-					mtlidcur = k;
-					break;
-				}
-			}
-			vertid[0] = model.mesh[i].vert_list[3 * j];
-			vertid[1] = model.mesh[i].vert_list[3 * j + 1];
-			vertid[2] = model.mesh[i].vert_list[3 * j + 2];
-			lMesh->BeginPolygon(mtlidcur);
-			lMesh->AddPolygon(vertid[0], vertid[0]);
-			lMesh->AddPolygon(vertid[1], vertid[1]);
-			lMesh->AddPolygon(vertid[2], vertid[2]);
-			lMesh->EndPolygon();
-		}
-		lMesh->GenerateNormals(false,true);
-		FbxNode* lMeshNode = FbxNode::Create(sdkscene, "nodemesh");
-		lMeshNode->SetNodeAttribute(lMesh);
-		lMeshNode->SetShadingMode(FbxNode::eTextureShading);
-		// Materials and Textures
-		for (j = 0; j < model.material[i].size(); j++) {
-			FbxString lTextureName = model.material[i][j].maintex_file_name.c_str();
-			FbxSurfacePhong* lMaterial = FbxSurfacePhong::Create(sdkscene, FbxString("mat") + GetFbxNameIndice(i, j, model.mesh.size()));
-			lMeshNode->AddMaterial(lMaterial);
-			FbxFileTexture* lFileTex = FbxFileTexture::Create(sdkscene, lTextureName);
-			lFileTex->SetFileName(lTextureName);
-			lFileTex->SetRelativeFileName(lTextureName);
-			lFileTex->SetTextureUse(FbxTexture::eStandard);
-			lFileTex->SetMappingType(FbxTexture::eUV);
-			lFileTex->SetMaterialUse(FbxFileTexture::eModelMaterial);
-			lFileTex->UVSet.Set(FbxString("DiffuseUV"));
-			lMaterial->Diffuse.ConnectSrcObject(lFileTex);
-//			FbxProperty lProp = FbxProperty::Create(lMaterial, FbxDouble3DT, "EnvSampler", "SamplerTexture");
-//			FbxDouble3 lSampleVal(0, 0, 0);
-//			lProp.Set(lSampleVal);
-//			lFileTex->ConnectDstProperty(lProp);
-//			lMaterial->ConnectSrcObject(lFileTex);
-		}
-		if (lRootNode->AddChild(lMeshNode))
-			lMeshNodeIndex[i] = lRootNode->GetChildCount()-1;
-		else
-			lMeshNodeIndex[i] = -1;
-		// Skeleton
-		if (model.mesh[i].bone_amount > 0) {
-			FbxNode* lSkeletonRootNode = NULL;
-			FbxSkin* lSkin = FbxSkin::Create(sdkscene, "");
-			for (j = 0; j < model.mesh[i].bone_amount; j++) {
-				FbxSkeleton* lSkeletonBone = FbxSkeleton::Create(sdkscene, FbxString("bone") + GetFbxNameIndice(i, j, model.mesh.size()));
-				FbxNode* lSkeletonNode = FbxNode::Create(sdkscene, "bonenode");
-				if (j == 0) {
-					lSkeletonBone->SetSkeletonType(FbxSkeleton::eRoot);
-					lSkeletonRootNode = lSkeletonNode;
-				} else {
-					lSkeletonBone->SetSkeletonType(FbxSkeleton::eLimbNode);
-					lSkeletonBone->Size.Set(1.0);
-					lSkeletonRootNode->AddChild(lSkeletonNode);
-				}
-				lSkeletonNode->SetNodeAttribute(lSkeletonBone);
-				lSkeletonNode->SetRotationPivot(FbxNode::eDestinationPivot, FbxVector4(model.mesh[i].bone[j].unk_f1, model.mesh[i].bone[j].unk_f2, model.mesh[i].bone[j].unk_f3));
-				lSkeletonNode->SetScalingPivot(FbxNode::eDestinationPivot, FbxVector4(model.mesh[i].bone[j].unk_f1, model.mesh[i].bone[j].unk_f2, model.mesh[i].bone[j].unk_f3));
-				FbxCluster *lSkeletonCluster = FbxCluster::Create(sdkscene, "");
-				lSkeletonCluster->SetLink(lSkeletonNode);
-				lSkeletonCluster->SetLinkMode(FbxCluster::eTotalOne);
-				for (k = 0; k < model.mesh[i].vertice_attachment_amount; k++) {
-					for (l = 0; l < 4; l++) {
-						if (model.mesh[i].vert_attachment[k].bone_id[l]==j && model.mesh[i].vert_attachment[k].bone_factor[l] > 0.0) {
-							lSkeletonCluster->AddControlPointIndex(k, model.mesh[i].vert_attachment[k].bone_factor[l]);
-						}
-					}
-				}
-				lSkin->AddCluster(lSkeletonCluster);
-			}
-			if (lRootNode->AddChild(lSkeletonRootNode))
-				lSkeletonNodeIndex[i] = lRootNode->GetChildCount()-1;
-			else
-				lSkeletonNodeIndex[i] = -1;
-			FbxGeometry* lPatchAttribute = (FbxGeometry*)lMeshNode->GetNodeAttribute();
-			lPatchAttribute->AddDeformer(lSkin);
-		}
-	}*/
 	// Animations
 	FbxTime lTime;
 	int lKeyIndex;
@@ -880,7 +928,7 @@ void InitializeSdkObjects(FbxManager*& pManager, FbxScene*& pScene) {
 	pManager->SetIOSettings(ios);
 	FbxString lPath = FbxGetApplicationDirectory();
 	pManager->LoadPluginsDirectory(lPath.Buffer());
-	pScene = FbxScene::Create(pManager, "My Scene");
+	pScene = FbxScene::Create(pManager, "Scene");
 	if (!pScene) {
 		exit(1);
 	}
@@ -888,6 +936,14 @@ void InitializeSdkObjects(FbxManager*& pManager, FbxScene*& pScene) {
 
 void DestroySdkObjects(FbxManager* pManager) {
 	if (pManager) pManager->Destroy();
+}
+
+void SetupAxisSystem(FbxScene*& sdkscene) {
+	FbxAxisSystem lAxisSytemBase = sdkscene->GetGlobalSettings().GetAxisSystem();
+	int lUpVectorSign = 1;
+	int lFrontVectorSign = -1;
+	FbxAxisSystem lAxisSytem(lAxisSytemBase.GetUpVector(lUpVectorSign),lAxisSytemBase.GetFrontVector(lFrontVectorSign),lAxisSytemBase.GetCoorSystem());
+	lAxisSytem.ConvertScene(sdkscene);
 }
 
 bool SaveScene(const char* pFilename, FbxManager* pManager, FbxDocument* pScene, int format, bool pEmbedMedia) {
@@ -1007,14 +1063,31 @@ bool LoadScene(const char* pFilename, FbxManager* pManager, FbxDocument* pScene)
 //           Maths             //
 //=============================//
 
+#define DEG_TO_RAD 0.0174532925199432958
+#define RAD_TO_DEG 57.295779513082320877
+
+void Quaternion::Read(fstream& f) {
+	ModelDataStruct::ReadCoordinates(f,x,y,z);
+	w = ReadFloat(f);
+	apply_matrix_updated = false;
+}
+
+void Quaternion::Write(fstream& f) {
+	ModelDataStruct::WriteCoordinates(f,x,y,z);
+	WriteFloat(f,w);
+}
+
 Quaternion Quaternion::EulerToQuaternion(float roll, float pitch, float yaw) {
+	double r = DEG_TO_RAD * roll;
+	double p = DEG_TO_RAD * pitch;
+	double y = DEG_TO_RAD * yaw;
 	Quaternion q;
-	double t0 = cos(yaw * 0.5);
-	double t1 = sin(yaw * 0.5);
-	double t2 = cos(roll * 0.5);
-	double t3 = sin(roll * 0.5);
-	double t4 = cos(pitch * 0.5);
-	double t5 = sin(pitch * 0.5);
+	double t0 = cos(y * 0.5);
+	double t1 = sin(y * 0.5);
+	double t2 = cos(r * 0.5);
+	double t3 = sin(r * 0.5);
+	double t4 = cos(p * 0.5);
+	double t5 = sin(p * 0.5);
 	q.w = t0 * t2 * t4 + t1 * t3 * t5;
 	q.x = t0 * t3 * t4 - t1 * t2 * t5;
 	q.y = t0 * t2 * t5 + t1 * t3 * t4;
@@ -1027,35 +1100,83 @@ void Quaternion::QuaternionToEuler(const Quaternion q, float& roll, float& pitch
 	// roll (x-axis rotation)
 	double t0 = +2.0 * (q.w * q.x + q.y * q.z);
 	double t1 = +1.0 - 2.0 * (q.x * q.x + ysqr);
-	roll = atan2(t0, t1);
+	roll = RAD_TO_DEG * atan2(t0, t1);
 	// pitch (y-axis rotation)
 	double t2 = +2.0 * (q.w * q.y - q.z * q.x);
 	t2 = t2 > 1.0 ? 1.0 : t2;
 	t2 = t2 < -1.0 ? -1.0 : t2;
-	pitch = asin(t2);
+	pitch = RAD_TO_DEG * asin(t2);
 	// yaw (z-axis rotation)
 	double t3 = +2.0 * (q.w * q.z + q.x * q.y);
 	double t4 = +1.0 - 2.0 * (ysqr + q.z * q.z);  
-	yaw = atan2(t3, t4);
+	yaw = RAD_TO_DEG * atan2(t3, t4);
 }
 
 float Quaternion::GetRoll() {
 	double ysqr = y*y;
 	double t0 = +2.0 * (w*x + y*z);
 	double t1 = +1.0 - 2.0 * (x*x + ysqr);
-	return atan2(t0, t1);
+	return RAD_TO_DEG * atan2(t0, t1);
 }
 
 float Quaternion::GetPitch() {
 	double t2 = +2.0 * (w*y - z*x);
 	t2 = t2 > 1.0 ? 1.0 : t2;
 	t2 = t2 < -1.0 ? -1.0 : t2;
-	return asin(t2);
+	return RAD_TO_DEG * asin(t2);
 }
 
 float Quaternion::GetYaw() {
-	double ysqr = y * y;
+	double ysqr = y*y;
 	double t3 = +2.0 * (w*z + x*y);
 	double t4 = +1.0 - 2.0 * (ysqr + z*z);  
-	return atan2(t3, t4);
+	return RAD_TO_DEG * atan2(t3, t4);
+}
+
+void Quaternion::SetValue(float newx, float newy, float newz, float neww) {
+	x = newx;
+	y = newy;
+	z = newz;
+	w = neww;
+	apply_matrix_updated = false;
+}
+
+void Quaternion::Apply(float& posx, float& posy, float& posz) {
+	if (!apply_matrix_updated) {
+		double dx = w*w + x*x - y*y - z*z;
+		double dy = w*w - x*x + y*y - z*z;
+		double dz = w*w - x*x - y*y + z*z;
+		double xy = 2*x*y;
+		double xz = 2*x*z;
+		double yz = 2*y*z;
+		double wx = 2*w*x;
+		double wy = 2*w*y;
+		double wz = 2*w*z;
+		apply_matrix[0] = dx;
+		apply_matrix[1] = xy-wz;
+		apply_matrix[2] = xz+wy;
+		apply_matrix[3] = xy+wz;
+		apply_matrix[4] = dy;
+		apply_matrix[5] = yz-wx;
+		apply_matrix[6] = xz-wy;
+		apply_matrix[7] = yz+wx;
+		apply_matrix[8] = dz;
+		apply_matrix_updated = true;
+	}
+	float px = posx;
+	float py = posy;
+	float pz = posz;
+	posx = apply_matrix[0]*px + apply_matrix[1]*py + apply_matrix[2]*pz;
+	posy = apply_matrix[3]*px + apply_matrix[4]*py + apply_matrix[5]*pz;
+	posz = apply_matrix[6]*px + apply_matrix[7]*py + apply_matrix[8]*pz;
+}
+
+Quaternion Quaternion::Product(Quaternion lfactor, Quaternion rfactor) {
+	Quaternion res;
+	res.w = lfactor.w*rfactor.w - lfactor.x*rfactor.x - lfactor.y*rfactor.y - lfactor.z*rfactor.z;
+	res.x = lfactor.w*rfactor.x + lfactor.x*rfactor.w + lfactor.y*rfactor.z - lfactor.z*rfactor.y;
+	res.y = lfactor.w*rfactor.y + lfactor.y*rfactor.w + lfactor.z*rfactor.x - lfactor.x*rfactor.z;
+	res.z = lfactor.w*rfactor.z + lfactor.z*rfactor.w + lfactor.x*rfactor.y - lfactor.y*rfactor.x;
+	res.apply_matrix_updated = false;
+	return res;
 }
