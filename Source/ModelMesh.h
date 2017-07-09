@@ -2,6 +2,7 @@
 #define _MODELMESH_H
 
 struct Quaternion;
+struct LinearTransformationMatrix;
 struct ModelMeshVertex;
 struct ModelMeshBone;
 struct ModelMeshVertexAttachment;
@@ -87,13 +88,23 @@ public:
 
 	void Read(fstream& f);
 	void Write(fstream& f);
-	static Quaternion Product(Quaternion lfactor, Quaternion rfactor);
+	static Quaternion Product(Quaternion& lfactor, Quaternion& rfactor);
+	static LinearTransformationMatrix Product(LinearTransformationMatrix lfactor, Quaternion& rfactor);
+	static LinearTransformationMatrix Product(Quaternion& lfactor, LinearTransformationMatrix rfactor);
+	static LinearTransformationMatrix Product(LinearTransformationMatrix lfactor, LinearTransformationMatrix rfactor);
 	static Quaternion EulerToQuaternion(float roll, float pitch, float yaw);
-	static void QuaternionToEuler(const Quaternion q, float& roll, float& pitch, float& yaw);
+	static void QuaternionToEuler(Quaternion& q, float& roll, float& pitch, float& yaw);
+	static LinearTransformationMatrix QuaternionToMatrix(Quaternion& q);
 
 private:
 	bool apply_matrix_updated;
 	double apply_matrix[9];
+
+	void UpdateMatrixIfNecessary();
+};
+
+struct LinearTransformationMatrix {
+	double value[4][4];
 };
 
 #include "GameObject.h"
@@ -110,33 +121,18 @@ struct ModelMeshVertex {
 	// Texture UV
 	float u;
 	float v;
+	// Tangent
+	float tx;
+	float ty;
+	float tz;
 	// Unknown
-	float unkp1; // Either -1.0 or between 0.0 and 1.0
-	float unkp2;
-	float unkp3;
-	float unkp4;
+	float unkf; // Usually -1.0
 	float unkuv1; // Looks like UV
 	float unkuv2;
 };
 
 struct ModelMeshBone {
-	float unk_p1; // p: between 0.0 and 1.0
-	float unk_p2;
-	float unk_p3;
-	float unk_f1; // f: any float
-	float unk_p4;
-	float unk_p5;
-	float unk_p6;
-	float unk_f2;
-	float unk_p7;
-	float unk_p8;
-	float unk_p9;
-	float unk_f3;
-	uint32_t unk_z1; // mostly 0
-	uint32_t unk_z2; // mostly 0
-	uint32_t unk_z3; // mostly 0
-	float unk_one; // mostly 1.0
-
+	LinearTransformationMatrix transform_matrix;
 	string name;
 	string scoped_name;
 };

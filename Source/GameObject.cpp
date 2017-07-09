@@ -88,13 +88,13 @@ GameObjectNode* BuildHierarchy_Rec(GameObjectNode* parent, GameObjectHierarchy& 
 		}
 		MACRO_READCHILDOBJ(restransf,false)
 		restransf->parent_transform = childobj;
-		GameObjectNode* parentnoderec = restransf->parent_transform;
+/*		GameObjectNode* parentnoderec = restransf->parent_transform;
 		Quaternion rotationquat = restransf->rot;
 		while (parentnoderec && parentnoderec->node_type==4) {
 			rotationquat = Quaternion::Product(static_cast<TransformStruct*>(parentnoderec)->rot,rotationquat);
 			parentnoderec = static_cast<TransformStruct*>(parentnoderec)->parent_transform;
-		}
-		rotationquat.Apply(restransf->x,restransf->y,restransf->z);
+		}*/
+//		restransf->rot.Apply(restransf->x,restransf->y,restransf->z);
 		res = restransf;
 	} else if (meta.file_type1[fileindex]==23) {
 		MeshRendererStruct* resmeshren = new MeshRendererStruct(parent,roothierarchy,objtype,objunk,objinfo);

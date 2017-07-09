@@ -21,11 +21,10 @@ void ModelMeshData::Read(fstream& f) {
 	ModelMeshMaterialInfo matinfobuffer;
 	ModelMeshVertex vertbuffer;
 	ModelMeshBone bonebuffer;
-	unsigned int i;
+	unsigned int i,j,k;
 	size_t headerpos = f.tellg();
-//fstream fout("aaaa.txt",ios::out|ios::app);
 	material_info_amount = ReadLong(f);
-//fout << "material_info_amount: " << (unsigned int)material_info_amount << endl;
+//fstream fout("aaaa.txt",ios::out|ios::app); fout << "material_info_amount: " << (unsigned int)material_info_amount << endl; fout.close();
 	mat_info.reserve(material_info_amount);
 	for (i=0;i<material_info_amount;i++) {
 		matinfobuffer.vert_list_start = ReadLong(f);
@@ -39,29 +38,16 @@ void ModelMeshData::Read(fstream& f) {
 	}
 	f.seekg(0x10,ios::cur);
 	bone_amount = ReadLong(f);
-//fout << "bone_amount: " << (unsigned int)bone_amount << endl;
+//fout.open("aaaa.txt",ios::out|ios::app); fout << "bone_amount: " << (unsigned int)bone_amount << endl; fout.close();
 	bone.reserve(bone_amount);
 	for (i=0;i<bone_amount;i++) {
-		bonebuffer.unk_p1 = ReadFloat(f);
-		bonebuffer.unk_p2 = ReadFloat(f);
-		bonebuffer.unk_p3 = ReadFloat(f);
-		bonebuffer.unk_f1 = ReadFloat(f);
-		bonebuffer.unk_p4 = ReadFloat(f);
-		bonebuffer.unk_p5 = ReadFloat(f);
-		bonebuffer.unk_p6 = ReadFloat(f);
-		bonebuffer.unk_f2 = ReadFloat(f);
-		bonebuffer.unk_p7 = ReadFloat(f);
-		bonebuffer.unk_p8 = ReadFloat(f);
-		bonebuffer.unk_p9 = ReadFloat(f);
-		bonebuffer.unk_f3 = ReadFloat(f);
-		bonebuffer.unk_z1 = ReadLong(f);
-		bonebuffer.unk_z2 = ReadLong(f);
-		bonebuffer.unk_z3 = ReadLong(f);
-		bonebuffer.unk_one = ReadFloat(f);
+		for (j=0;j<4;j++)
+			for (k=0;k<4;k++)
+				bonebuffer.transform_matrix.value[j][k] = ReadFloat(f);
 		bone.push_back(bonebuffer);
 	}
 	bone_unk_amount = ReadLong(f);
-//fout << "bone_unk_amount: " << (unsigned int)bone_unk_amount << endl;
+//fout.open("aaaa.txt",ios::out|ios::app); fout << "bone_unk_amount: " << (unsigned int)bone_unk_amount << endl; fout.close();
 	bone_unk_list.reserve(bone_unk_amount);
 	for (i=0;i<bone_unk_amount;i++)
 		bone_unk_list.push_back(ReadLong(f));
@@ -72,13 +58,13 @@ void ModelMeshData::Read(fstream& f) {
 	unk_flag4 = f.get();
 	unsigned int sizevertlist = ReadLong(f);
 	vertex_list_amount = sizevertlist/2;
-//fout << "vertex_list_amount: " << (unsigned int)vertex_list_amount << endl;
+//fout.open("aaaa.txt",ios::out|ios::app); fout << "vertex_list_amount: " << (unsigned int)vertex_list_amount << endl; fout.close();
 	vert_list.reserve(vertex_list_amount);
 	for (i=0;i<vertex_list_amount;i++)
 		vert_list.push_back(ReadShort(f));
 	f.seekg(GetAlignOffset(f.tellg()),ios::cur);
 	vertice_attachment_amount = ReadLong(f);
-//fout << "vertice_attachment_amount: " << (unsigned int)vertice_attachment_amount << endl;
+//fout.open("aaaa.txt",ios::out|ios::app); fout << "vertice_attachment_amount: " << (unsigned int)vertice_attachment_amount << endl; fout.close();
 	vert_attachment.reserve(vertice_attachment_amount);
 	for (i=0;i<vertice_attachment_amount;i++) {
 		vertattachbuffer.bone_factor[0] = ReadFloat(f);
@@ -93,7 +79,7 @@ void ModelMeshData::Read(fstream& f) {
 	}
 	vert_format0 = ReadLong(f);
 	vertice_amount = ReadLong(f);
-//fout << "vertice_attachment_amount: " << (unsigned int)vertice_amount << endl;
+//fout.open("aaaa.txt",ios::out|ios::app); fout << "vertice_attachment_amount: " << (unsigned int)vertice_amount << endl; fout.close();
 	vert_format1 = ReadLong(f);
 	vert_format2 = ReadLong(f);
 	vert_format3 = ReadLong(f);
@@ -113,10 +99,8 @@ void ModelMeshData::Read(fstream& f) {
 			vertbuffer.u = ReadFloat(f);
 			vertbuffer.v = ReadFloat(f);
 		}
-		vertbuffer.unkp1 = ReadFloat(f);
-		vertbuffer.unkp2 = ReadFloat(f);
-		vertbuffer.unkp3 = ReadFloat(f);
-		vertbuffer.unkp4 = ReadFloat(f);
+		ModelDataStruct::ReadCoordinates(f,vertbuffer.tx,vertbuffer.ty,vertbuffer.tz);
+		vertbuffer.unkf = ReadFloat(f);
 		vert.push_back(vertbuffer);
 	}
 	if (vert_format9!=0x4002000) {
@@ -139,7 +123,7 @@ void ModelMeshData::Read(fstream& f) {
 	unk_num1 = ReadLong(f);
 	unk_num2 = ReadLong(f);
 	unk_num3 = ReadLong(f);
-//fout.close();
+//fout.open("aaaa.txt",ios::out|ios::app); fout << "READ DONE" << endl; fout.close();
 }
 
 void ModelMeshData::Export(fstream& output, const char* objname, const char* mtlbasename, bool firstobject) {
@@ -278,6 +262,7 @@ void ModelAnimationData::Read(fstream& f, GameObjectHierarchy* gohier) {
 	for (i=0;i<name_len;i++)
 		name.push_back(f.get());
 	f.seekg(GetAlignOffset(f.tellg()),ios::cur);
+fstream fout("aaaa.txt",ios::app|ios::out); fout << "READ ANIM " << name << endl; fout.close();
 	num_unk1 = ReadShort(f);
 	num_unk2 = ReadShort(f);
 //fstream fout("aaaa.txt",ios::out|ios::app);
@@ -340,9 +325,11 @@ void ModelAnimationData::Read(fstream& f, GameObjectHierarchy* gohier) {
 	bool foundflag;
 	// 1st step: create the list of needed nodes and parent hierarchy
 	// Note: a parent node is always before a child in the vector lists
+/*fout.open("aaaa.txt",ios::app|ios::out); fout << "ROTATION BEG" << endl; fout.close();
 	vector<unsigned int> localtnodeindex;
 	localtnodeindex.resize(localt_amount);
 	for (i=0;i<localt_amount;i++) {
+fout.open("aaaa.txt",ios::app|ios::out); fout << "CREATE LIST " << i << endl; fout.close();
 		nodefullname = FbxString(localt[i].object_name.c_str());
 		tokenamount = nodefullname.GetTokenCount("/");
 		for (j=0;j<tokenamount;j++) {
@@ -379,12 +366,14 @@ void ModelAnimationData::Read(fstream& f, GameObjectHierarchy* gohier) {
 	// 2nd step: retrieve the default orientation from GameObjectHierarchy
 	nodedefaultglobalrot.resize(nodename.size());
 	if (gohier) {
+fout.open("aaaa.txt",ios::app|ios::out); fout << "GOHIER HERE" << endl; fout.close();
 		for (i=0;i<nodedefaultglobalrot.size();i++) {
+fout.open("aaaa.txt",ios::app|ios::out); fout << "DEFAULT ROTATION " << i << endl; fout.close();
 			foundflag = false;
 			for (j=0;gohier->node_list.size();j++)
 				if (gohier->node_list[j]->node_type==4 /*
-				*/ && static_cast<TransformStruct*>(gohier->node_list[j])->child_object && static_cast<TransformStruct*>(gohier->node_list[j])->child_object->node_type==1 /*
-				*/ && nodename[i]==FbxString(static_cast<GameObjectStruct*>(static_cast<TransformStruct*>(gohier->node_list[j])->child_object)->name.c_str())) {
+				*//* && static_cast<TransformStruct*>(gohier->node_list[j])->child_object && static_cast<TransformStruct*>(gohier->node_list[j])->child_object->node_type==1 /*
+				*//* && nodename[i]==FbxString(static_cast<GameObjectStruct*>(static_cast<TransformStruct*>(gohier->node_list[j])->child_object)->name.c_str())) {
 					nodedefaultglobalrot[i] = static_cast<TransformStruct*>(gohier->node_list[j])->rot;
 					foundflag = true;
 					break;
@@ -407,7 +396,9 @@ void ModelAnimationData::Read(fstream& f, GameObjectHierarchy* gohier) {
 	// 3rd step: compute the orientation at each time and apply it to the translation
 	vector<float> timelist;
 	float newtime;
-	for (i=0;i<localt_amount;i++)
+fout.open("aaaa.txt",ios::app|ios::out); fout << "APPLY " << i << endl; fout.close();
+	for (i=0;i<localt_amount;i++) {
+fout.open("aaaa.txt",ios::app|ios::out); fout << "TIME LIST " << i << endl; fout.close();
 		for (j=0;j<localt[i].transform_amount;j++) {
 			newtime = localt[i].transform[j].time;
 			foundflag = false;
@@ -419,7 +410,9 @@ void ModelAnimationData::Read(fstream& f, GameObjectHierarchy* gohier) {
 			if (!foundflag)
 				timelist.push_back(newtime);
 		}
+	}
 	for (t=0;t<timelist.size();t++) {
+fout.open("aaaa.txt",ios::app|ios::out); fout << "TIME APPLY " << timelist[t] << endl; fout.close();
 		nodeglobalrot.clear();
 		nodeglobalrot.resize(nodename.size());
 		for (k=0;k<nodeglobalrot.size();k++) {
@@ -443,12 +436,12 @@ void ModelAnimationData::Read(fstream& f, GameObjectHierarchy* gohier) {
 					nodeglobalrot[localtnodeindex[i]].Apply(localt[i].transform[j].transx1,localt[i].transform[j].transy1,localt[i].transform[j].transz1);
 					nodeglobalrot[localtnodeindex[i]].Apply(localt[i].transform[j].transx2,localt[i].transform[j].transy2,localt[i].transform[j].transz2);
 				}
-	}
+	}*/
 /*	for (i=0;i<localt_amount;i++)
 		for (k=0;k<localw_amount;k++)
 			if (localw[k].object_name==localt[i].object_name) {
 				for (j=0;j<localt[i].transform_amount;j++)
-					for (l=0;l<localw[k].transform_amount;l++)
+					for (unsigned int l=0;l<localw[k].transform_amount;l++)
 						if (localw[k].transform[l].time==localt[i].transform[j].time) {
 							localw[k].transform[l].rot.Apply(localt[i].transform[j].transx,localt[i].transform[j].transy,localt[i].transform[j].transz);
 							localw[k].transform[l].rot.Apply(localt[i].transform[j].transx1,localt[i].transform[j].transy1,localt[i].transform[j].transz1);
@@ -460,14 +453,14 @@ void ModelAnimationData::Read(fstream& f, GameObjectHierarchy* gohier) {
 }
 
 void ModelDataStruct::ReadCoordinates(fstream& f, float& x, float& y, float& z, bool swapsign) {
-	float sign = swapsign ? 1.0 : 1.0;
+	int sign = swapsign ? -1 : 1;
 	x = sign*ReadFloat(f);
 	y = sign*ReadFloat(f);
 	z = sign*ReadFloat(f);
 }
 
 void ModelDataStruct::WriteCoordinates(fstream& f, float x, float y, float z, bool swapsign) {
-	float sign = swapsign ? -1.0 : 1.0;
+	int sign = swapsign ? -1 : 1;
 	WriteFloat(f,sign*x);
 	WriteFloat(f,sign*z);
 	WriteFloat(f,sign*y);
@@ -608,7 +601,6 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 	FbxNode* lSingleSkeletonNode = NULL;
 	vector<FbxSkin*> lMultiSkin;
 	vector<FbxSkeleton*> lMultiSkeleton;
-/*	vector<FbxCluster*> lMultiSkeletonCluster;*/
 	vector<string> lMultiSkeletonName;
 	bool hasbones = false;
 	for (i=0;i<model.mesh.size();i++)
@@ -688,7 +680,6 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 							} \
 						if (boneobj) { \
 							FbxSkeleton* lSkeleton = FbxSkeleton::Create(sdkscene, boneobj->name.c_str()); \
-							/*FbxCluster* lSkeletonCluster = FbxCluster::Create(sdkscene, "");*/ \
 							if (parenttransf->parent_transform==NULL || parenttransf->parent_transform==model.hierarchy->root_node) \
 								lSkeleton->SetSkeletonType(FbxSkeleton::eRoot); \
 							else \
@@ -696,13 +687,10 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 							for (k=0;k<hierarchynode.size();k++) \
 								if (parenttransf==hierarchynode[k] && lNodeList[k]) { \
 									lNodeList[k]->SetNodeAttribute(lSkeleton); \
-									/*lSkeletonCluster->SetLink(lNodeList[k]);*/ \
 									break; \
 								} \
 							lSkeleton->Size.Set(1.0); \
-							/*lSkeletonCluster->SetLinkMode(FbxCluster::eTotalOne);*/ \
 							lMultiSkeleton.push_back(lSkeleton); \
-							/*lMultiSkeletonCluster.push_back(lSkeletonCluster);*/ \
 							lMultiSkeletonName.push_back(BONENAME); \
 						} \
 					}
@@ -797,8 +785,8 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 					vertid[2] = mesh.vert_list[3 * j + 2];
 					lMesh->BeginPolygon(mtlidcur);
 					lMesh->AddPolygon(vertid[0], vertid[0]);
-					lMesh->AddPolygon(vertid[1], vertid[1]);
 					lMesh->AddPolygon(vertid[2], vertid[2]);
+					lMesh->AddPolygon(vertid[1], vertid[1]);
 					lMesh->EndPolygon();
 				}
 				lMesh->GenerateNormals(false,true);
@@ -834,19 +822,13 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 						lSkin->AddCluster(lSingleSkeletonCluster);
 					} else {
 						for (j = 0; j < mesh.bone_amount; j++) {
-/*							FbxCluster* lSkeletonCluster = NULL;
-							for (k=0;k<lMultiSkeleton.size();k++)
+							FbxCluster* lSkeletonCluster = FbxCluster::Create(sdkscene, "");
+							for (k=0;k<lMultiSkeletonName.size();k++)
 								if (lMultiSkeletonName[k]==mesh.bone[j].scoped_name) {
-									lSkeletonCluster = lMultiSkeletonCluster[k];
-									break;
-								}*/
-							FbxCluster* lSkeletonCluster = FbxCluster::Create(sdkscene, ""); // DEBUG
-							for (k=0;k<lMultiSkeletonName.size();k++) // DEBUG
-								if (lMultiSkeletonName[k]==mesh.bone[j].scoped_name) { // DEBUG
 									lSkeletonCluster->SetLink(lMultiSkeleton[k]->GetNode());
 									break;
 								}
-							lSkeletonCluster->SetLinkMode(FbxCluster::eTotalOne); // DEBUG
+							lSkeletonCluster->SetLinkMode(FbxCluster::eTotalOne);
 							if (lSkeletonCluster) {
 								for (k = 0; k < mesh.vertice_attachment_amount; k++)
 									for (l = 0; l < 4; l++)
@@ -1037,20 +1019,14 @@ bool LoadScene(const char* pFilename, FbxManager* pManager, FbxDocument* pScene)
     char lPassword[1024];
     if(lStatus == false && lImporter->GetStatus().GetCode() == FbxStatus::ePasswordError) {
         FBXSDK_printf("Please enter password: ");
-
         lPassword[0] = '\0';
-
         FBXSDK_CRT_SECURE_NO_WARNING_BEGIN
         scanf("%s", lPassword);
         FBXSDK_CRT_SECURE_NO_WARNING_END
-
         FbxString lString(lPassword);
-
         pManager->GetIOSettings()->SetStringProp(IMP_FBX_PASSWORD,      lString);
         pManager->GetIOSettings()->SetBoolProp(IMP_FBX_PASSWORD_ENABLE, true);
-
         lStatus = lImporter->Import(pScene);
-
         if(lStatus == false && lImporter->GetStatus().GetCode() == FbxStatus::ePasswordError) {
             FBXSDK_printf("\nPassword is wrong, import aborted.\n");
         }
@@ -1067,21 +1043,28 @@ bool LoadScene(const char* pFilename, FbxManager* pManager, FbxDocument* pScene)
 #define RAD_TO_DEG 57.295779513082320877
 
 void Quaternion::Read(fstream& f) {
-	ModelDataStruct::ReadCoordinates(f,x,y,z);
+	ModelDataStruct::ReadCoordinates(f,x,y,z,false);
 	w = ReadFloat(f);
 	apply_matrix_updated = false;
 }
 
 void Quaternion::Write(fstream& f) {
-	ModelDataStruct::WriteCoordinates(f,x,y,z);
+	ModelDataStruct::WriteCoordinates(f,x,y,z,false);
 	WriteFloat(f,w);
 }
 
 Quaternion Quaternion::EulerToQuaternion(float roll, float pitch, float yaw) {
-	double r = DEG_TO_RAD * roll;
+	Quaternion q;
+	FbxVector4 eulervect(roll,pitch,yaw);
+	FbxQuaternion fbxquat;
+	fbxquat.ComposeSphericalXYZ(eulervect);
+	q.x = fbxquat[0];
+	q.y = fbxquat[1];
+	q.z = fbxquat[2];
+	q.w = fbxquat[3];
+/*	double r = DEG_TO_RAD * roll;
 	double p = DEG_TO_RAD * pitch;
 	double y = DEG_TO_RAD * yaw;
-	Quaternion q;
 	double t0 = cos(y * 0.5);
 	double t1 = sin(y * 0.5);
 	double t2 = cos(r * 0.5);
@@ -1091,12 +1074,18 @@ Quaternion Quaternion::EulerToQuaternion(float roll, float pitch, float yaw) {
 	q.w = t0 * t2 * t4 + t1 * t3 * t5;
 	q.x = t0 * t3 * t4 - t1 * t2 * t5;
 	q.y = t0 * t2 * t5 + t1 * t3 * t4;
-	q.z = t1 * t2 * t4 - t0 * t3 * t5;
+	q.z = t1 * t2 * t4 - t0 * t3 * t5;*/
+	q.apply_matrix_updated = false;
 	return q;
 }
 
-void Quaternion::QuaternionToEuler(const Quaternion q, float& roll, float& pitch, float& yaw) {
-	double ysqr = q.y * q.y;
+void Quaternion::QuaternionToEuler(Quaternion& q, float& roll, float& pitch, float& yaw) {
+	FbxQuaternion fbxquat(q.x,q.y,q.z,q.w);
+	FbxVector4 fbxangle = fbxquat.DecomposeSphericalXYZ();
+	roll = fbxangle[0];
+	pitch = fbxangle[1];
+	yaw = fbxangle[2];
+/*	double ysqr = q.y * q.y;
 	// roll (x-axis rotation)
 	double t0 = +2.0 * (q.w * q.x + q.y * q.z);
 	double t1 = +1.0 - 2.0 * (q.x * q.x + ysqr);
@@ -1109,39 +1098,24 @@ void Quaternion::QuaternionToEuler(const Quaternion q, float& roll, float& pitch
 	// yaw (z-axis rotation)
 	double t3 = +2.0 * (q.w * q.z + q.x * q.y);
 	double t4 = +1.0 - 2.0 * (ysqr + q.z * q.z);  
-	yaw = RAD_TO_DEG * atan2(t3, t4);
+	yaw = RAD_TO_DEG * atan2(t3, t4);*/
 }
 
-float Quaternion::GetRoll() {
-	double ysqr = y*y;
-	double t0 = +2.0 * (w*x + y*z);
-	double t1 = +1.0 - 2.0 * (x*x + ysqr);
-	return RAD_TO_DEG * atan2(t0, t1);
+LinearTransformationMatrix Quaternion::QuaternionToMatrix(Quaternion& q) {
+	LinearTransformationMatrix res;
+	unsigned int i,j;
+	q.UpdateMatrixIfNecessary();
+	for (i=0;i<3;i++) {
+		for (j=0;j<3;j++)
+			res.value[i][j] = q.apply_matrix[3*i+j];
+		res.value[3][i] = 0.0;
+		res.value[i][3] = 0.0;
+	}
+	res.value[3][3] = 1.0;
+	return res;
 }
 
-float Quaternion::GetPitch() {
-	double t2 = +2.0 * (w*y - z*x);
-	t2 = t2 > 1.0 ? 1.0 : t2;
-	t2 = t2 < -1.0 ? -1.0 : t2;
-	return RAD_TO_DEG * asin(t2);
-}
-
-float Quaternion::GetYaw() {
-	double ysqr = y*y;
-	double t3 = +2.0 * (w*z + x*y);
-	double t4 = +1.0 - 2.0 * (ysqr + z*z);  
-	return RAD_TO_DEG * atan2(t3, t4);
-}
-
-void Quaternion::SetValue(float newx, float newy, float newz, float neww) {
-	x = newx;
-	y = newy;
-	z = newz;
-	w = neww;
-	apply_matrix_updated = false;
-}
-
-void Quaternion::Apply(float& posx, float& posy, float& posz) {
+void Quaternion::UpdateMatrixIfNecessary() {
 	if (!apply_matrix_updated) {
 		double dx = w*w + x*x - y*y - z*z;
 		double dy = w*w - x*x + y*y - z*z;
@@ -1163,20 +1137,98 @@ void Quaternion::Apply(float& posx, float& posy, float& posz) {
 		apply_matrix[8] = dz;
 		apply_matrix_updated = true;
 	}
+}
+
+float Quaternion::GetRoll() {
+	FbxQuaternion fbxquat(x,y,z,w);
+	FbxVector4 fbxangle = fbxquat.DecomposeSphericalXYZ();
+	return fbxangle[0];
+/*	double ysqr = y*y;
+	double t0 = +2.0 * (w*x + y*z);
+	double t1 = +1.0 - 2.0 * (x*x + ysqr);
+	return RAD_TO_DEG * atan2(t0, t1);*/
+}
+
+float Quaternion::GetPitch() {
+	FbxQuaternion fbxquat(x,y,z,w);
+	FbxVector4 fbxangle = fbxquat.DecomposeSphericalXYZ();
+	return fbxangle[1];
+/*	double t2 = +2.0 * (w*y - z*x);
+	t2 = t2 > 1.0 ? 1.0 : t2;
+	t2 = t2 < -1.0 ? -1.0 : t2;
+	return RAD_TO_DEG * asin(t2);*/
+}
+
+float Quaternion::GetYaw() {
+	FbxQuaternion fbxquat(x,y,z,w);
+	FbxVector4 fbxangle = fbxquat.DecomposeSphericalXYZ();
+	return fbxangle[2];
+/*	double ysqr = y*y;
+	double t3 = +2.0 * (w*z + x*y);
+	double t4 = +1.0 - 2.0 * (ysqr + z*z);  
+	return RAD_TO_DEG * atan2(t3, t4);*/
+}
+
+void Quaternion::SetValue(float newx, float newy, float newz, float neww) {
+	x = newx;
+	y = newy;
+	z = newz;
+	w = neww;
+	apply_matrix_updated = false;
+}
+
+void Quaternion::Apply(float& posx, float& posy, float& posz) {
 	float px = posx;
 	float py = posy;
 	float pz = posz;
+	UpdateMatrixIfNecessary();
 	posx = apply_matrix[0]*px + apply_matrix[1]*py + apply_matrix[2]*pz;
 	posy = apply_matrix[3]*px + apply_matrix[4]*py + apply_matrix[5]*pz;
 	posz = apply_matrix[6]*px + apply_matrix[7]*py + apply_matrix[8]*pz;
 }
 
-Quaternion Quaternion::Product(Quaternion lfactor, Quaternion rfactor) {
+Quaternion Quaternion::Product(Quaternion& lfactor, Quaternion& rfactor) {
 	Quaternion res;
 	res.w = lfactor.w*rfactor.w - lfactor.x*rfactor.x - lfactor.y*rfactor.y - lfactor.z*rfactor.z;
 	res.x = lfactor.w*rfactor.x + lfactor.x*rfactor.w + lfactor.y*rfactor.z - lfactor.z*rfactor.y;
 	res.y = lfactor.w*rfactor.y + lfactor.y*rfactor.w + lfactor.z*rfactor.x - lfactor.x*rfactor.z;
 	res.z = lfactor.w*rfactor.z + lfactor.z*rfactor.w + lfactor.x*rfactor.y - lfactor.y*rfactor.x;
 	res.apply_matrix_updated = false;
+	return res;
+}
+
+LinearTransformationMatrix Quaternion::Product(LinearTransformationMatrix lfactor, Quaternion& rfactor) {
+	LinearTransformationMatrix res;
+	unsigned int i,j;
+	rfactor.UpdateMatrixIfNecessary();
+	for (i=0;i<4;i++) {
+		for (j=0;j<3;j++)
+			res.value[i][j] = lfactor.value[i][0]*rfactor.apply_matrix[j]+lfactor.value[i][1]*rfactor.apply_matrix[3+j]+lfactor.value[i][2]*rfactor.apply_matrix[6+j];
+		res.value[i][3] = lfactor.value[i][3];
+	}
+	return res;
+}
+
+LinearTransformationMatrix Quaternion::Product(Quaternion& lfactor, LinearTransformationMatrix rfactor) {
+	LinearTransformationMatrix res;
+	unsigned int i,j;
+	lfactor.UpdateMatrixIfNecessary();
+	for (j=0;j<4;j++) {
+		for (i=0;i<3;i++)
+			res.value[i][j] = lfactor.apply_matrix[3*i]*rfactor.value[0][j]+lfactor.apply_matrix[3*i+1]*rfactor.value[1][j]+lfactor.apply_matrix[3*i+2]*rfactor.value[2][j];
+		res.value[3][j] = rfactor.value[3][j];
+	}
+	return res;
+}
+
+LinearTransformationMatrix Quaternion::Product(LinearTransformationMatrix lfactor, LinearTransformationMatrix rfactor) {
+	LinearTransformationMatrix res;
+	unsigned int i,j,k;
+	for (j=0;j<4;j++)
+		for (i=0;i<j;i++) {
+			res.value[i][j] = 0.0;
+			for (k=0;k<4;k++)
+				res.value[i][j] += lfactor.value[i][k]*rfactor.value[k][j];
+		}
 	return res;
 }
