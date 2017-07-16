@@ -1222,10 +1222,12 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 			MACRO_CONFIG_SEARCHOFFSCRIPT_STEAM("world/",worldnamelower[j],world_script_file[i][j])
 		}
 	}
-	// DEBUG: Steam doesn't use these files
-	// It uses the discmr.img files instead, that pack the binary 0x00 cluster "world_map_shared_data" of the PSX image
-	dest.world_fxfile_file[0] = dest.meta_world.GetFileIndex("fx.ntp",49,0);
-	dest.world_fxfile_file[1] = dest.meta_world.GetFileIndex("fx.ntp",49,1);
+	dest.world_fx_file[0] = dest.meta_world.GetFileIndex("fx.ntp",49,0);
+	dest.world_fx_file[1] = dest.meta_world.GetFileIndex("fx.ntp",49,1);
+	dest.world_disc_file[0] = dest.meta_world.GetFileIndex("disc.img",49,0);
+	dest.world_disc_file[1] = dest.meta_world.GetFileIndex("disc.img",49,1);
+	dest.world_discmr_file[0] = dest.meta_world.GetFileIndex("discmr.img",49,0);
+	dest.world_discmr_file[1] = dest.meta_world.GetFileIndex("discmr.img",49,1);
 	
 	// Text Blocks
 	dest.text_amount = 0;
@@ -1549,18 +1551,29 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		bool* copylist = new bool[config.meta_world.header_file_amount];
 		uint32_t* filenewsize = new uint32_t[config.meta_world.header_file_amount];
 		for (i=0;i<config.meta_world.header_file_amount;i++)
-			if (i==config.world_fxfile_file[0] || i==config.world_fxfile_file[1]) {
+			if (i==config.world_fx_file[0] || i==config.world_fx_file[1]) {
 				copylist[i] = false;
 				filenewsize[i] = saveset.worldset->world_data->size;
+			} else if (i==config.world_disc_file[0] || i==config.world_disc_file[1] || i==config.world_discmr_file[0] || i==config.world_discmr_file[1]) {
+				copylist[i] = true; // DEBUG: those files are not replaced but only overwritten for now (no size change)
+				filenewsize[i] = config.meta_world.file_size[i];
 			} else {
 				copylist[i] = true;
 				filenewsize[i] = config.meta_world.file_size[i];
 			}
 		uint32_t* unitydataoff = config.meta_world.Duplicate(filebase,filedest,copylist,filenewsize);
-		filedest.seekp(unitydataoff[config.world_fxfile_file[0]]);
+		filedest.seekp(unitydataoff[config.world_fx_file[0]]);
 		saveset.worldset->world_data->WriteHWS(filedest);
-		filedest.seekp(unitydataoff[config.world_fxfile_file[1]]);
+		filedest.seekp(unitydataoff[config.world_fx_file[1]]);
 		saveset.worldset->world_data->WriteHWS(filedest);
+		filedest.seekp(unitydataoff[config.world_disc_file[0]]);
+		saveset.worldset->world_data->WriteHWS(filedest,0);
+		filedest.seekp(unitydataoff[config.world_disc_file[1]]);
+		saveset.worldset->world_data->WriteHWS(filedest,1);
+		filedest.seekp(unitydataoff[config.world_discmr_file[0]]);
+		saveset.worldset->world_data->WriteHWS(filedest,2);
+		filedest.seekp(unitydataoff[config.world_discmr_file[1]]);
+		saveset.worldset->world_data->WriteHWS(filedest,3);
 		filebase.close();
 		filedest.close();
 		delete[] copylist;

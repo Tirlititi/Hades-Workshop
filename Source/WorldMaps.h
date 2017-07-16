@@ -23,7 +23,9 @@ struct WorldMapDataStruct : public ChunkChild {
 	uint32_t* section_offset;
 	uint32_t* section_size;
 	uint8_t** section_raw_data;
-	
+	uint32_t steam_chunk_pos_disc[2]; // Steam version only
+	uint32_t steam_chunk_pos_discmr[2]; // Steam version only
+
 	uint16_t place_name_extra_size;
 	FF9String place_name[WORLD_MAP_PLACE_AMOUNT];
 	uint16_t* place_unknown_amount;
@@ -41,7 +43,7 @@ struct WorldMapDataStruct : public ChunkChild {
 	void Write(fstream& f);
 	void WritePPF(fstream& f);
 	void ReadHWS(fstream& f, bool usetext = true);
-	void WriteHWS(fstream& f);
+	void WriteHWS(fstream& f, int steamdiscordiscmr = -1); // 0-1: disc.img, 2-3: dicmr.img
 	void UpdateOffset();
 };
 

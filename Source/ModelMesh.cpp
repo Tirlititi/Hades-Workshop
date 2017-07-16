@@ -43,7 +43,7 @@ void ModelMeshData::Read(fstream& f) {
 	for (i=0;i<bone_amount;i++) {
 		for (j=0;j<4;j++)
 			for (k=0;k<4;k++)
-				bonebuffer.transform_matrix.value[j][k] = ReadFloat(f);
+				bonebuffer.transform_matrix.value[j][k] = (k==3 ? -ReadFloat(f) : ReadFloat(f));
 		bone.push_back(bonebuffer);
 	}
 	bone_unk_amount = ReadLong(f);
@@ -160,8 +160,7 @@ void ModelMeshData::Export(fstream& output, const char* objname, const char* mtl
 	tvert_count_origin += vertice_amount;
 }
 
-void ModelMaterialData::Read(fstream& f) {
-	unsigned int i;
+void ModelMaterialData::Read(fstream& f, UnityArchiveMetaData& metadata) {
 	uint32_t fieldlen;
 	char fieldbuffer[0x20];
 	size_t headerpos = f.tellg();
@@ -171,37 +170,40 @@ void ModelMaterialData::Read(fstream& f) {
 		f.read(fieldbuffer,fieldlen);
 		fieldbuffer[fieldlen] = 0;
 		f.seekg(GetAlignOffset(f.tellg()),ios::cur);
+
+		#define MACRO_MATERIAL_READFILE(MAP) \
+			MAP.unk1 = ReadLong(f); \
+			MAP.file_info = ReadLongLong(f); \
+			MAP.u = ReadFloat(f); \
+			MAP.v = ReadFloat(f); \
+			MAP.unk2 = ReadLong(f); \
+			MAP.unk3 = ReadLong(f); \
+			if (MAP.file_info==0) { \
+				MAP.file_name = ""; \
+			} else { \
+				int32_t texfileid = metadata.GetFileIndexByInfo(MAP.file_info); \
+				MAP.file_name = (texfileid>=0 ? metadata.file_name[texfileid]+".png" : "TextureNotFound"); \
+			}
+
 		if (strcmp(fieldbuffer,"_BumpMap")==0) {
-			for (i=0;i<7;i++)
-				bumpmap_data[i] = ReadLong(f);
+			MACRO_MATERIAL_READFILE(bumpmap)
 		} else if (strcmp(fieldbuffer,"_DetailAlbedoMap")==0) {
-			for (i=0;i<7;i++)
-				detailalbedomap_data[i] = ReadLong(f);
+			MACRO_MATERIAL_READFILE(detailalbedomap)
 		} else if (strcmp(fieldbuffer,"_DetailMask")==0) {
-			for (i=0;i<7;i++)
-				detailmask_data[i] = ReadLong(f);
+			MACRO_MATERIAL_READFILE(detailmask)
 		} else if (strcmp(fieldbuffer,"_DetailNormalMap")==0) {
-			for (i=0;i<7;i++)
-				detailnormalmap_data[i] = ReadLong(f);
+			MACRO_MATERIAL_READFILE(detailnormalmap)
 		} else if (strcmp(fieldbuffer,"_EmissionMap")==0) {
-			for (i=0;i<7;i++)
-				emissionmap_data[i] = ReadLong(f);
+			MACRO_MATERIAL_READFILE(emissionmap)
 		} else if (strcmp(fieldbuffer,"_MainTex")==0) {
-			maintex_unk1 = ReadLong(f);
-			maintex_file_info = ReadLongLong(f);
-			maintex_u = ReadFloat(f);
-			maintex_v = ReadFloat(f);
-			maintex_unk2 = ReadLong(f);
-			maintex_unk3 = ReadLong(f);
+			MACRO_MATERIAL_READFILE(maintex)
 		} else if (strcmp(fieldbuffer,"_MetallicGlossMap")==0) {
-			for (i=0;i<7;i++)
-				metallicglossmap_data[i] = ReadLong(f);
+			MACRO_MATERIAL_READFILE(metallicglossmap)
 		} else if (strcmp(fieldbuffer,"_OcclusionMap")==0) {
-			for (i=0;i<7;i++)
-				occlusionmap_data[i] = ReadLong(f);
+			MACRO_MATERIAL_READFILE(occlusionmap)
 		} else if (strcmp(fieldbuffer,"_ParallaxMap")==0) {
-			for (i=0;i<8;i++)
-				parallaxmap_data[i] = ReadLong(f);
+			MACRO_MATERIAL_READFILE(parallaxmap)
+			parallaxmap_unk4 = ReadLong(f);
 		} else if (strcmp(fieldbuffer,"_BumpScale")==0) {
 			bumpscale_value = ReadFloat(f);
 		} else if (strcmp(fieldbuffer,"_Cutoff")==0) {
@@ -256,24 +258,20 @@ void ModelMaterialData::Export(fstream& output, const char* mtlname, const char*
 }
 
 void ModelAnimationData::Read(fstream& f, GameObjectHierarchy* gohier) {
-	unsigned int i,j,k,t;
+	unsigned int i,j;
 	name_len = ReadLong(f);
 	name = "";
 	for (i=0;i<name_len;i++)
 		name.push_back(f.get());
 	f.seekg(GetAlignOffset(f.tellg()),ios::cur);
-fstream fout("aaaa.txt",ios::app|ios::out); fout << "READ ANIM " << name << endl; fout.close();
 	num_unk1 = ReadShort(f);
 	num_unk2 = ReadShort(f);
-//fstream fout("aaaa.txt",ios::out|ios::app);
 
 	#define MACRO_IOTRANSFORM_BEGIN(LOCALTYPE) \
 		LOCALTYPE ## _amount = ReadLong(f); \
-/*fout << #LOCALTYPE": " << (unsigned int)LOCALTYPE ## _amount << endl;*/ \
 		LOCALTYPE.resize(LOCALTYPE ## _amount); \
 		for (i=0;i<LOCALTYPE ## _amount;i++) { \
 			LOCALTYPE[i].transform_amount = ReadLong(f); \
-/*fout << #LOCALTYPE" transform: " << (unsigned int)LOCALTYPE[i].transform_amount << endl;*/ \
 			LOCALTYPE[i].transform.resize(LOCALTYPE[i].transform_amount); \
 			for (j=0;j<LOCALTYPE[i].transform_amount;j++) {
 
@@ -286,7 +284,6 @@ fstream fout("aaaa.txt",ios::app|ios::out); fout << "READ ANIM " << name << endl
 			for (j=0;j<LOCALTYPE[i].object_name_len;j++) \
 				LOCALTYPE[i].object_name.push_back(f.get()); \
 			f.seekg(GetAlignOffset(f.tellg()),ios::cur); \
-/*fout << #LOCALTYPE" name: " << LOCALTYPE[i].object_name.c_str() << endl;*/ \
 		}
 
 	MACRO_IOTRANSFORM_BEGIN(localw)
@@ -299,157 +296,20 @@ fstream fout("aaaa.txt",ios::app|ios::out); fout << "READ ANIM " << name << endl
 	MACRO_IOTRANSFORM_BEGIN(localt)
 		localt[i].transform[j].time = ReadFloat(f);
 		ModelDataStruct::ReadCoordinates(f,localt[i].transform[j].transx,localt[i].transform[j].transy,localt[i].transform[j].transz);
-		ModelDataStruct::ReadCoordinates(f,localt[i].transform[j].transx1,localt[i].transform[j].transy1,localt[i].transform[j].transz1);
-		ModelDataStruct::ReadCoordinates(f,localt[i].transform[j].transx2,localt[i].transform[j].transy2,localt[i].transform[j].transz2);
+		ModelDataStruct::ReadCoordinates(f,localt[i].transform[j].trans1x,localt[i].transform[j].trans1y,localt[i].transform[j].trans1z);
+		ModelDataStruct::ReadCoordinates(f,localt[i].transform[j].trans2x,localt[i].transform[j].trans2y,localt[i].transform[j].trans2z);
 	MACRO_IOTRANSFORM_END(localt)
 	MACRO_IOTRANSFORM_BEGIN(locals)
 		locals[i].transform[j].time = ReadFloat(f);
 		ModelDataStruct::ReadCoordinates(f,locals[i].transform[j].scalex,locals[i].transform[j].scaley,locals[i].transform[j].scalez,false);
-		ModelDataStruct::ReadCoordinates(f,locals[i].transform[j].scalex1,locals[i].transform[j].scaley1,locals[i].transform[j].scalez1,false);
-		ModelDataStruct::ReadCoordinates(f,locals[i].transform[j].scalex2,locals[i].transform[j].scaley2,locals[i].transform[j].scalez2,false);
+		ModelDataStruct::ReadCoordinates(f,locals[i].transform[j].scale1x,locals[i].transform[j].scale1y,locals[i].transform[j].scale1z,false);
+		ModelDataStruct::ReadCoordinates(f,locals[i].transform[j].scale2x,locals[i].transform[j].scale2y,locals[i].transform[j].scale2z,false);
 	MACRO_IOTRANSFORM_END(locals)
 	num_unk4 = ReadLong(f);
 	num_unk5 = ReadLong(f);
 	float_unk = ReadFloat(f);
 	num_unk6 = ReadLong(f);
-//fout.close();
 	// ToDo: read the end
-	// In FBX, the translations are done using the global coordinates
-	// In Steam assets, they are done using the node's orientation
-	vector<int> nodeparentindex;
-	vector<FbxString> nodename;
-	vector<Quaternion> nodedefaultglobalrot;
-	vector<Quaternion> nodeglobalrot;
-	FbxString nodefullname, nodenewname;
-	unsigned int tokenamount;
-	bool foundflag;
-	// 1st step: create the list of needed nodes and parent hierarchy
-	// Note: a parent node is always before a child in the vector lists
-/*fout.open("aaaa.txt",ios::app|ios::out); fout << "ROTATION BEG" << endl; fout.close();
-	vector<unsigned int> localtnodeindex;
-	localtnodeindex.resize(localt_amount);
-	for (i=0;i<localt_amount;i++) {
-fout.open("aaaa.txt",ios::app|ios::out); fout << "CREATE LIST " << i << endl; fout.close();
-		nodefullname = FbxString(localt[i].object_name.c_str());
-		tokenamount = nodefullname.GetTokenCount("/");
-		for (j=0;j<tokenamount;j++) {
-			nodenewname = nodefullname.GetToken(j,"/");
-			foundflag = false;
-			for (k=0;k<nodename.size();k++)
-				if (nodename[k]==nodenewname) {
-					foundflag = true;
-					if (j+1==tokenamount)
-						localtnodeindex[i] = k;
-					break;
-				}
-			if (!foundflag) {
-				if (j+1==tokenamount)
-					localtnodeindex[i] = nodename.size();
-				nodename.push_back(nodenewname);
-			}
-		}
-		if (tokenamount<=1) {
-			nodeparentindex.push_back(-1);
-		} else {
-			nodenewname = nodefullname.GetToken(tokenamount-2,"/");
-			foundflag = false;
-			for (k=0;k<nodename.size();k++)
-				if (nodenewname==nodename[k]) {
-					nodeparentindex.push_back(k);
-					foundflag = true;
-					break;
-				}
-			if (!foundflag)
-				nodeparentindex.push_back(-1);
-		}
-	}
-	// 2nd step: retrieve the default orientation from GameObjectHierarchy
-	nodedefaultglobalrot.resize(nodename.size());
-	if (gohier) {
-fout.open("aaaa.txt",ios::app|ios::out); fout << "GOHIER HERE" << endl; fout.close();
-		for (i=0;i<nodedefaultglobalrot.size();i++) {
-fout.open("aaaa.txt",ios::app|ios::out); fout << "DEFAULT ROTATION " << i << endl; fout.close();
-			foundflag = false;
-			for (j=0;gohier->node_list.size();j++)
-				if (gohier->node_list[j]->node_type==4 /*
-				*//* && static_cast<TransformStruct*>(gohier->node_list[j])->child_object && static_cast<TransformStruct*>(gohier->node_list[j])->child_object->node_type==1 /*
-				*//* && nodename[i]==FbxString(static_cast<GameObjectStruct*>(static_cast<TransformStruct*>(gohier->node_list[j])->child_object)->name.c_str())) {
-					nodedefaultglobalrot[i] = static_cast<TransformStruct*>(gohier->node_list[j])->rot;
-					foundflag = true;
-					break;
-				}
-			if (!foundflag) {
-				nodedefaultglobalrot[i].x = 0.0;
-				nodedefaultglobalrot[i].y = 0.0;
-				nodedefaultglobalrot[i].z = 0.0;
-				nodedefaultglobalrot[i].w = 1.0;
-			}
-		}
-	} else {
-		for (i=0;i<nodedefaultglobalrot.size();i++) {
-			nodedefaultglobalrot[i].x = 0.0;
-			nodedefaultglobalrot[i].y = 0.0;
-			nodedefaultglobalrot[i].z = 0.0;
-			nodedefaultglobalrot[i].w = 1.0;
-		}
-	}
-	// 3rd step: compute the orientation at each time and apply it to the translation
-	vector<float> timelist;
-	float newtime;
-fout.open("aaaa.txt",ios::app|ios::out); fout << "APPLY " << i << endl; fout.close();
-	for (i=0;i<localt_amount;i++) {
-fout.open("aaaa.txt",ios::app|ios::out); fout << "TIME LIST " << i << endl; fout.close();
-		for (j=0;j<localt[i].transform_amount;j++) {
-			newtime = localt[i].transform[j].time;
-			foundflag = false;
-			for (k=0;k<timelist.size();k++)
-				if (newtime==timelist[k]) {
-					foundflag = true;
-					break;
-				}
-			if (!foundflag)
-				timelist.push_back(newtime);
-		}
-	}
-	for (t=0;t<timelist.size();t++) {
-fout.open("aaaa.txt",ios::app|ios::out); fout << "TIME APPLY " << timelist[t] << endl; fout.close();
-		nodeglobalrot.clear();
-		nodeglobalrot.resize(nodename.size());
-		for (k=0;k<nodeglobalrot.size();k++) {
-			nodeglobalrot[k] = nodedefaultglobalrot[k];
-			for (i=0;i<localw_amount;i++)
-				if (FbxString(localw[i].object_name.c_str()).GetToken(FbxString(localw[i].object_name.c_str()).GetTokenCount("/"),"/")==nodename[k]) {
-					for (j=0;j<localw[i].transform_amount;j++)
-						if (localw[i].transform[j].time==timelist[t]) {
-							nodeglobalrot[k] = localw[i].transform[j].rot;
-							break;
-						}
-					break;
-				}
-			if (nodeparentindex[k]>=0)
-				nodeglobalrot[k] = Quaternion::Product(nodeglobalrot[nodeparentindex[k]],nodeglobalrot[k]);
-		}
-		for (i=0;i<localt_amount;i++)
-			for (j=0;j<localt[i].transform_amount;j++)
-				if (localt[i].transform[j].time==timelist[t]) {
-					nodeglobalrot[localtnodeindex[i]].Apply(localt[i].transform[j].transx,localt[i].transform[j].transy,localt[i].transform[j].transz);
-					nodeglobalrot[localtnodeindex[i]].Apply(localt[i].transform[j].transx1,localt[i].transform[j].transy1,localt[i].transform[j].transz1);
-					nodeglobalrot[localtnodeindex[i]].Apply(localt[i].transform[j].transx2,localt[i].transform[j].transy2,localt[i].transform[j].transz2);
-				}
-	}*/
-/*	for (i=0;i<localt_amount;i++)
-		for (k=0;k<localw_amount;k++)
-			if (localw[k].object_name==localt[i].object_name) {
-				for (j=0;j<localt[i].transform_amount;j++)
-					for (unsigned int l=0;l<localw[k].transform_amount;l++)
-						if (localw[k].transform[l].time==localt[i].transform[j].time) {
-							localw[k].transform[l].rot.Apply(localt[i].transform[j].transx,localt[i].transform[j].transy,localt[i].transform[j].transz);
-							localw[k].transform[l].rot.Apply(localt[i].transform[j].transx1,localt[i].transform[j].transy1,localt[i].transform[j].transz1);
-							localw[k].transform[l].rot.Apply(localt[i].transform[j].transx2,localt[i].transform[j].transy2,localt[i].transform[j].transz2);
-							break;
-						}
-				break;
-			}*/
 }
 
 void ModelDataStruct::ReadCoordinates(fstream& f, float& x, float& y, float& z, bool swapsign) {
@@ -480,10 +340,8 @@ bool ModelDataStruct::Read(fstream& f, GameObjectHierarchy* gohier) {
 				ModelMaterialData matdata;
 				if (!node->child_material[j]) return false;
 				f.seekg(meta.GetFileOffsetByIndex(node->child_material[j]->file_index));
-				matdata.Read(f);
+				matdata.Read(f,meta);
 				matdata.name = meta.file_name[node->child_material[j]->file_index];
-				int32_t texfileid = meta.GetFileIndexByInfo(matdata.maintex_file_info);
-				matdata.maintex_file_name = (texfileid>=0 ? meta.file_name[texfileid]+".png" : "TextureNotFound");
 				matdatalist.push_back(matdata);
 			}
 			// Remember the name of the parent Game Object for the mesh-material link
@@ -523,10 +381,8 @@ bool ModelDataStruct::Read(fstream& f, GameObjectHierarchy* gohier) {
 				ModelMaterialData matdata;
 				if (!node->child_material[j]) return false;
 				f.seekg(meta.GetFileOffsetByIndex(node->child_material[j]->file_index));
-				matdata.Read(f);
+				matdata.Read(f,meta);
 				matdata.name = meta.file_name[node->child_material[j]->file_index];
-				int32_t texfileid = meta.GetFileIndexByInfo(matdata.maintex_file_info);
-				matdata.maintex_file_name = (texfileid>=0 ? meta.file_name[texfileid]+".png" : "TextureNotFound");
 				matdatalist.push_back(matdata);
 			}
 			k = 0;
@@ -597,9 +453,7 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 	// Construct the basis for the skeleton
 	FbxNode* lRootNode = sdkscene->GetRootNode();
 	FbxSkeleton* lSingleSkeleton = NULL;
-	FbxCluster* lSingleSkeletonCluster = NULL;
 	FbxNode* lSingleSkeletonNode = NULL;
-	vector<FbxSkin*> lMultiSkin;
 	vector<FbxSkeleton*> lMultiSkeleton;
 	vector<string> lMultiSkeletonName;
 	bool hasbones = false;
@@ -610,12 +464,10 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 		}
 	if (model.animation.size()>0 && !hasbones) {
 		lSingleSkeleton = FbxSkeleton::Create(sdkscene, "");
-		lSingleSkeletonNode = FbxNode::Create(sdkscene, "");
-		lSingleSkeletonCluster = FbxCluster::Create(sdkscene, "");
 		lSingleSkeleton->SetSkeletonType(FbxSkeleton::eRoot);
+		lSingleSkeleton->Size.Set(1.0);
+		lSingleSkeletonNode = FbxNode::Create(sdkscene, "");
 		lSingleSkeletonNode->SetNodeAttribute(lSingleSkeleton);
-		lSingleSkeletonCluster->SetLink(lSingleSkeletonNode);
-		lSingleSkeletonCluster->SetLinkMode(FbxCluster::eTotalOne);
 	}
 	// Construct all the Fbx nodes
 	vector<FbxNode*> lNodeList;
@@ -624,7 +476,6 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 		if (hierarchynode[i]==model.hierarchy->root_node) {
 			if (hierarchynode[i]->node_type==4) { // Should be always true
 				TransformStruct* nodespec = static_cast<TransformStruct*>(hierarchynode[i]);
-//{fstream fout("aaaa.txt",ios::app|ios::out); fout << "ROOT NODE : " << (unsigned int)nodespec->file_index << endl; fout.close();}
 				lRootNode->LclRotation.Set(FbxDouble3(nodespec->rot.GetRoll(), nodespec->rot.GetPitch(), nodespec->rot.GetYaw()));
 				lRootNode->LclTranslation.Set(FbxDouble3(nodespec->x, nodespec->y, nodespec->z));
 				lRootNode->LclScaling.Set(FbxDouble3(nodespec->scale_x, nodespec->scale_y, nodespec->scale_z));
@@ -638,7 +489,6 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 			TransformStruct* nodespec = static_cast<TransformStruct*>(hierarchynode[i]);
 			if (nodespec->child_object && nodespec->child_object->node_type==1)
 				nodename = static_cast<GameObjectStruct*>(nodespec->child_object)->name;
-//{fstream fout("aaaa.txt",ios::app|ios::out); fout << nodename.c_str() << " : " << (unsigned int)nodespec->file_index << endl; fout.close();}
 			FbxNode* lNode = FbxNode::Create(sdkscene, FbxString(nodename.c_str()));
 			lNode->LclRotation.Set(FbxDouble3(nodespec->rot.GetRoll(), nodespec->rot.GetPitch(), nodespec->rot.GetYaw()));
 			lNode->LclTranslation.Set(FbxDouble3(nodespec->x, nodespec->y, nodespec->z));
@@ -658,7 +508,7 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 						lNodeList[j]->AddChild(lNodeList[i]);
 						break;
 					}
-		} else if (hierarchynode[i]->node_type==137) {
+		} else if (hierarchynode[i]->node_type==137 && hasbones) {
 			SkinnedMeshRendererStruct* nodespec = static_cast<SkinnedMeshRendererStruct*>(hierarchynode[i]);
 			for (j=0;j<nodespec->child_bone_amount;j++) {
 
@@ -701,20 +551,21 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 		}
 	}
 	// Construct more bones
-	for (i=0;i<model.animation.size();i++) {
-		for (j=0;j<model.animation[i].localw_amount;j++) {
-			string bonename = model.animation[i].localw[j].object_name;
-			MACRO_CONSTRUCT_NEWBONE(bonename)
+	if (hasbones)
+		for (i=0;i<model.animation.size();i++) {
+			for (j=0;j<model.animation[i].localw_amount;j++) {
+				string bonename = model.animation[i].localw[j].object_name;
+				MACRO_CONSTRUCT_NEWBONE(bonename)
+			}
+			for (j=0;j<model.animation[i].localt_amount;j++) {
+				string bonename = model.animation[i].localt[j].object_name;
+				MACRO_CONSTRUCT_NEWBONE(bonename)
+			}
+			for (j=0;j<model.animation[i].locals_amount;j++) {
+				string bonename = model.animation[i].locals[j].object_name;
+				MACRO_CONSTRUCT_NEWBONE(bonename)
+			}
 		}
-		for (j=0;j<model.animation[i].localt_amount;j++) {
-			string bonename = model.animation[i].localt[j].object_name;
-			MACRO_CONSTRUCT_NEWBONE(bonename)
-		}
-		for (j=0;j<model.animation[i].locals_amount;j++) {
-			string bonename = model.animation[i].locals[j].object_name;
-			MACRO_CONSTRUCT_NEWBONE(bonename)
-		}
-	}
 	// Construct the meshes
 	for (i=0;i<hierarchynode.size();i++) {
 		if (hierarchynode[i]->node_type==1) {
@@ -758,15 +609,20 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 				FbxGeometryElementNormal* lGeometryElementNormal = lMesh->CreateElementNormal();
 				lGeometryElementNormal->SetMappingMode(FbxGeometryElement::eByControlPoint);
 				lGeometryElementNormal->SetReferenceMode(FbxGeometryElement::eDirect);
-				FbxVector4 lNormal;
+				FbxGeometryElementTangent* lGeometryElementTangent = lMesh->CreateElementTangent();
+				lGeometryElementTangent->SetMappingMode(FbxGeometryElement::eByControlPoint);
+				lGeometryElementTangent->SetReferenceMode(FbxGeometryElement::eDirect);
 				FbxGeometryElementUV* lUVDiffuseElement = lMesh->CreateElementUV("DiffuseUV");
 				lUVDiffuseElement->SetMappingMode(FbxGeometryElement::eByControlPoint);
 				lUVDiffuseElement->SetReferenceMode(FbxGeometryElement::eDirect);
+				FbxVector4 lNormal,lTangent;
 				FbxVector2 lUVPoint;
 				for (j = 0; j<mesh.vert.size(); j++) {
 					lControlPoints[j].Set(mesh.vert[j].x, mesh.vert[j].y, mesh.vert[j].z);
 					lNormal.Set(mesh.vert[j].nx, mesh.vert[j].ny, mesh.vert[j].nz);
+					lTangent.Set(mesh.vert[j].tx, mesh.vert[j].ty, mesh.vert[j].tz);
 					lGeometryElementNormal->GetDirectArray().Add(lNormal);
+					lGeometryElementTangent->GetDirectArray().Add(lTangent);
 					lUVPoint.Set(mesh.vert[j].u, mesh.vert[j].v);
 					lUVDiffuseElement->GetDirectArray().Add(lUVPoint);
 				}
@@ -795,7 +651,7 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 				// Materials and Textures
 				vector<ModelMaterialData>& material = model.material[meshindex];
 				for (j = 0; j < material.size(); j++) {
-					FbxString lTextureName = material[j].maintex_file_name.c_str();
+					FbxString lTextureName = material[j].maintex.file_name.c_str();
 					FbxSurfacePhong* lMaterial = FbxSurfacePhong::Create(sdkscene, material[j].name.c_str());
 					lMeshNode->AddMaterial(lMaterial);
 					FbxFileTexture* lFileTex = FbxFileTexture::Create(sdkscene, lTextureName);
@@ -805,21 +661,87 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 					lFileTex->SetMappingType(FbxTexture::eUV);
 					lFileTex->SetMaterialUse(FbxFileTexture::eModelMaterial);
 					lFileTex->UVSet.Set(FbxString("DiffuseUV"));
+					FbxProperty lProp;
+					// DEBUG: there is a "FbxMaterialBumpDT" and other similars... No idea of how to use them
+					if (material[j].bumpmap.file_info!=0) {
+						FbxProperty::Create(lMaterial, FbxStringDT, "_BumpMap");
+						lProp.Set(FbxString(material[j].bumpmap.file_name.c_str()));
+					}
+					if (material[j].detailalbedomap.file_info!=0) {
+						FbxProperty::Create(lMaterial, FbxStringDT, "_DetailAlbedoMap");
+						lProp.Set(FbxString(material[j].detailalbedomap.file_name.c_str()));
+					}
+					if (material[j].detailmask.file_info!=0) {
+						FbxProperty::Create(lMaterial, FbxStringDT, "_DetailMask");
+						lProp.Set(FbxString(material[j].detailmask.file_name.c_str()));
+					}
+					if (material[j].detailnormalmap.file_info!=0) {
+						FbxProperty::Create(lMaterial, FbxStringDT, "_DetailNormalMap");
+						lProp.Set(FbxString(material[j].detailnormalmap.file_name.c_str()));
+					}
+					if (material[j].emissionmap.file_info!=0) {
+						FbxProperty::Create(lMaterial, FbxStringDT, "_EmissionMap");
+						lProp.Set(FbxString(material[j].emissionmap.file_name.c_str()));
+					}
+					if (material[j].metallicglossmap.file_info!=0) {
+						FbxProperty::Create(lMaterial, FbxStringDT, "_MetallicGlossMap");
+						lProp.Set(FbxString(material[j].metallicglossmap.file_name.c_str()));
+					}
+					if (material[j].occlusionmap.file_info!=0) {
+						FbxProperty::Create(lMaterial, FbxStringDT, "_OcclusionMap");
+						lProp.Set(FbxString(material[j].occlusionmap.file_name.c_str()));
+					}
+					if (material[j].parallaxmap.file_info!=0) {
+						FbxProperty::Create(lMaterial, FbxStringDT, "_ParallaxMap");
+						lProp.Set(FbxString(material[j].parallaxmap.file_name.c_str()));
+					}
+					lProp = FbxProperty::Create(lMaterial, FbxFloatDT, "_BumpScale");
+					lProp.Set(material[j].bumpscale_value);
+					lProp = FbxProperty::Create(lMaterial, FbxFloatDT, "_Cutoff");
+					lProp.Set(material[j].cutoff_value);
+					lProp = FbxProperty::Create(lMaterial, FbxFloatDT, "_DetailNormalMapScale");
+					lProp.Set(material[j].detailnormalmapscale_value);
+					lProp = FbxProperty::Create(lMaterial, FbxFloatDT, "_DstBlend");
+					lProp.Set(material[j].dstblend_value);
+					lProp = FbxProperty::Create(lMaterial, FbxFloatDT, "_Glossiness");
+					lProp.Set(material[j].glossiness_value);
+					lProp = FbxProperty::Create(lMaterial, FbxFloatDT, "_Metallic");
+					lProp.Set(material[j].metallic_value);
+					lProp = FbxProperty::Create(lMaterial, FbxFloatDT, "_Mode");
+					lProp.Set(material[j].mode_value);
+					lProp = FbxProperty::Create(lMaterial, FbxFloatDT, "_OcclusionStrength");
+					lProp.Set(material[j].occlusionstrength_value);
+					lProp = FbxProperty::Create(lMaterial, FbxFloatDT, "_Parallax");
+					lProp.Set(material[j].parallax_value);
+					lProp = FbxProperty::Create(lMaterial, FbxFloatDT, "_SrcBlend");
+					lProp.Set(material[j].srcblend_value);
+					lProp = FbxProperty::Create(lMaterial, FbxFloatDT, "_UVSec");
+					lProp.Set(material[j].uvsec_value);
+					lProp = FbxProperty::Create(lMaterial, FbxDouble2DT, "_ZWrite");
+					lProp.Set(FbxDouble2(material[j].zwrite_factor,material[j].zwrite_mode));
+					lProp = FbxProperty::Create(lMaterial, FbxColor4DT, "_Color");
+					lProp.Set(FbxColor(material[j].color_red,material[j].color_green,material[j].color_blue,material[j].color_alpha));
+					lProp = FbxProperty::Create(lMaterial, FbxColor4DT, "_EmissionColor");
+					lProp.Set(FbxColor(material[j].emissioncolor_red,material[j].emissioncolor_green,material[j].emissioncolor_blue,material[j].emissioncolor_alpha));
 					lMaterial->Diffuse.ConnectSrcObject(lFileTex);
-//					FbxProperty lProp = FbxProperty::Create(lMaterial, FbxDouble3DT, "EnvSampler", "SamplerTexture");
-//					FbxDouble3 lSampleVal(0, 0, 0);
-//					lProp.Set(lSampleVal);
-//					lFileTex->ConnectDstProperty(lProp);
-//					lMaterial->ConnectSrcObject(lFileTex);
 				}
 				// Link points to Skeleton Clusters
 				if (model.animation.size()>0 || hasbones) {
 					FbxSkin* lSkin = FbxSkin::Create(sdkscene, "");
+					FbxAMatrix lTransformMatrix = lMeshNode->EvaluateGlobalTransform();
+					FbxAMatrix lTransformLinkMatrix;
+					lTransformLinkMatrix.SetIdentity();
 					lSkin->SetGeometry(lMesh);
 					if (model.animation.size()>0 && !hasbones) {
+						FbxCluster* lSingleSkeletonCluster = FbxCluster::Create(sdkscene, "");
+						lSingleSkeletonCluster->SetLink(lSingleSkeletonNode);
+						lSingleSkeletonCluster->SetLinkMode(FbxCluster::eTotalOne);
 						for (j = 0; j<mesh.vert.size(); j++)
 							lSingleSkeletonCluster->AddControlPointIndex(j, 1.0);
 						lSkin->AddCluster(lSingleSkeletonCluster);
+						lTransformLinkMatrix = lSingleSkeletonNode->EvaluateGlobalTransform();
+						lSingleSkeletonCluster->SetTransformMatrix(lTransformMatrix);
+						lSingleSkeletonCluster->SetTransformLinkMatrix(lTransformLinkMatrix);
 					} else {
 						for (j = 0; j < mesh.bone_amount; j++) {
 							FbxCluster* lSkeletonCluster = FbxCluster::Create(sdkscene, "");
@@ -829,21 +751,19 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 									break;
 								}
 							lSkeletonCluster->SetLinkMode(FbxCluster::eTotalOne);
-							if (lSkeletonCluster) {
-								for (k = 0; k < mesh.vertice_attachment_amount; k++)
-									for (l = 0; l < 4; l++)
-										if (mesh.vert_attachment[k].bone_id[l]==j && mesh.vert_attachment[k].bone_factor[l] > 0.0)
-											lSkeletonCluster->AddControlPointIndex(k, mesh.vert_attachment[k].bone_factor[l]);
-								lSkin->AddCluster(lSkeletonCluster);
-							}
+							for (k = 0; k < mesh.vertice_attachment_amount; k++)
+								for (l = 0; l < 4; l++)
+									if (mesh.vert_attachment[k].bone_id[l]==j && mesh.vert_attachment[k].bone_factor[l] > 0.0)
+										lSkeletonCluster->AddControlPointIndex(k, mesh.vert_attachment[k].bone_factor[l]);
+							lSkin->AddCluster(lSkeletonCluster);
+							LinearTransformationMatrix& linkmatrix = mesh.bone[j].transform_matrix;
+							lTransformMatrix.SetRow(0,FbxVector4(linkmatrix.value[0][0],linkmatrix.value[1][0],linkmatrix.value[2][0],linkmatrix.value[3][0]));
+							lTransformMatrix.SetRow(1,FbxVector4(linkmatrix.value[0][1],linkmatrix.value[1][1],linkmatrix.value[2][1],linkmatrix.value[3][1]));
+							lTransformMatrix.SetRow(2,FbxVector4(linkmatrix.value[0][2],linkmatrix.value[1][2],linkmatrix.value[2][2],linkmatrix.value[3][2]));
+							lTransformMatrix.SetRow(3,FbxVector4(linkmatrix.value[0][3],linkmatrix.value[1][3],linkmatrix.value[2][3],linkmatrix.value[3][3]));
+							lSkeletonCluster->SetTransformMatrix(lTransformMatrix);
+							lSkeletonCluster->SetTransformLinkMatrix(lTransformLinkMatrix);
 						}
-					}
-					FbxAMatrix lTransformMatrix = lMeshNode->EvaluateGlobalTransform();
-					for (j=0;j<lSkin->GetClusterCount();j++)
-						lSkin->GetCluster(j)->SetTransformMatrix(lTransformMatrix);
-					for (j=0;j<lSkin->GetClusterCount();j++) {
-						lTransformMatrix = lSkin->GetCluster(j)->GetLink()->EvaluateGlobalTransform();
-						lSkin->GetCluster(j)->SetTransformLinkMatrix(lTransformMatrix);
 					}
 					lMesh->AddDeformer(lSkin);
 				}
@@ -853,27 +773,33 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 	// Animations
 	FbxTime lTime;
 	int lKeyIndex;
+	FbxAnimCurveFilterUnroll lUnrollFilter;
+	lUnrollFilter.SetForceAutoTangents(true);
     for (i=0;i<model.animation.size();i++) {
 		FbxAnimStack* lAnimStack = FbxAnimStack::Create(sdkscene, model.animation[i].name.c_str());
 		FbxAnimLayer* lAnimLayer = FbxAnimLayer::Create(sdkscene, "Base Layer");
 		FbxAnimCurve* lCurve;
+		FbxTime lStartTime, lEndTime;
+		lStartTime.SetSecondDouble(0.0);
+		lEndTime.SetSecondDouble(0.0);
 		lAnimStack->AddMember(lAnimLayer);
 		for (j=0;j<model.animation[i].localw_amount;j++) {
 
-			#define MACRO_FBX_APPLY_SINGLETRANSFORMATION(LOCALTYPE,LCLTYPE,COMPONENTNAME,VALUE) \
+			#define MACRO_FBX_APPLY_SINGLETRANSFORMATION(LOCALTYPE,LCLTYPE,COMPONENTNAME,VALUE,VALUE1,VALUE2) \
 				lCurve = lSkeletonNode->LCLTYPE.GetCurve(lAnimLayer, COMPONENTNAME, true); \
 				if (lCurve) { \
 					lCurve->KeyModifyBegin(); \
 					for (k=0;k<model.animation[i].LOCALTYPE[j].transform_amount;k++) { \
 						lTime.SetSecondDouble(model.animation[i].LOCALTYPE[j].transform[k].time); \
 						lKeyIndex = lCurve->KeyAdd(lTime); \
-						lCurve->KeySetValue(lKeyIndex, model.animation[i].LOCALTYPE[j].transform[k].VALUE); \
-						lCurve->KeySetInterpolation(lKeyIndex, FbxAnimCurveDef::eInterpolationLinear); \
+						lCurve->KeySet(lKeyIndex, lTime, model.animation[i].LOCALTYPE[j].transform[k].VALUE, FbxAnimCurveDef::eInterpolationCubic, FbxAnimCurveDef::eTangentGenericBreak, model.animation[i].LOCALTYPE[j].transform[k].VALUE1, model.animation[i].LOCALTYPE[j].transform[k].VALUE2); \
+						if (lStartTime>lTime) lStartTime = lTime; \
+						if (lEndTime<lTime) lEndTime = lTime; \
 					} \
 					lCurve->KeyModifyEnd(); \
 				}
 
-			#define MACRO_FBX_APPLY_TRANSFORMATION(LOCALTYPE,LCLTYPE,X,Y,Z) \
+			#define MACRO_FBX_APPLY_TRANSFORMATION(LOCALTYPE,LCLTYPE,BASECOORD,X,Y,Z) \
 				FbxNode* lSkeletonNode = NULL; \
 				if (!hasbones) \
 					lSkeletonNode = lSingleSkeletonNode; \
@@ -885,18 +811,26 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 						} \
 				if (lSkeletonNode==NULL) \
 					continue; \
-				MACRO_FBX_APPLY_SINGLETRANSFORMATION(LOCALTYPE,LCLTYPE,FBXSDK_CURVENODE_COMPONENT_X,X) \
-				MACRO_FBX_APPLY_SINGLETRANSFORMATION(LOCALTYPE,LCLTYPE,FBXSDK_CURVENODE_COMPONENT_Y,Y) \
-				MACRO_FBX_APPLY_SINGLETRANSFORMATION(LOCALTYPE,LCLTYPE,FBXSDK_CURVENODE_COMPONENT_Z,Z)
+				MACRO_FBX_APPLY_SINGLETRANSFORMATION(LOCALTYPE,LCLTYPE,FBXSDK_CURVENODE_COMPONENT_X,BASECOORD ## X,BASECOORD ## 1 ## X,BASECOORD ## 2 ## X) \
+				MACRO_FBX_APPLY_SINGLETRANSFORMATION(LOCALTYPE,LCLTYPE,FBXSDK_CURVENODE_COMPONENT_Y,BASECOORD ## Y,BASECOORD ## 1 ## Y,BASECOORD ## 2 ## Y) \
+				MACRO_FBX_APPLY_SINGLETRANSFORMATION(LOCALTYPE,LCLTYPE,FBXSDK_CURVENODE_COMPONENT_Z,BASECOORD ## Z,BASECOORD ## 1 ## Z,BASECOORD ## 2 ## Z)
 			
-			MACRO_FBX_APPLY_TRANSFORMATION(localw,LclRotation,rot.GetRoll(),rot.GetPitch(),rot.GetYaw())
+			MACRO_FBX_APPLY_TRANSFORMATION(localw,LclRotation,rot,.GetRoll(),.GetPitch(),.GetYaw())
+			FbxAnimCurve** lAnimEulerCurve = new FbxAnimCurve*[3];
+			lAnimEulerCurve[0] = lSkeletonNode->LclRotation.GetCurve(lAnimLayer, FBXSDK_CURVENODE_COMPONENT_X, true);
+			lAnimEulerCurve[1] = lSkeletonNode->LclRotation.GetCurve(lAnimLayer, FBXSDK_CURVENODE_COMPONENT_Y, true);
+			lAnimEulerCurve[2] = lSkeletonNode->LclRotation.GetCurve(lAnimLayer, FBXSDK_CURVENODE_COMPONENT_Z, true);
+			lUnrollFilter.Apply(lAnimEulerCurve,3);
+			delete[] lAnimEulerCurve;
 		}
 		for (j=0;j<model.animation[i].localt_amount;j++) {
-			MACRO_FBX_APPLY_TRANSFORMATION(localt,LclTranslation,transx,transy,transz)
+			MACRO_FBX_APPLY_TRANSFORMATION(localt,LclTranslation,trans,x,y,z)
 		}
 		for (j=0;j<model.animation[i].locals_amount;j++) {
-			MACRO_FBX_APPLY_TRANSFORMATION(locals,LclScaling,scalex,scaley,scalez)
+			MACRO_FBX_APPLY_TRANSFORMATION(locals,LclScaling,scale,x,y,z)
 		}
+		lAnimStack->LocalStart = lStartTime;
+		lAnimStack->LocalStop = lEndTime;
 	}
     return true;
 }
@@ -1043,7 +977,9 @@ bool LoadScene(const char* pFilename, FbxManager* pManager, FbxDocument* pScene)
 #define RAD_TO_DEG 57.295779513082320877
 
 void Quaternion::Read(fstream& f) {
-	ModelDataStruct::ReadCoordinates(f,x,y,z,false);
+	float fx,fy,fz;
+	ModelDataStruct::ReadCoordinates(f,fx,fy,fz,false);
+	x = fx; y = fy; z = fz;
 	w = ReadFloat(f);
 	apply_matrix_updated = false;
 }
@@ -1053,7 +989,7 @@ void Quaternion::Write(fstream& f) {
 	WriteFloat(f,w);
 }
 
-Quaternion Quaternion::EulerToQuaternion(float roll, float pitch, float yaw) {
+Quaternion Quaternion::EulerToQuaternion(double roll, double pitch, double yaw) {
 	Quaternion q;
 	FbxVector4 eulervect(roll,pitch,yaw);
 	FbxQuaternion fbxquat;
@@ -1079,7 +1015,7 @@ Quaternion Quaternion::EulerToQuaternion(float roll, float pitch, float yaw) {
 	return q;
 }
 
-void Quaternion::QuaternionToEuler(Quaternion& q, float& roll, float& pitch, float& yaw) {
+void Quaternion::QuaternionToEuler(Quaternion& q, double& roll, double& pitch, double& yaw) {
 	FbxQuaternion fbxquat(q.x,q.y,q.z,q.w);
 	FbxVector4 fbxangle = fbxquat.DecomposeSphericalXYZ();
 	roll = fbxangle[0];
@@ -1139,7 +1075,7 @@ void Quaternion::UpdateMatrixIfNecessary() {
 	}
 }
 
-float Quaternion::GetRoll() {
+double Quaternion::GetRoll() {
 	FbxQuaternion fbxquat(x,y,z,w);
 	FbxVector4 fbxangle = fbxquat.DecomposeSphericalXYZ();
 	return fbxangle[0];
@@ -1149,7 +1085,7 @@ float Quaternion::GetRoll() {
 	return RAD_TO_DEG * atan2(t0, t1);*/
 }
 
-float Quaternion::GetPitch() {
+double Quaternion::GetPitch() {
 	FbxQuaternion fbxquat(x,y,z,w);
 	FbxVector4 fbxangle = fbxquat.DecomposeSphericalXYZ();
 	return fbxangle[1];
@@ -1159,7 +1095,7 @@ float Quaternion::GetPitch() {
 	return RAD_TO_DEG * asin(t2);*/
 }
 
-float Quaternion::GetYaw() {
+double Quaternion::GetYaw() {
 	FbxQuaternion fbxquat(x,y,z,w);
 	FbxVector4 fbxangle = fbxquat.DecomposeSphericalXYZ();
 	return fbxangle[2];
@@ -1169,7 +1105,7 @@ float Quaternion::GetYaw() {
 	return RAD_TO_DEG * atan2(t3, t4);*/
 }
 
-void Quaternion::SetValue(float newx, float newy, float newz, float neww) {
+void Quaternion::SetValue(double newx, double newy, double newz, double neww) {
 	x = newx;
 	y = newy;
 	z = newz;
@@ -1177,10 +1113,10 @@ void Quaternion::SetValue(float newx, float newy, float newz, float neww) {
 	apply_matrix_updated = false;
 }
 
-void Quaternion::Apply(float& posx, float& posy, float& posz) {
-	float px = posx;
-	float py = posy;
-	float pz = posz;
+void Quaternion::Apply(double& posx, double& posy, double& posz) {
+	double px = posx;
+	double py = posy;
+	double pz = posz;
 	UpdateMatrixIfNecessary();
 	posx = apply_matrix[0]*px + apply_matrix[1]*py + apply_matrix[2]*pz;
 	posy = apply_matrix[3]*px + apply_matrix[4]*py + apply_matrix[5]*pz;

@@ -22,8 +22,8 @@ public:
 	GLint** field_walk_triangle_pos;
 	int field_walk_path_highlight;
 	int field_walk_triangle_highlight;
-	unsigned int field_region_vertice_amount;
-	GLint** field_region_vertice_pos;
+	unsigned int field_region_vertex_amount;
+	GLint** field_region_vertex_pos;
 	unsigned int field_showpoint;
 	GLint field_pointx[GL_WINDOW_FIELD_MAX_POINTS];
 	GLint field_pointy[GL_WINDOW_FIELD_MAX_POINTS];

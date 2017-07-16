@@ -88,13 +88,6 @@ GameObjectNode* BuildHierarchy_Rec(GameObjectNode* parent, GameObjectHierarchy& 
 		}
 		MACRO_READCHILDOBJ(restransf,false)
 		restransf->parent_transform = childobj;
-/*		GameObjectNode* parentnoderec = restransf->parent_transform;
-		Quaternion rotationquat = restransf->rot;
-		while (parentnoderec && parentnoderec->node_type==4) {
-			rotationquat = Quaternion::Product(static_cast<TransformStruct*>(parentnoderec)->rot,rotationquat);
-			parentnoderec = static_cast<TransformStruct*>(parentnoderec)->parent_transform;
-		}*/
-//		restransf->rot.Apply(restransf->x,restransf->y,restransf->z);
 		res = restransf;
 	} else if (meta.file_type1[fileindex]==23) {
 		MeshRendererStruct* resmeshren = new MeshRendererStruct(parent,roothierarchy,objtype,objunk,objinfo);
@@ -206,13 +199,9 @@ GameObjectNode* BuildHierarchy_Rec(GameObjectNode* parent, GameObjectHierarchy& 
 		resskinmeshren->flag16 = ReadLong(f);
 		MACRO_READCHILDOBJ(resskinmeshren,false)
 		resskinmeshren->child_bone_sample = childobj;
+		ModelDataStruct::ReadCoordinates(f,resskinmeshren->center_x,resskinmeshren->center_y,resskinmeshren->center_z); // DEBUG: Unsure if "swap sign" for both
+		ModelDataStruct::ReadCoordinates(f,resskinmeshren->radius_x,resskinmeshren->radius_y,resskinmeshren->radius_z,false);
 		resskinmeshren->float_unk9 = ReadFloat(f);
-		resskinmeshren->float_unk10 = ReadFloat(f);
-		resskinmeshren->float_unk11 = ReadFloat(f);
-		resskinmeshren->float_unk12 = ReadFloat(f);
-		resskinmeshren->float_unk13 = ReadFloat(f);
-		resskinmeshren->float_unk14 = ReadFloat(f);
-		resskinmeshren->float_unk15 = ReadFloat(f);
 	} else {
 		res = new GameObjectNode(parent,roothierarchy,objtype,objunk,objinfo);
 		roothierarchy.node_list.push_back(res);
@@ -230,14 +219,18 @@ void DEBUGDisplayHierarchy_Rec(fstream& fout, GameObjectNode* node) {
 		return;
 	}
 	unsigned int i;
-	fout << DEBUGSpace << "-> " << UnityArchiveMetaData::GetTypeName(node->node_type);
+	fout << DEBUGSpace << "-> " << UnityArchiveMetaData::GetTypeName(node->node_type) << " " << (unsigned int)node->file_index+1;
 	if (node->node_type==1) {
 		GameObjectStruct* nodeobj = static_cast<GameObjectStruct*>(node);
 		fout << " (" << nodeobj->name << ")";
 	}
 	for (i=0;i<DEBUGDisplayedNode.size();i++)
 		if (DEBUGDisplayedNode[i]==node) {
-			fout << " - ALREADY DISPLAYED: " << (unsigned int)i << endl;
+			fout << " - ALREADY DISPLAYED: " << (unsigned int)i;
+			GameObjectStruct* nodeobj = NULL;
+			if (node->node_type==4)
+				fout << " (" << static_cast<GameObjectStruct*>(static_cast<TransformStruct*>(node)->child_object)->name << ")";
+			fout << endl;
 			return;
 		}
 	fout << " - " << (unsigned int)DEBUGDisplayedNode.size() << endl;

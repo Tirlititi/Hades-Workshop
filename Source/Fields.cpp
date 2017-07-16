@@ -679,8 +679,8 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 	IO ## Short(f,walkpath_offset); \
 	IO ## Short(f,normal_amount); \
 	IO ## Short(f,normal_offset); \
-	IO ## Short(f,vertice_amount); \
-	IO ## Short(f,vertice_offset); \
+	IO ## Short(f,vertex_amount); \
+	IO ## Short(f,vertex_offset); \
 	if (PPF) PPFEndScanStep(); \
 	if (READ) { \
 		triangle_unk1 = new uint8_t[triangle_amount]; \
@@ -690,9 +690,9 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 		triangle_normal = new uint16_t[triangle_amount]; \
 		triangle_unk4 = new uint16_t[triangle_amount]; \
 		triangle_unk5 = new uint16_t[triangle_amount]; \
-		triangle_vertice1 = new uint16_t[triangle_amount]; \
-		triangle_vertice2 = new uint16_t[triangle_amount]; \
-		triangle_vertice3 = new uint16_t[triangle_amount]; \
+		triangle_vertex1 = new uint16_t[triangle_amount]; \
+		triangle_vertex2 = new uint16_t[triangle_amount]; \
+		triangle_vertex3 = new uint16_t[triangle_amount]; \
 		triangle_edge1 = new uint16_t[triangle_amount]; \
 		triangle_edge2 = new uint16_t[triangle_amount]; \
 		triangle_edge3 = new uint16_t[triangle_amount]; \
@@ -733,9 +733,9 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 		normal_z = new int32_t[normal_amount]; \
 		normal_y = new int32_t[normal_amount]; \
 		normal_overz = new int32_t[normal_amount]; \
-		vertice_x = new int16_t[vertice_amount]; \
-		vertice_z = new int16_t[vertice_amount]; \
-		vertice_y = new int16_t[vertice_amount]; \
+		vertex_x = new int16_t[vertex_amount]; \
+		vertex_z = new int16_t[vertex_amount]; \
+		vertex_y = new int16_t[vertex_amount]; \
 	} \
 	for (i=0;i<triangle_amount;i++) { \
 		SEEK(f,headerpos,triangle_offset+i*0x28); \
@@ -747,9 +747,9 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 		IO ## Short(f,triangle_normal[i]); \
 		IO ## Short(f,triangle_unk4[i]); \
 		IO ## Short(f,triangle_unk5[i]); \
-		IO ## Short(f,triangle_vertice1[i]); \
-		IO ## Short(f,triangle_vertice2[i]); \
-		IO ## Short(f,triangle_vertice3[i]); \
+		IO ## Short(f,triangle_vertex1[i]); \
+		IO ## Short(f,triangle_vertex2[i]); \
+		IO ## Short(f,triangle_vertex3[i]); \
 		IO ## Short(f,triangle_edge1[i]); \
 		IO ## Short(f,triangle_edge2[i]); \
 		IO ## Short(f,triangle_edge3[i]); \
@@ -818,12 +818,12 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 		IO ## Long(f,(uint32_t&)normal_overz[i]); \
 		if (PPF) PPFEndScanStep(); \
 	} \
-	for (i=0;i<vertice_amount;i++) { \
-		SEEK(f,headerpos,vertice_offset+i*0x6); \
+	for (i=0;i<vertex_amount;i++) { \
+		SEEK(f,headerpos,vertex_offset+i*0x6); \
 		if (PPF) PPFInitScanStep(f); \
-		IO ## Short(f,(uint16_t&)vertice_x[i]); \
-		IO ## Short(f,(uint16_t&)vertice_z[i]); \
-		IO ## Short(f,(uint16_t&)vertice_y[i]); \
+		IO ## Short(f,(uint16_t&)vertex_x[i]); \
+		IO ## Short(f,(uint16_t&)vertex_z[i]); \
+		IO ## Short(f,(uint16_t&)vertex_y[i]); \
 		if (PPF) PPFEndScanStep(); \
 	}
 

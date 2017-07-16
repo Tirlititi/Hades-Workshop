@@ -39,7 +39,7 @@ void GLWindow::DisplayField(FieldTilesDataStruct* tiles, FieldWalkmeshDataStruct
 	field_showwalk = true;
 	field_walk_path_highlight = -1;
 	field_walk_triangle_highlight = -1;
-	field_region_vertice_amount = 0;
+	field_region_vertex_amount = 0;
 	field_showpoint = 0;
 	field_showplane = 0;
 	field_walk_triangle_pos = new GLint*[3*field_walk->triangle_amount];
@@ -50,15 +50,15 @@ void GLWindow::DisplayField(FieldTilesDataStruct* tiles, FieldWalkmeshDataStruct
 		field_walk_triangle_pos[3*i] = new GLint[3];
 		field_walk_triangle_pos[3*i+1] = new GLint[3];
 		field_walk_triangle_pos[3*i+2] = new GLint[3];
-		field_walk_triangle_pos[3*i][0] = offx+field_walk->vertice_x[field_walk->triangle_vertice1[i]];
-		field_walk_triangle_pos[3*i][1] = offy+field_walk->vertice_y[field_walk->triangle_vertice1[i]];
-		field_walk_triangle_pos[3*i][2] = offz-field_walk->vertice_z[field_walk->triangle_vertice1[i]];
-		field_walk_triangle_pos[3*i+1][0] = offx+field_walk->vertice_x[field_walk->triangle_vertice2[i]];
-		field_walk_triangle_pos[3*i+1][1] = offy+field_walk->vertice_y[field_walk->triangle_vertice2[i]];
-		field_walk_triangle_pos[3*i+1][2] = offz-field_walk->vertice_z[field_walk->triangle_vertice2[i]];
-		field_walk_triangle_pos[3*i+2][0] = offx+field_walk->vertice_x[field_walk->triangle_vertice3[i]];
-		field_walk_triangle_pos[3*i+2][1] = offy+field_walk->vertice_y[field_walk->triangle_vertice3[i]];
-		field_walk_triangle_pos[3*i+2][2] = offz-field_walk->vertice_z[field_walk->triangle_vertice3[i]];
+		field_walk_triangle_pos[3*i][0] = offx+field_walk->vertex_x[field_walk->triangle_vertex1[i]];
+		field_walk_triangle_pos[3*i][1] = offy+field_walk->vertex_y[field_walk->triangle_vertex1[i]];
+		field_walk_triangle_pos[3*i][2] = offz-field_walk->vertex_z[field_walk->triangle_vertex1[i]];
+		field_walk_triangle_pos[3*i+1][0] = offx+field_walk->vertex_x[field_walk->triangle_vertex2[i]];
+		field_walk_triangle_pos[3*i+1][1] = offy+field_walk->vertex_y[field_walk->triangle_vertex2[i]];
+		field_walk_triangle_pos[3*i+1][2] = offz-field_walk->vertex_z[field_walk->triangle_vertex2[i]];
+		field_walk_triangle_pos[3*i+2][0] = offx+field_walk->vertex_x[field_walk->triangle_vertex3[i]];
+		field_walk_triangle_pos[3*i+2][1] = offy+field_walk->vertex_y[field_walk->triangle_vertex3[i]];
+		field_walk_triangle_pos[3*i+2][2] = offz-field_walk->vertex_z[field_walk->triangle_vertex3[i]];
 	}
 /*	field_tiles_quad_pos = new GLint**[field_tiles->tiles_amount];
 	for (i=0;i<field_tiles->tiles_amount;i++) {
@@ -104,12 +104,12 @@ void GLWindow::DisplayFieldRegion(unsigned int vertamount,int16_t* vert) {
 	DisplayFieldClear();
 	unsigned int i,j;
 	GLint zpos = -0x7FFF;
-	field_region_vertice_amount = vertamount;
-	field_region_vertice_pos = new GLint*[field_region_vertice_amount];
+	field_region_vertex_amount = vertamount;
+	field_region_vertex_pos = new GLint*[field_region_vertex_amount];
 	for (i=0;i<vertamount;i++) {
-		field_region_vertice_pos[i] = new GLint[3];
-		field_region_vertice_pos[i][0] = vert[2*i];
-		field_region_vertice_pos[i][1] = vert[2*i+1];
+		field_region_vertex_pos[i] = new GLint[3];
+		field_region_vertex_pos[i][0] = vert[2*i];
+		field_region_vertex_pos[i][1] = vert[2*i+1];
 		for (j=0;j<field_walk->triangle_amount;j++)
 			if (IsPointInTriangle2D(vert[2*i],vert[2*i+1],field_walk_triangle_pos[3*j][0],field_walk_triangle_pos[3*j][1],field_walk_triangle_pos[3*j+1][0],field_walk_triangle_pos[3*j+1][1],field_walk_triangle_pos[3*j+2][0],field_walk_triangle_pos[3*j+2][1])) {
 				zpos = max(max(max(zpos,field_walk_triangle_pos[3*j][2]),field_walk_triangle_pos[3*j+1][2]),field_walk_triangle_pos[3*j+2][2])+DRAW_OVER_OFFSET;
@@ -119,7 +119,7 @@ void GLWindow::DisplayFieldRegion(unsigned int vertamount,int16_t* vert) {
 	if (zpos==-0x7FFF)
 		zpos = -field_walk->offset_z;
 	for (i=0;i<vertamount;i++)
-		field_region_vertice_pos[i][2] = zpos;
+		field_region_vertex_pos[i][2] = zpos;
 	Draw();
 }
 
@@ -196,11 +196,11 @@ void GLWindow::DisplayFieldClear() {
 	if (display_type!=DISPLAY_GL_TYPE_FIELD)
 		return;
 	bool mustdraw = false;
-	if (field_region_vertice_amount>0) {
-		for (unsigned int i=0;i<field_region_vertice_amount;i++)
-			delete[] field_region_vertice_pos[i];
-		delete[] field_region_vertice_pos;
-		field_region_vertice_amount = 0;
+	if (field_region_vertex_amount>0) {
+		for (unsigned int i=0;i<field_region_vertex_amount;i++)
+			delete[] field_region_vertex_pos[i];
+		delete[] field_region_vertex_pos;
+		field_region_vertex_amount = 0;
 		mustdraw = true;
 	}
 	if (field_showpoint>0) {
@@ -373,11 +373,11 @@ void GLWindow::Draw() {
 				glEnd();
 			}
 		}
-		if (field_region_vertice_amount>0) {
+		if (field_region_vertex_amount>0) {
 			glColor4f(0, 0, 1, 0.8);
 			glBegin(GL_POLYGON);
-			for (i=0;i<field_region_vertice_amount;i++)
-				glVertex3iv(field_region_vertice_pos[i]);
+			for (i=0;i<field_region_vertex_amount;i++)
+				glVertex3iv(field_region_vertex_pos[i]);
 			glEnd();
 		}
 		if (field_showpoint>0) {

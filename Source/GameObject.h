@@ -168,13 +168,13 @@ struct SkinnedMeshRendererStruct : public GameObjectNode {
 	vector<GameObjectNode*> child_bone;
 	uint32_t flag16;
 	GameObjectNode* child_bone_sample;
+	float center_x; // Weird coordinates ; maybe barycenter?
+	float center_y;
+	float center_z;
+	float radius_x;
+	float radius_y;
+	float radius_z;
 	float float_unk9;
-	float float_unk10;
-	float float_unk11;
-	float float_unk12;
-	float float_unk13;
-	float float_unk14;
-	float float_unk15;
 
 	SkinnedMeshRendererStruct(GameObjectNode* prt, GameObjectHierarchy& rt, uint32_t ndtype, uint32_t unk, uint64_t nfo) : GameObjectNode(prt, rt, ndtype, unk, nfo) {}
 };

@@ -661,7 +661,7 @@ void FFIXSeek(fstream& f, uint32_t abspos, uint32_t offset) {
 	f.seekg(abspos);
 	if (offset>=nextignore) {
 		offset -= nextignore;
-		f.seekg(FILE_IGNORE_DATA_AMOUNT*(offset/(FILE_IGNORE_DATA_PERIOD-FILE_IGNORE_DATA_AMOUNT)+1),ios_base::cur);
+		f.seekg(FILE_IGNORE_DATA_AMOUNT*(offset/FILE_IGNORE_DATA_SIZE+1),ios_base::cur);
 	}
 	f.seekg(realoffset,ios_base::cur);
 }
@@ -671,7 +671,7 @@ void FFIXSeekBack(fstream& f, uint32_t abspos, uint32_t minusoffset) {
 	uint32_t realoffset = minusoffset;
 	if (minusoffset>lastignore) {
 		minusoffset -= lastignore;
-		f.seekg(abspos-realoffset-FILE_IGNORE_DATA_AMOUNT*(minusoffset/(FILE_IGNORE_DATA_PERIOD-FILE_IGNORE_DATA_AMOUNT)+1),ios_base::cur);
+		f.seekg(abspos-realoffset-FILE_IGNORE_DATA_AMOUNT*(minusoffset/FILE_IGNORE_DATA_SIZE+1),ios_base::cur);
 	} else
 		f.seekg(abspos-realoffset);
 }

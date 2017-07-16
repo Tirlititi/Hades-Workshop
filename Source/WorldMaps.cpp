@@ -3,10 +3,14 @@
 #include "Gui_LoadingDialog.h"
 #include "Database_Resource.h"
 
+// PSX
 #define WM_DATA_CHUNK_ID	0x41B
-
 #define WM_SECTION_NAME		0
 #define WM_SECTION_BATTLES	3
+
+// Steam
+#define WM_CHUNK_STEAM			1
+#define WM_CHUNK_AMOUNT_STEAM	11
 
 int WorldMapDataStruct::SetName(unsigned int placeid, wstring newvalue) {
 	FF9String tmp(place_name[placeid]);
@@ -142,7 +146,11 @@ void WorldMapDataStruct::ReadHWS(fstream& f, bool usetext) {
 	MarkDataModified();
 }
 
-void WorldMapDataStruct::WriteHWS(fstream& f) {
+void WorldMapDataStruct::WriteHWS(fstream& f, int steamdiscordiscmr) {
+	if (steamdiscordiscmr>=0 && steamdiscordiscmr<2)
+		HWSSeek(f,f.tellg(),steam_chunk_pos_disc[steamdiscordiscmr]);
+	else if (steamdiscordiscmr>=2 && steamdiscordiscmr<4)
+		HWSSeek(f,f.tellg(),steam_chunk_pos_discmr[steamdiscordiscmr-2]);
 	MACRO_WORLDSTRUCT_IOFUNCTION(HWSWrite,HWSSeek,false,false)
 	if (GetGameType()==GAME_TYPE_PSX) {
 		MACRO_WORLDSTRUCT_PLACE(HWSWrite,HWSSeek,false,false)
@@ -262,9 +270,17 @@ void WorldMapDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 		ffbin.close();
 		fname = config.steam_dir_assets + "p0data3.bin";
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
-		ffbin.seekg(config.meta_world.GetFileOffsetByIndex(config.world_fxfile_file[0]));
-		world_data->size = config.meta_world.GetFileSizeByIndex(config.world_fxfile_file[0]);
+		ffbin.seekg(config.meta_world.GetFileOffsetByIndex(config.world_fx_file[0]));
+		world_data->size = config.meta_world.GetFileSizeByIndex(config.world_fx_file[0]);
 		world_data->Read(ffbin);
+		ffbin.seekg(config.meta_world.GetFileOffsetByIndex(config.world_disc_file[0])+8*WM_CHUNK_STEAM);
+		world_data->steam_chunk_pos_disc[0] = ReadLong(ffbin)*FILE_IGNORE_DATA_SIZE;
+		ffbin.seekg(config.meta_world.GetFileOffsetByIndex(config.world_disc_file[1])+8*WM_CHUNK_STEAM);
+		world_data->steam_chunk_pos_disc[1] = ReadLong(ffbin)*FILE_IGNORE_DATA_SIZE;
+		ffbin.seekg(config.meta_world.GetFileOffsetByIndex(config.world_discmr_file[0])+8*WM_CHUNK_STEAM);
+		world_data->steam_chunk_pos_discmr[0] = ReadLong(ffbin)*FILE_IGNORE_DATA_SIZE;
+		ffbin.seekg(config.meta_world.GetFileOffsetByIndex(config.world_discmr_file[1])+8*WM_CHUNK_STEAM);
+		world_data->steam_chunk_pos_discmr[1] = ReadLong(ffbin)*FILE_IGNORE_DATA_SIZE;
 		ffbin.close();
 		fname = config.steam_dir_assets + "p0data7.bin";
 		ffbin.open(fname.c_str(),ios::in | ios::binary);

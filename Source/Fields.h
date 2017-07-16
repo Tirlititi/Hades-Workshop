@@ -237,8 +237,8 @@ public:
 	uint16_t walkpath_offset;
 	uint16_t normal_amount;
 	uint16_t normal_offset;
-	uint16_t vertice_amount;
-	uint16_t vertice_offset;
+	uint16_t vertex_amount;
+	uint16_t vertex_offset;
 	
 	uint8_t* triangle_unk1;
 	uint8_t* triangle_stepsound;
@@ -247,9 +247,9 @@ public:
 	uint16_t* triangle_normal;
 	uint16_t* triangle_unk4;
 	uint16_t* triangle_unk5;
-	uint16_t* triangle_vertice1;
-	uint16_t* triangle_vertice2;
-	uint16_t* triangle_vertice3;
+	uint16_t* triangle_vertex1;
+	uint16_t* triangle_vertex2;
+	uint16_t* triangle_vertex3;
 	uint16_t* triangle_edge1;
 	uint16_t* triangle_edge2;
 	uint16_t* triangle_edge3;
@@ -295,9 +295,9 @@ public:
 	int32_t* normal_y;
 	int32_t* normal_overz;
 	
-	int16_t* vertice_x;
-	int16_t* vertice_z;
-	int16_t* vertice_y;
+	int16_t* vertex_x;
+	int16_t* vertex_z;
+	int16_t* vertex_y;
 	
 	void Read(fstream& f);
 	void Write(fstream& f);

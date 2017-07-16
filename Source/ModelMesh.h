@@ -8,6 +8,7 @@ struct ModelMeshBone;
 struct ModelMeshVertexAttachment;
 struct ModelMeshMaterialInfo;
 struct ModelMeshData;
+struct ModelMaterialFile;
 struct ModelMaterialData;
 struct ModelAnimationData;
 struct ModelDataStruct;
@@ -74,17 +75,17 @@ using namespace std;
 
 struct Quaternion {
 public:
-	float x;
-	float y;
-	float z;
-	float w;
+	double x;
+	double y;
+	double z;
+	double w;
 
-	float GetRoll();
-	float GetPitch();
-	float GetYaw();
+	double GetRoll();
+	double GetPitch();
+	double GetYaw();
 
-	void SetValue(float newx, float newy, float newz, float neww);
-	void Apply(float& posx, float& posy, float& posz);
+	void SetValue(double newx, double newy, double newz, double neww);
+	void Apply(double& posx, double& posy, double& posz);
 
 	void Read(fstream& f);
 	void Write(fstream& f);
@@ -92,8 +93,8 @@ public:
 	static LinearTransformationMatrix Product(LinearTransformationMatrix lfactor, Quaternion& rfactor);
 	static LinearTransformationMatrix Product(Quaternion& lfactor, LinearTransformationMatrix rfactor);
 	static LinearTransformationMatrix Product(LinearTransformationMatrix lfactor, LinearTransformationMatrix rfactor);
-	static Quaternion EulerToQuaternion(float roll, float pitch, float yaw);
-	static void QuaternionToEuler(Quaternion& q, float& roll, float& pitch, float& yaw);
+	static Quaternion EulerToQuaternion(double roll, double pitch, double yaw);
+	static void QuaternionToEuler(Quaternion& q, double& roll, double& pitch, double& yaw);
 	static LinearTransformationMatrix QuaternionToMatrix(Quaternion& q);
 
 private:
@@ -207,21 +208,28 @@ struct ModelMeshData {
 	void Export(fstream& output, const char* objname, const char* mtlbasename, bool firstobject = true);
 };
 
+struct ModelMaterialFile {
+	uint32_t unk1;
+	uint64_t file_info = 0;
+	float u = 0.0;
+	float v = 0.0;
+	uint32_t unk2;
+	uint32_t unk3;
+
+	string file_name = "";
+};
+
 struct ModelMaterialData {
-	uint32_t bumpmap_data[7];
-	uint32_t detailalbedomap_data[7];
-	uint32_t detailmask_data[7];
-	uint32_t detailnormalmap_data[7];
-	uint32_t emissionmap_data[7];
-	uint32_t maintex_unk1;
-	uint64_t maintex_file_info = 0;
-	float maintex_u = 0.0;
-	float maintex_v = 0.0;
-	uint32_t maintex_unk2;
-	uint32_t maintex_unk3;
-	uint32_t metallicglossmap_data[7];
-	uint32_t occlusionmap_data[7];
-	uint32_t parallaxmap_data[8];
+	ModelMaterialFile bumpmap;
+	ModelMaterialFile detailalbedomap;
+	ModelMaterialFile detailmask;
+	ModelMaterialFile detailnormalmap;
+	ModelMaterialFile emissionmap;
+	ModelMaterialFile maintex;
+	ModelMaterialFile metallicglossmap;
+	ModelMaterialFile occlusionmap;
+	ModelMaterialFile parallaxmap;
+	uint32_t parallaxmap_unk4;
 	float bumpscale_value = 1.0;
 	float cutoff_value;
 	float detailnormalmapscale_value = 1.0;
@@ -244,10 +252,9 @@ struct ModelMaterialData {
 	float emissioncolor_blue = 0.0;
 	float emissioncolor_alpha = 1.0;
 	
-    string maintex_file_name;
 	string name;
     
-	void Read(fstream& f);
+	void Read(fstream& f, UnityArchiveMetaData& metadata);
 	// Deprecated ; use ModelDataStruct::Export
 	void Export(fstream& output, const char* mtlname, const char* maintexname);
 };
@@ -264,12 +271,12 @@ struct ModelAnimationTransformT {
 	float transx;
 	float transy;
 	float transz;
-	float transx1;
-	float transy1;
-	float transz1;
-	float transx2;
-	float transy2;
-	float transz2;
+	float trans1x;
+	float trans1y;
+	float trans1z;
+	float trans2x;
+	float trans2y;
+	float trans2z;
 };
 
 struct ModelAnimationTransformS {
@@ -277,12 +284,12 @@ struct ModelAnimationTransformS {
 	float scalex;
 	float scaley;
 	float scalez;
-	float scalex1;
-	float scaley1;
-	float scalez1;
-	float scalex2;
-	float scaley2;
-	float scalez2;
+	float scale1x;
+	float scale1y;
+	float scale1z;
+	float scale2x;
+	float scale2y;
+	float scale2z;
 };
 
 template<typename Transf>
@@ -334,13 +341,9 @@ struct ModelDataStruct {
 	string description;
     
 	// In Steam's assets, the coordinate system is:
-	//  1st coord: right to left
+	//  1st coord: left to right
 	//  2nd coord: up to bottom
 	//  3rd coord: front to back
-	// It is converted here into:
-	//  x: left to right
-	//  y: bottom to up
-	//  z: front to back
 	static void ReadCoordinates(fstream& f, float& x, float& y, float& z, bool swapsign = true);
 	static void WriteCoordinates(fstream& f, float x, float y, float z, bool swapsign = true);
 

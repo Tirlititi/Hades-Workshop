@@ -220,7 +220,9 @@ public:
 	uint16_t* field_id;
 	
 	uint16_t world_amount;
-	int32_t world_fxfile_file[2];
+	int32_t world_fx_file[2];
+	int32_t world_disc_file[2];
+	int32_t world_discmr_file[2];
 	int32_t world_worldplace_name_file[STEAM_LANGUAGE_AMOUNT];
 	int32_t world_text_file[STEAM_LANGUAGE_AMOUNT];
 	int32_t* world_script_file[STEAM_LANGUAGE_AMOUNT];
