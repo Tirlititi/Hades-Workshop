@@ -2375,7 +2375,7 @@ class BatchExportWindow : public wxDialog
 		wxFilePickerCtrl* m_filepicker;
 		wxCheckBox* m_exportorder;
 		
-		BatchExportWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Export Data"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+		BatchExportWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Export Data"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 275,355 ), long style = wxDEFAULT_DIALOG_STYLE ); 
 		~BatchExportWindow();
 	
 };

@@ -473,16 +473,6 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 	vector<FbxNode*> lNodeList;
 	vector<GameObjectNode*> hierarchynode = model.hierarchy->node_list;
 	for (i=0;i<hierarchynode.size();i++) {
-		if (hierarchynode[i]==model.hierarchy->root_node) {
-			if (hierarchynode[i]->node_type==4) { // Should be always true
-				TransformStruct* nodespec = static_cast<TransformStruct*>(hierarchynode[i]);
-				lRootNode->LclRotation.Set(FbxDouble3(nodespec->rot.GetRoll(), nodespec->rot.GetPitch(), nodespec->rot.GetYaw()));
-				lRootNode->LclTranslation.Set(FbxDouble3(nodespec->x, nodespec->y, nodespec->z));
-				lRootNode->LclScaling.Set(FbxDouble3(nodespec->scale_x, nodespec->scale_y, nodespec->scale_z));
-			}
-			lNodeList.push_back(lRootNode);
-			continue;
-		}
 		if (hierarchynode[i]->node_type==4) {
 			// Simple node
 			string nodename = "";
@@ -493,6 +483,8 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 			lNode->LclRotation.Set(FbxDouble3(nodespec->rot.GetRoll(), nodespec->rot.GetPitch(), nodespec->rot.GetYaw()));
 			lNode->LclTranslation.Set(FbxDouble3(nodespec->x, nodespec->y, nodespec->z));
 			lNode->LclScaling.Set(FbxDouble3(nodespec->scale_x, nodespec->scale_y, nodespec->scale_z));
+			if (hierarchynode[i]==model.hierarchy->root_node)
+				lRootNode->AddChild(lNode);
 			lNodeList.push_back(lNode);
 		} else {
 			lNodeList.push_back(NULL);

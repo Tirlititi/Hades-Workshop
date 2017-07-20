@@ -947,9 +947,6 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 			m_loadgauge->SetValue(50+itcounter*50/itamount);
 			itsuccesscounter++;
 		}
-		delete[] copylist;
-		delete[] filenewsize;
-		delete[] unityfileoff;
 		filebase.close();
 		filedest.close();
 		m_loadgauge->SetValue(100);
@@ -989,6 +986,9 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				m_assetlist->SetItem(it,4,_(ConvertToString(meta_data[current_archive].GetFileSizeByIndex(expfileid))));
 			}
 		}
+		delete[] copylist;
+		delete[] filenewsize;
+		delete[] unityfileoff;
 		if (itsuccesscounter==itamount) {
 			wxString successtring;
 			successtring.Printf(wxT(HADES_STRING_UNITYVIEWER_IMPORT_SUCCESS),itsuccesscounter);
