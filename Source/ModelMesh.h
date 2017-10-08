@@ -93,7 +93,7 @@ public:
 	static LinearTransformationMatrix Product(LinearTransformationMatrix lfactor, Quaternion& rfactor);
 	static LinearTransformationMatrix Product(Quaternion& lfactor, LinearTransformationMatrix rfactor);
 	static LinearTransformationMatrix Product(LinearTransformationMatrix lfactor, LinearTransformationMatrix rfactor);
-	static Quaternion EulerToQuaternion(double roll, double pitch, double yaw);
+	static void EulerToQuaternion(Quaternion& q, double roll, double pitch, double yaw);
 	static void QuaternionToEuler(Quaternion& q, double& roll, double& pitch, double& yaw);
 	static LinearTransformationMatrix QuaternionToMatrix(Quaternion& q);
 

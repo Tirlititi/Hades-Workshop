@@ -119,8 +119,8 @@ public:
 	uint16_t related_charmap_id;
 	
 	// Limited by a size of 24 bytes ; return 1 if too long
-	int SetName(wstring newvalue);
-	int SetName(FF9String& newvalue);
+	int SetName(wstring newvalue, SteamLanguage lang = STEAM_LANGUAGE_NONE);
+	int SetName(FF9String& newvalue, SteamLanguage lang = STEAM_LANGUAGE_NONE);
 	void AddFunction(int entryid, int funcidpos, uint16_t functype); // Needs 4 or 8 bytes available
 	int RemoveFunction(int entryid, int funcid); // Returns nb of bytes freed
 	void AddEntry(int entrypos, uint8_t entrytype); // Needs 16 bytes available

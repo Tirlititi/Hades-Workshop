@@ -43,6 +43,10 @@ public:
 	GLfloat camera_pos_z;
 	GLfloat camera_angle_xy;
 	GLfloat camera_angle_z;
+	GLfloat camera_fovy;
+	GLfloat camera_aspect;
+	GLfloat camera_znear;
+	GLfloat camera_zfar;
 	bool mouse_lefton;
 	bool mouse_righton;
 	int mouse_x;

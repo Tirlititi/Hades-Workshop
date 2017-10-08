@@ -31,16 +31,6 @@ typedef uint8_t GameType;
 #define GAME_TYPE_PSX	0
 #define GAME_TYPE_STEAM	1
 
-typedef uint8_t SteamLanguage;
-#define STEAM_LANGUAGE_US	0
-#define STEAM_LANGUAGE_EN	1
-#define STEAM_LANGUAGE_JA	2
-#define STEAM_LANGUAGE_GE	3
-#define STEAM_LANGUAGE_FR	4
-#define STEAM_LANGUAGE_IT	5
-#define STEAM_LANGUAGE_SP	6
-#define STEAM_LANGUAGE_AMOUNT	7
-
 #define STEAM_SPECIAL_TEXT_AMOUNT	7
 #define STEAM_WORLD_MAP_TEXT_ID		68
 
@@ -332,10 +322,5 @@ GameType GetGameType();
 void SetGameType(GameType gt);
 GameType GetHWSGameType();
 void SetHWSGameType(GameType gt);
-
-SteamLanguage GetSteamLanguage();
-void SetSteamLanguage(SteamLanguage gt);
-SteamLanguage GetHWSSteamLanguage();
-void SetHWSSteamLanguage(SteamLanguage gt);
 
 #endif

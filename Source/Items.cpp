@@ -822,28 +822,31 @@ int ItemDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 		uint16_t txtspace;
 		uint32_t tmppos;
 		
-		#define MACRO_ITEM_HWSSTEAMTEXT(STR,AMT,SPACEMAX) \
+		#define MACRO_ITEM_HWSSTEAMTEXT(STR,AMT) \
 			HWSReadChar(ffbin,lg); \
-			while (lg!=0xFF) { \
+			while (lg!=STEAM_LANGUAGE_NONE) { \
 				HWSReadShort(ffbin,txtspace); \
 				tmppos = ffbin.tellg(); \
-				if (usetext && txtspace<=SPACEMAX && GetGameType()!=GAME_TYPE_PSX && lg==GetSteamLanguage()) { \
-					for (i=0;i<AMT;i++) { \
-						SteamReadFF9String(ffbin,STR); \
-						if (GetGameType()==GAME_TYPE_PSX) \
+				if (usetext) { \
+					if (GetGameType()!=GAME_TYPE_PSX) \
+						for (i=0;i<AMT;i++) \
+							SteamReadFF9String(ffbin,STR,lg); \
+					else if (lg==GetSteamLanguage()) \
+						for (i=0;i<AMT;i++) { \
+							SteamReadFF9String(ffbin,STR); \
 							STR.SteamToPSX(); \
-					} \
+						} \
 				} \
 				ffbin.seekg(tmppos+txtspace); \
 				HWSReadChar(ffbin,lg); \
 			}
 		
-		MACRO_ITEM_HWSSTEAMTEXT(item[i].name,ITEM_AMOUNT,name_space_total)
-		MACRO_ITEM_HWSSTEAMTEXT(item[i].help,ITEM_AMOUNT,help_space_total)
-		MACRO_ITEM_HWSSTEAMTEXT(item[i].battle_help,ITEM_AMOUNT,help2_space_total)
-		MACRO_ITEM_HWSSTEAMTEXT(key_item[i].name,KEY_ITEM_AMOUNT,key_name_space_total)
-		MACRO_ITEM_HWSSTEAMTEXT(key_item[i].help,KEY_ITEM_AMOUNT,key_help_space_total)
-		MACRO_ITEM_HWSSTEAMTEXT(key_item[i].description,KEY_ITEM_AMOUNT,key_desc_space_total)
+		MACRO_ITEM_HWSSTEAMTEXT(item[i].name,ITEM_AMOUNT)
+		MACRO_ITEM_HWSSTEAMTEXT(item[i].help,ITEM_AMOUNT)
+		MACRO_ITEM_HWSSTEAMTEXT(item[i].battle_help,ITEM_AMOUNT)
+		MACRO_ITEM_HWSSTEAMTEXT(key_item[i].name,KEY_ITEM_AMOUNT)
+		MACRO_ITEM_HWSSTEAMTEXT(key_item[i].help,KEY_ITEM_AMOUNT)
+		MACRO_ITEM_HWSSTEAMTEXT(key_item[i].description,KEY_ITEM_AMOUNT)
 	}
 	UpdateOffset();
 	return res;
@@ -893,48 +896,81 @@ void ItemDataSet::WriteHWS(fstream& ffbin) {
 	key_help_space_total = khelpsize;
 	key_desc_space_total = kdescsize;
 	if (GetGameType()!=GAME_TYPE_PSX) {
-		SteamLanguage lg = GetSteamLanguage();
-		HWSWriteChar(ffbin,lg);
-		HWSWriteShort(ffbin,name_space_used);
-		for (i=0;i<ITEM_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,item[i].name);
-		lg = 0xFF;
-		HWSWriteChar(ffbin,lg);
-		lg = GetSteamLanguage();
-		HWSWriteChar(ffbin,lg);
-		HWSWriteShort(ffbin,help_space_used);
-		for (i=0;i<ITEM_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,item[i].help);
-		lg = 0xFF;
-		HWSWriteChar(ffbin,lg);
-		lg = GetSteamLanguage();
-		HWSWriteChar(ffbin,lg);
-		HWSWriteShort(ffbin,help2_space_used);
-		for (i=0;i<ITEM_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,item[i].battle_help);
-		lg = 0xFF;
-		HWSWriteChar(ffbin,lg);
-		lg = GetSteamLanguage();
-		HWSWriteChar(ffbin,lg);
-		HWSWriteShort(ffbin,key_name_space_used);
-		for (i=0;i<KEY_ITEM_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,key_item[i].name);
-		lg = 0xFF;
-		HWSWriteChar(ffbin,lg);
-		lg = GetSteamLanguage();
-		HWSWriteChar(ffbin,lg);
-		HWSWriteShort(ffbin,key_help_space_used);
-		for (i=0;i<KEY_ITEM_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,key_item[i].help);
-		lg = 0xFF;
-		HWSWriteChar(ffbin,lg);
-		lg = GetSteamLanguage();
-		HWSWriteChar(ffbin,lg);
-		HWSWriteShort(ffbin,key_desc_space_used);
-		for (i=0;i<KEY_ITEM_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,key_item[i].description);
-		lg = 0xFF;
-		HWSWriteChar(ffbin,lg);
+		SteamLanguage lg;
+		size_t strpos;
+		uint16_t strsize;
+		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
+			HWSWriteChar(ffbin,lg);
+			HWSWriteShort(ffbin,0);
+			strpos = ffbin.tellg();
+			for (i=0;i<ITEM_AMOUNT;i++)
+				SteamWriteFF9String(ffbin,item[i].name,lg);
+			strsize = (unsigned int)ffbin.tellg()-strpos;
+			ffbin.seekg(strpos-2);
+			HWSWriteShort(ffbin,strsize);
+			ffbin.seekg(strpos+strsize);
+		}
+		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
+		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
+			HWSWriteChar(ffbin,lg);
+			HWSWriteShort(ffbin,0);
+			strpos = ffbin.tellg();
+			for (i=0;i<ITEM_AMOUNT;i++)
+				SteamWriteFF9String(ffbin,item[i].help,lg);
+			strsize = (unsigned int)ffbin.tellg()-strpos;
+			ffbin.seekg(strpos-2);
+			HWSWriteShort(ffbin,strsize);
+			ffbin.seekg(strpos+strsize);
+		}
+		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
+		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
+			HWSWriteChar(ffbin,lg);
+			HWSWriteShort(ffbin,0);
+			strpos = ffbin.tellg();
+			for (i=0;i<ITEM_AMOUNT;i++)
+				SteamWriteFF9String(ffbin,item[i].battle_help,lg);
+			strsize = (unsigned int)ffbin.tellg()-strpos;
+			ffbin.seekg(strpos-2);
+			HWSWriteShort(ffbin,strsize);
+			ffbin.seekg(strpos+strsize);
+		}
+		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
+		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
+			HWSWriteChar(ffbin,lg);
+			HWSWriteShort(ffbin,0);
+			strpos = ffbin.tellg();
+			for (i=0;i<KEY_ITEM_AMOUNT;i++)
+				SteamWriteFF9String(ffbin,key_item[i].name,lg);
+			strsize = (unsigned int)ffbin.tellg()-strpos;
+			ffbin.seekg(strpos-2);
+			HWSWriteShort(ffbin,strsize);
+			ffbin.seekg(strpos+strsize);
+		}
+		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
+		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
+			HWSWriteChar(ffbin,lg);
+			HWSWriteShort(ffbin,0);
+			strpos = ffbin.tellg();
+			for (i=0;i<KEY_ITEM_AMOUNT;i++)
+				SteamWriteFF9String(ffbin,key_item[i].help,lg);
+			strsize = (unsigned int)ffbin.tellg()-strpos;
+			ffbin.seekg(strpos-2);
+			HWSWriteShort(ffbin,strsize);
+			ffbin.seekg(strpos+strsize);
+		}
+		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
+		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
+			HWSWriteChar(ffbin,lg);
+			HWSWriteShort(ffbin,0);
+			strpos = ffbin.tellg();
+			for (i=0;i<KEY_ITEM_AMOUNT;i++)
+				SteamWriteFF9String(ffbin,key_item[i].description,lg);
+			strsize = (unsigned int)ffbin.tellg()-strpos;
+			ffbin.seekg(strpos-2);
+			HWSWriteShort(ffbin,strsize);
+			ffbin.seekg(strpos+strsize);
+		}
+		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
 	}
 }
 

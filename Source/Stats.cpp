@@ -464,7 +464,7 @@ int StatDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 			uint16_t txtspace;
 			uint32_t tmppos;
 			HWSReadChar(ffbin,lg);
-			while (lg!=0xFF) {
+			while (lg!=STEAM_LANGUAGE_NONE) {
 				HWSReadShort(ffbin,txtspace);
 				tmppos = ffbin.tellg();
 /*				if (GetGameType()!=GAME_TYPE_PSX && lg==GetSteamLanguage()) { // DEBUG : need to make Steam language compatible with PSX versions
@@ -485,7 +485,7 @@ int StatDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 			SteamLanguage lg;
 			uint16_t txtspace;
 			HWSReadChar(ffbin,lg);
-			while (lg!=0xFF) {
+			while (lg!=STEAM_LANGUAGE_NONE) {
 				HWSReadShort(ffbin,txtspace);
 				ffbin.seekg(txtspace,ios::cur);
 				HWSReadChar(ffbin,lg);
@@ -524,8 +524,7 @@ void StatDataSet::WriteHWS(fstream& ffbin) {
 		HWSWriteShort(ffbin,default_name_space_total);
 		for (i=0;i<PLAYABLE_CHAR_AMOUNT;i++)
 			SteamWriteFF9String(ffbin,initial_stat[i].default_name);*/
-		lg = 0xFF;
-		HWSWriteChar(ffbin,lg);
+		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
 	}
 	MACRO_STAT_IOFUNCTIONEQUIP(HWSWrite,HWSSeek,false,false)
 	MACRO_STAT_IOFUNCTIONABIL(HWSWrite,HWSSeek,false,false)

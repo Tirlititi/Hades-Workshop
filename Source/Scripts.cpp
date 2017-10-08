@@ -319,19 +319,25 @@ void ScriptFunction::WriteHWS(fstream& f) {
 		op[i].WriteHWS(f);
 }
 
-int ScriptDataStruct::SetName(wstring newvalue) {
+int ScriptDataStruct::SetName(wstring newvalue, SteamLanguage lang) {
 	FF9String tmp(name);
 	tmp.SetValue(newvalue);
 	if (tmp.length>SCRIPT_NAME_MAX_LENGTH)
 		return 1;
-	name.SetValue(newvalue);
+	if (lang==STEAM_LANGUAGE_NONE || GetGameType()==GAME_TYPE_PSX)
+		name.SetValue(newvalue);
+	else
+		name.multi_lang_str[lang] = newvalue;
 	return 0;
 }
 
-int ScriptDataStruct::SetName(FF9String& newvalue) {
+int ScriptDataStruct::SetName(FF9String& newvalue, SteamLanguage lang) {
 	if (newvalue.length>SCRIPT_NAME_MAX_LENGTH)
 		return 1;
-	name = newvalue;
+	if (lang==STEAM_LANGUAGE_NONE || GetGameType()==GAME_TYPE_PSX)
+		name = newvalue;
+	else
+		name.multi_lang_str[lang] = newvalue.str;
 	return 0;
 }
 

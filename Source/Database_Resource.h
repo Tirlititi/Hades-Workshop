@@ -249,6 +249,7 @@ static SortedChoiceItem HADES_STRING_MUSIC_NAME[] = {
 	{ 35,	L"Boss Battle" },
 	{ 36,	L"Oeilvert" },
 	{ 48,	L"You're Not Alone" },
+	{ 0,	L"Battle" },
 };
 
 //-- Audio

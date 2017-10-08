@@ -180,16 +180,17 @@ int CardDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 			uint16_t txtspace;
 			uint32_t tmppos;
 			HWSReadChar(ffbin,lg);
-			while (lg!=0xFF) {
+			while (lg!=STEAM_LANGUAGE_NONE) {
 				HWSReadShort(ffbin,txtspace);
 				tmppos = ffbin.tellg();
-				if (GetGameType()!=GAME_TYPE_PSX && lg==GetSteamLanguage()) { // DEBUG : need to make Steam language compatible with PSX versions
+				if (GetGameType()!=GAME_TYPE_PSX)
+					for (i=0;i<CARD_AMOUNT;i++)
+						SteamReadFF9String(ffbin,card[i].name,lg);
+				else if (lg==GetSteamLanguage())
 					for (i=0;i<CARD_AMOUNT;i++) {
 						SteamReadFF9String(ffbin,card[i].name);
-						if (GetGameType()==GAME_TYPE_PSX)
-							card[i].name.SteamToPSX();
+						card[i].name.SteamToPSX();
 					}
-				}
 				ffbin.seekg(tmppos+txtspace);
 				HWSReadChar(ffbin,lg);
 			}
@@ -201,7 +202,7 @@ int CardDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 			SteamLanguage lg;
 			uint16_t txtspace;
 			HWSReadChar(ffbin,lg);
-			while (lg!=0xFF) {
+			while (lg!=STEAM_LANGUAGE_NONE) {
 				HWSReadShort(ffbin,txtspace);
 				ffbin.seekg(txtspace,ios::cur);
 				HWSReadChar(ffbin,lg);
@@ -229,13 +230,21 @@ void CardDataSet::WriteHWS(fstream& ffbin) {
 	if (GetGameType()==GAME_TYPE_PSX) {
 		MACRO_CARD_IOFUNCTIONNAME(HWSWrite,HWSSeek,false,false)
 	} else {
-		SteamLanguage lg = GetSteamLanguage();
-		HWSWriteChar(ffbin,lg);
-		HWSWriteShort(ffbin,name_space_total);
-		for (i=0;i<CARD_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,card[i].name);
-		lg = 0xFF;
-		HWSWriteChar(ffbin,lg);
+		SteamLanguage lg;
+		size_t strpos;
+		uint16_t strsize;
+		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
+			HWSWriteChar(ffbin,lg);
+			HWSWriteShort(ffbin,0);
+			strpos = ffbin.tellg();
+			for (i=0;i<CARD_AMOUNT;i++)
+				SteamWriteFF9String(ffbin,card[i].name,lg);
+			strsize = (unsigned int)ffbin.tellg()-strpos;
+			ffbin.seekg(strpos-2);
+			HWSWriteShort(ffbin,strsize);
+			ffbin.seekg(strpos+strsize);
+		}
+		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
 	}
 	MACRO_CARD_IOFUNCTIONCARDDATA(HWSWrite,HWSSeek,false,false,false)
 	MACRO_CARD_IOFUNCTIONCARDDATA(HWSWrite,HWSSeek,false,false,true)

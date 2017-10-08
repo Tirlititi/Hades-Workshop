@@ -19,6 +19,17 @@ using namespace std;
 #define OPCODE_CHAR 0xF9
 #define OPCODE_WCHAR L'µ'
 
+typedef uint8_t SteamLanguage;
+#define STEAM_LANGUAGE_US	0
+#define STEAM_LANGUAGE_EN	1
+#define STEAM_LANGUAGE_JA	2
+#define STEAM_LANGUAGE_GE	3
+#define STEAM_LANGUAGE_FR	4
+#define STEAM_LANGUAGE_IT	5
+#define STEAM_LANGUAGE_SP	6
+#define STEAM_LANGUAGE_AMOUNT	7
+#define STEAM_LANGUAGE_NONE		0xFF
+
 static wchar_t DEFAULT_CHARMAP[256] = {	L'0',L'1',L'2',L'3',L'4',L'5',L'6',L'7',L'8',L'9',L'+',L'-',L'=',L'*',L'%',L' ',
 										L'A',L'B',L'C',L'D',L'E',L'F',L'G',L'H',L'I',L'J',L'K',L'L',L'M',L'N',L'O',L'P',
 										L'Q',L'R',L'S',L'T',L'U',L'V',L'W',L'X',L'Y',L'Z',L'(',L'!',L'?',L'“',L':',L'.',
@@ -66,21 +77,26 @@ struct ExtendedCharmap {
 
 struct FF9String {
 public:
-	uint8_t* raw; // array of raw data ; unused for Steam version
+	// Shared PSX-Steam
+	bool created;
 	uint16_t length; // Length of raw data ; for Steam, it is the length of the multibyte representation of str
-	wstring str; // String with µ at opcode positions
+	wstring str; // PSX: string with µ at opcode positions ; Steam: same as str_ext
 	wstring str_ext; // String with extended opcode names
 	wstring str_nice; // String without opcodes (some are converted)
+	uint8_t null_terminated; // PSX: some opcodes terminate the string so no 0 is appended ; Steam: same but the 0-terminating char is replaced by [ENDN]
+	// PSX only
+	uint8_t* raw; // array of raw data
 	uint16_t code_amount; // Match with the amount of µ in str
 	uint8_t* code_arg_length;
 	uint8_t** code_arg;
-	uint8_t null_terminated; // PSX: some opcodes terminate the string so no 0 is appended ; Steam: same but the 0-terminating char is replaced by [ENDN]
 	wchar_t* charmap;
 	wchar_t* charmap_A;
 	wchar_t* charmap_B;
 	wchar_t* charmap_Ext;
 	wchar_t opcode_wchar;
-	bool created;
+	// Steam only
+	bool has_multi_lang;
+	wstring* multi_lang_str;
 	
 	FF9String();
 	FF9String(FF9String& cp);
@@ -91,6 +107,7 @@ public:
 	void SetValue(wstring value); // If there are more µ than "code_amount", the latest ones are ignored
 	void SetCharmaps(wchar_t* newmapdef, wchar_t* newmapa, wchar_t* newmapb, wchar_t* newmapext); // newmaps must be 256-sized arrays, never destroyed
 	void SetOpcodeChar(wchar_t newchar);
+	void ChangeSteamLanguage(SteamLanguage newlang, bool saveprevious = true); // If saveprevious==true, the current Steam Language must match the current FF9String's str
 	void PermuteCode(uint16_t code1, uint16_t code2); // Assume they are < code_amount
 	void AddCode(uint8_t* codearg, uint8_t codelength, uint16_t pos); // codearg must be an array of size codelength
 	void SetCode(uint16_t codeid, uint8_t* codearg, uint8_t codelength);
@@ -136,8 +153,8 @@ uint32_t GetFFIXOffsetSub(uint32_t beg, uint32_t end);
 uint32_t GetFFIXNextIgnore(uint32_t fromoffset);
 
 // Final Fantasy IX Steam binary manipulation
-void SteamReadFF9String(fstream& f, FF9String& deststr);
-void SteamWriteFF9String(fstream& f, FF9String& str, bool writeend = true);
+void SteamReadFF9String(fstream& f, FF9String& deststr, SteamLanguage lang = STEAM_LANGUAGE_NONE);
+void SteamWriteFF9String(fstream& f, FF9String& str, SteamLanguage lang = STEAM_LANGUAGE_NONE, bool writeend = true);
 uint32_t SteamReadLong(fstream& f, uint32_t& destvalue);
 void SteamWriteLong(fstream& f, uint32_t value);
 uint32_t SteamReadLong3(fstream& f, uint32_t& destvalue);
@@ -147,6 +164,11 @@ void SteamWriteShort(fstream& f, uint16_t value);
 uint8_t SteamReadChar(fstream& f, uint8_t& destvalue);
 void SteamWriteChar(fstream& f, uint8_t value);
 void SteamSeek(fstream& f, uint32_t abspos, uint32_t offset);
+
+SteamLanguage GetSteamLanguage();
+void SetSteamLanguage(SteamLanguage gt);
+SteamLanguage GetHWSSteamLanguage();
+void SetHWSSteamLanguage(SteamLanguage gt);
 
 // For PPF conversion
 void PPFInitScanStep(fstream& f, bool datastring = false, uint16_t len = 0); // len is only used for strings

@@ -264,25 +264,56 @@ void GLWindow::Prepare2DViewport(int topleft_x, int topleft_y, int bottomrigth_x
 
 void GLWindow::ResetCamera() {
 	switch (display_type) {
-	case DISPLAY_GL_TYPE_FIELD:
-		camera_pos_x = (field_tiles->camera[field_camera].min_x+field_tiles->camera[field_camera].max_x)/2;
-		camera_pos_y = -(field_tiles->camera[field_camera].min_y+field_tiles->camera[field_camera].max_y)/2;
+	case DISPLAY_GL_TYPE_FIELD: {
+		FieldTilesCameraDataStruct& cam = field_tiles->camera[field_camera];
+/*		camera_pos_x = cam.offset_centerx+cam.offset_width/2.0-160.0;
+		camera_pos_y = -(cam.offset_centery+cam.offset_height/2.0)+112.0;
 		camera_pos_z = 0.0;
-		camera_eye_x = field_tiles->camera[field_camera].eye_x;
-		camera_eye_y = -field_tiles->camera[field_camera].eye_y;
-		camera_eye_z = -field_tiles->camera[field_camera].eye_z;
+		camera_eye_x = camera_pos_x + cam.matrix[0]*cam.offset_x/4096.0 - cam.matrix[1]*cam.offset_z/4096.0 + cam.matrix[2]*cam.offset_y/4096.0;
+		camera_eye_y = camera_pos_y + cam.matrix[3]*cam.offset_x/4096.0 - cam.matrix[4]*cam.offset_z/4096.0 + cam.matrix[5]*cam.offset_y/4096.0;
+		camera_eye_z = camera_eye_z + cam.matrix[6]*cam.offset_x/4096.0 - cam.matrix[7]*cam.offset_z/4096.0 + cam.matrix[8]*cam.offset_y/4096.0;*/
+/*		camera_eye_x = -cam.matrix[0]*cam.offset_x/4096.0 + cam.matrix[3]*cam.offset_z/4096.0 - cam.matrix[6]*cam.offset_y/4096.0;
+		camera_eye_y = -cam.matrix[1]*cam.offset_x/4096.0 + cam.matrix[4]*cam.offset_z/4096.0 - cam.matrix[7]*cam.offset_y/4096.0;
+		camera_eye_z = -cam.matrix[2]*cam.offset_x/4096.0 + cam.matrix[5]*cam.offset_z/4096.0 - cam.matrix[8]*cam.offset_y/4096.0;
+		camera_pos_x = camera_eye_x+cam.matrix[6]*cam.distance/4096.0;
+		camera_pos_y = camera_eye_y+cam.matrix[7]*cam.distance/4096.0;
+		camera_pos_z = camera_eye_z+cam.matrix[8]*cam.distance/4096.0;
+		camera_eye_z *= -1.0;
+		camera_pos_z *= -1.0;*/
+		camera_pos_x = (cam.min_x+cam.max_x)/2;
+		camera_pos_y = -(cam.min_y+cam.max_y)/2;
+		camera_pos_z = 0.0;
+		camera_eye_x = cam.matrix[2];
+		camera_eye_y = -cam.matrix[4];
+		camera_eye_z = -cam.matrix[5];
+/*fstream fout("aaaa.txt",ios::app|ios::out); for (unsigned int i=0;i<9;i++) fout << (int)cam.matrix[i] << " ";
+fout << "; T " << (int)cam.offset_x << " " << (int)cam.offset_y << " " << (int)cam.offset_z;
+fout << " ; V " << (float)camera_pos_x << " " << (float)camera_pos_y << " " << (float)camera_pos_z << endl;
+fout << "CX " << (int)cam.offset_centerx << " CY "  << (int)cam.offset_centery;
+fout << " W " << (int)cam.offset_width << " H "  << (int)cam.offset_height;
+fout << " D " << (unsigned int)cam.distance << " DD "  << (int)cam.depth << endl;
+fout.close();*/
 		camera_angle_xy = atan2(camera_pos_y-camera_eye_y,camera_pos_x-camera_eye_x);
 		camera_angle_z = atan2(camera_eye_z-camera_pos_z,sqrt((camera_pos_x-camera_eye_x)*(camera_pos_x-camera_eye_x)+(camera_pos_y-camera_eye_y)*(camera_pos_y-camera_eye_y)));
+		camera_fovy = atan2(cam.offset_height/2,cam.distance);//65.0;
+		camera_aspect = cam.offset_width*1.0f/cam.offset_height;//1.0;
+		camera_znear = 1.0;
+		camera_zfar = 100000.0;
 		break;
+	}
 	default:
-		camera_pos_x = 0;
-		camera_pos_y = 0;
+		camera_pos_x = 0.0;
+		camera_pos_y = 0.0;
 		camera_pos_z = 0.0;
-		camera_eye_x = 0;
-		camera_eye_y = 0;
+		camera_eye_x = 0.0;
+		camera_eye_y = 0.0;
 		camera_eye_z = 1000.0;
 		camera_angle_xy = M_PI/2;
 		camera_angle_z = M_PI/2;
+		camera_fovy = 65.0;
+		camera_aspect = 1.0;
+		camera_znear = 1.0;
+		camera_zfar = 100000.0;
 	}
 }
 
@@ -296,6 +327,7 @@ void GLWindow::Draw() {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	gluPerspective(65.0,1.0,1.0,100000.0L);
 	gluLookAt(camera_eye_x,camera_eye_y,camera_eye_z,camera_pos_x,camera_pos_y,camera_pos_z,cos(camera_angle_xy)*sin(camera_angle_z),sin(camera_angle_xy)*sin(camera_angle_z),cos(camera_angle_z));

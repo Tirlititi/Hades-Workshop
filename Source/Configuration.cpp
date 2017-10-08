@@ -35,8 +35,6 @@ SaveSet::SaveSet(SpellDataSet* sp, CommandDataSet* cmd, EnemyDataSet* enmy, Shop
 
 GameType TheGameType;
 GameType TheHWSGameType;
-SteamLanguage TheSteamLanguage;
-SteamLanguage TheHWSSteamLanguage;
 
 GameType GetGameType() {
 	return TheGameType;
@@ -49,19 +47,6 @@ GameType GetHWSGameType() {
 }
 void SetHWSGameType(GameType gt) {
 	TheHWSGameType = gt;
-}
-
-SteamLanguage GetSteamLanguage() {
-	return TheSteamLanguage;
-}
-void SetSteamLanguage(SteamLanguage sl) {
-	TheSteamLanguage = sl;
-}
-SteamLanguage GetHWSSteamLanguage() {
-	return TheHWSSteamLanguage;
-}
-void SetHWSSteamLanguage(SteamLanguage sl) {
-	TheHWSSteamLanguage = sl;
 }
 
 //==================================================//

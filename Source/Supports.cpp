@@ -221,16 +221,17 @@ int SupportDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 			uint16_t txtspace;
 			uint32_t tmppos;
 			HWSReadChar(ffbin,lg);
-			while (lg!=0xFF) {
+			while (lg!=STEAM_LANGUAGE_NONE) {
 				HWSReadShort(ffbin,txtspace);
 				tmppos = ffbin.tellg();
-				if (GetGameType()!=GAME_TYPE_PSX && lg==GetSteamLanguage()) { // DEBUG : need to make Steam language compatible with PSX versions
+				if (GetGameType()!=GAME_TYPE_PSX)
+					for (i=0;i<SUPPORT_AMOUNT;i++)
+						SteamReadFF9String(ffbin,support[i].name,lg);
+				else if (lg==GetSteamLanguage())
 					for (i=0;i<SUPPORT_AMOUNT;i++) {
 						SteamReadFF9String(ffbin,support[i].name);
-						if (GetGameType()==GAME_TYPE_PSX)
-							support[i].name.SteamToPSX();
+						support[i].name.SteamToPSX();
 					}
-				}
 				ffbin.seekg(tmppos+txtspace);
 				HWSReadChar(ffbin,lg);
 			}
@@ -242,7 +243,7 @@ int SupportDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 			SteamLanguage lg;
 			uint16_t txtspace;
 			HWSReadChar(ffbin,lg);
-			while (lg!=0xFF) {
+			while (lg!=STEAM_LANGUAGE_NONE) {
 				HWSReadShort(ffbin,txtspace);
 				ffbin.seekg(txtspace,ios::cur);
 				HWSReadChar(ffbin,lg);
@@ -262,16 +263,17 @@ int SupportDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 			uint16_t txtspace;
 			uint32_t tmppos;
 			HWSReadChar(ffbin,lg);
-			while (lg!=0xFF) {
+			while (lg!=STEAM_LANGUAGE_NONE) {
 				HWSReadShort(ffbin,txtspace);
 				tmppos = ffbin.tellg();
-				if (GetGameType()!=GAME_TYPE_PSX && lg==GetSteamLanguage()) { // DEBUG : need to make Steam language compatible with PSX versions
+				if (GetGameType()!=GAME_TYPE_PSX)
+					for (i=0;i<SUPPORT_AMOUNT;i++)
+						SteamReadFF9String(ffbin,support[i].help,lg);
+				else if (lg==GetSteamLanguage())
 					for (i=0;i<SUPPORT_AMOUNT;i++) {
 						SteamReadFF9String(ffbin,support[i].help);
-						if (GetGameType()==GAME_TYPE_PSX)
-							support[i].help.SteamToPSX();
+						support[i].help.SteamToPSX();
 					}
-				}
 				ffbin.seekg(tmppos+txtspace);
 				HWSReadChar(ffbin,lg);
 			}
@@ -283,7 +285,7 @@ int SupportDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 			SteamLanguage lg;
 			uint16_t txtspace;
 			HWSReadChar(ffbin,lg);
-			while (lg!=0xFF) {
+			while (lg!=STEAM_LANGUAGE_NONE) {
 				HWSReadShort(ffbin,txtspace);
 				ffbin.seekg(txtspace,ios::cur);
 				HWSReadChar(ffbin,lg);
@@ -312,20 +314,33 @@ void SupportDataSet::WriteHWS(fstream& ffbin) {
 		MACRO_SUPPORT_IOFUNCTIONNAME(HWSWrite,HWSSeek,false,false)
 		MACRO_SUPPORT_IOFUNCTIONHELP(HWSWrite,HWSSeek,false,false)
 	} else {
-		SteamLanguage lg = GetSteamLanguage();
-		HWSWriteChar(ffbin,lg);
-		HWSWriteShort(ffbin,name_space_total);
-		for (i=0;i<SUPPORT_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,support[i].name);
-		lg = 0xFF;
-		HWSWriteChar(ffbin,lg);
-		lg = GetSteamLanguage();
-		HWSWriteChar(ffbin,lg);
-		HWSWriteShort(ffbin,help_space_total);
-		for (i=0;i<SUPPORT_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,support[i].help);
-		lg = 0xFF;
-		HWSWriteChar(ffbin,lg);
+		SteamLanguage lg;
+		size_t strpos;
+		uint16_t strsize;
+		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
+			HWSWriteChar(ffbin,lg);
+			HWSWriteShort(ffbin,0);
+			strpos = ffbin.tellg();
+			for (i=0;i<SUPPORT_AMOUNT;i++)
+				SteamWriteFF9String(ffbin,support[i].name,lg);
+			strsize = (unsigned int)ffbin.tellg()-strpos;
+			ffbin.seekg(strpos-2);
+			HWSWriteShort(ffbin,strsize);
+			ffbin.seekg(strpos+strsize);
+		}
+		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
+		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
+			HWSWriteChar(ffbin,lg);
+			HWSWriteShort(ffbin,0);
+			strpos = ffbin.tellg();
+			for (i=0;i<SUPPORT_AMOUNT;i++)
+				SteamWriteFF9String(ffbin,support[i].help,lg);
+			strsize = (unsigned int)ffbin.tellg()-strpos;
+			ffbin.seekg(strpos-2);
+			HWSWriteShort(ffbin,strsize);
+			ffbin.seekg(strpos+strsize);
+		}
+		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
 	}
 	name_space_total = namesize;
 	help_space_total = helpsize;

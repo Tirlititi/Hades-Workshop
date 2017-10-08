@@ -8,6 +8,7 @@ void SetupAxisSystem(FbxScene*& sdkscene);
 bool SaveScene(const char* pFilename, FbxManager* pManager, FbxDocument* pScene, int format = MODEL_FILE_FORMAT_FBX_ASCII, bool pEmbedMedia = false);
 bool LoadScene(const char* pFilename, FbxManager* pManager, FbxDocument* pScene);
 bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene*& sdkscene);
+bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene*& sdkscene);
 
 //=============================//
 //     Model Mesh Methods      //
@@ -632,9 +633,9 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 					vertid[1] = mesh.vert_list[3 * j + 1];
 					vertid[2] = mesh.vert_list[3 * j + 2];
 					lMesh->BeginPolygon(mtlidcur);
-					lMesh->AddPolygon(vertid[0], vertid[0]);
-					lMesh->AddPolygon(vertid[2], vertid[2]);
-					lMesh->AddPolygon(vertid[1], vertid[1]);
+					lMesh->AddPolygon(vertid[0]);
+					lMesh->AddPolygon(vertid[2]);
+					lMesh->AddPolygon(vertid[1]);
 					lMesh->EndPolygon();
 				}
 				lMesh->GenerateNormals(false,true);
@@ -827,6 +828,175 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
     return true;
 }
 
+template<typename Tvect, typename Tgeoelement>
+Tvect GetVertexGeometryElement(FbxMesh* lMesh, Tgeoelement* lGeometryElement, unsigned int vertindex) {
+	if (lGeometryElement==NULL)
+		return Tvect();
+	int mappingid = vertindex;
+	if (lGeometryElement->GetReferenceMode()==FbxLayerElement::eIndex || lGeometryElement->GetReferenceMode()==FbxLayerElement::eIndexToDirect) {
+		mappingid = lGeometryElement->GetIndexArray()[vertindex];
+		if (mappingid<0)
+			return Tvect();
+	}
+	switch (lGeometryElementNormal->GetMappingMode()) {
+	case FbxLayerElement::eByControlPoint:
+		return lGeometryElement->GetDirectArray()[mappingid];
+		break;
+	case FbxLayerElement::eByPolygonVertex:
+		return Tvect(); // TODO: Find a vertex's polygon and return the value...
+		break;
+	case FbxLayerElement::eByPolygon:
+		return Tvect();
+		break;
+	case FbxLayerElement::eByEdge:
+		return Tvect();
+		break;
+	case FbxLayerElement::eAllSame:
+		return lGeometryElement->GetDirectArray()[0];
+		break;
+	}
+	return Tvect();
+}
+
+bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene*& sdkscene) {
+	unsigned int i,j,k,l;
+	// Construct the basis for the skeleton
+	FbxNode* lRootNode = sdkscene->GetRootNode();
+	FbxSkeleton* lSingleSkeleton = NULL;
+	FbxNode* lSingleSkeletonNode = NULL;
+	vector<FbxSkeleton*> lMultiSkeleton;
+	vector<string> lMultiSkeletonName;
+	bool hasbones = true; // DEBUG: maybe accept to construct non-boned models?
+	model.hierarchy = new GameObjectHierarchy();
+	// Construct the TransformStruct+GameObjectStruct hierarchy
+	if (lRootNode==NULL)
+		return false;
+	FbxNode* lCurrentNode = lRootNode;
+	vector<int> childindexlist;
+	vector<FbxNode*> lNodeList;
+	vector<TransformStruct*> transf_list;
+	vector<GameObjectStruct*> obj_list;
+	int childcurrentindex = 0;
+	childindexlist.push_back(0);
+	do {
+		TransformStruct* newtransf = new TransformStruct(NULL,*model.hierarchy,4,0,0); // DEBUG: setup "parent", "unk" and "info"
+		newtransf->child_transform_amount = 0;
+		Quaternion::EulerToQuaternion(newtransf->rot, lCurrentNode->LclRotation.Get()[0],lCurrentNode->LclRotation.Get()[1],lCurrentNode->LclRotation.Get()[2]);
+		newtransf->x = lCurrentNode->LclTranslation.Get()[0];
+		newtransf->y = lCurrentNode->LclTranslation.Get()[1];
+		newtransf->z = lCurrentNode->LclTranslation.Get()[2];
+		newtransf->scale_x = lCurrentNode->LclScaling.Get()[0];
+		newtransf->scale_y = lCurrentNode->LclScaling.Get()[1];
+		newtransf->scale_z = lCurrentNode->LclScaling.Get()[2];
+		for (i=0;i<lNodeList.size();i++)
+			if (lCurrentNode->GetParent()==lNodeList[i]) {
+				newtransf->parent_transform = transf_list[i];
+				transf_list[i]->child_transform.push_back(newtransf);
+				transf_list[i]->child_transform_amount++;
+			}
+		GameObjectStruct* newobj = new GameObjectStruct(newtransf,*model.hierarchy,1,0,0);
+		newobj->child_amount = 1;
+		newobj->child.push_back(newtransf);
+		newobj->name = lCurrentNode->GetNameOnly();
+		newobj->name_len = newobj->name.length();
+		newtransf->child_object = newobj;
+		transf_list.push_back(newtransf);
+		obj_list.push_back(newobj);
+		lNodeList.push_back(lCurrentNode);
+		while (childcurrentindex>=0 && childindexlist[childcurrentindex]>=lCurrentNode->GetChildCount()) {
+			childcurrentindex--;
+			childindexlist.pop_back();
+			lCurrentNode = lCurrentNode->GetParent();
+		}
+		if (childcurrentindex>=0) {
+			lCurrentNode = lCurrentNode->GetChild(childindexlist[childcurrentindex]);
+			childindexlist[childcurrentindex]++;
+			childindexlist.push_back(0);
+			childcurrentindex++;
+		}
+	} while (childcurrentindex>=0);
+	model.hierarchy->root_node = transf_list[0];
+	// Construct the SkinnedMeshRenderer
+	vector<SkinnedMeshRendererStruct*> skinnedmesh_list;
+	for (i=0;i<lNodeList.size();i++) {
+		lCurrentNode = lNodeList[i];
+		// TODO: accept other geometry types in the future?
+		if (lCurrentNode->GetNodeAttribute() && lCurrentNode->GetNodeAttribute()->GetAttributeType()==FbxNodeAttribute::EType::eMesh) {
+			SkinnedMeshRendererStruct* newskinmesh = new SkinnedMeshRendererStruct(obj_list[i],*model.hierarchy,137,0,0);
+			obj_list[i]->child.push_back(newskinmesh);
+			obj_list[i]->child_amount++;
+			newskinmesh->parent_object = obj_list[i];
+			// Mesh
+			FbxMesh* lMesh =  static_cast<FbxMesh*>(lCurrentNode->GetNodeAttribute());
+			GameObjectNode* newmeshnode = new GameObjectNode(newskinmesh,*model.hierarchy,43,0,0);
+			newskinmesh->child_mesh = newmeshnode;
+			ModelMeshData newmesh;
+			newmesh.vertice_amount = lMesh->GetControlPointsCount();
+			FbxVector4* lCtrlPts = lMesh->GetControlPoints();
+			FbxGeometryElementNormal* lGeometryElementNormal = lMesh->GetElementNormal();
+			FbxGeometryElementTangent* lGeometryElementTangent = lMesh->GetElementTangent();
+			FbxGeometryElementUV* lGeometryElementUV = lMesh->GetElementUV();
+			for (j=0;j<newmesh.vertice_amount;j++) {
+				FbxVector4 lVertNormal = GetVertexGeometryElement<FbxVector4,FbxGeometryElementNormal>(lMesh,lGeometryElementNormal,j);
+				FbxVector4 lVertTangent = GetVertexGeometryElement<FbxVector4,FbxGeometryElementTangent>(lMesh,lGeometryElementTangent,j);
+				FbxVector2 lVertUV = GetVertexGeometryElement<FbxVector2,FbxGeometryElementUV>(lMesh,lGeometryElementUV,j);
+				ModelMeshVertex newvert;
+				newvert.x = lCtrlPts[j][0];
+				newvert.y = lCtrlPts[j][1];
+				newvert.z = lCtrlPts[j][2];
+				newvert.nx = lVertNormal[0];
+				newvert.ny = lVertNormal[1];
+				newvert.nz = lVertNormal[2];
+				newvert.tx = lVertTangent[0];
+				newvert.ty = lVertTangent[1];
+				newvert.tz = lVertTangent[2];
+				newvert.u = lVertUV[0];
+				newvert.v = lVertUV[1];
+				// UNKNOWN
+				newvert.unkf = -1.0;
+				newvert.unkuv1 = 0.0;
+				newvert.unkuv2 = 0.0;
+				newmesh.vert.push_back(newvert);
+			}
+/*			ModelMeshData& mesh = model.mesh[meshindex];
+			FbxMesh* lMesh = FbxMesh::Create(sdkscene, mesh.name.c_str());
+			FbxNode* lMeshNode = NULL;
+			for (j=0;j<hierarchynode.size();j++)
+				if (nodespec->GetParentTransform()==hierarchynode[j] && lNodeList[j]) {
+					lMeshNode = lNodeList[j];
+					break;
+				}
+			lMesh->InitMaterialIndices(FbxLayerElement::EMappingMode::eByPolygon);
+			uint16_t vertid[3];
+			for (j = 0; 3 * j<mesh.vert_list.size(); j++) {
+				int mtlidcur = -1;
+				for (k = 0; k <mesh.mat_info.size(); k++) {
+					if (3 * j >= mesh.mat_info[k].vert_list_start / 2 && 3 * j < mesh.mat_info[k].vert_list_start / 2 + mesh.mat_info[k].vert_list_amount) {
+						mtlidcur = k;
+						break;
+					}
+				}
+				vertid[0] = mesh.vert_list[3 * j];
+				vertid[1] = mesh.vert_list[3 * j + 1];
+				vertid[2] = mesh.vert_list[3 * j + 2];
+				lMesh->BeginPolygon(mtlidcur);
+				lMesh->AddPolygon(vertid[0], vertid[0]);
+				lMesh->AddPolygon(vertid[2], vertid[2]);
+				lMesh->AddPolygon(vertid[1], vertid[1]);
+				lMesh->EndPolygon();
+			}
+			lMesh->GenerateNormals(false,true);*/
+
+
+
+			model.mesh.push_back(newmesh);
+			// Materials
+			// Bones
+		}
+	}
+	return true;
+}
+
 void InitializeSdkObjects(FbxManager*& pManager, FbxScene*& pScene) {
 	pManager = FbxManager::Create();
 	if (!pManager) {
@@ -981,8 +1151,7 @@ void Quaternion::Write(fstream& f) {
 	WriteFloat(f,w);
 }
 
-Quaternion Quaternion::EulerToQuaternion(double roll, double pitch, double yaw) {
-	Quaternion q;
+void Quaternion::EulerToQuaternion(Quaternion& q, double roll, double pitch, double yaw) {
 	FbxVector4 eulervect(roll,pitch,yaw);
 	FbxQuaternion fbxquat;
 	fbxquat.ComposeSphericalXYZ(eulervect);
@@ -1004,7 +1173,6 @@ Quaternion Quaternion::EulerToQuaternion(double roll, double pitch, double yaw) 
 	q.y = t0 * t2 * t5 + t1 * t3 * t4;
 	q.z = t1 * t2 * t4 - t0 * t3 * t5;*/
 	q.apply_matrix_updated = false;
-	return q;
 }
 
 void Quaternion::QuaternionToEuler(Quaternion& q, double& roll, double& pitch, double& yaw) {

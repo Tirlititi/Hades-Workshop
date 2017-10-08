@@ -117,15 +117,7 @@ public:
 struct FieldTilesCameraDataStruct {
 public:
 	uint16_t distance;
-	int16_t angle_x;
-	int16_t angle_a; // walk no diff
-	int16_t eye_x; // walk diff
-	int16_t angle_b; // walk no diff X
-	int16_t eye_y; // walk no diff
-	int16_t eye_z; // walk no diff X
-	int16_t focal_x; // walk diff?
-	int16_t focal_z; // walk no diff
-	int16_t focal_y; // walk no diff Y
+	int16_t matrix[9];
 	int32_t offset_x;
 	int32_t offset_z;
 	int32_t offset_y;
@@ -384,8 +376,8 @@ public:
 	unsigned int tile_size;
 	unsigned int tile_gap;
 	
-	int SetFieldName(unsigned int fieldid, wstring newvalue);
-	int SetFieldName(unsigned int fieldid, FF9String& newvalue);
+	int SetFieldName(unsigned int fieldid, wstring newvalue, SteamLanguage lang = STEAM_LANGUAGE_NONE);
+	int SetFieldName(unsigned int fieldid, FF9String& newvalue, SteamLanguage lang = STEAM_LANGUAGE_NONE);
 	
 	void Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textset = NULL);
 	void Write(fstream& ffbin, ClusterSet& clusset);
