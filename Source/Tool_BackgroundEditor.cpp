@@ -103,7 +103,7 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 	wxImage* tblockimgarray = new wxImage[tilesamountplustitle];
 	unsigned int tiledefaultsize = GetGameType()==GAME_TYPE_PSX ? FIELD_TILE_BASE_SIZE : FIELD_TILE_BASE_SIZE*2;
 	unsigned int expectmemoryusage = 0;
-	bool loadallimage = false; // If the images are too big, we don't load them all in the RAM simultaneously
+	bool loadallimage = false; // If the images are too big, we don't load them all in the RAM simultaneously ; DEBUG: always deactivated
 	for (i=0;i<tilesamountplustitle;i++) {
 		if (wxFile::Exists(imgfilename[i])) {
 			tblockimgarray[i].LoadFile(imgfilename[i],type);
@@ -113,6 +113,11 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 				delete[] tblockimgarray;
 				remove((outputname+_(L".tmp")).c_str());
 				return 2;
+			}
+			if (!tblockimgarray[i].HasAlpha()) {
+				delete[] tblockimgarray;
+				remove((outputname+_(L".tmp")).c_str());
+				return 3;
 			}
 			expectmemoryusage += (tblockimgarray[i].GetWidth()*tblockimgarray[i].GetHeight())*4;
 			if (expectmemoryusage>=CONVERTER_MEMORY_LIMIT && loadallimage) {
@@ -769,6 +774,10 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 					wxString errstr;
 					errstr.Printf(wxT(HADES_STRING_BACKGROUNDIMPORT_ERROR_DIMENSIONS),m_fieldchoice->GetSelection(),GetFieldNameOrDefault(cddata,m_fieldchoice->GetSelection()));
 					log.AddError(errstr.wc_str());
+				} else if (res==3) {
+					wxString errstr;
+					errstr.Printf(wxT(HADES_STRING_BACKGROUNDIMPORT_ERROR_ALPHA),m_fieldchoice->GetSelection(),GetFieldNameOrDefault(cddata,m_fieldchoice->GetSelection()));
+					log.AddError(errstr.wc_str());
 				}
 				LogDialog logdial(this,log);
 				logdial.ShowModal();
@@ -840,6 +849,10 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 					} else if (res==2) {
 						wxString errstr;
 						errstr.Printf(wxT(HADES_STRING_BACKGROUNDIMPORT_ERROR_DIMENSIONS),fieldid,GetFieldNameOrDefault(cddata,fieldindex));
+						log.AddError(errstr.wc_str());
+					} else if (res==3) {
+						wxString errstr;
+						errstr.Printf(wxT(HADES_STRING_BACKGROUNDIMPORT_ERROR_ALPHA),m_fieldchoice->GetSelection(),GetFieldNameOrDefault(cddata,m_fieldchoice->GetSelection()));
 						log.AddError(errstr.wc_str());
 					}
 					delete[] imgfilelist;

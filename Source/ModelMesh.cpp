@@ -432,6 +432,88 @@ int ModelDataStruct::Export(const char* outputname, int format) {
     return 0;
 }
 
+
+void ModelDataStruct::SetupPostImportData() {
+	unsigned int i,j,k;
+	for (i=0;i<mesh.size();i++) {
+		float minx = FLT_MAX, miny = FLT_MAX, minz = FLT_MAX;
+		float maxx = -FLT_MAX, maxy = -FLT_MAX, maxz = -FLT_MAX;
+		for (j=0;j<mesh[i].vertice_amount;j++) {
+			if (mesh[i].vert[j].x<minx) minx = mesh[i].vert[j].x;
+			if (mesh[i].vert[j].x>maxx) maxx = mesh[i].vert[j].x;
+			if (mesh[i].vert[j].y<miny) miny = mesh[i].vert[j].y;
+			if (mesh[i].vert[j].y>maxy) maxy = mesh[i].vert[j].y;
+			if (mesh[i].vert[j].z<minz) minz = mesh[i].vert[j].z;
+			if (mesh[i].vert[j].z>maxz) maxz = mesh[i].vert[j].z;
+			mesh[i].vert[j].unkf = -1.0;
+			mesh[i].vert[j].unkuv1 = 0.0;
+			mesh[i].vert[j].unkuv2 = 0.0;
+		}
+		for (j=0;j<mesh[i].material_info_amount;j++) {
+			// ToDo: vert_start etc...
+			float matminx = FLT_MAX, matminy = FLT_MAX, matminz = FLT_MAX;
+			float matmaxx = -FLT_MAX, matmaxy = -FLT_MAX, matmaxz = -FLT_MAX;
+			for (k=0;k<mesh[i].mat_info[j].vert_list_amount;k++) {
+				if (mesh[i].vert[mesh[i].mat_info[j].vert_list_start+k].x<matminx) matminx = mesh[i].vert[mesh[i].mat_info[j].vert_list_start+k].x;
+				if (mesh[i].vert[mesh[i].mat_info[j].vert_list_start+k].x>matmaxx) matmaxx = mesh[i].vert[mesh[i].mat_info[j].vert_list_start+k].x;
+				if (mesh[i].vert[mesh[i].mat_info[j].vert_list_start+k].y<matminy) matminy = mesh[i].vert[mesh[i].mat_info[j].vert_list_start+k].y;
+				if (mesh[i].vert[mesh[i].mat_info[j].vert_list_start+k].y>matmaxy) matmaxy = mesh[i].vert[mesh[i].mat_info[j].vert_list_start+k].y;
+				if (mesh[i].vert[mesh[i].mat_info[j].vert_list_start+k].z<matminz) matminz = mesh[i].vert[mesh[i].mat_info[j].vert_list_start+k].z;
+				if (mesh[i].vert[mesh[i].mat_info[j].vert_list_start+k].z>matmaxz) matmaxz = mesh[i].vert[mesh[i].mat_info[j].vert_list_start+k].z;
+			}
+			mesh[i].mat_info[j].unk0 = 0;
+			mesh[i].mat_info[j].center_x = (matminx+matmaxx)/2;
+			mesh[i].mat_info[j].center_y = (matminy+matmaxy)/2;
+			mesh[i].mat_info[j].center_z = (matminz+matmaxz)/2;
+			mesh[i].mat_info[j].radius_x = (matmaxx-matminx)/2;
+			mesh[i].mat_info[j].radius_y = (matmaxy-matminy)/2;
+			mesh[i].mat_info[j].radius_z = (matmaxz-matminz)/2;
+		}
+		for (j=0;j<mesh[i].bone_amount;j++) {
+			mesh[i].bone[j].scoped_name = ""; // DEBUG
+		}
+		mesh[i].unk_flag1 = 0;
+		mesh[i].unk_flag2 = 1;
+		mesh[i].unk_flag3 = 1;
+		mesh[i].unk_flag4 = 1;
+		mesh[i].vert_format0 = 0x8B;
+		mesh[i].vert_format1 = 8;
+		mesh[i].vert_format2 = 0x03000000;
+		mesh[i].vert_format3 = 0x03000C00;
+		mesh[i].vert_format4 = 0;
+		mesh[i].vert_format5 = 0x02001800;
+		mesh[i].vert_format6 = 0;
+		mesh[i].vert_format7 = 0;
+		mesh[i].vert_format8 = 0;
+		mesh[i].vert_format9 = 0x04002000;
+		mesh[i].vert_datasize = 12*4*mesh[i].vertice_amount;
+		mesh[i].center_x = (minx+maxx)/2;
+		mesh[i].center_y = (miny+maxy)/2;
+		mesh[i].center_z = (minz+maxz)/2;
+		mesh[i].radius_x = (maxx-minx)/2;
+		mesh[i].radius_y = (maxy-miny)/2;
+		mesh[i].radius_z = (maxz-minz)/2;
+		mesh[i].unk_num1 = 1;
+		mesh[i].unk_num2 = 0;
+		mesh[i].unk_num3 = 0;
+		mesh[i].scoped_name = ""; // DEBUG
+	}
+	for (i=0;i<material.size();i++) {
+		for (j=0;j<material[i].size();j++) {
+			material[i][j].bumpmap.unk1 = 0;	material[i][j].bumpmap.unk2 = 0;	material[i][j].bumpmap.unk3 = 0;
+			material[i][j].bumpmap.file_info = 0; // DEBUG
+			material[i][j].detailalbedomap.unk1 = 0;	material[i][j].detailalbedomap.unk2 = 0;	material[i][j].detailalbedomap.unk3 = 0;
+			material[i][j].detailalbedomap.file_info = 0; // etc...
+		}
+	}
+	for (i=0;i<animation.size();i++) {
+
+	}
+	for (i=0;i<hierarchy->node_list.size();i++) {
+
+	}
+}
+
 //=============================//
 //       FBX SDK Common        //
 //=============================//
@@ -859,7 +941,7 @@ Tvect GetVertexGeometryElement(FbxMesh* lMesh, Tgeoelement* lGeometryElement, un
 }
 
 bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene*& sdkscene) {
-	unsigned int i,j,k,l;
+	unsigned int i,j,k,l,m;
 	// Construct the basis for the skeleton
 	FbxNode* lRootNode = sdkscene->GetRootNode();
 	FbxSkeleton* lSingleSkeleton = NULL;
@@ -915,13 +997,24 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 			childcurrentindex++;
 		}
 	} while (childcurrentindex>=0);
-	model.hierarchy->root_node = transf_list[0];
+	// Sequence the bone list of the whole model
+	vector<FbxString> lSkeletonName;
+	vector<FbxString> lSkeletonFullName;
+	vector<FbxNode*> lSkeletonNode;
+	for (i=0;i<lNodeList.size();i++) {
+		lCurrentNode = lNodeList[i];
+		if (lCurrentNode->GetNodeAttribute()!=NULL && lCurrentNode->GetNodeAttribute()->GetAttributeType()==FbxNodeAttribute::EType::eSkeleton) {
+			FbxSkeleton* lSkeleton =  static_cast<FbxSkeleton*>(lCurrentNode->GetNodeAttribute());
+			lSkeletonName.push_back(lSkeleton->GetNameOnly());
+			lSkeletonFullName.push_back(lSkeleton->GetNameWithNameSpacePrefix());
+			lSkeletonNode.push_back(lCurrentNode);
+		}
+	}
 	// Construct the SkinnedMeshRenderer
-	vector<SkinnedMeshRendererStruct*> skinnedmesh_list;
 	for (i=0;i<lNodeList.size();i++) {
 		lCurrentNode = lNodeList[i];
 		// TODO: accept other geometry types in the future?
-		if (lCurrentNode->GetNodeAttribute() && lCurrentNode->GetNodeAttribute()->GetAttributeType()==FbxNodeAttribute::EType::eMesh) {
+		if (lCurrentNode->GetNodeAttribute()!=NULL && lCurrentNode->GetNodeAttribute()->GetAttributeType()==FbxNodeAttribute::EType::eMesh) {
 			SkinnedMeshRendererStruct* newskinmesh = new SkinnedMeshRendererStruct(obj_list[i],*model.hierarchy,137,0,0);
 			obj_list[i]->child.push_back(newskinmesh);
 			obj_list[i]->child_amount++;
@@ -931,6 +1024,7 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 			GameObjectNode* newmeshnode = new GameObjectNode(newskinmesh,*model.hierarchy,43,0,0);
 			newskinmesh->child_mesh = newmeshnode;
 			ModelMeshData newmesh;
+			newmesh.name = lMesh->GetNameOnly();
 			newmesh.vertice_amount = lMesh->GetControlPointsCount();
 			FbxVector4* lCtrlPts = lMesh->GetControlPoints();
 			FbxGeometryElementNormal* lGeometryElementNormal = lMesh->GetElementNormal();
@@ -952,47 +1046,182 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 				newvert.tz = lVertTangent[2];
 				newvert.u = lVertUV[0];
 				newvert.v = lVertUV[1];
-				// UNKNOWN
-				newvert.unkf = -1.0;
-				newvert.unkuv1 = 0.0;
-				newvert.unkuv2 = 0.0;
 				newmesh.vert.push_back(newvert);
 			}
-/*			ModelMeshData& mesh = model.mesh[meshindex];
-			FbxMesh* lMesh = FbxMesh::Create(sdkscene, mesh.name.c_str());
-			FbxNode* lMeshNode = NULL;
-			for (j=0;j<hierarchynode.size();j++)
-				if (nodespec->GetParentTransform()==hierarchynode[j] && lNodeList[j]) {
-					lMeshNode = lNodeList[j];
-					break;
+			// Polygons are converted to triangles
+			FbxGeometryElementMaterial* lGeometryElementMaterial = lMesh->GetElementMaterial();
+			vector<FbxSurfaceMaterial*> lMaterialList;
+			FbxSurfaceMaterial* lCurrentMaterial = NULL;
+			newmesh.vertex_list_amount = 0;
+			for (j=0;j<lMesh->GetPolygonCount();j++) {
+				FbxSurfaceMaterial* lPolyMaterial = GetVertexGeometryElement<FbxSurfaceMaterial*,FbxGeometryElementMaterial>(lMesh,lGeometryElementMaterial,lMesh->GetPolygonVertex(j,0));
+				if (lPolyMaterial!=lCurrentMaterial) {
+					for (k=0;k<lMaterialList.size();k++)
+						if (lMaterialList[k]==lPolyMaterial)
+							break;
+					if (k>=lMaterialList.size())
+						lMaterialList.push_back(lPolyMaterial);
+					ModelMeshMaterialInfo newmatinfo;
+					newmatinfo.vert_list_start = newmesh.vertex_list_amount*2; // DEBUG: setup the rest
+					newmesh.mat_info.push_back(newmatinfo);
+					lCurrentMaterial = lPolyMaterial;
 				}
-			lMesh->InitMaterialIndices(FbxLayerElement::EMappingMode::eByPolygon);
-			uint16_t vertid[3];
-			for (j = 0; 3 * j<mesh.vert_list.size(); j++) {
-				int mtlidcur = -1;
-				for (k = 0; k <mesh.mat_info.size(); k++) {
-					if (3 * j >= mesh.mat_info[k].vert_list_start / 2 && 3 * j < mesh.mat_info[k].vert_list_start / 2 + mesh.mat_info[k].vert_list_amount) {
-						mtlidcur = k;
-						break;
+				int polysize = lMesh->GetPolygonSize(j);
+				newmesh.vertex_list_amount += 3*(polysize-2);
+				for (k=0;k+2<polysize;k++) {
+					// [0 1 2] [0 2 3] [0 3 -1] [-1 3 4] [-1 4 -2] [-2 4 5] [-2 5 -3] etc...
+					if (k==0) {
+						newmesh.vert_list.push_back(lMesh->GetPolygonVertex(j,0));
+						newmesh.vert_list.push_back(lMesh->GetPolygonVertex(j,2));
+						newmesh.vert_list.push_back(lMesh->GetPolygonVertex(j,1));
+					} else if (k%2==1) {
+						newmesh.vert_list.push_back(lMesh->GetPolygonVertex(j,(-(k-1)/2)%polysize));
+						newmesh.vert_list.push_back(lMesh->GetPolygonVertex(j,(k+5)/2));
+						newmesh.vert_list.push_back(lMesh->GetPolygonVertex(j,(k+4)/2));
+					} else {
+						newmesh.vert_list.push_back(lMesh->GetPolygonVertex(j,(-(k-1)/2)%polysize));
+						newmesh.vert_list.push_back(lMesh->GetPolygonVertex(j,polysize-k/2));
+						newmesh.vert_list.push_back(lMesh->GetPolygonVertex(j,(k+4)/2));
 					}
 				}
-				vertid[0] = mesh.vert_list[3 * j];
-				vertid[1] = mesh.vert_list[3 * j + 1];
-				vertid[2] = mesh.vert_list[3 * j + 2];
-				lMesh->BeginPolygon(mtlidcur);
-				lMesh->AddPolygon(vertid[0], vertid[0]);
-				lMesh->AddPolygon(vertid[2], vertid[2]);
-				lMesh->AddPolygon(vertid[1], vertid[1]);
-				lMesh->EndPolygon();
 			}
-			lMesh->GenerateNormals(false,true);*/
 
-
-
-			model.mesh.push_back(newmesh);
+			// ToDo: the rest
 			// Materials
+			vector<ModelMaterialData> newmatlist;
+			for (j=0;j<lMaterialList.size();j++) {
+				FbxSurfacePhong* lMaterial = static_cast<FbxSurfacePhong*>(lMaterialList[j]);
+				FbxFileTexture* lFileTex = static_cast<FbxFileTexture*>(lMaterial->Diffuse.GetSrcObject(FbxCriteria::ObjectType(FbxFileTexture::ClassId)));
+				ModelMaterialData newmat;
+				newmat.name = lMaterial->GetNameOnly();
+				if (lFileTex!=NULL) {
+					newmat.maintex.file_name = lFileTex->GetNameOnly();
+				} else {
+					newmat.maintex.file_name = "";
+				}
+				FbxProperty lProp = lMaterial->FindProperty("_BumpMap",FbxStringDT);
+				if (lProp.IsValid()) newmat.bumpmap.file_name = lProp.Get<FbxString>();
+				lProp = lMaterial->FindProperty("_DetailAlbedoMap",FbxStringDT);
+				if (lProp.IsValid()) newmat.detailalbedomap.file_name = lProp.Get<FbxString>();
+				lProp = lMaterial->FindProperty("_DetailMask",FbxStringDT);
+				if (lProp.IsValid()) newmat.detailmask.file_name = lProp.Get<FbxString>();
+				lProp = lMaterial->FindProperty("_DetailNormalMap",FbxStringDT);
+				if (lProp.IsValid()) newmat.detailnormalmap.file_name = lProp.Get<FbxString>();
+				lProp = lMaterial->FindProperty("_EmissionMap",FbxStringDT);
+				if (lProp.IsValid()) newmat.emissionmap.file_name = lProp.Get<FbxString>();
+				lProp = lMaterial->FindProperty("_MetallicGlossMap",FbxStringDT);
+				if (lProp.IsValid()) newmat.metallicglossmap.file_name = lProp.Get<FbxString>();
+				lProp = lMaterial->FindProperty("_OcclusionMap",FbxStringDT);
+				if (lProp.IsValid()) newmat.occlusionmap.file_name = lProp.Get<FbxString>();
+				lProp = lMaterial->FindProperty("_ParallaxMap",FbxStringDT);
+				if (lProp.IsValid()) newmat.parallaxmap.file_name = lProp.Get<FbxString>();
+				lProp = lMaterial->FindProperty("_BumpScale",FbxFloatDT);
+				if (lProp.IsValid()) newmat.bumpscale_value = lProp.Get<FbxFloat>();
+				lProp = lMaterial->FindProperty("_Cutoff",FbxFloatDT);
+				if (lProp.IsValid()) newmat.cutoff_value = lProp.Get<FbxFloat>();
+				lProp = lMaterial->FindProperty("_DetailNormalMapScale",FbxFloatDT);
+				if (lProp.IsValid()) newmat.detailnormalmapscale_value = lProp.Get<FbxFloat>();
+				lProp = lMaterial->FindProperty("_DstBlend",FbxFloatDT);
+				if (lProp.IsValid()) newmat.dstblend_value = lProp.Get<FbxFloat>();
+				lProp = lMaterial->FindProperty("_Glossiness",FbxFloatDT);
+				if (lProp.IsValid()) newmat.glossiness_value = lProp.Get<FbxFloat>();
+				lProp = lMaterial->FindProperty("_Metallic",FbxFloatDT);
+				if (lProp.IsValid()) newmat.metallic_value = lProp.Get<FbxFloat>();
+				lProp = lMaterial->FindProperty("_Mode",FbxFloatDT);
+				if (lProp.IsValid()) newmat.mode_value = lProp.Get<FbxFloat>();
+				lProp = lMaterial->FindProperty("_OcclusionStrength",FbxFloatDT);
+				if (lProp.IsValid()) newmat.occlusionstrength_value = lProp.Get<FbxFloat>();
+				lProp = lMaterial->FindProperty("_Parallax",FbxFloatDT);
+				if (lProp.IsValid()) newmat.parallax_value = lProp.Get<FbxFloat>();
+				lProp = lMaterial->FindProperty("_SrcBlend",FbxFloatDT);
+				if (lProp.IsValid()) newmat.srcblend_value = lProp.Get<FbxFloat>();
+				lProp = lMaterial->FindProperty("_UVSec",FbxFloatDT);
+				if (lProp.IsValid()) newmat.uvsec_value = lProp.Get<FbxFloat>();
+				lProp = lMaterial->FindProperty("_ZWrite",FbxDouble2DT);
+				if (lProp.IsValid()) {
+					newmat.zwrite_factor = lProp.Get<FbxDouble2>()[0];
+					newmat.zwrite_mode = lProp.Get<FbxDouble2>()[1];
+				}
+				lProp = lMaterial->FindProperty("_Color",FbxColor4DT);
+				if (lProp.IsValid()) {
+					newmat.color_red = lProp.Get<FbxColor>().mRed;
+					newmat.color_green = lProp.Get<FbxColor>().mGreen;
+					newmat.color_blue = lProp.Get<FbxColor>().mBlue;
+					newmat.color_alpha = lProp.Get<FbxColor>().mAlpha;
+				}
+				lProp = lMaterial->FindProperty("_EmissionColor",FbxColor4DT);
+				if (lProp.IsValid()) {
+					newmat.emissioncolor_red = lProp.Get<FbxColor>().mRed;
+					newmat.emissioncolor_green = lProp.Get<FbxColor>().mGreen;
+					newmat.emissioncolor_blue = lProp.Get<FbxColor>().mBlue;
+					newmat.emissioncolor_alpha = lProp.Get<FbxColor>().mAlpha;
+				}
+				newmatlist.push_back(newmat);
+			}
+
 			// Bones
+			FbxSkin* lSkin = static_cast<FbxSkin*>(lMesh->GetDeformer(0,FbxDeformer::EDeformerType::eSkin));
+			if (lSkin!=NULL) {
+				FbxAMatrix lTransformMatrix;
+				newmesh.bone_amount = lSkin->GetClusterCount();
+				for (j=0;j<newmesh.bone_amount;j++) {
+					FbxCluster* lSkeletonCluster = lSkin->GetCluster(j);
+					ModelMeshBone newbone;
+					newbone.name = "";
+					for (k=0;k<lSkeletonNode.size();k++) {
+						if (lSkeletonNode[k]==lSkeletonCluster->GetLink()) {
+							newbone.name = lSkeletonName[k]; // DEBUG: think of scopedname
+							break;
+						}
+					}
+					lSkeletonCluster->GetTransformMatrix(lTransformMatrix);
+					for (k=0;k<4;k++)
+						for (l=0;l<4;l++)
+							newbone.transform_matrix.value[k][l] = lTransformMatrix.Get(l,k);
+					newmesh.bone.push_back(newbone);
+				}
+				newmesh.bone_unk_amount = newmesh.bone_amount;
+				for (j=0;j<newmesh.bone_unk_amount;j++) {
+					newmesh.bone_unk_list.push_back(j+1); // DEBUG
+				}
+				newmesh.bone_unk_main = newmesh.bone_unk_amount>0 ? newmesh.bone_unk_list[0] : 0;
+				newmesh.vertice_attachment_amount = newmesh.vertice_amount;
+				for (j=0;j<newmesh.vertice_attachment_amount;j++) {
+					ModelMeshVertexAttachment newvertattach;
+					for (k=0;k<4;k++) {
+						newvertattach.bone_id[k] = 0;
+						newvertattach.bone_factor[k] = 0.0;
+					}
+					for (k=0;k<lSkin->GetClusterCount();k++) {
+						FbxCluster* lSkeletonCluster = lSkin->GetCluster(k);
+						int* lPtsIndex = lSkeletonCluster->GetControlPointIndices();
+						double* lPtsFactor = lSkeletonCluster->GetControlPointWeights();
+						for (l=0;l<lSkeletonCluster->GetControlPointIndicesCount();l++) {
+							if (lPtsIndex[l]==j) {
+								for (m=0;m<4;m++)
+									if (newvertattach.bone_factor[m]==0.0)
+										break;
+								if (m<4) {
+									newvertattach.bone_id[m] = k;
+									newvertattach.bone_factor[m] = lPtsFactor[l];
+								}
+							}
+						}
+					}
+					newmesh.vert_attachment.push_back(newvertattach);
+				}
+			}
+			model.material.push_back(newmatlist);
+			model.mesh.push_back(newmesh);
 		}
+	}
+	// ToDo: Animations
+	model.hierarchy->root_node = transf_list[0];
+	for (i=0;i<transf_list.size();i++) {
+		model.hierarchy->node_list.push_back(transf_list[i]);
+		model.hierarchy->node_list.push_back(obj_list[i]);
+		for (j=1;j<obj_list[i]->child_amount;j++)
+			model.hierarchy->node_list.push_back(obj_list[i]->child[j]);
 	}
 	return true;
 }

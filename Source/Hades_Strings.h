@@ -342,6 +342,7 @@ static wxString HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM[] = {
 #define HADES_STRING_BACKGROUNDIMPORT_MISSING_LAYERS	" - Missing %d layers for the field %d (%s)\n"
 #define HADES_STRING_BACKGROUNDIMPORT_ERROR_CREATE		" - Failed to convert the field %d (%s)\n"
 #define HADES_STRING_BACKGROUNDIMPORT_ERROR_DIMENSIONS	" - The dimensions of the layers don't match for the field %d (%s)\n"
+#define HADES_STRING_BACKGROUNDIMPORT_ERROR_ALPHA	" - One or several layer(s) have no alpha channel for the field %d (%s)\n"
 #define HADES_STRING_UNITYVIEWER_GAME_OPEN	L"This game folder is already opened in Hades Workshop's main module. Updating the assets is not possible in this situation."
 #define HADES_STRING_UNITYVIEWER_IMPORT_ERROR_FORMAT	"Default format could not be retrieved for '%s'"
 #define HADES_STRING_UNITYVIEWER_MISSING_AKB	"Expected an AKB header in '%s' but none was found"
