@@ -245,7 +245,7 @@ static wxString HADES_STRING_SYNTH_NAME[8] = {
 #define HADES_STRING_CILSCRIPT_NOTARG			" - IL_%.4X : Expected an argument instead of '%s'\n"
 #define HADES_STRING_CILSCRIPT_WRONGTYPECHECK	" - IL_%.4X : Expected a list of check types, '%s', '%s' or '%s'\n"
 #define HADES_STRING_CILSCRIPT_WRONGILPOS		" - IL_%.4X : '%s' is not a valid IL position\n"
-#define HADES_STRING_CILSCRIPT_RANGEILPOS		" - IL_%.4X : '%s' is out of range for tbis instruction's short form\n"
+#define HADES_STRING_CILSCRIPT_RANGEILPOS		" - IL_%.4X : '%s' is out of range for this instruction's short form\n"
 
 //-- File Batching
 #define HADES_STRING_BATCH_NOTHING				" - Nothing done\n"

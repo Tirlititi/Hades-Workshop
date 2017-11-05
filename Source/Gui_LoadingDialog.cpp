@@ -38,7 +38,7 @@ void LoadingDialogUpdate(unsigned int objdone, wxString message) {
 	int oldvalue = TheLoadingDialog->wxGenericProgressDialog::GetValue();
 	if (message==wxEmptyString)
 		message = wxString::Format(wxT("%u / %u"),objdone,TheLoadingDialog->object_amount);
-	if (newvalue>=oldvalue+10 || newvalue<oldvalue)
+	if (newvalue>=oldvalue+5 || newvalue<oldvalue)
 		TheLoadingDialog->wxGenericProgressDialog::Update(newvalue<=99 ? newvalue : 99,message);
 	else
 		TheLoadingDialog->wxGenericProgressDialog::Update(oldvalue,message);

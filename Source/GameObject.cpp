@@ -211,7 +211,7 @@ GameObjectNode* BuildHierarchy_Rec(GameObjectNode* parent, GameObjectHierarchy& 
 	return res;
 }
 
-/*string DEBUGSpace = "";
+string DEBUGSpace = "";
 vector<GameObjectNode*> DEBUGDisplayedNode;
 void DEBUGDisplayHierarchy_Rec(fstream& fout, GameObjectNode* node) {
 	if (!node) {
@@ -271,7 +271,14 @@ void DEBUGDisplayHierarchy_Rec(fstream& fout, GameObjectNode* node) {
 		DEBUGDisplayHierarchy_Rec(fout,nodespec->child_bone_sample);
 	}
 	DEBUGSpace = DEBUGSpace.substr(2);
-}*/
+}
+
+void GameObjectHierarchy::DEBUGDisplayHierarchy() {
+	fstream fout("aaab.txt",ios::app|ios::out); fout << "DISPLAYING" << endl;
+	DEBUGDisplayedNode.clear();
+	DEBUGDisplayHierarchy_Rec(fout,root_node);
+	fout << endl; fout.close();
+}
 
 void GameObjectHierarchy::BuildHierarchy(fstream& archivefile, UnityArchiveMetaData& metadata, unsigned int rootfileindex) {
 	uint32_t type = metadata.file_type1[rootfileindex];
@@ -279,10 +286,6 @@ void GameObjectHierarchy::BuildHierarchy(fstream& archivefile, UnityArchiveMetaD
 	uint64_t info = metadata.file_info[rootfileindex];
 	meta_data = &metadata;
 	root_node = BuildHierarchy_Rec(NULL,*this,type,unk,info,archivefile,metadata,rootfileindex);
-/*fstream fout("aaab.txt",ios::app|ios::out); fout << "DISPLAYING" << endl;
-DEBUGDisplayedNode.clear();
-DEBUGDisplayHierarchy_Rec(fout,root_node);
-fout << endl; fout.close();*/
 }
 
 GameObjectHierarchy::~GameObjectHierarchy() {
@@ -296,4 +299,84 @@ GameObjectNode* GameObjectHierarchy::FindObjectByInfo(uint64_t info) {
 		if (node_list[i]->node_info==info)
 			return node_list[i];
 	return NULL;
+}
+
+void GameObjectHierarchy::MergeHierarchy(GameObjectHierarchy* base, int mergepolicy) {
+	unsigned int i,j,macroi,newfileindex = meta_data->header_file_amount;
+	uint64_t newfileinfo = 0x5555444433332222L;
+
+	#define MACRO_ASSIGN_NEW_INFO(NODE) \
+		NODE->node_unknown = 0; \
+		for (macroi=0;macroi<meta_data->header_file_amount;macroi++) \
+			if (meta_data->file_info[macroi]==newfileinfo) { \
+				newfileinfo++; \
+				while (newfileinfo==meta_data->file_info[0]) newfileinfo++; \
+				macroi = 0; \
+			} \
+		NODE->node_info = newfileinfo++; \
+		NODE->file_index = newfileindex++;
+
+	if (mergepolicy==2) {
+		for (i=0;i<node_list.size();i++) {
+			MACRO_ASSIGN_NEW_INFO(node_list[i])
+		}
+		return;
+	}
+	bool* node_found = new bool[base->node_list.size()];
+	bool found;
+	for (i=0;i<base->node_list.size();i++)
+		node_found[i] = false;
+	for (i=0;i<node_list.size();i++) {
+		node_list[i]->node_unknown = 0;
+		node_list[i]->node_info = 0;
+		node_list[i]->file_index = 0;
+	}
+	if (node_list[0]->node_type==base->node_list[0]->node_type)
+		node_found[0] = true;
+	for (i=0;i<node_list.size();i++) {
+		if (node_list[i]->node_info!=0)
+			continue;
+		found = false;
+		for (j=0;!found && j<base->node_list.size();j++) {
+			if (!node_found[j] && node_list[i]->node_type==base->node_list[j]->node_type) {
+				if (node_list[i]->node_type==4 && static_cast<GameObjectStruct*>(static_cast<TransformStruct*>(node_list[i])->child_object)->name==static_cast<GameObjectStruct*>(static_cast<TransformStruct*>(base->node_list[j])->child_object)->name) {
+					node_list[i]->node_unknown = base->node_list[j]->node_unknown;
+					node_list[i]->node_info = base->node_list[j]->node_info;
+					node_list[i]->file_index = base->node_list[j]->file_index;
+					static_cast<TransformStruct*>(node_list[i])->child_object->node_unknown = static_cast<TransformStruct*>(base->node_list[j])->child_object->node_unknown;
+					static_cast<TransformStruct*>(node_list[i])->child_object->node_info = static_cast<TransformStruct*>(base->node_list[j])->child_object->node_info;
+					static_cast<TransformStruct*>(node_list[i])->child_object->file_index = static_cast<TransformStruct*>(base->node_list[j])->child_object->file_index;
+					found = true;
+				} else if (node_list[i]->parent && node_list[i]->parent->node_info!=0 && base->node_list[j]->parent && node_list[i]->parent->file_index==base->node_list[j]->parent->file_index) {
+					node_list[i]->node_unknown = base->node_list[j]->node_unknown;
+					node_list[i]->node_info = base->node_list[j]->node_info;
+					node_list[i]->file_index = base->node_list[j]->file_index;
+					found = true;
+				}
+			}
+		}
+		if (!found && mergepolicy==1) {
+			MACRO_ASSIGN_NEW_INFO(node_list[i])
+		}
+	}
+	delete[] node_found;
+}
+
+uint64_t GameObjectHierarchy::GetRootInfoFromObject(uint8_t * objbuffer) {
+	uint32_t childamount;
+	uint32_t childtype;
+	uint64_t rootinfo = 0;
+	unsigned int i;
+	BufferInitPosition();
+	BufferReadLong(objbuffer,childamount);
+	for (i=0;i<childamount;i++) {
+		BufferReadLong(objbuffer,childtype);
+		if (childtype==4) {
+			BufferInitPosition(BufferGetPosition()+4);
+			BufferReadLongLong(objbuffer,rootinfo);
+			break;
+		}
+		BufferInitPosition(BufferGetPosition()+0xC);
+	}
+	return rootinfo;
 }

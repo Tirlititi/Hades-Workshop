@@ -185,10 +185,22 @@ struct GameObjectHierarchy {
 
 	UnityArchiveMetaData* meta_data;
 
+	void DEBUGDisplayHierarchy();
+
 	void BuildHierarchy(fstream& archivefile, UnityArchiveMetaData& metadata, unsigned int rootfileindex);
 	~GameObjectHierarchy();
 
 	GameObjectNode* FindObjectByInfo(uint64_t info);
+
+	// Setup new informations (node_info, file_index, ...) for this->node_list[]
+	// Both "this" and "base" should share the same meta_data
+	// mergepolicies:
+	// 0=Only setup the nodes that are already existing (node_info==0 for the others)
+	// 1=Setup the nodes that are already existing and assign new file informations for the others
+	// 2=Assign new informations to all the nodes
+	void MergeHierarchy(GameObjectHierarchy* base, int mergepolicy);
+
+	static uint64_t GetRootInfoFromObject(uint8_t* objbuffer);
 };
 
 #endif

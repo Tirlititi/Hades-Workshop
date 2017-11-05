@@ -10,6 +10,13 @@ bool LoadScene(const char* pFilename, FbxManager* pManager, FbxDocument* pScene)
 bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene*& sdkscene);
 bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene*& sdkscene);
 
+inline FbxString RemoveFbxStringExtension(FbxString value) {
+	size_t dotpos = value.ReverseFind('.');
+	if (dotpos>=0)
+		value = value.Left(dotpos);
+	return value;
+}
+
 //=============================//
 //     Model Mesh Methods      //
 //=============================//
@@ -432,9 +439,26 @@ int ModelDataStruct::Export(const char* outputname, int format) {
     return 0;
 }
 
+int ModelDataStruct::Import(const char* inputname) {
+	FbxManager* sdkmanager = NULL;
+	FbxScene* sdkscene = NULL;
+	InitializeSdkObjects(sdkmanager, sdkscene);
+	bool importresult = LoadScene(inputname, sdkmanager, sdkscene);
+	if (!importresult) {
+		DestroySdkObjects(sdkmanager);
+		return 1;
+	}
+	importresult = ConvertFBXToModel(*this, sdkmanager, sdkscene);
+	DestroySdkObjects(sdkmanager);
+	if (!importresult)
+		return 2;
+	return 0;
+}
 
-void ModelDataStruct::SetupPostImportData() {
+void ModelDataStruct::SetupPostImportData(vector<unsigned int> folderfiles, GameObjectHierarchy* basehierarchy, int mergepolicy) {
 	unsigned int i,j,k;
+	if (basehierarchy)
+		hierarchy->MergeHierarchy(basehierarchy,mergepolicy);
 	for (i=0;i<mesh.size();i++) {
 		float minx = FLT_MAX, miny = FLT_MAX, minz = FLT_MAX;
 		float maxx = -FLT_MAX, maxy = -FLT_MAX, maxz = -FLT_MAX;
@@ -500,17 +524,33 @@ void ModelDataStruct::SetupPostImportData() {
 	}
 	for (i=0;i<material.size();i++) {
 		for (j=0;j<material[i].size();j++) {
-			material[i][j].bumpmap.unk1 = 0;	material[i][j].bumpmap.unk2 = 0;	material[i][j].bumpmap.unk3 = 0;
-			material[i][j].bumpmap.file_info = 0; // DEBUG
-			material[i][j].detailalbedomap.unk1 = 0;	material[i][j].detailalbedomap.unk2 = 0;	material[i][j].detailalbedomap.unk3 = 0;
-			material[i][j].detailalbedomap.file_info = 0; // etc...
+
+			#define MACRO_SETUP_FILEMAP(FMAP) \
+				FMAP.unk1 = 0; \
+				FMAP.unk2 = 0; \
+				FMAP.unk3 = 0; \
+				FMAP.file_info = 0; \
+				if (FMAP.file_name!="") { \
+					for (k=0;k<folderfiles.size();k++) \
+						if (hierarchy->meta_data->file_name[folderfiles[k]]==FMAP.file_name) { \
+							FMAP.file_info = hierarchy->meta_data->file_info[folderfiles[k]]; \
+							break; \
+						} \
+				}
+
+			MACRO_SETUP_FILEMAP(material[i][j].bumpmap)
+			MACRO_SETUP_FILEMAP(material[i][j].detailalbedomap)
+			MACRO_SETUP_FILEMAP(material[i][j].detailmask)
+			MACRO_SETUP_FILEMAP(material[i][j].detailnormalmap)
+			MACRO_SETUP_FILEMAP(material[i][j].emissionmap)
+			MACRO_SETUP_FILEMAP(material[i][j].maintex)
+			MACRO_SETUP_FILEMAP(material[i][j].metallicglossmap)
+			MACRO_SETUP_FILEMAP(material[i][j].occlusionmap)
+			MACRO_SETUP_FILEMAP(material[i][j].parallaxmap);
 		}
 	}
 	for (i=0;i<animation.size();i++) {
-
-	}
-	for (i=0;i<hierarchy->node_list.size();i++) {
-
+		// ToDo
 	}
 }
 
@@ -920,9 +960,9 @@ Tvect GetVertexGeometryElement(FbxMesh* lMesh, Tgeoelement* lGeometryElement, un
 		if (mappingid<0)
 			return Tvect();
 	}
-	switch (lGeometryElementNormal->GetMappingMode()) {
+	switch (lGeometryElement->GetMappingMode()) {
 	case FbxLayerElement::eByControlPoint:
-		return lGeometryElement->GetDirectArray()[mappingid];
+		return lGeometryElement->FbxLayerElementTemplate::GetDirectArray()[mappingid];
 		break;
 	case FbxLayerElement::eByPolygonVertex:
 		return Tvect(); // TODO: Find a vertex's polygon and return the value...
@@ -934,7 +974,7 @@ Tvect GetVertexGeometryElement(FbxMesh* lMesh, Tgeoelement* lGeometryElement, un
 		return Tvect();
 		break;
 	case FbxLayerElement::eAllSame:
-		return lGeometryElement->GetDirectArray()[0];
+		return lGeometryElement->FbxLayerElementTemplate::GetDirectArray()[0];
 		break;
 	}
 	return Tvect();
@@ -951,17 +991,18 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 	bool hasbones = true; // DEBUG: maybe accept to construct non-boned models?
 	model.hierarchy = new GameObjectHierarchy();
 	// Construct the TransformStruct+GameObjectStruct hierarchy
-	if (lRootNode==NULL)
+	if (lRootNode==NULL && lRootNode->GetChildCount()<1)
 		return false;
-	FbxNode* lCurrentNode = lRootNode;
-	vector<int> childindexlist;
+	// ToDo: RootNode is ignored ; verify that it has exactly 1 child and no geometric transformation?
+	FbxNode* lCurrentNode = lRootNode->GetChild(0);
+	vector<int> indexlist;
 	vector<FbxNode*> lNodeList;
 	vector<TransformStruct*> transf_list;
 	vector<GameObjectStruct*> obj_list;
 	int childcurrentindex = 0;
-	childindexlist.push_back(0);
-	do {
-		TransformStruct* newtransf = new TransformStruct(NULL,*model.hierarchy,4,0,0); // DEBUG: setup "parent", "unk" and "info"
+	indexlist.push_back(0);
+	while (childcurrentindex>=0) {
+		TransformStruct* newtransf = new TransformStruct(NULL,*model.hierarchy,4,0,0);
 		newtransf->child_transform_amount = 0;
 		Quaternion::EulerToQuaternion(newtransf->rot, lCurrentNode->LclRotation.Get()[0],lCurrentNode->LclRotation.Get()[1],lCurrentNode->LclRotation.Get()[2]);
 		newtransf->x = lCurrentNode->LclTranslation.Get()[0];
@@ -972,6 +1013,7 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 		newtransf->scale_z = lCurrentNode->LclScaling.Get()[2];
 		for (i=0;i<lNodeList.size();i++)
 			if (lCurrentNode->GetParent()==lNodeList[i]) {
+				newtransf->parent = obj_list[i];
 				newtransf->parent_transform = transf_list[i];
 				transf_list[i]->child_transform.push_back(newtransf);
 				transf_list[i]->child_transform_amount++;
@@ -985,22 +1027,23 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 		transf_list.push_back(newtransf);
 		obj_list.push_back(newobj);
 		lNodeList.push_back(lCurrentNode);
-		while (childcurrentindex>=0 && childindexlist[childcurrentindex]>=lCurrentNode->GetChildCount()) {
+		while (childcurrentindex>=0 && indexlist[childcurrentindex]>=lCurrentNode->GetChildCount()) {
 			childcurrentindex--;
-			childindexlist.pop_back();
+			indexlist.pop_back();
 			lCurrentNode = lCurrentNode->GetParent();
 		}
 		if (childcurrentindex>=0) {
-			lCurrentNode = lCurrentNode->GetChild(childindexlist[childcurrentindex]);
-			childindexlist[childcurrentindex]++;
-			childindexlist.push_back(0);
+			lCurrentNode = lCurrentNode->GetChild(indexlist[childcurrentindex]);
+			indexlist[childcurrentindex]++;
+			indexlist.push_back(0);
 			childcurrentindex++;
 		}
-	} while (childcurrentindex>=0);
+	}
 	// Sequence the bone list of the whole model
 	vector<FbxString> lSkeletonName;
 	vector<FbxString> lSkeletonFullName;
 	vector<FbxNode*> lSkeletonNode;
+	indexlist.empty();
 	for (i=0;i<lNodeList.size();i++) {
 		lCurrentNode = lNodeList[i];
 		if (lCurrentNode->GetNodeAttribute()!=NULL && lCurrentNode->GetNodeAttribute()->GetAttributeType()==FbxNodeAttribute::EType::eSkeleton) {
@@ -1008,20 +1051,28 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 			lSkeletonName.push_back(lSkeleton->GetNameOnly());
 			lSkeletonFullName.push_back(lSkeleton->GetNameWithNameSpacePrefix());
 			lSkeletonNode.push_back(lCurrentNode);
+			indexlist.push_back(i);
 		}
 	}
 	// Construct the SkinnedMeshRenderer
+	vector<FbxSurfaceMaterial*> lMaterialFullList;
+	vector<GameObjectNode*> materialnode;
+	model.hierarchy->root_node = transf_list[0];
 	for (i=0;i<lNodeList.size();i++) {
 		lCurrentNode = lNodeList[i];
+		model.hierarchy->node_list.push_back(transf_list[i]);
+		model.hierarchy->node_list.push_back(obj_list[i]);
 		// TODO: accept other geometry types in the future?
 		if (lCurrentNode->GetNodeAttribute()!=NULL && lCurrentNode->GetNodeAttribute()->GetAttributeType()==FbxNodeAttribute::EType::eMesh) {
 			SkinnedMeshRendererStruct* newskinmesh = new SkinnedMeshRendererStruct(obj_list[i],*model.hierarchy,137,0,0);
+			model.hierarchy->node_list.push_back(newskinmesh);
 			obj_list[i]->child.push_back(newskinmesh);
 			obj_list[i]->child_amount++;
 			newskinmesh->parent_object = obj_list[i];
 			// Mesh
 			FbxMesh* lMesh =  static_cast<FbxMesh*>(lCurrentNode->GetNodeAttribute());
 			GameObjectNode* newmeshnode = new GameObjectNode(newskinmesh,*model.hierarchy,43,0,0);
+			model.hierarchy->node_list.push_back(newmeshnode);
 			newskinmesh->child_mesh = newmeshnode;
 			ModelMeshData newmesh;
 			newmesh.name = lMesh->GetNameOnly();
@@ -1054,13 +1105,19 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 			FbxSurfaceMaterial* lCurrentMaterial = NULL;
 			newmesh.vertex_list_amount = 0;
 			for (j=0;j<lMesh->GetPolygonCount();j++) {
-				FbxSurfaceMaterial* lPolyMaterial = GetVertexGeometryElement<FbxSurfaceMaterial*,FbxGeometryElementMaterial>(lMesh,lGeometryElementMaterial,lMesh->GetPolygonVertex(j,0));
+				FbxSurfaceMaterial* lPolyMaterial = lMesh->GetSrcObject<FbxSurfaceMaterial>(lGeometryElementMaterial->GetIndexArray()[j]); // DEBUG: expect an index (required by FBX) to eByPolygon (might be something else)
 				if (lPolyMaterial!=lCurrentMaterial) {
 					for (k=0;k<lMaterialList.size();k++)
 						if (lMaterialList[k]==lPolyMaterial)
 							break;
-					if (k>=lMaterialList.size())
+					if (k>=lMaterialList.size()) { // New material for this mesh
 						lMaterialList.push_back(lPolyMaterial);
+						for (k=0;k<lMaterialFullList.size();k++)
+							if (lMaterialFullList[k]==lPolyMaterial)
+								break;
+						if (k>=lMaterialFullList.size()) // New material for the model
+							lMaterialFullList.push_back(lPolyMaterial);
+					}
 					ModelMeshMaterialInfo newmatinfo;
 					newmatinfo.vert_list_start = newmesh.vertex_list_amount*2; // DEBUG: setup the rest
 					newmesh.mat_info.push_back(newmatinfo);
@@ -1075,11 +1132,11 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 						newmesh.vert_list.push_back(lMesh->GetPolygonVertex(j,2));
 						newmesh.vert_list.push_back(lMesh->GetPolygonVertex(j,1));
 					} else if (k%2==1) {
-						newmesh.vert_list.push_back(lMesh->GetPolygonVertex(j,(-(k-1)/2)%polysize));
+						newmesh.vert_list.push_back(lMesh->GetPolygonVertex(j,(-((int)k-1)/2)%polysize));
 						newmesh.vert_list.push_back(lMesh->GetPolygonVertex(j,(k+5)/2));
 						newmesh.vert_list.push_back(lMesh->GetPolygonVertex(j,(k+4)/2));
 					} else {
-						newmesh.vert_list.push_back(lMesh->GetPolygonVertex(j,(-(k-1)/2)%polysize));
+						newmesh.vert_list.push_back(lMesh->GetPolygonVertex(j,(-((int)k-1)/2)%polysize));
 						newmesh.vert_list.push_back(lMesh->GetPolygonVertex(j,polysize-k/2));
 						newmesh.vert_list.push_back(lMesh->GetPolygonVertex(j,(k+4)/2));
 					}
@@ -1089,32 +1146,44 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 			// ToDo: the rest
 			// Materials
 			vector<ModelMaterialData> newmatlist;
+			newskinmesh->child_material_amount = lMaterialList.size();
 			for (j=0;j<lMaterialList.size();j++) {
+				for (k=0;k<lMaterialFullList.size();k++)
+					if (lMaterialFullList[k]==lMaterialList[k])
+						break;
+				if (k>=lMaterialFullList.size()) {
+					GameObjectNode* newmatnode = new GameObjectNode(newskinmesh,*model.hierarchy,21,0,0);
+					model.hierarchy->node_list.push_back(newmatnode);
+					materialnode.push_back(newmatnode);
+					newskinmesh->child_material.push_back(newmatnode);
+				} else {
+					newskinmesh->child_material.push_back(materialnode[k]);
+				}
 				FbxSurfacePhong* lMaterial = static_cast<FbxSurfacePhong*>(lMaterialList[j]);
 				FbxFileTexture* lFileTex = static_cast<FbxFileTexture*>(lMaterial->Diffuse.GetSrcObject(FbxCriteria::ObjectType(FbxFileTexture::ClassId)));
 				ModelMaterialData newmat;
 				newmat.name = lMaterial->GetNameOnly();
 				if (lFileTex!=NULL) {
-					newmat.maintex.file_name = lFileTex->GetNameOnly();
+					newmat.maintex.file_name = RemoveFbxStringExtension(lFileTex->GetNameOnly());
 				} else {
 					newmat.maintex.file_name = "";
 				}
 				FbxProperty lProp = lMaterial->FindProperty("_BumpMap",FbxStringDT);
-				if (lProp.IsValid()) newmat.bumpmap.file_name = lProp.Get<FbxString>();
+				if (lProp.IsValid()) newmat.bumpmap.file_name = RemoveFbxStringExtension(lProp.Get<FbxString>());
 				lProp = lMaterial->FindProperty("_DetailAlbedoMap",FbxStringDT);
-				if (lProp.IsValid()) newmat.detailalbedomap.file_name = lProp.Get<FbxString>();
+				if (lProp.IsValid()) newmat.detailalbedomap.file_name = RemoveFbxStringExtension(lProp.Get<FbxString>());
 				lProp = lMaterial->FindProperty("_DetailMask",FbxStringDT);
-				if (lProp.IsValid()) newmat.detailmask.file_name = lProp.Get<FbxString>();
+				if (lProp.IsValid()) newmat.detailmask.file_name = RemoveFbxStringExtension(lProp.Get<FbxString>());
 				lProp = lMaterial->FindProperty("_DetailNormalMap",FbxStringDT);
-				if (lProp.IsValid()) newmat.detailnormalmap.file_name = lProp.Get<FbxString>();
+				if (lProp.IsValid()) newmat.detailnormalmap.file_name = RemoveFbxStringExtension(lProp.Get<FbxString>());
 				lProp = lMaterial->FindProperty("_EmissionMap",FbxStringDT);
-				if (lProp.IsValid()) newmat.emissionmap.file_name = lProp.Get<FbxString>();
+				if (lProp.IsValid()) newmat.emissionmap.file_name = RemoveFbxStringExtension(lProp.Get<FbxString>());
 				lProp = lMaterial->FindProperty("_MetallicGlossMap",FbxStringDT);
-				if (lProp.IsValid()) newmat.metallicglossmap.file_name = lProp.Get<FbxString>();
+				if (lProp.IsValid()) newmat.metallicglossmap.file_name = RemoveFbxStringExtension(lProp.Get<FbxString>());
 				lProp = lMaterial->FindProperty("_OcclusionMap",FbxStringDT);
-				if (lProp.IsValid()) newmat.occlusionmap.file_name = lProp.Get<FbxString>();
+				if (lProp.IsValid()) newmat.occlusionmap.file_name = RemoveFbxStringExtension(lProp.Get<FbxString>());
 				lProp = lMaterial->FindProperty("_ParallaxMap",FbxStringDT);
-				if (lProp.IsValid()) newmat.parallaxmap.file_name = lProp.Get<FbxString>();
+				if (lProp.IsValid()) newmat.parallaxmap.file_name = RemoveFbxStringExtension(lProp.Get<FbxString>());
 				lProp = lMaterial->FindProperty("_BumpScale",FbxFloatDT);
 				if (lProp.IsValid()) newmat.bumpscale_value = lProp.Get<FbxFloat>();
 				lProp = lMaterial->FindProperty("_Cutoff",FbxFloatDT);
@@ -1161,9 +1230,12 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 
 			// Bones
 			FbxSkin* lSkin = static_cast<FbxSkin*>(lMesh->GetDeformer(0,FbxDeformer::EDeformerType::eSkin));
+			newskinmesh->child_bone_amount = 0;
+			newskinmesh->child_bone_sample = NULL;
 			if (lSkin!=NULL) {
 				FbxAMatrix lTransformMatrix;
 				newmesh.bone_amount = lSkin->GetClusterCount();
+				newskinmesh->child_bone_amount = newmesh.bone_amount;
 				for (j=0;j<newmesh.bone_amount;j++) {
 					FbxCluster* lSkeletonCluster = lSkin->GetCluster(j);
 					ModelMeshBone newbone;
@@ -1171,8 +1243,21 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 					for (k=0;k<lSkeletonNode.size();k++) {
 						if (lSkeletonNode[k]==lSkeletonCluster->GetLink()) {
 							newbone.name = lSkeletonName[k]; // DEBUG: think of scopedname
+							newskinmesh->child_bone.push_back(transf_list[indexlist[k]]);
+							newskinmesh->child_bone_sample = transf_list[indexlist[k]];
 							break;
 						}
+					}
+					if (k>=lSkeletonNode.size()) { // Should not happen
+						TransformStruct* newbonenode = new TransformStruct(newskinmesh,*model.hierarchy,4,0,0);
+						newbonenode->child_object = NULL;
+						newbonenode->child_transform_amount = 0;
+						newbonenode->parent_transform = NULL;
+						newbonenode->rot.SetValue(0,0,0,1);
+						newbonenode->x = 0;			newbonenode->y = 0;			newbonenode->z = 0;
+						newbonenode->scale_x = 0;	newbonenode->scale_y = 0;	newbonenode->scale_z = 0;
+						model.hierarchy->node_list.push_back(newbonenode);
+						newskinmesh->child_bone.push_back(newbonenode);
 					}
 					lSkeletonCluster->GetTransformMatrix(lTransformMatrix);
 					for (k=0;k<4;k++)
@@ -1211,18 +1296,13 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 					newmesh.vert_attachment.push_back(newvertattach);
 				}
 			}
+			if (newskinmesh->child_bone_sample==NULL && newskinmesh->child_bone_amount>0)
+				newskinmesh->child_bone_sample = newskinmesh->child_bone[0];
 			model.material.push_back(newmatlist);
 			model.mesh.push_back(newmesh);
 		}
 	}
 	// ToDo: Animations
-	model.hierarchy->root_node = transf_list[0];
-	for (i=0;i<transf_list.size();i++) {
-		model.hierarchy->node_list.push_back(transf_list[i]);
-		model.hierarchy->node_list.push_back(obj_list[i]);
-		for (j=1;j<obj_list[i]->child_amount;j++)
-			model.hierarchy->node_list.push_back(obj_list[i]->child[j]);
-	}
 	return true;
 }
 

@@ -349,8 +349,9 @@ struct ModelDataStruct {
 
     bool Read(fstream& f, GameObjectHierarchy* gohier);
 	int Export(const char* outputname, int format);
+	int Import(const char * inputname);
 
-	void SetupPostImportData();
+	void SetupPostImportData(vector<unsigned int> folderfiles, GameObjectHierarchy* basehierarchy = NULL, int mergepolicy = 0);
 };
 
 #endif
