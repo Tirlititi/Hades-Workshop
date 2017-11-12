@@ -134,6 +134,9 @@ void ModelMeshData::Read(fstream& f) {
 //fout.open("aaaa.txt",ios::out|ios::app); fout << "READ DONE" << endl; fout.close();
 }
 
+void ModelMeshData::Write(fstream & f) {
+}
+
 void ModelMeshData::Export(fstream& output, const char* objname, const char* mtlbasename, bool firstobject) {
 	unsigned int i,j;
 	if (firstobject) {
@@ -252,6 +255,9 @@ void ModelMaterialData::Read(fstream& f, UnityArchiveMetaData& metadata) {
 		}
 		fieldlen = ReadLong(f);
 	}
+}
+
+void ModelMaterialData::Write(fstream& f, UnityArchiveMetaData& metadata) {
 }
 
 void ModelMaterialData::Export(fstream& output, const char* mtlname, const char* maintexname) {
@@ -426,6 +432,44 @@ bool ModelDataStruct::Read(fstream& f, GameObjectHierarchy* gohier) {
 	return true;
 }
 
+bool ModelDataStruct::Write(fstream& f, GameObjectHierarchy* gohier) {
+	UnityArchiveMetaData& meta = *hierarchy->meta_data;
+	unsigned int i,j,k;
+	for (i=0;i<hierarchy->node_list.size();i++) {
+		if (hierarchy->node_list[i]->node_type==23) {
+			// Write material list ; TODO: do not duplicates the same materials
+			MeshRendererStruct* node = static_cast<MeshRendererStruct*>(hierarchy->node_list[i]);
+			for (j=0;j<node->child_material_amount;j++) {
+				ModelMaterialData& matdata = material[i][j];
+				if (!node->child_material[j]) return false;
+				f.seekg(meta.GetFileOffsetByIndex(node->child_material[j]->file_index));
+				matdata.Write(f,meta);
+			}
+		} else if (hierarchy->node_list[i]->node_type==33) {
+			// Write mesh
+			MeshFilterStruct* node = static_cast<MeshFilterStruct*>(hierarchy->node_list[i]);
+			ModelMeshData& meshdata = mesh[i];
+			if (!node->child_mesh) return false;
+			f.seekg(meta.GetFileOffsetByIndex(node->child_mesh->file_index));
+			meshdata.Write(f);
+		} else if (hierarchy->node_list[i]->node_type==137) {
+			// Write mesh + material list + node names
+			SkinnedMeshRendererStruct* node = static_cast<SkinnedMeshRendererStruct*>(hierarchy->node_list[i]);
+			ModelMeshData& meshdata = mesh[i];
+			if (!node->child_mesh) return false;
+			f.seekg(meta.GetFileOffsetByIndex(node->child_mesh->file_index));
+			meshdata.Write(f);
+			for (j=0;j<node->child_material_amount;j++) {
+				ModelMaterialData& matdata = material[i][j];
+				if (!node->child_material[j]) return false;
+				f.seekg(meta.GetFileOffsetByIndex(node->child_material[j]->file_index));
+				matdata.Write(f,meta);
+			}
+		}
+	}
+	return true;
+}
+
 int ModelDataStruct::Export(const char* outputname, int format) {
     FbxManager* sdkmanager = NULL;
     FbxScene* sdkscene = NULL;
@@ -474,16 +518,17 @@ void ModelDataStruct::SetupPostImportData(vector<unsigned int> folderfiles, Game
 			mesh[i].vert[j].unkuv2 = 0.0;
 		}
 		for (j=0;j<mesh[i].material_info_amount;j++) {
-			// ToDo: vert_start etc...
 			float matminx = FLT_MAX, matminy = FLT_MAX, matminz = FLT_MAX;
 			float matmaxx = -FLT_MAX, matmaxy = -FLT_MAX, matmaxz = -FLT_MAX;
+			uint16_t vertid;
 			for (k=0;k<mesh[i].mat_info[j].vert_list_amount;k++) {
-				if (mesh[i].vert[mesh[i].mat_info[j].vert_list_start+k].x<matminx) matminx = mesh[i].vert[mesh[i].mat_info[j].vert_list_start+k].x;
-				if (mesh[i].vert[mesh[i].mat_info[j].vert_list_start+k].x>matmaxx) matmaxx = mesh[i].vert[mesh[i].mat_info[j].vert_list_start+k].x;
-				if (mesh[i].vert[mesh[i].mat_info[j].vert_list_start+k].y<matminy) matminy = mesh[i].vert[mesh[i].mat_info[j].vert_list_start+k].y;
-				if (mesh[i].vert[mesh[i].mat_info[j].vert_list_start+k].y>matmaxy) matmaxy = mesh[i].vert[mesh[i].mat_info[j].vert_list_start+k].y;
-				if (mesh[i].vert[mesh[i].mat_info[j].vert_list_start+k].z<matminz) matminz = mesh[i].vert[mesh[i].mat_info[j].vert_list_start+k].z;
-				if (mesh[i].vert[mesh[i].mat_info[j].vert_list_start+k].z>matmaxz) matmaxz = mesh[i].vert[mesh[i].mat_info[j].vert_list_start+k].z;
+				vertid = mesh[i].vert_list[mesh[i].mat_info[j].vert_list_start/2+k];
+				if (mesh[i].vert[vertid].x<matminx) matminx = mesh[i].vert[vertid].x;
+				if (mesh[i].vert[vertid].x>matmaxx) matmaxx = mesh[i].vert[vertid].x;
+				if (mesh[i].vert[vertid].y<matminy) matminy = mesh[i].vert[vertid].y;
+				if (mesh[i].vert[vertid].y>matmaxy) matmaxy = mesh[i].vert[vertid].y;
+				if (mesh[i].vert[vertid].z<matminz) matminz = mesh[i].vert[vertid].z;
+				if (mesh[i].vert[vertid].z>matmaxz) matmaxz = mesh[i].vert[vertid].z;
 			}
 			mesh[i].mat_info[j].unk0 = 0;
 			mesh[i].mat_info[j].center_x = (matminx+matmaxx)/2;
@@ -1054,10 +1099,8 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 			indexlist.push_back(i);
 		}
 	}
-	// Construct the SkinnedMeshRenderer
-	vector<FbxSurfaceMaterial*> lMaterialFullList;
-	vector<GameObjectNode*> materialnode;
 	model.hierarchy->root_node = transf_list[0];
+	// Construct the SkinnedMeshRenderer
 	for (i=0;i<lNodeList.size();i++) {
 		lCurrentNode = lNodeList[i];
 		model.hierarchy->node_list.push_back(transf_list[i]);
@@ -1072,7 +1115,6 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 			// Mesh
 			FbxMesh* lMesh =  static_cast<FbxMesh*>(lCurrentNode->GetNodeAttribute());
 			GameObjectNode* newmeshnode = new GameObjectNode(newskinmesh,*model.hierarchy,43,0,0);
-			model.hierarchy->node_list.push_back(newmeshnode);
 			newskinmesh->child_mesh = newmeshnode;
 			ModelMeshData newmesh;
 			newmesh.name = lMesh->GetNameOnly();
@@ -1105,19 +1147,17 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 			FbxSurfaceMaterial* lCurrentMaterial = NULL;
 			newmesh.vertex_list_amount = 0;
 			for (j=0;j<lMesh->GetPolygonCount();j++) {
-				FbxSurfaceMaterial* lPolyMaterial = lMesh->GetSrcObject<FbxSurfaceMaterial>(lGeometryElementMaterial->GetIndexArray()[j]); // DEBUG: expect an index (required by FBX) to eByPolygon (might be something else)
+				FbxSurfaceMaterial* lPolyMaterial;
+				if (lGeometryElementMaterial->GetMappingMode()==FbxGeometryElement::eByPolygon)
+					lPolyMaterial = lMesh->GetNode()->GetMaterial(lGeometryElementMaterial->GetIndexArray()[j]);
+				else
+					lPolyMaterial = lMesh->GetNode()->GetMaterial(lGeometryElementMaterial->GetIndexArray()[0]);
 				if (lPolyMaterial!=lCurrentMaterial) {
 					for (k=0;k<lMaterialList.size();k++)
 						if (lMaterialList[k]==lPolyMaterial)
 							break;
-					if (k>=lMaterialList.size()) { // New material for this mesh
+					if (k>=lMaterialList.size())
 						lMaterialList.push_back(lPolyMaterial);
-						for (k=0;k<lMaterialFullList.size();k++)
-							if (lMaterialFullList[k]==lPolyMaterial)
-								break;
-						if (k>=lMaterialFullList.size()) // New material for the model
-							lMaterialFullList.push_back(lPolyMaterial);
-					}
 					ModelMeshMaterialInfo newmatinfo;
 					newmatinfo.vert_list_start = newmesh.vertex_list_amount*2; // DEBUG: setup the rest
 					newmesh.mat_info.push_back(newmatinfo);
@@ -1142,23 +1182,35 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 					}
 				}
 			}
+			newmesh.material_info_amount = newmesh.mat_info.size();
+			for (j=0;j<newmesh.material_info_amount;j++) {
+				vector<uint16_t> matvertlist;
+				if (j+1<newmesh.material_info_amount)
+					newmesh.mat_info[j].vert_list_amount = (newmesh.mat_info[j+1].vert_list_start-newmesh.mat_info[j].vert_list_start)/2;
+				else
+					newmesh.mat_info[j].vert_list_amount = newmesh.vertex_list_amount-newmesh.mat_info[j].vert_list_start/2;
+				for (k=0;k<newmesh.mat_info[j].vert_list_amount;k++) {
+					for (l=0;l<matvertlist.size();l++)
+						if (matvertlist[l]==newmesh.vert_list[newmesh.mat_info[j].vert_list_start/2+k])
+							break;
+					if (l>=matvertlist.size())
+						matvertlist.push_back(newmesh.vert_list[newmesh.mat_info[j].vert_list_start/2+k]);
+				}
+				newmesh.mat_info[j].vert_amount = matvertlist.size();
+				if (j==0)
+					newmesh.mat_info[j].vert_start = 0;
+				else
+					newmesh.mat_info[j].vert_start = newmesh.mat_info[j-1].vert_start+newmesh.mat_info[j-1].vert_amount;
+			}
 
 			// ToDo: the rest
 			// Materials
 			vector<ModelMaterialData> newmatlist;
 			newskinmesh->child_material_amount = lMaterialList.size();
 			for (j=0;j<lMaterialList.size();j++) {
-				for (k=0;k<lMaterialFullList.size();k++)
-					if (lMaterialFullList[k]==lMaterialList[k])
-						break;
-				if (k>=lMaterialFullList.size()) {
-					GameObjectNode* newmatnode = new GameObjectNode(newskinmesh,*model.hierarchy,21,0,0);
-					model.hierarchy->node_list.push_back(newmatnode);
-					materialnode.push_back(newmatnode);
-					newskinmesh->child_material.push_back(newmatnode);
-				} else {
-					newskinmesh->child_material.push_back(materialnode[k]);
-				}
+				GameObjectNode* newmatnode = new GameObjectNode(newskinmesh,*model.hierarchy,21,0,0);
+				model.hierarchy->node_list.push_back(newmatnode);
+				newskinmesh->child_material.push_back(newmatnode);
 				FbxSurfacePhong* lMaterial = static_cast<FbxSurfacePhong*>(lMaterialList[j]);
 				FbxFileTexture* lFileTex = static_cast<FbxFileTexture*>(lMaterial->Diffuse.GetSrcObject(FbxCriteria::ObjectType(FbxFileTexture::ClassId)));
 				ModelMaterialData newmat;
@@ -1227,6 +1279,7 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 				}
 				newmatlist.push_back(newmat);
 			}
+			model.hierarchy->node_list.push_back(newmeshnode);
 
 			// Bones
 			FbxSkin* lSkin = static_cast<FbxSkin*>(lMesh->GetDeformer(0,FbxDeformer::EDeformerType::eSkin));

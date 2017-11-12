@@ -839,6 +839,7 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 					wxLogError(HADES_STRING_UNITYVIEWER_UNKNOWN_FORMAT,path);
 					continue;
 				}
+				newmodel.hierarchy->meta_data = &meta_data[current_archive];
 				vector<unsigned int> potentiallylinkedfiles;
 				long subitem = m_assetlist->GetNextItem(-1,wxLIST_NEXT_ALL,wxLIST_STATE_DONTCARE);
 				while (subitem!=-1) {
@@ -848,8 +849,8 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 					// ToDo: Deselect the files of modelhierarchy?
 					subitem = m_assetlist->GetNextItem(subitem,wxLIST_NEXT_ALL,wxLIST_STATE_DONTCARE);
 				}
-fstream fout("aaab.txt",ios::app|ios::out); fout << "POTENTIAL LINKS (" << filearchivedir << "):"; for (i=0;i<potentiallylinkedfiles.size();i++) fout << " " << potentiallylinkedfiles[i]; fout << endl; fout.close();
-				newmodel.hierarchy->DEBUGDisplayHierarchy();
+//fstream fout("aaab.txt",ios::app|ios::out); fout << "POTENTIAL LINKS (" << filearchivedir << "):"; for (i=0;i<potentiallylinkedfiles.size();i++) fout << " " << potentiallylinkedfiles[i]; fout << endl; fout.close();
+//				newmodel.hierarchy->DEBUGDisplayHierarchy();
 				newmodel.SetupPostImportData(potentiallylinkedfiles,&modelhierarchy,0);
 				newmodel.hierarchy->DEBUGDisplayHierarchy();
 
@@ -914,7 +915,7 @@ fstream fout("aaab.txt",ios::app|ios::out); fout << "POTENTIAL LINKS (" << filea
 				filenewsize[expfileid] = fileasset.tellg();
 				fileasset.close();
 			}
-			copylist[expfileid] = false;
+//			copylist[expfileid] = false; DEBUG
 		}
 		m_loadgauge->SetValue(10);
 		filebase.seekg(0);

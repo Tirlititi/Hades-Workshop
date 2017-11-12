@@ -288,6 +288,10 @@ void GameObjectHierarchy::BuildHierarchy(fstream& archivefile, UnityArchiveMetaD
 	root_node = BuildHierarchy_Rec(NULL,*this,type,unk,info,archivefile,metadata,rootfileindex);
 }
 
+void GameObjectHierarchy::OverwriteHierarchy(fstream& archivefile) {
+	// TODO
+}
+
 GameObjectHierarchy::~GameObjectHierarchy() {
 	for (unsigned int i=0;i<node_list.size();i++)
 		delete node_list[i];
@@ -331,26 +335,26 @@ void GameObjectHierarchy::MergeHierarchy(GameObjectHierarchy* base, int mergepol
 		node_list[i]->node_info = 0;
 		node_list[i]->file_index = 0;
 	}
-	if (node_list[0]->node_type==base->node_list[0]->node_type)
-		node_found[0] = true;
 	for (i=0;i<node_list.size();i++) {
 		if (node_list[i]->node_info!=0)
 			continue;
 		found = false;
 		for (j=0;!found && j<base->node_list.size();j++) {
 			if (!node_found[j] && node_list[i]->node_type==base->node_list[j]->node_type) {
-				if (node_list[i]->node_type==4 && static_cast<GameObjectStruct*>(static_cast<TransformStruct*>(node_list[i])->child_object)->name==static_cast<GameObjectStruct*>(static_cast<TransformStruct*>(base->node_list[j])->child_object)->name) {
+				if (node_list[i]->node_type==4 && ((j==0 && i==0) || static_cast<GameObjectStruct*>(static_cast<TransformStruct*>(node_list[i])->child_object)->name==static_cast<GameObjectStruct*>(static_cast<TransformStruct*>(base->node_list[j])->child_object)->name)) {
 					node_list[i]->node_unknown = base->node_list[j]->node_unknown;
 					node_list[i]->node_info = base->node_list[j]->node_info;
 					node_list[i]->file_index = base->node_list[j]->file_index;
 					static_cast<TransformStruct*>(node_list[i])->child_object->node_unknown = static_cast<TransformStruct*>(base->node_list[j])->child_object->node_unknown;
 					static_cast<TransformStruct*>(node_list[i])->child_object->node_info = static_cast<TransformStruct*>(base->node_list[j])->child_object->node_info;
 					static_cast<TransformStruct*>(node_list[i])->child_object->file_index = static_cast<TransformStruct*>(base->node_list[j])->child_object->file_index;
+					node_found[j] = true;
 					found = true;
 				} else if (node_list[i]->parent && node_list[i]->parent->node_info!=0 && base->node_list[j]->parent && node_list[i]->parent->file_index==base->node_list[j]->parent->file_index) {
 					node_list[i]->node_unknown = base->node_list[j]->node_unknown;
 					node_list[i]->node_info = base->node_list[j]->node_info;
 					node_list[i]->file_index = base->node_list[j]->file_index;
+					node_found[j] = true;
 					found = true;
 				}
 			}
@@ -379,4 +383,9 @@ uint64_t GameObjectHierarchy::GetRootInfoFromObject(uint8_t * objbuffer) {
 		BufferInitPosition(BufferGetPosition()+0xC);
 	}
 	return rootinfo;
+}
+
+int GameObjectNode::GetDataSize() {
+	// TODO
+	return 0;
 }

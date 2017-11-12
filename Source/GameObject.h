@@ -49,6 +49,7 @@ struct GameObjectNode {
 	unsigned int file_index;
 
 	GameObjectNode(GameObjectNode* prt, GameObjectHierarchy& rt, uint32_t ndtype, uint32_t unk, uint64_t nfo) : parent(prt), root(rt), node_type(ndtype), node_unknown(unk), node_info(nfo) {}
+	virtual int GetDataSize();
 };
 
 struct GameObjectStruct : public GameObjectNode {
@@ -188,6 +189,7 @@ struct GameObjectHierarchy {
 	void DEBUGDisplayHierarchy();
 
 	void BuildHierarchy(fstream& archivefile, UnityArchiveMetaData& metadata, unsigned int rootfileindex);
+	void OverwriteHierarchy(fstream& archivefile);
 	~GameObjectHierarchy();
 
 	GameObjectNode* FindObjectByInfo(uint64_t info);

@@ -204,6 +204,7 @@ struct ModelMeshData {
 	string scoped_name;
 	
 	void Read(fstream& f);
+	void Write(fstream& f);
 	// Deprecated (bone data loss) ; use ModelDataStruct::Export
 	void Export(fstream& output, const char* objname, const char* mtlbasename, bool firstobject = true);
 };
@@ -255,6 +256,7 @@ struct ModelMaterialData {
 	string name;
     
 	void Read(fstream& f, UnityArchiveMetaData& metadata);
+	void Write(fstream& f, UnityArchiveMetaData& metadata);
 	// Deprecated ; use ModelDataStruct::Export
 	void Export(fstream& output, const char* mtlname, const char* maintexname);
 };
@@ -348,6 +350,7 @@ struct ModelDataStruct {
 	static void WriteCoordinates(fstream& f, float x, float y, float z, bool swapsign = true);
 
     bool Read(fstream& f, GameObjectHierarchy* gohier);
+	bool Write(fstream& f, GameObjectHierarchy* gohier);
 	int Export(const char* outputname, int format);
 	int Import(const char * inputname);
 
