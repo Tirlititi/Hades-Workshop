@@ -11,7 +11,7 @@ string GameObjectStruct::GetScopedName() {
 	string res = name;
 	TransformStruct* transf = GetParentTransform();
 	GameObjectStruct* obj;
-	while (true) {
+	while (transf) {
 		if (transf->parent_transform && transf->parent_transform->node_type==4)
 			transf = static_cast<TransformStruct*>(transf->parent_transform);
 		else
@@ -71,7 +71,6 @@ GameObjectNode* BuildHierarchy_Rec(GameObjectNode* parent, GameObjectHierarchy& 
 		resobj->unk1 = f.get();
 		resobj->unk2 = f.get();
 		resobj->unk3 = f.get();
-		res = resobj;
 	} else if (meta.file_type1[fileindex]==4) {
 		TransformStruct* restransf = new TransformStruct(parent,roothierarchy,objtype,objunk,objinfo);
 		res = restransf;
@@ -88,7 +87,6 @@ GameObjectNode* BuildHierarchy_Rec(GameObjectNode* parent, GameObjectHierarchy& 
 		}
 		MACRO_READCHILDOBJ(restransf,false)
 		restransf->parent_transform = childobj;
-		res = restransf;
 	} else if (meta.file_type1[fileindex]==23) {
 		MeshRendererStruct* resmeshren = new MeshRendererStruct(parent,roothierarchy,objtype,objunk,objinfo);
 		res = resmeshren;
@@ -125,7 +123,6 @@ GameObjectNode* BuildHierarchy_Rec(GameObjectNode* parent, GameObjectHierarchy& 
 		resmeshren->flag14 = ReadLong(f);
 		resmeshren->flag15 = ReadLong(f);
 		resmeshren->flag16 = ReadLong(f);
-		res = resmeshren;
 	} else if (meta.file_type1[fileindex]==33) {
 		MeshFilterStruct* resmeshfilter = new MeshFilterStruct(parent,roothierarchy,objtype,objunk,objinfo);
 		res = resmeshfilter;
@@ -134,7 +131,6 @@ GameObjectNode* BuildHierarchy_Rec(GameObjectNode* parent, GameObjectHierarchy& 
 		resmeshfilter->parent_object = childobj;
 		MACRO_READCHILDOBJ(resmeshfilter,false)
 		resmeshfilter->child_mesh = childobj;
-		res = resmeshfilter;
 	} else if (meta.file_type1[fileindex]==111) {
 		AnimationStruct* resanim = new AnimationStruct(parent,roothierarchy,objtype,objunk,objinfo);
 		res = resanim;
@@ -289,7 +285,142 @@ void GameObjectHierarchy::BuildHierarchy(fstream& archivefile, UnityArchiveMetaD
 }
 
 void GameObjectHierarchy::OverwriteHierarchy(fstream& archivefile) {
-	// TODO
+	unsigned int i;
+	for (i=0;i<node_list.size();i++) {
+		if (node_list[i]->node_type==1) {
+			GameObjectStruct& nodeobj = *static_cast<GameObjectStruct*>(node_list[i]);
+			archivefile.seekg(meta_data->GetFileOffsetByIndex(node_list[i]->file_index));
+
+			#define MACRO_WRITECHILDOBJ(OBJ,HASTYPE) \
+				if (OBJ==NULL) { \
+					if (HASTYPE) WriteLong(archivefile,0); \
+					WriteLong(archivefile,0); \
+					WriteLongLong(archivefile,0); \
+				} else { \
+					if (HASTYPE) WriteLong(archivefile,OBJ->node_type); \
+					WriteLong(archivefile,OBJ->node_unknown); \
+					WriteLongLong(archivefile,OBJ->node_info); \
+				}
+
+			WriteLong(archivefile,nodeobj.child_amount);
+			for (i=0;i<nodeobj.child_amount;i++) {
+				MACRO_WRITECHILDOBJ(nodeobj.child[i],true)
+			}
+			WriteLong(archivefile,nodeobj.unknown);
+			WriteLong(archivefile,nodeobj.name_len);
+			for (i=0;i<nodeobj.name_len;i++)
+				archivefile.put(nodeobj.name[i]);
+			while (archivefile.tellg()%4) archivefile.put(0);
+			archivefile.put(nodeobj.unk1);
+			archivefile.put(nodeobj.unk2);
+			archivefile.put(nodeobj.unk3);
+		} else if (node_list[i]->node_type==4) {
+			TransformStruct& nodetransf = *static_cast<TransformStruct*>(node_list[i]);
+			archivefile.seekg(meta_data->GetFileOffsetByIndex(node_list[i]->file_index));
+			MACRO_WRITECHILDOBJ(nodetransf.child_object,false)
+			nodetransf.rot.Write(archivefile);
+			ModelDataStruct::WriteCoordinates(archivefile,nodetransf.x,nodetransf.y,nodetransf.z);
+			ModelDataStruct::WriteCoordinates(archivefile,nodetransf.scale_x,nodetransf.scale_y,nodetransf.scale_z,false);
+			WriteLong(archivefile,nodetransf.child_transform_amount);
+			for (i=0;i<nodetransf.child_transform_amount;i++) {
+				MACRO_WRITECHILDOBJ(nodetransf.child_transform[i],false)
+			}
+			MACRO_WRITECHILDOBJ(nodetransf.parent_transform,false)
+		} else if (node_list[i]->node_type==23) {
+			MeshRendererStruct& nodemeshren = *static_cast<MeshRendererStruct*>(node_list[i]);
+			archivefile.seekg(meta_data->GetFileOffsetByIndex(node_list[i]->file_index));
+			MACRO_WRITECHILDOBJ(nodemeshren.parent_object,false)
+			WriteLong(archivefile,nodemeshren.flag1);
+			WriteLong(archivefile,nodemeshren.flags_unk);
+			WriteLong(archivefile,nodemeshren.max_unk);
+			WriteFloat(archivefile,nodemeshren.float_unk1);
+			WriteFloat(archivefile,nodemeshren.float_unk2);
+			WriteFloat(archivefile,nodemeshren.float_unk3);
+			WriteFloat(archivefile,nodemeshren.float_unk4);
+			WriteFloat(archivefile,nodemeshren.float_unk5);
+			WriteFloat(archivefile,nodemeshren.float_unk6);
+			WriteFloat(archivefile,nodemeshren.float_unk7);
+			WriteFloat(archivefile,nodemeshren.float_unk8);
+			WriteLong(archivefile,nodemeshren.child_material_amount);
+			for (i=0;i<nodemeshren.child_material_amount;i++) {
+				MACRO_WRITECHILDOBJ(nodemeshren.child_material[i],false)
+			}
+			WriteLong(archivefile,nodemeshren.flag3);
+			WriteLong(archivefile,nodemeshren.flag4);
+			WriteLong(archivefile,nodemeshren.flag5);
+			WriteLong(archivefile,nodemeshren.flag5);
+			WriteLong(archivefile,nodemeshren.flag6);
+			WriteLong(archivefile,nodemeshren.flag7);
+			WriteLong(archivefile,nodemeshren.flag8);
+			WriteLong(archivefile,nodemeshren.flag9);
+			WriteLong(archivefile,nodemeshren.flag10);
+			WriteLong(archivefile,nodemeshren.flag11);
+			WriteLong(archivefile,nodemeshren.flag12);
+			WriteLong(archivefile,nodemeshren.flag13);
+			WriteLong(archivefile,nodemeshren.flag14);
+			WriteLong(archivefile,nodemeshren.flag15);
+		} else if (node_list[i]->node_type==33) {
+			MeshFilterStruct& nodemeshfilter = *static_cast<MeshFilterStruct*>(node_list[i]);
+			archivefile.seekg(meta_data->GetFileOffsetByIndex(node_list[i]->file_index));
+			MACRO_WRITECHILDOBJ(nodemeshfilter.parent_object,false)
+			MACRO_WRITECHILDOBJ(nodemeshfilter.child_mesh,false)
+		} else if (node_list[i]->node_type==111) {
+			AnimationStruct& nodeanim = *static_cast<AnimationStruct*>(node_list[i]);
+			archivefile.seekg(meta_data->GetFileOffsetByIndex(node_list[i]->file_index));
+			MACRO_WRITECHILDOBJ(nodeanim.parent_object,false)
+			WriteLong(archivefile,nodeanim.flag1);
+			MACRO_WRITECHILDOBJ(nodeanim.child_clip1,false)
+			WriteLong(archivefile,nodeanim.flag2);
+			if (nodeanim.child_clip1!=NULL) {
+				MACRO_WRITECHILDOBJ(nodeanim.child_clip2,false)
+			}
+			WriteLong(archivefile,nodeanim.flag3);
+			WriteLong(archivefile,nodeanim.flag4);
+			WriteLong(archivefile,nodeanim.flag5);
+		} else if (node_list[i]->node_type==137) {
+			SkinnedMeshRendererStruct& nodeskinmeshren = *static_cast<SkinnedMeshRendererStruct*>(node_list[i]);
+			archivefile.seekg(meta_data->GetFileOffsetByIndex(node_list[i]->file_index));
+			MACRO_WRITECHILDOBJ(nodeskinmeshren.parent_object,false)
+			WriteLong(archivefile,nodeskinmeshren.flag1);
+			WriteLong(archivefile,nodeskinmeshren.flags_unk);
+			WriteLong(archivefile,nodeskinmeshren.max_unk);
+			WriteFloat(archivefile,nodeskinmeshren.float_unk1);
+			WriteFloat(archivefile,nodeskinmeshren.float_unk2);
+			WriteFloat(archivefile,nodeskinmeshren.float_unk3);
+			WriteFloat(archivefile,nodeskinmeshren.float_unk4);
+			WriteFloat(archivefile,nodeskinmeshren.float_unk5);
+			WriteFloat(archivefile,nodeskinmeshren.float_unk6);
+			WriteFloat(archivefile,nodeskinmeshren.float_unk7);
+			WriteFloat(archivefile,nodeskinmeshren.float_unk8);
+			WriteLong(archivefile,nodeskinmeshren.child_material_amount);
+			for (i=0;i<nodeskinmeshren.child_material_amount;i++) {
+				MACRO_WRITECHILDOBJ(nodeskinmeshren.child_material[i],false)
+			}
+			WriteLong(archivefile,nodeskinmeshren.flag3);
+			WriteLong(archivefile,nodeskinmeshren.flag4);
+			WriteLong(archivefile,nodeskinmeshren.flag5);
+			WriteLong(archivefile,nodeskinmeshren.flag6);
+			WriteLong(archivefile,nodeskinmeshren.flag7);
+			WriteLong(archivefile,nodeskinmeshren.flag8);
+			WriteLong(archivefile,nodeskinmeshren.flag9);
+			WriteLong(archivefile,nodeskinmeshren.flag10);
+			WriteLong(archivefile,nodeskinmeshren.flag11);
+			WriteLong(archivefile,nodeskinmeshren.flag12);
+			WriteLong(archivefile,nodeskinmeshren.flag13);
+			WriteLong(archivefile,nodeskinmeshren.flag14);
+			WriteLong(archivefile,nodeskinmeshren.flag15);
+			MACRO_WRITECHILDOBJ(nodeskinmeshren.child_mesh,false)
+			WriteLong(archivefile,nodeskinmeshren.child_bone_amount);
+			for (i=0;i<nodeskinmeshren.child_bone_amount;i++) {
+				MACRO_WRITECHILDOBJ(nodeskinmeshren.child_bone[i],false)
+			}
+			WriteLong(archivefile,nodeskinmeshren.flag16);
+			MACRO_WRITECHILDOBJ(nodeskinmeshren.child_bone_sample,false)
+			ModelDataStruct::WriteCoordinates(archivefile,nodeskinmeshren.center_x,nodeskinmeshren.center_y,nodeskinmeshren.center_z);
+			ModelDataStruct::WriteCoordinates(archivefile,nodeskinmeshren.radius_x,nodeskinmeshren.radius_y,nodeskinmeshren.radius_z,false);
+			WriteFloat(archivefile,nodeskinmeshren.float_unk9);
+		}
+	}
 }
 
 GameObjectHierarchy::~GameObjectHierarchy() {
@@ -322,7 +453,9 @@ void GameObjectHierarchy::MergeHierarchy(GameObjectHierarchy* base, int mergepol
 
 	if (mergepolicy==2) {
 		for (i=0;i<node_list.size();i++) {
-			MACRO_ASSIGN_NEW_INFO(node_list[i])
+			if (root_node->node_type!=4 || static_cast<TransformStruct*>(root_node)->child_object!=node_list[i]) {
+				MACRO_ASSIGN_NEW_INFO(node_list[i])
+			}
 		}
 		return;
 	}
@@ -386,6 +519,29 @@ uint64_t GameObjectHierarchy::GetRootInfoFromObject(uint8_t * objbuffer) {
 }
 
 int GameObjectNode::GetDataSize() {
-	// TODO
 	return 0;
+}
+
+int GameObjectStruct::GetDataSize() {
+	return 15+16*child_amount+name_len+GetAlignOffset(name_len);
+}
+
+int TransformStruct::GetDataSize() {
+	return 68+12*child_transform_amount;
+}
+
+int MeshRendererStruct::GetDataSize() {
+	return 116+12*child_material_amount;
+}
+
+int MeshFilterStruct::GetDataSize() {
+	return 24;
+}
+
+int AnimationStruct::GetDataSize() {
+	return 44+(child_clip1!=NULL ? 12 : 0);
+}
+
+int SkinnedMeshRendererStruct::GetDataSize() {
+	return 176+12*child_material_amount+12*child_bone_amount;
 }

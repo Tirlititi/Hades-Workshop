@@ -18,6 +18,45 @@
 #define ASSET_COLUMN_SIZE		L"Size"
 #define ASSET_COLUMN_INFO		L"Infos"
 
+// Conversion utility for non-formatted (without "0x") 16 characters-long hexadecimal strings
+uint64_t ConvertStringToLong(wxString value) {
+	uint64_t charval, res = 0;
+	uint8_t shift = 0;
+	char c;
+	unsigned int i;
+	for (i=0;i<value.Len();i++) {
+		c = value[value.Len()-i-1];
+		if (c>='0' && c<='9')
+			charval = c-'0';
+		else if (c>='a' && c<='f')
+			charval = c-'a'+10;
+		else if (c>='A' && c<='F')
+			charval = c-'A'+10;
+		else
+			charval = 0;
+		res |= (charval << shift);
+		shift += 4;
+	}
+	return res;
+}
+
+wxString ConvertLongToString(uint64_t value) {
+	wxString res = _(L"");
+	uint8_t charval;
+	unsigned int i;
+	char c;
+	for (i=0;i<16;i++) {
+		charval = value%0x10;
+		if (charval<10)
+			c = '0'+charval;
+		else
+			c = 'A'+(charval-10);
+		res = c+res;
+		value >>= 4;
+	}
+	return res;
+}
+
 static string AudioFileNames[] = {
 	"MusicMetaData.txt",
 	"SongMetaData.txt",
@@ -540,9 +579,28 @@ void ToolUnityViewer::OnMenuSelection(wxCommandEvent& event) {
 	}
 }
 
+void InitLinkFileDialog(UnityLinkFileDialog& dial, wxListCtrl* listctrl, UnityArchiveMetaData* metadata) {
+	unsigned int fileid;
+	long it = -1;
+	dial.filelist.Empty();
+	dial.fileinfolist.clear();
+	if (listctrl->GetItemCount()==0)
+		return;
+	for (;;) {
+		it = listctrl->GetNextItem(it,wxLIST_NEXT_ALL,wxLIST_STATE_DONTCARE);
+		if (it==-1) break;
+		fileid = wxAtoi(listctrl->GetItemText(it,0))-1;
+		dial.filelist.Add(_(L"#")+listctrl->GetItemText(it,0)+_(L": ")+listctrl->GetItemText(it,1)+_(L" (")+_(UnityArchiveMetaData::GetTypeName(metadata->file_type1[fileid]))+_(L")"));
+		dial.fileinfolist.push_back(metadata->file_info[fileid]);
+	}
+	dial.m_existinglist->Set(dial.filelist);
+	dial.m_existinglist->SetSelection(0);
+	dial.m_fileinfo->ChangeValue(ConvertLongToString(dial.fileinfolist[0]));
+}
+
 void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 	int id = event.GetId();
-	unsigned int i,j;
+	unsigned int i,j,k;
 	if (id==wxID_EXPORT) {
 		fstream filebase((const char*)(root_path+archive_name).c_str(),ios::in|ios::binary);
 		if (!filebase.is_open()) {
@@ -732,6 +790,8 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 		fstream filebase((const char*)(root_path+archive_name).c_str(),ios::in|ios::binary);
 		fstream filedest((const char*)(root_path+archive_name+_(L".tmp")).c_str(),ios::out|ios::binary);
 		bool overwritefile = true;
+		UnityLinkFileDialog linkfiledialog(this);
+		bool linkfiledialoginit = false;
 		if (!filebase.is_open()) {
 			wxLogError(HADES_STRING_OPEN_ERROR_FAIL,root_path+archive_name);
 			return;
@@ -752,6 +812,15 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 			copylist[i] = true;
 			filenewsize[i] = meta_data[current_archive].file_size[i];
 		}
+		vector<GameObjectHierarchy> importmodelbasehierarchy;
+		vector<ModelDataStruct> importmodel;
+		unsigned int importmodelcounter = 0;
+		bool modelflushunused = m_menuimportmodelflush->IsChecked();
+		bool modelimportmesh = m_menuimportmodelmesh->IsChecked();
+		bool modelimportanim = m_menuimportmodelanims->IsChecked();
+		int modelmergepolicy = m_menuimportmodelexistingfiles->IsChecked() ? 0 :
+							   m_menuimportmodelmerge->IsChecked() ? 1 :
+							   m_menuimportmodelimportall->IsChecked() ? 2 : -1;
 		long it = -1;
 		for (;;) {
 			it = m_assetlist->GetNextItem(it,wxLIST_NEXT_ALL,wxLIST_STATE_SELECTED);
@@ -832,11 +901,15 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 					wxLogError(HADES_STRING_UNITYVIEWER_MODEL_BAD_HIERARCHY);
 					continue;
 				}
-				GameObjectHierarchy modelhierarchy;
+				importmodelbasehierarchy.resize(importmodelbasehierarchy.size()+1);
+				importmodel.resize(importmodel.size()+1);
+				GameObjectHierarchy& modelhierarchy = importmodelbasehierarchy[importmodelbasehierarchy.size()];
+				ModelDataStruct& newmodel = importmodel[importmodel.size()];
 				modelhierarchy.BuildHierarchy(filebase,meta_data[current_archive],modelrootid);
-				ModelDataStruct newmodel;
 				if (newmodel.Import((const char*)path.c_str())!=0) {
 					wxLogError(HADES_STRING_UNITYVIEWER_UNKNOWN_FORMAT,path);
+					importmodelbasehierarchy.pop_back();
+					importmodel.pop_back();
 					continue;
 				}
 				newmodel.hierarchy->meta_data = &meta_data[current_archive];
@@ -851,23 +924,58 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				}
 //fstream fout("aaab.txt",ios::app|ios::out); fout << "POTENTIAL LINKS (" << filearchivedir << "):"; for (i=0;i<potentiallylinkedfiles.size();i++) fout << " " << potentiallylinkedfiles[i]; fout << endl; fout.close();
 //				newmodel.hierarchy->DEBUGDisplayHierarchy();
-				newmodel.SetupPostImportData(potentiallylinkedfiles,&modelhierarchy,0);
-				newmodel.hierarchy->DEBUGDisplayHierarchy();
-
+				newmodel.SetupPostImportData(potentiallylinkedfiles,&modelhierarchy,modelmergepolicy);
+				for (i=0;i<newmodel.material.size();i++) {
+					for (j=0;j<newmodel.material[i].size();j++) {
+						if (newmodel.material[i][j].maintex.file_info==0) {
+							if (!linkfiledialoginit) {
+								InitLinkFileDialog(linkfiledialog,m_assetlist,&meta_data[current_archive]);
+								linkfiledialoginit = true;
+							}
+							wxString message = _(HADES_STRING_UNITYVIEWER_LINK_TEXTURE);
+							message += path.AfterLast(L'\\') + _(L", Mesh ") + newmodel.mesh[i].name + _(L" --> ") + newmodel.material[i][j].maintex.file_name;
+							if (linkfiledialog.ShowModal(message)==wxID_OK) {
+								newmodel.material[i][j].maintex.file_info = linkfiledialog.info_selected;
+							}
+						}
+					}
+				}
+				// ToDo: Animations
+				unsigned int nodefileindex,nodefiletype,meshcounter = 0, meshmatcounter = 0, animcounter = 0;
+				for (i=0;i<newmodel.hierarchy->node_list.size();i++) { // ToDo
+					nodefileindex = newmodel.hierarchy->node_list[i]->file_index;
+					nodefiletype = newmodel.hierarchy->node_list[i]->node_type;
+					if (newmodel.hierarchy->node_list[i]->node_info==0) { // New file without new allocation
+					} else if (nodefileindex>=meta_data[current_archive].header_file_amount) { // New file with new allocation
+					} else { // Old file updated
+						if (nodefiletype==43)		filenewsize[nodefileindex] = newmodel.mesh[meshcounter].GetDataSize();
+						else if (nodefiletype==21)	filenewsize[nodefileindex] = newmodel.material[meshcounter][meshmatcounter].GetDataSize();
+						else if (nodefiletype==74)	filenewsize[nodefileindex] = newmodel.animation[animcounter].GetDataSize();
+						else						filenewsize[nodefileindex] = newmodel.hierarchy->node_list[i]->GetDataSize();
+						copylist[nodefileindex] = false;
+					}
+					if (nodefiletype==43) {
+						meshcounter++;
+						meshmatcounter = 0;
+					} else if (nodefiletype==21) {
+						meshmatcounter++;
+					} else if (nodefiletype==74) {
+						animcounter++;
+					}
+				}
+				if (modelflushunused) {
+					for (i=0;i<modelhierarchy.node_list.size();i++) {
+						for (j=0;j<newmodel.hierarchy->node_list.size();j++)
+							if (modelhierarchy.node_list[i]->file_index==newmodel.hierarchy->node_list[j]->file_index)
+								break;
+						if (j>=newmodel.hierarchy->node_list.size()) {
+							// ToDo
+						}
+					}
+				}
+//				newmodel.hierarchy->DEBUGDisplayHierarchy();
 				/*
 			} else if (meta_data[current_archive].file_type1[expfileid]==1 && path.AfterLast(L'.').IsSameAs(L"fbx",false) && !m_menuconvertmodelnone->IsChecked()) {
-				GameObjectHierarchy modelhierarchy;
-				modelhierarchy.BuildHierarchy(filebase,meta_data[current_archive],modelrootid);
-				wxString filepathbase = m_assetlist->GetItemText(it,1).BeforeLast(L'.');
-				ModelDataStruct model;
-				wxString descriptionstr = m_assetlist->GetItemText(it, 5);
-				descriptionstr.Replace(_(UnityArchiveMetaData::GetTypeName(meta_data[current_archive].file_type1[expfileid])), _(L"Full Model"));
-				model.description = descriptionstr.ToStdString();
-				if (!model.Read(filebase,&modelhierarchy)) {
-					wxLogError(HADES_STRING_UNITYVIEWER_MODEL_BAD_HIERARCHY);
-					continue;
-				}
-				long itclip = -1;
 				wxString fileobjectid,gameobjectid = GetFullName(current_archive,expfileid);
 				for (;;) {
 					itclip = m_assetlist->GetNextItem(itclip,wxLIST_NEXT_ALL,wxLIST_STATE_DONTCARE);
@@ -915,7 +1023,7 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				filenewsize[expfileid] = fileasset.tellg();
 				fileasset.close();
 			}
-//			copylist[expfileid] = false; DEBUG
+			copylist[expfileid] = false;
 		}
 		m_loadgauge->SetValue(10);
 		filebase.seekg(0);
@@ -1015,6 +1123,11 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				filedest.write(buffer,filenewsize[expfileid]);
 				fileasset.close();
 				delete[] buffer;
+			} else if (meta_data[current_archive].file_type1[expfileid]==1 && path.AfterLast(L'.').IsSameAs(L"fbx",false) && !m_menuconvertmodelnone->IsChecked()) {
+				ModelDataStruct& newmodel = importmodel[importmodelcounter];
+				importmodelcounter++;
+				newmodel.hierarchy->meta_data;
+				newmodel.Write(filedest);
 			} else {
 				fstream fileasset((const char*)path.c_str(),ios::in|ios::binary);
 				if (!fileasset.is_open()) {
@@ -1121,4 +1234,27 @@ void ToolUnityViewer::OnSortColumn(wxListEvent& event) {
 		m_assetlist->SetItemData(it,i);
 		it = m_assetlist->GetNextItem(it);
 	}
+}
+
+int UnityLinkFileDialog::ShowModal(wxString message) {
+	if (infovalidator==NULL) {
+		infovalidator = new wxTextValidator(wxFILTER_INCLUDE_CHAR_LIST);
+		infovalidator->SetCharIncludes(_(L"0123456789abcdefABCDEF"));
+		infovalidator->SetWindow(m_fileinfo);
+	}
+	m_message->ChangeValue(message);
+	return wxDialog::ShowModal();
+}
+
+void UnityLinkFileDialog::OnFileSelect(wxCommandEvent& event) {
+	m_fileinfo->ChangeValue(ConvertLongToString(fileinfolist[m_existinglist->GetSelection()]));
+}
+
+void UnityLinkFileDialog::OnFileInfoEdit(wxCommandEvent& event) {
+	m_buttonok->Enable(m_fileinfo->GetValue().Len()==16);
+}
+
+void UnityLinkFileDialog::OnButtonClick(wxCommandEvent& event) {
+	info_selected = ConvertStringToLong(m_fileinfo->GetValue());
+	return EndModal(event.GetId());
 }

@@ -336,6 +336,7 @@ private:
 	void OnListBoxCilMacro(wxCommandEvent& event);
 	void OnCilMethodButton(wxCommandEvent& event);
 	void OnCilMacroButton(wxCommandEvent& event);
+	void OnCilParameterResolution(wxSpinEvent & event);
 	
 public:
 	void DebugWrite();

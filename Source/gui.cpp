@@ -10940,6 +10940,37 @@ UnityViewerWindow::UnityViewerWindow( wxWindow* parent, wxWindowID id, const wxS
 	m_menuconvertmodelwave = new wxMenuItem( m_menuconvertmodel, wxID_ANY, wxString( _("Convert as Wavefront OBJ") ) , wxEmptyString, wxITEM_RADIO );
 	m_menuconvertmodel->Append( m_menuconvertmodelwave );
 	
+	m_menuconvertmodel->AppendSeparator();
+	
+	m_menuimportmodelexistingfiles = new wxMenuItem( m_menuconvertmodel, wxID_ANY, wxString( _("Only Update Exisiting Nodes") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertmodel->Append( m_menuimportmodelexistingfiles );
+	
+	m_menuimportmodelmerge = new wxMenuItem( m_menuconvertmodel, wxID_ANY, wxString( _("Update Existing Nodes and Import New Nodes") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertmodel->Append( m_menuimportmodelmerge );
+	m_menuimportmodelmerge->Check( true );
+	
+	m_menuimportmodelimportall = new wxMenuItem( m_menuconvertmodel, wxID_ANY, wxString( _("Import All the Nodes in New Files") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertmodel->Append( m_menuimportmodelimportall );
+	
+	m_menuconvertmodel->AppendSeparator();
+	
+	m_menuimportmodeldontflush = new wxMenuItem( m_menuconvertmodel, wxID_ANY, wxString( _("Keep Unused Node Files") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertmodel->Append( m_menuimportmodeldontflush );
+	
+	m_menuimportmodelflush = new wxMenuItem( m_menuconvertmodel, wxID_ANY, wxString( _("Delete Unused Node Files") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertmodel->Append( m_menuimportmodelflush );
+	m_menuimportmodelflush->Check( true );
+	
+	m_menuconvertmodel->AppendSeparator();
+	
+	m_menuimportmodelmesh = new wxMenuItem( m_menuconvertmodel, wxID_ANY, wxString( _("Import Meshes/Materials") ) , wxEmptyString, wxITEM_CHECK );
+	m_menuconvertmodel->Append( m_menuimportmodelmesh );
+	m_menuimportmodelmesh->Check( true );
+	
+	m_menuimportmodelanims = new wxMenuItem( m_menuconvertmodel, wxID_ANY, wxString( _("Import Animations") ) , wxEmptyString, wxITEM_CHECK );
+	m_menuconvertmodel->Append( m_menuimportmodelanims );
+	m_menuimportmodelanims->Check( true );
+	
 	m_menuoptions->Append( m_menuconvertmodelItem );
 	
 	m_menuoptions->AppendSeparator();
@@ -11150,6 +11181,72 @@ UnityViewerWindow::~UnityViewerWindow()
 	this->Disconnect( wxID_FOLDER86, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( UnityViewerWindow::OnMenuSelection ) );
 	m_assetlist->Disconnect( wxEVT_COMMAND_LIST_COL_CLICK, wxListEventHandler( UnityViewerWindow::OnSortColumn ), NULL, this );
 	m_assetlist->Disconnect( wxEVT_COMMAND_LIST_ITEM_RIGHT_CLICK, wxListEventHandler( UnityViewerWindow::OnAssetRightClick ), NULL, this );
+	
+}
+
+UnityLinkFileWindow::UnityLinkFileWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	
+	wxBoxSizer* bSizer197;
+	bSizer197 = new wxBoxSizer( wxVERTICAL );
+	
+	wxGridBagSizer* gbSizer46;
+	gbSizer46 = new wxGridBagSizer( 0, 0 );
+	gbSizer46->SetFlexibleDirection( wxBOTH );
+	gbSizer46->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	m_message = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 525,80 ), wxTE_MULTILINE|wxTE_READONLY|wxTE_WORDWRAP|wxSIMPLE_BORDER );
+	m_message->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
+	
+	gbSizer46->Add( m_message, wxGBPosition( 0, 0 ), wxGBSpan( 1, 2 ), wxALL, 5 );
+	
+	wxArrayString m_existinglistChoices;
+	m_existinglist = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_existinglistChoices, 0 );
+	m_existinglist->SetSelection( 0 );
+	gbSizer46->Add( m_existinglist, wxGBPosition( 1, 0 ), wxGBSpan( 1, 2 ), wxALL, 5 );
+	
+	m_staticText329 = new wxStaticText( this, wxID_ANY, _("File Internal ID"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText329->Wrap( -1 );
+	gbSizer46->Add( m_staticText329, wxGBPosition( 2, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	m_fileinfo = new wxTextCtrl( this, wxID_ANY, _("FFFFFFFFFFFFFFFF"), wxDefaultPosition, wxSize( 140,-1 ), 0 );
+	#ifdef __WXGTK__
+	if ( !m_fileinfo->HasFlag( wxTE_MULTILINE ) )
+	{
+	m_fileinfo->SetMaxLength( 16 );
+	}
+	#else
+	m_fileinfo->SetMaxLength( 16 );
+	#endif
+	gbSizer46->Add( m_fileinfo, wxGBPosition( 2, 1 ), wxGBSpan( 1, 1 ), wxALL, 3 );
+	
+	
+	gbSizer46->AddGrowableCol( 1 );
+	
+	bSizer197->Add( gbSizer46, 1, wxEXPAND, 5 );
+	
+	m_buttonok = new wxButton( this, wxID_OK, _("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer197->Add( m_buttonok, 0, wxALIGN_CENTER|wxALL, 5 );
+	
+	
+	this->SetSizer( bSizer197 );
+	this->Layout();
+	
+	this->Centre( wxBOTH );
+	
+	// Connect Events
+	m_existinglist->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( UnityLinkFileWindow::OnFileSelect ), NULL, this );
+	m_fileinfo->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( UnityLinkFileWindow::OnFileInfoEdit ), NULL, this );
+	m_buttonok->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( UnityLinkFileWindow::OnButtonClick ), NULL, this );
+}
+
+UnityLinkFileWindow::~UnityLinkFileWindow()
+{
+	// Disconnect Events
+	m_existinglist->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( UnityLinkFileWindow::OnFileSelect ), NULL, this );
+	m_fileinfo->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( UnityLinkFileWindow::OnFileInfoEdit ), NULL, this );
+	m_buttonok->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( UnityLinkFileWindow::OnButtonClick ), NULL, this );
 	
 }
 

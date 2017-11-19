@@ -65,6 +65,7 @@ struct GameObjectStruct : public GameObjectNode {
 	GameObjectStruct(GameObjectNode* prt, GameObjectHierarchy& rt, uint32_t ndtype, uint32_t unk, uint64_t nfo) : GameObjectNode(prt, rt, ndtype, unk, nfo) {}
 	TransformStruct* GetParentTransform();
 	string GetScopedName();
+	int GetDataSize();
 };
 
 struct TransformStruct : public GameObjectNode {
@@ -81,6 +82,7 @@ struct TransformStruct : public GameObjectNode {
 	float scale_z;
 
 	TransformStruct(GameObjectNode* prt, GameObjectHierarchy& rt, uint32_t ndtype, uint32_t unk, uint64_t nfo) : GameObjectNode(prt, rt, ndtype, unk, nfo) {}
+	int GetDataSize();
 };
 
 struct MeshRendererStruct : public GameObjectNode {
@@ -114,6 +116,7 @@ struct MeshRendererStruct : public GameObjectNode {
 	uint32_t flag16;
 
 	MeshRendererStruct(GameObjectNode* prt, GameObjectHierarchy& rt, uint32_t ndtype, uint32_t unk, uint64_t nfo) : GameObjectNode(prt, rt, ndtype, unk, nfo) {}
+	int GetDataSize();
 };
 
 struct MeshFilterStruct : public GameObjectNode {
@@ -121,6 +124,7 @@ struct MeshFilterStruct : public GameObjectNode {
 	GameObjectNode* child_mesh;
 
 	MeshFilterStruct(GameObjectNode* prt, GameObjectHierarchy& rt, uint32_t ndtype, uint32_t unk, uint64_t nfo) : GameObjectNode(prt, rt, ndtype, unk, nfo) {}
+	int GetDataSize();
 };
 
 struct AnimationStruct : public GameObjectNode {
@@ -134,6 +138,7 @@ struct AnimationStruct : public GameObjectNode {
 	uint32_t flag5;
 
 	AnimationStruct(GameObjectNode* prt, GameObjectHierarchy& rt, uint32_t ndtype, uint32_t unk, uint64_t nfo) : GameObjectNode(prt, rt, ndtype, unk, nfo) {}
+	int GetDataSize();
 };
 
 struct SkinnedMeshRendererStruct : public GameObjectNode {
@@ -178,6 +183,7 @@ struct SkinnedMeshRendererStruct : public GameObjectNode {
 	float float_unk9;
 
 	SkinnedMeshRendererStruct(GameObjectNode* prt, GameObjectHierarchy& rt, uint32_t ndtype, uint32_t unk, uint64_t nfo) : GameObjectNode(prt, rt, ndtype, unk, nfo) {}
+	int GetDataSize();
 };
 
 struct GameObjectHierarchy {
@@ -199,7 +205,7 @@ struct GameObjectHierarchy {
 	// mergepolicies:
 	// 0=Only setup the nodes that are already existing (node_info==0 for the others)
 	// 1=Setup the nodes that are already existing and assign new file informations for the others
-	// 2=Assign new informations to all the nodes
+	// 2=Assign new informations to all the nodes except for the root_node's object (but the root_node is re-assigned)
 	void MergeHierarchy(GameObjectHierarchy* base, int mergepolicy);
 
 	static uint64_t GetRootInfoFromObject(uint8_t* objbuffer);

@@ -41,4 +41,22 @@ private:
 	void OnSortColumn(wxListEvent& event);
 };
 
+class UnityLinkFileDialog : public UnityLinkFileWindow {
+public:
+	wxArrayString filelist;
+	vector<uint64_t> fileinfolist;
+
+	uint64_t info_selected;
+
+	UnityLinkFileDialog(wxWindow* parent) : UnityLinkFileWindow(parent), infovalidator(NULL) {}
+	int ShowModal(wxString message);
+
+private:
+	wxTextValidator* infovalidator;
+
+	void OnFileSelect(wxCommandEvent& event);
+	void OnFileInfoEdit(wxCommandEvent& event);
+	void OnButtonClick(wxCommandEvent& event);
+};
+
 #endif

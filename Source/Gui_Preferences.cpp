@@ -235,6 +235,7 @@ bool PreferencesDialog::SaveToolUnityConfig(UnityViewerWindow* configwindow) {
 	if (!GetBeforeAndAfterSection(_(L"[UnityViewer]"), before, after))
 		return false;
 	wxFile configfileout(_(PREFERENCE_FILE_NAME), wxFile::write);
+	wxString comma = _(L"");
 	wxString token;
 	configfileout.Write(before);
 	configfileout.Write(_(L"[UnityViewer]"));
@@ -267,6 +268,16 @@ bool PreferencesDialog::SaveToolUnityConfig(UnityViewerWindow* configwindow) {
 		configwindow->m_menuconvertmodelcollada->IsChecked() ? _(L"dae") :
 		configwindow->m_menuconvertmodelwave->IsChecked() ? _(L"obj") : _(L"fbx_bin");
 	configfileout.Write(_(L"\nModelFormat=") + token);
+	token = configwindow->m_menuimportmodelexistingfiles->IsChecked() ? _(L"existingonly") :
+		configwindow->m_menuimportmodelmerge->IsChecked() ? _(L"merge") :
+		configwindow->m_menuimportmodelimportall->IsChecked() ? _(L"allnew") : _(L"merge");
+	configfileout.Write(_(L"\nModelImportPolicy=") + token);
+	token = configwindow->m_menuimportmodeldontflush->IsChecked() ? _(L"no") :
+		configwindow->m_menuimportmodelflush->IsChecked() ? _(L"yes") : _(L"yes");
+	configfileout.Write(_(L"\nModelFlush=") + token);
+	configfileout.Write(_(L"\nModelImportType="));
+	if (configwindow->m_menuimportmodelmesh->IsChecked())		{ configfileout.Write(comma+_(L"mesh")); comma = _(L","); }
+	if (configwindow->m_menuimportmodelanims->IsChecked())		{ configfileout.Write(comma+_(L"anim")); comma = _(L","); }
 	token = configwindow->m_menufolderx86->IsChecked() ? _(L"x86") :
 		configwindow->m_menufolderx64->IsChecked() ? _(L"x64") : _(L"x86");
 	configfileout.Write(_(L"\nArchFolder=") + token);
@@ -325,6 +336,27 @@ bool PreferencesDialog::LoadToolUnityConfig(UnityViewerWindow* configwindow) {
 			else if (TmpArgs[argcount].IsSameAs(_(L"dxf")))			configwindow->m_menuconvertmodelautocad->Check();
 			else if (TmpArgs[argcount].IsSameAs(_(L"dae")))			configwindow->m_menuconvertmodelcollada->Check();
 			else if (TmpArgs[argcount].IsSameAs(_(L"obj")))			configwindow->m_menuconvertmodelwave->Check();
+		}
+		cfgfield = cfgstr;
+		if (SearchField(cfgfield, _(L"ModelImportPolicy"), TmpArgs, argcount)) {
+			if (TmpArgs[argcount].IsSameAs(_(L"existingonly")))		configwindow->m_menuimportmodelexistingfiles->Check();
+			else if (TmpArgs[argcount].IsSameAs(_(L"merge")))		configwindow->m_menuimportmodelmerge->Check();
+			else if (TmpArgs[argcount].IsSameAs(_(L"allnew")))		configwindow->m_menuimportmodelimportall->Check();
+		}
+		cfgfield = cfgstr;
+		if (SearchField(cfgfield, _(L"ModelFlush"), TmpArgs, argcount)) {
+			if (TmpArgs[argcount].IsSameAs(_(L"no")))				configwindow->m_menuimportmodeldontflush->Check();
+			else if (TmpArgs[argcount].IsSameAs(_(L"yes")))			configwindow->m_menuimportmodelflush->Check();
+		}
+		cfgfield = cfgstr;
+		if (SearchField(cfgfield, _(L"ModelFlush"), TmpArgs, argcount)) {
+			wxStringTokenizer sortlist(TmpArgs[argcount],L",");
+			wxString sorttoken;
+			while (sortlist.HasMoreTokens()) {
+				sorttoken = sortlist.GetNextToken();
+				if (sorttoken.IsSameAs(_(L"mesh")))					configwindow->m_menuimportmodelmesh->Check();
+				else if (sorttoken.IsSameAs(_(L"anim")))			configwindow->m_menuimportmodelanims->Check();
+			}
 		}
 		cfgfield = cfgstr;
 		if (SearchField(cfgfield, _(L"ArchFolder"), TmpArgs, argcount)) {

@@ -52,6 +52,7 @@ class PreviewTextCtrl;
 #include <wx/treelist.h>
 #include <wx/radiobut.h>
 #include <wx/gauge.h>
+#include <wx/valtext.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -3103,12 +3104,46 @@ class UnityViewerWindow : public wxFrame
 		wxMenuItem* m_menuconvertmodelautocad;
 		wxMenuItem* m_menuconvertmodelcollada;
 		wxMenuItem* m_menuconvertmodelwave;
+		wxMenuItem* m_menuimportmodelexistingfiles;
+		wxMenuItem* m_menuimportmodelmerge;
+		wxMenuItem* m_menuimportmodelimportall;
+		wxMenuItem* m_menuimportmodeldontflush;
+		wxMenuItem* m_menuimportmodelflush;
+		wxMenuItem* m_menuimportmodelmesh;
+		wxMenuItem* m_menuimportmodelanims;
 		wxMenuItem* m_menufolderx64;
 		wxMenuItem* m_menufolderx86;
 		
 		UnityViewerWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Unity Assets Viewer"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 700,700 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
 		
 		~UnityViewerWindow();
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class UnityLinkFileWindow
+///////////////////////////////////////////////////////////////////////////////
+class UnityLinkFileWindow : public wxDialog 
+{
+	private:
+	
+	protected:
+		wxStaticText* m_staticText329;
+		wxButton* m_buttonok;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void OnFileSelect( wxCommandEvent& event ) { event.Skip(); }
+		virtual void OnFileInfoEdit( wxCommandEvent& event ) { event.Skip(); }
+		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
+		
+	
+	public:
+		wxTextCtrl* m_message;
+		wxChoice* m_existinglist;
+		wxTextCtrl* m_fileinfo;
+		
+		UnityLinkFileWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Select Associated File"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 550,230 ), long style = wxCAPTION|wxSYSTEM_MENU ); 
+		~UnityLinkFileWindow();
 	
 };
 

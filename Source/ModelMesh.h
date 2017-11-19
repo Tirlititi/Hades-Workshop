@@ -65,6 +65,10 @@ enum ModelFileFormat {
  (unknown) 0
 
  ***********************************************
+ *           Material (File Type 21)           *
+ ***********************************************
+
+ ***********************************************
  *          Animation (File Type 74)           *
  ***********************************************
 */
@@ -205,6 +209,8 @@ struct ModelMeshData {
 	
 	void Read(fstream& f);
 	void Write(fstream& f);
+	int GetDataSize();
+
 	// Deprecated (bone data loss) ; use ModelDataStruct::Export
 	void Export(fstream& output, const char* objname, const char* mtlbasename, bool firstobject = true);
 };
@@ -221,6 +227,7 @@ struct ModelMaterialFile {
 };
 
 struct ModelMaterialData {
+	// Always there
 	ModelMaterialFile bumpmap;
 	ModelMaterialFile detailalbedomap;
 	ModelMaterialFile detailmask;
@@ -252,11 +259,27 @@ struct ModelMaterialData {
 	float emissioncolor_green = 0.0;
 	float emissioncolor_blue = 0.0;
 	float emissioncolor_alpha = 1.0;
+	// Optional
+	bool has_alphapremultiply_on = false;
+	uint32_t alphapremultiply_on_value1;
+	uint32_t alphapremultiply_on_value2;
+	uint32_t alphapremultiply_on_value3;
+	bool has_rendertype = false;
+	uint32_t rendertype_value;
+	bool has_transparent = false;
+	uint32_t transparent_value;
+	bool has_extheader = true;
+	uint32_t extheader_value1 = 5;
+	uint32_t extheader_value2 = 0xFFFFFFFF;
+	uint32_t extheader_value3 = 0;
+	uint32_t extheader_value4 = 9;
 	
 	string name;
     
 	void Read(fstream& f, UnityArchiveMetaData& metadata);
 	void Write(fstream& f, UnityArchiveMetaData& metadata);
+	int GetDataSize();
+
 	// Deprecated ; use ModelDataStruct::Export
 	void Export(fstream& output, const char* mtlname, const char* maintexname);
 };
@@ -332,6 +355,7 @@ struct ModelAnimationData {
 	uint32_t anim_id;
 
 	void Read(fstream& f, GameObjectHierarchy* gohier = NULL);
+	int GetDataSize();
 };
 
 struct ModelDataStruct {
@@ -350,7 +374,7 @@ struct ModelDataStruct {
 	static void WriteCoordinates(fstream& f, float x, float y, float z, bool swapsign = true);
 
     bool Read(fstream& f, GameObjectHierarchy* gohier);
-	bool Write(fstream& f, GameObjectHierarchy* gohier);
+	bool Write(fstream& f);
 	int Export(const char* outputname, int format);
 	int Import(const char * inputname);
 

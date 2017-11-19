@@ -4212,6 +4212,7 @@ void CDDataStruct::OnEnemyChangeButton(wxCommandEvent& event) {
 }
 
 bool DiscardEnemySizeLimit = false;
+bool DiscardEnemyNumberLimit = false;
 void CDDataStruct::OnEnemyStatRightClick(wxMouseEvent& event) {
 	int newsel = m_enemystatlist->HitTest(event.GetPosition());
 	if (newsel!=wxNOT_FOUND) {
@@ -4269,6 +4270,12 @@ void CDDataStruct::OnEnemyStatRightClickMenu(wxCommandEvent& event) {
 				if (popup.ShowModal()==wxID_DISCARD)
 					DiscardEnemySizeLimit = true;
 			}
+		} else if (eb.stat_amount>=4) {
+			if (!DiscardEnemyNumberLimit) {
+				DiscardableMessageWindow popup(wxGetApp().GetTopWindow(),HADES_STRING_STAT_WARN_LIMIT);
+				if (popup.ShowModal()==wxID_DISCARD)
+					DiscardEnemyNumberLimit = true;
+			}
 		}
 	} else if (id==wxID_REMOVE && eb.stat_amount>1) {
 		eb.RemoveStat(objid);
@@ -4313,6 +4320,12 @@ void CDDataStruct::OnEnemySpellRightClickMenu(wxCommandEvent& event) {
 				DiscardableMessageWindow popup(wxGetApp().GetTopWindow(),HADES_STRING_DATA_REACH_LIMIT);
 				if (popup.ShowModal()==wxID_DISCARD)
 					DiscardEnemySizeLimit = true;
+			}
+		} else if (eb.spell_amount>=19) {
+			if (!DiscardEnemyNumberLimit) {
+				DiscardableMessageWindow popup(wxGetApp().GetTopWindow(),HADES_STRING_SPELL_WARN_LIMIT);
+				if (popup.ShowModal()==wxID_DISCARD)
+					DiscardEnemyNumberLimit = true;
 			}
 		}
 	} else if (id==wxID_REMOVE) {
@@ -5876,6 +5889,7 @@ void CDDataStruct::DisplayCilMacro(int cilmacroid) {
 		m_cilmacroparametersizer->Add(resspin,0,wxALL,3);
 		m_cilmacroscrolledwindow->Layout();
 		m_cilmacroscrolledwindow->Refresh();
+		m_spellpower->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDDataStruct::OnCilParameterResolution ), NULL, this );
 	}
 }
 
@@ -5924,6 +5938,14 @@ void CDDataStruct::OnCilMacroButton(wxCommandEvent& event) {
 		m_cilmacrobutton->SetLabel(_(HADES_STRING_CIL_UNAPPLY_MACRO));
 	}
 	MarkDataCilModified();
+}
+
+void CDDataStruct::OnCilParameterResolution(wxSpinEvent& event) {
+	int macroindex = cilset.GetEnabledMacroIndex(50);
+	if (macroindex>=0) {
+		uint32_t param[] = {event.GetPosition()};
+		cilset.macromodif[macroindex].info->SetParameters(param);
+	}
 }
 
 //=============================//

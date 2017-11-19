@@ -30,9 +30,9 @@ void ModelMeshData::Read(fstream& f) {
 	ModelMeshVertex vertbuffer;
 	ModelMeshBone bonebuffer;
 	unsigned int i,j,k;
-	size_t headerpos = f.tellg();
 	material_info_amount = ReadLong(f);
 //fstream fout("aaaa.txt",ios::out|ios::app); fout << "material_info_amount: " << (unsigned int)material_info_amount << endl; fout.close();
+fstream fout("aaaa.txt",ios::out|ios::app); fout << "NEW MESH" << endl; fout.close();
 	mat_info.reserve(material_info_amount);
 	for (i=0;i<material_info_amount;i++) {
 		matinfobuffer.vert_list_start = ReadLong(f);
@@ -97,6 +97,11 @@ void ModelMeshData::Read(fstream& f) {
 	vert_format7 = ReadLong(f);
 	vert_format8 = ReadLong(f);
 	vert_format9 = ReadLong(f);
+	/* Examples of format0-9:
+	p0data4/1/133 (Moogle Book): 8B ... 8 3000000 3000C00 0 2000001 0       0 0 4001800
+	p0data4/5/667 (Kuja Burned): 9B ... 8 3000000 3000C00 0 2000001 2000801 0 0 4001800
+	worldmap + battle models   : 8B ... 8 3000000 3000C00 0 2001800 0       0 0 4002000
+	*/
 	vert_datasize = ReadLong(f);
 	size_t vertpos = f.tellg();
 	vert.reserve(vertice_amount);
@@ -135,6 +140,102 @@ void ModelMeshData::Read(fstream& f) {
 }
 
 void ModelMeshData::Write(fstream & f) {
+	unsigned int i,j,k;
+	WriteLong(f,material_info_amount);
+	for (i=0;i<material_info_amount;i++) {
+		WriteLong(f,mat_info[i].vert_list_start);
+		WriteLong(f,mat_info[i].vert_list_amount);
+		WriteLong(f,mat_info[i].unk0);
+		WriteLong(f,mat_info[i].vert_start);
+		WriteLong(f,mat_info[i].vert_amount);
+		ModelDataStruct::WriteCoordinates(f,mat_info[i].center_x,mat_info[i].center_y,mat_info[i].center_z);
+		ModelDataStruct::WriteCoordinates(f,mat_info[i].radius_x,mat_info[i].radius_y,mat_info[i].radius_z,false);
+	}
+	for (i=0;i<0x10;i++)
+		f.put(0);
+	WriteLong(f,bone_amount);
+	for (i=0;i<bone_amount;i++) {
+		for (j=0;j<4;j++) {
+			for (k=0;k<3;k++)
+				WriteFloat(f,bone[i].transform_matrix.value[j][k]);
+			WriteFloat(f,-bone[i].transform_matrix.value[j][3]);
+		}
+	}
+	WriteLong(f,bone_unk_amount);
+	for (i=0;i<bone_unk_amount;i++)
+		WriteLong(f,bone_unk_list[i]);
+	WriteLong(f,bone_unk_main);
+	f.put(unk_flag1);
+	f.put(unk_flag2);
+	f.put(unk_flag3);
+	f.put(unk_flag4);
+	unsigned int sizevertlist = vertex_list_amount*2;
+	WriteLong(f,sizevertlist);
+	for (i=0;i<vertex_list_amount;i++)
+		WriteShort(f,vert_list[i]);
+	while (f.tellg()%4!=0)
+		f.put(0);
+	WriteLong(f,vertice_attachment_amount);
+	for (i=0;i<vertice_attachment_amount;i++) {
+		WriteFloat(f,vert_attachment[i].bone_factor[0]);
+		WriteFloat(f,vert_attachment[i].bone_factor[1]);
+		WriteFloat(f,vert_attachment[i].bone_factor[2]);
+		WriteFloat(f,vert_attachment[i].bone_factor[3]);
+		WriteLong(f,vert_attachment[i].bone_id[0]);
+		WriteLong(f,vert_attachment[i].bone_id[1]);
+		WriteLong(f,vert_attachment[i].bone_id[2]);
+		WriteLong(f,vert_attachment[i].bone_id[3]);
+	}
+	WriteLong(f,vert_format0);
+	WriteLong(f,vertice_amount);
+	WriteLong(f,vert_format1);
+	WriteLong(f,vert_format2);
+	WriteLong(f,vert_format3);
+	WriteLong(f,vert_format4);
+	WriteLong(f,vert_format5);
+	WriteLong(f,vert_format6);
+	WriteLong(f,vert_format7);
+	WriteLong(f,vert_format8);
+	WriteLong(f,vert_format9);
+	WriteLong(f,vert_datasize);
+	size_t vertposalign = f.tellg()%0x10;
+	for (i=0;i<vertice_amount;i++) {
+		ModelDataStruct::WriteCoordinates(f,vert[i].x,vert[i].y,vert[i].z);
+		ModelDataStruct::WriteCoordinates(f,vert[i].nx,vert[i].ny,vert[i].nz);
+		if (vert_format9==0x4002000) {
+			WriteFloat(f,vert[i].u);
+			WriteFloat(f,vert[i].v);
+		}
+		ModelDataStruct::WriteCoordinates(f,vert[i].tx,vert[i].ty,vert[i].tz);
+		WriteFloat(f,vert[i].unkf);
+	}
+	while (f.tellg()%0x10!=vertposalign)
+		f.put(0);
+	if (vert_format9!=0x4002000) {
+		for (i=0;i<vertice_amount;i++) {
+			WriteFloat(f,vert[i].u);
+			WriteFloat(f,vert[i].v);
+			if (vert_format6==0x2000801) {
+				WriteFloat(f,vert[i].unkuv1);
+				WriteFloat(f,vert[i].unkuv2);
+			}
+		}
+	}
+	for (i=0;i<0xA4;i++)
+		f.put(0);
+	ModelDataStruct::WriteCoordinates(f,center_x,center_y,center_z);
+	ModelDataStruct::WriteCoordinates(f,radius_x,radius_y,radius_z,false);
+	WriteLong(f,unk_num1);
+	WriteLong(f,unk_num2);
+	WriteLong(f,unk_num3);
+}
+
+int ModelMeshData::GetDataSize() {
+	return 292+44*material_info_amount+64*bone_amount+4*bone_unk_amount+32*vertice_attachment_amount
+		+2*vertex_list_amount+2*(vertex_list_amount%2)
+		+(vert_format9==0x4002000 ? 48*vertice_amount :
+			40*vertice_amount+8*(vertice_amount%2)
+			+(vert_format6==0x2000801 ? 16*vertice_amount : 8*vertice_amount));
 }
 
 void ModelMeshData::Export(fstream& output, const char* objname, const char* mtlbasename, bool firstobject) {
@@ -175,8 +276,18 @@ void ModelMaterialData::Read(fstream& f, UnityArchiveMetaData& metadata) {
 	uint32_t fieldlen;
 	char fieldbuffer[0x20];
 	size_t headerpos = f.tellg();
-	f.seekg(headerpos+0x20);
+	f.seekg(headerpos+0xC);
 	fieldlen = ReadLong(f);
+	if (fieldlen==0) {
+		extheader_value1 = ReadLong(f); // DEBUG: save that and optional fields in FBX
+		extheader_value2 = ReadLong(f);
+		extheader_value3 = ReadLong(f);
+		extheader_value4 = ReadLong(f);
+		fieldlen = ReadLong(f);
+		has_extheader = true;
+	} else {
+		has_extheader = false;
+	}
 	while (fieldlen<0x20 && !f.eof()) {
 		f.read(fieldbuffer,fieldlen);
 		fieldbuffer[fieldlen] = 0;
@@ -250,6 +361,17 @@ void ModelMaterialData::Read(fstream& f, UnityArchiveMetaData& metadata) {
 			emissioncolor_green = ReadFloat(f);
 			emissioncolor_blue = ReadFloat(f);
 			emissioncolor_alpha = ReadFloat(f);
+		} else if (strcmp(fieldbuffer,"_ALPHAPREMULTIPLY_ON")==0) {
+			alphapremultiply_on_value1 = ReadLong(f);
+			alphapremultiply_on_value2 = ReadLong(f);
+			alphapremultiply_on_value3 = ReadLong(f);
+			has_alphapremultiply_on = true;
+		} else if (strcmp(fieldbuffer,"RenderType")==0) {
+			rendertype_value = ReadLong(f);
+			has_rendertype = true;
+		} else if (strcmp(fieldbuffer,"Transparent")==0) {
+			transparent_value = ReadLong(f);
+			has_transparent = true;
 		} else {
 			break;
 		}
@@ -258,6 +380,126 @@ void ModelMaterialData::Read(fstream& f, UnityArchiveMetaData& metadata) {
 }
 
 void ModelMaterialData::Write(fstream& f, UnityArchiveMetaData& metadata) {
+	string fieldbuffer;
+	WriteLong(f,0);
+	WriteLong(f,0xC6190F1B);
+	WriteLong(f,0x0D38C292);
+	if (has_extheader) {
+		WriteLong(f,0);
+		WriteLong(f,extheader_value1);
+		WriteLong(f,extheader_value2);
+		WriteLong(f,extheader_value3);
+		WriteLong(f,extheader_value4);
+	}
+	if (has_alphapremultiply_on) {
+		fieldbuffer = "_ALPHAPREMULTIPLY_ON";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+		while (f.tellg()%4!=0) f.put(0);
+		WriteLong(f,alphapremultiply_on_value1);
+		WriteLong(f,alphapremultiply_on_value2);
+		WriteLong(f,alphapremultiply_on_value3);
+	}
+	if (has_rendertype) {
+		fieldbuffer = "RenderType";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+		while (f.tellg()%4!=0) f.put(0);
+		WriteLong(f,rendertype_value);
+	}
+	if (has_transparent) {
+		fieldbuffer = "Transparent";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+		while (f.tellg()%4!=0) f.put(0);
+		WriteLong(f,transparent_value);
+	}
+
+	#define MACRO_MATERIAL_WRITEFILE(MAP) \
+		WriteLong(f,MAP.unk1); \
+		WriteLongLong(f,MAP.file_info); \
+		WriteFloat(f,MAP.u); \
+		WriteFloat(f,MAP.v); \
+		WriteLong(f,MAP.unk2); \
+		WriteLong(f,MAP.unk3);
+
+	fieldbuffer = "_BumpMap";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+	while (f.tellg()%4!=0) f.put(0);
+	MACRO_MATERIAL_WRITEFILE(bumpmap)
+	fieldbuffer = "_DetailAlbedoMap";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+	while (f.tellg()%4!=0) f.put(0);
+	MACRO_MATERIAL_WRITEFILE(detailalbedomap)
+	fieldbuffer = "_DetailMask";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+	while (f.tellg()%4!=0) f.put(0);
+	MACRO_MATERIAL_WRITEFILE(detailmask)
+	fieldbuffer = "_DetailNormalMap";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+	while (f.tellg()%4!=0) f.put(0);
+	MACRO_MATERIAL_WRITEFILE(detailnormalmap)
+	fieldbuffer = "_EmissionMap";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+	while (f.tellg()%4!=0) f.put(0);
+	MACRO_MATERIAL_WRITEFILE(emissionmap)
+	fieldbuffer = "_MainTex";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+	while (f.tellg()%4!=0) f.put(0);
+	MACRO_MATERIAL_WRITEFILE(maintex)
+	fieldbuffer = "_MetallicGlossMap";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+	while (f.tellg()%4!=0) f.put(0);
+	MACRO_MATERIAL_WRITEFILE(metallicglossmap)
+	fieldbuffer = "_OcclusionMap";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+	while (f.tellg()%4!=0) f.put(0);
+	MACRO_MATERIAL_WRITEFILE(occlusionmap)
+	fieldbuffer = "_ParallaxMap";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+	while (f.tellg()%4!=0) f.put(0);
+	MACRO_MATERIAL_WRITEFILE(parallaxmap)
+	WriteLong(f,parallaxmap_unk4);
+	fieldbuffer = "_BumpScale";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+	while (f.tellg()%4!=0) f.put(0);
+	WriteFloat(f,bumpscale_value);
+	fieldbuffer = "_Cutoff";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+	while (f.tellg()%4!=0) f.put(0);
+	WriteFloat(f,cutoff_value);
+	fieldbuffer = "_DetailNormalMapScale";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+	while (f.tellg()%4!=0) f.put(0);
+	WriteFloat(f,detailnormalmapscale_value);
+	fieldbuffer = "_DstBlend";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+	while (f.tellg()%4!=0) f.put(0);
+	WriteFloat(f,dstblend_value);
+	fieldbuffer = "_Glossiness";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+	while (f.tellg()%4!=0) f.put(0);
+	WriteFloat(f,glossiness_value);
+	fieldbuffer = "_Metallic";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+	while (f.tellg()%4!=0) f.put(0);
+	WriteFloat(f,metallic_value);
+	fieldbuffer = "_Mode";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+	while (f.tellg()%4!=0) f.put(0);
+	WriteFloat(f,mode_value);
+	fieldbuffer = "_OcclusionStrength";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+	while (f.tellg()%4!=0) f.put(0);
+	WriteFloat(f,occlusionstrength_value);
+	fieldbuffer = "_Parallax";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+	while (f.tellg()%4!=0) f.put(0);
+	WriteFloat(f,parallax_value);
+	fieldbuffer = "_SrcBlend";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+	while (f.tellg()%4!=0) f.put(0);
+	WriteFloat(f,srcblend_value);
+	fieldbuffer = "_UVSec";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+	while (f.tellg()%4!=0) f.put(0);
+	WriteFloat(f,uvsec_value);
+	fieldbuffer = "_ZWrite";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+	while (f.tellg()%4!=0) f.put(0);
+	WriteFloat(f,zwrite_factor);
+	WriteLong(f,zwrite_mode);
+	fieldbuffer = "_Color";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+	while (f.tellg()%4!=0) f.put(0);
+	WriteFloat(f,color_red);
+	WriteFloat(f,color_green);
+	WriteFloat(f,color_blue);
+	WriteFloat(f,color_alpha);
+	fieldbuffer = "_EmissionColor";	WriteLong(f,fieldbuffer.size());	f.write(fieldbuffer.c_str(),fieldbuffer.size());
+	while (f.tellg()%4!=0) f.put(0);
+	WriteFloat(f,emissioncolor_red);
+	WriteFloat(f,emissioncolor_green);
+	WriteFloat(f,emissioncolor_blue);
+	WriteFloat(f,emissioncolor_alpha);
+}
+
+int ModelMaterialData::GetDataSize() {
+	return 0x2E0 // Header + fields that are always there
+		+(has_extheader ? 0x14 : 0)
+		+(has_alphapremultiply_on ? 0x24 : 0)+(has_rendertype ? 0x10 : 0)+(has_transparent ? 0x14 : 0);
 }
 
 void ModelMaterialData::Export(fstream& output, const char* mtlname, const char* maintexname) {
@@ -324,6 +566,16 @@ void ModelAnimationData::Read(fstream& f, GameObjectHierarchy* gohier) {
 	float_unk = ReadFloat(f);
 	num_unk6 = ReadLong(f);
 	// ToDo: read the end
+}
+
+int ModelAnimationData::GetDataSize() {
+	int res = 40+name_len+GetAlignOffset(name_len)+12*(localw_amount+localt_amount+locals_amount);
+	unsigned int i;
+	for (i=0;i<localw_amount;i++)	res += localw[i].object_name_len+GetAlignOffset(localw[i].object_name_len)+52*localw[i].transform_amount;
+	for (i=0;i<localt_amount;i++)	res += localt[i].object_name_len+GetAlignOffset(localt[i].object_name_len)+40*localt[i].transform_amount;
+	for (i=0;i<locals_amount;i++)	res += locals[i].object_name_len+GetAlignOffset(locals[i].object_name_len)+40*locals[i].transform_amount;
+	// ToDo: the end (after num_unk6)
+	return res;
 }
 
 void ModelDataStruct::ReadCoordinates(fstream& f, float& x, float& y, float& z, bool swapsign) {
@@ -432,9 +684,10 @@ bool ModelDataStruct::Read(fstream& f, GameObjectHierarchy* gohier) {
 	return true;
 }
 
-bool ModelDataStruct::Write(fstream& f, GameObjectHierarchy* gohier) {
+bool ModelDataStruct::Write(fstream& f) {
 	UnityArchiveMetaData& meta = *hierarchy->meta_data;
-	unsigned int i,j,k;
+	unsigned int i,j;
+	hierarchy->OverwriteHierarchy(f);
 	for (i=0;i<hierarchy->node_list.size();i++) {
 		if (hierarchy->node_list[i]->node_type==23) {
 			// Write material list ; TODO: do not duplicates the same materials
@@ -538,24 +791,22 @@ void ModelDataStruct::SetupPostImportData(vector<unsigned int> folderfiles, Game
 			mesh[i].mat_info[j].radius_y = (matmaxy-matminy)/2;
 			mesh[i].mat_info[j].radius_z = (matmaxz-matminz)/2;
 		}
-		for (j=0;j<mesh[i].bone_amount;j++) {
-			mesh[i].bone[j].scoped_name = ""; // DEBUG
-		}
 		mesh[i].unk_flag1 = 0;
 		mesh[i].unk_flag2 = 1;
 		mesh[i].unk_flag3 = 1;
 		mesh[i].unk_flag4 = 1;
+		// DEBUG: most of p0data4 format but not weapons/battlescene/worldmap
 		mesh[i].vert_format0 = 0x8B;
 		mesh[i].vert_format1 = 8;
 		mesh[i].vert_format2 = 0x03000000;
 		mesh[i].vert_format3 = 0x03000C00;
 		mesh[i].vert_format4 = 0;
-		mesh[i].vert_format5 = 0x02001800;
+		mesh[i].vert_format5 = 0x02000001;
 		mesh[i].vert_format6 = 0;
 		mesh[i].vert_format7 = 0;
 		mesh[i].vert_format8 = 0;
-		mesh[i].vert_format9 = 0x04002000;
-		mesh[i].vert_datasize = 12*4*mesh[i].vertice_amount;
+		mesh[i].vert_format9 = 0x04001800;
+		mesh[i].vert_datasize = 12*4*mesh[i].vertice_amount+8*(mesh[i].vertice_amount%2);
 		mesh[i].center_x = (minx+maxx)/2;
 		mesh[i].center_y = (miny+maxy)/2;
 		mesh[i].center_z = (minz+maxz)/2;
@@ -565,7 +816,6 @@ void ModelDataStruct::SetupPostImportData(vector<unsigned int> folderfiles, Game
 		mesh[i].unk_num1 = 1;
 		mesh[i].unk_num2 = 0;
 		mesh[i].unk_num3 = 0;
-		mesh[i].scoped_name = ""; // DEBUG
 	}
 	for (i=0;i<material.size();i++) {
 		for (j=0;j<material[i].size();j++) {
@@ -591,7 +841,7 @@ void ModelDataStruct::SetupPostImportData(vector<unsigned int> folderfiles, Game
 			MACRO_SETUP_FILEMAP(material[i][j].maintex)
 			MACRO_SETUP_FILEMAP(material[i][j].metallicglossmap)
 			MACRO_SETUP_FILEMAP(material[i][j].occlusionmap)
-			MACRO_SETUP_FILEMAP(material[i][j].parallaxmap);
+			MACRO_SETUP_FILEMAP(material[i][j].parallaxmap)
 		}
 	}
 	for (i=0;i<animation.size();i++) {
@@ -883,6 +1133,18 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 					lProp.Set(FbxColor(material[j].color_red,material[j].color_green,material[j].color_blue,material[j].color_alpha));
 					lProp = FbxProperty::Create(lMaterial, FbxColor4DT, "_EmissionColor");
 					lProp.Set(FbxColor(material[j].emissioncolor_red,material[j].emissioncolor_green,material[j].emissioncolor_blue,material[j].emissioncolor_alpha));
+					if (material[j].has_alphapremultiply_on) {
+						FbxProperty::Create(lMaterial, FbxColor3DT, "_ALPHAPREMULTIPLY_ON");
+						lProp.Set(FbxColor(FbxDouble(material[j].alphapremultiply_on_value1)/0xFF,FbxDouble(material[j].alphapremultiply_on_value2)/0xFF,FbxDouble(material[j].alphapremultiply_on_value3)/0xFF));
+					}
+					if (material[j].has_rendertype) {
+						FbxProperty::Create(lMaterial, FbxUIntDT, "RenderType");
+						lProp.Set(material[j].rendertype_value);
+					}
+					if (material[j].has_transparent) {
+						FbxProperty::Create(lMaterial, FbxUIntDT, "Transparent");
+						lProp.Set(material[j].transparent_value);
+					}
 					lMaterial->Diffuse.ConnectSrcObject(lFileTex);
 				}
 				// Link points to Skeleton Clusters
@@ -1086,7 +1348,6 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 	}
 	// Sequence the bone list of the whole model
 	vector<FbxString> lSkeletonName;
-	vector<FbxString> lSkeletonFullName;
 	vector<FbxNode*> lSkeletonNode;
 	indexlist.empty();
 	for (i=0;i<lNodeList.size();i++) {
@@ -1094,7 +1355,6 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 		if (lCurrentNode->GetNodeAttribute()!=NULL && lCurrentNode->GetNodeAttribute()->GetAttributeType()==FbxNodeAttribute::EType::eSkeleton) {
 			FbxSkeleton* lSkeleton =  static_cast<FbxSkeleton*>(lCurrentNode->GetNodeAttribute());
 			lSkeletonName.push_back(lSkeleton->GetNameOnly());
-			lSkeletonFullName.push_back(lSkeleton->GetNameWithNameSpacePrefix());
 			lSkeletonNode.push_back(lCurrentNode);
 			indexlist.push_back(i);
 		}
@@ -1117,7 +1377,8 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 			GameObjectNode* newmeshnode = new GameObjectNode(newskinmesh,*model.hierarchy,43,0,0);
 			newskinmesh->child_mesh = newmeshnode;
 			ModelMeshData newmesh;
-			newmesh.name = lMesh->GetNameOnly();
+			newmesh.name = obj_list[i]->name;
+			newmesh.scoped_name = obj_list[i]->GetScopedName();
 			newmesh.vertice_amount = lMesh->GetControlPointsCount();
 			FbxVector4* lCtrlPts = lMesh->GetControlPoints();
 			FbxGeometryElementNormal* lGeometryElementNormal = lMesh->GetElementNormal();
@@ -1159,7 +1420,7 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 					if (k>=lMaterialList.size())
 						lMaterialList.push_back(lPolyMaterial);
 					ModelMeshMaterialInfo newmatinfo;
-					newmatinfo.vert_list_start = newmesh.vertex_list_amount*2; // DEBUG: setup the rest
+					newmatinfo.vert_list_start = newmesh.vertex_list_amount*2;
 					newmesh.mat_info.push_back(newmatinfo);
 					lCurrentMaterial = lPolyMaterial;
 				}
@@ -1277,6 +1538,23 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 					newmat.emissioncolor_blue = lProp.Get<FbxColor>().mBlue;
 					newmat.emissioncolor_alpha = lProp.Get<FbxColor>().mAlpha;
 				}
+				lProp = lMaterial->FindProperty("_ALPHAPREMULTIPLY_ON",FbxColor3DT);
+				if (lProp.IsValid()) {
+					newmat.alphapremultiply_on_value1 = lProp.Get<FbxColor>().mRed*0xFF;
+					newmat.alphapremultiply_on_value2 = lProp.Get<FbxColor>().mGreen*0xFF;
+					newmat.alphapremultiply_on_value3 = lProp.Get<FbxColor>().mBlue*0xFF;
+					newmat.has_alphapremultiply_on = true;
+				}
+				lProp = lMaterial->FindProperty("RenderType",FbxUIntDT);
+				if (lProp.IsValid()) {
+					newmat.rendertype_value = lProp.Get<FbxUInt>();
+					newmat.has_rendertype = true;
+				}
+				lProp = lMaterial->FindProperty("Transparent",FbxUIntDT);
+				if (lProp.IsValid()) {
+					newmat.transparent_value = lProp.Get<FbxUInt>();
+					newmat.has_transparent = true;
+				}
 				newmatlist.push_back(newmat);
 			}
 			model.hierarchy->node_list.push_back(newmeshnode);
@@ -1293,9 +1571,11 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 					FbxCluster* lSkeletonCluster = lSkin->GetCluster(j);
 					ModelMeshBone newbone;
 					newbone.name = "";
+					newbone.scoped_name = "";
 					for (k=0;k<lSkeletonNode.size();k++) {
 						if (lSkeletonNode[k]==lSkeletonCluster->GetLink()) {
-							newbone.name = lSkeletonName[k]; // DEBUG: think of scopedname
+							newbone.name = obj_list[indexlist[k]]->name;
+							newbone.scoped_name = obj_list[indexlist[k]]->GetScopedName();
 							newskinmesh->child_bone.push_back(transf_list[indexlist[k]]);
 							newskinmesh->child_bone_sample = transf_list[indexlist[k]];
 							break;
