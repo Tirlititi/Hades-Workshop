@@ -276,7 +276,7 @@ bool PreferencesDialog::SaveToolUnityConfig(UnityViewerWindow* configwindow) {
 		configwindow->m_menuimportmodelflush->IsChecked() ? _(L"yes") : _(L"yes");
 	configfileout.Write(_(L"\nModelFlush=") + token);
 	configfileout.Write(_(L"\nModelImportType="));
-	if (configwindow->m_menuimportmodelmesh->IsChecked())		{ configfileout.Write(comma+_(L"mesh")); comma = _(L","); }
+	if (configwindow->m_menuimportmodelmesh->IsChecked())		{ configfileout.Write(comma+_(L"meshmat")); comma = _(L","); }
 	if (configwindow->m_menuimportmodelanims->IsChecked())		{ configfileout.Write(comma+_(L"anim")); comma = _(L","); }
 	token = configwindow->m_menufolderx86->IsChecked() ? _(L"x86") :
 		configwindow->m_menufolderx64->IsChecked() ? _(L"x64") : _(L"x86");
@@ -352,9 +352,11 @@ bool PreferencesDialog::LoadToolUnityConfig(UnityViewerWindow* configwindow) {
 		if (SearchField(cfgfield, _(L"ModelFlush"), TmpArgs, argcount)) {
 			wxStringTokenizer sortlist(TmpArgs[argcount],L",");
 			wxString sorttoken;
+			configwindow->m_menuimportmodelmesh->Check(false);
+			configwindow->m_menuimportmodelanims->Check(false);
 			while (sortlist.HasMoreTokens()) {
 				sorttoken = sortlist.GetNextToken();
-				if (sorttoken.IsSameAs(_(L"mesh")))					configwindow->m_menuimportmodelmesh->Check();
+				if (sorttoken.IsSameAs(_(L"meshmat")))				configwindow->m_menuimportmodelmesh->Check();
 				else if (sorttoken.IsSameAs(_(L"anim")))			configwindow->m_menuimportmodelanims->Check();
 			}
 		}

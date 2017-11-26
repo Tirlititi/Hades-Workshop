@@ -120,16 +120,18 @@ struct UnityArchiveMetaData {
 	
 	int Load(fstream& f);
 	void Flush();
+	void Copy(UnityArchiveMetaData* base, bool copyfiles = true);
 	uint32_t GetFileSizeByIndex(unsigned int fileid);
 	uint32_t GetFileOffset(string filename, uint32_t filetype = 0xFFFFFFFF, unsigned int num = 0, string folder = "");
 	uint32_t GetFileOffsetByInfo(uint64_t info, uint32_t filetype = 0xFFFFFFFF, string folder = "");
 	uint32_t GetFileOffsetByIndex(unsigned int fileid, string folder = "");
 	int32_t GetFileIndex(string filename, uint32_t filetype = 0xFFFFFFFF, unsigned int num = 0, string folder = "");
 	int32_t GetFileIndexByInfo(uint64_t info, uint32_t filetype = 0xFFFFFFFF, string folder = "");
-	
-	// Return the starting offset of the files in the duplicate (must be deleted[])
+
 	// Arrays must be of length header_file_amount
-	uint32_t* Duplicate(fstream& fbase, fstream& fdest, bool* copylist, uint32_t* filenewsize);
+	// Return the starting offset of the files in the duplicate (must be deleted[] if newmetadata is not given)
+	// If a newmetadata is given, an UnityArchiveMetaData compatible with the duplicate is computed and the offsets returned are file_offset_start instead (use GetFileOffsetByIndex instead)
+	uint32_t* Duplicate(fstream& fbase, fstream& fdest, bool* copylist, uint32_t* filenewsize, UnityArchiveMetaData* newmetadata = NULL);
 	
 	UnityArchiveMetaData() : loaded(false) {}
 	~UnityArchiveMetaData() { Flush(); }

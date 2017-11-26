@@ -131,7 +131,7 @@ struct ModelMeshVertex {
 	float ty;
 	float tz;
 	// Unknown
-	float unkf; // Usually -1.0
+	float unkf; // Usually -1.0 or 1.0
 	float unkuv1; // Looks like UV
 	float unkuv2;
 };
@@ -218,8 +218,8 @@ struct ModelMeshData {
 struct ModelMaterialFile {
 	uint32_t unk1;
 	uint64_t file_info = 0;
-	float u = 0.0;
-	float v = 0.0;
+	float u = 1.0;
+	float v = 1.0;
 	uint32_t unk2;
 	uint32_t unk3;
 

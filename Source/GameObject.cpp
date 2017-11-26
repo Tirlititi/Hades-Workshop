@@ -285,7 +285,7 @@ void GameObjectHierarchy::BuildHierarchy(fstream& archivefile, UnityArchiveMetaD
 }
 
 void GameObjectHierarchy::OverwriteHierarchy(fstream& archivefile) {
-	unsigned int i;
+	unsigned int i,j;
 	for (i=0;i<node_list.size();i++) {
 		if (node_list[i]->node_type==1) {
 			GameObjectStruct& nodeobj = *static_cast<GameObjectStruct*>(node_list[i]);
@@ -303,13 +303,13 @@ void GameObjectHierarchy::OverwriteHierarchy(fstream& archivefile) {
 				}
 
 			WriteLong(archivefile,nodeobj.child_amount);
-			for (i=0;i<nodeobj.child_amount;i++) {
-				MACRO_WRITECHILDOBJ(nodeobj.child[i],true)
+			for (j=0;j<nodeobj.child_amount;j++) {
+				MACRO_WRITECHILDOBJ(nodeobj.child[j],true)
 			}
 			WriteLong(archivefile,nodeobj.unknown);
 			WriteLong(archivefile,nodeobj.name_len);
-			for (i=0;i<nodeobj.name_len;i++)
-				archivefile.put(nodeobj.name[i]);
+			for (j=0;j<nodeobj.name_len;j++)
+				archivefile.put(nodeobj.name[j]);
 			while (archivefile.tellg()%4) archivefile.put(0);
 			archivefile.put(nodeobj.unk1);
 			archivefile.put(nodeobj.unk2);
@@ -322,8 +322,8 @@ void GameObjectHierarchy::OverwriteHierarchy(fstream& archivefile) {
 			ModelDataStruct::WriteCoordinates(archivefile,nodetransf.x,nodetransf.y,nodetransf.z);
 			ModelDataStruct::WriteCoordinates(archivefile,nodetransf.scale_x,nodetransf.scale_y,nodetransf.scale_z,false);
 			WriteLong(archivefile,nodetransf.child_transform_amount);
-			for (i=0;i<nodetransf.child_transform_amount;i++) {
-				MACRO_WRITECHILDOBJ(nodetransf.child_transform[i],false)
+			for (j=0;j<nodetransf.child_transform_amount;j++) {
+				MACRO_WRITECHILDOBJ(nodetransf.child_transform[j],false)
 			}
 			MACRO_WRITECHILDOBJ(nodetransf.parent_transform,false)
 		} else if (node_list[i]->node_type==23) {
@@ -342,8 +342,8 @@ void GameObjectHierarchy::OverwriteHierarchy(fstream& archivefile) {
 			WriteFloat(archivefile,nodemeshren.float_unk7);
 			WriteFloat(archivefile,nodemeshren.float_unk8);
 			WriteLong(archivefile,nodemeshren.child_material_amount);
-			for (i=0;i<nodemeshren.child_material_amount;i++) {
-				MACRO_WRITECHILDOBJ(nodemeshren.child_material[i],false)
+			for (j=0;j<nodemeshren.child_material_amount;j++) {
+				MACRO_WRITECHILDOBJ(nodemeshren.child_material[j],false)
 			}
 			WriteLong(archivefile,nodemeshren.flag3);
 			WriteLong(archivefile,nodemeshren.flag4);
@@ -393,8 +393,8 @@ void GameObjectHierarchy::OverwriteHierarchy(fstream& archivefile) {
 			WriteFloat(archivefile,nodeskinmeshren.float_unk7);
 			WriteFloat(archivefile,nodeskinmeshren.float_unk8);
 			WriteLong(archivefile,nodeskinmeshren.child_material_amount);
-			for (i=0;i<nodeskinmeshren.child_material_amount;i++) {
-				MACRO_WRITECHILDOBJ(nodeskinmeshren.child_material[i],false)
+			for (j=0;j<nodeskinmeshren.child_material_amount;j++) {
+				MACRO_WRITECHILDOBJ(nodeskinmeshren.child_material[j],false)
 			}
 			WriteLong(archivefile,nodeskinmeshren.flag3);
 			WriteLong(archivefile,nodeskinmeshren.flag4);
@@ -411,8 +411,8 @@ void GameObjectHierarchy::OverwriteHierarchy(fstream& archivefile) {
 			WriteLong(archivefile,nodeskinmeshren.flag15);
 			MACRO_WRITECHILDOBJ(nodeskinmeshren.child_mesh,false)
 			WriteLong(archivefile,nodeskinmeshren.child_bone_amount);
-			for (i=0;i<nodeskinmeshren.child_bone_amount;i++) {
-				MACRO_WRITECHILDOBJ(nodeskinmeshren.child_bone[i],false)
+			for (j=0;j<nodeskinmeshren.child_bone_amount;j++) {
+				MACRO_WRITECHILDOBJ(nodeskinmeshren.child_bone[j],false)
 			}
 			WriteLong(archivefile,nodeskinmeshren.flag16);
 			MACRO_WRITECHILDOBJ(nodeskinmeshren.child_bone_sample,false)
@@ -543,5 +543,5 @@ int AnimationStruct::GetDataSize() {
 }
 
 int SkinnedMeshRendererStruct::GetDataSize() {
-	return 176+12*child_material_amount+12*child_bone_amount;
+	return 172+12*child_material_amount+12*child_bone_amount;
 }

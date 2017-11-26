@@ -1,5 +1,6 @@
 #include "ModelMesh.h"
 
+#include <algorithm>
 #include "fbxsdk.h"
 
 void InitializeSdkObjects(FbxManager*& pManager, FbxScene*& pScene);
@@ -32,7 +33,6 @@ void ModelMeshData::Read(fstream& f) {
 	unsigned int i,j,k;
 	material_info_amount = ReadLong(f);
 //fstream fout("aaaa.txt",ios::out|ios::app); fout << "material_info_amount: " << (unsigned int)material_info_amount << endl; fout.close();
-fstream fout("aaaa.txt",ios::out|ios::app); fout << "NEW MESH" << endl; fout.close();
 	mat_info.reserve(material_info_amount);
 	for (i=0;i<material_info_amount;i++) {
 		matinfobuffer.vert_list_start = ReadLong(f);
@@ -588,8 +588,8 @@ void ModelDataStruct::ReadCoordinates(fstream& f, float& x, float& y, float& z, 
 void ModelDataStruct::WriteCoordinates(fstream& f, float x, float y, float z, bool swapsign) {
 	int sign = swapsign ? -1 : 1;
 	WriteFloat(f,sign*x);
-	WriteFloat(f,sign*z);
 	WriteFloat(f,sign*y);
+	WriteFloat(f,sign*z);
 }
 
 bool ModelDataStruct::Read(fstream& f, GameObjectHierarchy* gohier) {
@@ -687,37 +687,40 @@ bool ModelDataStruct::Read(fstream& f, GameObjectHierarchy* gohier) {
 bool ModelDataStruct::Write(fstream& f) {
 	UnityArchiveMetaData& meta = *hierarchy->meta_data;
 	unsigned int i,j;
+	unsigned int meshcounter = 0;
 	hierarchy->OverwriteHierarchy(f);
 	for (i=0;i<hierarchy->node_list.size();i++) {
 		if (hierarchy->node_list[i]->node_type==23) {
 			// Write material list ; TODO: do not duplicates the same materials
 			MeshRendererStruct* node = static_cast<MeshRendererStruct*>(hierarchy->node_list[i]);
 			for (j=0;j<node->child_material_amount;j++) {
-				ModelMaterialData& matdata = material[i][j];
+				ModelMaterialData& matdata = material[meshcounter][j];
 				if (!node->child_material[j]) return false;
 				f.seekg(meta.GetFileOffsetByIndex(node->child_material[j]->file_index));
 				matdata.Write(f,meta);
 			}
+			meshcounter++;
 		} else if (hierarchy->node_list[i]->node_type==33) {
 			// Write mesh
 			MeshFilterStruct* node = static_cast<MeshFilterStruct*>(hierarchy->node_list[i]);
-			ModelMeshData& meshdata = mesh[i];
+			ModelMeshData& meshdata = mesh[meshcounter];
 			if (!node->child_mesh) return false;
 			f.seekg(meta.GetFileOffsetByIndex(node->child_mesh->file_index));
 			meshdata.Write(f);
 		} else if (hierarchy->node_list[i]->node_type==137) {
 			// Write mesh + material list + node names
 			SkinnedMeshRendererStruct* node = static_cast<SkinnedMeshRendererStruct*>(hierarchy->node_list[i]);
-			ModelMeshData& meshdata = mesh[i];
+			ModelMeshData& meshdata = mesh[meshcounter];
 			if (!node->child_mesh) return false;
 			f.seekg(meta.GetFileOffsetByIndex(node->child_mesh->file_index));
 			meshdata.Write(f);
 			for (j=0;j<node->child_material_amount;j++) {
-				ModelMaterialData& matdata = material[i][j];
+				ModelMaterialData& matdata = material[meshcounter][j];
 				if (!node->child_material[j]) return false;
 				f.seekg(meta.GetFileOffsetByIndex(node->child_material[j]->file_index));
 				matdata.Write(f,meta);
 			}
+			meshcounter++;
 		}
 	}
 	return true;
@@ -756,20 +759,31 @@ void ModelDataStruct::SetupPostImportData(vector<unsigned int> folderfiles, Game
 	unsigned int i,j,k;
 	if (basehierarchy)
 		hierarchy->MergeHierarchy(basehierarchy,mergepolicy);
+	vector<float> minmeshx,minmeshy,minmeshz;
+	vector<float> maxmeshx,maxmeshy,maxmeshz;
+	vector<float> meanmeshx,meanmeshy,meanmeshz;
+	unsigned int meshcounter = 0;
 	for (i=0;i<mesh.size();i++) {
-		float minx = FLT_MAX, miny = FLT_MAX, minz = FLT_MAX;
-		float maxx = -FLT_MAX, maxy = -FLT_MAX, maxz = -FLT_MAX;
+		minmeshx.push_back(FLT_MAX);	minmeshy.push_back(FLT_MAX);	minmeshz.push_back(FLT_MAX);
+		maxmeshx.push_back(-FLT_MAX);	maxmeshy.push_back(-FLT_MAX);	maxmeshz.push_back(-FLT_MAX);
+		meanmeshx.push_back(0.0);		meanmeshy.push_back(0.0);		meanmeshz.push_back(0.0);
 		for (j=0;j<mesh[i].vertice_amount;j++) {
-			if (mesh[i].vert[j].x<minx) minx = mesh[i].vert[j].x;
-			if (mesh[i].vert[j].x>maxx) maxx = mesh[i].vert[j].x;
-			if (mesh[i].vert[j].y<miny) miny = mesh[i].vert[j].y;
-			if (mesh[i].vert[j].y>maxy) maxy = mesh[i].vert[j].y;
-			if (mesh[i].vert[j].z<minz) minz = mesh[i].vert[j].z;
-			if (mesh[i].vert[j].z>maxz) maxz = mesh[i].vert[j].z;
-			mesh[i].vert[j].unkf = -1.0;
+			if (mesh[i].vert[j].x<minmeshx[i]) minmeshx[i] = mesh[i].vert[j].x;
+			if (mesh[i].vert[j].x>maxmeshx[i]) maxmeshx[i] = mesh[i].vert[j].x;
+			if (mesh[i].vert[j].y<minmeshy[i]) minmeshy[i] = mesh[i].vert[j].y;
+			if (mesh[i].vert[j].y>maxmeshy[i]) maxmeshy[i] = mesh[i].vert[j].y;
+			if (mesh[i].vert[j].z<minmeshz[i]) minmeshz[i] = mesh[i].vert[j].z;
+			if (mesh[i].vert[j].z>maxmeshz[i]) maxmeshz[i] = mesh[i].vert[j].z;
+			meanmeshx[i] += mesh[i].vert[j].x;
+			meanmeshy[i] += mesh[i].vert[j].y;
+			meanmeshz[i] += mesh[i].vert[j].z;
+			mesh[i].vert[j].unkf = -1.0; // 1.0 or -1.0
 			mesh[i].vert[j].unkuv1 = 0.0;
 			mesh[i].vert[j].unkuv2 = 0.0;
 		}
+		meanmeshx[i] /= (float)mesh[i].vertice_amount;
+		meanmeshy[i] /= (float)mesh[i].vertice_amount;
+		meanmeshz[i] /= (float)mesh[i].vertice_amount;
 		for (j=0;j<mesh[i].material_info_amount;j++) {
 			float matminx = FLT_MAX, matminy = FLT_MAX, matminz = FLT_MAX;
 			float matmaxx = -FLT_MAX, matmaxy = -FLT_MAX, matmaxz = -FLT_MAX;
@@ -807,12 +821,12 @@ void ModelDataStruct::SetupPostImportData(vector<unsigned int> folderfiles, Game
 		mesh[i].vert_format8 = 0;
 		mesh[i].vert_format9 = 0x04001800;
 		mesh[i].vert_datasize = 12*4*mesh[i].vertice_amount+8*(mesh[i].vertice_amount%2);
-		mesh[i].center_x = (minx+maxx)/2;
-		mesh[i].center_y = (miny+maxy)/2;
-		mesh[i].center_z = (minz+maxz)/2;
-		mesh[i].radius_x = (maxx-minx)/2;
-		mesh[i].radius_y = (maxy-miny)/2;
-		mesh[i].radius_z = (maxz-minz)/2;
+		mesh[i].center_x = (minmeshx[i]+maxmeshx[i])/2;
+		mesh[i].center_y = (minmeshy[i]+maxmeshy[i])/2;
+		mesh[i].center_z = (minmeshz[i]+maxmeshz[i])/2;
+		mesh[i].radius_x = (maxmeshx[i]-minmeshx[i])/2;
+		mesh[i].radius_y = (maxmeshy[i]-minmeshy[i])/2;
+		mesh[i].radius_z = (maxmeshz[i]-minmeshz[i])/2;
 		mesh[i].unk_num1 = 1;
 		mesh[i].unk_num2 = 0;
 		mesh[i].unk_num3 = 0;
@@ -842,6 +856,43 @@ void ModelDataStruct::SetupPostImportData(vector<unsigned int> folderfiles, Game
 			MACRO_SETUP_FILEMAP(material[i][j].metallicglossmap)
 			MACRO_SETUP_FILEMAP(material[i][j].occlusionmap)
 			MACRO_SETUP_FILEMAP(material[i][j].parallaxmap)
+			material[i][j].parallaxmap_unk4 = 12;
+		}
+	}
+	for (i=0;i<hierarchy->node_list.size();i++) {
+		// ToDo: MeshRenderer & MeshFilter
+		if (hierarchy->node_list[i]->node_type==111) {
+			AnimationStruct* node = static_cast<AnimationStruct*>(hierarchy->node_list[i]);
+			if (node->child_clip1!=NULL)
+				continue;
+			for (j=0;j<folderfiles.size();j++)
+				if (hierarchy->meta_data->file_type1[folderfiles[j]]==74) {
+					node->child_clip1 = new GameObjectNode(node,*hierarchy,74,0,hierarchy->meta_data->file_info[folderfiles[j]]);
+					node->child_clip2 = node->child_clip1;
+					node->flag2 = 1;
+					hierarchy->node_list.insert(hierarchy->node_list.begin()+i+1,node->child_clip1);
+					break;
+				}
+		} else if (hierarchy->node_list[i]->node_type==137) {
+			SkinnedMeshRendererStruct* node = static_cast<SkinnedMeshRendererStruct*>(hierarchy->node_list[i]);
+			// DEBUG: unclear what all these actually mean
+			node->center_x = meanmeshx[meshcounter];
+			node->center_y = meanmeshy[meshcounter];
+			node->center_z = meanmeshz[meshcounter];
+			node->radius_x = max(abs(meanmeshx[meshcounter]-minmeshx[meshcounter]),abs(meanmeshx[meshcounter]-maxmeshx[meshcounter]));
+			node->radius_y = max(abs(meanmeshy[meshcounter]-minmeshy[meshcounter]),abs(meanmeshy[meshcounter]-maxmeshy[meshcounter]));
+			node->radius_z = max(abs(meanmeshz[meshcounter]-minmeshz[meshcounter]),abs(meanmeshz[meshcounter]-maxmeshz[meshcounter]));
+			node->flag1 = 1;
+			node->flags_unk = 0x101;
+			node->max_unk = 0xFFFFFFFF;
+			node->float_unk1 = 1.0;	node->float_unk2 = 1.0;	node->float_unk3 = 0.0;	node->float_unk4 = 0.0;
+			node->float_unk5 = 1.0;	node->float_unk6 = 1.0;	node->float_unk7 = 0.0;	node->float_unk8 = 0.0;
+			node->flag3 = 0;	node->flag4 = 0;	node->flag5 = 0;	node->flag6 = 0;
+			node->flag7 = 1;	node->flag8 = 1;	node->flag9 = 0;	node->flag10 = 0;	node->flag11 = 0;
+			node->flag12 = 0;	node->flag13 = 0;	node->flag14 = 0;	node->flag15 = 0;
+			node->flag16 = 0;
+			node->float_unk9 = 0.0;
+			meshcounter++;
 		}
 	}
 	for (i=0;i<animation.size();i++) {
@@ -1330,6 +1381,23 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 		newobj->child.push_back(newtransf);
 		newobj->name = lCurrentNode->GetNameOnly();
 		newobj->name_len = newobj->name.length();
+		newobj->unknown = 0;
+		newobj->unk1 = 0;
+		newobj->unk2 = 0;
+		newobj->unk3 = 1;
+		if (transf_list.size()==0) {
+			AnimationStruct* newanim = new AnimationStruct(newobj,*model.hierarchy,111,0,0);
+			newanim->parent_object = newobj;
+			newanim->child_clip1 = NULL;
+			newanim->child_clip2 = NULL;
+			newanim->flag1 = 1;
+			newanim->flag2 = 0;
+			newanim->flag3 = 0;
+			newanim->flag4 = 1;
+			newanim->flag5 = 1;
+			newobj->child.push_back(newanim);
+			newobj->child_amount++;
+		}
 		newtransf->child_object = newobj;
 		transf_list.push_back(newtransf);
 		obj_list.push_back(newobj);
@@ -1365,6 +1433,8 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 		lCurrentNode = lNodeList[i];
 		model.hierarchy->node_list.push_back(transf_list[i]);
 		model.hierarchy->node_list.push_back(obj_list[i]);
+		for (j=1;j<obj_list[i]->child_amount;j++)
+			model.hierarchy->node_list.push_back(obj_list[i]->child[j]);
 		// TODO: accept other geometry types in the future?
 		if (lCurrentNode->GetNodeAttribute()!=NULL && lCurrentNode->GetNodeAttribute()->GetAttributeType()==FbxNodeAttribute::EType::eMesh) {
 			SkinnedMeshRendererStruct* newskinmesh = new SkinnedMeshRendererStruct(obj_list[i],*model.hierarchy,137,0,0);
@@ -1595,7 +1665,7 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 					lSkeletonCluster->GetTransformMatrix(lTransformMatrix);
 					for (k=0;k<4;k++)
 						for (l=0;l<4;l++)
-							newbone.transform_matrix.value[k][l] = lTransformMatrix.Get(l,k);
+							newbone.transform_matrix.value[k][l] = (l==3 && k==3 ? -lTransformMatrix.Get(l,k) : lTransformMatrix.Get(l,k));
 					newmesh.bone.push_back(newbone);
 				}
 				newmesh.bone_unk_amount = newmesh.bone_amount;

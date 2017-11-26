@@ -903,8 +903,8 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				}
 				importmodelbasehierarchy.resize(importmodelbasehierarchy.size()+1);
 				importmodel.resize(importmodel.size()+1);
-				GameObjectHierarchy& modelhierarchy = importmodelbasehierarchy[importmodelbasehierarchy.size()];
-				ModelDataStruct& newmodel = importmodel[importmodel.size()];
+				GameObjectHierarchy& modelhierarchy = importmodelbasehierarchy[importmodelbasehierarchy.size()-1];
+				ModelDataStruct& newmodel = importmodel[importmodel.size()-1];
 				modelhierarchy.BuildHierarchy(filebase,meta_data[current_archive],modelrootid);
 				if (newmodel.Import((const char*)path.c_str())!=0) {
 					wxLogError(HADES_STRING_UNITYVIEWER_UNKNOWN_FORMAT,path);
@@ -922,7 +922,6 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 					// ToDo: Deselect the files of modelhierarchy?
 					subitem = m_assetlist->GetNextItem(subitem,wxLIST_NEXT_ALL,wxLIST_STATE_DONTCARE);
 				}
-//fstream fout("aaab.txt",ios::app|ios::out); fout << "POTENTIAL LINKS (" << filearchivedir << "):"; for (i=0;i<potentiallylinkedfiles.size();i++) fout << " " << potentiallylinkedfiles[i]; fout << endl; fout.close();
 //				newmodel.hierarchy->DEBUGDisplayHierarchy();
 				newmodel.SetupPostImportData(potentiallylinkedfiles,&modelhierarchy,modelmergepolicy);
 				for (i=0;i<newmodel.material.size();i++) {
@@ -1027,7 +1026,8 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 		}
 		m_loadgauge->SetValue(10);
 		filebase.seekg(0);
-		uint32_t* unityfileoff = meta_data[current_archive].Duplicate(filebase,filedest,copylist,filenewsize);
+		UnityArchiveMetaData newmetadata;
+		meta_data[current_archive].Duplicate(filebase,filedest,copylist,filenewsize,&newmetadata);
 		m_loadgauge->SetValue(50);
 		for (it = -1;;) {
 			it = m_assetlist->GetNextItem(it,wxLIST_NEXT_ALL,wxLIST_STATE_SELECTED);
@@ -1082,7 +1082,7 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				}
 				buffer = (char*)TIMImageDataStruct::CreateSteamTextureFile(datasize,w,h,rgba,textureformat,quality);
 				delete[] rgba;
-				filedest.seekg(unityfileoff[expfileid]);
+				filedest.seekg(newmetadata.GetFileOffsetByIndex(expfileid));
 				filedest.write(buffer,datasize);
 				delete[] buffer;
 			} else if (meta_data[current_archive].file_type1[expfileid]==49 && path.Len()>=10 && path.Mid(path.Len()-10).IsSameAs(L".akb.bytes",false) && !m_menuconvertaudionone->IsChecked()) {
@@ -1098,7 +1098,7 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				fileasset.seekg(0,ios::end);
 				newsizeogg = fileasset.tellg();
 				fileasset.seekg(0);
-				filedest.seekg(unityfileoff[expfileid]);
+				filedest.seekg(newmetadata.GetFileOffsetByIndex(expfileid));
 				filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(expfileid));
 				buffer = new char[filenewsize[expfileid]];
 				filebase.read(buffer,0x130);
@@ -1126,7 +1126,7 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 			} else if (meta_data[current_archive].file_type1[expfileid]==1 && path.AfterLast(L'.').IsSameAs(L"fbx",false) && !m_menuconvertmodelnone->IsChecked()) {
 				ModelDataStruct& newmodel = importmodel[importmodelcounter];
 				importmodelcounter++;
-				newmodel.hierarchy->meta_data;
+				newmodel.hierarchy->meta_data = &newmetadata;
 				newmodel.Write(filedest);
 			} else {
 				fstream fileasset((const char*)path.c_str(),ios::in|ios::binary);
@@ -1137,7 +1137,7 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				}
 				buffer = new char[filenewsize[expfileid]];
 				fileasset.read(buffer,filenewsize[expfileid]);
-				filedest.seekg(unityfileoff[expfileid]);
+				filedest.seekg(newmetadata.GetFileOffsetByIndex(expfileid));
 				filedest.write(buffer,filenewsize[expfileid]);
 				fileasset.close();
 				delete[] buffer;
@@ -1152,8 +1152,9 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 			overwritefile = wxRenameFile(root_path+archive_name+_(L".tmp"),root_path+archive_name,true);
 		if (overwritefile) {
 			meta_data[current_archive].Flush();
+			meta_data[current_archive].Copy(&newmetadata);
 			fstream unityarchive((const char*)(root_path+archive_name).c_str(),ios::in | ios::binary);
-			meta_data[current_archive].Load(unityarchive);
+//			meta_data[current_archive].Load(unityarchive);
 			if (current_archive>=UNITY_ARCHIVE_DATA11 && current_archive<=UNITY_ARCHIVE_DATA7) {
 				bundle_data[current_archive-UNITY_ARCHIVE_DATA11].Flush();
 				uint32_t offset = meta_data[current_archive].GetFileOffset("",142);
@@ -1186,7 +1187,6 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 		}
 		delete[] copylist;
 		delete[] filenewsize;
-		delete[] unityfileoff;
 		if (itsuccesscounter==itamount) {
 			wxString successtring;
 			successtring.Printf(wxT(HADES_STRING_UNITYVIEWER_IMPORT_SUCCESS),itsuccesscounter);
