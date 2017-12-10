@@ -759,6 +759,8 @@ void ModelDataStruct::SetupPostImportData(vector<unsigned int> folderfiles, Game
 	unsigned int i,j,k;
 	if (basehierarchy)
 		hierarchy->MergeHierarchy(basehierarchy,mergepolicy);
+	else
+		hierarchy->MergeHierarchy(NULL,2);
 	vector<float> minmeshx,minmeshy,minmeshz;
 	vector<float> maxmeshx,maxmeshy,maxmeshz;
 	vector<float> meanmeshx,meanmeshy,meanmeshz;

@@ -438,7 +438,7 @@ GameObjectNode* GameObjectHierarchy::FindObjectByInfo(uint64_t info) {
 
 void GameObjectHierarchy::MergeHierarchy(GameObjectHierarchy* base, int mergepolicy) {
 	unsigned int i,j,macroi,newfileindex = meta_data->header_file_amount;
-	uint64_t newfileinfo = 0x5555444433332222L;
+	uint64_t newfileinfo = 0x2222333344445555L;
 
 	#define MACRO_ASSIGN_NEW_INFO(NODE) \
 		NODE->node_unknown = 0; \
@@ -455,6 +455,8 @@ void GameObjectHierarchy::MergeHierarchy(GameObjectHierarchy* base, int mergepol
 		for (i=0;i<node_list.size();i++) {
 			if (root_node->node_type!=4 || static_cast<TransformStruct*>(root_node)->child_object!=node_list[i]) {
 				MACRO_ASSIGN_NEW_INFO(node_list[i])
+			} else {
+				node_list[i]->node_unknown = 0;
 			}
 		}
 		return;

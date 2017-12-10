@@ -1057,8 +1057,9 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	unityarchivename = dest.steam_dir_data+"mainData";
 	unityarchive.open(unityarchivename.c_str(),ios::in | ios::binary);
 	dest.meta_main.Load(unityarchive);
-	unityarchive.seekg(dest.meta_main.GetFileOffset("",147));
-	mesindexlist.Load(unityarchive);
+	uint32_t mesindexfileid = dest.meta_main.GetFileIndex("",147);
+	unityarchive.seekg(dest.meta_main.GetFileOffsetByIndex(mesindexfileid));
+	mesindexlist.Load(unityarchive,dest.meta_main.GetFileSizeByIndex(mesindexfileid));
 	unityarchive.close();
 	UnityArchiveAssetBundle ebindexlist;
 	unityarchivename = dest.steam_dir_assets+"p0data7.bin";

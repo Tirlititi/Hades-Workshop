@@ -3148,6 +3148,66 @@ class UnityLinkFileWindow : public wxDialog
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+/// Class UnityAddFileWindow
+///////////////////////////////////////////////////////////////////////////////
+class UnityAddFileWindow : public wxDialog 
+{
+	private:
+	
+	protected:
+		wxButton* m_buttonadd;
+		wxButton* m_buttoncancel;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
+		
+	
+	public:
+		wxNotebook* m_filebook;
+		wxButton* m_buttonok;
+		
+		UnityAddFileWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Insert New Asset"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,340 ), long style = wxCAPTION|wxRESIZE_BORDER ); 
+		~UnityAddFileWindow();
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class UnityAddFilePanel
+///////////////////////////////////////////////////////////////////////////////
+class UnityAddFilePanel : public wxPanel 
+{
+	private:
+	
+	protected:
+		wxStaticText* m_staticText333;
+		wxStaticText* m_staticText332;
+		wxStaticText* m_staticText334;
+		wxButton* m_generateinfo;
+		wxPanel* m_panel90;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void OnFilePick( wxFileDirPickerEvent& event ) { event.Skip(); }
+		virtual void OnTypeChoice( wxCommandEvent& event ) { event.Skip(); }
+		virtual void OnFileInfoEdit( wxCommandEvent& event ) { event.Skip(); }
+		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
+		virtual void OnCheckBox( wxCommandEvent& event ) { event.Skip(); }
+		
+	
+	public:
+		wxFilePickerCtrl* m_filepicker;
+		wxChoice* m_filetype;
+		wxTextCtrl* m_fileinternalname;
+		wxTextCtrl* m_fileinfo;
+		wxCheckBox* m_addbundleinfo;
+		wxStaticText* m_filenamelabel;
+		wxTextCtrl* m_filename;
+		
+		UnityAddFilePanel( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxTAB_TRAVERSAL ); 
+		~UnityAddFilePanel();
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
 /// Class MenuDEBUG
 ///////////////////////////////////////////////////////////////////////////////
 class MenuDEBUG : public wxMenuBar 

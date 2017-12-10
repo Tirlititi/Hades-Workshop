@@ -205,7 +205,7 @@ struct GameObjectHierarchy {
 	// mergepolicies:
 	// 0=Only setup the nodes that are already existing (node_info==0 for the others)
 	// 1=Setup the nodes that are already existing and assign new file informations for the others
-	// 2=Assign new informations to all the nodes except for the root_node's object (but the root_node is re-assigned)
+	// 2=Assign new informations to all the nodes except for the root_node's object (but the root_node is re-assigned) ; base is ignored
 	void MergeHierarchy(GameObjectHierarchy* base, int mergepolicy);
 
 	static uint64_t GetRootInfoFromObject(uint8_t* objbuffer);

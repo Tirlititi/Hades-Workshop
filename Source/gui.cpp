@@ -11250,6 +11250,162 @@ UnityLinkFileWindow::~UnityLinkFileWindow()
 	
 }
 
+UnityAddFileWindow::UnityAddFileWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	
+	wxBoxSizer* bSizer197;
+	bSizer197 = new wxBoxSizer( wxVERTICAL );
+	
+	m_filebook = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	
+	bSizer197->Add( m_filebook, 1, wxEXPAND | wxALL, 5 );
+	
+	wxFlexGridSizer* fgSizer89;
+	fgSizer89 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer89->AddGrowableCol( 1 );
+	fgSizer89->SetFlexibleDirection( wxBOTH );
+	fgSizer89->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	m_buttonadd = new wxButton( this, wxID_ADD, _("Add Another File"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer89->Add( m_buttonadd, 0, wxALL, 5 );
+	
+	wxBoxSizer* bSizer196;
+	bSizer196 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_buttoncancel = new wxButton( this, wxID_CANCEL, _("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer196->Add( m_buttoncancel, 0, wxALIGN_RIGHT|wxALL, 5 );
+	
+	m_buttonok = new wxButton( this, wxID_OK, _("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer196->Add( m_buttonok, 0, wxALIGN_RIGHT|wxALL, 5 );
+	
+	
+	fgSizer89->Add( bSizer196, 1, wxALIGN_RIGHT, 5 );
+	
+	
+	bSizer197->Add( fgSizer89, 1, wxEXPAND, 5 );
+	
+	
+	this->SetSizer( bSizer197 );
+	this->Layout();
+	
+	this->Centre( wxBOTH );
+	
+	// Connect Events
+	m_buttonadd->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( UnityAddFileWindow::OnButtonClick ), NULL, this );
+	m_buttoncancel->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( UnityAddFileWindow::OnButtonClick ), NULL, this );
+	m_buttonok->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( UnityAddFileWindow::OnButtonClick ), NULL, this );
+}
+
+UnityAddFileWindow::~UnityAddFileWindow()
+{
+	// Disconnect Events
+	m_buttonadd->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( UnityAddFileWindow::OnButtonClick ), NULL, this );
+	m_buttoncancel->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( UnityAddFileWindow::OnButtonClick ), NULL, this );
+	m_buttonok->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( UnityAddFileWindow::OnButtonClick ), NULL, this );
+	
+}
+
+UnityAddFilePanel::UnityAddFilePanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )
+{
+	wxGridBagSizer* gbSizer46;
+	gbSizer46 = new wxGridBagSizer( 0, 0 );
+	gbSizer46->SetFlexibleDirection( wxBOTH );
+	gbSizer46->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	m_filepicker = new wxFilePickerCtrl( this, wxID_ANY, wxEmptyString, _("Select a file"), wxT("*.*"), wxDefaultPosition, wxDefaultSize, wxFLP_DEFAULT_STYLE );
+	gbSizer46->Add( m_filepicker, wxGBPosition( 0, 0 ), wxGBSpan( 1, 3 ), wxALL|wxEXPAND, 5 );
+	
+	m_staticText333 = new wxStaticText( this, wxID_ANY, _("Type"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText333->Wrap( -1 );
+	gbSizer46->Add( m_staticText333, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	wxArrayString m_filetypeChoices;
+	m_filetype = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxSize( 200,-1 ), m_filetypeChoices, 0 );
+	m_filetype->SetSelection( 0 );
+	gbSizer46->Add( m_filetype, wxGBPosition( 1, 1 ), wxGBSpan( 1, 2 ), wxALL, 5 );
+	
+	m_staticText332 = new wxStaticText( this, wxID_ANY, _("Internal Name"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText332->Wrap( -1 );
+	gbSizer46->Add( m_staticText332, wxGBPosition( 2, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	m_fileinternalname = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 300,-1 ), 0 );
+	m_fileinternalname->SetToolTip( _("Only a few file types can have an internal name") );
+	
+	gbSizer46->Add( m_fileinternalname, wxGBPosition( 2, 1 ), wxGBSpan( 1, 2 ), wxALL, 5 );
+	
+	m_staticText334 = new wxStaticText( this, wxID_ANY, _("File Internal ID"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText334->Wrap( -1 );
+	gbSizer46->Add( m_staticText334, wxGBPosition( 3, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	m_fileinfo = new wxTextCtrl( this, wxID_ANY, _("FFFFFFFFFFFFFFFF"), wxDefaultPosition, wxSize( 140,-1 ), 0 );
+	#ifdef __WXGTK__
+	if ( !m_fileinfo->HasFlag( wxTE_MULTILINE ) )
+	{
+	m_fileinfo->SetMaxLength( 16 );
+	}
+	#else
+	m_fileinfo->SetMaxLength( 16 );
+	#endif
+	m_fileinfo->SetToolTip( _("ID is valid and unused") );
+	
+	gbSizer46->Add( m_fileinfo, wxGBPosition( 3, 1 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	m_generateinfo = new wxButton( this, wxID_ANY, _("Generate unused ID"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_generateinfo->SetToolTip( _("Generate a valid internal file ID") );
+	
+	gbSizer46->Add( m_generateinfo, wxGBPosition( 3, 2 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	m_addbundleinfo = new wxCheckBox( this, wxID_ANY, _("Add Bundle Info"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_addbundleinfo->SetToolTip( _("Bundle info can be added if the archive\ncontains a file of type AssetBundle") );
+	
+	gbSizer46->Add( m_addbundleinfo, wxGBPosition( 4, 0 ), wxGBSpan( 1, 2 ), wxALL, 5 );
+	
+	m_panel90 = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSUNKEN_BORDER|wxTAB_TRAVERSAL );
+	wxFlexGridSizer* fgSizer88;
+	fgSizer88 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer88->SetFlexibleDirection( wxBOTH );
+	fgSizer88->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	m_filenamelabel = new wxStaticText( m_panel90, wxID_ANY, _("Full Name"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_filenamelabel->Wrap( -1 );
+	fgSizer88->Add( m_filenamelabel, 0, wxALL, 5 );
+	
+	m_filename = new wxTextCtrl( m_panel90, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 330,-1 ), 0 );
+	m_filename->SetToolTip( _("Full names are used by the game's engine") );
+	
+	fgSizer88->Add( m_filename, 0, wxALL, 5 );
+	
+	
+	m_panel90->SetSizer( fgSizer88 );
+	m_panel90->Layout();
+	fgSizer88->Fit( m_panel90 );
+	gbSizer46->Add( m_panel90, wxGBPosition( 5, 0 ), wxGBSpan( 1, 3 ), wxEXPAND | wxALL, 5 );
+	
+	
+	this->SetSizer( gbSizer46 );
+	this->Layout();
+	gbSizer46->Fit( this );
+	
+	// Connect Events
+	m_filepicker->Connect( wxEVT_COMMAND_FILEPICKER_CHANGED, wxFileDirPickerEventHandler( UnityAddFilePanel::OnFilePick ), NULL, this );
+	m_filetype->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( UnityAddFilePanel::OnTypeChoice ), NULL, this );
+	m_fileinfo->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( UnityAddFilePanel::OnFileInfoEdit ), NULL, this );
+	m_generateinfo->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( UnityAddFilePanel::OnButtonClick ), NULL, this );
+	m_addbundleinfo->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( UnityAddFilePanel::OnCheckBox ), NULL, this );
+}
+
+UnityAddFilePanel::~UnityAddFilePanel()
+{
+	// Disconnect Events
+	m_filepicker->Disconnect( wxEVT_COMMAND_FILEPICKER_CHANGED, wxFileDirPickerEventHandler( UnityAddFilePanel::OnFilePick ), NULL, this );
+	m_filetype->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( UnityAddFilePanel::OnTypeChoice ), NULL, this );
+	m_fileinfo->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( UnityAddFilePanel::OnFileInfoEdit ), NULL, this );
+	m_generateinfo->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( UnityAddFilePanel::OnButtonClick ), NULL, this );
+	m_addbundleinfo->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( UnityAddFilePanel::OnCheckBox ), NULL, this );
+	
+}
+
 MenuDEBUG::MenuDEBUG( long style ) : wxMenuBar( style )
 {
 	m_menu6 = new wxMenu();

@@ -1,6 +1,7 @@
 #ifndef _UNITY_ARCHIVER_H
 #define _UNITY_ARCHIVER_H
 
+struct UnityArchiveFileCreator;
 struct UnityArchiveMetaData;
 struct UnityArchiveIndexListData;
 struct UnityArchiveAssetBundle;
@@ -88,6 +89,29 @@ enum UnityArchiveFile {
 	UNITY_ARCHIVE_AMOUNT
 };
 
+struct UnityArchiveFileCreator {
+	UnityArchiveMetaData* meta_data;
+
+	vector<uint64_t> file_info;
+	vector<uint32_t> file_size;
+	vector<uint32_t> file_type;
+	vector<uint32_t> file_unknown;
+	vector<string> file_name;
+	vector<int> file_bundle_index;
+
+	vector<string> bundle_path;
+	vector<uint32_t> bundle_index;
+	vector<uint32_t> bundle_unk1;
+	vector<uint32_t> bundle_unk2;
+	vector<uint64_t> bundle_info;
+
+	UnityArchiveFileCreator(UnityArchiveMetaData* refdata) : meta_data(refdata) {}
+
+	// 'AddBundleData' should always follow a call of 'Add'
+	void Add(uint32_t type, uint32_t size, uint64_t info, string name = "", uint32_t unk = 0);
+	void AddBundleData(string fullpath, uint32_t unk1 = 0, uint32_t unk2 = 0);
+};
+
 struct UnityArchiveMetaData {
 	uint8_t archive_type; // p0data[n].bin or .assets
 	bool loaded;
@@ -131,13 +155,14 @@ struct UnityArchiveMetaData {
 	// Arrays must be of length header_file_amount
 	// Return the starting offset of the files in the duplicate (must be deleted[] if newmetadata is not given)
 	// If a newmetadata is given, an UnityArchiveMetaData compatible with the duplicate is computed and the offsets returned are file_offset_start instead (use GetFileOffsetByIndex instead)
-	uint32_t* Duplicate(fstream& fbase, fstream& fdest, bool* copylist, uint32_t* filenewsize, UnityArchiveMetaData* newmetadata = NULL);
+	uint32_t* Duplicate(fstream& fbase, fstream& fdest, bool* copylist, uint32_t* filenewsize, UnityArchiveFileCreator* addfile = NULL, UnityArchiveMetaData* newmetadata = NULL);
 	
 	UnityArchiveMetaData() : loaded(false) {}
 	~UnityArchiveMetaData() { Flush(); }
 	
 	static string GetArchiveName(UnityArchiveFile file, bool x86 = false);
 	static string GetTypeName(uint32_t type);
+	static bool HasFileTypeName(uint32_t type);
 };
 
 struct UnityArchiveIndexListData {
@@ -147,8 +172,12 @@ struct UnityArchiveIndexListData {
 	uint32_t* unk1;
 	uint32_t* index;
 	uint32_t* unk2;
+
+	unsigned int data_part2_amount;
+	uint32_t* data_part2;
 	
-	int Load(fstream& f);
+	int Load(fstream& f, uint32_t datasize);
+	void Write(fstream& f);
 	void Flush();
 	uint32_t GetFileIndex(string filepath);
 	
@@ -164,8 +193,23 @@ struct UnityArchiveAssetBundle {
 	uint32_t* unk1;
 	uint32_t* unk2;
 	uint64_t* info;
-	
+
+	uint32_t unkstruct_amount;
+	uint32_t* unkstruct_flag;
+	uint64_t* unkstruct_info;
+
+	uint32_t tail_unk1;
+	uint32_t tail_unk2;
+	uint32_t tail_unk3;
+	uint32_t tail_unk4;
+	uint32_t tail_unk5;
+	uint32_t tail_unk6;
+	string tail_archive_name;
+	uint32_t tail_unk7;
+	uint32_t tail_unk8;
+
 	int Load(fstream& f);
+	void Write(fstream& f);
 	void Flush();
 	uint32_t GetFileIndex(string filepath);
 	uint64_t GetFileInfo(string filepath);

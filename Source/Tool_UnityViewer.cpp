@@ -7,8 +7,6 @@
 #include "Database_Resource.h"
 #include "Database_SpellAnimation.h"
 #include "Gui_Preferences.h"
-#include "GameObject.h"
-#include "ModelMesh.h"
 #include "main.h"
 
 #define ASSET_COLUMN_INDEX		L"#"
@@ -114,8 +112,10 @@ ToolUnityViewer::ToolUnityViewer(wxWindow* parent) :
 	assetmenu = new wxMenu();
 	assetmenuexport = new wxMenuItem(assetmenu,wxID_EXPORT,HADES_STRING_GENERIC_EXPORT_SEL);
 	assetmenuimport = new wxMenuItem(assetmenu,wxID_IMPORT,HADES_STRING_GENERIC_IMPORT_SEL);
+	assetmenuadd = new wxMenuItem(assetmenu,wxID_ADD,HADES_STRING_GENERIC_ADD);
 	assetmenu->Append(assetmenuexport);
 	assetmenu->Append(assetmenuimport);
+	assetmenu->Append(assetmenuadd);
 	assetmenu->Connect(wxEVT_COMMAND_MENU_SELECTED,wxCommandEventHandler(ToolUnityViewer::OnAssetRightClickMenu),NULL,this);
 	UpdateMenuAvailability();
 }
@@ -128,6 +128,7 @@ ToolUnityViewer::~ToolUnityViewer() {
 bool ToolUnityViewer::SetupRootPath(wxString path, bool ignorestreaming) {
 	wxString filename;
 	uint32_t offset;
+	int32_t fileindex;
 	unsigned int i,j;
 	unsigned int starti = ignorestreaming ? (unsigned int)UNITY_ARCHIVE_DATA7+1 : 0;
 	if (path.Last()!=L'\\')
@@ -184,10 +185,10 @@ bool ToolUnityViewer::SetupRootPath(wxString path, bool ignorestreaming) {
 				bundle_data[i-UNITY_ARCHIVE_DATA11].Load(unityarchive);
 			}
 		} else if (i==UNITY_ARCHIVE_MAINDATA) {
-			offset = meta_data[i].GetFileOffset("",147);
-			if (offset>0) {
-				unityarchive.seekg(offset);
-				list_data.Load(unityarchive);
+			fileindex = meta_data[i].GetFileIndex("",147);
+			if (fileindex>=0) {
+				unityarchive.seekg(meta_data[i].GetFileOffsetByIndex(fileindex));
+				list_data.Load(unityarchive,meta_data[i].GetFileSizeByIndex(fileindex));
 				list_data_filename.Alloc(list_data.amount);
 				for (j=0;j<list_data.amount;j++)
 					list_data_filename.Add(_(list_data.path[j]).AfterLast(L'/'));
@@ -243,7 +244,7 @@ bool ToolUnityViewer::DisplayArchive(UnityArchiveFile archivetype) {
 }
 
 wxString ToolUnityViewer::GetFullName(UnityArchiveFile archivetype, unsigned int fileid, bool* found) {
-	wxString fullname;
+	wxString fullname = _(meta_data[archivetype].file_name[fileid]);
 	bool searchfullname = true;
 	unsigned int i;
 	if (archivetype>=UNITY_ARCHIVE_DATA11 && archivetype<=UNITY_ARCHIVE_DATA7) {
@@ -255,7 +256,7 @@ wxString ToolUnityViewer::GetFullName(UnityArchiveFile archivetype, unsigned int
 				break;
 			}
 	}
-	if (searchfullname) {
+	if (searchfullname && fullname.Len()>0) {
 		for (i=0;i<list_data.amount;i++)
 			if (list_data_filename[i].IsSameAs(fullname,false) && list_data.index[i]==fileid+1) {
 				fullname = _(list_data.path[i]);
@@ -598,6 +599,322 @@ void InitLinkFileDialog(UnityLinkFileDialog& dial, wxListCtrl* listctrl, UnityAr
 	dial.m_fileinfo->ChangeValue(ConvertLongToString(dial.fileinfolist[0]));
 }
 
+bool ToolUnityViewer::PrepareAssetForImport(bool isnewfile, fstream& filebase, wxString path, uint32_t ftype, vector<ModelDataStruct>& importmodel, UnityArchiveFileCreator& filestoadd, UnityLinkFileDialog& linkfiledialog, bool linkfiledialoginit, /*	Common Arguments
+										*/	uint32_t* filenewsize, bool* copylist, unsigned int impfileid, long it, wxString filearchivedir, vector<GameObjectHierarchy>* importmodelbasehierarchy, /* Replace file
+										*/	uint64_t newfileinfo, string newfileinternalname, string newfilepath) { // New file
+	bool newfilehasbundle = newfilepath.length()>0;
+	unsigned int i,j;
+	char* buffer;
+	if (ftype==28 && !m_menuconvertimgnone->IsChecked()) {
+		wxImage img;
+		bool success;
+		if (m_menuconvertimgpng->IsChecked())		success = img.LoadFile(path,wxBITMAP_TYPE_PNG);
+		else if (m_menuconvertimgtga->IsChecked())	success = img.LoadFile(path,wxBITMAP_TYPE_TGA);
+		else if (m_menuconvertimgtiff->IsChecked())	success = img.LoadFile(path,wxBITMAP_TYPE_TIFF);
+		else										success = img.LoadFile(path,wxBITMAP_TYPE_BMP);
+		if (!success)								success = img.LoadFile(path,wxBITMAP_TYPE_ANY);
+		if (!success) {
+			wxLogError(HADES_STRING_OPEN_ERROR_FAIL_FORMAT,path);
+			return false;
+		}
+		uint32_t textureformat = 0;
+		if (m_menuconvertimgqualityalpha->IsChecked())		textureformat = 0x01;
+		else if (m_menuconvertimgqualityrgb->IsChecked())	textureformat = 0x03;
+		else if (m_menuconvertimgqualityrgba->IsChecked())	textureformat = 0x04;
+		else if (m_menuconvertimgqualityargb->IsChecked())	textureformat = 0x05;
+		else if (m_menuconvertimgqualitydxt1->IsChecked())	textureformat = 0x0A;
+		else if (m_menuconvertimgqualitydxt5->IsChecked())	textureformat = 0x0C;
+		else if (!isnewfile && meta_data[current_archive].GetFileSizeByIndex(impfileid)>=0x10) {
+			filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(impfileid)+0xC);
+			textureformat = ReadLong(filebase);
+		}
+		uint32_t newsizetmp = TIMImageDataStruct::GetSteamTextureFileSize(img.GetWidth(),img.GetHeight(),textureformat);
+		if (newsizetmp==0) {
+			wxLogError(HADES_STRING_UNITYVIEWER_IMPORT_ERROR_FORMAT,path);
+			return false;
+		}
+		if (isnewfile) {
+			filestoadd.Add(ftype,newsizetmp,newfileinfo,newfileinternalname);
+			if (newfilehasbundle)
+				filestoadd.AddBundleData(newfilepath);
+		} else {
+			filenewsize[impfileid] = newsizetmp;
+		}
+	} else if (ftype==49 && !isnewfile && path.Len()>=10 && path.Mid(path.Len()-10).IsSameAs(L".akb.bytes",false) && !m_menuconvertaudionone->IsChecked()) {
+		filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(impfileid));
+		uint32_t magicakb = ReadLong(filebase);
+		if (magicakb!=0x32424B41) {
+			wxLogError(HADES_STRING_UNITYVIEWER_IMPORT_ERROR_FORMAT,path);
+			return false;
+		}
+		fstream fileasset((const char*)path.c_str(),ios::in|ios::binary);
+		if (!fileasset.is_open()) {
+			wxLogError(HADES_STRING_OPEN_ERROR_FAIL,path);
+			return false;
+		}
+		uint32_t magicogg = ReadLong(fileasset);
+		if (magicogg!=0x5367674F) {
+			wxLogError(HADES_STRING_UNITYVIEWER_MISSING_OGG,path);
+			return false;
+		}
+		fileasset.seekg(0,ios::end);
+		filenewsize[impfileid] = (uint32_t)fileasset.tellg()+0x130;
+		filenewsize[impfileid] += GetAlignOffset(filenewsize[impfileid],0x10);
+		fileasset.close();
+	} else if (ftype==1 && path.AfterLast(L'.').IsSameAs(L"fbx",false) && !m_menuconvertmodelnone->IsChecked()) {
+		bool modelflushunused = m_menuimportmodelflush->IsChecked() && !isnewfile;
+		bool modelimportmesh = m_menuimportmodelmesh->IsChecked();
+		bool modelimportanim = m_menuimportmodelanims->IsChecked();
+		int modelmergepolicy = isnewfile ? 2 :
+			m_menuimportmodelexistingfiles->IsChecked() ? 0 :
+			m_menuimportmodelmerge->IsChecked() ? 1 :
+			m_menuimportmodelimportall->IsChecked() ? 2 : -1;
+		GameObjectHierarchy* modelhierarchy = NULL;
+		if (!isnewfile) {
+			filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(impfileid));
+			buffer = new char[meta_data[current_archive].GetFileSizeByIndex(impfileid)];
+			filebase.read(buffer,meta_data[current_archive].GetFileSizeByIndex(impfileid));
+			uint64_t rootinfo = GameObjectHierarchy::GetRootInfoFromObject((uint8_t*)buffer);
+			int32_t modelrootid = meta_data[current_archive].GetFileIndexByInfo(rootinfo);
+			delete[] buffer;
+			if (modelrootid<0) {
+				wxLogError(HADES_STRING_UNITYVIEWER_MODEL_BAD_HIERARCHY);
+				return false;
+			}
+			importmodelbasehierarchy->resize(importmodelbasehierarchy->size()+1);
+			modelhierarchy = &importmodelbasehierarchy->at(importmodelbasehierarchy->size()-1);
+			modelhierarchy->BuildHierarchy(filebase,meta_data[current_archive],modelrootid);
+		}
+		importmodel.resize(importmodel.size()+1);
+		ModelDataStruct& newmodel = importmodel[importmodel.size()-1];
+		if (newmodel.Import((const char*)path.c_str())!=0) {
+			wxLogError(HADES_STRING_UNITYVIEWER_UNKNOWN_FORMAT,path);
+			importmodelbasehierarchy->pop_back();
+			importmodel.pop_back();
+			return false;
+		}
+		newmodel.hierarchy->meta_data = &meta_data[current_archive];
+		vector<unsigned int> potentiallylinkedfiles;
+		if (!isnewfile) {
+			long subitem = m_assetlist->GetNextItem(-1,wxLIST_NEXT_ALL,wxLIST_STATE_DONTCARE);
+			while (subitem!=-1) {
+				if (filearchivedir.IsSameAs(m_assetlist->GetItemText(subitem,1).Mid(0,filearchivedir.Len())) && subitem!=it) {
+					potentiallylinkedfiles.push_back(wxAtoi(m_assetlist->GetItemText(subitem,0))-1);
+				}
+				// ToDo: Deselect the files of modelhierarchy?
+				subitem = m_assetlist->GetNextItem(subitem,wxLIST_NEXT_ALL,wxLIST_STATE_DONTCARE);
+			}
+		}
+//		newmodel.hierarchy->DEBUGDisplayHierarchy();
+		if (modelmergepolicy==2) {
+			if (newmodel.hierarchy->root_node->node_type==4 && static_cast<TransformStruct*>(newmodel.hierarchy->root_node)->child_object) {
+				GameObjectNode* rootobj = static_cast<TransformStruct*>(newmodel.hierarchy->root_node)->child_object;
+				if (isnewfile) {
+					rootobj->node_info = newfileinfo;
+					rootobj->file_index = meta_data[current_archive].header_file_amount;
+				} else {
+					rootobj->node_info = meta_data[current_archive].file_info[impfileid];
+					rootobj->file_index = impfileid;
+				}
+			}
+		}
+		newmodel.SetupPostImportData(potentiallylinkedfiles,modelhierarchy,modelmergepolicy);
+		for (i=0;i<newmodel.material.size();i++) {
+			for (j=0;j<newmodel.material[i].size();j++) {
+				if (newmodel.material[i][j].maintex.file_info==0) {
+					if (!linkfiledialoginit) {
+						InitLinkFileDialog(linkfiledialog,m_assetlist,&meta_data[current_archive]);
+						linkfiledialoginit = true;
+					}
+					wxString message = _(HADES_STRING_UNITYVIEWER_LINK_TEXTURE);
+					message += path.AfterLast(L'\\') + _(L", Mesh ") + newmodel.mesh[i].name + _(L" --> ") + newmodel.material[i][j].maintex.file_name;
+					if (linkfiledialog.ShowModal(message)==wxID_OK) {
+						newmodel.material[i][j].maintex.file_info = linkfiledialog.info_selected;
+					}
+				}
+			}
+		}
+		// ToDo: Animations
+		unsigned int nodefileindex,nodefiletype,meshcounter = 0, meshmatcounter = 0, animcounter = 0;
+		uint32_t nodefilesize;
+		for (i=0;i<newmodel.hierarchy->node_list.size();i++) { // ToDo
+			nodefileindex = newmodel.hierarchy->node_list[i]->file_index;
+			nodefiletype = newmodel.hierarchy->node_list[i]->node_type;
+			if (nodefiletype==43)		nodefilesize = newmodel.mesh[meshcounter].GetDataSize();
+			else if (nodefiletype==21)	nodefilesize = newmodel.material[meshcounter][meshmatcounter].GetDataSize();
+			else if (nodefiletype==74)	nodefilesize = newmodel.animation[animcounter].GetDataSize();
+			else						nodefilesize = newmodel.hierarchy->node_list[i]->GetDataSize();
+			if (newmodel.hierarchy->node_list[i]->node_info==0) { // New file without new allocation
+			} else if (nodefileindex>=meta_data[current_archive].header_file_amount) { // New file with new allocation
+				if (newmodel.hierarchy->root_node->node_type==4 && static_cast<TransformStruct*>(newmodel.hierarchy->root_node)->child_object==newmodel.hierarchy->node_list[i]) {
+					filestoadd.Add(newmodel.hierarchy->node_list[i]->node_type,nodefilesize,newmodel.hierarchy->node_list[i]->node_info,newfileinternalname);
+					if (isnewfile && newfilehasbundle>0)
+						filestoadd.AddBundleData(newfilepath);
+				} else {
+					filestoadd.Add(newmodel.hierarchy->node_list[i]->node_type,nodefilesize,newmodel.hierarchy->node_list[i]->node_info);
+				}
+			} else { // Old file updated
+				filenewsize[nodefileindex] = nodefilesize;
+				copylist[nodefileindex] = false;
+			}
+			if (nodefiletype==43) {
+				meshcounter++;
+				meshmatcounter = 0;
+			} else if (nodefiletype==21) {
+				meshmatcounter++;
+			} else if (nodefiletype==74) {
+				animcounter++;
+			}
+		}
+		if (modelflushunused) {
+			for (i=0;i<modelhierarchy->node_list.size();i++) {
+				for (j=0;j<newmodel.hierarchy->node_list.size();j++)
+					if (modelhierarchy->node_list[i]->file_index==newmodel.hierarchy->node_list[j]->file_index)
+						break;
+				if (j>=newmodel.hierarchy->node_list.size()) {
+					// ToDo
+				}
+			}
+		}
+//		newmodel.hierarchy->DEBUGDisplayHierarchy();
+	} else {
+		fstream fileasset((const char*)path.c_str(),ios::in|ios::binary);
+		if (!fileasset.is_open()) {
+			wxLogError(HADES_STRING_OPEN_ERROR_FAIL,path);
+			return false;
+		}
+		fileasset.seekg(0,ios::end);
+		if (isnewfile) {
+			filestoadd.Add(ftype,fileasset.tellg(),newfileinfo);
+			if (newfilehasbundle)
+				filestoadd.AddBundleData(newfilepath);
+		} else {
+			filenewsize[impfileid] = fileasset.tellg();
+		}
+		fileasset.close();
+	}
+	if (!isnewfile)
+		copylist[impfileid] = false;
+	return true;
+}
+
+bool ToolUnityViewer::PerformImportOfAsset(bool isnewfile, fstream& filebase, fstream& filedest, UnityArchiveMetaData& newmetadata, wxString path, uint32_t ftype, vector<ModelDataStruct>& importmodel, unsigned int& importmodelcounter, unsigned int impfileid) {
+	unsigned int i,j;
+	char* buffer;
+	uint32_t filenewsize;
+	if (ftype==28 && !m_menuconvertimgnone->IsChecked()) {
+		wxImage img;
+		bool success;
+		if (m_menuconvertimgpng->IsChecked())		success = img.LoadFile(path,wxBITMAP_TYPE_PNG);
+		else if (m_menuconvertimgtga->IsChecked())	success = img.LoadFile(path,wxBITMAP_TYPE_TGA);
+		else if (m_menuconvertimgtiff->IsChecked())	success = img.LoadFile(path,wxBITMAP_TYPE_TIFF);
+		else										success = img.LoadFile(path,wxBITMAP_TYPE_BMP);
+		if (!success)								success = img.LoadFile(path,wxBITMAP_TYPE_ANY);
+		if (!success) {
+			wxLogError(HADES_STRING_OPEN_ERROR_FAIL_FORMAT,path);
+			return false;
+		}
+		uint32_t pixelindex;
+		unsigned int x,y,w = img.GetWidth(), h = img.GetHeight();
+		uint8_t* rgba = new uint8_t[w*h*4];
+		bool hasalpha = img.HasAlpha();
+		for (x=0;x<w;x++)
+			for (y=0;y<h;y++) {
+				pixelindex = (x+y*w)*4;
+				rgba[pixelindex] = img.GetRed(x,y);
+				rgba[pixelindex+1] = img.GetGreen(x,y);
+				rgba[pixelindex+2] = img.GetBlue(x,y);
+				rgba[pixelindex+3] = hasalpha ? img.GetAlpha(x,y) : 0xFF;
+			}
+		img.Destroy();
+		uint32_t textureformat = 0;
+		int quality =	m_menuconvertimgqualitylow->IsChecked() ? 0 :
+			m_menuconvertimgqualitymedium->IsChecked() ? 1 :
+			m_menuconvertimgqualityhigh->IsChecked() ? 2 : -1;
+		if (m_menuconvertimgqualityalpha->IsChecked())		textureformat = 0x01;
+		else if (m_menuconvertimgqualityrgb->IsChecked())	textureformat = 0x03;
+		else if (m_menuconvertimgqualityrgba->IsChecked())	textureformat = 0x04;
+		else if (m_menuconvertimgqualityargb->IsChecked())	textureformat = 0x05;
+		else if (m_menuconvertimgqualitydxt1->IsChecked())	textureformat = 0x0A;
+		else if (m_menuconvertimgqualitydxt5->IsChecked())	textureformat = 0x0C;
+		else if (!isnewfile && meta_data[current_archive].GetFileSizeByIndex(impfileid)>=0x10) {
+			filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(impfileid)+0xC);
+			textureformat = ReadLong(filebase);
+		}
+		buffer = (char*)TIMImageDataStruct::CreateSteamTextureFile(filenewsize,w,h,rgba,textureformat,quality);
+		delete[] rgba;
+		filedest.seekg(newmetadata.GetFileOffsetByIndex(impfileid));
+		filedest.write(buffer,filenewsize);
+		delete[] buffer;
+	} else if (!isnewfile && ftype==49 && path.Len()>=10 && path.Mid(path.Len()-10).IsSameAs(L".akb.bytes",false) && !m_menuconvertaudionone->IsChecked()) {
+		fstream fileasset((const char*)path.c_str(),ios::in|ios::binary);
+		if (!fileasset.is_open()) {
+			wxLogError(HADES_STRING_OPEN_ERROR_FAIL,path);
+			return false;
+		}
+		uint32_t loopstart = 0;
+		uint32_t loopend = 0;
+		uint32_t newsizeogg;
+		fileasset.seekg(0,ios::end);
+		newsizeogg = fileasset.tellg();
+		filenewsize = newsizeogg+0x130;
+		fileasset.seekg(0);
+		filedest.seekg(newmetadata.GetFileOffsetByIndex(impfileid));
+		filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(impfileid));
+		buffer = new char[filenewsize];
+		filebase.read(buffer,0x130);
+		fileasset.read(&buffer[0x130],newsizeogg);
+		for (i=newsizeogg+0x130;i<filenewsize;i++)
+			buffer[i] = 0;
+		for (i=0x130;i<newsizeogg;i++) {
+			if (i+10<newsizeogg && strncmp(&buffer[i],"LoopStart=",10)==0)
+				loopstart = atoi(&buffer[i+10]);
+			else if (i+8<newsizeogg && strncmp(&buffer[i],"LoopEnd=",8)==0)
+				loopend = atoi(&buffer[i+8]);
+		}
+		BufferInitPosition(8);		BufferWriteLong((uint8_t*)buffer,filenewsize);
+//		BufferInitPosition(0x28);	BufferWriteLong((uint8_t*)buffer,akbid); // ToDo: be able to retrieve this kind of info without the old file
+//		BufferInitPosition(0xE2);	BufferWriteShort((uint8_t*)buffer,sound/music?);
+//		BufferInitPosition(0xE6);	BufferWriteShort((uint8_t*)buffer,samplerate at 0x28 of Ogg);
+		BufferInitPosition(0xE8);	BufferWriteLong((uint8_t*)buffer,newsizeogg);
+//		BufferWriteLong((uint8_t*)buffer,samplecount);
+		BufferInitPosition(0xF0);	BufferWriteLong((uint8_t*)buffer,loopstart);
+		BufferWriteLong((uint8_t*)buffer,loopend);
+//		BufferInitPosition(0x124);	BufferWriteLong((uint8_t*)buffer,???);
+		filedest.write(buffer,filenewsize);
+		fileasset.close();
+		delete[] buffer;
+	} else if (ftype==1 && path.AfterLast(L'.').IsSameAs(L"fbx",false) && !m_menuconvertmodelnone->IsChecked()) {
+		ModelDataStruct& newmodel = importmodel[importmodelcounter];
+		importmodelcounter++;
+		newmodel.hierarchy->meta_data = &newmetadata;
+		for (i=0;i<newmodel.hierarchy->node_list.size();i++)
+			if (newmodel.hierarchy->node_list[i]->file_index>=meta_data[current_archive].header_file_amount)
+				for (j=0;j<newmetadata.header_file_amount;j++) // New node: the node's file_index may be wrong
+					if (newmodel.hierarchy->node_list[i]->node_info==newmetadata.file_info[j]) {
+						newmodel.hierarchy->node_list[i]->file_index = j;
+						break;
+					}
+		newmodel.Write(filedest);
+	} else {
+		fstream fileasset((const char*)path.c_str(),ios::in|ios::binary);
+		if (!fileasset.is_open()) {
+			wxLogError(HADES_STRING_OPEN_ERROR_FAIL,path);
+			return false;
+		}
+		fileasset.seekg(0,ios::end);
+		filenewsize = fileasset.tellg();
+		fileasset.seekg(0);
+		buffer = new char[filenewsize];
+		fileasset.read(buffer,filenewsize);
+		filedest.seekg(newmetadata.GetFileOffsetByIndex(impfileid));
+		filedest.write(buffer,filenewsize);
+		fileasset.close();
+		delete[] buffer;
+	}
+	return true;
+}
+
 void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 	int id = event.GetId();
 	unsigned int i,j,k;
@@ -802,10 +1119,9 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 		}
 		m_loadgauge->SetValue(0);
 		unsigned int itcounter = 0, itsuccesscounter = 0, itamount = m_assetlist->GetSelectedItemCount();
-		unsigned int expfileid, expfilesize;
+		unsigned int impfileid;
 		wxString basepath = root_path+_(L"HadesWorkshopAssets\\")+archive_name.AfterLast(L'\\').BeforeFirst(L'.')+_(L"\\");
 		wxString path,filearchivedir;
-		char* buffer;
 		bool* copylist = new bool[meta_data[current_archive].header_file_amount];
 		uint32_t* filenewsize = new uint32_t[meta_data[current_archive].header_file_amount];
 		for (i=0;i<meta_data[current_archive].header_file_amount;i++) {
@@ -815,12 +1131,7 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 		vector<GameObjectHierarchy> importmodelbasehierarchy;
 		vector<ModelDataStruct> importmodel;
 		unsigned int importmodelcounter = 0;
-		bool modelflushunused = m_menuimportmodelflush->IsChecked();
-		bool modelimportmesh = m_menuimportmodelmesh->IsChecked();
-		bool modelimportanim = m_menuimportmodelanims->IsChecked();
-		int modelmergepolicy = m_menuimportmodelexistingfiles->IsChecked() ? 0 :
-							   m_menuimportmodelmerge->IsChecked() ? 1 :
-							   m_menuimportmodelimportall->IsChecked() ? 2 : -1;
+		UnityArchiveFileCreator filestoadd(&meta_data[current_archive]);
 		long it = -1;
 		for (;;) {
 			it = m_assetlist->GetNextItem(it,wxLIST_NEXT_ALL,wxLIST_STATE_SELECTED);
@@ -838,309 +1149,29 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				filearchivedir = filearchivedir.Mid(0,slashpos);
 			if (!wxFileName::FileExists(path))
 				continue;
-			expfileid = wxAtoi(m_assetlist->GetItemText(it,0))-1;
-			expfilesize = meta_data[current_archive].GetFileSizeByIndex(expfileid);
-			if (meta_data[current_archive].file_type1[expfileid]==28 && !m_menuconvertimgnone->IsChecked()) {
-				wxImage img;
-				bool success;
-				if (m_menuconvertimgpng->IsChecked())		success = img.LoadFile(path,wxBITMAP_TYPE_PNG);
-				else if (m_menuconvertimgtga->IsChecked())	success = img.LoadFile(path,wxBITMAP_TYPE_TGA);
-				else if (m_menuconvertimgtiff->IsChecked())	success = img.LoadFile(path,wxBITMAP_TYPE_TIFF);
-				else										success = img.LoadFile(path,wxBITMAP_TYPE_BMP);
-				if (!success)								success = img.LoadFile(path,wxBITMAP_TYPE_ANY);
-				if (!success) {
-					wxLogError(HADES_STRING_OPEN_ERROR_FAIL_FORMAT,path);
-					continue;
-				}
-				uint32_t textureformat = 0;
-				if (m_menuconvertimgqualityalpha->IsChecked())		textureformat = 0x01;
-				else if (m_menuconvertimgqualityrgb->IsChecked())	textureformat = 0x03;
-				else if (m_menuconvertimgqualityrgba->IsChecked())	textureformat = 0x04;
-				else if (m_menuconvertimgqualityargb->IsChecked())	textureformat = 0x05;
-				else if (m_menuconvertimgqualitydxt1->IsChecked())	textureformat = 0x0A;
-				else if (m_menuconvertimgqualitydxt5->IsChecked())	textureformat = 0x0C;
-				else if (meta_data[current_archive].GetFileSizeByIndex(expfileid)>=0x10) {
-					filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(expfileid)+0xC);
-					textureformat = ReadLong(filebase);
-				}
-				uint32_t newsizetmp = TIMImageDataStruct::GetSteamTextureFileSize(img.GetWidth(),img.GetHeight(),textureformat);
-				if (newsizetmp==0) {
-					wxLogError(HADES_STRING_UNITYVIEWER_IMPORT_ERROR_FORMAT,path);
-					continue;
-				}
-				filenewsize[expfileid] = newsizetmp;
-			} else if (meta_data[current_archive].file_type1[expfileid]==49 && path.Len()>=10 && path.Mid(path.Len()-10).IsSameAs(L".akb.bytes",false) && !m_menuconvertaudionone->IsChecked()) {
-				filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(expfileid));
-				uint32_t magicakb = ReadLong(filebase);
-				if (magicakb!=0x32424B41) {
-					wxLogError(HADES_STRING_UNITYVIEWER_IMPORT_ERROR_FORMAT,path);
-					continue;
-				}
-				fstream fileasset((const char*)path.c_str(),ios::in|ios::binary);
-				if (!fileasset.is_open()) {
-					wxLogError(HADES_STRING_OPEN_ERROR_FAIL,path);
-					continue;
-				}
-				uint32_t magicogg = ReadLong(fileasset);
-				if (magicogg!=0x5367674F) {
-					wxLogError(HADES_STRING_UNITYVIEWER_MISSING_OGG,path);
-					continue;
-				}
-				fileasset.seekg(0,ios::end);
-				filenewsize[expfileid] = (uint32_t)fileasset.tellg()+0x130;
-				filenewsize[expfileid] += GetAlignOffset(filenewsize[expfileid],0x10);
-				fileasset.close();
-			} else if (meta_data[current_archive].file_type1[expfileid]==1 && path.AfterLast(L'.').IsSameAs(L"fbx",false) && !m_menuconvertmodelnone->IsChecked()) {
-				filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(expfileid));
-				buffer = new char[expfilesize];
-				filebase.read(buffer,expfilesize);
-				uint64_t rootinfo = GameObjectHierarchy::GetRootInfoFromObject((uint8_t*)buffer);
-				int32_t modelrootid = meta_data[current_archive].GetFileIndexByInfo(rootinfo);
-				delete[] buffer;
-				if (modelrootid<0) {
-					wxLogError(HADES_STRING_UNITYVIEWER_MODEL_BAD_HIERARCHY);
-					continue;
-				}
-				importmodelbasehierarchy.resize(importmodelbasehierarchy.size()+1);
-				importmodel.resize(importmodel.size()+1);
-				GameObjectHierarchy& modelhierarchy = importmodelbasehierarchy[importmodelbasehierarchy.size()-1];
-				ModelDataStruct& newmodel = importmodel[importmodel.size()-1];
-				modelhierarchy.BuildHierarchy(filebase,meta_data[current_archive],modelrootid);
-				if (newmodel.Import((const char*)path.c_str())!=0) {
-					wxLogError(HADES_STRING_UNITYVIEWER_UNKNOWN_FORMAT,path);
-					importmodelbasehierarchy.pop_back();
-					importmodel.pop_back();
-					continue;
-				}
-				newmodel.hierarchy->meta_data = &meta_data[current_archive];
-				vector<unsigned int> potentiallylinkedfiles;
-				long subitem = m_assetlist->GetNextItem(-1,wxLIST_NEXT_ALL,wxLIST_STATE_DONTCARE);
-				while (subitem!=-1) {
-					if (filearchivedir.IsSameAs(m_assetlist->GetItemText(subitem,1).Mid(0,filearchivedir.Len())) && subitem!=it) {
-						potentiallylinkedfiles.push_back(wxAtoi(m_assetlist->GetItemText(subitem,0))-1);
-					}
-					// ToDo: Deselect the files of modelhierarchy?
-					subitem = m_assetlist->GetNextItem(subitem,wxLIST_NEXT_ALL,wxLIST_STATE_DONTCARE);
-				}
-//				newmodel.hierarchy->DEBUGDisplayHierarchy();
-				newmodel.SetupPostImportData(potentiallylinkedfiles,&modelhierarchy,modelmergepolicy);
-				for (i=0;i<newmodel.material.size();i++) {
-					for (j=0;j<newmodel.material[i].size();j++) {
-						if (newmodel.material[i][j].maintex.file_info==0) {
-							if (!linkfiledialoginit) {
-								InitLinkFileDialog(linkfiledialog,m_assetlist,&meta_data[current_archive]);
-								linkfiledialoginit = true;
-							}
-							wxString message = _(HADES_STRING_UNITYVIEWER_LINK_TEXTURE);
-							message += path.AfterLast(L'\\') + _(L", Mesh ") + newmodel.mesh[i].name + _(L" --> ") + newmodel.material[i][j].maintex.file_name;
-							if (linkfiledialog.ShowModal(message)==wxID_OK) {
-								newmodel.material[i][j].maintex.file_info = linkfiledialog.info_selected;
-							}
-						}
-					}
-				}
-				// ToDo: Animations
-				unsigned int nodefileindex,nodefiletype,meshcounter = 0, meshmatcounter = 0, animcounter = 0;
-				for (i=0;i<newmodel.hierarchy->node_list.size();i++) { // ToDo
-					nodefileindex = newmodel.hierarchy->node_list[i]->file_index;
-					nodefiletype = newmodel.hierarchy->node_list[i]->node_type;
-					if (newmodel.hierarchy->node_list[i]->node_info==0) { // New file without new allocation
-					} else if (nodefileindex>=meta_data[current_archive].header_file_amount) { // New file with new allocation
-					} else { // Old file updated
-						if (nodefiletype==43)		filenewsize[nodefileindex] = newmodel.mesh[meshcounter].GetDataSize();
-						else if (nodefiletype==21)	filenewsize[nodefileindex] = newmodel.material[meshcounter][meshmatcounter].GetDataSize();
-						else if (nodefiletype==74)	filenewsize[nodefileindex] = newmodel.animation[animcounter].GetDataSize();
-						else						filenewsize[nodefileindex] = newmodel.hierarchy->node_list[i]->GetDataSize();
-						copylist[nodefileindex] = false;
-					}
-					if (nodefiletype==43) {
-						meshcounter++;
-						meshmatcounter = 0;
-					} else if (nodefiletype==21) {
-						meshmatcounter++;
-					} else if (nodefiletype==74) {
-						animcounter++;
-					}
-				}
-				if (modelflushunused) {
-					for (i=0;i<modelhierarchy.node_list.size();i++) {
-						for (j=0;j<newmodel.hierarchy->node_list.size();j++)
-							if (modelhierarchy.node_list[i]->file_index==newmodel.hierarchy->node_list[j]->file_index)
-								break;
-						if (j>=newmodel.hierarchy->node_list.size()) {
-							// ToDo
-						}
-					}
-				}
-//				newmodel.hierarchy->DEBUGDisplayHierarchy();
-				/*
-			} else if (meta_data[current_archive].file_type1[expfileid]==1 && path.AfterLast(L'.').IsSameAs(L"fbx",false) && !m_menuconvertmodelnone->IsChecked()) {
-				wxString fileobjectid,gameobjectid = GetFullName(current_archive,expfileid);
-				for (;;) {
-					itclip = m_assetlist->GetNextItem(itclip,wxLIST_NEXT_ALL,wxLIST_STATE_DONTCARE);
-					if (itclip==-1) break;
-					if (meta_data[current_archive].file_type1[wxAtoi(m_assetlist->GetItemText(itclip,0))-1]==74) {
-						fileobjectid = GetFullName(current_archive,wxAtoi(m_assetlist->GetItemText(itclip,0))-1);
-						if (gameobjectid.IsSameAs(fileobjectid)) {
-							ModelAnimationData animation;
-							filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(wxAtoi(m_assetlist->GetItemText(itclip,0))-1));
-							animation.Read(filebase,&modelhierarchy);
-							model.animation.push_back(animation);
-						}
-					}
-				}
-				if (current_archive!=UNITY_ARCHIVE_DATA5) {
-					wxString animarchivefilename, animsearchpath;
-					wxString fileanimname = _(UnityArchiveMetaData::GetArchiveName(UNITY_ARCHIVE_DATA5,use_x86));
-					bool foundanimarchivefilename;
-					fstream fileanimbase((const char*)(root_path+fileanimname).c_str(),ios::in|ios::binary);
-					if (!fileanimbase.is_open()) {
-						wxLogError(HADES_STRING_OPEN_ERROR_FAIL,root_path+fileanimname);
-						continue;
-					}
-					animsearchpath = _(L"assets/resources/animations/")+filepathbase.AfterLast(L'/').AfterLast(L'\\')+_(L"/");
-					for (i=0;i<meta_data[UNITY_ARCHIVE_DATA5].header_file_amount;i++) {
-						animarchivefilename = GetFullName(UNITY_ARCHIVE_DATA5,i,&foundanimarchivefilename);
-						if (foundanimarchivefilename && animsearchpath.IsSameAs(animarchivefilename.Mid(0,animsearchpath.Len()))) {
-							ModelAnimationData animation;
-							fileanimbase.seekg(meta_data[UNITY_ARCHIVE_DATA5].GetFileOffsetByIndex(i));
-							animation.Read(fileanimbase);
-							animation.anim_id = wxAtoi(animarchivefilename.Mid(animsearchpath.Len()));
-							model.animation.push_back(animation);
-						}
-					}
-					fileanimbase.close();
-				}
-				if (m_menuconvertmodelfbxtext->IsChecked())			model.Export(path.BeforeLast(L'.').c_str(), MODEL_FILE_FORMAT_FBX_ASCII);*/
-			} else {
-				fstream fileasset((const char*)path.c_str(),ios::in|ios::binary);
-				if (!fileasset.is_open()) {
-					wxLogError(HADES_STRING_OPEN_ERROR_FAIL,path);
-					continue;
-				}
-				fileasset.seekg(0,ios::end);
-				filenewsize[expfileid] = fileasset.tellg();
-				fileasset.close();
-			}
-			copylist[expfileid] = false;
+			impfileid = wxAtoi(m_assetlist->GetItemText(it,0))-1;
+			if (!PrepareAssetForImport(false,filebase,path,meta_data[current_archive].file_type1[impfileid],importmodel,filestoadd,linkfiledialog,linkfiledialoginit,filenewsize,copylist,impfileid,it,filearchivedir,&importmodelbasehierarchy,0,"",""))
+				continue;
 		}
 		m_loadgauge->SetValue(10);
 		filebase.seekg(0);
 		UnityArchiveMetaData newmetadata;
-		meta_data[current_archive].Duplicate(filebase,filedest,copylist,filenewsize,&newmetadata);
+		meta_data[current_archive].Duplicate(filebase,filedest,copylist,filenewsize,&filestoadd,&newmetadata);
 		m_loadgauge->SetValue(50);
 		for (it = -1;;) {
 			it = m_assetlist->GetNextItem(it,wxLIST_NEXT_ALL,wxLIST_STATE_SELECTED);
 			if (it==-1) break;
 			itcounter++;
-			expfileid = wxAtoi(m_assetlist->GetItemText(it,0))-1;
-			if (copylist[expfileid])
+			impfileid = wxAtoi(m_assetlist->GetItemText(it,0))-1;
+			if (copylist[impfileid])
 				continue;
 			path = m_assetlist->GetItemText(it,1);
 			path.Replace(_(L"/"),_(L"\\"));
 			if (!m_menuexportpath->IsChecked()) path = path.AfterLast(L'\\');
 			path = basepath+path;
-			if (meta_data[current_archive].file_type1[expfileid]==28 && !m_menuconvertimgnone->IsChecked()) {
-				wxImage img;
-				bool success;
-				if (m_menuconvertimgpng->IsChecked())		success = img.LoadFile(path,wxBITMAP_TYPE_PNG);
-				else if (m_menuconvertimgtga->IsChecked())	success = img.LoadFile(path,wxBITMAP_TYPE_TGA);
-				else if (m_menuconvertimgtiff->IsChecked())	success = img.LoadFile(path,wxBITMAP_TYPE_TIFF);
-				else										success = img.LoadFile(path,wxBITMAP_TYPE_BMP);
-				if (!success)								success = img.LoadFile(path,wxBITMAP_TYPE_ANY);
-				if (!success) {
-					wxLogError(HADES_STRING_OPEN_ERROR_FAIL_FORMAT,path);
-					overwritefile = false;
-					continue;
-				}
-				uint32_t datasize, pixelindex;
-				unsigned int x,y,w = img.GetWidth(), h = img.GetHeight();
-				uint8_t* rgba = new uint8_t[w*h*4];
-				bool hasalpha = img.HasAlpha();
-				for (x=0;x<w;x++)
-					for (y=0;y<h;y++) {
-						pixelindex = (x+y*w)*4;
-						rgba[pixelindex] = img.GetRed(x,y);
-						rgba[pixelindex+1] = img.GetGreen(x,y);
-						rgba[pixelindex+2] = img.GetBlue(x,y);
-						rgba[pixelindex+3] = hasalpha ? img.GetAlpha(x,y) : 0xFF;
-					}
-				img.Destroy();
-				uint32_t textureformat = 0;
-				int quality =	m_menuconvertimgqualitylow->IsChecked() ? 0 :
-								m_menuconvertimgqualitymedium->IsChecked() ? 1 :
-								m_menuconvertimgqualityhigh->IsChecked() ? 2 : -1;
-				if (m_menuconvertimgqualityalpha->IsChecked())		textureformat = 0x01;
-				else if (m_menuconvertimgqualityrgb->IsChecked())	textureformat = 0x03;
-				else if (m_menuconvertimgqualityrgba->IsChecked())	textureformat = 0x04;
-				else if (m_menuconvertimgqualityargb->IsChecked())	textureformat = 0x05;
-				else if (m_menuconvertimgqualitydxt1->IsChecked())	textureformat = 0x0A;
-				else if (m_menuconvertimgqualitydxt5->IsChecked())	textureformat = 0x0C;
-				else if (meta_data[current_archive].GetFileSizeByIndex(expfileid)>=0x10) {
-					filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(expfileid)+0xC);
-					textureformat = ReadLong(filebase);
-				}
-				buffer = (char*)TIMImageDataStruct::CreateSteamTextureFile(datasize,w,h,rgba,textureformat,quality);
-				delete[] rgba;
-				filedest.seekg(newmetadata.GetFileOffsetByIndex(expfileid));
-				filedest.write(buffer,datasize);
-				delete[] buffer;
-			} else if (meta_data[current_archive].file_type1[expfileid]==49 && path.Len()>=10 && path.Mid(path.Len()-10).IsSameAs(L".akb.bytes",false) && !m_menuconvertaudionone->IsChecked()) {
-				fstream fileasset((const char*)path.c_str(),ios::in|ios::binary);
-				if (!fileasset.is_open()) {
-					wxLogError(HADES_STRING_OPEN_ERROR_FAIL,path);
-					overwritefile = false;
-					continue;
-				}
-				uint32_t loopstart = 0;
-				uint32_t loopend = 0;
-				uint32_t newsizeogg;
-				fileasset.seekg(0,ios::end);
-				newsizeogg = fileasset.tellg();
-				fileasset.seekg(0);
-				filedest.seekg(newmetadata.GetFileOffsetByIndex(expfileid));
-				filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(expfileid));
-				buffer = new char[filenewsize[expfileid]];
-				filebase.read(buffer,0x130);
-				fileasset.read(&buffer[0x130],newsizeogg);
-				for (i=newsizeogg+0x130;i<filenewsize[expfileid];i++)
-					buffer[i] = 0;
-				for (i=0x130;i<newsizeogg;i++) {
-					if (i+10<newsizeogg && strncmp(&buffer[i],"LoopStart=",10)==0)
-						loopstart = atoi(&buffer[i+10]);
-					else if (i+8<newsizeogg && strncmp(&buffer[i],"LoopEnd=",8)==0)
-						loopend = atoi(&buffer[i+8]);
-				}
-				BufferInitPosition(8);		BufferWriteLong((uint8_t*)buffer,filenewsize[expfileid]);
-//				BufferInitPosition(0x28);	BufferWriteLong((uint8_t*)buffer,akbid); // ToDo: be able to retrieve this kind of info without the old file
-//				BufferInitPosition(0xE2);	BufferWriteShort((uint8_t*)buffer,sound/music?);
-//				BufferInitPosition(0xE6);	BufferWriteShort((uint8_t*)buffer,samplerate at 0x28 of Ogg);
-				BufferInitPosition(0xE8);	BufferWriteLong((uint8_t*)buffer,newsizeogg);
-//				BufferWriteLong((uint8_t*)buffer,samplecount);
-				BufferInitPosition(0xF0);	BufferWriteLong((uint8_t*)buffer,loopstart);
-				BufferWriteLong((uint8_t*)buffer,loopend);
-//				BufferInitPosition(0x124);	BufferWriteLong((uint8_t*)buffer,???);
-				filedest.write(buffer,filenewsize[expfileid]);
-				fileasset.close();
-				delete[] buffer;
-			} else if (meta_data[current_archive].file_type1[expfileid]==1 && path.AfterLast(L'.').IsSameAs(L"fbx",false) && !m_menuconvertmodelnone->IsChecked()) {
-				ModelDataStruct& newmodel = importmodel[importmodelcounter];
-				importmodelcounter++;
-				newmodel.hierarchy->meta_data = &newmetadata;
-				newmodel.Write(filedest);
-			} else {
-				fstream fileasset((const char*)path.c_str(),ios::in|ios::binary);
-				if (!fileasset.is_open()) {
-					wxLogError(HADES_STRING_OPEN_ERROR_FAIL,path);
-					overwritefile = false;
-					continue;
-				}
-				buffer = new char[filenewsize[expfileid]];
-				fileasset.read(buffer,filenewsize[expfileid]);
-				filedest.seekg(newmetadata.GetFileOffsetByIndex(expfileid));
-				filedest.write(buffer,filenewsize[expfileid]);
-				fileasset.close();
-				delete[] buffer;
+			if (!PerformImportOfAsset(false,filebase,filedest,newmetadata,path,meta_data[current_archive].file_type1[impfileid],importmodel,importmodelcounter,impfileid)) {
+				overwritefile = false;
+				continue;
 			}
 			m_loadgauge->SetValue(50+itcounter*50/itamount);
 			itsuccesscounter++;
@@ -1166,23 +1197,27 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 			if (current_archive==UNITY_ARCHIVE_MAINDATA) {
 				list_data.Flush();
 				list_data_filename.Empty();
-				uint32_t offset = meta_data[current_archive].GetFileOffset("",147);
-				if (offset>0) {
-					unityarchive.seekg(offset);
-					list_data.Load(unityarchive);
+				int32_t listindex = meta_data[i].GetFileIndex("",147);
+				if (listindex>=0) {
+					unityarchive.seekg(meta_data[current_archive].GetFileOffsetByIndex(listindex));
+					list_data.Load(unityarchive,meta_data[i].GetFileSizeByIndex(listindex));
 					list_data_filename.Alloc(list_data.amount);
 					for (i=0;i<list_data.amount;i++)
 						list_data_filename.Add(_(list_data.path[i]).AfterLast(L'/'));
 				}
 			}
 			unityarchive.close();
-			for (it = -1;;) {
-				it = m_assetlist->GetNextItem(it,wxLIST_NEXT_ALL,wxLIST_STATE_SELECTED);
-				if (it==-1) break;
-				expfileid = wxAtoi(m_assetlist->GetItemText(it,0))-1;
-				if (copylist[expfileid])
-					continue;
-				m_assetlist->SetItem(it,4,_(ConvertToString(meta_data[current_archive].GetFileSizeByIndex(expfileid))));
+			if (filestoadd.file_type.size()>0) { // New files added or removed: refresh the list
+				DisplayArchive(current_archive);
+			} else { // Files are only updated: display the updated sizes
+				for (it = -1;;) {
+					it = m_assetlist->GetNextItem(it,wxLIST_NEXT_ALL,wxLIST_STATE_SELECTED);
+					if (it==-1) break;
+					impfileid = wxAtoi(m_assetlist->GetItemText(it,0))-1;
+					if (copylist[impfileid])
+						continue;
+					m_assetlist->SetItem(it,4,_(ConvertToString(meta_data[current_archive].GetFileSizeByIndex(impfileid))));
+				}
 			}
 		}
 		delete[] copylist;
@@ -1200,6 +1235,122 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 			wxMessageDialog popupfail(this,failstring,HADES_STRING_WARNING,wxOK|wxCENTRE);
 			popupfail.ShowModal();
 		}
+	} else if (id==wxID_ADD) {
+		UnityAddFileDialog adddial(this,&meta_data[current_archive]);
+		if (adddial.ShowModal()==wxID_OK) {
+			fstream filebase((const char*)(root_path+archive_name).c_str(),ios::in|ios::binary);
+			fstream filedest((const char*)(root_path+archive_name+_(L".tmp")).c_str(),ios::out|ios::binary);
+			UnityLinkFileDialog linkfiledialog(this);
+			bool linkfiledialoginit = false;
+			if (!filebase.is_open()) {
+				wxLogError(HADES_STRING_OPEN_ERROR_FAIL,root_path+archive_name);
+				return;
+			}
+			if (!filedest.is_open()) {
+				wxLogError(HADES_STRING_OPEN_ERROR_CREATE,root_path+archive_name+_(L".tmp"));
+				return;
+			}
+			m_loadgauge->SetValue(0);
+			unsigned int itcounter = 0, itsuccesscounter = 0, itamount = 0;
+			wxString path,filearchivedir;
+			vector<ModelDataStruct> importmodel;
+			unsigned int importmodelcounter = 0;
+			UnityArchiveFileCreator filestoadd(&meta_data[current_archive]);
+			vector<int> bookaddfileindex;
+			bookaddfileindex.resize(adddial.m_filebook->GetPageCount());
+			for (i=0;i<adddial.m_filebook->GetPageCount();i++) {
+				bookaddfileindex[i] = -1;
+				UnityAddFilePanelDialog* panel = static_cast<UnityAddFilePanelDialog*>(adddial.m_filebook->GetPage(i));
+				path = panel->m_filepicker->GetPath();
+				if (path.Len()==0)
+					continue;
+				itamount++;
+				uint32_t ftype = adddial.file_type_choice[panel->m_filetype->GetSelection()];
+				uint64_t newfileinfo = ConvertStringToLong(panel->m_fileinfo->GetValue());
+				string newfilename = panel->m_fileinternalname->IsEnabled() ? panel->m_fileinternalname->GetValue() : "";
+				string newfilepath = panel->m_addbundleinfo->IsChecked() ? panel->m_filename->GetValue() : "";
+				bookaddfileindex[i] = filestoadd.file_type.size();
+				if (!PrepareAssetForImport(true,filebase,path,ftype,importmodel,filestoadd,linkfiledialog,linkfiledialoginit,NULL,NULL,0,0,"",NULL,newfileinfo,newfilename,newfilepath)) {
+					bookaddfileindex[i] = -1;
+					continue;
+				}
+				itcounter++;
+			}
+			m_loadgauge->SetValue(10);
+			filebase.seekg(0);
+			UnityArchiveMetaData newmetadata;
+			bool* copylist = new bool[meta_data[current_archive].header_file_amount];
+			uint32_t* filenewsize = new uint32_t[meta_data[current_archive].header_file_amount];
+			for (i=0;i<meta_data[current_archive].header_file_amount;i++) {
+				copylist[i] = true;
+				filenewsize[i] = meta_data[current_archive].file_size[i];
+			}
+			meta_data[current_archive].Duplicate(filebase,filedest,copylist,filenewsize,&filestoadd,&newmetadata);
+			m_loadgauge->SetValue(50);
+			unsigned int impfileid = meta_data[current_archive].header_file_amount;
+			unsigned int impfileidincr;
+			for (i=0;i<adddial.m_filebook->GetPageCount();i++) {
+				if (bookaddfileindex[i]<0)
+					continue;
+				UnityAddFilePanelDialog* panel = static_cast<UnityAddFilePanelDialog*>(adddial.m_filebook->GetPage(i));
+				path = panel->m_filepicker->GetPath();
+				uint32_t ftype = filestoadd.file_type[bookaddfileindex[i]];
+				impfileidincr = (i+1>=adddial.m_filebook->GetPageCount() ? filestoadd.file_type.size() : bookaddfileindex[i+1]) - bookaddfileindex[i];
+				impfileid += impfileidincr;
+				if (!PerformImportOfAsset(false,filebase,filedest,newmetadata,path,ftype,importmodel,importmodelcounter,impfileid-impfileidincr))
+					continue;
+				itsuccesscounter++;
+				m_loadgauge->SetValue(50+itsuccesscounter*50/itamount);
+			}
+			filebase.close();
+			filedest.close();
+			m_loadgauge->SetValue(100);
+			bool overwritefile = itsuccesscounter==itamount;
+			if (overwritefile)
+				overwritefile = wxRenameFile(root_path+archive_name+_(L".tmp"),root_path+archive_name,true);
+			if (overwritefile) {
+				meta_data[current_archive].Flush();
+				meta_data[current_archive].Copy(&newmetadata);
+				fstream unityarchive((const char*)(root_path+archive_name).c_str(),ios::in | ios::binary);
+				if (current_archive>=UNITY_ARCHIVE_DATA11 && current_archive<=UNITY_ARCHIVE_DATA7) {
+					bundle_data[current_archive-UNITY_ARCHIVE_DATA11].Flush();
+					uint32_t offset = meta_data[current_archive].GetFileOffset("",142);
+					if (offset>0) {
+						unityarchive.seekg(offset);
+						bundle_data[current_archive-UNITY_ARCHIVE_DATA11].Load(unityarchive);
+					}
+				}
+				if (current_archive==UNITY_ARCHIVE_MAINDATA) {
+					list_data.Flush();
+					list_data_filename.Empty();
+					int32_t listindex = meta_data[i].GetFileIndex("",147);
+					if (listindex>=0) {
+						unityarchive.seekg(meta_data[current_archive].GetFileOffsetByIndex(listindex));
+						list_data.Load(unityarchive,meta_data[i].GetFileSizeByIndex(listindex));
+						list_data_filename.Alloc(list_data.amount);
+						for (i=0;i<list_data.amount;i++)
+							list_data_filename.Add(_(list_data.path[i]).AfterLast(L'/'));
+					}
+				}
+				unityarchive.close();
+				DisplayArchive(current_archive);
+			}
+			delete[] copylist;
+			delete[] filenewsize;
+			if (itsuccesscounter==itamount && itcounter==itamount) {
+				wxString successtring;
+				successtring.Printf(wxT(HADES_STRING_UNITYVIEWER_IMPORT_SUCCESS),itsuccesscounter);
+				if (!overwritefile) successtring += _(HADES_STRING_UNITYVIEWER_IMPORT_NO_REPLACE);
+				wxMessageDialog popupsuccess(this,successtring,HADES_STRING_SUCCESS,wxOK|wxCENTRE);
+				popupsuccess.ShowModal();
+			} else {
+				wxString failstring;
+				failstring.Printf(wxT(HADES_STRING_UNITYVIEWER_IMPORT_ERROR),itsuccesscounter,itamount-itsuccesscounter);
+				if (!overwritefile) failstring += _(HADES_STRING_UNITYVIEWER_IMPORT_NO_REPLACE);
+				wxMessageDialog popupfail(this,failstring,HADES_STRING_WARNING,wxOK|wxCENTRE);
+				popupfail.ShowModal();
+			}
+		}
 	}
 }
 
@@ -1212,6 +1363,7 @@ void ToolUnityViewer::OnAssetRightClick(wxListEvent& event) {
 			break;
 		}
 	assetmenuimport->Enable(enableimport);
+	assetmenuadd->Enable(enableimport);
 	m_assetlist->PopupMenu(assetmenu);
 }
 
@@ -1241,6 +1393,7 @@ int UnityLinkFileDialog::ShowModal(wxString message) {
 		infovalidator = new wxTextValidator(wxFILTER_INCLUDE_CHAR_LIST);
 		infovalidator->SetCharIncludes(_(L"0123456789abcdefABCDEF"));
 		infovalidator->SetWindow(m_fileinfo);
+		m_fileinfo->SetValidator(*infovalidator);
 	}
 	m_message->ChangeValue(message);
 	return wxDialog::ShowModal();
@@ -1257,4 +1410,129 @@ void UnityLinkFileDialog::OnFileInfoEdit(wxCommandEvent& event) {
 void UnityLinkFileDialog::OnButtonClick(wxCommandEvent& event) {
 	info_selected = ConvertStringToLong(m_fileinfo->GetValue());
 	return EndModal(event.GetId());
+}
+
+int UnityAddFileDialog::ShowModal() {
+	unsigned int i;
+	string tname;
+	has_bundle = false;
+	for (i=0;i<meta_data->header_file_amount;i++)
+		if (meta_data->file_type1[i]==142) {
+			has_bundle = true;
+			break;
+		}
+	for (i=0;i<290;i++) {
+		tname = UnityArchiveMetaData::GetTypeName(i);
+		if (tname.length()>0) {
+			file_type_choice.push_back(i);
+			file_type_name.Add(tname);
+		}
+	}
+	panel_amount = 0;
+	AddPanel();
+	return wxDialog::ShowModal();
+}
+
+bool UnityAddFileDialog::IsInfoUnused(uint64_t info, int paneltoignore) {
+	unsigned int i;
+	for (i=0;i<panel_amount;i++)
+		if (i!=paneltoignore && ConvertStringToLong(static_cast<UnityAddFilePanelDialog*>(m_filebook->GetPage(i))->m_fileinfo->GetValue())==info)
+			return false;
+	for (i=0;i<meta_data->header_file_amount;i++)
+		if (meta_data->file_info[i]==info)
+			return false;
+	return true;
+}
+
+void UnityAddFileDialog::GenerateValidInfo(unsigned int panelid) {
+	uint64_t newfileinfo = 0x5555444433332222L;
+	while (!IsInfoUnused(newfileinfo,panelid))
+		newfileinfo++;
+	static_cast<UnityAddFilePanelDialog*>(m_filebook->GetPage(panelid))->m_fileinfo->SetValue(ConvertLongToString(newfileinfo));
+}
+
+int UnityAddFileDialog::VerifyInfoValidity() {
+	int res = 0;
+	for (unsigned int panelid=0;panelid<m_filebook->GetPageCount();panelid++) {
+		UnityAddFilePanelDialog* panel = static_cast<UnityAddFilePanelDialog*>(m_filebook->GetPage(panelid));
+		if (panel->m_fileinfo->GetValue().Len()!=16) {
+			panel->m_fileinfo->SetBackgroundColour(wxColor(0xB0,0x20,0x20));
+			panel->m_fileinfo->SetToolTip(_(HADES_STRING_UNITYVIEWER_INVALID_FILE_INFO));
+			res = max(res,2);
+		} else if (!IsInfoUnused(ConvertStringToLong(panel->m_fileinfo->GetValue()),panelid)) {
+			panel->m_fileinfo->SetBackgroundColour(wxColor(0xFF,0x70,0x00));
+			panel->m_fileinfo->SetToolTip(_(HADES_STRING_UNITYVIEWER_USED_FILE_INFO));
+			res = max(res,1);
+		} else {
+			panel->m_fileinfo->SetBackgroundColour(wxSystemSettings::GetColour( wxSYS_COLOUR_WINDOW ));
+			panel->m_fileinfo->UnsetToolTip();
+		}
+	}
+	m_buttonok->Enable(res<2);
+	return res;
+}
+
+void UnityAddFileDialog::AddPanel() {
+	UnityAddFilePanelDialog* addedpanel = new UnityAddFilePanelDialog(this);
+	addedpanel->m_filetype->Append(file_type_name);
+	addedpanel->m_filetype->Select(0);
+	addedpanel->m_fileinternalname->Enable(UnityArchiveMetaData::HasFileTypeName(file_type_choice[0]));
+	addedpanel->EnableBundlePanel(false);
+	m_filebook->AddPage(addedpanel,_(HADES_STRING_GENERIC_NEW),true);
+	panel_amount++;
+	GenerateValidInfo(panel_amount-1);
+}
+
+void UnityAddFileDialog::OnButtonClick(wxCommandEvent& event) {
+	if (event.GetId()==wxID_ADD) {
+		AddPanel();
+		return;
+	}
+	int validityproblem = VerifyInfoValidity();
+	if (validityproblem==1) {
+		wxMessageDialog popupwarning(this,_(HADES_STRING_UNITYVIEWER_WARNING_FILE_INFO),HADES_STRING_WARNING,wxCANCEL|wxOK|wxCENTRE);
+		if (popupwarning.ShowModal()!=wxID_OK)
+			return;
+	}
+	EndModal(event.GetId());
+}
+
+UnityAddFilePanelDialog::UnityAddFilePanelDialog(UnityAddFileDialog* p) : UnityAddFilePanel(p->m_filebook), parent(p) {
+	infovalidator = new wxTextValidator(wxFILTER_INCLUDE_CHAR_LIST);
+	infovalidator->SetCharIncludes(_(L"0123456789abcdefABCDEF"));
+	infovalidator->SetWindow(m_fileinfo);
+	m_fileinfo->SetValidator(*infovalidator);
+	m_addbundleinfo->Enable(parent->has_bundle);
+}
+
+void UnityAddFilePanelDialog::EnableBundlePanel(bool enable) {
+	m_filenamelabel->Enable(enable);
+	m_filename->Enable(enable);
+}
+
+void UnityAddFilePanelDialog::OnFilePick(wxFileDirPickerEvent& event) {
+	if (!wxFile::Exists(event.GetPath())) {
+		SetLabel(_(HADES_STRING_GENERIC_NEW));
+		return;
+	}
+	wxString shortname = event.GetPath().AfterLast(L'\\').AfterLast(L'/');
+	SetLabel(shortname);
+	m_fileinternalname->SetValue(shortname);
+	parent->m_filebook->SetPageText(parent->m_filebook->FindPage(this),shortname);
+}
+
+void UnityAddFilePanelDialog::OnTypeChoice(wxCommandEvent& event) {
+	m_fileinternalname->Enable(UnityArchiveMetaData::HasFileTypeName(parent->file_type_choice[event.GetSelection()]));
+}
+
+void UnityAddFilePanelDialog::OnFileInfoEdit(wxCommandEvent& event) {
+	parent->VerifyInfoValidity();
+}
+
+void UnityAddFilePanelDialog::OnCheckBox(wxCommandEvent& event) {
+	EnableBundlePanel(event.IsChecked());
+}
+
+void UnityAddFilePanelDialog::OnButtonClick(wxCommandEvent& event) {
+	parent->GenerateValidInfo(parent->m_filebook->FindPage(this));
 }
