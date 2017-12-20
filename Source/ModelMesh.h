@@ -228,6 +228,8 @@ struct ModelMaterialFile {
 
 struct ModelMaterialData {
 	// Always there
+	uint32_t shader_unk;
+	uint64_t shader_info;
 	ModelMaterialFile bumpmap;
 	ModelMaterialFile detailalbedomap;
 	ModelMaterialFile detailmask;

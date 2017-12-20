@@ -26,7 +26,7 @@ string GameObjectStruct::GetScopedName() {
 	return res;
 }
 
-GameObjectNode* BuildHierarchy_Rec(GameObjectNode* parent, GameObjectHierarchy& roothierarchy, uint32_t objtype, uint32_t objunk, uint64_t objinfo, fstream& f, UnityArchiveMetaData& meta, unsigned int fileindex) {
+GameObjectNode* BuildHierarchy_Rec(GameObjectNode* parent, GameObjectHierarchy& roothierarchy, uint32_t objtype, uint32_t objflags, uint64_t objinfo, fstream& f, UnityArchiveMetaData& meta, unsigned int fileindex) {
 	GameObjectNode* res = NULL;
 	unsigned int i;
 	GameObjectNode* childobj = NULL;
@@ -36,7 +36,7 @@ GameObjectNode* BuildHierarchy_Rec(GameObjectNode* parent, GameObjectHierarchy& 
 	size_t prevpos = f.tellg();
 	f.seekg(meta.GetFileOffsetByIndex(fileindex));
 	if (meta.file_type1[fileindex]==1) {
-		GameObjectStruct* resobj = new GameObjectStruct(parent,roothierarchy,objtype,objunk,objinfo);
+		GameObjectStruct* resobj = new GameObjectStruct(parent,roothierarchy,objtype,objflags,objinfo);
 		res = resobj;
 		roothierarchy.node_list.push_back(res);
 
@@ -72,7 +72,7 @@ GameObjectNode* BuildHierarchy_Rec(GameObjectNode* parent, GameObjectHierarchy& 
 		resobj->unk2 = f.get();
 		resobj->unk3 = f.get();
 	} else if (meta.file_type1[fileindex]==4) {
-		TransformStruct* restransf = new TransformStruct(parent,roothierarchy,objtype,objunk,objinfo);
+		TransformStruct* restransf = new TransformStruct(parent,roothierarchy,objtype,objflags,objinfo);
 		res = restransf;
 		roothierarchy.node_list.push_back(res);
 		MACRO_READCHILDOBJ(restransf,false)
@@ -88,7 +88,7 @@ GameObjectNode* BuildHierarchy_Rec(GameObjectNode* parent, GameObjectHierarchy& 
 		MACRO_READCHILDOBJ(restransf,false)
 		restransf->parent_transform = childobj;
 	} else if (meta.file_type1[fileindex]==23) {
-		MeshRendererStruct* resmeshren = new MeshRendererStruct(parent,roothierarchy,objtype,objunk,objinfo);
+		MeshRendererStruct* resmeshren = new MeshRendererStruct(parent,roothierarchy,objtype,objflags,objinfo);
 		res = resmeshren;
 		roothierarchy.node_list.push_back(res);
 		MACRO_READCHILDOBJ(resmeshren,false)
@@ -124,7 +124,7 @@ GameObjectNode* BuildHierarchy_Rec(GameObjectNode* parent, GameObjectHierarchy& 
 		resmeshren->flag15 = ReadLong(f);
 		resmeshren->flag16 = ReadLong(f);
 	} else if (meta.file_type1[fileindex]==33) {
-		MeshFilterStruct* resmeshfilter = new MeshFilterStruct(parent,roothierarchy,objtype,objunk,objinfo);
+		MeshFilterStruct* resmeshfilter = new MeshFilterStruct(parent,roothierarchy,objtype,objflags,objinfo);
 		res = resmeshfilter;
 		roothierarchy.node_list.push_back(res);
 		MACRO_READCHILDOBJ(resmeshfilter,false)
@@ -132,7 +132,7 @@ GameObjectNode* BuildHierarchy_Rec(GameObjectNode* parent, GameObjectHierarchy& 
 		MACRO_READCHILDOBJ(resmeshfilter,false)
 		resmeshfilter->child_mesh = childobj;
 	} else if (meta.file_type1[fileindex]==111) {
-		AnimationStruct* resanim = new AnimationStruct(parent,roothierarchy,objtype,objunk,objinfo);
+		AnimationStruct* resanim = new AnimationStruct(parent,roothierarchy,objtype,objflags,objinfo);
 		res = resanim;
 		roothierarchy.node_list.push_back(res);
 		MACRO_READCHILDOBJ(resanim,false)
@@ -151,7 +151,7 @@ GameObjectNode* BuildHierarchy_Rec(GameObjectNode* parent, GameObjectHierarchy& 
 		resanim->flag4 = ReadLong(f);
 		resanim->flag5 = ReadLong(f);
 	} else if (meta.file_type1[fileindex]==137) {
-		SkinnedMeshRendererStruct* resskinmeshren = new SkinnedMeshRendererStruct(parent,roothierarchy,objtype,objunk,objinfo);
+		SkinnedMeshRendererStruct* resskinmeshren = new SkinnedMeshRendererStruct(parent,roothierarchy,objtype,objflags,objinfo);
 		res = resskinmeshren;
 		roothierarchy.node_list.push_back(res);
 		MACRO_READCHILDOBJ(resskinmeshren,false)
@@ -199,7 +199,7 @@ GameObjectNode* BuildHierarchy_Rec(GameObjectNode* parent, GameObjectHierarchy& 
 		ModelDataStruct::ReadCoordinates(f,resskinmeshren->radius_x,resskinmeshren->radius_y,resskinmeshren->radius_z,false);
 		resskinmeshren->float_unk9 = ReadFloat(f);
 	} else {
-		res = new GameObjectNode(parent,roothierarchy,objtype,objunk,objinfo);
+		res = new GameObjectNode(parent,roothierarchy,objtype,objflags,objinfo);
 		roothierarchy.node_list.push_back(res);
 	}
 	res->file_index = fileindex;
@@ -278,15 +278,16 @@ void GameObjectHierarchy::DEBUGDisplayHierarchy() {
 
 void GameObjectHierarchy::BuildHierarchy(fstream& archivefile, UnityArchiveMetaData& metadata, unsigned int rootfileindex) {
 	uint32_t type = metadata.file_type1[rootfileindex];
-	uint32_t unk = metadata.file_unknown2[rootfileindex];
+	uint32_t flags = metadata.file_flags[rootfileindex];
 	uint64_t info = metadata.file_info[rootfileindex];
 	meta_data = &metadata;
-	root_node = BuildHierarchy_Rec(NULL,*this,type,unk,info,archivefile,metadata,rootfileindex);
+	root_node = BuildHierarchy_Rec(NULL,*this,type,flags,info,archivefile,metadata,rootfileindex);
 }
 
 void GameObjectHierarchy::OverwriteHierarchy(fstream& archivefile) {
 	unsigned int i,j;
 	for (i=0;i<node_list.size();i++) {
+fstream fout("aaab.txt",ios::app|ios::out); fout << "HIERARCHY WRITE: " << i << " " << (unsigned int)node_list[i]->node_type << endl; fout.close();
 		if (node_list[i]->node_type==1) {
 			GameObjectStruct& nodeobj = *static_cast<GameObjectStruct*>(node_list[i]);
 			archivefile.seekg(meta_data->GetFileOffsetByIndex(node_list[i]->file_index));
@@ -316,16 +317,24 @@ void GameObjectHierarchy::OverwriteHierarchy(fstream& archivefile) {
 			archivefile.put(nodeobj.unk3);
 		} else if (node_list[i]->node_type==4) {
 			TransformStruct& nodetransf = *static_cast<TransformStruct*>(node_list[i]);
+fout.open("aaab.txt",ios::app|ios::out); fout << "HIERARCHY TRANSFORM: " << (int)node_list[i]->file_index << endl; fout.close();
 			archivefile.seekg(meta_data->GetFileOffsetByIndex(node_list[i]->file_index));
+fout.open("aaab.txt",ios::app|ios::out); fout << "HIERARCHY 1" << endl; fout.close();
 			MACRO_WRITECHILDOBJ(nodetransf.child_object,false)
+fout.open("aaab.txt",ios::app|ios::out); fout << "HIERARCHY 2" << endl; fout.close();
 			nodetransf.rot.Write(archivefile);
+fout.open("aaab.txt",ios::app|ios::out); fout << "HIERARCHY 3" << endl; fout.close();
 			ModelDataStruct::WriteCoordinates(archivefile,nodetransf.x,nodetransf.y,nodetransf.z);
 			ModelDataStruct::WriteCoordinates(archivefile,nodetransf.scale_x,nodetransf.scale_y,nodetransf.scale_z,false);
+fout.open("aaab.txt",ios::app|ios::out); fout << "HIERARCHY CHILD: " << (unsigned int)nodetransf.child_transform_amount << endl; fout.close();
 			WriteLong(archivefile,nodetransf.child_transform_amount);
+fout.open("aaab.txt",ios::app|ios::out); fout << "HIERARCHY 4" << endl; fout.close();
 			for (j=0;j<nodetransf.child_transform_amount;j++) {
 				MACRO_WRITECHILDOBJ(nodetransf.child_transform[j],false)
 			}
+fout.open("aaab.txt",ios::app|ios::out); fout << "HIERARCHY 5" << endl; fout.close();
 			MACRO_WRITECHILDOBJ(nodetransf.parent_transform,false)
+fout.open("aaab.txt",ios::app|ios::out); fout << "HIERARCHY 6" << endl; fout.close();
 		} else if (node_list[i]->node_type==23) {
 			MeshRendererStruct& nodemeshren = *static_cast<MeshRendererStruct*>(node_list[i]);
 			archivefile.seekg(meta_data->GetFileOffsetByIndex(node_list[i]->file_index));
@@ -426,7 +435,6 @@ void GameObjectHierarchy::OverwriteHierarchy(fstream& archivefile) {
 GameObjectHierarchy::~GameObjectHierarchy() {
 	for (unsigned int i=0;i<node_list.size();i++)
 		delete node_list[i];
-	node_list.clear();
 }
 
 GameObjectNode* GameObjectHierarchy::FindObjectByInfo(uint64_t info) {

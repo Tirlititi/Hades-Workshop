@@ -97,19 +97,10 @@ struct UnityArchiveFileCreator {
 	vector<uint32_t> file_type;
 	vector<uint32_t> file_unknown;
 	vector<string> file_name;
-	vector<int> file_bundle_index;
-
-	vector<string> bundle_path;
-	vector<uint32_t> bundle_index;
-	vector<uint32_t> bundle_unk1;
-	vector<uint32_t> bundle_unk2;
-	vector<uint64_t> bundle_info;
 
 	UnityArchiveFileCreator(UnityArchiveMetaData* refdata) : meta_data(refdata) {}
 
-	// 'AddBundleData' should always follow a call of 'Add'
 	void Add(uint32_t type, uint32_t size, uint64_t info, string name = "", uint32_t unk = 0);
-	void AddBundleData(string fullpath, uint32_t unk1 = 0, uint32_t unk2 = 0);
 };
 
 struct UnityArchiveMetaData {
@@ -136,7 +127,7 @@ struct UnityArchiveMetaData {
 	uint32_t* file_size;
 	uint32_t* file_type1;
 	uint32_t* file_type2;
-	uint32_t* file_unknown2;
+	uint32_t* file_flags; // Often 0 (not always)
 	uint32_t* file_name_len;
 	string* file_name;
 	
@@ -186,17 +177,16 @@ struct UnityArchiveIndexListData {
 };
 
 struct UnityArchiveAssetBundle {
-	bool loaded;
 	uint32_t amount;
-	string* path;
-	uint32_t* index;
-	uint32_t* unk1;
-	uint32_t* unk2;
-	uint64_t* info;
+	vector<string> path;
+	vector<uint32_t> index;
+	vector<uint32_t> unk1;
+	vector<uint32_t> unk2;
+	vector<uint64_t> info;
 
-	uint32_t unkstruct_amount;
-	uint32_t* unkstruct_flag;
-	uint64_t* unkstruct_info;
+	uint32_t bundle_amount;
+	vector<uint32_t> bundle_flag;
+	vector<uint64_t> bundle_info;
 
 	uint32_t tail_unk1;
 	uint32_t tail_unk2;
@@ -208,14 +198,21 @@ struct UnityArchiveAssetBundle {
 	uint32_t tail_unk7;
 	uint32_t tail_unk8;
 
+	vector<uint32_t> bundle_index_start;
+	vector<uint32_t> bundle_index_end;
+
 	int Load(fstream& f);
 	void Write(fstream& f);
-	void Flush();
 	uint32_t GetFileIndex(string filepath);
 	uint64_t GetFileInfo(string filepath);
-	
-	UnityArchiveAssetBundle() : loaded(false) {}
-	~UnityArchiveAssetBundle() { Flush(); }
+
+	int GetFileBundle(uint64_t info);
+	void AddFile(string filepath, uint32_t fileindex, uint64_t fileinfo, uint32_t fileunk1 = 0, uint32_t fileunk2 = 0);
+	void AddFileBundle(uint64_t type, vector<uint64_t> fileinfolist);
+	void RemoveFile(unsigned int fileindex);
+	void RemoveFileBundle(unsigned int bundleindex);
+
+	int GetDataSize();
 };
 
 struct UnityArchiveDictionary {

@@ -339,7 +339,7 @@ int UnityArchiveMetaData::Load(fstream& f) {
 	file_size = new uint32_t[header_file_amount];
 	file_type1 = new uint32_t[header_file_amount];
 	file_type2 = new uint32_t[header_file_amount];
-	file_unknown2 = new uint32_t[header_file_amount];
+	file_flags = new uint32_t[header_file_amount];
 	file_name_len = new uint32_t[header_file_amount];
 	file_name = new string[header_file_amount];
 	text_file_size = new uint32_t[header_file_amount];
@@ -349,7 +349,7 @@ int UnityArchiveMetaData::Load(fstream& f) {
 		file_size[i] = ReadLong(f);
 		file_type1[i] = ReadLong(f);
 		file_type2[i] = ReadLong(f);
-		file_unknown2[i] = ReadLong(f);
+		file_flags[i] = ReadLong(f);
 		if (HasFileTypeName(file_type1[i])) {
 			size_t curpos = f.tellg();
 			f.seekg(archivestart+header_file_offset+file_offset_start[i]);
@@ -386,7 +386,7 @@ void UnityArchiveMetaData::Flush() {
 		delete[] file_size;
 		delete[] file_type1;
 		delete[] file_type2;
-		delete[] file_unknown2;
+		delete[] file_flags;
 		delete[] file_name_len;
 		delete[] file_name;
 		delete[] text_file_size;
@@ -422,7 +422,7 @@ void UnityArchiveMetaData::Copy(UnityArchiveMetaData* base, bool copyfiles) {
 		file_size = new uint32_t[header_file_amount];
 		file_type1 = new uint32_t[header_file_amount];
 		file_type2 = new uint32_t[header_file_amount];
-		file_unknown2 = new uint32_t[header_file_amount];
+		file_flags = new uint32_t[header_file_amount];
 		file_name_len = new uint32_t[header_file_amount];
 		file_name = new string[header_file_amount];
 		text_file_size = new uint32_t[header_file_amount];
@@ -431,7 +431,7 @@ void UnityArchiveMetaData::Copy(UnityArchiveMetaData* base, bool copyfiles) {
 		memcpy(file_size,base->file_size,header_file_amount*sizeof(uint32_t));
 		memcpy(file_type1,base->file_type1,header_file_amount*sizeof(uint32_t));
 		memcpy(file_type2,base->file_type2,header_file_amount*sizeof(uint32_t));
-		memcpy(file_unknown2,base->file_unknown2,header_file_amount*sizeof(uint32_t));
+		memcpy(file_flags,base->file_flags,header_file_amount*sizeof(uint32_t));
 		memcpy(file_name_len,base->file_name_len,header_file_amount*sizeof(uint32_t));
 		memcpy(text_file_size,base->text_file_size,header_file_amount*sizeof(uint32_t));
 		for (i=0;i<header_file_amount;i++)
@@ -501,8 +501,6 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 	uint32_t copyfileamount = header_file_amount + (addfile ? addfile->file_type.size() : 0);
 	uint32_t copyfileoffset = header_file_offset + (addfile ? addfile->file_type.size()*0x1C : 0);
 	uint32_t copyfileheadersize = header_size + (addfile ? addfile->file_type.size()*0x1C : 0);
-	bool updatebundle = addfile && addfile->bundle_index.size()>0;
-	bool updatingbundle;
 	uint32_t* res = new uint32_t[copyfileamount];
 	unsigned int i,j;
 	char* buffer;
@@ -530,7 +528,7 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 		newmetadata->file_size = new uint32_t[newmetadata->header_file_amount];
 		newmetadata->file_type1 = new uint32_t[newmetadata->header_file_amount];
 		newmetadata->file_type2 = new uint32_t[newmetadata->header_file_amount];
-		newmetadata->file_unknown2 = new uint32_t[newmetadata->header_file_amount];
+		newmetadata->file_flags = new uint32_t[newmetadata->header_file_amount];
 		newmetadata->file_name_len = new uint32_t[newmetadata->header_file_amount];
 		newmetadata->text_file_size = new uint32_t[newmetadata->header_file_amount];
 		newmetadata->file_name = new string[newmetadata->header_file_amount];
@@ -540,13 +538,6 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 	offstart = 0;
 	for (i=0;i<header_file_amount;i++) {
 		filenewsizetmp = filenewsize[i];
-		updatingbundle = updatebundle && file_type1[i]==142 && copylist[i];
-		if (updatingbundle) {
-			copylist[i] = false;
-			filenewsizetmp = file_size[i];
-			for (j=0;j<addfile->bundle_index.size();j++)
-				filenewsizetmp += 0x18+addfile->bundle_path[j].length()+GetAlignOffset(addfile->bundle_path[j].length());
-		}
 		if (file_type1[i]==49)
 			filenewsizetmp += 4;
 		WriteLongLong(fdest,file_info[i]);
@@ -564,7 +555,7 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 		}
 		WriteLong(fdest,file_type1[i]);
 		WriteLong(fdest,file_type2[i]);
-		WriteLong(fdest,file_unknown2[i]);
+		WriteLong(fdest,file_flags[i]);
 		offtmp = fdest.tellp();
 		fdest.seekp(archivestart+copyfileoffset+offstart);
 		if (HasFileTypeName(file_type1[i])) {
@@ -584,63 +575,15 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 			fdest.write(buffer,copysize);
 			delete[] buffer;
 		} else {
-			if (updatingbundle) {
-				fbase.seekg(GetFileOffsetByIndex(i));
-				WriteLong(fdest,ReadLong(fbase));
-				uint32_t unkstructam = ReadLong(fbase);
-				WriteLong(fdest,unkstructam);
-				copysize = unkstructam*0xC;
-				buffer = new char[copysize];
-				fbase.read(buffer,copysize);
-				fdest.write(buffer,copysize);
-				delete[] buffer;
-				uint32_t bundleinfoamount = ReadLong(fbase);
-				WriteLong(fdest,bundleinfoamount+addfile->bundle_index.size());
-				uint32_t bundlepathlen;
-				for (j=0;j<bundleinfoamount;j++) {
-					bundlepathlen = ReadLong(fbase);
-					WriteLong(fdest,bundlepathlen);
-					copysize = 0x14+bundlepathlen+GetAlignOffset(bundlepathlen);
-					buffer = new char[copysize];
-					fbase.read(buffer,copysize);
-					fdest.write(buffer,copysize);
-					delete[] buffer;
-				}
-				unsigned int k;
-				for (j=0;j<addfile->bundle_index.size();j++) {
-					WriteLong(fdest,addfile->bundle_path[j].length());
-					for (k=0;k<addfile->bundle_path[j].length();k++)
-						fdest.put(addfile->bundle_path[j][k]);
-					while (fdest.tellp()%4)
-						fdest.put(0);
-					WriteLong(fdest,addfile->bundle_index[j]);
-					WriteLong(fdest,addfile->bundle_unk1[j]);
-					WriteLong(fdest,addfile->bundle_unk2[j]);
-					WriteLongLong(fdest,addfile->bundle_info[j]);
-				}
-				copysize = 0x18;
-				buffer = new char[copysize];
-				fbase.read(buffer,copysize);
-				fdest.write(buffer,copysize);
-				delete[] buffer;
-				bundlepathlen = ReadLong(fbase);
-				WriteLong(fdest,bundlepathlen);
-				copysize = 0x8+bundlepathlen+GetAlignOffset(bundlepathlen);
-				buffer = new char[copysize];
-				fbase.read(buffer,copysize);
-				fdest.write(buffer,copysize);
-				delete[] buffer;
-			} else {
-				fdest.seekp(res[i]+filenewsize[i]-1);
-				fdest.put(0);
-			}
+			fdest.seekp(res[i]+filenewsize[i]-1);
+			fdest.put(0);
 		}
 		fdest.seekp(offtmp);
 		if (newmetadata) {
 			newmetadata->file_info[i] = file_info[i];
 			newmetadata->file_type1[i] = file_type1[i];
 			newmetadata->file_type2[i] = file_type2[i];
-			newmetadata->file_unknown2[i] = file_unknown2[i];
+			newmetadata->file_flags[i] = file_flags[i];
 			newmetadata->file_name_len[i] = file_name_len[i];
 			newmetadata->file_name[i] = file_name[i];
 			if (copylist[i]) {
@@ -659,8 +602,6 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 			offstart += file_size[i];
 		else
 			offstart += filenewsizetmp;
-		if (updatingbundle)
-			copylist[i] = true;
 		offstart += GetAlignOffset(offstart,8);
 	}
 	fbase.seekg(offtmp);
@@ -699,7 +640,7 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 				newmetadata->file_info[header_file_amount+i] = addfile->file_info[i];
 				newmetadata->file_type1[header_file_amount+i] = addfile->file_type[i];
 				newmetadata->file_type2[header_file_amount+i] = addfile->file_type[i];
-				newmetadata->file_unknown2[header_file_amount+i] = addfile->file_unknown[i];
+				newmetadata->file_flags[header_file_amount+i] = addfile->file_unknown[i];
 				newmetadata->file_name_len[header_file_amount+i] = addfile->file_name[i].length();
 				newmetadata->file_name[header_file_amount+i] = addfile->file_name[i];
 				newmetadata->file_size[header_file_amount+i] = filenewsizetmp;
@@ -820,19 +761,27 @@ int UnityArchiveAssetBundle::Load(fstream& f) {
 	uint32_t fnamelen;
 	unsigned int i,j;
 	ReadLong(f);
-	unkstruct_amount = ReadLong(f);
-	unkstruct_flag = new uint32_t[unkstruct_amount];
-	unkstruct_info = new uint64_t[unkstruct_amount];
-	for (i=0;i<unkstruct_amount;i++) {
-		unkstruct_flag[i] = ReadLong(f);
-		unkstruct_info[i] = ReadLongLong(f);
+	bundle_amount = ReadLong(f);
+	bundle_index_start.clear();
+	bundle_index_end.clear();
+	bundle_flag.resize(bundle_amount);
+	bundle_info.resize(bundle_amount);
+	for (i=0;i<bundle_amount;i++) {
+		bundle_flag[i] = ReadLong(f);
+		bundle_info[i] = ReadLongLong(f);
+		if (bundle_flag[i]!=0) {
+			if (bundle_index_start.size()>0)
+				bundle_index_end.push_back(i);
+			bundle_index_start.push_back(i);
+		}
 	}
+	bundle_index_end.push_back(bundle_amount);
 	amount = ReadLong(f);
-	path = new string[amount];
-	index = new uint32_t[amount];
-	unk1 = new uint32_t[amount];
-	unk2 = new uint32_t[amount];
-	info = new uint64_t[amount];
+	path.resize(amount);
+	index.resize(amount);
+	unk1.resize(amount);
+	unk2.resize(amount);
+	info.resize(amount);
 	for (i=0;i<amount;i++) {
 		fnamelen = ReadLong(f);
 		path[i] = "";
@@ -857,17 +806,16 @@ int UnityArchiveAssetBundle::Load(fstream& f) {
 	f.seekg(GetAlignOffset(fnamelen),ios::cur);
 	tail_unk7 = ReadLong(f);
 	tail_unk8 = ReadLong(f);
-	loaded = true;
 	return 0;
 }
 
 void UnityArchiveAssetBundle::Write(fstream& f) {
 	unsigned int i,j;
 	WriteLong(f,0);
-	WriteLong(f,unkstruct_amount);
-	for (i=0;i<unkstruct_amount;i++) {
-		WriteLong(f,unkstruct_flag[i]);
-		WriteLongLong(f,unkstruct_info[i]);
+	WriteLong(f,bundle_amount);
+	for (i=0;i<bundle_amount;i++) {
+		WriteLong(f,bundle_flag[i]);
+		WriteLongLong(f,bundle_info[i]);
 	}
 	WriteLong(f,amount);
 	for (i=0;i<amount;i++) {
@@ -896,19 +844,6 @@ void UnityArchiveAssetBundle::Write(fstream& f) {
 	WriteLong(f,tail_unk8);
 }
 
-void UnityArchiveAssetBundle::Flush() {
-	if (loaded) {
-		delete[] unkstruct_flag;
-		delete[] unkstruct_info;
-		delete[] path;
-		delete[] index;
-		delete[] unk1;
-		delete[] unk2;
-		delete[] info;
-		loaded = false;
-	}
-}
-
 uint32_t UnityArchiveAssetBundle::GetFileIndex(string filepath) {
 	for (unsigned int i=0;i<amount;i++)
 		if (filepath.compare(path[i])==0)
@@ -921,6 +856,61 @@ uint64_t UnityArchiveAssetBundle::GetFileInfo(string filepath) {
 		if (filepath.compare(path[i])==0)
 			return info[i];
 	return 0;
+}
+
+int UnityArchiveAssetBundle::GetFileBundle(uint64_t info) {
+	unsigned int bundle = 0;
+	for (unsigned int i=1;i<bundle_amount;i++)
+		if (i==bundle_index_end[bundle])
+			bundle++;
+		else if (info==bundle_info[i])
+			return bundle;
+	return -1;
+}
+
+void UnityArchiveAssetBundle::AddFile(string filepath, uint32_t fileindex, uint64_t fileinfo, uint32_t fileunk1, uint32_t fileunk2) {
+	path.push_back(filepath);
+	index.push_back(fileindex);
+	unk1.push_back(fileunk1);
+	unk2.push_back(fileunk2);
+	info.push_back(fileinfo);
+	amount = path.size();
+}
+
+void UnityArchiveAssetBundle::AddFileBundle(uint64_t type, vector<uint64_t> fileinfolist) {
+	bundle_index_start.push_back(bundle_flag.size());
+	bundle_flag.push_back(1);
+	bundle_info.push_back(type);
+	for (unsigned int i=1;i<fileinfolist.size();i++) {
+		bundle_flag.push_back(0);
+		bundle_info.push_back(fileinfolist[i]);
+	}
+	bundle_index_end.push_back(bundle_flag.size());
+	bundle_amount = bundle_flag.size();
+}
+
+void UnityArchiveAssetBundle::RemoveFile(unsigned int fileindex) {
+	path.erase(path.begin()+fileindex);
+	index.erase(index.begin()+fileindex);
+	unk1.erase(unk1.begin()+fileindex);
+	unk2.erase(unk2.begin()+fileindex);
+	info.erase(info.begin()+fileindex);
+	amount = index.size();
+}
+
+void UnityArchiveAssetBundle::RemoveFileBundle(unsigned int bundleindex) {
+	bundle_flag.erase(bundle_flag.begin()+bundleindex);
+	bundle_info.erase(bundle_info.begin()+bundleindex);
+	bundle_index_start.erase(bundle_index_start.begin()+bundleindex);
+	bundle_index_end.erase(bundle_index_end.begin()+bundleindex);
+	bundle_amount = bundle_flag.size();
+}
+
+int UnityArchiveAssetBundle::GetDataSize() {
+	int res = 0x30+bundle_amount*0xC+amount*0x18+tail_archive_name.length()+GetAlignOffset(tail_archive_name.length());
+	for (unsigned int i=0;i<amount;i++)
+		res += path[i].length()+GetAlignOffset(path[i].length());
+	return res;
 }
 
 int UnityArchiveDictionary::GetObjectIndex(string keyparameter, string id) {
@@ -1006,16 +996,4 @@ void UnityArchiveFileCreator::Add(uint32_t type, uint32_t size, uint64_t info, s
 	file_type.push_back(type);
 	file_unknown.push_back(unk);
 	file_name.push_back(name);
-	file_bundle_index.push_back(-1);
-}
-
-void UnityArchiveFileCreator::AddBundleData(string fullpath, uint32_t unk1, uint32_t unk2) {
-	if (file_bundle_index.size()==0)
-		return;
-	file_bundle_index[file_bundle_index.size()-1] = bundle_index.size();
-	bundle_path.push_back(fullpath);
-	bundle_index.push_back(meta_data->header_file_amount+file_bundle_index.size()+1);
-	bundle_unk1.push_back(unk1);
-	bundle_unk2.push_back(unk2);
-	bundle_info.push_back(file_info[file_info.size()-1]);
 }

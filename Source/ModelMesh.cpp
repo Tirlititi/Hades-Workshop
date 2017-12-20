@@ -276,7 +276,8 @@ void ModelMaterialData::Read(fstream& f, UnityArchiveMetaData& metadata) {
 	uint32_t fieldlen;
 	char fieldbuffer[0x20];
 	size_t headerpos = f.tellg();
-	f.seekg(headerpos+0xC);
+	shader_unk = ReadLong(f);
+	shader_info = ReadLongLong(f);
 	fieldlen = ReadLong(f);
 	if (fieldlen==0) {
 		extheader_value1 = ReadLong(f); // DEBUG: save that and optional fields in FBX
@@ -381,9 +382,8 @@ void ModelMaterialData::Read(fstream& f, UnityArchiveMetaData& metadata) {
 
 void ModelMaterialData::Write(fstream& f, UnityArchiveMetaData& metadata) {
 	string fieldbuffer;
-	WriteLong(f,0);
-	WriteLong(f,0xC6190F1B);
-	WriteLong(f,0x0D38C292);
+	WriteLong(f,shader_unk);
+	WriteLongLong(f,shader_info);
 	if (has_extheader) {
 		WriteLong(f,0);
 		WriteLong(f,extheader_value1);
@@ -690,6 +690,7 @@ bool ModelDataStruct::Write(fstream& f) {
 	unsigned int meshcounter = 0;
 	hierarchy->OverwriteHierarchy(f);
 	for (i=0;i<hierarchy->node_list.size();i++) {
+fstream fout("aaab.txt",ios::app|ios::out); fout << "MODEL WRITE: " << i << " " << (unsigned int)hierarchy->node_list[i]->node_type << endl; fout.close();
 		if (hierarchy->node_list[i]->node_type==23) {
 			// Write material list ; TODO: do not duplicates the same materials
 			MeshRendererStruct* node = static_cast<MeshRendererStruct*>(hierarchy->node_list[i]);
@@ -833,8 +834,22 @@ void ModelDataStruct::SetupPostImportData(vector<unsigned int> folderfiles, Game
 		mesh[i].unk_num2 = 0;
 		mesh[i].unk_num3 = 0;
 	}
+	uint64_t shaderinfo = 0; // DEBUG: Use the same shader for all materials
+	for (k=0;k<folderfiles.size();k++)
+		if (hierarchy->meta_data->file_type1[folderfiles[k]]==48) {
+			shaderinfo = hierarchy->meta_data->file_info[folderfiles[k]];
+			break;
+		}
+	if (shaderinfo==0)
+		for (k=0;k<hierarchy->meta_data->header_file_amount;k++)
+			if (hierarchy->meta_data->file_type1[k]==48) {
+				shaderinfo = hierarchy->meta_data->file_info[k];
+				break;
+			}
 	for (i=0;i<material.size();i++) {
 		for (j=0;j<material[i].size();j++) {
+			material[i][j].shader_unk = 0;
+			material[i][j].shader_info = shaderinfo;
 
 			#define MACRO_SETUP_FILEMAP(FMAP) \
 				FMAP.unk1 = 0; \
@@ -1371,6 +1386,7 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 		newtransf->scale_x = lCurrentNode->LclScaling.Get()[0];
 		newtransf->scale_y = lCurrentNode->LclScaling.Get()[1];
 		newtransf->scale_z = lCurrentNode->LclScaling.Get()[2];
+		newtransf->parent_transform = NULL;
 		for (i=0;i<lNodeList.size();i++)
 			if (lCurrentNode->GetParent()==lNodeList[i]) {
 				newtransf->parent = obj_list[i];
