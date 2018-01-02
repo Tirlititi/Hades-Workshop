@@ -1507,9 +1507,13 @@ bool UnityAddFileDialog::IsInfoUnused(uint64_t info, int paneltoignore) {
 }
 
 void UnityAddFileDialog::GenerateValidInfo(unsigned int panelid) {
-	uint64_t newfileinfo = 0x5555444433332222L;
-	while (!IsInfoUnused(newfileinfo,panelid))
-		newfileinfo++;
+	uint64_t newfileinfo = meta_data->file_info[meta_data->header_file_amount-1]+1;
+	unsigned int i;
+//	while (!IsInfoUnused(newfileinfo,panelid))
+//		newfileinfo++;
+	for (i=0;i<panelid;i++)
+		if (ConvertStringToLong(static_cast<UnityAddFilePanelDialog*>(m_filebook->GetPage(i))->m_fileinfo->GetValue())>=newfileinfo)
+			newfileinfo = ConvertStringToLong(static_cast<UnityAddFilePanelDialog*>(m_filebook->GetPage(i))->m_fileinfo->GetValue())+1;
 	static_cast<UnityAddFilePanelDialog*>(m_filebook->GetPage(panelid))->m_fileinfo->SetValue(ConvertLongToString(newfileinfo));
 }
 
