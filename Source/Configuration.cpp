@@ -1169,7 +1169,7 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 		dest.field_walkmesh_file[i] = dest.meta_field[dest.field_file_id[i]-1].GetFileIndexByInfo(fieldindexlist[dest.field_file_id[i]-1].GetFileInfo(subfilepath),49);
 		subfilepath = "assets/resources/fieldmaps/"+fieldbacknamelower[i]+"/atlas.png";
 		dest.field_image_file[i] = dest.meta_field[dest.field_file_id[i]-1].GetFileIndexByInfo(fieldindexlist[dest.field_file_id[i]-1].GetFileInfo(subfilepath),28);
-		uint64_t finfo;
+		int64_t finfo;
 		int32_t fsharedbgs;
 		subfilepath = "assets/resources/fieldmaps/"+fieldbacknamelower[i]+"/"+fieldbacknamelower[i]+".bgs.bytes";
 		fsharedbgs = dest.meta_field[dest.field_file_id[i]-1].GetFileIndexByInfo(fieldindexlist[dest.field_file_id[i]-1].GetFileInfo(subfilepath),49);

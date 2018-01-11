@@ -44,7 +44,7 @@ private:
 	void UpdateMenuAvailability();
 	bool PrepareAssetForImport(bool isnewfile, fstream& filebase, wxString path, uint32_t ftype, vector<ModelDataStruct>& importmodel, UnityArchiveFileCreator& filestoadd, UnityLinkFileDialog& linkfiledialog, bool linkfiledialoginit, bool* copylist, /*	Common Arguments
 							*/ uint32_t* filenewsize, unsigned int impfileid, long it, wxString filearchivedir, vector<GameObjectHierarchy>* importmodelbasehierarchy, /* Replace file
-							*/ uint64_t newfileinfo, string newfileinternalname, string newfilepath); // New file
+							*/ int64_t newfileinfo, string newfileinternalname, string newfilepath); // New file
 	bool PerformImportOfAsset(bool isnewfile, fstream& filebase, fstream& filedest, UnityArchiveMetaData& newmetadata, wxString path, uint32_t ftype, vector<ModelDataStruct>& importmodel, unsigned int& importmodelcounter, unsigned int impfileid);
 
 	void OnMenuSelection(wxCommandEvent& event);
@@ -56,9 +56,9 @@ private:
 class UnityLinkFileDialog : public UnityLinkFileWindow {
 public:
 	wxArrayString filelist;
-	vector<uint64_t> fileinfolist;
+	vector<int64_t> fileinfolist;
 
-	uint64_t info_selected;
+	int64_t info_selected;
 
 	UnityLinkFileDialog(wxWindow* parent) : UnityLinkFileWindow(parent), infovalidator(NULL) {}
 	int ShowModal(wxString message);
@@ -73,21 +73,21 @@ private:
 
 class UnityAddFileDialog : public UnityAddFileWindow {
 public:
+	UnityArchiveMetaData* meta_data_list;
 	UnityArchiveMetaData* meta_data;
 	unsigned int panel_amount;
 	vector<uint32_t> file_type_choice;
 	wxArrayString file_type_name;
 	bool has_bundle;
 
-	UnityAddFileDialog(wxWindow* parent, UnityArchiveMetaData* metadata) : UnityAddFileWindow(parent), meta_data(metadata) {}
+	UnityAddFileDialog(wxWindow* parent, UnityArchiveMetaData metadatalist[UNITY_ARCHIVE_AMOUNT], unsigned int archiveindex);
 	int ShowModal();
-	bool IsInfoUnused(uint64_t info, int paneltoignore = -1);
+	bool IsInfoUnused(int64_t info, int paneltoignore = -1);
 	void GenerateValidInfo(unsigned int panelid);
 	int VerifyInfoValidity();
+	UnityAddFilePanelDialog* AddPanel();
 
 private:
-	void AddPanel();
-
 	void OnButtonClick(wxCommandEvent& event);
 };
 

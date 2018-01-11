@@ -10970,7 +10970,7 @@ UnityViewerWindow::UnityViewerWindow( wxWindow* parent, wxWindowID id, const wxS
 	
 	m_menuimportmodelanims = new wxMenuItem( m_menuconvertmodel, wxID_ANY, wxString( _("Import Animations") ) , wxEmptyString, wxITEM_CHECK );
 	m_menuconvertmodel->Append( m_menuimportmodelanims );
-	m_menuimportmodelanims->Enable( false );
+	m_menuimportmodelanims->Check( true );
 	
 	m_menuoptions->Append( m_menuconvertmodelItem );
 	

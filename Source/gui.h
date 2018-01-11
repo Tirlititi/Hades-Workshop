@@ -3155,7 +3155,6 @@ class UnityAddFileWindow : public wxDialog
 	private:
 	
 	protected:
-		wxButton* m_buttonadd;
 		wxButton* m_buttoncancel;
 		
 		// Virtual event handlers, overide them in your derived class
@@ -3164,6 +3163,7 @@ class UnityAddFileWindow : public wxDialog
 	
 	public:
 		wxNotebook* m_filebook;
+		wxButton* m_buttonadd;
 		wxButton* m_buttonok;
 		
 		UnityAddFileWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Insert New Asset"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,340 ), long style = wxCAPTION|wxRESIZE_BORDER ); 

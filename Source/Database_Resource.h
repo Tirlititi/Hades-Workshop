@@ -9,6 +9,15 @@ struct SortedChoiceSteamItem {
 	wxString label;
 };
 
+struct ModelDatabaseItem {
+	uint32_t id;
+//	uint8_t category; // TODO: fill
+//	uint8_t module;
+//	uint8_t version;
+//	wxString steamid;
+	wxString label;
+};
+
 //-- Battle Scenes
 static SortedChoiceSteamItem HADES_STRING_BATTLE_SCENE_NAME[] = {
 	{ 0x0,	L"B065",	L"Alexandria Castle, Hidden passage's lower level" },
@@ -281,7 +290,7 @@ static wxString DATABASE_MODEL_TYPE[] = {
 	L"weapon",
 };
 
-static SortedChoiceItem HADES_STRING_MODEL_NAME[] = {
+static ModelDatabaseItem HADES_STRING_MODEL_NAME[] = {
 	{ 0,	L"Enemy_Deathguise" },
 	{ 1,	L"Enemy_Ozma" },
 	{ 3,	L"Terran_Elevator" },
@@ -398,8 +407,8 @@ static SortedChoiceItem HADES_STRING_MODEL_NAME[] = {
 	{ 116,	L"Gilgamesh" },
 	{ 117,	L"GrandpaA" },
 	{ 118,	L"Alexandrian_SoldierB" },
-	{ 119,	L"Red_MageA" },
-	{ 120,	L"Red_MageB" },
+	{ 119,	L"Red_Mage_Female" },
+	{ 120,	L"Red_Mage_Male" },
 	{ 121,	L"Puck" },
 	{ 122,	L"Ticketmaster" },
 	{ 123,	L"Hippolady" },

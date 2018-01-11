@@ -217,7 +217,7 @@ struct ModelMeshData {
 
 struct ModelMaterialFile {
 	uint32_t unk1;
-	uint64_t file_info = 0;
+	int64_t file_info = 0;
 	float u = 1.0;
 	float v = 1.0;
 	uint32_t unk2;
@@ -229,7 +229,7 @@ struct ModelMaterialFile {
 struct ModelMaterialData {
 	// Always there
 	uint32_t shader_unk;
-	uint64_t shader_info;
+	int64_t shader_info;
 	ModelMaterialFile bumpmap;
 	ModelMaterialFile detailalbedomap;
 	ModelMaterialFile detailmask;
@@ -345,18 +345,23 @@ struct ModelAnimationData {
 	uint32_t num_unk5; // mostly 0
 	float float_unk; // mostly 30.0
 	uint32_t num_unk6; // mostly 0
-	// From now, it's mostly always the same except for the first 6*float (coords)
-	// 7 structs of 6*float+0x20+5*float + extraifnonzero = 0x4C + extraifnonzero ?
-	// 0x14.........0x34..............0x07.....
-	// 3 structs of 0x1C+5*float = 0x4C ?
-	// 0x4C of unk
+	// From now, it's mostly always the same except for the first 6*float? (coords?)
+	// 8 structs of 0x38+5*float + extraifnonzero = 0x4C + extraifnonzero ?
+	// ........0x04........0x14........(0x14........0x34........0x07)........(1.0 *5)........
+	// at 0x00:  if value==0x14, add 0x48 or 0x3C to size?
+	// at 0x1C:  while (value==1.0), add float to size
+	// at 0x20:  add 1*value (4) to size
+	// at 0x30?: add 0x10*value (0x34) to size
+	// at 0x34?: add 0x14*value (0x07) to size
 	uint32_t num_unk7; // mostly 0x9B = 155
 	vector<int32_t> unk7; // mostly -1
 	// 0x1C of unk ; mostly 0 0 1 0 0 0 0
     
 	uint32_t anim_id;
+	int32_t file_id;
 
 	void Read(fstream& f, GameObjectHierarchy* gohier = NULL);
+	void Write(fstream& f);
 	int GetDataSize();
 };
 
@@ -366,6 +371,7 @@ struct ModelDataStruct {
 	vector<ModelAnimationData> animation;
 	GameObjectHierarchy* hierarchy;
 
+	string steam_name;
 	string description;
     
 	// In Steam's assets, the coordinate system is:
@@ -378,9 +384,9 @@ struct ModelDataStruct {
     bool Read(fstream& f, GameObjectHierarchy* gohier);
 	bool Write(fstream& f);
 	int Export(const char* outputname, int format);
-	int Import(const char * inputname);
+	int Import(const char* inputname, bool retrieveanims = true);
 
-	void SetupPostImportData(vector<unsigned int> folderfiles, GameObjectHierarchy* basehierarchy = NULL, int mergepolicy = 0);
+	void SetupPostImportData(vector<unsigned int> folderfiles, UnityArchiveMetaData archivelist[UNITY_ARCHIVE_AMOUNT], UnityArchiveAssetBundle* animbundle = NULL, GameObjectHierarchy* basehierarchy = NULL, int mergepolicy = 0);
 };
 
 #endif

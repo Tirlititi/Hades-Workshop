@@ -45,10 +45,10 @@ struct GameObjectNode {
 	GameObjectHierarchy& root;
 	uint32_t node_type;
 	uint32_t node_unknown;
-	uint64_t node_info;
+	int64_t node_info;
 	unsigned int file_index;
 
-	GameObjectNode(GameObjectNode* prt, GameObjectHierarchy& rt, uint32_t ndtype, uint32_t unk, uint64_t nfo) : parent(prt), root(rt), node_type(ndtype), node_unknown(unk), node_info(nfo) {}
+	GameObjectNode(GameObjectNode* prt, GameObjectHierarchy& rt, uint32_t ndtype, uint32_t unk, int64_t nfo) : parent(prt), root(rt), node_type(ndtype), node_unknown(unk), node_info(nfo) {}
 	virtual int GetDataSize();
 };
 
@@ -62,7 +62,7 @@ struct GameObjectStruct : public GameObjectNode {
 	uint8_t unk2;
 	uint8_t unk3;
 
-	GameObjectStruct(GameObjectNode* prt, GameObjectHierarchy& rt, uint32_t ndtype, uint32_t unk, uint64_t nfo) : GameObjectNode(prt, rt, ndtype, unk, nfo) {}
+	GameObjectStruct(GameObjectNode* prt, GameObjectHierarchy& rt, uint32_t ndtype, uint32_t unk, int64_t nfo) : GameObjectNode(prt, rt, ndtype, unk, nfo) {}
 	TransformStruct* GetParentTransform();
 	string GetScopedName();
 	int GetDataSize();
@@ -81,7 +81,7 @@ struct TransformStruct : public GameObjectNode {
 	float scale_y;
 	float scale_z;
 
-	TransformStruct(GameObjectNode* prt, GameObjectHierarchy& rt, uint32_t ndtype, uint32_t unk, uint64_t nfo) : GameObjectNode(prt, rt, ndtype, unk, nfo) {}
+	TransformStruct(GameObjectNode* prt, GameObjectHierarchy& rt, uint32_t ndtype, uint32_t unk, int64_t nfo) : GameObjectNode(prt, rt, ndtype, unk, nfo) {}
 	int GetDataSize();
 };
 
@@ -115,7 +115,7 @@ struct MeshRendererStruct : public GameObjectNode {
 	uint32_t flag15;
 	uint32_t flag16;
 
-	MeshRendererStruct(GameObjectNode* prt, GameObjectHierarchy& rt, uint32_t ndtype, uint32_t unk, uint64_t nfo) : GameObjectNode(prt, rt, ndtype, unk, nfo) {}
+	MeshRendererStruct(GameObjectNode* prt, GameObjectHierarchy& rt, uint32_t ndtype, uint32_t unk, int64_t nfo) : GameObjectNode(prt, rt, ndtype, unk, nfo) {}
 	int GetDataSize();
 };
 
@@ -123,7 +123,7 @@ struct MeshFilterStruct : public GameObjectNode {
 	GameObjectNode* parent_object;
 	GameObjectNode* child_mesh;
 
-	MeshFilterStruct(GameObjectNode* prt, GameObjectHierarchy& rt, uint32_t ndtype, uint32_t unk, uint64_t nfo) : GameObjectNode(prt, rt, ndtype, unk, nfo) {}
+	MeshFilterStruct(GameObjectNode* prt, GameObjectHierarchy& rt, uint32_t ndtype, uint32_t unk, int64_t nfo) : GameObjectNode(prt, rt, ndtype, unk, nfo) {}
 	int GetDataSize();
 };
 
@@ -137,7 +137,7 @@ struct AnimationStruct : public GameObjectNode {
 	uint32_t flag4;
 	uint32_t flag5;
 
-	AnimationStruct(GameObjectNode* prt, GameObjectHierarchy& rt, uint32_t ndtype, uint32_t unk, uint64_t nfo) : GameObjectNode(prt, rt, ndtype, unk, nfo) {}
+	AnimationStruct(GameObjectNode* prt, GameObjectHierarchy& rt, uint32_t ndtype, uint32_t unk, int64_t nfo) : GameObjectNode(prt, rt, ndtype, unk, nfo) {}
 	int GetDataSize();
 };
 
@@ -182,7 +182,7 @@ struct SkinnedMeshRendererStruct : public GameObjectNode {
 	float radius_z;
 	float float_unk9;
 
-	SkinnedMeshRendererStruct(GameObjectNode* prt, GameObjectHierarchy& rt, uint32_t ndtype, uint32_t unk, uint64_t nfo) : GameObjectNode(prt, rt, ndtype, unk, nfo) {}
+	SkinnedMeshRendererStruct(GameObjectNode* prt, GameObjectHierarchy& rt, uint32_t ndtype, uint32_t unk, int64_t nfo) : GameObjectNode(prt, rt, ndtype, unk, nfo) {}
 	int GetDataSize();
 };
 
@@ -198,7 +198,7 @@ struct GameObjectHierarchy {
 	void OverwriteHierarchy(fstream& archivefile);
 	~GameObjectHierarchy();
 
-	GameObjectNode* FindObjectByInfo(uint64_t info);
+	GameObjectNode* FindObjectByInfo(int64_t info);
 
 	// Setup new informations (node_info, file_index, ...) for this->node_list[]
 	// Both "this" and "base" should share the same meta_data
@@ -206,9 +206,9 @@ struct GameObjectHierarchy {
 	// 0=Only setup the nodes that are already existing (node_info==0 for the others)
 	// 1=Setup the nodes that are already existing and assign new file informations for the others
 	// 2=Assign new informations to all the nodes except for the root_node's object (but the root_node is re-assigned) ; base is ignored
-	void MergeHierarchy(GameObjectHierarchy* base, int mergepolicy);
+	void MergeHierarchy(UnityArchiveMetaData archivelist[UNITY_ARCHIVE_AMOUNT], GameObjectHierarchy* base, int mergepolicy);
 
-	static uint64_t GetRootInfoFromObject(uint8_t* objbuffer);
+	static int64_t GetRootInfoFromObject(uint8_t* objbuffer);
 };
 
 #endif

@@ -104,6 +104,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release staticdll|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>C:\CodeLite\wxWidgets-3.1.0\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -156,7 +157,7 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(VCInstallDir)lib\vc_dll\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(VCInstallDir)lib\vc_dll;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;glu32.lib;libfbxsdk.lib;wxbase31u.lib;wxbase31u_net.lib;wxbase31u_xml.lib;comctl32.lib;rpcrt4.lib;winmm.lib;advapi32.lib;wsock32.lib;wxexpat.lib;wxjpeg.lib;wxmsw31u_adv.lib;wxmsw31u_aui.lib;wxmsw31u_core.lib;wxmsw31u_gl.lib;wxmsw31u_html.lib;wxmsw31u_media.lib;wxmsw31u_propgrid.lib;wxmsw31u_qa.lib;wxmsw31u_ribbon.lib;wxmsw31u_richtext.lib;wxmsw31u_stc.lib;wxmsw31u_webview.lib;wxmsw31u_xrc.lib;wxpng.lib;wxregexu.lib;wxscintilla.lib;wxtiff.lib;wxzlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
     </Link>
@@ -255,6 +256,7 @@
     <ClInclude Include="Source\Cluts.h" />
     <ClInclude Include="Source\Commands.h" />
     <ClInclude Include="Source\Configuration.h" />
+    <ClInclude Include="Source\Database_Animation.h" />
     <ClInclude Include="Source\Database_Assembly.h" />
     <ClInclude Include="Source\Database_Common.h" />
     <ClInclude Include="Source\Database_Item.h" />

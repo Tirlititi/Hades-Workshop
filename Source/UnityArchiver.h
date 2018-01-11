@@ -92,15 +92,16 @@ enum UnityArchiveFile {
 struct UnityArchiveFileCreator {
 	UnityArchiveMetaData* meta_data;
 
-	vector<uint64_t> file_info;
+	vector<int64_t> file_info;
 	vector<uint32_t> file_size;
 	vector<uint32_t> file_type;
 	vector<uint32_t> file_unknown;
 	vector<string> file_name;
+	vector<uint32_t> file_index;
 
 	UnityArchiveFileCreator(UnityArchiveMetaData* refdata) : meta_data(refdata) {}
 
-	void Add(uint32_t type, uint32_t size, uint64_t info, string name = "", uint32_t unk = 0);
+	void Add(uint32_t type, uint32_t size, int64_t info, string name = "", uint32_t unk = 0);
 };
 
 struct UnityArchiveMetaData {
@@ -122,7 +123,7 @@ struct UnityArchiveMetaData {
 	// 0x10 or 0x20 info data
 	// + unkstruct
 	uint32_t header_file_amount;
-	uint64_t* file_info;
+	int64_t* file_info;
 	uint32_t* file_offset_start;
 	uint32_t* file_size;
 	uint32_t* file_type1;
@@ -138,10 +139,11 @@ struct UnityArchiveMetaData {
 	void Copy(UnityArchiveMetaData* base, bool copyfiles = true);
 	uint32_t GetFileSizeByIndex(unsigned int fileid);
 	uint32_t GetFileOffset(string filename, uint32_t filetype = 0xFFFFFFFF, unsigned int num = 0, string folder = "");
-	uint32_t GetFileOffsetByInfo(uint64_t info, uint32_t filetype = 0xFFFFFFFF, string folder = "");
+	uint32_t GetFileOffsetByInfo(int64_t info, uint32_t filetype = 0xFFFFFFFF, string folder = "");
 	uint32_t GetFileOffsetByIndex(unsigned int fileid, string folder = "");
 	int32_t GetFileIndex(string filename, uint32_t filetype = 0xFFFFFFFF, unsigned int num = 0, string folder = "");
-	int32_t GetFileIndexByInfo(uint64_t info, uint32_t filetype = 0xFFFFFFFF, string folder = "");
+	int32_t GetFileIndexByInfo(int64_t info, uint32_t filetype = 0xFFFFFFFF, string folder = "");
+	string GetFileFullName(unsigned int fileid, UnityArchiveAssetBundle* bundle = NULL, UnityArchiveIndexListData* indexlist = NULL, bool* found = NULL);
 
 	// Arrays must be of length header_file_amount
 	// Return the starting offset of the files in the duplicate (must be deleted[] if newmetadata is not given)
@@ -182,11 +184,11 @@ struct UnityArchiveAssetBundle {
 	vector<uint32_t> index;
 	vector<uint32_t> unk1;
 	vector<uint32_t> unk2;
-	vector<uint64_t> info;
+	vector<int64_t> info;
 
 	uint32_t bundle_amount;
 	vector<uint32_t> bundle_flag;
-	vector<uint64_t> bundle_info;
+	vector<int64_t> bundle_info;
 
 	uint32_t tail_unk1;
 	uint32_t tail_unk2;
@@ -204,11 +206,11 @@ struct UnityArchiveAssetBundle {
 	int Load(fstream& f);
 	void Write(fstream& f);
 	uint32_t GetFileIndex(string filepath);
-	uint64_t GetFileInfo(string filepath);
+	int64_t GetFileInfo(string filepath);
 
-	int GetFileBundle(uint64_t info);
-	void AddFile(string filepath, uint32_t fileindex, uint64_t fileinfo, uint32_t fileunk1 = 0, uint32_t fileunk2 = 0);
-	void AddFileBundle(uint64_t type, vector<uint64_t> fileinfolist);
+	int GetFileBundle(int64_t info);
+	void AddFile(string filepath, uint32_t fileindex, int64_t fileinfo, uint32_t fileunk1 = 0, uint32_t fileunk2 = 0);
+	void AddFileBundle(uint64_t type, vector<int64_t> fileinfolist);
 	void RemoveFile(unsigned int fileindex);
 	void RemoveFileBundle(unsigned int bundleindex);
 

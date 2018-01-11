@@ -425,6 +425,9 @@
     <ClInclude Include="Source\GameObject.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Database_Animation.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Source\resource.rc">

@@ -102,12 +102,12 @@ public:
 	uint8_t text_amount;
 	uint16_t radius;
 	uint16_t model;
-	uint16_t anim_stand;
-	uint16_t anim_death1;
-	uint16_t anim_hit1;
-	uint16_t anim_hit2;
-	uint16_t anim_death2;
-	uint16_t anim_death3;
+	uint16_t anim_idle;
+	uint16_t anim_idle_alt;
+	uint16_t anim_hit;
+	uint16_t anim_hit_alt;
+	uint16_t anim_death;
+	uint16_t anim_death_alt;
 	uint16_t mesh;
 	uint16_t mesh_vanish;
 	uint8_t bone_camera1;
@@ -286,12 +286,12 @@ private:
 
 struct BattleModelLinks {
 	uint16_t model;
-	uint16_t anim_stand;
-	uint16_t anim_death1;
-	uint16_t anim_hit1;
-	uint16_t anim_hit2;
-	uint16_t anim_death2;
-	uint16_t anim_death3;
+	uint16_t anim_idle;
+	uint16_t anim_idle_alt;
+	uint16_t anim_hit;
+	uint16_t anim_hit_alt;
+	uint16_t anim_death;
+	uint16_t anim_death_alt;
 	uint16_t radius;
 	uint16_t mesh;
 	uint16_t mesh_vanish;

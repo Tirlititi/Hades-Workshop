@@ -26,12 +26,12 @@ string GameObjectStruct::GetScopedName() {
 	return res;
 }
 
-GameObjectNode* BuildHierarchy_Rec(GameObjectNode* parent, GameObjectHierarchy& roothierarchy, uint32_t objtype, uint32_t objflags, uint64_t objinfo, fstream& f, UnityArchiveMetaData& meta, unsigned int fileindex) {
+GameObjectNode* BuildHierarchy_Rec(GameObjectNode* parent, GameObjectHierarchy& roothierarchy, uint32_t objtype, uint32_t objflags, int64_t objinfo, fstream& f, UnityArchiveMetaData& meta, unsigned int fileindex) {
 	GameObjectNode* res = NULL;
 	unsigned int i;
 	GameObjectNode* childobj = NULL;
 	uint32_t ctype, cunk;
-	uint64_t cinfo;
+	int64_t cinfo;
 	int32_t objindex;
 	size_t prevpos = f.tellg();
 	f.seekg(meta.GetFileOffsetByIndex(fileindex));
@@ -279,7 +279,7 @@ void GameObjectHierarchy::DEBUGDisplayHierarchy() {
 void GameObjectHierarchy::BuildHierarchy(fstream& archivefile, UnityArchiveMetaData& metadata, unsigned int rootfileindex) {
 	uint32_t type = metadata.file_type1[rootfileindex];
 	uint32_t flags = metadata.file_flags[rootfileindex];
-	uint64_t info = metadata.file_info[rootfileindex];
+	int64_t info = metadata.file_info[rootfileindex];
 	meta_data = &metadata;
 	root_node = BuildHierarchy_Rec(NULL,*this,type,flags,info,archivefile,metadata,rootfileindex);
 }
@@ -287,7 +287,7 @@ void GameObjectHierarchy::BuildHierarchy(fstream& archivefile, UnityArchiveMetaD
 void GameObjectHierarchy::OverwriteHierarchy(fstream& archivefile) {
 	unsigned int i,j;
 	for (i=0;i<node_list.size();i++) {
-//fstream fout("aaab.txt",ios::app|ios::out); fout << "HIERARCHY WRITE: " << i << " " << (unsigned int)node_list[i]->node_type << endl; fout.close();
+fstream fout("aaab.txt",ios::app|ios::out); fout << "HIERARCHY WRITE: " << i << " " << (unsigned int)node_list[i]->node_type << endl; fout.close();
 		if (node_list[i]->node_type==1) {
 			GameObjectStruct& nodeobj = *static_cast<GameObjectStruct*>(node_list[i]);
 			archivefile.seekg(meta_data->GetFileOffsetByIndex(node_list[i]->file_index));
@@ -317,24 +317,24 @@ void GameObjectHierarchy::OverwriteHierarchy(fstream& archivefile) {
 			archivefile.put(nodeobj.unk3);
 		} else if (node_list[i]->node_type==4) {
 			TransformStruct& nodetransf = *static_cast<TransformStruct*>(node_list[i]);
-//fout.open("aaab.txt",ios::app|ios::out); fout << "HIERARCHY TRANSFORM: " << (int)node_list[i]->file_index << endl; fout.close();
+fout.open("aaab.txt",ios::app|ios::out); fout << "HIERARCHY TRANSFORM: " << (int)node_list[i]->file_index << endl; fout.close();
 			archivefile.seekg(meta_data->GetFileOffsetByIndex(node_list[i]->file_index));
-//fout.open("aaab.txt",ios::app|ios::out); fout << "HIERARCHY 1" << endl; fout.close();
+fout.open("aaab.txt",ios::app|ios::out); fout << "HIERARCHY 1" << endl; fout.close();
 			MACRO_WRITECHILDOBJ(nodetransf.child_object,false)
-//fout.open("aaab.txt",ios::app|ios::out); fout << "HIERARCHY 2" << endl; fout.close();
+fout.open("aaab.txt",ios::app|ios::out); fout << "HIERARCHY 2" << endl; fout.close();
 			nodetransf.rot.Write(archivefile);
-//fout.open("aaab.txt",ios::app|ios::out); fout << "HIERARCHY 3" << endl; fout.close();
+fout.open("aaab.txt",ios::app|ios::out); fout << "HIERARCHY 3" << endl; fout.close();
 			ModelDataStruct::WriteCoordinates(archivefile,nodetransf.x,nodetransf.y,nodetransf.z);
 			ModelDataStruct::WriteCoordinates(archivefile,nodetransf.scale_x,nodetransf.scale_y,nodetransf.scale_z,false);
-//fout.open("aaab.txt",ios::app|ios::out); fout << "HIERARCHY CHILD: " << (unsigned int)nodetransf.child_transform_amount << endl; fout.close();
+fout.open("aaab.txt",ios::app|ios::out); fout << "HIERARCHY CHILD: " << (unsigned int)nodetransf.child_transform_amount << endl; fout.close();
 			WriteLong(archivefile,nodetransf.child_transform_amount);
-//fout.open("aaab.txt",ios::app|ios::out); fout << "HIERARCHY 4" << endl; fout.close();
+fout.open("aaab.txt",ios::app|ios::out); fout << "HIERARCHY 4" << endl; fout.close();
 			for (j=0;j<nodetransf.child_transform_amount;j++) {
 				MACRO_WRITECHILDOBJ(nodetransf.child_transform[j],false)
 			}
-//fout.open("aaab.txt",ios::app|ios::out); fout << "HIERARCHY 5" << endl; fout.close();
+fout.open("aaab.txt",ios::app|ios::out); fout << "HIERARCHY 5" << endl; fout.close();
 			MACRO_WRITECHILDOBJ(nodetransf.parent_transform,false)
-//fout.open("aaab.txt",ios::app|ios::out); fout << "HIERARCHY 6" << endl; fout.close();
+fout.open("aaab.txt",ios::app|ios::out); fout << "HIERARCHY 6" << endl; fout.close();
 		} else if (node_list[i]->node_type==23) {
 			MeshRendererStruct& nodemeshren = *static_cast<MeshRendererStruct*>(node_list[i]);
 			archivefile.seekg(meta_data->GetFileOffsetByIndex(node_list[i]->file_index));
@@ -437,25 +437,44 @@ GameObjectHierarchy::~GameObjectHierarchy() {
 		delete node_list[i];
 }
 
-GameObjectNode* GameObjectHierarchy::FindObjectByInfo(uint64_t info) {
+GameObjectNode* GameObjectHierarchy::FindObjectByInfo(int64_t info) {
 	for (unsigned int i=0;i<node_list.size();i++)
 		if (node_list[i]->node_info==info)
 			return node_list[i];
 	return NULL;
 }
 
-void GameObjectHierarchy::MergeHierarchy(GameObjectHierarchy* base, int mergepolicy) {
+void GameObjectHierarchy::MergeHierarchy(UnityArchiveMetaData archivelist[UNITY_ARCHIVE_AMOUNT], GameObjectHierarchy* base, int mergepolicy) {
 	unsigned int i,j,macroi,newfileindex = meta_data->header_file_amount;
-	uint64_t newfileinfo = meta_data->file_info[meta_data->header_file_amount-1]+1;
+	int64_t newfileinfo = meta_data->file_info[meta_data->header_file_amount-1]+1;
+	unsigned int archiveinfolist[UNITY_ARCHIVE_AMOUNT];
+	if (mergepolicy>=1) {
+		for (i=0;i<UNITY_ARCHIVE_AMOUNT;i++) {
+			archiveinfolist[i] = archivelist[i].header_file_amount;
+			do {
+				archiveinfolist[i]--;
+			} while (archivelist[i].file_info[archiveinfolist[i]]>=newfileinfo);
+			archiveinfolist[i]++;
+		}
+
+		#define MACRO_VERIFY_INFO_AVAILABILITY(INFO) \
+			macroi = 0; \
+			while (macroi<UNITY_ARCHIVE_AMOUNT) { \
+				if (archiveinfolist[macroi]<archivelist[macroi].header_file_amount && INFO==archivelist[macroi].file_info[archiveinfolist[macroi]]) { \
+					archiveinfolist[macroi]++; \
+					INFO++; \
+					macroi = 0; \
+				} else { \
+					macroi++; \
+				} \
+			}
+
+		MACRO_VERIFY_INFO_AVAILABILITY(newfileinfo)
+	}
 
 	#define MACRO_ASSIGN_NEW_INFO(NODE) \
 		NODE->node_unknown = 0; \
-		for (macroi=0;macroi<meta_data->header_file_amount;macroi++) \
-			if (meta_data->file_info[macroi]==newfileinfo) { \
-				newfileinfo++; \
-				while (newfileinfo==meta_data->file_info[0]) newfileinfo++; \
-				macroi = 0; \
-			} \
+		MACRO_VERIFY_INFO_AVAILABILITY(newfileinfo) \
 		NODE->node_info = newfileinfo++; \
 		NODE->file_index = newfileindex++;
 
@@ -509,10 +528,10 @@ void GameObjectHierarchy::MergeHierarchy(GameObjectHierarchy* base, int mergepol
 	delete[] node_found;
 }
 
-uint64_t GameObjectHierarchy::GetRootInfoFromObject(uint8_t * objbuffer) {
+int64_t GameObjectHierarchy::GetRootInfoFromObject(uint8_t * objbuffer) {
 	uint32_t childamount;
 	uint32_t childtype;
-	uint64_t rootinfo = 0;
+	int64_t rootinfo = 0;
 	unsigned int i;
 	BufferInitPosition();
 	BufferReadLong(objbuffer,childamount);
@@ -520,7 +539,7 @@ uint64_t GameObjectHierarchy::GetRootInfoFromObject(uint8_t * objbuffer) {
 		BufferReadLong(objbuffer,childtype);
 		if (childtype==4) {
 			BufferInitPosition(BufferGetPosition()+4);
-			BufferReadLongLong(objbuffer,rootinfo);
+			BufferReadLongLong(objbuffer,(uint64_t&)rootinfo);
 			break;
 		}
 		BufferInitPosition(BufferGetPosition()+0xC);

@@ -354,11 +354,14 @@ static wxString HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM[] = {
 #define HADES_STRING_UNITYVIEWER_IMPORT_ERROR	"Successfully imported %d asset(s).\n"\
 												"Failed to import %d asset(s)."
 #define HADES_STRING_UNITYVIEWER_IMPORT_NO_REPLACE	"\nArchive not updated: saved the output as tmp file."
+#define HADES_STRING_UNITYVIEWER_IMPORTANIM_CANCEL	L"\nImportation of the model animations canceled."
+#define HADES_STRING_UNITYVIEWER_IMPORTANIM_SUCCESS	"Successfully imported %d animation(s) in p0data5.bin."
 #define HADES_STRING_UNITYVIEWER_UNKNOWN_FORMAT	L"Format of '%s' not supported"
 #define HADES_STRING_UNITYVIEWER_MODEL_BAD_HIERARCHY	L"Failed to read the asset's file hierarchy"
 #define HADES_STRING_UNITYVIEWER_LINK_TEXTURE	L"The following Texture could not be automatically identified. Specify the corresponding file:\n"
 #define HADES_STRING_UNITYVIEWER_INVALID_FILE_INFO	L"Internal ID must be a 16-digit long hexadecimal number"
 #define HADES_STRING_UNITYVIEWER_USED_FILE_INFO	L"Internal ID already used by another asset"
+#define HADES_STRING_UNITYVIEWER_LOW_FILE_INFO	"Low Internal ID: the file will be inserted as #%d"
 #define HADES_STRING_UNITYVIEWER_WARNING_FILE_INFO	L"Unpredicted behaviour will happen if two files use the same internal ID\n"\
 													L"Confirm nonetheless?"
 
