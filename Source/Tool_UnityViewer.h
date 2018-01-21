@@ -2,6 +2,7 @@
 #define _GUI_UNITYVIEWER_H
 
 class ToolUnityViewer;
+class ToolUnityViewerListCtrl;
 class UnityLinkFileDialog;
 class UnityAddFileDialog;
 class UnityAddFilePanelDialog;

@@ -25,7 +25,8 @@ public:
 	wxArrayString modellist_str;
 	uint16_t** functionlist_id;
 	uint16_t** modellist_id;
-	
+	int32_t* entry_model_index;
+
 	ScriptEditDialog* handler_dialog;
 	
 	ScriptEditHandler(ScriptDataStruct& scpt);
@@ -78,6 +79,7 @@ public:
 	wxArrayString ability_str;
 	wxArrayString command_str;
 	wxArrayString deck_str;
+	wxArrayString animlist_str;
 	uint16_t** battle_id;
 	uint16_t** field_id;
 	uint16_t** item_id;
@@ -91,6 +93,7 @@ public:
 	uint16_t** spscode_id;
 	uint16_t** entrylist_id;
 	uint16_t** worldmap_id;
+	uint16_t** animlist_id;
 	
 	long line_selection;
 	long text_x_selection;

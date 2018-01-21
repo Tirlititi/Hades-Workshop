@@ -524,7 +524,7 @@ void ModelAnimationData::Read(fstream& f, GameObjectHierarchy* gohier) {
 	num_unk1 = ReadShort(f);
 	num_unk2 = ReadShort(f);
 
-	#define MACRO_IOTRANSFORM_BEGIN(LOCALTYPE) \
+	#define MACRO_READTRANSFORM_BEGIN(LOCALTYPE) \
 		LOCALTYPE ## _amount = ReadLong(f); \
 		LOCALTYPE.resize(LOCALTYPE ## _amount); \
 		for (i=0;i<LOCALTYPE ## _amount;i++) { \
@@ -532,7 +532,7 @@ void ModelAnimationData::Read(fstream& f, GameObjectHierarchy* gohier) {
 			LOCALTYPE[i].transform.resize(LOCALTYPE[i].transform_amount); \
 			for (j=0;j<LOCALTYPE[i].transform_amount;j++) {
 
-	#define MACRO_IOTRANSFORM_END(LOCALTYPE) \
+	#define MACRO_READTRANSFORM_END(LOCALTYPE) \
 			} \
 			LOCALTYPE[i].unkint1 = ReadLong(f); \
 			LOCALTYPE[i].unkint2 = ReadLong(f); \
@@ -543,25 +543,25 @@ void ModelAnimationData::Read(fstream& f, GameObjectHierarchy* gohier) {
 			f.seekg(GetAlignOffset(f.tellg()),ios::cur); \
 		}
 
-	MACRO_IOTRANSFORM_BEGIN(localw)
+	MACRO_READTRANSFORM_BEGIN(localw)
 		localw[i].transform[j].time = ReadFloat(f);
 		localw[i].transform[j].rot.Read(f);
 		localw[i].transform[j].rot1.Read(f);
 		localw[i].transform[j].rot2.Read(f);
-	MACRO_IOTRANSFORM_END(localw)
+	MACRO_READTRANSFORM_END(localw)
 	num_unk3 = ReadLong(f);
-	MACRO_IOTRANSFORM_BEGIN(localt)
+	MACRO_READTRANSFORM_BEGIN(localt)
 		localt[i].transform[j].time = ReadFloat(f);
 		ModelDataStruct::ReadCoordinates(f,localt[i].transform[j].transx,localt[i].transform[j].transy,localt[i].transform[j].transz);
 		ModelDataStruct::ReadCoordinates(f,localt[i].transform[j].trans1x,localt[i].transform[j].trans1y,localt[i].transform[j].trans1z);
 		ModelDataStruct::ReadCoordinates(f,localt[i].transform[j].trans2x,localt[i].transform[j].trans2y,localt[i].transform[j].trans2z);
-	MACRO_IOTRANSFORM_END(localt)
-	MACRO_IOTRANSFORM_BEGIN(locals)
+	MACRO_READTRANSFORM_END(localt)
+	MACRO_READTRANSFORM_BEGIN(locals)
 		locals[i].transform[j].time = ReadFloat(f);
 		ModelDataStruct::ReadCoordinates(f,locals[i].transform[j].scalex,locals[i].transform[j].scaley,locals[i].transform[j].scalez,false);
 		ModelDataStruct::ReadCoordinates(f,locals[i].transform[j].scale1x,locals[i].transform[j].scale1y,locals[i].transform[j].scale1z,false);
 		ModelDataStruct::ReadCoordinates(f,locals[i].transform[j].scale2x,locals[i].transform[j].scale2y,locals[i].transform[j].scale2z,false);
-	MACRO_IOTRANSFORM_END(locals)
+	MACRO_READTRANSFORM_END(locals)
 	num_unk4 = ReadLong(f);
 	num_unk5 = ReadLong(f);
 	float_unk = ReadFloat(f);
@@ -579,13 +579,13 @@ void ModelAnimationData::Write(fstream& f) {
 	WriteShort(f,num_unk1);
 	WriteShort(f,num_unk2);
 
-	#define MACRO_IOTRANSFORM_BEGIN(LOCALTYPE) \
+	#define MACRO_WRITETRANSFORM_BEGIN(LOCALTYPE) \
 		WriteLong(f,LOCALTYPE ## _amount); \
 		for (i=0;i<LOCALTYPE ## _amount;i++) { \
 			WriteLong(f,LOCALTYPE[i].transform_amount); \
 			for (j=0;j<LOCALTYPE[i].transform_amount;j++) {
 
-	#define MACRO_IOTRANSFORM_END(LOCALTYPE) \
+	#define MACRO_WRITETRANSFORM_END(LOCALTYPE) \
 			} \
 			WriteLong(f,LOCALTYPE[i].unkint1); \
 			WriteLong(f,LOCALTYPE[i].unkint2); \
@@ -596,25 +596,25 @@ void ModelAnimationData::Write(fstream& f) {
 				f.put(0); \
 		}
 
-	MACRO_IOTRANSFORM_BEGIN(localw)
+	MACRO_WRITETRANSFORM_BEGIN(localw)
 		WriteFloat(f,localw[i].transform[j].time);
 		localw[i].transform[j].rot.Write(f);
 		localw[i].transform[j].rot1.Write(f);
 		localw[i].transform[j].rot2.Write(f);
-	MACRO_IOTRANSFORM_END(localw)
+	MACRO_WRITETRANSFORM_END(localw)
 	WriteLong(f,num_unk3);
-	MACRO_IOTRANSFORM_BEGIN(localt)
+	MACRO_WRITETRANSFORM_BEGIN(localt)
 		WriteFloat(f,localt[i].transform[j].time);
 		ModelDataStruct::WriteCoordinates(f,localt[i].transform[j].transx,localt[i].transform[j].transy,localt[i].transform[j].transz);
 		ModelDataStruct::WriteCoordinates(f,localt[i].transform[j].trans1x,localt[i].transform[j].trans1y,localt[i].transform[j].trans1z);
 		ModelDataStruct::WriteCoordinates(f,localt[i].transform[j].trans2x,localt[i].transform[j].trans2y,localt[i].transform[j].trans2z);
-	MACRO_IOTRANSFORM_END(localt)
-	MACRO_IOTRANSFORM_BEGIN(locals)
+	MACRO_WRITETRANSFORM_END(localt)
+	MACRO_WRITETRANSFORM_BEGIN(locals)
 		WriteFloat(f,locals[i].transform[j].time);
 		ModelDataStruct::WriteCoordinates(f,locals[i].transform[j].scalex,locals[i].transform[j].scaley,locals[i].transform[j].scalez,false);
 		ModelDataStruct::WriteCoordinates(f,locals[i].transform[j].scale1x,locals[i].transform[j].scale1y,locals[i].transform[j].scale1z,false);
 		ModelDataStruct::WriteCoordinates(f,locals[i].transform[j].scale2x,locals[i].transform[j].scale2y,locals[i].transform[j].scale2z,false);
-	MACRO_IOTRANSFORM_END(locals)
+	MACRO_WRITETRANSFORM_END(locals)
 	WriteLong(f,num_unk4);
 	WriteLong(f,num_unk5);
 	WriteFloat(f,float_unk);
@@ -627,7 +627,7 @@ void ModelAnimationData::Write(fstream& f) {
 		if (TYPE==1) { WriteLong(f,0x04); for (i=0;i<5;i++) WriteLong(f,0); } \
 		else if (TYPE==4) { for (i=0;i<5;i++) WriteFloat(f,1.0); for (i=0;i<5;i++) WriteLong(f,0); } \
 		j = TYPE==3 ? 0x34 : 0; \
-		WriteLong(f,j); for (i=0;i<4*j;i++) WriteLong(f,0); \
+		WriteLong(f,j); for (i=0;i<j;i++) WriteLong(f,0); \
 		j = TYPE==3 ? 0x07 : 0; \
 		WriteLong(f,j); for (i=0;i<5*j;i++) WriteLong(f,0); \
 		WriteFloat(f,1.0); \
@@ -646,13 +646,13 @@ void ModelAnimationData::Write(fstream& f) {
 	WriteLong(f,num_unk7);
 	for (i=0;i<num_unk7;i++)
 		WriteLong(f,unk7[i]);
-	WriteLong(f,0);	WriteLong(f,0);	WriteLong(f,1);
+	WriteLong(f,0);	WriteLong(f,0);	WriteLong(f,0x1000000);
 	WriteLong(f,0);	WriteLong(f,0);	WriteLong(f,0);	WriteLong(f,0);
 }
 
 int ModelAnimationData::GetDataSize() {
 	unsigned int i;
-	int res = 1332+name_len+GetAlignOffset(name_len)+12*(localw_amount+localt_amount+locals_amount)+4*num_unk7;
+	int res = 1332+name_len+GetAlignOffset(name_len)+16*(localw_amount+localt_amount+locals_amount)+4*num_unk7;
 	// static size for everything up to num_unk6: 40
 	// static size (all except num_unk7 array) after num_unk6: 1292
 	for (i=0;i<localw_amount;i++)	res += localw[i].object_name_len+GetAlignOffset(localw[i].object_name_len)+52*localw[i].transform_amount;
@@ -773,7 +773,6 @@ bool ModelDataStruct::Write(fstream& f) {
 	unsigned int meshcounter = 0;
 	hierarchy->OverwriteHierarchy(f);
 	for (i=0;i<hierarchy->node_list.size();i++) {
-fstream fout("aaab.txt",ios::app|ios::out); fout << "MODEL WRITE: " << i << " " << (unsigned int)hierarchy->node_list[i]->node_type << endl; fout.close();
 		if (hierarchy->node_list[i]->node_type==23) {
 			// Write material list ; TODO: do not duplicates the same materials
 			MeshRendererStruct* node = static_cast<MeshRendererStruct*>(hierarchy->node_list[i]);
@@ -998,6 +997,12 @@ void ModelDataStruct::SetupPostImportData(vector<unsigned int> folderfiles, Unit
 	}
 	string animsearchpath = "assets/resources/animations/"+steam_name+"/";
 	string animsearchname;
+	uint8_t modelcat = DATABASE_MODEL_CATEGORY_LIST_ALL;
+	uint32_t modelid = atoi(steam_name.c_str());
+	if (modelid>0 || steam_name=="0")
+		for (i=0;i<G_N_ELEMENTS(HADES_STRING_MODEL_NAME);i++)
+			if (modelid==HADES_STRING_MODEL_NAME[i].id)
+				modelcat = DATABASE_MODEL_CATEGORY_TO_LIST(HADES_STRING_MODEL_NAME[i].category);
 	for (i=0;i<animation.size();i++) {
 		animation[i].anim_id = 0xFFFFFFFF;
 		animation[i].file_id = -1;
@@ -1017,19 +1022,19 @@ void ModelDataStruct::SetupPostImportData(vector<unsigned int> folderfiles, Unit
 		if (animation[i].file_id>=0)
 			continue;
 		if (animbundle) {
-			int animsearchid = -1;
-			for (j=0;j<G_N_ELEMENTS(DATABASE_ANIMATION);j++)
-				if (DATABASE_ANIMATION[j].steamid.IsSameAs(animation[i].name,false)) {
-					animsearchid = DATABASE_ANIMATION[j].id;
-					break;
-				}
-			if (animsearchid<0)
+			int32_t animsearchindex = AnimationDatabase::GetIndexFromSteam(animation[i].name,modelcat);
+			if (animsearchindex<0)
 				continue;
-			animsearchname = animsearchpath+to_string(animsearchid)+".anim";
+			animsearchname = animsearchpath+to_string(AnimationDatabase::GetId(animsearchindex))+".anim";
+			animation[i].anim_id = AnimationDatabase::GetId(animsearchindex);
 			for (j=0;j<animbundle->amount;j++)
-				if (animbundle->path[j]==animsearchpath) {
-					animation[i].anim_id = animsearchid;
-					animation[i].file_id = animbundle->index[j]-1;
+				if (animbundle->path[j]==animsearchname) {
+					for (k=0;k<archivelist[UNITY_ARCHIVE_DATA5].header_file_amount;k++)
+						if (animbundle->info[j]==archivelist[UNITY_ARCHIVE_DATA5].file_info[k]) {
+							animation[i].file_id = k;
+							j = animbundle->amount;
+							break;
+						}
 					break;
 				}
 		}
@@ -1487,7 +1492,7 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 	// Construct the TransformStruct+GameObjectStruct hierarchy
 	if (lRootNode==NULL && lRootNode->GetChildCount()<1)
 		return false;
-	// ToDo: RootNode is ignored ; verify that it has exactly 1 child and no geometric transformation?
+	// ToDo: RootNode is ignored, assuming it has exactly 1 child and no geometric transformation
 	FbxNode* lCurrentNode = lRootNode->GetChild(0);
 	vector<int> indexlist;
 	vector<FbxNode*> lNodeList;
@@ -1554,7 +1559,7 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 	// Sequence the bone list of the whole model
 	vector<FbxString> lSkeletonName;
 	vector<FbxNode*> lSkeletonNode;
-	indexlist.empty();
+	indexlist.clear();
 	for (i=0;i<lNodeList.size();i++) {
 		lCurrentNode = lNodeList[i];
 		if (lCurrentNode->GetNodeAttribute()!=NULL && lCurrentNode->GetNodeAttribute()->GetAttributeType()==FbxNodeAttribute::EType::eSkeleton) {
@@ -1765,7 +1770,6 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 				newmatlist.push_back(newmat);
 			}
 			model.hierarchy->node_list.push_back(newmeshnode);
-
 			// Bones
 			FbxSkin* lSkin = static_cast<FbxSkin*>(lMesh->GetDeformer(0,FbxDeformer::EDeformerType::eSkin));
 			newskinmesh->child_bone_amount = 0;
@@ -1842,6 +1846,9 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 			model.mesh.push_back(newmesh);
 		}
 	}
+	// Animations
+	if (!retrieveanims)
+		return true;
 	model.animation.resize(sdkscene->GetSrcObjectCount(FbxCriteria::ObjectType(FbxAnimStack::ClassId)));
 	for (i=0;i<model.animation.size();i++) {
 		FbxAnimStack* lAnimStack = sdkscene->GetSrcObject<FbxAnimStack>(i);
@@ -1849,7 +1856,15 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 		float starttime = lAnimStack->LocalStart.Get().GetSecondDouble();
 		FbxAnimCurve* lCurveX, *lCurveY, *lCurveZ;
 		FbxTime lCurrentTime;
-		int keyindexx, keyindexy, keyindexz;
+		int keyindexx, keyindexy, keyindexz, keycountx, keycounty, keycountz;
+		/* Default Slopes:
+		- Right Slope Value = Left Slope Value
+		- Next Left Slope Value = (Next Value - Value) / (Next Time - Time)
+		Exceptions:
+		- Right Slope of 1st Transform (t=0) = Next Left Slope
+		- Right Slope & Next Left Slope of of last Transform = 0
+		Warning: For rotations, the formula is to be understood as angle interpolation
+		*/
 
 		#define MACRO_FBX_RETRIEVE_TRANSFORMATION(LOCALTYPE,ANIMLOCALTYPE,LCLTYPE,VALUE,VALUEFIELDX,VALUEFIELDY,VALUEFIELDZ) \
 			for (j=0;j<lSkeletonNode.size();j++) { \
@@ -1857,56 +1872,60 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 				lCurveY = lSkeletonNode[j]->LCLTYPE.GetCurve(lAnimLayer,FBXSDK_CURVENODE_COMPONENT_Y); \
 				lCurveZ = lSkeletonNode[j]->LCLTYPE.GetCurve(lAnimLayer,FBXSDK_CURVENODE_COMPONENT_Z); \
 				if (lCurveX || lCurveY || lCurveZ) { \
+					lCurveX = lSkeletonNode[j]->LCLTYPE.GetCurve(lAnimLayer,FBXSDK_CURVENODE_COMPONENT_X,true); \
+					lCurveY = lSkeletonNode[j]->LCLTYPE.GetCurve(lAnimLayer,FBXSDK_CURVENODE_COMPONENT_Y,true); \
+					lCurveZ = lSkeletonNode[j]->LCLTYPE.GetCurve(lAnimLayer,FBXSDK_CURVENODE_COMPONENT_Z,true); \
 					ModelAnimationLocal<ANIMLOCALTYPE> LOCALTYPE; \
-					LOCALTYPE.object_name = obj_list[indexlist[j]]->name; \
+					LOCALTYPE.object_name = obj_list[indexlist[j]]->GetScopedName(); \
 					LOCALTYPE.object_name_len = LOCALTYPE.object_name.length(); \
 					LOCALTYPE.unkint1 = 2; \
 					LOCALTYPE.unkint2 = 2; \
 					keyindexx = 0; \
 					keyindexy = 0; \
 					keyindexz = 0; \
-					while (keyindexx<lCurveX->KeyGetCount() || keyindexy<lCurveY->KeyGetCount() || keyindexz<lCurveZ->KeyGetCount()) { \
+					keycountx = lCurveX ? lCurveX->KeyGetCount() : 0; \
+					keycounty = lCurveY ? lCurveY->KeyGetCount() : 0; \
+					keycountz = lCurveZ ? lCurveZ->KeyGetCount() : 0; \
+					while (keyindexx<keycountx || keyindexy<keycounty || keyindexz<keycountz) { \
 						ANIMLOCALTYPE localtransf; \
-						if (keyindexx<lCurveX->KeyGetCount() && (keyindexy>=lCurveY->KeyGetCount() || lCurveX->KeyGetTime(keyindexx)<=lCurveY->KeyGetTime(keyindexy)) && (keyindexz>=lCurveZ->KeyGetCount() || lCurveX->KeyGetTime(keyindexx)<=lCurveZ->KeyGetTime(keyindexz))) { \
+						if (keyindexx<keycountx && (keyindexy>=keycounty || lCurveX->KeyGetTime(keyindexx)<=lCurveY->KeyGetTime(keyindexy)) && (keyindexz>=keycountz || lCurveX->KeyGetTime(keyindexx)<=lCurveZ->KeyGetTime(keyindexz))) { \
 							lCurrentTime = lCurveX->KeyGetTime(keyindexx); \
-						} else if (keyindexy<lCurveY->KeyGetCount() && (keyindexx>=lCurveX->KeyGetCount() || lCurveY->KeyGetTime(keyindexy)<=lCurveX->KeyGetTime(keyindexx)) && (keyindexz>=lCurveZ->KeyGetCount() || lCurveY->KeyGetTime(keyindexy)<=lCurveZ->KeyGetTime(keyindexz))) { \
+						} else if (keyindexy<keycounty && (keyindexx>=keycountx || lCurveY->KeyGetTime(keyindexy)<=lCurveX->KeyGetTime(keyindexx)) && (keyindexz>=keycountz || lCurveY->KeyGetTime(keyindexy)<=lCurveZ->KeyGetTime(keyindexz))) { \
 							lCurrentTime = lCurveY->KeyGetTime(keyindexy); \
 						} else { \
 							lCurrentTime = lCurveZ->KeyGetTime(keyindexz); \
 						} \
 						localtransf.time = lCurrentTime.GetSecondDouble()-starttime; \
-						if (starttime>lCurrentTime.GetSecondDouble()) \
-							starttime = lCurrentTime.GetSecondDouble(); \
-						if (keyindexx<lCurveX->KeyGetCount() && lCurrentTime==lCurveX->KeyGetTime(keyindexx)) { \
+						if (keyindexx<keycounty && lCurrentTime==lCurveX->KeyGetTime(keyindexx)) { \
 							localtransf.VALUE ## VALUEFIELDX = lCurveX->KeyGetValue(keyindexx); \
-							localtransf.VALUE ## 1 ## VALUEFIELDX = lCurveX->KeyGetLeftDerivative(keyindexx); \
+/*							localtransf.VALUE ## 1 ## VALUEFIELDX = lCurveX->KeyGetLeftDerivative(keyindexx); \
 							localtransf.VALUE ## 2 ## VALUEFIELDX = lCurveX->KeyGetRightDerivative(keyindexx); \
-							keyindexx++; \
+*/							keyindexx++; \
 						} else { \
 							localtransf.VALUE ## VALUEFIELDX = lCurveX->Evaluate(lCurrentTime,&keyindexx); \
-							localtransf.VALUE ## 1 ## VALUEFIELDX = lCurveX->EvaluateLeftDerivative(lCurrentTime,&keyindexx); \
+/*							localtransf.VALUE ## 1 ## VALUEFIELDX = lCurveX->EvaluateLeftDerivative(lCurrentTime,&keyindexx); \
 							localtransf.VALUE ## 2 ## VALUEFIELDX = lCurveX->EvaluateRightDerivative(lCurrentTime,&keyindexx); \
-						} \
-						if (keyindexx<lCurveY->KeyGetCount() && lCurrentTime==lCurveY->KeyGetTime(keyindexy)) { \
+*/						} \
+						if (keyindexy<keycounty && lCurrentTime==lCurveY->KeyGetTime(keyindexy)) { \
 							localtransf.VALUE ## VALUEFIELDY = lCurveY->KeyGetValue(keyindexy); \
-							localtransf.VALUE ## 1 ## VALUEFIELDY = lCurveY->KeyGetLeftDerivative(keyindexy); \
+/*							localtransf.VALUE ## 1 ## VALUEFIELDY = lCurveY->KeyGetLeftDerivative(keyindexy); \
 							localtransf.VALUE ## 2 ## VALUEFIELDY = lCurveY->KeyGetRightDerivative(keyindexy); \
-							keyindexy++; \
+*/							keyindexy++; \
 						} else { \
 							localtransf.VALUE ## VALUEFIELDY = lCurveY->Evaluate(lCurrentTime,&keyindexy); \
-							localtransf.VALUE ## 1 ## VALUEFIELDY = lCurveY->EvaluateLeftDerivative(lCurrentTime,&keyindexy); \
+/*							localtransf.VALUE ## 1 ## VALUEFIELDY = lCurveY->EvaluateLeftDerivative(lCurrentTime,&keyindexy); \
 							localtransf.VALUE ## 2 ## VALUEFIELDY = lCurveY->EvaluateRightDerivative(lCurrentTime,&keyindexy); \
-						} \
-						if (keyindexx<lCurveZ->KeyGetCount() && lCurrentTime==lCurveZ->KeyGetTime(keyindexz)) { \
-							localtransf.VALUE ## VALUEFIELDZ = lCurveX->KeyGetValue(keyindexz); \
-							localtransf.VALUE ## 1 ## VALUEFIELDZ = lCurveX->KeyGetLeftDerivative(keyindexz); \
-							localtransf.VALUE ## 2 ## VALUEFIELDZ = lCurveX->KeyGetRightDerivative(keyindexz); \
-							keyindexz++; \
+*/						} \
+						if (keyindexz<keycountz && lCurrentTime==lCurveZ->KeyGetTime(keyindexz)) { \
+							localtransf.VALUE ## VALUEFIELDZ = lCurveZ->KeyGetValue(keyindexz); \
+/*							localtransf.VALUE ## 1 ## VALUEFIELDZ = lCurveZ->KeyGetLeftDerivative(keyindexz); \
+							localtransf.VALUE ## 2 ## VALUEFIELDZ = lCurveZ->KeyGetRightDerivative(keyindexz); \
+*/							keyindexz++; \
 						} else { \
 							localtransf.VALUE ## VALUEFIELDZ = lCurveZ->Evaluate(lCurrentTime,&keyindexz); \
-							localtransf.VALUE ## 1 ## VALUEFIELDZ = lCurveZ->EvaluateLeftDerivative(lCurrentTime,&keyindexz); \
+/*							localtransf.VALUE ## 1 ## VALUEFIELDZ = lCurveZ->EvaluateLeftDerivative(lCurrentTime,&keyindexz); \
 							localtransf.VALUE ## 2 ## VALUEFIELDZ = lCurveZ->EvaluateRightDerivative(lCurrentTime,&keyindexz); \
-						} \
+*/						} \
 						LOCALTYPE.transform.push_back(localtransf); \
 					} \
 					LOCALTYPE.transform_amount = LOCALTYPE.transform.size(); \
@@ -1915,9 +1934,79 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 			} \
 			model.animation[i].LOCALTYPE ## _amount = model.animation[i].LOCALTYPE.size();
 
+			#define MACRO_FBX_COMPUTE_TANGENT_TRANSFORMATION(LOCALTYPE,ANIMLOCALTYPE,VALUE,VALUEFIELDX,VALUEFIELDY,VALUEFIELDZ) \
+				for (j=0;j<model.animation[i].LOCALTYPE.size();j++) \
+					for (k=0;k<model.animation[i].LOCALTYPE[j].transform.size();k++) { \
+						ANIMLOCALTYPE& localtransf = model.animation[i].LOCALTYPE[j].transform[k]; \
+						if (k>0) { \
+							ANIMLOCALTYPE& lasttransf = model.animation[i].LOCALTYPE[j].transform[k-1]; \
+							lasttransf.VALUE ## 2 ## VALUEFIELDX = (double)(localtransf.VALUE ## VALUEFIELDX - lasttransf.VALUE ## VALUEFIELDX)/(double)(localtransf.time - lasttransf.time); \
+							lasttransf.VALUE ## 2 ## VALUEFIELDY = (double)(localtransf.VALUE ## VALUEFIELDY - lasttransf.VALUE ## VALUEFIELDY)/(double)(localtransf.time - lasttransf.time); \
+							lasttransf.VALUE ## 2 ## VALUEFIELDZ = (double)(localtransf.VALUE ## VALUEFIELDZ - lasttransf.VALUE ## VALUEFIELDZ)/(double)(localtransf.time - lasttransf.time); \
+							localtransf.VALUE ## 1 ## VALUEFIELDX = lasttransf.VALUE ## 2 ## VALUEFIELDX; \
+							localtransf.VALUE ## 1 ## VALUEFIELDY = lasttransf.VALUE ## 2 ## VALUEFIELDY; \
+							localtransf.VALUE ## 1 ## VALUEFIELDZ = lasttransf.VALUE ## 2 ## VALUEFIELDZ; \
+							if (k==1) { \
+								lasttransf.VALUE ## 1 ## VALUEFIELDX = lasttransf.VALUE ## 2 ## VALUEFIELDX; \
+								lasttransf.VALUE ## 1 ## VALUEFIELDY = lasttransf.VALUE ## 2 ## VALUEFIELDY; \
+								lasttransf.VALUE ## 1 ## VALUEFIELDZ = lasttransf.VALUE ## 2 ## VALUEFIELDZ; \
+							} \
+						} \
+						if (k+1==model.animation[i].LOCALTYPE[j].transform.size()) { \
+							localtransf.VALUE ## 1 ## VALUEFIELDX = 0.0; \
+							localtransf.VALUE ## 2 ## VALUEFIELDX = 0.0; \
+							localtransf.VALUE ## 1 ## VALUEFIELDY = 0.0; \
+							localtransf.VALUE ## 2 ## VALUEFIELDY = 0.0; \
+							localtransf.VALUE ## 1 ## VALUEFIELDZ = 0.0; \
+							localtransf.VALUE ## 2 ## VALUEFIELDZ = 0.0; \
+						} \
+					}
+
+
 		MACRO_FBX_RETRIEVE_TRANSFORMATION(localw,ModelAnimationTransformW,LclRotation,rot,.x,.y,.z)
+		for (j=0;j<model.animation[i].localw.size();j++)
+			for (k=0;k<model.animation[i].localw[j].transform.size();k++) {
+				ModelAnimationTransformW& transform = model.animation[i].localw[j].transform[k];
+				Quaternion::EulerToQuaternion(transform.rot,transform.rot.x,transform.rot.y,transform.rot.z);
+				if (k>0) {
+					ModelAnimationTransformW& prevtransform = model.animation[i].localw[j].transform[k-1];
+					FbxQuaternion fbxquat, prevfbxquat, interpolatequat, zeroquat;
+					transform.rot.TakeContinuousRepresentative(prevtransform.rot);
+					zeroquat.Set(0.0,0.0,0.0);
+					fbxquat.Set(transform.rot.x,transform.rot.y,transform.rot.z,transform.rot.w);
+					prevfbxquat.Set(prevtransform.rot.x,prevtransform.rot.y,prevtransform.rot.z,prevtransform.rot.w);
+					prevfbxquat.Conjugate();
+					interpolatequat = zeroquat.Slerp(prevfbxquat.Product(fbxquat),(double)(1.0)/(double)(transform.time-prevtransform.time));
+					prevtransform.rot2.x = interpolatequat[0];
+					prevtransform.rot2.y = interpolatequat[1];
+					prevtransform.rot2.z = interpolatequat[2];
+					prevtransform.rot2.w = interpolatequat[3];
+					transform.rot1.x = interpolatequat[0];
+					transform.rot1.y = interpolatequat[1];
+					transform.rot1.z = interpolatequat[2];
+					transform.rot1.w = interpolatequat[3];
+					if (k==1) {
+						prevtransform.rot1.x = interpolatequat[0];
+						prevtransform.rot1.y = interpolatequat[1];
+						prevtransform.rot1.z = interpolatequat[2];
+						prevtransform.rot1.w = interpolatequat[3];
+					}
+				}
+				if (k+1==model.animation[i].localw[j].transform.size()) {
+					transform.rot1.x = 0.0;
+					transform.rot1.y = 0.0;
+					transform.rot1.z = 0.0;
+					transform.rot1.w = 0.0;
+					transform.rot2.x = 0.0;
+					transform.rot2.y = 0.0;
+					transform.rot2.z = 0.0;
+					transform.rot2.w = 0.0;
+				}
+			}
 		MACRO_FBX_RETRIEVE_TRANSFORMATION(localt,ModelAnimationTransformT,LclTranslation,trans,x,y,z)
+		MACRO_FBX_COMPUTE_TANGENT_TRANSFORMATION(localt,ModelAnimationTransformT,trans,x,y,z)
 		MACRO_FBX_RETRIEVE_TRANSFORMATION(locals,ModelAnimationTransformS,LclScaling,scale,x,y,z)
+		MACRO_FBX_COMPUTE_TANGENT_TRANSFORMATION(locals,ModelAnimationTransformS,scale,x,y,z)
 		model.animation[i].name = lAnimStack->GetNameOnly();
 		model.animation[i].name_len = model.animation[i].name.length();
 		model.animation[i].num_unk1 = 1;
@@ -2088,26 +2177,26 @@ void Quaternion::Write(fstream& f) {
 }
 
 void Quaternion::EulerToQuaternion(Quaternion& q, double roll, double pitch, double yaw) {
-	FbxVector4 eulervect(roll,pitch,yaw);
+/*	FbxVector4 eulervect(fmod(roll+180,360)-180,fmod(pitch,180),fmod(yaw+180,360)-180);
 	FbxQuaternion fbxquat;
 	fbxquat.ComposeSphericalXYZ(eulervect);
 	q.x = fbxquat[0];
 	q.y = fbxquat[1];
 	q.z = fbxquat[2];
-	q.w = fbxquat[3];
-/*	double r = DEG_TO_RAD * roll;
+	q.w = fbxquat[3];*/
+	double r = DEG_TO_RAD * roll;
 	double p = DEG_TO_RAD * pitch;
 	double y = DEG_TO_RAD * yaw;
-	double t0 = cos(y * 0.5);
-	double t1 = sin(y * 0.5);
-	double t2 = cos(r * 0.5);
-	double t3 = sin(r * 0.5);
-	double t4 = cos(p * 0.5);
-	double t5 = sin(p * 0.5);
-	q.w = t0 * t2 * t4 + t1 * t3 * t5;
-	q.x = t0 * t3 * t4 - t1 * t2 * t5;
-	q.y = t0 * t2 * t5 + t1 * t3 * t4;
-	q.z = t1 * t2 * t4 - t0 * t3 * t5;*/
+	double cy = cos(y * 0.5);
+	double sy = sin(y * 0.5);
+	double cr = cos(r * 0.5);
+	double sr = sin(r * 0.5);
+	double cp = cos(p * 0.5);
+	double sp = sin(p * 0.5);
+	q.x = sr * cp * cy - cr * sp * sy;
+	q.y = cr * sp * cy + sr * cp * sy;
+	q.z = cr * cp * sy - sr * sp * cy;
+	q.w = cr * cp * cy + sr * sp * sy;
 	q.apply_matrix_updated = false;
 }
 
@@ -2217,6 +2306,17 @@ void Quaternion::Apply(double& posx, double& posy, double& posz) {
 	posx = apply_matrix[0]*px + apply_matrix[1]*py + apply_matrix[2]*pz;
 	posy = apply_matrix[3]*px + apply_matrix[4]*py + apply_matrix[5]*pz;
 	posz = apply_matrix[6]*px + apply_matrix[7]*py + apply_matrix[8]*pz;
+}
+
+void Quaternion::TakeContinuousRepresentative(Quaternion closequaternion) {
+	double norm1 = (closequaternion.x-x)*(closequaternion.x-x)+(closequaternion.y-y)*(closequaternion.y-y)+(closequaternion.z-z)*(closequaternion.z-z)+(closequaternion.w-w)*(closequaternion.w-w);
+	double norm2 = (closequaternion.x+x)*(closequaternion.x+x)+(closequaternion.y+y)*(closequaternion.y+y)+(closequaternion.z+z)*(closequaternion.z+z)+(closequaternion.w+w)*(closequaternion.w+w);
+	if (norm1>norm2) {
+		x = -x;
+		y = -y;
+		z = -z;
+		w = -w;
+	}
 }
 
 Quaternion Quaternion::Product(Quaternion& lfactor, Quaternion& rfactor) {

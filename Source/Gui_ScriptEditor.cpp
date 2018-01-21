@@ -6,6 +6,7 @@
 #include "Hades_Strings.h"
 #include "Database_Script.h"
 #include "Database_Resource.h"
+#include "Database_Animation.h"
 #include "Database_Item.h"
 #include "Database_Spell.h"
 
@@ -246,11 +247,14 @@ ScriptEditHandler::ScriptEditHandler(ScriptDataStruct& scpt) :
 		modellist_str.Add(_(HADES_STRING_MODEL_NAME[i].label));
 		modellist_id[i] = new uint16_t(HADES_STRING_MODEL_NAME[i].id);
 	}
-	entry_name.Alloc(script.entry_amount); // ToDo : when entries can be added/removed
+	entry_name.Alloc(script.entry_amount);
 	if (script.entry_amount>0)
 		entry_name.Add(_(L"Main"));
 	for (i=1;i<script.entry_amount;i++)
 		entry_name.Add(wxString::Format(wxT("Entry%d"),i));
+	entry_model_index = new int32_t[script.entry_amount];
+	for (i=0;i<script.entry_amount;i++)
+		entry_model_index[i] = -1;
 //fout.open("aaaa.txt",ios::app|ios::out); fout << "0.7" << endl; fout.close();
 }
 
@@ -259,6 +263,7 @@ ScriptEditHandler::~ScriptEditHandler() {
 	for (i=0;i<modellist_str.Count();i++)
 		delete[] modellist_id[i];
 	delete[] modellist_id;
+	delete[] entry_model_index;
 }
 
 ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int scpttype, SaveSet* sv, EnemyDataStruct* ed, TextDataStruct* td, bool* dataloaded) :
@@ -268,6 +273,7 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 	text(td),
 	datas(sv),
 	script_type(scpttype),
+	animlist_id(NULL),
 	current_opcode(0xFFFF),
 	arg_control_type(NULL),
 	extra_size(script.GetExtraSize()),
@@ -310,11 +316,11 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 	if (dataloaded[0]) {
 		character_str.Alloc(13);
 		for (i=0;i<8;i++)
-			character_str.Add(_(datas->statset->initial_stat[i].default_name.str));
-		character_str.Add(_(datas->statset->initial_stat[11].default_name.str));
-		character_str.Add(_(datas->statset->initial_stat[8].default_name.str));
-		character_str.Add(_(datas->statset->initial_stat[9].default_name.str));
-		character_str.Add(_(datas->statset->initial_stat[10].default_name.str));
+			character_str.Add(_(datas->statset->initial_stat[i].default_name.str_nice));
+		character_str.Add(_(datas->statset->initial_stat[11].default_name.str_nice));
+		character_str.Add(_(datas->statset->initial_stat[8].default_name.str_nice));
+		character_str.Add(_(datas->statset->initial_stat[9].default_name.str_nice));
+		character_str.Add(_(datas->statset->initial_stat[10].default_name.str_nice));
 		character_str.Add(_(HADES_STRING_NULL_CHARACTER_SLOT));
 		character_id = new uint16_t*[13];
 		for (i=0;i<12;i++)
@@ -339,7 +345,7 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 	if (enemy) {
 		attack_str.Alloc(enemy->spell_amount);
 		for (i=0;i<enemy->spell_amount;i++)
-			attack_str.Add(_(enemy->spell[i].name.str));
+			attack_str.Add(_(enemy->spell[i].name.str_nice));
 		use_attack = true;
 	} else
 		use_attack = false;
@@ -347,7 +353,7 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 		field_str.Alloc(datas->fieldset->amount+1);
 		field_id = new uint16_t*[datas->fieldset->amount+1];
 		for (i=0;i<datas->fieldset->amount;i++) {
-			field_str.Add(_(datas->fieldset->script_data[i]->name.str));
+			field_str.Add(_(datas->fieldset->script_data[i]->name.str_nice));
 			field_id[i] = new uint16_t[1];
 			field_id[i][0] = datas->fieldset->script_data[i]->object_id;
 		}
@@ -363,18 +369,18 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 		item_str.Alloc(ITEM_AMOUNT+KEY_ITEM_AMOUNT+CARD_AMOUNT);
 		item_id = new uint16_t*[ITEM_AMOUNT+KEY_ITEM_AMOUNT+CARD_AMOUNT];
 		for (i=0;i<ITEM_AMOUNT;i++) {
-			item_str.Add(_(datas->itemset->item[i].name.str));
+			item_str.Add(_(datas->itemset->item[i].name.str_nice));
 			item_id[i] = new uint16_t[1];
 			item_id[i][0] = i;
 		}
 		for (i=0;i<KEY_ITEM_AMOUNT;i++) {
-			item_str.Add(_(datas->itemset->key_item[i].name.str));
+			item_str.Add(_(datas->itemset->key_item[i].name.str_nice));
 			item_id[ITEM_AMOUNT+i] = new uint16_t[1];
 			item_id[ITEM_AMOUNT+i][0] = 0x100+i;
 		}
 		if (dataloaded[6]) {
 			for (i=0;i<CARD_AMOUNT;i++) {
-				item_str.Add(_(datas->cardset->card[i].name.str));
+				item_str.Add(_(datas->cardset->card[i].name.str_nice));
 				item_id[ITEM_AMOUNT+KEY_ITEM_AMOUNT+i] = new uint16_t[1];
 				item_id[ITEM_AMOUNT+KEY_ITEM_AMOUNT+i][0] = 0x200+i;
 			}
@@ -393,7 +399,7 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 	if (dataloaded[4]) {
 		ability_str.Alloc(SPELL_AMOUNT);
 		for (i=0;i<SPELL_AMOUNT;i++)
-			ability_str.Add(_(datas->spellset->spell[i].name.str));
+			ability_str.Add(_(datas->spellset->spell[i].name.str_nice));
 		use_ability = true;
 	} else
 		use_ability = false;
@@ -402,7 +408,7 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 	if (dataloaded[5]) {
 		command_str.Alloc(COMMAND_AMOUNT);
 		for (i=0;i+1<COMMAND_AMOUNT;i++)
-			command_str.Add(_(datas->cmdset->cmd[i].name.str));
+			command_str.Add(_(datas->cmdset->cmd[i].name.str_nice));
 		for (i=0;i<G_N_ELEMENTS(CommandAddendaName);i++)
 			command_str.Add(_(CommandAddendaName[i]));
 		use_command = true;
@@ -543,6 +549,11 @@ ScriptEditDialog::~ScriptEditDialog() {
 	for (i=0;i<worldmap_str.Count();i++)
 		delete[] worldmap_id[i];
 	delete[] worldmap_id;
+	if (animlist_id!=NULL) {
+		for (i=0;i<animlist_str.GetCount();i++)
+			delete[] animlist_id[i];
+		delete[] animlist_id;
+	}
 	func_popup_menu->Disconnect(wxEVT_COMMAND_MENU_SELECTED,wxCommandEventHandler(ScriptEditDialog::OnFunctionRightClickMenu),NULL,this);
 	Disconnect(wxEVT_TIMER,wxTimerEventHandler(ScriptEditDialog::OnTimer),NULL,this);
 	delete timer;
@@ -1115,7 +1126,10 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 			if (func.op[oppos].opcode==0x2F) {
 				for (j=0;j<modellist_str.Count();j++)
 					if (func.op[oppos].arg[0].GetValue()==*modellist_id[j]) {
-						EntryChangeName(entry_selection,modellist_str[j]);
+						entry_model_index[entry_selection] = j;
+						wxString entrynewname = modellist_str[j];
+						entrynewname.Replace(_(L" "),_(L"_"));
+						EntryChangeName(entry_selection,entrynewname);
 						break;
 					}
 			} else if (func.op[oppos].opcode==0x07) {
@@ -2640,6 +2654,7 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 	uint16_t opcode = 0xFFFF;
 	unsigned int argi;
 	int i;
+	unsigned int j;
 	bool cleanarg = true;
 	if (arg_control_type && refreshargcontrol) {
 		for (i=0;i<arg_amount;i++) {
@@ -2650,6 +2665,13 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 		delete[] arg_label;
 		delete[] arg_control;
 		arg_control_type = NULL;
+	}
+	if (refreshargcontrol && animlist_id!=NULL) {
+		for (i=0;i<animlist_str.GetCount();i++)
+			delete[] animlist_id[i];
+		delete[] animlist_id;
+		animlist_id = NULL;
+		animlist_str.Empty();
 	}
 	tmpstr = GetNextWord(line);
 	for (i=0;i<G_N_ELEMENTS(HADES_STRING_SCRIPT_OPCODE);i++)
@@ -2865,7 +2887,7 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 				if ((argi>0 && HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[argi-1]==AT_ENTRY) && static_cast<wxChoice*>(arg_control[i-1])->GetSelection()!=wxNOT_FOUND) {
 					unsigned int entrysel = static_cast<wxChoice*>(arg_control[i-1])->GetSelection();
 					uint16_t funcid = wxAtoi(arg), funclistpos = 0;
-					for (unsigned int j=0;j<script.entry_amount;j++)
+					for (j=0;j<script.entry_amount;j++)
 						for (unsigned int k=0;k<script.entry_function_amount[j];k++) {
 							if (entrysel==j && script.function_type[j][k]==funcid)
 								static_cast<wxChoice*>(arg_control[i])->SetSelection(funclistpos);
@@ -2877,6 +2899,26 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 			}
 			case AT_MODEL:
 				arg_control[i] = ArgCreateChoice(arg,i,modellist_id,modellist_str);
+				argsizer->Add(arg_control[i],0,wxALL,5);
+				break;
+			case AT_ANIMATION:
+				if (entry_model_index[entry_selection]>=0) {
+					int32_t animindex = AnimationDatabase::GetIndexFromModelIndex(entry_model_index[entry_selection]);
+					int32_t animindex2 = animindex;
+					while (AnimationDatabase::GetModelId(animindex)==HADES_STRING_MODEL_NAME[entry_model_index[entry_selection]].id)
+						animlist_str.Add(AnimationDatabase::GetDescription(animindex++));
+					animlist_id = new uint16_t*[animlist_str.GetCount()];
+					for (j=0;j<animlist_str.GetCount();j++)
+						animlist_id[j] = new uint16_t(AnimationDatabase::GetId(animindex2+j));
+					arg_control[i] = ArgCreateChoice(arg,i,animlist_id,animlist_str);
+					for (j=0;j<animlist_str.GetCount();j++)
+						if (AnimationDatabase::GetId2(animindex2+j)==wxAtoi(arg)) {
+							static_cast<wxChoice*>(arg_control[i])->SetSelection(j);
+							break;
+						}
+				} else {
+					arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_length[argi],false);
+				}
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_SOUND:
@@ -3232,14 +3274,15 @@ wxChoice* ScriptEditDialog::ArgCreateChoice(wxString& arg, unsigned int id, uint
 	else
 		res->Append(choicestr);
 	if (arg.IsNumber()) {
+		int argval = wxAtoi(arg);
 		if (choiceid) {
 			for (unsigned int i=0;i<choicestr.Count();i++)
-				if (wxAtoi(arg)==*choiceid[i]) {
+				if (argval==*choiceid[i]) {
 					res->SetSelection(i);
 					break;
 				}
 		} else {
-			res->SetSelection(wxAtoi(arg));
+			res->SetSelection(argval);
 		}
 	}
 	res->Connect(wxEVT_COMMAND_CHOICE_SELECTED,wxCommandEventHandler(ScriptEditDialog::OnArgChoice),NULL,this);
@@ -3259,17 +3302,18 @@ wxPanel* ScriptEditDialog::ArgCreateDiscFieldChoice(wxString& arg, unsigned int 
 		field->Append(choicestr);
 	disc->Append(disc_str);
 	if (arg.IsNumber()) {
+		int argval = wxAtoi(arg);
 		if (choiceid) {
 			for (i=0;i<choicestr.Count();i++)
-				if ((wxAtoi(arg) & 0x3FFF)==*choiceid[i]) {
+				if ((argval & 0x3FFF)==*choiceid[i]) {
 					field->SetSelection(i);
 					break;
 				}
 			if (i==choicestr.Count())
 				field->SetSelection(0);
 		} else
-			field->SetSelection(wxAtoi(arg) & 0x3FFF);
-		disc->SetSelection(wxAtoi(arg) >> 14);
+			field->SetSelection(argval & 0x3FFF);
+		disc->SetSelection(argval >> 14);
 	} else {
 		field->SetSelection(0);
 		disc->SetSelection(0);

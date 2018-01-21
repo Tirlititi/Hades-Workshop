@@ -349,7 +349,7 @@ bool PreferencesDialog::LoadToolUnityConfig(UnityViewerWindow* configwindow) {
 			else if (TmpArgs[argcount].IsSameAs(_(L"yes")))			configwindow->m_menuimportmodelflush->Check();
 		}
 		cfgfield = cfgstr;
-		if (SearchField(cfgfield, _(L"ModelFlush"), TmpArgs, argcount)) {
+		if (SearchField(cfgfield, _(L"ModelImportType"), TmpArgs, argcount)) {
 			wxStringTokenizer sortlist(TmpArgs[argcount],L",");
 			wxString sorttoken;
 			configwindow->m_menuimportmodelmesh->Check(false);

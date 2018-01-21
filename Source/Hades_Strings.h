@@ -359,6 +359,8 @@ static wxString HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM[] = {
 #define HADES_STRING_UNITYVIEWER_UNKNOWN_FORMAT	L"Format of '%s' not supported"
 #define HADES_STRING_UNITYVIEWER_MODEL_BAD_HIERARCHY	L"Failed to read the asset's file hierarchy"
 #define HADES_STRING_UNITYVIEWER_LINK_TEXTURE	L"The following Texture could not be automatically identified. Specify the corresponding file:\n"
+#define HADES_STRING_UNITYVIEWER_IMPORT_MISSING	"%d nodes are new and thus not imported\n"\
+												"Change the model importing options to allow the importation of new assets"
 #define HADES_STRING_UNITYVIEWER_INVALID_FILE_INFO	L"Internal ID must be a 16-digit long hexadecimal number"
 #define HADES_STRING_UNITYVIEWER_USED_FILE_INFO	L"Internal ID already used by another asset"
 #define HADES_STRING_UNITYVIEWER_LOW_FILE_INFO	"Low Internal ID: the file will be inserted as #%d"

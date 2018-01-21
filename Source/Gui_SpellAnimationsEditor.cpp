@@ -1,6 +1,7 @@
 #include "Gui_SpellAnimationsEditor.h"
 
 #include "Database_SpellAnimation.h"
+#include "Database_Animation.h"
 #include "Hades_Strings.h"
 #include "main.h"
 
@@ -12,7 +13,7 @@ inline bool IsSAATChoice(Spell_Animation_Argument_Type saat) {
 }
 
 inline bool IsEAATChoice(Enemy_Animation_Argument_Type eaat) {
-	return eaat==EAAT_TEXT || eaat==EAAT_SPELL_ANIM || eaat==EAAT_SOUND;
+	return eaat==EAAT_ANIMATION || eaat==EAAT_TEXT || eaat==EAAT_SPELL_ANIM || eaat==EAAT_SOUND;
 }
 
 //====================================//
@@ -347,8 +348,15 @@ void EnemyAnimSequenceCodeSizer::CreateArgumentControls() {
 	m_arg = new wxControl*[seqcode.arg_amount];
 	for (i=0;i<seqcode.arg_amount;i++) {
 		if (IsEAATChoice(seqcode.arg_type[i])) {
-			m_arg[i] = new wxChoice(parent->m_sequencewindow,ENEMY_SEQUENCE_CODE_MAX_ARG*line_nb+i,wxDefaultPosition,wxSize(150,-1));
-			if (seqcode.arg_type[i]==EAAT_TEXT) {
+			m_arg[i] = new wxChoice(parent->m_sequencewindow,ENEMY_SEQUENCE_CODE_MAX_ARG*line_nb+i,wxDefaultPosition,wxSize(seqcode.arg_type[i]==EAAT_SOUND ? 220 : 150,-1));
+			if (seqcode.arg_type[i]==EAAT_ANIMATION) {
+			((wxChoice*)m_arg[i])->Append(parent->arg_animation,(void**)parent->arg_animation_id);
+			for (j=0;j<parent->arg_animation.GetCount();j++)
+				if (*parent->arg_animation_id[j]==codeline->arg[i]) {
+					((wxChoice*)m_arg[i])->SetSelection(j);
+					break;
+				}
+			} else if (seqcode.arg_type[i]==EAAT_TEXT) {
 				((wxChoice*)m_arg[i])->Append(parent->arg_battletext,(void**)parent->arg_battletext_id);
 				for (j=0;j<parent->arg_battletext.GetCount();j++)
 					if (*parent->arg_battletext_id[j]==codeline->arg[i]) {
@@ -375,8 +383,6 @@ void EnemyAnimSequenceCodeSizer::CreateArgumentControls() {
 		} else {
 			if (seqcode.arg_type[i]==EAAT_COORDINATE)
 				m_arg[i] = new wxSpinCtrl(parent->m_sequencewindow,ENEMY_SEQUENCE_CODE_MAX_ARG*line_nb+i,wxEmptyString,wxDefaultPosition,wxSize(150,-1),wxSP_ARROW_KEYS,-0x8000,0x7FFF,codeline->arg[i]>=0x8000 ? codeline->arg[i]-0x10000 : codeline->arg[i]);
-			else if (seqcode.arg_type[i]==EAAT_ANIMATION)
-				m_arg[i] = new wxSpinCtrl(parent->m_sequencewindow,ENEMY_SEQUENCE_CODE_MAX_ARG*line_nb+i,wxEmptyString,wxDefaultPosition,wxSize(150,-1),wxSP_ARROW_KEYS,0,parent->battle.animation_amount-1,codeline->arg[i]);
 			else
 				m_arg[i] = new wxSpinCtrl(parent->m_sequencewindow,ENEMY_SEQUENCE_CODE_MAX_ARG*line_nb+i,wxEmptyString,wxDefaultPosition,wxSize(150,-1),wxSP_ARROW_KEYS,seqcode.arg_type[i]==EAAT_TIME ? 1 : 0,(1 << min(seqcode.arg_length[i]*8,31))-1,codeline->arg[i]);
 			this->Add(m_arg[i],0,wxALIGN_CENTER|wxALL,2);
@@ -390,7 +396,7 @@ EnemyAnimSequenceEditDialog::EnemyAnimSequenceEditDialog(wxWindow* parent, Battl
 	AnimSequenceEditWindow(parent),
 	battle(b),
 	anim_id(animid) {
-	unsigned int i;
+	unsigned int i,j;
 	sequence_code_amount = battle.sequence_code_amount[anim_id];
 	sequence_code = new EnemySequenceCodeLine[sequence_code_amount];
 	memcpy(sequence_code,battle.sequence_code[anim_id],sequence_code_amount*sizeof(EnemySequenceCodeLine));
@@ -402,6 +408,20 @@ EnemyAnimSequenceEditDialog::EnemyAnimSequenceEditDialog(wxWindow* parent, Battl
 	code_list.Alloc(G_N_ELEMENTS(ENEMYANIM_OPCODE));
 	for (i=0;i<G_N_ELEMENTS(ENEMYANIM_OPCODE);i++)
 		code_list.Add(_(ENEMYANIM_OPCODE[i].label));
+	unsigned int animamount = battle.animation_amount-battle.sequence_base_anim[anim_id];
+	int32_t animdbindex;
+	for (i=0;i<battle.sequence_amount;i++)
+		if (battle.sequence_base_anim[i]>battle.sequence_base_anim[anim_id] && battle.sequence_base_anim[i]-battle.sequence_base_anim[anim_id]<animamount)
+			animamount = battle.sequence_base_anim[i]-battle.sequence_base_anim[anim_id];
+	arg_animation_id = new uint32_t*[animamount+1];
+	arg_animation.Alloc(animamount+1);
+	for (i=0;i<animamount;i++) {
+		animdbindex = AnimationDatabase::GetIndex(battle.animation_id[battle.sequence_base_anim[anim_id]+i],DATABASE_MODEL_CATEGORY_TO_LIST(DATABASE_MODEL_CATEGORY_ENEMY));
+		arg_animation_id[i] = new uint32_t(i);
+		arg_animation.Add(AnimationDatabase::GetDescription(animdbindex));
+	}
+	arg_animation_id[animamount] = new uint32_t(0xFF);
+	arg_animation.Add(_(L"Stand Animation"));
 	unsigned int texti = battle.parent->battle[battle.id]->spell_amount+battle.parent->battle[battle.id]->stat_amount;
 	unsigned int textamount = battle.parent->text[battle.id]->amount-texti+1;
 	arg_battletext_id = new uint32_t*[textamount];
@@ -418,15 +438,29 @@ EnemyAnimSequenceEditDialog::EnemyAnimSequenceEditDialog(wxWindow* parent, Battl
 		arg_spellanim_id[i] = new uint32_t(HADES_STRING_SPELL_MODEL[i].id);
 		arg_spellanim.Add(_(HADES_STRING_SPELL_MODEL[i].label));
 	}
-	if (GetGameType()==GAME_TYPE_PSX && battle.parent_cluster->SearchChunkType(CHUNK_TYPE_SOUND)>=0) { // ToDo: add support for Steam
-		ChunkData* soundchunk = &battle.parent_cluster->chunk[battle.parent_cluster->SearchChunkType(CHUNK_TYPE_SOUND)];
-		arg_sound_id = new uint32_t*[soundchunk->object_amount];
-		arg_sound.Alloc(soundchunk->object_amount);
-		for (i=0;i<soundchunk->object_amount;i++) {
-			wxString sndlabel;
-			sndlabel.Printf(wxT("Sound %d"),i+1);
-			arg_sound.Add(sndlabel);
-			arg_sound_id[i] = new uint32_t(soundchunk->object_id[i]);
+	if (GetGameType()==GAME_TYPE_PSX) {
+		if (battle.parent_cluster->SearchChunkType(CHUNK_TYPE_SOUND)>=0) {
+			ChunkData* soundchunk = &battle.parent_cluster->chunk[battle.parent_cluster->SearchChunkType(CHUNK_TYPE_SOUND)];
+			arg_sound_id = new uint32_t*[soundchunk->object_amount];
+			arg_sound.Alloc(soundchunk->object_amount);
+			for (i=0;i<soundchunk->object_amount;i++) {
+				wxString sndlabel;
+				sndlabel.Printf(wxT("Sound %d"),i+1);
+				for (j=0;j<G_N_ELEMENTS(HADES_STRING_AUDIO_NAME);j++)
+					if (soundchunk->object_id[i]==HADES_STRING_AUDIO_NAME[j].id) {
+						sndlabel = HADES_STRING_AUDIO_NAME[j].label;
+						break;
+					}
+				arg_sound.Add(sndlabel);
+				arg_sound_id[i] = new uint32_t(soundchunk->object_id[i]);
+			}
+		}
+	} else {
+		arg_sound_id = new uint32_t*[G_N_ELEMENTS(HADES_STRING_AUDIO_NAME)];
+		arg_sound.Alloc(G_N_ELEMENTS(HADES_STRING_AUDIO_NAME));
+		for (i=0;i<G_N_ELEMENTS(HADES_STRING_AUDIO_NAME);i++) {
+			arg_sound_id[i] = new uint32_t(HADES_STRING_AUDIO_NAME[i].id);
+			arg_sound.Add(_(HADES_STRING_AUDIO_NAME[i].label));
 		}
 	}
 	m_sequencesizer = new wxFlexGridSizer(0,1,0,0);

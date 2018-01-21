@@ -90,6 +90,7 @@ public:
 
 	void SetValue(double newx, double newy, double newz, double neww);
 	void Apply(double& posx, double& posy, double& posz);
+	void TakeContinuousRepresentative(Quaternion closequaternion);
 
 	void Read(fstream& f);
 	void Write(fstream& f);

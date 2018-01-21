@@ -211,8 +211,10 @@ struct UnityArchiveAssetBundle {
 	int GetFileBundle(int64_t info);
 	void AddFile(string filepath, uint32_t fileindex, int64_t fileinfo, uint32_t fileunk1 = 0, uint32_t fileunk2 = 0);
 	void AddFileBundle(uint64_t type, vector<int64_t> fileinfolist);
+	void AddFileToBundle(int64_t fileinfo, unsigned int bundleindex = 0);
 	void RemoveFile(unsigned int fileindex);
 	void RemoveFileBundle(unsigned int bundleindex);
+	void RemoveFileFromBundle(int64_t fileinfo, unsigned int bundleindex = 0);
 
 	int GetDataSize();
 };

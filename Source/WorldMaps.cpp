@@ -41,7 +41,7 @@ int WorldMapDataStruct::SetName(unsigned int placeid, FF9String& newvalue) {
 #define MACRO_WORLDSTRUCT_IOFUNCTION(IO,SEEK,READ,PPF) \
 	uint32_t headerpos = f.tellg(); \
 	uint8_t zero8 = 0; \
-	unsigned int i,j,k; \
+	unsigned int i,j; \
 	if (PPF) PPFInitScanStep(f); \
 	IO ## Long(f,section_amount); \
 	if (READ) { \
@@ -66,6 +66,7 @@ int WorldMapDataStruct::SetName(unsigned int placeid, FF9String& newvalue) {
 	}
 
 #define MACRO_WORLDSTRUCT_PLACE(IO,SEEK,READ,PPF) \
+	unsigned int k; \
 	SEEK(f,headerpos,section_offset[WM_SECTION_NAME]); \
 	if (READ) { \
 		place_unknown_amount = new uint16_t[WORLD_MAP_PLACE_AMOUNT]; \

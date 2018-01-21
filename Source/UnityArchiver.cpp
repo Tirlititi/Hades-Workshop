@@ -555,6 +555,8 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 	fdest.write(buffer,copysize);
 	delete[] buffer;
 	WriteLong(fdest,copyfileamount);
+	while (fdest.tellp()%4)
+		fdest.put(0);
 	if (newmetadata) {
 		newmetadata->Copy(this,false);
 		newmetadata->header_file_amount = copyfileamount;
@@ -571,8 +573,7 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 		newmetadata->file_name = new string[newmetadata->header_file_amount];
 		newmetadata->file_offset_start = res;
 	}
-	baseoffheadend = (uint32_t)fbase.tellg()+4+0x1C*header_file_amount;
-	fdest.seekp(GetAlignOffset(fdest.tellp()),ios::cur);
+	baseoffheadend = (uint32_t)fbase.tellg()+4+GetAlignOffset(fbase.tellg())+0x1C*header_file_amount;
 	offstart = 0;
 	curfileindex = 0;
 
@@ -825,7 +826,9 @@ int UnityArchiveAssetBundle::Load(fstream& f) {
 		if (bundle_flag[i]!=0) {
 			if (bundle_index_start.size()>0)
 				bundle_index_end.push_back(i);
-			bundle_index_start.push_back(i);
+			bundle_index_start.push_back(i+1);
+		} else if (i==0) {
+			bundle_index_start.push_back(0);
 		}
 	}
 	bundle_index_end.push_back(bundle_amount);
@@ -931,14 +934,25 @@ void UnityArchiveAssetBundle::AddFile(string filepath, uint32_t fileindex, int64
 }
 
 void UnityArchiveAssetBundle::AddFileBundle(uint64_t type, vector<int64_t> fileinfolist) {
-	bundle_index_start.push_back(bundle_flag.size());
 	bundle_flag.push_back(1);
 	bundle_info.push_back(type);
-	for (unsigned int i=1;i<fileinfolist.size();i++) {
+	bundle_index_start.push_back(bundle_flag.size());
+	for (unsigned int i=0;i<fileinfolist.size();i++) {
 		bundle_flag.push_back(0);
 		bundle_info.push_back(fileinfolist[i]);
 	}
 	bundle_index_end.push_back(bundle_flag.size());
+	bundle_amount = bundle_flag.size();
+}
+
+void UnityArchiveAssetBundle::AddFileToBundle(int64_t fileinfo, unsigned int bundleindex) {
+	bundle_flag.insert(bundle_flag.begin()+bundle_index_end[bundleindex],0);
+	bundle_info.insert(bundle_info.begin()+bundle_index_end[bundleindex],fileinfo);
+	bundle_index_end[bundleindex]++;
+	for (unsigned int i=bundleindex+1;i<bundle_index_start.size();i++) {
+		bundle_index_start[i]++;
+		bundle_index_end[i]++;
+	}
 	bundle_amount = bundle_flag.size();
 }
 
@@ -952,11 +966,32 @@ void UnityArchiveAssetBundle::RemoveFile(unsigned int fileindex) {
 }
 
 void UnityArchiveAssetBundle::RemoveFileBundle(unsigned int bundleindex) {
-	bundle_flag.erase(bundle_flag.begin()+bundleindex);
-	bundle_info.erase(bundle_info.begin()+bundleindex);
+	unsigned int start = bundle_index_start[bundleindex]>0 ? bundle_index_start[bundleindex]-1 : 0;
+	for (unsigned int i=bundleindex+1;i<bundle_index_start.size();i++) {
+		bundle_index_start[i] -= bundle_index_end[bundleindex]-start;
+		bundle_index_end[i] -= bundle_index_end[bundleindex]-start;
+	}
+	bundle_flag.erase(bundle_flag.begin()+start,bundle_flag.begin()+bundle_index_end[bundleindex]);
+	bundle_info.erase(bundle_info.begin()+start,bundle_info.begin()+bundle_index_end[bundleindex]);
 	bundle_index_start.erase(bundle_index_start.begin()+bundleindex);
 	bundle_index_end.erase(bundle_index_end.begin()+bundleindex);
 	bundle_amount = bundle_flag.size();
+}
+
+void UnityArchiveAssetBundle::RemoveFileFromBundle(int64_t fileinfo, unsigned int bundleindex) {
+	for (unsigned int i=bundle_index_start[bundleindex];i<bundle_index_end[bundleindex];i++)
+		if (bundle_flag[i]==0 && bundle_info[i]==fileinfo) {
+			bundle_flag.erase(bundle_flag.begin()+i);
+			bundle_info.erase(bundle_info.begin()+i);
+			bundle_index_end[bundleindex]--;
+			for (unsigned int j=bundleindex+1;j<bundle_index_start.size();j++) {
+				bundle_index_start[j]--;
+				bundle_index_end[j]--;
+			}
+			if (bundle_index_end[bundleindex]==0 || (bundle_index_end[bundleindex]==bundle_index_start[bundleindex]+1 && bundle_index_start[bundleindex]>0))
+				RemoveFileBundle(bundleindex);
+			return;
+		}
 }
 
 int UnityArchiveAssetBundle::GetDataSize() {
@@ -1044,10 +1079,10 @@ void UnityArchiveDictionary::Load(fstream& f, bool append) {
 }
 
 void UnityArchiveFileCreator::Add(uint32_t type, uint32_t size, int64_t info, string name, uint32_t unk) {
-	uint32_t index = 0;
+	uint32_t index = meta_data->header_file_amount;
 	unsigned int i;
-	while (meta_data->file_info[index]<info)
-		index++;
+	while (index>0 && meta_data->file_info[index-1]>=info)
+		index--;
 	for (i=0;i<file_type.size();i++) {
 		if (info>=file_info[i])
 			index++;

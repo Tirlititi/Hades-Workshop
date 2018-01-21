@@ -1,11 +1,13 @@
 #include "Tool_UnityViewer.h"
 
 #include <wx/tokenzr.h>
+#include <list>
 #include "Squish/squish.h"
 #include "Hades_Strings.h"
 #include "Database_Text.h"
 #include "Database_Resource.h"
 #include "Database_SpellAnimation.h"
+#include "Database_Animation.h"
 #include "Gui_Preferences.h"
 #include "main.h"
 
@@ -211,34 +213,31 @@ bool ToolUnityViewer::SetupRootPath(wxString path, bool ignorestreaming) {
 }
 
 bool ToolUnityViewer::DisplayArchive(UnityArchiveFile archivetype) {
-	unsigned int i;
-	long itemid;
+	wxString typestr, fullname, infostr;
 	bool foundfullname;
-	wxString fullname,infostr,typestr;
-	m_assetlist->DeleteAllItems();
+	unsigned int i;
+	int itemid;
 	current_archive = archivetype;
 	archive_name = _(UnityArchiveMetaData::GetArchiveName(current_archive,use_x86));
-	for (i=0;i<meta_data[archivetype].header_file_amount;i++) {
-		fullname = GetFullName(archivetype,i,&foundfullname);
-		if (foundfullname)
-			infostr = GetInfoString(fullname,meta_data[archivetype].file_type1[i],current_archive);
-		else
-			infostr = _(L"");
-		typestr = _(UnityArchiveMetaData::GetTypeName(meta_data[archivetype].file_type1[i]));
+	column_sort = 0;
+	column_sort_ascending = true;
+	m_assetlist->DeleteAllItems();
+	for (i=0;i<meta_data[current_archive].header_file_amount;i++) {
+		fullname = GetFullName(current_archive,i,&foundfullname);
+		infostr = foundfullname ? GetInfoString(fullname,meta_data[current_archive].file_type1[i],current_archive) : _(L"");
+		typestr = _(UnityArchiveMetaData::GetTypeName(meta_data[current_archive].file_type1[i]));
 		if (typestr.Len()>0)
-			typestr = _(ConvertToString(meta_data[archivetype].file_type1[i]))+_(L" (")+typestr+_(L")");
+			typestr = _(ConvertToString(meta_data[current_archive].file_type1[i]))+_(L" (")+typestr+_(L")");
 		else
-			typestr = _(ConvertToString(meta_data[archivetype].file_type1[i]));
+			typestr = _(ConvertToString(meta_data[current_archive].file_type1[i]));
 		itemid = m_assetlist->InsertItem(i,_(ConvertToString(i+1)));
 		m_assetlist->SetItem(itemid,1,fullname);
-		m_assetlist->SetItem(itemid,2,_(meta_data[archivetype].file_name[i]));
+		m_assetlist->SetItem(itemid,2,_(meta_data[current_archive].file_name[i]));
 		m_assetlist->SetItem(itemid,3,typestr);
-		m_assetlist->SetItem(itemid,4,_(ConvertToString(meta_data[archivetype].GetFileSizeByIndex(i))));
+		m_assetlist->SetItem(itemid,4,_(ConvertToString(meta_data[current_archive].GetFileSizeByIndex(i))));
 		m_assetlist->SetItem(itemid,5,infostr);
 		m_assetlist->SetItemData(itemid,itemid);
 	}
-	column_sort = 0;
-	column_sort_ascending = true;
 	return true;
 }
 
@@ -339,14 +338,18 @@ wxString ToolUnityViewer::GetInfoString(wxString filename, uint32_t filetype, Un
 		if (patharray.Count()==5 && patharray[2].IsSameAs(L"animations",false)) {
 			unsigned int modelid = wxAtoi(patharray[3]);
 			unsigned int animid = wxAtoi(patharray[4]);
+			unsigned int modelcat = DATABASE_MODEL_CATEGORY_LIST_ALL;
 			wxString partstrmodel = _(L"[Unknown Model]");
 			wxString partstranim = _(L"[Unknown Animation]");
 			for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_MODEL_NAME);i++)
 				if (HADES_STRING_MODEL_NAME[i].id==modelid) {
 					partstrmodel = HADES_STRING_MODEL_NAME[i].label;
+					modelcat = DATABASE_MODEL_CATEGORY_TO_LIST(HADES_STRING_MODEL_NAME[i].category);
 					break;
 				}
-			// ToDo
+			int32_t animindex = AnimationDatabase::GetIndex(animid,modelcat);
+			if (animindex>=0)
+				partstranim = AnimationDatabase::GetDescription(animindex);
 			return _(L"Animation ")+partstranim+_(L" of the model ")+partstrmodel;
 		}
 	} else if (archive>=UNITY_ARCHIVE_DATA61 && archive<=UNITY_ARCHIVE_DATA63) {
@@ -603,6 +606,8 @@ bool ToolUnityViewer::PrepareAssetForImport(bool isnewfile, fstream& filebase, w
 			if (newfilehasbundle) {
 				int32_t bundleindex = meta_data[current_archive].GetFileIndex("",142);
 				bundle_data[current_archive-UNITY_ARCHIVE_DATA11].AddFile(newfilepath,meta_data[current_archive].header_file_amount+filestoadd.file_type.size(),newfileinfo);
+				if (bundle_data[current_archive-UNITY_ARCHIVE_DATA11].bundle_index_start[0]==0)
+					bundle_data[current_archive-UNITY_ARCHIVE_DATA11].AddFileToBundle(newfileinfo);
 				copylist[bundleindex] = false;
 			}
 		} else {
@@ -706,6 +711,7 @@ bool ToolUnityViewer::PrepareAssetForImport(bool isnewfile, fstream& filebase, w
 		unsigned int nodefileindex,nodefiletype,meshcounter = 0, meshmatcounter = 0, animcounter = 0;
 		vector<int64_t> modelbundle;
 		uint32_t nodefilesize;
+		unsigned int missedfiles = 0;
 		for (i=0;i<newmodel.hierarchy->node_list.size();i++) {
 			nodefileindex = newmodel.hierarchy->node_list[i]->file_index;
 			nodefiletype = newmodel.hierarchy->node_list[i]->node_type;
@@ -713,7 +719,8 @@ bool ToolUnityViewer::PrepareAssetForImport(bool isnewfile, fstream& filebase, w
 			else if (nodefiletype==21)	nodefilesize = newmodel.material[meshcounter][meshmatcounter].GetDataSize();
 			else if (nodefiletype==74)	nodefilesize = newmodel.animation[animcounter].GetDataSize();
 			else						nodefilesize = newmodel.hierarchy->node_list[i]->GetDataSize();
-			if (newmodel.hierarchy->node_list[i]->node_info==0) { // ToDo: New file without new allocation
+			if (newmodel.hierarchy->node_list[i]->node_info==0) { // New file without new allocation
+				missedfiles++;
 			} else if (nodefileindex>=meta_data[current_archive].header_file_amount) { // New file with new allocation
 				modelbundle.push_back(newmodel.hierarchy->node_list[i]->node_info);
 				if (newmodel.hierarchy->root_node->node_type==4 && static_cast<TransformStruct*>(newmodel.hierarchy->root_node)->child_object==newmodel.hierarchy->node_list[i]) {
@@ -739,6 +746,12 @@ bool ToolUnityViewer::PrepareAssetForImport(bool isnewfile, fstream& filebase, w
 				animcounter++;
 			}
 		}
+		if (missedfiles>0) {
+			wxString warningstr;
+			warningstr.Printf(wxT(HADES_STRING_UNITYVIEWER_IMPORT_MISSING),missedfiles);
+			wxMessageDialog popupwarning(this,warningstr,HADES_STRING_WARNING,wxOK|wxCENTRE);
+			popupwarning.ShowModal();
+		}
 		for (i=0;i<newmodel.animation.size();i++)
 			if (newmodel.animation[i].file_id>=0 && newmodel.animation[i].anim_id==0xFFFFFFFF) { // Animations that are in the same archive as the model
 				filenewsize[newmodel.animation[i].file_id] = newmodel.animation[i].GetDataSize();
@@ -748,14 +761,14 @@ bool ToolUnityViewer::PrepareAssetForImport(bool isnewfile, fstream& filebase, w
 		for (meshcounter=0;meshcounter<newmodel.material.size();meshcounter++)
 			for (meshmatcounter=0;meshmatcounter<newmodel.material[meshcounter].size();meshmatcounter++) {
 				ModelMaterialData& mat = newmodel.material[meshcounter][meshmatcounter];
-				if (mat.shader_info>0) {
+				if (mat.shader_info!=0) {
 					for (i=0;i<modelbundle.size();i++)
 						if (modelbundle[i]==mat.shader_info)
 							break;
 					if (i>=modelbundle.size())
 						modelbundle.push_back(mat.shader_info);
 				}
-				if (mat.maintex.file_info>0) {
+				if (mat.maintex.file_info!=0) {
 					for (i=0;i<modelbundle.size();i++)
 						if (modelbundle[i]==mat.maintex.file_info)
 							break;
@@ -1187,13 +1200,14 @@ fout.close();*/
 		}
 		m_loadgauge->SetValue(10);
 		int32_t bundleindex = meta_data[current_archive].GetFileIndex("",142);
-		if (bundleindex>=0 && !copylist[bundleindex])
+		bool bundleisupdated = bundleindex>=0 && !copylist[bundleindex];
+		if (bundleisupdated)
 			filenewsize[bundleindex] = bundle_data[current_archive-UNITY_ARCHIVE_DATA11].GetDataSize();
 		filebase.seekg(0);
 		UnityArchiveMetaData newmetadata;
 		meta_data[current_archive].Duplicate(filebase,filedest,copylist,filenewsize,&filestoadd,&newmetadata);
-		if (bundleindex>=0 && !copylist[bundleindex]) {
-			filedest.seekp(newmetadata.GetFileOffsetByIndex(bundleindex));
+		if (bundleisupdated) {
+			filedest.seekg(newmetadata.GetFileOffsetByIndex(bundleindex));
 			bundle_data[current_archive-UNITY_ARCHIVE_DATA11].Write(filedest);
 		}
 		m_loadgauge->SetValue(50);
@@ -1286,7 +1300,7 @@ fout.close();*/
 				goto block_finishimportation;
 			}
 			j = 0;
-			int32_t bundleindex = meta_data[UNITY_ARCHIVE_DATA5].GetFileIndex("",142);
+			int32_t bundleindexanim = meta_data[UNITY_ARCHIVE_DATA5].GetFileIndex("",142);
 			for (importmodelcounter=0;importmodelcounter<importmodel.size();importmodelcounter++) {
 				ModelDataStruct& model = importmodel[importmodelcounter];
 				for (i=0;i<model.animation.size();i++)
@@ -1300,22 +1314,22 @@ fout.close();*/
 							filestoaddanim.Add(ftype,model.animation[i].GetDataSize(),newfileinfo);
 							if (newfilepath.length()>0) {
 								bundle_data[UNITY_ARCHIVE_DATA5-UNITY_ARCHIVE_DATA11].AddFile(newfilepath,meta_data[UNITY_ARCHIVE_DATA5].header_file_amount+filestoaddanim.file_type.size(),newfileinfo);
-								copylistanim[bundleindex] = false;
-								// DEBUG: maybe use AddFileBundle?
+								bundle_data[UNITY_ARCHIVE_DATA5-UNITY_ARCHIVE_DATA11].AddFileToBundle(newfileinfo);
+								copylistanim[bundleindexanim] = false;
 							}
 						}
 					}
 			}
-			if (bundleindex>=0 && !copylistanim[bundleindex])
-				filenewsizeanim[bundleindex] = bundle_data[UNITY_ARCHIVE_DATA5-UNITY_ARCHIVE_DATA11].GetDataSize();
+			if (bundleindexanim>=0 && !copylistanim[bundleindexanim])
+				filenewsizeanim[bundleindexanim] = bundle_data[UNITY_ARCHIVE_DATA5-UNITY_ARCHIVE_DATA11].GetDataSize();
 			filebaseanim.seekg(0);
 			UnityArchiveMetaData newmetadataanim;
-			meta_data[UNITY_ARCHIVE_DATA5].Duplicate(filebaseanim,filedestanim,copylistanim,filenewsizeanim,&filestoadd,&newmetadataanim);
-			if (bundleindex>=0 && !copylist[bundleindex]) {
+			meta_data[UNITY_ARCHIVE_DATA5].Duplicate(filebaseanim,filedestanim,copylistanim,filenewsizeanim,&filestoaddanim,&newmetadataanim);
+			if (bundleindexanim>=0 && !copylistanim[bundleindexanim]) {
 				for (k=0;k<filestoaddanim.file_index.size();k++)
-					if (filestoaddanim.file_index[k]<=bundleindex)
-						bundleindex++;
-				filedestanim.seekp(newmetadataanim.GetFileOffsetByIndex(bundleindex));
+					if (filestoaddanim.file_index[k]<=bundleindexanim)
+						bundleindexanim++;
+				filedestanim.seekg(newmetadataanim.GetFileOffsetByIndex(bundleindexanim));
 				bundle_data[UNITY_ARCHIVE_DATA5-UNITY_ARCHIVE_DATA11].Write(filedestanim);
 			}
 			delete[] copylistanim;
@@ -1326,14 +1340,14 @@ fout.close();*/
 				for (i=0;i<model.animation.size();i++)
 					if (model.animation[i].anim_id!=0xFFFFFFFF || model.animation[i].file_id<0) {
 						if (model.animation[i].file_id<0 || modelmergepolicy==2) {
-							filedestanim.seekp(newmetadataanim.GetFileOffsetByIndex(filestoaddanim.file_index[j++]));
+							filedestanim.seekg(newmetadataanim.GetFileOffsetByIndex(filestoaddanim.file_index[j++]));
 							model.animation[i].Write(filedestanim);
 							nbanimupdated++;
 						} else {
 							for (k=0;k<filestoaddanim.file_index.size();k++)
 								if (filestoaddanim.file_index[k]<=model.animation[i].file_id)
 									model.animation[i].file_id++;
-							filedestanim.seekp(newmetadataanim.GetFileOffsetByIndex(model.animation[i].file_id));
+							filedestanim.seekg(newmetadataanim.GetFileOffsetByIndex(model.animation[i].file_id));
 							model.animation[i].Write(filedestanim);
 							nbanimupdated++;
 						}
@@ -1384,6 +1398,15 @@ fout.close();*/
 					if (copylist[impfileid])
 						continue;
 					m_assetlist->SetItem(it,4,_(ConvertToString(meta_data[current_archive].GetFileSizeByIndex(impfileid))));
+				}
+			}
+		} else if (bundleisupdated) { // Bundle was updated but the archive replacement failed
+			if (current_archive>=UNITY_ARCHIVE_DATA11 && current_archive<=UNITY_ARCHIVE_DATA7) {
+				fstream unityarchive((const char*)(root_path+archive_name).c_str(),ios::in | ios::binary);
+				uint32_t offset = meta_data[current_archive].GetFileOffset("",142);
+				if (offset>0) {
+					unityarchive.seekg(offset);
+					bundle_data[current_archive-UNITY_ARCHIVE_DATA11].Load(unityarchive);
 				}
 			}
 		}
@@ -1457,13 +1480,14 @@ fout.close();*/
 			}
 			m_loadgauge->SetValue(10);
 			int32_t bundleindex = meta_data[current_archive].GetFileIndex("",142);
-			if (bundleindex>=0 && !copylist[bundleindex])
+			bool bundleisupdated = bundleindex>=0 && !copylist[bundleindex];
+			if (bundleisupdated)
 				filenewsize[bundleindex] = bundle_data[current_archive-UNITY_ARCHIVE_DATA11].GetDataSize();
 			filebase.seekg(0);
 			UnityArchiveMetaData newmetadata;
 			meta_data[current_archive].Duplicate(filebase,filedest,copylist,filenewsize,&filestoadd,&newmetadata);
-			if (bundleindex>=0 && !copylist[bundleindex]) {
-				filedest.seekp(newmetadata.GetFileOffsetByIndex(bundleindex));
+			if (bundleisupdated) {
+				filedest.seekg(newmetadata.GetFileOffsetByIndex(bundleindex));
 				bundle_data[current_archive-UNITY_ARCHIVE_DATA11].Write(filedest);
 			}
 			m_loadgauge->SetValue(50);
@@ -1513,6 +1537,15 @@ fout.close();*/
 				}
 				unityarchive.close();
 				DisplayArchive(current_archive);
+			} else if (bundleisupdated) { // Bundle was updated but the archive replacement failed
+				if (current_archive>=UNITY_ARCHIVE_DATA11 && current_archive<=UNITY_ARCHIVE_DATA7) {
+					fstream unityarchive((const char*)(root_path+archive_name).c_str(),ios::in | ios::binary);
+					uint32_t offset = meta_data[current_archive].GetFileOffset("",142);
+					if (offset>0) {
+						unityarchive.seekg(offset);
+						bundle_data[current_archive-UNITY_ARCHIVE_DATA11].Load(unityarchive);
+					}
+				}
 			}
 			delete[] copylist;
 			delete[] filenewsize;
@@ -1562,7 +1595,7 @@ void ToolUnityViewer::OnSortColumn(wxListEvent& event) {
 	m_assetlist->SortItems(SortItemCompare,(wxIntPtr)&info);
 	it = m_assetlist->GetTopItem();
 	for (i=0;i<m_assetlist->GetItemCount();i++) {
-		m_assetlist->SetItemData(it,i);
+		m_assetlist->SetItemData(it,it);
 		it = m_assetlist->GetNextItem(it);
 	}
 }

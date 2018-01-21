@@ -44,7 +44,7 @@ SpellAnimSequenceCodeLine seqcodetmp[0x400];
 	} while (seqcodetmp[seq_code_amount++].code!=0); \
 	seq_code = new SpellAnimSequenceCodeLine[seq_code_amount]; \
 	memcpy(seq_code,seqcodetmp,seq_code_amount*sizeof(SpellAnimSequenceCodeLine)); \
-	for (unsigned int i=0;i<seq_code_amount;i++) \
+	for (i=0;i<seq_code_amount;i++) \
 		seq_code[i].parent = this;
 
 #define MACRO_SPELL_ANIM_IOFUNCTION_SEQWRITE(IO,SEEK,PPF) \
