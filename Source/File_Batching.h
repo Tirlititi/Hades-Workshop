@@ -8,18 +8,8 @@ class BatchImportDialog;
 #include "Configuration.h"
 #include "gui.h"
 
-int FileBatch_ExportText(wxString path, TextDataSet& data, bool* exportlist = NULL, bool splitfile = true);
-LogStruct FileBatch_ImportText(wxString filetext, TextDataSet& data, bool adjustsize = true, bool isjapan = false, bool fatalwarning = false);
-int FileBatch_ExportSpecialText(wxString path, SpecialTextDataSet& data, bool* exportlist = NULL, bool splitfile = true);
-LogStruct FileBatch_ImportSpecialText(wxString filetext, SpecialTextDataSet& data, bool fatalwarning = false);
-
-int FileBatch_ExportEnemyScript(wxString path, EnemyDataSet& data, bool* exportlist = NULL, bool splitfile = true);
-int FileBatch_ExportWorldScript(wxString path, WorldMapDataSet& data, bool* exportlist = NULL, bool splitfile = true);
-int FileBatch_ExportFieldScript(wxString path, FieldDataSet& data, bool* exportlist = NULL, bool splitfile = true);
-
-int FileBatch_ExportImageBackground(wxString path, FieldDataSet& data, bool* exportlist = NULL, bool mergetile = true, bool depthorder = true, int steamtitlelang = -1);
-
-//int FileBatch_ExportSceneModel(wxString path, BattleSceneDataSet& data, bool* exportlist = NULL);
+#define BATCHING_SCRIPT_INFO_FILENAME	1
+#define BATCHING_SCRIPT_INFO_ARGUMENT	2
 
 class BatchExportDialog : public BatchExportWindow {
 public:
@@ -32,10 +22,18 @@ public:
 	int datatype;
 	unsigned int* sortlist;
 	SaveSet* dataset;
+	bool* dataloaded;
 	
 	BatchExportDialog(wxWindow* p);
 	~BatchExportDialog();
-	int ShowModal(int type, SaveSet* datas, wxArrayString objlist, unsigned int* objlistsort);
+	int ShowModal(int type, SaveSet* datas, wxArrayString objlist, unsigned int* objlistsort, bool* dload);
+
+	int ExportText(wxString path, bool* exportlist = NULL, bool splitfile = true);
+	int ExportSpecialText(wxString path, bool* exportlist = NULL, bool splitfile = true);
+	int ExportEnemyScript(wxString path, bool* exportlist = NULL, bool splitfile = true, int addedinfo = 0);
+	int ExportWorldScript(wxString path, bool* exportlist = NULL, bool splitfile = true, int addedinfo = 0);
+	int ExportFieldScript(wxString path, bool* exportlist = NULL, bool splitfile = true, int addedinfo = 0);
+	int ExportImageBackground(wxString path, bool* exportlist = NULL, bool mergetile = true, bool depthorder = true, int steamtitlelang = -1);
 
 private:
 	wxMenu* list_popup_menu;
@@ -57,6 +55,9 @@ public:
 	BatchImportDialog(wxWindow* p);
 	~BatchImportDialog();
 	int ShowModal(int type, SaveSet* datas, bool isjapan);
+
+	LogStruct ImportText(wxString filetext, bool adjustsize = true, bool isjapan = false, bool fatalwarning = false);
+	LogStruct ImportSpecialText(wxString filetext, bool fatalwarning = false);
 
 private:
 	wxMenu* list_popup_menu;

@@ -1184,26 +1184,20 @@ void FieldSteamTitleInfo::Write(fstream& f) {
 }
 
 int FieldDataSet::SetFieldName(unsigned int fieldid, wstring newvalue, SteamLanguage lang) {
-	if (GetGameType()==GAME_TYPE_PSX && lang==GetSteamLanguage())
-		lang = STEAM_LANGUAGE_NONE;
-	if (GetGameType()==GAME_TYPE_PSX && lang!=STEAM_LANGUAGE_NONE)
+	if (GetGameType()==GAME_TYPE_PSX && lang!=GetSteamLanguage())
 		return 0;
 	int oldlen = script_data[fieldid]->name.length;
 	int res = script_data[fieldid]->SetName(newvalue,lang);
-	if (res==0 && GetGameType()!=GAME_TYPE_PSX && lang==GetSteamLanguage())
-		name_space_used += script_data[fieldid]->name.length-oldlen;
+/*	if (res==0 && GetGameType()!=GAME_TYPE_PSX && lang==GetSteamLanguage())
+		name_space_used += script_data[fieldid]->name.length-oldlen;*/
 	return res;
 }
 
-int FieldDataSet::SetFieldName(unsigned int fieldid, FF9String& newvalue, SteamLanguage lang) {
-	if (GetGameType()==GAME_TYPE_PSX && lang==GetSteamLanguage())
-		lang = STEAM_LANGUAGE_NONE;
-	if (GetGameType()==GAME_TYPE_PSX && lang!=STEAM_LANGUAGE_NONE)
-		return 0;
+int FieldDataSet::SetFieldName(unsigned int fieldid, FF9String& newvalue) {
 	int oldlen = script_data[fieldid]->name.length;
-	int res = script_data[fieldid]->SetName(newvalue,lang);
-	if (res==0 && GetGameType()!=GAME_TYPE_PSX && lang==GetSteamLanguage())
-		name_space_used += script_data[fieldid]->name.length-oldlen;
+	int res = script_data[fieldid]->SetName(newvalue);
+/*	if (res==0 && GetGameType()!=GAME_TYPE_PSX && lang==GetSteamLanguage())
+		name_space_used += script_data[fieldid]->name.length-oldlen;*/
 	return res;
 }
 
@@ -1293,20 +1287,47 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 		ClusterData** dummyclus = new ClusterData*[amount];
 		ConfigurationSet& config = *clusset.config;
 		string fname = config.steam_dir_data;
+		bool fieldnameinit = false;
 		FF9String* fieldname = new FF9String[amount];
 		uint16_t* fieldnameid = new uint16_t[amount];
+		uint16_t fieldnameidtmp;
 		uint8_t strbuffer[10];
+		SteamLanguage lang;
 		fname += "resources.assets";
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
-		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.field_text_file[GetSteamLanguage()]));
-		name_space_used = config.meta_res.GetFileSizeByIndex(config.field_text_file[GetSteamLanguage()]);
-		for (i=0;i<amount;i++) {
-			j = 0;
-			do SteamReadChar(ffbin,strbuffer[j]);
-			while (strbuffer[j++]!=':');
-			strbuffer[j-1] = 0;
-			fieldnameid[i] = atoi((const char*)strbuffer);
-			SteamReadFF9String(ffbin,fieldname[i]);
+		for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+			if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+				continue;
+			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.field_text_file[lang]));
+			name_space_used = config.meta_res.GetFileSizeByIndex(config.field_text_file[lang]);
+			for (i=0;i<amount;i++) {
+				j = 0;
+				do SteamReadChar(ffbin,strbuffer[j]);
+				while (strbuffer[j++]!=':');
+				strbuffer[j-1] = 0;
+				fieldnameidtmp = atoi((const char*)strbuffer);
+				if (fieldnameidtmp==1805) { // DEBUG: Registered field lacking data
+					FF9String dumpedstr;
+					SteamReadFF9String(ffbin,dumpedstr);
+					i--;
+				} else if (!fieldnameinit) {
+					fieldnameid[i] = fieldnameidtmp;
+					SteamReadFF9String(ffbin,fieldname[i],lang);
+				} else if (fieldnameid[i]==fieldnameidtmp) {
+					SteamReadFF9String(ffbin,fieldname[i],lang);
+				} else {
+					for (k=0;k<amount;k++)
+						if (fieldnameid[k]==fieldnameidtmp) {
+							SteamReadFF9String(ffbin,fieldname[k],lang);
+							break;
+						}
+					if (k>=amount) {
+						FF9String dumpedstr;
+						SteamReadFF9String(ffbin,dumpedstr);
+					}
+				}
+			}
+			fieldnameinit = true;
 		}
 		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.field_title_info));
 		title_info = new FieldSteamTitleInfo[1];
@@ -1339,12 +1360,17 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 						related_text[i] = textset->text_data[j];
 						break;
 					}
-			ffbin.seekg(config.meta_script.GetFileOffsetByIndex(config.field_script_file[GetSteamLanguage()][i]));
 			script_data[i] = new ScriptDataStruct[1];
 			script_data[i]->related_charmap_id = 0;
 			script_data[i]->Init(true,CHUNK_TYPE_SCRIPT,config.field_id[i],&dummyclus[i],CLUSTER_TYPE_FIELD);
+			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+				if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+					continue;
+				ffbin.seekg(config.meta_script.GetFileOffsetByIndex(config.field_script_file[lang][i]));
+				script_data[i]->Read(ffbin,lang);
+			}
+			script_data[i]->ChangeSteamLanguage(GetSteamLanguage());
 			script_data[i]->size = config.meta_script.GetFileSizeByIndex(config.field_script_file[GetSteamLanguage()][i]);
-			script_data[i]->Read(ffbin);
 			for (j=0;j<amount;j++)
 				if (fieldnameid[j]==script_data[i]->object_id) {
 					script_data[i]->name = fieldname[j];
@@ -1415,15 +1441,22 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 	LoadingDialogEnd();
 }
 
-void FieldDataSet::WriteSteamText(fstream& ffbin) {
+int FieldDataSet::GetSteamTextSize(SteamLanguage lang) {
+	unsigned int i;
+	int res = 0;
+	for (i=0;i<amount;i++) {
+		string namedefstream = to_string((unsigned int)script_data[i]->object_id)+":";
+		res += namedefstream.length()+script_data[i]->name.GetLength(lang)+2;
+	}
+	return res;
+}
+
+void FieldDataSet::WriteSteamText(fstream& ffbin, SteamLanguage lang) {
 	unsigned int i;
 	for (i=0;i<amount;i++) {
-		wstringstream namedefstream;
-		FF9String namedef;
-		namedefstream << (unsigned int)script_data[i]->object_id << L":" << script_data[i]->name.str_ext;
-		namedef.CreateEmpty();
-		namedef.SetValue(namedefstream.str());
-		SteamWriteFF9String(ffbin,namedef);
+		string namedefstream = to_string((unsigned int)script_data[i]->object_id)+":";
+		ffbin.write(namedefstream.c_str(),namedefstream.length());
+		SteamWriteFF9String(ffbin,script_data[i]->name,lang);
 		WriteShort(ffbin,0x0A0D);
 	}
 }
@@ -1448,6 +1481,7 @@ int* FieldDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 	unsigned int i,j,k;
 	uint32_t chunksize,clustersize,chunkpos,objectpos,objectsize;
 	uint16_t nbmodified,objectid;
+	SteamLanguage lang;
 	uint8_t chunktype;
 	ClusterData* clus;
 	int* res = new int[5];
@@ -1514,22 +1548,55 @@ int* FieldDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 							}
 						} else if (chunktype==CHUNK_STEAM_FIELD_NAME || chunktype==CHUNK_STEAM_FIELD_MULTINAME) {
 							if (loadmain && usetext) {
-								SteamLanguage lg = GetSteamLanguage();
-								while (lg!=STEAM_LANGUAGE_NONE) {
-									if (chunktype==CHUNK_STEAM_FIELD_MULTINAME)
-										HWSReadChar(ffhws,lg);
+								if (chunktype==CHUNK_STEAM_FIELD_NAME)
+									lang = GetSteamLanguage();
+								else
+									HWSReadChar(ffhws,lang);
+								while (lang!=STEAM_LANGUAGE_NONE) {
 									FF9String locname;
 									SteamReadFF9String(ffhws,locname);
 									if (GetGameType()==GAME_TYPE_PSX)
 										locname.SteamToPSX();
-									SetFieldName(j,locname,lg);
+									SetFieldName(j,locname.str,lang);
 									if (chunktype==CHUNK_STEAM_FIELD_NAME)
-										lg = STEAM_LANGUAGE_NONE;
+										lang = STEAM_LANGUAGE_NONE;
+									else
+										HWSReadChar(ffhws,lang);
 								}
 							}
 						} else if (chunktype==CHUNK_SPECIAL_TYPE_LOCAL) {
 							if (loadlocal)
 								script_data[j]->ReadLocalHWS(ffhws);
+						} else if (chunktype==CHUNK_STEAM_SCRIPT_MULTILANG) {
+							if (loadmain) {
+								uint8_t langflag;
+								HWSReadChar(ffhws,lang);
+								while (lang!=STEAM_LANGUAGE_NONE) {
+									uint32_t langdatasize;
+									HWSReadChar(ffhws,langflag);
+									HWSReadLong(ffhws,langdatasize);
+									if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+										ffhws.seekg(langdatasize,ios::cur);
+									else
+										script_data[j]->ReadHWS(ffhws,false,lang);
+									HWSReadChar(ffhws,lang);
+								}
+							}
+						} else if (chunktype==CHUNK_SPECIAL_TYPE_LOCAL_MULTILANG) {
+							if (loadlocal) {
+								uint8_t langflag;
+								HWSReadChar(ffhws,lang);
+								while (lang!=STEAM_LANGUAGE_NONE) {
+									uint32_t langdatasize;
+									HWSReadChar(ffhws,langflag);
+									HWSReadLong(ffhws,langdatasize);
+									if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+										ffhws.seekg(langdatasize,ios::cur);
+									else
+										script_data[j]->ReadLocalHWS(ffhws,lang);
+									HWSReadChar(ffhws,lang);
+								}
+							}
 						} else
 							res[1]++;
 						ffhws.seekg(chunkpos+chunksize);
@@ -1570,7 +1637,8 @@ int* FieldDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 void FieldDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsigned int localflag) {
 	unsigned int i,j;
 	uint16_t nbmodified = 0;
-	uint32_t chunkpos, nboffset = ffhws.tellg();
+	uint32_t chunksize, chunkpos, nboffset = ffhws.tellg();
+	SteamLanguage lang;
 	ClusterData* clus;
 	bool savemain = localflag & 1;
 	bool savelocal = localflag & 2;
@@ -1581,29 +1649,6 @@ void FieldDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsign
 			clus->UpdateOffset();
 			HWSWriteShort(ffhws,script_data[i]->object_id);
 			HWSWriteLong(ffhws,clus->size);
-			if (script_data[i]->modified && savemain) {
-				HWSWriteChar(ffhws,CHUNK_TYPE_SCRIPT);
-				HWSWriteLong(ffhws,script_data[i]->size);
-				chunkpos = ffhws.tellg();
-				script_data[i]->WriteHWS(ffhws);
-				ffhws.seekg(chunkpos+script_data[i]->size);
-				if (GetGameType()!=GAME_TYPE_PSX) {
-					HWSWriteChar(ffhws,CHUNK_STEAM_FIELD_NAME);
-					HWSWriteLong(ffhws,0);
-					chunkpos = ffhws.tellg();
-					uint32_t chunksize;
-					SteamLanguage lg;
-					for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
-						HWSWriteChar(ffhws,lg);
-						SteamWriteFF9String(ffhws,script_data[i]->name,lg);
-					}
-					HWSWriteChar(ffhws,STEAM_LANGUAGE_NONE);
-					chunksize = (unsigned int)ffhws.tellg()-chunkpos;
-					ffhws.seekg(chunkpos-4);
-					HWSWriteLong(ffhws,chunksize);
-					ffhws.seekg(chunkpos+chunksize);
-				}
-			}
 			if (background_data[i]->modified && savemain) {
 				HWSWriteChar(ffhws,CHUNK_TYPE_FIELD_TILES);
 				HWSWriteLong(ffhws,background_data[i]->size);
@@ -1618,15 +1663,6 @@ void FieldDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsign
 				walkmesh[i]->WriteHWS(ffhws);
 				ffhws.seekg(chunkpos+walkmesh[i]->size);
 			}
-			for (j=0;j<tim_data[i]->parent_chunk->object_amount;j++)
-				if (tim_data[i][j].modified && savemain) {
-					HWSWriteChar(ffhws,CHUNK_TYPE_TIM);
-					HWSWriteLong(ffhws,tim_data[i][j].size+2);
-					chunkpos = ffhws.tellg();
-					HWSWriteShort(ffhws,tim_data[i][j].object_id);
-					tim_data[i][j].WriteHWS(ffhws);
-					ffhws.seekg(chunkpos+tim_data[i][j].size+2);
-				}
 			if (role[i]->modified && savemain) {
 				HWSWriteChar(ffhws,CHUNK_TYPE_FIELD_ROLE);
 				HWSWriteLong(ffhws,role[i]->size);
@@ -1643,16 +1679,95 @@ void FieldDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsign
 				preload[i]->WriteHWS(ffhws);
 				ffhws.seekg(chunkpos+preload[i]->size+4);
 			}
-			if (savelocal) {
-				uint32_t localsize = 0;
-				HWSWriteChar(ffhws,CHUNK_SPECIAL_TYPE_LOCAL);
-				HWSWriteLong(ffhws,localsize);
-				chunkpos = ffhws.tellg();
-				script_data[i]->WriteLocalHWS(ffhws);
-				localsize = (long long)ffhws.tellg()-chunkpos;
-				ffhws.seekg(chunkpos-4);
-				HWSWriteLong(ffhws,localsize);
-				ffhws.seekg(chunkpos+localsize);
+			if (GetGameType()==GAME_TYPE_PSX) {
+				for (j=0;j<tim_data[i]->parent_chunk->object_amount;j++)
+					if (tim_data[i][j].modified && savemain) {
+						HWSWriteChar(ffhws,CHUNK_TYPE_TIM);
+						HWSWriteLong(ffhws,tim_data[i][j].size+2);
+						chunkpos = ffhws.tellg();
+						HWSWriteShort(ffhws,tim_data[i][j].object_id);
+						tim_data[i][j].WriteHWS(ffhws);
+						ffhws.seekg(chunkpos+tim_data[i][j].size+2);
+					}
+				if (script_data[i]->modified && savemain) {
+					HWSWriteChar(ffhws,CHUNK_TYPE_SCRIPT);
+					HWSWriteLong(ffhws,script_data[i]->size);
+					chunkpos = ffhws.tellg();
+					script_data[i]->WriteHWS(ffhws);
+					ffhws.seekg(chunkpos+script_data[i]->size);
+				}
+				if (savelocal) {
+					uint32_t localsize = 0;
+					HWSWriteChar(ffhws,CHUNK_SPECIAL_TYPE_LOCAL);
+					HWSWriteLong(ffhws,localsize);
+					chunkpos = ffhws.tellg();
+					script_data[i]->WriteLocalHWS(ffhws);
+					localsize = (long long)ffhws.tellg()-chunkpos;
+					ffhws.seekg(chunkpos-4);
+					HWSWriteLong(ffhws,localsize);
+					ffhws.seekg(chunkpos+localsize);
+				}
+			} else {
+				for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+					if (savemain && hades::STEAM_LANGUAGE_SAVE_LIST[lang] && script_data[i]->IsDataModified(lang))
+						break;
+				if (lang<STEAM_LANGUAGE_AMOUNT) {
+					HWSWriteChar(ffhws,CHUNK_STEAM_SCRIPT_MULTILANG);
+					HWSWriteLong(ffhws,0);
+					chunkpos = ffhws.tellg();
+					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+						if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && script_data[i]->IsDataModified(lang)) {
+							HWSWriteChar(ffhws,lang);
+							HWSWriteChar(ffhws,0); // TODO: Use this as an options (eg. two scripts are actually the same)
+							HWSWriteLong(ffhws,script_data[i]->GetDataSize(lang));
+							script_data[i]->WriteHWS(ffhws,lang);
+						}
+					HWSWriteChar(ffhws,STEAM_LANGUAGE_NONE);
+					chunksize = (uint32_t)ffhws.tellg()-chunkpos;
+					ffhws.seekg(chunkpos-4);
+					HWSWriteLong(ffhws,chunksize);
+					ffhws.seekg(chunkpos+chunksize);
+					HWSWriteChar(ffhws,CHUNK_STEAM_FIELD_MULTINAME);
+					HWSWriteLong(ffhws,0);
+					chunkpos = ffhws.tellg();
+					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+						if (hades::STEAM_LANGUAGE_SAVE_LIST[lang]) {
+							HWSWriteChar(ffhws,lang);
+							SteamWriteFF9String(ffhws,script_data[i]->name,lang);
+						}
+					}
+					HWSWriteChar(ffhws,STEAM_LANGUAGE_NONE);
+					chunksize = (unsigned int)ffhws.tellg()-chunkpos;
+					ffhws.seekg(chunkpos-4);
+					HWSWriteLong(ffhws,chunksize);
+					ffhws.seekg(chunkpos+chunksize);
+				}
+				for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+					if (savelocal && hades::STEAM_LANGUAGE_SAVE_LIST[lang])
+						break;
+				if (lang<STEAM_LANGUAGE_AMOUNT) {
+					uint32_t langdatasize, langdatapos;
+					HWSWriteChar(ffhws,CHUNK_SPECIAL_TYPE_LOCAL_MULTILANG);
+					HWSWriteLong(ffhws,0);
+					chunkpos = ffhws.tellg();
+					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+						if (hades::STEAM_LANGUAGE_SAVE_LIST[lang]) {
+							HWSWriteChar(ffhws,lang);
+							HWSWriteChar(ffhws,0); // TODO: Use this as an options
+							HWSWriteLong(ffhws,0);
+							langdatapos = ffhws.tellg();
+							script_data[i]->WriteLocalHWS(ffhws,lang);
+							langdatasize = (long long)ffhws.tellg()-langdatapos;
+							ffhws.seekg(langdatapos-4);
+							HWSWriteLong(ffhws,langdatasize);
+							ffhws.seekg(langdatapos+langdatasize);
+						}
+					HWSWriteChar(ffhws,STEAM_LANGUAGE_NONE);
+					chunksize = (long long)ffhws.tellg()-chunkpos;
+					ffhws.seekg(chunkpos-4);
+					HWSWriteLong(ffhws,chunksize);
+					ffhws.seekg(chunkpos+chunksize);
+				}
 			}
 			HWSWriteChar(ffhws,0xFF);
 			nbmodified++;

@@ -611,7 +611,7 @@ static SteamFieldDictionary SteamFieldScript[] = {
 	{ 1801, 1, "EVT_ALEX3_AC_QUEEN", "FBG_N02_ALXC_MAP858_AC_QRM_0", "Alexandria Castle/Queen's Chamber", false },
 	{ 1802, 1, "EVT_ALEX3_AC_PRINCESS", "FBG_N02_ALXC_MAP861_AC_DGR_0", "Alexandria Castle/Garnet's Room", false },
 	{ 1803, 1, "EVT_ALEX3_AC_GUARD", "FBG_N02_ALXC_MAP042_AC_GDR_0", "Alexandria Castle/Guardhouse", true },
-//	{ 1805, 1, "EVT_ALEX3_AC_SEAT_N", "FBG_N02_ALXC_MAP038_AC_AST_0", "Unknown 1805", false },
+//	{ 1805, 1, "EVT_ALEX3_AC_SEAT_N", "FBG_N02_ALXC_MAP038_AC_AST_0", "Unknown 1805", false }, // DEBUG: This field has a minimal script (still valid) but no background data at all (missing .bgs, .bgi and atlas in p0data11)
 	{ 1806, 1, "EVT_ALEX3_AC_H2F", "FBG_N02_ALXC_MAP041A_AC_H2F_1", "Alexandria Castle/Hallway", false },
 	{ 1807, 1, "EVT_ALEX3_AC_ENT_2F", "FBG_N02_ALXC_MAP046_AC_FTI_0", "Alexandria Castle/Hallway", false },
 	{ 1808, 1, "EVT_ALEX3_AC_LIB", "FBG_N02_ALXC_MAP045_AC_LBR_0", "Alexandria Castle/Library", false },

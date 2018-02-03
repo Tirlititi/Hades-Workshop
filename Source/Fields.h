@@ -376,8 +376,8 @@ public:
 	unsigned int tile_size;
 	unsigned int tile_gap;
 	
-	int SetFieldName(unsigned int fieldid, wstring newvalue, SteamLanguage lang = STEAM_LANGUAGE_NONE);
-	int SetFieldName(unsigned int fieldid, FF9String& newvalue, SteamLanguage lang = STEAM_LANGUAGE_NONE);
+	int SetFieldName(unsigned int fieldid, wstring newvalue, SteamLanguage lang = GetSteamLanguage());
+	int SetFieldName(unsigned int fieldid, FF9String& newvalue);
 	
 	void Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textset = NULL);
 	void Write(fstream& ffbin, ClusterSet& clusset);
@@ -387,7 +387,8 @@ public:
 	// Parent block is a data block containing preloading datas and TIM images in Field & World Map clusters.
 	int* LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool usetext, unsigned int localflag);
 	void WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsigned int localflag);
-	void WriteSteamText(fstream& ffbin);
+	int GetSteamTextSize(SteamLanguage lang = GetSteamLanguage());
+	void WriteSteamText(fstream& ffbin, SteamLanguage lang = GetSteamLanguage());
 };
 
 #endif

@@ -15,33 +15,6 @@ using namespace std;
 class ScriptEditHandler {
 public:
 	ScriptDataStruct script;
-	unsigned int entry_selection;
-	unsigned int function_selection;
-	wxString** func_str;
-	wxString* localvar_str;
-	wxString globalvar_str;
-	wxArrayString entry_name;
-	wxArrayString functionlist_str;
-	wxArrayString modellist_str;
-	uint16_t** functionlist_id;
-	uint16_t** modellist_id;
-	int32_t* entry_model_index;
-
-	ScriptEditDialog* handler_dialog;
-	
-	ScriptEditHandler(ScriptDataStruct& scpt);
-	~ScriptEditHandler();
-	void GenerateFunctionStrings();
-	void GenerateFunctionList(bool firsttime);
-	void EntryChangeName(unsigned int entry, wxString newname);
-
-private:
-	bool GenerateFunctionStrings_Rec(wxString& str, ScriptFunction& func, unsigned int& funcpos, unsigned int& oppos, int endfuncpos = -1, unsigned int tabpos = 1, int blocktype = 0, int endblockpos = -1);
-	wxString ConvertVarArgument(ScriptArgument& arg);
-};
-
-class ScriptEditDialog : public ScriptEditWindow, public ScriptEditHandler {
-public:
 	EnemyDataStruct* enemy;
 	TextDataStruct* text;
 	SaveSet* datas;
@@ -53,8 +26,37 @@ public:
 	bool use_field;
 	bool use_item;
 	bool use_ability;
+	bool use_support;
 	bool use_command;
 	bool use_card;
+	unsigned int entry_selection;
+	unsigned int function_selection;
+	wxString** func_str;
+	wxString* localvar_str;
+	wxString globalvar_str;
+	wxArrayString entry_name;
+	wxArrayString functionlist_str;
+	uint16_t** functionlist_id;
+	int32_t* entry_model_index;
+
+	ScriptEditDialog* handler_dialog;
+	
+	// dataload[] = { statset, enemyset, fieldset, itemset, spellset, supportset, commandset, cardset }
+	ScriptEditHandler(ScriptDataStruct& scpt, int scpttype, SaveSet* sv, EnemyDataStruct* ed, TextDataStruct* td, bool* dataloaded);
+	~ScriptEditHandler();
+	void GenerateFunctionStrings(bool appendcomment = false);
+	void GenerateFunctionList(bool firsttime);
+	void EntryChangeName(unsigned int entry, wxString newname);
+	wxString GetArgumentDescription(int64_t argvalue, uint8_t argtype);
+
+private:
+	bool GenerateFunctionStrings_Rec(wxString& str, ScriptFunction& func, unsigned int& funcpos, unsigned int& oppos, int endfuncpos = -1, unsigned int tabpos = 1, int blocktype = 0, int endblockpos = -1, bool appendcomment = false);
+	wxString ConvertVarArgument(ScriptArgument& arg);
+};
+
+class ScriptEditDialog : public ScriptEditWindow, public ScriptEditHandler {
+public:
+	wxArrayString modellist_str;
 	wxArrayString defaultbool_str;
 	wxArrayString text_str;
 	wxArrayString battle_str;
@@ -80,6 +82,7 @@ public:
 	wxArrayString command_str;
 	wxArrayString deck_str;
 	wxArrayString animlist_str;
+	uint16_t** modellist_id;
 	uint16_t** battle_id;
 	uint16_t** field_id;
 	uint16_t** item_id;
@@ -105,7 +108,7 @@ public:
 	wxStaticText** arg_label;
 	wxWindow** arg_control;
 	
-	// dataload[] = { statset, enemyset, fieldset, itemset, spellset, commandset, cardset }
+	// dataload[] = { statset, enemyset, fieldset, itemset, spellset, supportset, commandset, cardset }
 	ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int scpttype, SaveSet* sv, EnemyDataStruct* ed, TextDataStruct* td, bool* dataloaded);
 	~ScriptEditDialog();
 	int ShowModal();

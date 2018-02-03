@@ -66,7 +66,8 @@ public:
 	// Return 0 on success and 1 if names are too long
 	int LoadHWS(fstream& ffhws, bool usetext);
 	void WriteHWS(fstream& ffhws);
-	void WriteSteamText(fstream& ffbin);
+	void WriteSteamText(fstream& ffbin, SteamLanguage lang = GetSteamLanguage());
+	int GetSteamTextSize(SteamLanguage lang = GetSteamLanguage());
 	// datatype: 0 for stats, 1 for decks, 2 for sets
 	void WriteSteamData(fstream& ffbin, unsigned int datatype);
 	void UpdateOffset();

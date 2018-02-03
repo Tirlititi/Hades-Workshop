@@ -1,5 +1,7 @@
 #include "Spells.h"
 
+#include "main.h"
+
 #define SPELL_HWS_VERSION 3
 
 const unsigned int steam_spell_field_size[] = { 4, 1, 3, 9, 12, 1, 1, 1, 8, 8, 8, 8, 8, 8, 8, 8, 16, 16 };
@@ -207,14 +209,18 @@ void SpellDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 		string fname = config.steam_dir_data;
 		fname += "resources.assets";
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
-		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.spell_name_file[GetSteamLanguage()]));
-		name_space_used = config.meta_res.GetFileSizeByIndex(config.spell_name_file[GetSteamLanguage()]);
-		for (i=0;i<SPELL_AMOUNT;i++)
-			SteamReadFF9String(ffbin,spell[i].name);
-		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.spell_help_file[GetSteamLanguage()]));
-		help_space_used = config.meta_res.GetFileSizeByIndex(config.spell_help_file[GetSteamLanguage()]);
-		for (i=0;i<SPELL_AMOUNT;i++)
-			SteamReadFF9String(ffbin,spell[i].help);
+		for (SteamLanguage lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+			if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+				continue;
+			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.spell_name_file[lang]));
+			name_space_used = config.meta_res.GetFileSizeByIndex(config.spell_name_file[lang]);
+			for (i=0;i<SPELL_AMOUNT;i++)
+				SteamReadFF9String(ffbin,spell[i].name,lang);
+			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.spell_help_file[lang]));
+			help_space_used = config.meta_res.GetFileSizeByIndex(config.spell_help_file[lang]);
+			for (i=0;i<SPELL_AMOUNT;i++)
+				SteamReadFF9String(ffbin,spell[i].help,lang);
+		}
 		ffbin.close();
 		dlldata.dll_file.seekg(dlldata.GetStaticFieldOffset(config.dll_spellnaming_field_id));
 		for (i=0;i<SPELL_AMOUNT;i++)
@@ -292,14 +298,26 @@ DllMetaDataModification* SpellDataSet::ComputeSteamMod(ConfigurationSet& config,
 	return res;
 }
 
-void SpellDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype) {
+int SpellDataSet::GetSteamTextSize(unsigned int texttype, SteamLanguage lang) {
+	unsigned int i;
+	int res = 0;
+	if (texttype==0)
+		for (i=0;i<SPELL_AMOUNT;i++)
+			res += spell[i].name.GetLength(lang);
+	else
+		for (i=0;i<SPELL_AMOUNT;i++)
+			res += spell[i].help.GetLength(lang);
+	return res;
+}
+
+void SpellDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype, SteamLanguage lang) {
 	unsigned int i;
 	if (texttype==0) {
 		for (i=0;i<SPELL_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,spell[i].name);
+			SteamWriteFF9String(ffbin,spell[i].name,lang);
 	} else {
 		for (i=0;i<SPELL_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,spell[i].help);
+			SteamWriteFF9String(ffbin,spell[i].help,lang);
 	}
 }
 
@@ -390,7 +408,7 @@ int SpellDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 						SteamReadFF9String(ffbin,spell[i].name,lg);
 				else if (lg==GetSteamLanguage()) // DEBUG: should somehow check if the total length of converted strings is low enough
 					for (i=0;i<SPELL_AMOUNT;i++) {
-						SteamReadFF9String(ffbin,spell[i].name,lg);
+						SteamReadFF9String(ffbin,spell[i].name);
 						spell[i].name.SteamToPSX();
 					}
 				ffbin.seekg(tmppos+txtspace);
@@ -483,30 +501,20 @@ void SpellDataSet::WriteHWS(fstream& ffbin) {
 		MACRO_SPELL_IOFUNCTIONHELP(HWSWrite,HWSSeek,false,false)
 	} else {
 		SteamLanguage lg;
-		size_t strpos;
-		uint16_t strsize;
 		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
-			HWSWriteChar(ffbin,lg);
-			HWSWriteShort(ffbin,0);
-			strpos = ffbin.tellg();
-			for (i=0;i<SPELL_AMOUNT;i++)
-				SteamWriteFF9String(ffbin,spell[i].name,lg);
-			strsize = (unsigned int)ffbin.tellg()-strpos;
-			ffbin.seekg(strpos-2);
-			HWSWriteShort(ffbin,strsize);
-			ffbin.seekg(strpos+strsize);
+			if (hades::STEAM_LANGUAGE_SAVE_LIST[lg]) {
+				HWSWriteChar(ffbin,lg);
+				HWSWriteShort(ffbin,GetSteamTextSize(0,lg));
+				WriteSteamText(ffbin,0,lg);
+			}
 		}
 		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
 		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
-			HWSWriteChar(ffbin,lg);
-			HWSWriteShort(ffbin,0);
-			strpos = ffbin.tellg();
-			for (i=0;i<SPELL_AMOUNT;i++)
-				SteamWriteFF9String(ffbin,spell[i].help,lg);
-			strsize = (unsigned int)ffbin.tellg()-strpos;
-			ffbin.seekg(strpos-2);
-			HWSWriteShort(ffbin,strsize);
-			ffbin.seekg(strpos+strsize);
+			if (hades::STEAM_LANGUAGE_SAVE_LIST[lg]) {
+				HWSWriteChar(ffbin,lg);
+				HWSWriteShort(ffbin,GetSteamTextSize(1,lg));
+				WriteSteamText(ffbin,1,lg);
+			}
 		}
 		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
 	}

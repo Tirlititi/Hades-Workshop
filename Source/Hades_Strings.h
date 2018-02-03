@@ -110,6 +110,16 @@
 #define HADES_STRING_FIELDTEXTURE_SAVE_SUCCESS L"Background successfully exported !"
 #define HADES_STRING_SCENE_SAVE_SUCCESS L"Battle Scene model successfully exported !"
 
+static wxString HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[] = {
+	L"us",
+	L"en",
+	L"jp",
+	L"de",
+	L"fr",
+	L"it",
+	L"sp"
+};
+
 //-- HWS Frame
 #define HADES_STRING_HWS_OPEN_TITLE L"Open hws..."
 #define HADES_STRING_HWS_OPEN_MESSAGE L"Open..."
@@ -259,6 +269,7 @@ static wxString HADES_STRING_SYNTH_NAME[8] = {
 #define HADES_STRING_BATCH_TOO_MANY				" - Line %u : Too many %s declarations\n"
 #define HADES_STRING_BATCH_TEXT_WRONG_ID		" - Line %u : Text Block %u doesn't have a text n°%u\n"
 #define HADES_STRING_BATCH_TEXT_REDEFINITION	" - Line %u : Redefinition of text n°%u\n"
+#define HADES_STRING_BATCH_INVALID_LANGUAGE		" - Line %u : '%s' is not recognized as a language\n"
 #define HADES_STRING_BATCH_TEXT_UNUSED			" - Text Block %u unused in this disc\n"
 #define HADES_STRING_BATCH_TEXT_SIZE			" - Text Block %u capacity is %u bytes too short\n"
 #define HADES_STRING_BATCH_TEXT_MISSMATCH_CODE	" - Text Block %u, Text %u : Expected %u opcode characters, got %u\n"
@@ -348,6 +359,8 @@ static wxString HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM[] = {
 #define HADES_STRING_BACKGROUNDIMPORT_ERROR_ALPHA	" - One or several layer(s) have no alpha channel for the field %d (%s)\n"
 #define HADES_STRING_UNITYVIEWER_GAME_OPEN	L"This game folder is already opened in Hades Workshop's main module. Updating the assets is not possible in this situation."
 #define HADES_STRING_UNITYVIEWER_IMPORT_ERROR_FORMAT	"Default format could not be retrieved for '%s'"
+#define HADES_STRING_UNITYVIEWER_IMPORT_DEFAULT_FORMAT	"No compression format specified for '%s'.\n"\
+														"File imported with RGBA format (no compression)"
 #define HADES_STRING_UNITYVIEWER_MISSING_AKB	"Expected an AKB header in '%s' but none was found"
 #define HADES_STRING_UNITYVIEWER_MISSING_OGG	"Expected an OGG format for '%s'"
 #define HADES_STRING_UNITYVIEWER_IMPORT_SUCCESS	"Successfully imported %d asset(s)."

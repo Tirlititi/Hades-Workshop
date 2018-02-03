@@ -43,10 +43,11 @@ private:
 	wxMenuItem* assetmenuadd;
 	
 	void UpdateMenuAvailability();
-	bool PrepareAssetForImport(bool isnewfile, fstream& filebase, wxString path, uint32_t ftype, vector<ModelDataStruct>& importmodel, UnityArchiveFileCreator& filestoadd, UnityLinkFileDialog& linkfiledialog, bool linkfiledialoginit, bool* copylist, /*	Common Arguments
+	bool PrepareAssetForImport(bool isnewfile, fstream& filebase, wxString path, uint32_t ftype, vector<ModelDataStruct>& importmodel, vector<int64_t>& infotoavoid, UnityArchiveFileCreator& filestoadd, UnityLinkFileDialog& linkfiledialog, bool linkfiledialoginit, bool* copylist, /*	Common Arguments
 							*/ uint32_t* filenewsize, unsigned int impfileid, long it, wxString filearchivedir, vector<GameObjectHierarchy>* importmodelbasehierarchy, /* Replace file
 							*/ int64_t newfileinfo, string newfileinternalname, string newfilepath); // New file
 	bool PerformImportOfAsset(bool isnewfile, fstream& filebase, fstream& filedest, UnityArchiveMetaData& newmetadata, wxString path, uint32_t ftype, vector<ModelDataStruct>& importmodel, unsigned int& importmodelcounter, unsigned int impfileid);
+	int PerformImportOfAnimations(vector<ModelDataStruct>& importmodel);
 
 	void OnMenuSelection(wxCommandEvent& event);
 	void OnAssetRightClickMenu(wxCommandEvent& event);

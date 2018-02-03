@@ -92,8 +92,11 @@ FF9String::FF9String() :
 	charmap_A(hades::SPECIAL_STRING_CHARMAP_A),
 	charmap_B(hades::SPECIAL_STRING_CHARMAP_B),
 	charmap_Ext(hades::SPECIAL_STRING_CHARMAP_EXT.GetCharmap(0)),
-	opcode_wchar(hades::SPECIAL_STRING_OPCODE_WCHAR),
-	has_multi_lang(false) {
+	opcode_wchar(hades::SPECIAL_STRING_OPCODE_WCHAR) {
+	for (unsigned int i=0;i<STEAM_LANGUAGE_AMOUNT;i++) {
+		multi_lang_init[i] = false;
+		multi_lang_str[i] = L"";
+	}
 }
 
 FF9String::FF9String(FF9String& cp) :
@@ -108,8 +111,7 @@ FF9String::FF9String(FF9String& cp) :
 	charmap_A(cp.charmap_A),
 	charmap_B(cp.charmap_B),
 	charmap_Ext(cp.charmap_Ext),
-	opcode_wchar(cp.opcode_wchar),
-	has_multi_lang(cp.has_multi_lang) {
+	opcode_wchar(cp.opcode_wchar) {
 	if (GetGameType()==GAME_TYPE_PSX) { // DEBUG
 		raw = new uint8_t[length];
 		code_arg_length = new uint8_t[code_amount];
@@ -122,11 +124,13 @@ FF9String::FF9String(FF9String& cp) :
 		}
 	} else {
 		raw = NULL;
-		if (has_multi_lang) {
-			multi_lang_str = new wstring[STEAM_LANGUAGE_AMOUNT];
-			for (unsigned int i=0;i<STEAM_LANGUAGE_AMOUNT;i++)
-				multi_lang_str[i] = cp.multi_lang_str[i];
-		}
+	}
+	for (unsigned int i=0;i<STEAM_LANGUAGE_AMOUNT;i++) {
+		multi_lang_init[i] = cp.multi_lang_init[i];
+		if (multi_lang_init)
+			multi_lang_str[i] = cp.multi_lang_str[i];
+		else
+			multi_lang_str[i] = L"";
 	}
 }
 
@@ -137,9 +141,7 @@ FF9String::~FF9String() {
 		for (unsigned int i=0;i<code_amount;i++)
 			delete[] code_arg[i];
 		delete[] code_arg;
-	}
-	if (has_multi_lang && GetGameType()!=GAME_TYPE_PSX)
-		delete[] multi_lang_str;*/
+	}*/
 }
 
 void FF9String::CreateEmpty() {
@@ -238,6 +240,10 @@ void FF9String::Read(fstream& ffbin,void (*ReadCharFunc)(fstream& fs,uint8_t& ch
 		code_arg[i] = new uint8_t[code_arg_length[i]];
 		copy(tmparg[i],tmparg[i]+code_arg_length[i],code_arg[i]);
 	}
+	for (i=0;i<STEAM_LANGUAGE_AMOUNT;i++) {
+		multi_lang_init[i] = false;
+		multi_lang_str[i] = L"";
+	}
 	GenerateStrExt();
 	created = true;
 }
@@ -253,10 +259,17 @@ void FF9String::ReadFromChar(uint8_t* rawvalue) {
 	Read(dummystream,&ReadCharFuncDummy);
 }
 
-void FF9String::SetValue(wstring value) {
+void FF9String::SetValue(wstring value, SteamLanguage lang) {
+	if (GetGameType()!=GAME_TYPE_PSX && hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+		return;
 	uint16_t len = value.length();
 	if (len==0) {
-		CreateEmpty();
+		if (lang<STEAM_LANGUAGE_AMOUNT && GetGameType()!=GAME_TYPE_PSX) {
+			multi_lang_init[lang] = true;
+			multi_lang_str[lang] = L"";
+		}
+		if (lang==GetSteamLanguage())
+			CreateEmpty();
 		return;
 	}
 	if (GetGameType()==GAME_TYPE_PSX) {
@@ -319,27 +332,34 @@ void FF9String::SetValue(wstring value) {
 		length = rawi;
 		raw = new uint8_t[length];
 		copy(tmpstr,tmpstr+length,raw);
+		GenerateStrExt();
 	} else {
 		if (raw)
 			delete[] raw;
 		raw = NULL;
-		null_terminated = 1;
-		code_amount = 0;
-		wxString wxstr(value);
-		wxCharBuffer buffer = wxstr.mb_str(wxConvUTF8);
-		length = buffer.length()+6;
-		if (value[len-1]==L']') {
-			size_t lastopposbeg = value.find_last_of(L'[');
-			if (lastopposbeg!=string::npos && lastopposbeg+6<=value.length()) {
-				if (value.substr(lastopposbeg+1,4).compare(L"TIME")==0) {
-					null_terminated = 0;
-					length = buffer.length();
+		if (lang>=STEAM_LANGUAGE_AMOUNT || (lang<STEAM_LANGUAGE_AMOUNT && GetSteamLanguage()==lang)) {
+			wxString wxstr(value);
+			wxCharBuffer buffer = wxstr.mb_str(wxConvUTF8);
+			null_terminated = 1;
+			code_amount = 0;
+			length = buffer.length()+6;
+			if (value[len-1]==L']') {
+				size_t lastopposbeg = value.find_last_of(L'[');
+				if (lastopposbeg!=string::npos && lastopposbeg+6<=value.length()) {
+					if (value.substr(lastopposbeg+1,4).compare(L"TIME")==0) {
+						null_terminated = 0;
+						length = buffer.length();
+					}
 				}
 			}
+			str = value;
+			GenerateStrExt();
 		}
-		str = value;
+		if (lang<STEAM_LANGUAGE_AMOUNT) {
+			multi_lang_init[lang] = true;
+			multi_lang_str[lang] = value;
+		}
 	}
-	GenerateStrExt();
 }
 
 void FF9String::SetCharmaps(wchar_t* newmapdef, wchar_t* newmapa, wchar_t* newmapb, wchar_t* newmapext) {
@@ -378,12 +398,15 @@ void FF9String::SetOpcodeChar(wchar_t newchar) {
 	opcode_wchar = newchar;
 }
 
-void FF9String::ChangeSteamLanguage(SteamLanguage newlang, bool saveprevious) {
-	if (!has_multi_lang)
-		return;
-	if (saveprevious)
-		multi_lang_str[GetSteamLanguage()] = str;
-	SetValue(multi_lang_str[newlang]);
+void FF9String::ChangeSteamLanguage(SteamLanguage newlang) {
+	if (multi_lang_init[newlang]) {
+		SetValue(multi_lang_str[newlang]);
+	} else {
+		str = L"";
+		str_ext = L"";
+		str_nice = L"";
+		length = 0;
+	}
 }
 
 void FF9String::PermuteCode(uint16_t code1, uint16_t code2) {
@@ -449,6 +472,24 @@ wstring& FF9String::GetStr(int strtype) {
 	if (strtype==2)
 		return str_nice;
 	return str;
+}
+
+uint16_t FF9String::GetLength(SteamLanguage lang, bool withend) {
+	if (lang>=STEAM_LANGUAGE_AMOUNT || lang==GetSteamLanguage())
+		return length-(!withend && null_terminated==1 ? (GetGameType()==GAME_TYPE_PSX ? 1 : 6) : 0);
+	if (!multi_lang_init[lang])
+		return 0;
+	wxString wxstr(multi_lang_str[lang]);
+	wxCharBuffer buffer = wxstr.mb_str(wxConvUTF8);
+	if (withend && wxstr[wxstr.Length()-1]==L']') {
+		size_t lastopposbeg = wxstr.find_last_of(L'[');
+		if (lastopposbeg!=string::npos && lastopposbeg+6<=wxstr.Length()) {
+			if (wxstr.substr(lastopposbeg+1,4).compare(L"TIME")==0) {
+				return buffer.length();
+			}
+		}
+	}
+	return buffer.length()+(withend ? 6 : 0);
 }
 
 void FF9String::GenerateStrExt() {
@@ -765,19 +806,13 @@ void SteamReadFF9String(fstream& f, FF9String& deststr, SteamLanguage lang) {
 		deststr.str = FF9String::GetUTF8FromByteCode((char*)tmpstr);
 		deststr.GenerateStrExt();
 	} else {
-		if (!deststr.has_multi_lang) {
-			deststr.multi_lang_str = new wstring[STEAM_LANGUAGE_AMOUNT];
-			deststr.has_multi_lang = true;
-		}
+		deststr.multi_lang_init[lang] = true;
 		deststr.multi_lang_str[lang] = FF9String::GetUTF8FromByteCode((char*)tmpstr);
 		if (lang==GetSteamLanguage()) {
 			deststr.str = deststr.multi_lang_str[lang];
 			deststr.GenerateStrExt();
 		}
 	}
-//		deststr.str = L"";
-//		while (striterator!=&tmpstr[len])
-//			deststr.str += utf8::next(striterator,&tmpstr[len]);
 	deststr.created = true;
 }
 
@@ -785,6 +820,8 @@ void SteamWriteFF9String(fstream& f, FF9String& str, SteamLanguage lang, bool wr
 	if (str.length==0)
 		return;
 	bool mainstr = lang==STEAM_LANGUAGE_NONE || lang==GetSteamLanguage();
+	if (!mainstr && str.GetLength(lang)==0)
+		return;
 	wxString wxstr;
 	if (mainstr)
 		wxstr = _(str.str);
@@ -801,7 +838,7 @@ void SteamWriteFF9String(fstream& f, FF9String& str, SteamLanguage lang, bool wr
 		} else {
 			wstring& strval = str.multi_lang_str[lang];
 			nt = 1;
-			if (strval[strval.length()-1]==L']') {
+			if (strval.length()>0 && strval[strval.length()-1]==L']') {
 				size_t lastopposbeg = strval.find_last_of(L'[');
 				if (lastopposbeg!=string::npos && lastopposbeg+6<=strval.length())
 					if (strval.substr(lastopposbeg+1,4).compare(L"TIME")==0)

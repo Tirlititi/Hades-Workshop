@@ -1,6 +1,7 @@
 #include "Commands.h"
 
 #include "DllEditor.h"
+#include "main.h"
 
 #define COMMAND_HWS_VERSION 1
 
@@ -198,14 +199,18 @@ void CommandDataSet::Load(fstream &ffbin, ConfigurationSet& config) {
 		string fname = config.steam_dir_data;
 		fname += "resources.assets";
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
-		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.cmd_name_file[GetSteamLanguage()]));
-		name_space_used = config.meta_res.GetFileSizeByIndex(config.cmd_name_file[GetSteamLanguage()]);
-		for (i=0;i<COMMAND_AMOUNT;i++)
-			SteamReadFF9String(ffbin,cmd[i].name);
-		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.cmd_help_file[GetSteamLanguage()]));
-		help_space_used = config.meta_res.GetFileSizeByIndex(config.cmd_help_file[GetSteamLanguage()]);
-		for (i=0;i<COMMAND_AMOUNT;i++)
-			SteamReadFF9String(ffbin,cmd[i].help);
+		for (SteamLanguage lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+			if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+				continue;
+			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.cmd_name_file[lang]));
+			name_space_used = config.meta_res.GetFileSizeByIndex(config.cmd_name_file[lang]);
+			for (i=0;i<COMMAND_AMOUNT;i++)
+				SteamReadFF9String(ffbin,cmd[i].name,lang);
+			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.cmd_help_file[lang]));
+			help_space_used = config.meta_res.GetFileSizeByIndex(config.cmd_help_file[lang]);
+			for (i=0;i<COMMAND_AMOUNT;i++)
+				SteamReadFF9String(ffbin,cmd[i].help,lang);
+		}
 		ffbin.close();
 		dlldata.dll_file.seekg(dlldata.GetMethodOffset(config.dll_rdata_method_id));
 		methinfo.ReadMethodInfo(dlldata.dll_file);
@@ -266,14 +271,26 @@ DllMetaDataModification* CommandDataSet::ComputeSteamMod(ConfigurationSet& confi
 	return res;
 }
 
-void CommandDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype) {
+int CommandDataSet::GetSteamTextSize(unsigned int texttype, SteamLanguage lang) {
+	unsigned int i;
+	int res = 0;
+	if (texttype==0)
+		for (i=0;i<COMMAND_AMOUNT;i++)
+			res += cmd[i].name.GetLength(lang);
+	else
+		for (i=0;i<COMMAND_AMOUNT;i++)
+			res += cmd[i].help.GetLength(lang);
+	return res;
+}
+
+void CommandDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype, SteamLanguage lang) {
 	unsigned int i;
 	if (texttype==0) {
 		for (i=0;i<COMMAND_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,cmd[i].name);
+			SteamWriteFF9String(ffbin,cmd[i].name,lang);
 	} else {
 		for (i=0;i<COMMAND_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,cmd[i].help);
+			SteamWriteFF9String(ffbin,cmd[i].help,lang);
 	}
 }
 
@@ -445,30 +462,20 @@ void CommandDataSet::WriteHWS(fstream &ffbin) {
 		MACRO_COMMAND_IOFUNCTIONHELP(HWSWrite,HWSSeek,false,false)
 	} else {
 		SteamLanguage lg;
-		size_t strpos;
-		uint16_t strsize;
 		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
-			HWSWriteChar(ffbin,lg);
-			HWSWriteShort(ffbin,0);
-			strpos = ffbin.tellg();
-			for (i=0;i<COMMAND_AMOUNT;i++)
-				SteamWriteFF9String(ffbin,cmd[i].name,lg);
-			strsize = (unsigned int)ffbin.tellg()-strpos;
-			ffbin.seekg(strpos-2);
-			HWSWriteShort(ffbin,strsize);
-			ffbin.seekg(strpos+strsize);
+			if (hades::STEAM_LANGUAGE_SAVE_LIST[lg]) {
+				HWSWriteChar(ffbin,lg);
+				HWSWriteShort(ffbin,GetSteamTextSize(0,lg));
+				WriteSteamText(ffbin,0,lg);
+			}
 		}
 		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
 		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
-			HWSWriteChar(ffbin,lg);
-			HWSWriteShort(ffbin,0);
-			strpos = ffbin.tellg();
-			for (i=0;i<COMMAND_AMOUNT;i++)
-				SteamWriteFF9String(ffbin,cmd[i].help,lg);
-			strsize = (unsigned int)ffbin.tellg()-strpos;
-			ffbin.seekg(strpos-2);
-			HWSWriteShort(ffbin,strsize);
-			ffbin.seekg(strpos+strsize);
+			if (hades::STEAM_LANGUAGE_SAVE_LIST[lg]) {
+				HWSWriteChar(ffbin,lg);
+				HWSWriteShort(ffbin,GetSteamTextSize(1,lg));
+				WriteSteamText(ffbin,1,lg);
+			}
 		}
 		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
 	}
@@ -478,6 +485,8 @@ void CommandDataSet::WriteHWS(fstream &ffbin) {
 }
 
 void CommandDataSet::UpdateOffset() {
+	if (GetGameType()!=GAME_TYPE_PSX)
+		return;
 	uint16_t j=0,k=0;
 	unsigned int i;
 	for (i=0;i<COMMAND_AMOUNT;i++) {

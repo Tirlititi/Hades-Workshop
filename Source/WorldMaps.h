@@ -69,7 +69,8 @@ public:
 	int* LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool usetext, unsigned int localflag);
 	void WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsigned int localflag);
 	// texttype: 0 for world texts, 1 for place name
-	void WriteSteamText(fstream& ffbin, unsigned int texttype);
+	void WriteSteamText(fstream& ffbin, unsigned int texttype, SteamLanguage lang = GetSteamLanguage());
+	int GetSteamTextSize(unsigned int texttype, SteamLanguage lang = GetSteamLanguage());
 };
 
 #endif

@@ -234,7 +234,7 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0x9C, L"RunJumpAnimation", L"Make the character play its jumping animation.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x9D, L"RunLandAnimation", L"Make the character play its landing animation (inverted jumping animation).", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x9E, L"ExitField", L"Make the player's character walk to the field exit and prepare to flush the field datas.", false, 0, NULL, NULL, NULL, 0 },
-	{ 0x9F, L"SetObjectSize", L"Set the size of a 3D model.\n\n1st argument : entry of the 3D model.\n2nd to 4th arguments : size ratio in (Ratio X, Ratio Z, Ratio Y) format. A ratio of 64 is the default size.", true, 4, new uint8_t[4]{ 1, 1, 1, 1 }, new wstring[4]{ L"Object", L"Size X", L"Size Z", L"Size Y" }, new uint8_t[4]{ AT_ENTRY, AT_USPIN, AT_USPIN, AT_USPIN }, 0 },
+	{ 0x9F, L"SetObjectSize", L"Set the size of a 3D model.\n\n1st argument : entry of the 3D model.\n2nd to 4th arguments : size ratio in (Ratio X, Ratio Z, Ratio Y) format. A ratio of 64 is the default size.", true, 4, new uint8_t[4]{ 1, 1, 1, 1 }, new wstring[4]{ L"Object", L"Size X", L"Size Z", L"Size Y" }, new uint8_t[4]{ AT_ENTRY, AT_SPIN, AT_SPIN, AT_SPIN }, 0 },
 	{ 0xA0, L"WalkToExit", L"Make the entry's object walk to the field exit.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xA1, L"MoveInstantXZY", L"Instantatly move the object.\n\n1st to 3rd arguments : destination in (X, Z, Y) format.", true, 3, new uint8_t[3]{ 2, 2, 2 }, new wstring[1]{ L"Destination" }, new uint8_t[3]{ AT_POSITION_X, AT_POSITION_Z, AT_POSITION_Y }, 0 },
 	{ 0xA2, L"WalkXZY", L"Make the character walk to destination. Make it synchronous if InitWalk is called before.\n\n1st argument : destination in (X, Z, Y) format.", true, 3, new uint8_t[3]{ 2, 2, 2 }, new wstring[1]{ L"Destination" }, new uint8_t[3]{ AT_POSITION_X, AT_POSITION_Z, AT_POSITION_Y }, 0 },
@@ -1035,6 +1035,7 @@ static ConstantNames WorldCodeName[] = {
 	{ 38, L"Set Auto-Pilot Off" },
 	{ 39, L"Set CD Use 3" },
 	{ 40, L"Set CD Use 0" },
+	{ 41, L"Unknown" },
 	{ 500, L"Change Character Control Status" },
 	{ 501, L"Set World Map Scenario Counter" },
 	{ 502, L"Set World Map Disc To 1" }

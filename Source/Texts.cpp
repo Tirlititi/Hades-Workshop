@@ -1,9 +1,13 @@
 #include "Texts.h"
 
+#include <vector>
 #include "Gui_LoadingDialog.h"
 #include "Hades_Strings.h"
 #include "Database_Text.h"
 #include "main.h"
+
+#define TEXT_LOCALIZATION_HWS_FIELDS		0xFD
+#define TEXT_LOCALIZATION_HWS_WHOLE_FILE	0xFE
 
 //=============================//
 //        Text Struct          //
@@ -143,14 +147,14 @@ void TextDataStruct::RemoveText(uint16_t id) {
 	}
 }
 
-int TextDataStruct::SetText(uint16_t id, wstring& newvalue) {
+int TextDataStruct::SetText(uint16_t id, wstring& newvalue, SteamLanguage lang) {
 	FF9String tmp(text[id]);
-	tmp.SetValue(newvalue);
+	tmp.SetValue(newvalue,lang);
 	uint16_t oldlen = text[id].length;
 	uint16_t newlen = tmp.length;
 	if (newlen>GetExtraSize()+oldlen)
 		return 1;
-	text[id].SetValue(newvalue);
+	text[id].SetValue(newvalue,lang);
 	SetSize(size+newlen-oldlen);
 	return 0;
 }
@@ -323,7 +327,7 @@ void TextDataStruct::WritePPF(fstream& f) {
 	}
 }
 
-void TextDataStruct::ReadHWS(fstream& f) {
+void TextDataStruct::ReadHWS(fstream& f, bool multilang) {
 	unsigned int i,j,k;
 	if (GetHWSGameType()==GAME_TYPE_PSX) {
 		if (size>0) {
@@ -334,67 +338,128 @@ void TextDataStruct::ReadHWS(fstream& f) {
 			}
 		}
 	} else {
-		HWSReadShort(f,amount);
-		text = new FF9String[amount]; // ToDo: handle the size etc...
-		for (i=0;i<amount;i++)
-			SteamReadFF9String(f,text[i]);
-		if (GetGameType()==GAME_TYPE_PSX) {
-			for (i=0;i<amount;i++)
-				text[i].SteamToPSX();
+		SteamLanguage lang;
+		uint32_t txtdatasize, txtdatatotalsize;
+		bool allocatedtext = false;
+		uint16_t newamount;
+		HWSReadShort(f,newamount);
+		if (multilang) {
+			HWSReadChar(f,lang);
+			while (lang!=STEAM_LANGUAGE_NONE) {
+				HWSReadLong(f,txtdatatotalsize);
+				if ((GetGameType()==GAME_TYPE_PSX || hades::STEAM_SINGLE_LANGUAGE_MODE) && lang!=GetSteamLanguage()) {
+					f.seekg(txtdatatotalsize,ios::cur);
+					HWSReadChar(f,lang);
+					continue;
+				}
+				if (!allocatedtext) {
+					if (amount<newamount) {
+						FF9String* newtext = new FF9String[max(amount,newamount)];
+						for (i=0;i<amount;i++)
+							newtext[i] = text[i];
+						delete[] text;
+						text = newtext;
+					}
+					if (GetGameType()==GAME_TYPE_PSX)
+						amount = newamount;
+					else
+						amount = max(amount,newamount);
+					allocatedtext = true;
+				}
+				txtdatasize = 0;
+				for (i=0;i<newamount && txtdatasize<txtdatatotalsize;i++) {
+					SteamReadFF9String(f,text[i],lang);
+					if (GetGameType()==GAME_TYPE_PSX)
+						text[i].SteamToPSX();
+					txtdatasize += text[i].GetLength(lang);
+				}
+				HWSReadChar(f,lang);
+			}
+		} else {
+			if (amount<newamount) {
+				FF9String* newtext = new FF9String[max(amount,newamount)];
+				for (i=0;i<amount;i++)
+					newtext[i] = text[i];
+				delete[] text;
+				text = newtext;
+			}
+			if (GetGameType()==GAME_TYPE_PSX)
+				amount = newamount;
+			else
+				amount = max(amount,newamount);
+			for (i=0;i<newamount;i++)
+				SteamReadFF9String(f,text[i]);
 		}
 	}
 	UpdateOffset();
 	MarkDataModified();
 }
 
-void TextDataStruct::WriteHWS(fstream& f) {
+void TextDataStruct::WriteHWS(fstream& f, bool multilang) {
 	unsigned int i,j,k;
 	if (GetGameType()==GAME_TYPE_PSX) {
 		if (size>0) {
 			MACRO_TEXT_IOFUNCTION(HWSWrite,HWSSeek,false,false)
 		}
 	} else {
+		SteamLanguage lang;
 		HWSWriteShort(f,amount);
-		for (i=0;i<amount;i++)
-			SteamWriteFF9String(f,text[i]);
+		if (multilang) {
+			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+				if (hades::STEAM_LANGUAGE_SAVE_LIST[lang]) {
+					HWSWriteChar(f,lang);
+					HWSWriteLong(f,GetDataSize(lang));
+					for (i=0;i<amount;i++)
+						SteamWriteFF9String(f,text[i],lang);
+				}
+			HWSWriteChar(f,STEAM_LANGUAGE_NONE);
+		} else {
+			for (i=0;i<amount;i++)
+				SteamWriteFF9String(f,text[i]);
+		}
 	}
 }
 
-void TextDataStruct::WriteSteam(fstream& f) {
+void TextDataStruct::WriteSteam(fstream& f, SteamLanguage lang) {
 	unsigned int i;
 	for (i=0;i<amount;i++)
-		SteamWriteFF9String(f,text[i]);
+		SteamWriteFF9String(f,text[i],lang);
+}
+
+int TextDataStruct::GetDataSize(SteamLanguage lang) {
+	if (GetGameType()==GAME_TYPE_PSX)
+		return size;
+	unsigned int i;
+	int res = 0;
+	for (i=0;i<amount;i++)
+		res += text[i].GetLength(lang);
+	return res;
 }
 
 void TextDataStruct::UpdateOffset() {
 	if (size==0 && GetGameType()==GAME_TYPE_PSX)
 		return;
+	if (GetGameType()!=GAME_TYPE_PSX)
+		return;
 	unsigned int i,j,k;
-	if (GetGameType()==GAME_TYPE_PSX) {
-		j = has_format ? amount*8 : amount*4;
-		if (has_format) {
-			for (i=0;i<amount;i++) {
-				format_offset[i] = j;
-				for (k=0;k<format_amount[i];k++)
-					j += format_data[i][k].length;
-				offset[i] = j;
-				j += text[i].length;
-			}
-		} else {
-			for (i=0;i<amount;i++) {
-				offset[i] = j;
-				j += text[i].length;
-			}
-		}
-		if (j%4)
-			j += 4-j%4;
-		SetSize(j+4);
-	} else {
-		j = 0;
-		for (i=0;i<amount;i++)
+	j = has_format ? amount*8 : amount*4;
+	if (has_format) {
+		for (i=0;i<amount;i++) {
+			format_offset[i] = j;
+			for (k=0;k<format_amount[i];k++)
+				j += format_data[i][k].length;
+			offset[i] = j;
 			j += text[i].length;
-		SetSize(j);
+		}
+	} else {
+		for (i=0;i<amount;i++) {
+			offset[i] = j;
+			j += text[i].length;
+		}
 	}
+	if (j%4)
+		j += 4-j%4;
+	SetSize(j+4);
 }
 
 void TextDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
@@ -460,15 +525,24 @@ void TextDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
 		for (i=0;i<amount;i++) {
 			ClusterData* dummyclus;
+			SteamLanguage lang;
+			uint16_t text_lang_amount[STEAM_LANGUAGE_AMOUNT];
 			tim_amount[i] = 0;
 			struct_id[i] = config.text_id[i];
-			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.text_file[GetSteamLanguage()][i]));
-			fsize = config.meta_res.GetFileSizeByIndex(config.text_file[GetSteamLanguage()][i]);
-			buffer = new char[fsize];
-			ffbin.read(buffer,fsize);
 			text_data[i] = new TextDataStruct[1];
 			text_data[i]->Init(true,CHUNK_TYPE_TEXT,config.text_id[i],&dummyclus,CLUSTER_TYPE_FIELD_TEXT);
-			text_data[i]->amount = FF9String::CountSteamTextAmount(buffer,fsize);
+			text_data[i]->amount = 0;
+			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+				if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+					continue;
+				ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.text_file[lang][i]));
+				fsize = config.meta_res.GetFileSizeByIndex(config.text_file[lang][i]);
+				buffer = new char[fsize];
+				ffbin.read(buffer,fsize);
+				text_lang_amount[lang] = FF9String::CountSteamTextAmount(buffer,fsize);
+				text_data[i]->amount = max(text_data[i]->amount,text_lang_amount[lang]);
+				delete[] buffer;
+			}
 			text_data[i]->text = new FF9String[text_data[i]->amount];
 /*			text_data[i]->size_y = new uint8_t[text_data[i]->amount];
 			text_data[i]->flag = new uint8_t[text_data[i]->amount];
@@ -479,18 +553,21 @@ void TextDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 			text_data[i]->format_data = new TextFormatStruct*[text_data[i]->amount];
 			text_data[i]->has_format = true;*/
 			text_data[i]->loaded = true;
-			delete[] buffer;
-			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.text_file[GetSteamLanguage()][i]));
-			text_data[i]->size = config.meta_res.GetFileSizeByIndex(config.text_file[GetSteamLanguage()][i]);
-			for (j=0;j<text_data[i]->amount;j++) { // ToDo: handle the sizes etc...
-				SteamReadFF9String(ffbin,text_data[i]->text[j]);
-/*				text_data[i]->size_y[j] = 0;
-				text_data[i]->flag[j] = 0;
-				text_data[i]->offset[j] = 0;
-				text_data[i]->format_offset[j] = 0;
-				text_data[i]->size_x[j] = 0;
-				text_data[i]->format_amount[j] = 0;
-				text_data[i]->format_data[j] = new TextFormatStruct[0];*/
+			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+				if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+					continue;
+				ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.text_file[lang][i]));
+				text_data[i]->size = config.meta_res.GetFileSizeByIndex(config.text_file[lang][i]);
+				for (j=0;j<text_lang_amount[lang];j++) { // ToDo: handle the sizes etc...
+					SteamReadFF9String(ffbin,text_data[i]->text[j],lang);
+/*					text_data[i]->size_y[j] = 0;
+					text_data[i]->flag[j] = 0;
+					text_data[i]->offset[j] = 0;
+					text_data[i]->format_offset[j] = 0;
+					text_data[i]->size_x[j] = 0;
+					text_data[i]->format_amount[j] = 0;
+					text_data[i]->format_data[j] = new TextFormatStruct[0];*/
+				}
 			}
 			for (j=0;j<G_N_ELEMENTS(HADES_STRING_TEXT_BLOCK_NAME);j++)
 				if (struct_id[i]==HADES_STRING_TEXT_BLOCK_NAME[j].id) {
@@ -557,6 +634,8 @@ int* TextDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup) {
 									chartim[j][k].ReadHWS(ffhws);
 									chartim[j][k].SetSize(chunksize-2);
 								}
+						} else if (chunktype==CHUNK_STEAM_TEXT_MULTILANG) {
+							text_data[j]->ReadHWS(ffhws,true);
 						} else
 							res[1]++;
 						ffhws.seekg(chunkpos+chunksize);
@@ -597,7 +676,7 @@ int* TextDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup) {
 void TextDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup) {
 	unsigned int i,j;
 	uint16_t fileobjectid,nbmodified = 0;
-	uint32_t chunkpos, nboffset = ffhws.tellg();
+	uint32_t chunkpos, chunksize, nboffset = ffhws.tellg();
 	ClusterData* clus;
 	HWSWriteShort(ffhws,nbmodified);
 	for (i=0;i<amount;i++) {
@@ -610,30 +689,43 @@ void TextDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup) {
 			clus->UpdateOffset();
 			HWSWriteShort(ffhws,fileobjectid);
 			HWSWriteLong(ffhws,clus->size);
-			if (text_data[i] && text_data[i]->modified) {
-				HWSWriteChar(ffhws,CHUNK_TYPE_TEXT);
-				HWSWriteLong(ffhws,text_data[i]->size+2);
-				chunkpos = ffhws.tellg();
-				text_data[i]->WriteHWS(ffhws);
-				ffhws.seekg(chunkpos+text_data[i]->size+2);
-			}
-			if (GetGameType()==GAME_TYPE_PSX && charmap[i] && charmap[i]->modified) {
-				HWSWriteChar(ffhws,CHUNK_TYPE_CHARMAP);
-				HWSWriteLong(ffhws,charmap[i]->size);
-				chunkpos = ffhws.tellg();
-				charmap[i]->WriteHWS(ffhws);
-				ffhws.seekg(chunkpos+charmap[i]->size);
-			}
-			if (GetGameType()==GAME_TYPE_PSX && chartim[i]) {
-				for (j=0;j<chartim[i]->parent_chunk->object_amount;j++)
-					if (chartim[i][j].modified) {
-						HWSWriteChar(ffhws,CHUNK_TYPE_TIM);
-						HWSWriteLong(ffhws,chartim[i][j].size+2);
-						chunkpos = ffhws.tellg();
-						HWSWriteShort(ffhws,chartim[i][j].object_id);
-						chartim[i][j].WriteHWS(ffhws);
-						ffhws.seekg(chunkpos+chartim[i][j].size+2);
-					}
+			if (GetGameType()==GAME_TYPE_PSX) {
+				if (text_data[i] && text_data[i]->modified) {
+					HWSWriteChar(ffhws,CHUNK_TYPE_TEXT);
+					HWSWriteLong(ffhws,text_data[i]->size);
+					chunkpos = ffhws.tellg();
+					text_data[i]->WriteHWS(ffhws);
+					ffhws.seekg(chunkpos+text_data[i]->size);
+				}
+				if (charmap[i] && charmap[i]->modified) {
+					HWSWriteChar(ffhws,CHUNK_TYPE_CHARMAP);
+					HWSWriteLong(ffhws,charmap[i]->size);
+					chunkpos = ffhws.tellg();
+					charmap[i]->WriteHWS(ffhws);
+					ffhws.seekg(chunkpos+charmap[i]->size);
+				}
+				if (chartim[i]) {
+					for (j=0;j<chartim[i]->parent_chunk->object_amount;j++)
+						if (chartim[i][j].modified) {
+							HWSWriteChar(ffhws,CHUNK_TYPE_TIM);
+							HWSWriteLong(ffhws,chartim[i][j].size+2);
+							chunkpos = ffhws.tellg();
+							HWSWriteShort(ffhws,chartim[i][j].object_id);
+							chartim[i][j].WriteHWS(ffhws);
+							ffhws.seekg(chunkpos+chartim[i][j].size+2);
+						}
+				}
+			} else {
+				if (text_data[i] && text_data[i]->modified) {
+					HWSWriteChar(ffhws,CHUNK_STEAM_TEXT_MULTILANG);
+					HWSWriteLong(ffhws,0);
+					chunkpos = ffhws.tellg();
+					text_data[i]->WriteHWS(ffhws,true);
+					chunksize = (uint32_t)ffhws.tellg()-chunkpos;
+					ffhws.seekg(chunkpos-4);
+					HWSWriteLong(ffhws,chunksize);
+					ffhws.seekg(chunkpos+chunksize);
+				}
 			}
 			HWSWriteChar(ffhws,0xFF);
 			nbmodified++;
@@ -665,6 +757,7 @@ int SpecialTextDataStruct::AddText(uint16_t id, FF9String& value) {
 	space_used += reqlen;
 	amount++;
 	FF9String* newtext = new FF9String[amount];
+	wstring* newfieldtext = NULL;
 	for (i=0;i<id;i++)
 		newtext[i] = text[i];
 	newtext[id] = value;
@@ -672,6 +765,16 @@ int SpecialTextDataStruct::AddText(uint16_t id, FF9String& value) {
 		newtext[i+1] = text[i];
 	delete[] text;
 	text = newtext;
+	if (is_localization) {
+		newfieldtext = new wstring[amount];
+		for (i=0;i<id;i++)
+			newfieldtext[i] = localization_field[i];
+		newfieldtext[id] = L"CustomField"+to_string(amount);
+		for (i=id;i+1<amount;i++)
+			newfieldtext[i+1] = localization_field[i];
+		delete[] localization_field;
+		localization_field = newfieldtext;
+	}
 	if (GetGameType()==GAME_TYPE_PSX) {
 		uint16_t* newoffset = new uint16_t[amount];
 		uint16_t* newsizex = new uint16_t[amount];
@@ -694,12 +797,22 @@ void SpecialTextDataStruct::RemoveText(uint16_t id) {
 	space_used -= text[id].length;
 	amount--;
 	FF9String* newtext = new FF9String[amount];
+	wstring* newfieldtext = NULL;
 	for (i=0;i<id;i++)
 		newtext[i] = text[i];
 	for (i=id;i<amount;i++)
 		newtext[i] = text[i+1];
 	delete[] text;
 	text = newtext;
+	if (is_localization) {
+		newfieldtext = new wstring[amount];
+		for (i=0;i<id;i++)
+			newfieldtext[i] = localization_field[i];
+		for (i=id;i<amount;i++)
+			newfieldtext[i] = localization_field[i+1];
+		delete[] localization_field;
+		localization_field = newfieldtext;
+	}
 	if (GetGameType()==GAME_TYPE_PSX) {
 		space_used -= 4;
 		uint16_t* newoffset = new uint16_t[amount];
@@ -739,29 +852,58 @@ int SpecialTextDataStruct::SetText(uint16_t id, FF9String& newvalue) {
 	return 0;
 }
 
+int SpecialTextDataStruct::GetHWSDataSize(SteamLanguage lang) {
+	if (GetGameType()==GAME_TYPE_PSX)
+		return space_used;
+	unsigned int i;
+	int res = 0;
+	if (is_localization) {
+		for (i=0;i<amount;i++) {
+			if (lang==STEAM_LANGUAGE_NONE) {
+				FF9String fieldstr;
+				fieldstr.SetValue(localization_field[i]);
+				res += fieldstr.GetLength(GetSteamLanguage(),false)+1;
+			} else {
+				res += text[i].GetLength(lang,false)+1;
+			}
+		}
+	} else {
+		for (i=0;i<amount;i++)
+			res += text[i].GetLength(lang);
+	}
+	return res;
+}
+
+int SpecialTextDataStruct::GetDataSize(SteamLanguage lang) {
+	if (!is_localization)
+		return GetHWSDataSize(lang);
+	unsigned int i;
+	int res = 0;
+	for (i=0;i<amount;i++) {
+		FF9String fieldstr;
+		fieldstr.SetValue(localization_field[i]);
+		res += fieldstr.GetLength(GetSteamLanguage(),false)+STEAM_LANGUAGE_AMOUNT+1;
+		for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+			res += text[i].GetLength(lang,false);
+			if (lang==GetSteamLanguage())
+				res += (text[i].str.find(L',')!=string::npos ? 2 : 0);
+			else
+				res += (text[i].multi_lang_str[lang].find(L',')!=string::npos ? 2 : 0);
+		}
+	}
+	return res;
+}
+
 void SpecialTextDataStruct::UpdateOffset() {
 	unsigned int i,j;
-	if (GetGameType()==GAME_TYPE_PSX) {
-		j = amount*4;
-		for (i=0;i<amount;i++) {
-			offset[i] = j;
-			j += text[i].length;
-		}
-		space_used = j;
-	} else if (localizationfile) {
-		j = 0;
-		for (i=0;i<amount;i++)
-			if (text[i].length>0)
-				j += text[i].length-5;
-			else
-				j++;
-		space_used = j;
-	} else {
-		j = 0;
-		for (i=0;i<amount;i++)
-			j += text[i].length;
-		space_used = j;
+	if (GetGameType()!=GAME_TYPE_PSX)
+		return;
+	j = amount*4;
+	for (i=0;i<amount;i++) {
+		offset[i] = j;
+		j += text[i].length;
 	}
+	space_used = j;
 }
 
 #define MACRO_SPECIALTEXT_IOFUNCTION(IO,SEEK,READ,PPF) \
@@ -790,19 +932,73 @@ void SpecialTextDataStruct::UpdateOffset() {
 	if (PPF) PPFEndScanStep(); \
 	SEEK(ffbin,strpos,text_block[i].space_total);
 
+#define MACRO_SPECIALTEXT_LOCALIZATION_READ(TEXTPTR,FIELDTEXTPTR,AMOUNT,SPACE) \
+	uint32_t posbeg, poslen, bufferpos = 0; \
+	char* buffer, *bufferstr; \
+	bufferstr = new char[SPACE]; \
+	buffer = new char[SPACE]; \
+	ffbin.read(buffer,SPACE); \
+	vector<FF9String> vecstr; \
+	vector<wstring> vecfield; \
+	for (i=0;bufferpos<SPACE;i++) { \
+		vecstr.resize(i+1); \
+		vecfield.resize(i+1); \
+		vecstr[i].CreateEmpty(); \
+		for (lang=0;lang<STEAM_LANGUAGE_AMOUNT+1;lang++) { \
+			if (buffer[bufferpos]=='"') { \
+				posbeg = ++bufferpos; \
+				while (buffer[bufferpos++]!='"') {} \
+				poslen = bufferpos-1-posbeg; \
+				bufferpos++; \
+			} else { \
+				posbeg = bufferpos; \
+				while (buffer[bufferpos]!=',' && buffer[bufferpos]!=0xA) {bufferpos++;} \
+				poslen = (bufferpos++)-posbeg; \
+			} \
+			memcpy(bufferstr,&buffer[posbeg],poslen); \
+			bufferstr[poslen] = 0; \
+			if (lang==0) { \
+				FF9String fieldstr; \
+				fieldstr.CreateEmpty(); \
+				fieldstr.SetValue(FF9String::GetUTF8FromByteCode(bufferstr)); \
+				vecfield[i] = fieldstr.str; \
+			} else { \
+				vecstr[i].SetValue(FF9String::GetUTF8FromByteCode(bufferstr),lang-1); \
+			} \
+			if (lang<STEAM_LANGUAGE_AMOUNT && buffer[bufferpos-1]==0xA) { \
+				while (lang<STEAM_LANGUAGE_AMOUNT) \
+					vecstr[i].SetValue(L"",lang++); \
+				break; \
+			} \
+			if (lang==STEAM_LANGUAGE_AMOUNT && buffer[bufferpos-1]!=0xA) \
+				while (buffer[bufferpos++]!=0xA) {} \
+		} \
+	} \
+	AMOUNT = i; \
+	delete[] bufferstr; \
+	delete[] buffer; \
+	TEXTPTR = new FF9String[AMOUNT]; \
+	FIELDTEXTPTR = new wstring[AMOUNT]; \
+	for (i=0;i<AMOUNT;i++) { \
+		TEXTPTR[i] = vecstr[i]; \
+		FIELDTEXTPTR[i] = vecfield[i]; \
+	}
+
 
 void SpecialTextDataSet::Load(fstream& ffbin, ConfigurationSet& configset) {
-	unsigned int i,j,k;
+	unsigned int i,j;
 	amount = configset.spetext_amount;
 	text_block = new SpecialTextDataStruct[amount];
 	if (GetGameType()==GAME_TYPE_PSX) {
 		for (i=0;i<amount;i++) {
 			text_block[i].parent = this;
 			text_block[i].space_total = configset.spetext_space_total[i];
+			text_block[i].is_localization = false;
 			ffbin.seekg(configset.spetext_offset[i]);
 			MACRO_SPECIALTEXT_IOFUNCTION(FFIXRead,FFIXSeek,true,false)
 		}
 	} else {
+		SteamLanguage lang;
 		for (i=0;i<amount;i++) {
 			text_block[i].parent = this;
 			text_block[i].space_total = configset.spetext_steam_space_total[i];
@@ -812,13 +1008,17 @@ void SpecialTextDataSet::Load(fstream& ffbin, ConfigurationSet& configset) {
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
 		
 		#define MACRO_READ_SPETEXT_STEAM(INDEX,TYPE) \
-			ffbin.seekg(configset.meta_res.GetFileOffsetByIndex(configset.spetext_ ## TYPE ## _file[GetSteamLanguage()])); \
 			text_block[INDEX].space_used = configset.meta_res.GetFileSizeByIndex(configset.spetext_ ## TYPE ## _file[GetSteamLanguage()]); \
 			text_block[INDEX].amount = configset.spetext_ ## TYPE ## _amount; \
-			text_block[INDEX].localizationfile = false; \
+			text_block[INDEX].is_localization = false; \
 			text_block[INDEX].text = new FF9String[text_block[INDEX].amount]; \
-			for (i=0;i<text_block[INDEX].amount;i++) \
-				SteamReadFF9String(ffbin,text_block[INDEX].text[i]);
+			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) { \
+				if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage()) \
+					continue; \
+				ffbin.seekg(configset.meta_res.GetFileOffsetByIndex(configset.spetext_ ## TYPE ## _file[lang])); \
+				for (j=0;j<text_block[INDEX].amount;j++) \
+					SteamReadFF9String(ffbin,text_block[INDEX].text[j],lang); \
+			}
 		
 		MACRO_READ_SPETEXT_STEAM(0,battleinfo)
 		MACRO_READ_SPETEXT_STEAM(1,battlescan)
@@ -828,47 +1028,13 @@ void SpecialTextDataSet::Load(fstream& ffbin, ConfigurationSet& configset) {
 		MACRO_READ_SPETEXT_STEAM(5,tetramaster)
 		// DEBUG : Steam version is buggy for texts in Localization.txt
 		// commas are used both inside texts and as language separator
-		uint32_t posbeg,poslen;
-		char* buffer, *bufferstr;
 		ffbin.seekg(configset.meta_res.GetFileOffsetByIndex(configset.spetext_localization_file));
-		text_block[6].amount = configset.spetext_localization_amount;
-		text_block[6].localizationfile = true;
-		text_block[6].text = new FF9String[text_block[6].amount];
+//		text_block[6].amount = configset.spetext_localization_amount;
+		text_block[6].is_localization = true;
+//		text_block[6].text = new FF9String[text_block[6].amount];
+//		text_block[6].localization_field = new wstring[text_block[6].amount];
 		text_block[6].space_used = configset.meta_res.GetFileSizeByIndex(configset.spetext_localization_file);
-		bufferstr = new char[text_block[6].space_used];
-		buffer = new char[text_block[6].space_used];
-		ffbin.read(buffer,text_block[6].space_used);
-		k = 0;
-		for (i=0;i<text_block[6].amount;i++) {
-/*			for (j=0;j<STEAM_LANGUAGE_AMOUNT+1;j++) {
-				if (buffer[k]=='"') {
-					posbeg = ++k;
-					while (buffer[k++]!='"') {}
-					poslen = k-1-posbeg;
-					k++;
-				} else {
-					posbeg = k;
-					if (j==STEAM_LANGUAGE_AMOUNT)
-						while (buffer[k]!=0xA) {k++;}
-					else
-						while (buffer[k]!=',' && buffer[k]!=0xA) {k++;}
-					poslen = (k++)-posbeg;
-				}*/
-				posbeg = k;
-				while (buffer[k]!=0xA) {k++;}
-				poslen = (k++)-posbeg;
-//				if (j==GetSteamLanguage()+1) {
-					text_block[6].text[i].CreateEmpty();
-					memcpy(bufferstr,&buffer[posbeg],poslen);
-					bufferstr[poslen] = 0;
-					text_block[6].text[i].SetValue(FF9String::GetUTF8FromByteCode(bufferstr));
-//				}
-//				if (j<STEAM_LANGUAGE_AMOUNT && buffer[k-1]==0xA)
-//					j = STEAM_LANGUAGE_AMOUNT+2;
-//			}
-		}
-		delete[] bufferstr;
-		delete[] buffer;
+		MACRO_SPECIALTEXT_LOCALIZATION_READ(text_block[6].text,text_block[6].localization_field,text_block[6].amount,text_block[6].space_used)
 		ffbin.close();
 	}
 	for (i=0;i<amount;i++)
@@ -876,16 +1042,51 @@ void SpecialTextDataSet::Load(fstream& ffbin, ConfigurationSet& configset) {
 	modified = false;
 }
 
-void SpecialTextDataSet::WriteSteam(fstream& ffbin, unsigned int blockid) {
+void SpecialTextDataSet::WriteSteam(fstream& ffbin, unsigned int blockid, SteamLanguage lang) { // DEBUG: Localization.txt is always fully updated, whatever the Steam language saving options
 	unsigned int i;
-	if (text_block[blockid].localizationfile) {
+	bool quotestr;
+	if (text_block[blockid].is_localization) {
 		for (i=0;i<text_block[blockid].amount;i++) {
-			SteamWriteFF9String(ffbin,text_block[blockid].text[i],false);
-			SteamWriteChar(ffbin,0xA);
+			FF9String fieldstr;
+			fieldstr.SetValue(text_block[blockid].localization_field[i]);
+			SteamWriteFF9String(ffbin,fieldstr,GetSteamLanguage(),false);
+			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+				ffbin.put(',');
+				if (lang==GetSteamLanguage())
+					quotestr = text_block[blockid].text[i].str.find(L',')!=string::npos;
+				else
+					quotestr = text_block[blockid].text[i].multi_lang_str[lang].find(L',')!=string::npos;
+				if (quotestr)
+					ffbin.put('\"');
+				SteamWriteFF9String(ffbin,text_block[blockid].text[i],lang,false);
+				if (quotestr)
+					ffbin.put('\"');
+			}
+			ffbin.put(0xA);
 		}
 	} else {
 		for (i=0;i<text_block[blockid].amount;i++)
-			SteamWriteFF9String(ffbin,text_block[blockid].text[i]);
+			SteamWriteFF9String(ffbin,text_block[blockid].text[i],lang);
+	}
+}
+
+void SpecialTextDataSet::WriteHWSSteam(fstream& ffbin, unsigned int blockid, SteamLanguage lang) {
+	unsigned int i;
+	if (text_block[blockid].is_localization) {
+		for (i=0;i<text_block[blockid].amount;i++) {
+			if (lang==STEAM_LANGUAGE_NONE) {
+				FF9String fieldstr;
+				fieldstr.SetValue(text_block[blockid].localization_field[i]);
+				SteamWriteFF9String(ffbin,fieldstr,GetSteamLanguage(),false);
+				ffbin.put(0); // Null-terminated strings, for allowing the presence or absence of [ENDN]
+			} else {
+				SteamWriteFF9String(ffbin,text_block[blockid].text[i],lang,false);
+				ffbin.put(0);
+			}
+		}
+	} else {
+		for (i=0;i<text_block[blockid].amount;i++)
+			SteamWriteFF9String(ffbin,text_block[blockid].text[i],lang);
 	}
 }
 
@@ -918,7 +1119,7 @@ int* SpecialTextDataSet::LoadHWS(fstream& ffbin, UnusedSaveBackupPart& backup) {
 		HWSReadShort(ffbin,i);
 		if (GetHWSGameType()==GAME_TYPE_PSX) {
 			uint16_t spacetmp;
-			if (i>=amount) {
+			if (i>=amount || GetGameType()!=GAME_TYPE_PSX) { // DEBUG: give up importing PSX special text in Steam
 				HWSReadShort(ffbin,size);
 				ffbin.seekg(-4,ios::cur);
 				backup.Add(ffbin,size+8);
@@ -934,53 +1135,102 @@ int* SpecialTextDataSet::LoadHWS(fstream& ffbin, UnusedSaveBackupPart& backup) {
 				res[0]++;
 			} else {
 				MACRO_SPECIALTEXT_IOFUNCTION(HWSRead,HWSSeek,true,false)
-				if (GetGameType()!=GAME_TYPE_PSX)
+/*				if (GetGameType()!=GAME_TYPE_PSX)
 					for (j=0;j<text_block[i].amount;j++)
-						text_block[i].text[j].PSXToSteam();
+						text_block[i].text[j].PSXToSteam();*/
 			}
 			text_block[i].space_total = size;
 		} else {
-			SteamLanguage sl;
+			bool allocatedtext = false;
+			SteamLanguage lang;
 			uint16_t modifamount;
 			uint32_t tmppos, spacetmp;
+			vector<char> bufferstr;
 			HWSReadShort(ffbin,modifamount);
-			HWSReadChar(ffbin,sl);
-			while (sl!=0xFF) {
+			HWSReadChar(ffbin,lang);
+			while (lang!=STEAM_LANGUAGE_NONE) {
 				HWSReadLong(ffbin,spacetmp);
 				tmppos = ffbin.tellg();
-				if ((sl==GetSteamLanguage() || sl==0xFE) && GetGameType()!=GAME_TYPE_PSX) {
-					if (modifamount!=text_block[i].amount) {
-						text_block[i].amount = modifamount;
-						text_block[i].text = new FF9String[modifamount];
-					}
-					if (text_block[i].localizationfile) {
-						unsigned int posbeg, poslen, curpos = 0;
-						char* bufferstr = new char[spacetmp];
-						char* buffer = new char[spacetmp];
-						ffbin.read(buffer,spacetmp);
-						for (j=0;j<modifamount;j++) {
-							posbeg = curpos;
-							while (buffer[curpos]!=0xA) {curpos++;}
-							poslen = (curpos++)-posbeg;
-							text_block[i].text[j].CreateEmpty();
-							memcpy(bufferstr,&buffer[posbeg],poslen);
-							bufferstr[poslen] = 0;
-							text_block[i].text[j].SetValue(FF9String::GetUTF8FromByteCode(bufferstr));
-							if (GetGameType()==GAME_TYPE_PSX)
-								text_block[i].text[j].SteamToPSX();
-						}
-						delete[] bufferstr;
-						delete[] buffer;
+				if (GetGameType()==GAME_TYPE_PSX) { // DEBUG: give up importing Steam special text in PSX
+					ffbin.seekg(tmppos+spacetmp);
+					HWSReadChar(ffbin,lang);
+					res[1]++;
+					continue;
+				}
+				if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage() && lang!=TEXT_LOCALIZATION_HWS_WHOLE_FILE && (lang!=TEXT_LOCALIZATION_HWS_FIELDS || !text_block[i].is_localization)) {
+					ffbin.seekg(tmppos+spacetmp);
+					HWSReadChar(ffbin,lang);
+					continue;
+				}
+				if (lang==TEXT_LOCALIZATION_HWS_WHOLE_FILE) {
+					if (text_block[i].is_localization) {
+						MACRO_SPECIALTEXT_LOCALIZATION_READ(text_block[i].text,text_block[i].localization_field,modifamount,spacetmp)
 					} else {
-						for (j=0;j<modifamount;j++) {
-							SteamReadFF9String(ffbin,text_block[i].text[j]);
-							if (GetGameType()==GAME_TYPE_PSX)
-								text_block[i].text[j].SteamToPSX();
+						ffbin.seekg(tmppos+spacetmp);
+						HWSReadChar(ffbin,lang);
+						res[1]++;
+						continue;
+					}
+				} else {
+					if (!allocatedtext) {
+						if (text_block[i].amount<modifamount) {
+							FF9String* newtext = new FF9String[max((uint16_t)text_block[i].amount,modifamount)];
+							for (j=0;j<text_block[i].amount;j++)
+								newtext[j] = text_block[i].text[j];
+							delete[] text_block[i].text;
+							text_block[i].text = newtext;
+							if (text_block[i].is_localization) {
+								wstring* newlocfieldstr = new wstring[max((uint16_t)text_block[i].amount,modifamount)];
+								for (j=0;j<text_block[i].amount;j++)
+									newlocfieldstr[j] = text_block[i].localization_field[j];
+								delete[] text_block[i].localization_field;
+								text_block[i].localization_field = newlocfieldstr;
+							}
 						}
+						text_block[i].amount = max((uint16_t)text_block[i].amount,modifamount);
+						allocatedtext = true;
+					}
+					if (lang==TEXT_LOCALIZATION_HWS_FIELDS) {
+						if (text_block[i].is_localization) {
+							for (j=0;j<modifamount;j++) {
+								bufferstr.clear();
+								bufferstr.push_back(ffbin.get());
+								while (bufferstr[bufferstr.size()-1]!=0)
+									bufferstr.push_back(ffbin.get());
+								char* bufferstrptr = new char[bufferstr.size()];
+								for (k=0;k<bufferstr.size();k++)
+									bufferstrptr[k] = bufferstr[k];
+								FF9String fieldstr;
+								fieldstr.CreateEmpty();
+								fieldstr.SetValue(FF9String::GetUTF8FromByteCode(bufferstrptr));
+								text_block[i].localization_field[j] = fieldstr.str;
+								delete[] bufferstrptr;
+							}
+						} else {
+							ffbin.seekg(tmppos+spacetmp);
+							HWSReadChar(ffbin,lang);
+							res[1]++;
+							continue;
+						}
+					} else if (text_block[i].is_localization) {
+						for (j=0;j<modifamount;j++) {
+							bufferstr.clear();
+							bufferstr.push_back(ffbin.get());
+							while (bufferstr[bufferstr.size()-1]!=0)
+								bufferstr.push_back(ffbin.get());
+							char* bufferstrptr = new char[bufferstr.size()];
+							for (k=0;k<bufferstr.size();k++)
+								bufferstrptr[k] = bufferstr[k];
+							text_block[i].text[j].SetValue(FF9String::GetUTF8FromByteCode(bufferstrptr),lang);
+							delete[] bufferstrptr;
+						}
+					} else {
+						for (j=0;j<modifamount;j++)
+							SteamReadFF9String(ffbin,text_block[i].text[j],lang);
 					}
 				}
 				ffbin.seekg(tmppos+spacetmp);
-				HWSReadChar(ffbin,sl);
+				HWSReadChar(ffbin,lang);
 			}
 		}
 		text_block[i].UpdateOffset();
@@ -992,10 +1242,11 @@ int* SpecialTextDataSet::LoadHWS(fstream& ffbin, UnusedSaveBackupPart& backup) {
 void SpecialTextDataSet::WriteHWS(fstream& ffbin, UnusedSaveBackupPart& backup) {
 	uint16_t size,i,spacetmp;
 	unsigned int j;
+	SteamLanguage lang;
 	if (GetGameType()==GAME_TYPE_PSX)
 		HWSWriteShort(ffbin,G_N_ELEMENTS(HADES_STRING_SPECIAL_TEXT_BLOCK)+backup.save_amount);
 	else
-		HWSWriteShort(ffbin,G_N_ELEMENTS(HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM));
+		HWSWriteShort(ffbin,G_N_ELEMENTS(HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM)+backup.save_amount);
 	for (i=0;i<amount;i++) {
 		text_block[i].UpdateOffset();
 		HWSWriteShort(ffbin,i);
@@ -1008,13 +1259,18 @@ void SpecialTextDataSet::WriteHWS(fstream& ffbin, UnusedSaveBackupPart& backup) 
 			text_block[i].space_total = size;
 		} else {
 			HWSWriteShort(ffbin,text_block[i].amount);
-			if (text_block[i].localizationfile)
-				HWSWriteChar(ffbin,0xFE);
-			else
-				HWSWriteChar(ffbin,GetSteamLanguage());
-			HWSWriteLong(ffbin,text_block[i].space_used);
-			WriteSteam(ffbin,i);
-			HWSWriteChar(ffbin,0xFF);
+			if (text_block[i].is_localization) {
+				HWSWriteChar(ffbin,TEXT_LOCALIZATION_HWS_FIELDS);
+				HWSWriteLong(ffbin,text_block[i].GetHWSDataSize(STEAM_LANGUAGE_NONE));
+				WriteHWSSteam(ffbin,i,STEAM_LANGUAGE_NONE);
+			}
+			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+				if (hades::STEAM_LANGUAGE_SAVE_LIST[lang]) {
+					HWSWriteChar(ffbin,lang);
+					HWSWriteLong(ffbin,text_block[i].GetHWSDataSize(lang));
+					WriteHWSSteam(ffbin,i,lang);
+				}
+			HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
 		}
 	}
 	for (i=0;i<backup.save_amount;i++)

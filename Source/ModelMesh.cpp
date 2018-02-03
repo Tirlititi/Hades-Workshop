@@ -816,7 +816,7 @@ int ModelDataStruct::Export(const char* outputname, int format) {
     ConvertModelToFBX(*this, sdkmanager, sdkscene);
 //	SetupAxisSystem(sdkscene);
 	bool exportresult = SaveScene(outputname, sdkmanager, sdkscene, format);
-    DestroySdkObjects(sdkmanager);
+	DestroySdkObjects(sdkmanager);
     if (!exportresult)
         return 1;
     return 0;
@@ -839,12 +839,12 @@ int ModelDataStruct::Import(const char* inputname, bool retrieveanims) {
 	return 0;
 }
 
-void ModelDataStruct::SetupPostImportData(vector<unsigned int> folderfiles, UnityArchiveMetaData archivelist[UNITY_ARCHIVE_AMOUNT], UnityArchiveAssetBundle* animbundle, GameObjectHierarchy* basehierarchy, int mergepolicy) {
+void ModelDataStruct::SetupPostImportData(vector<unsigned int> folderfiles, UnityArchiveMetaData archivelist[UNITY_ARCHIVE_AMOUNT], vector<int64_t> additionalinfotoavoid, UnityArchiveAssetBundle* animbundle, GameObjectHierarchy* basehierarchy, int mergepolicy) {
 	unsigned int i,j,k;
 	if (basehierarchy)
-		hierarchy->MergeHierarchy(archivelist,basehierarchy,mergepolicy);
+		hierarchy->MergeHierarchy(archivelist,additionalinfotoavoid,basehierarchy,mergepolicy);
 	else
-		hierarchy->MergeHierarchy(archivelist,NULL,2);
+		hierarchy->MergeHierarchy(archivelist,additionalinfotoavoid,NULL,2);
 	vector<float> minmeshx,minmeshy,minmeshz;
 	vector<float> maxmeshx,maxmeshy,maxmeshz;
 	vector<float> meanmeshx,meanmeshy,meanmeshz;
@@ -1006,7 +1006,7 @@ void ModelDataStruct::SetupPostImportData(vector<unsigned int> folderfiles, Unit
 	for (i=0;i<animation.size();i++) {
 		animation[i].anim_id = 0xFFFFFFFF;
 		animation[i].file_id = -1;
-		if (mergepolicy==2) // DEBUG: mergepolicy==2 implies that "Take" animations are imported in UNITY_ARCHIVE_DATA5
+		if (mergepolicy==2 || basehierarchy==NULL) // DEBUG: "Take" animations are imported in UNITY_ARCHIVE_DATA5 in these cases
 			continue;
 		if (animation[i].name.substr(0,4)=="Take") { // DEBUG: assuming there's only 1 such animation
 			for (j=0;j<hierarchy->node_list.size();j++)
@@ -1896,13 +1896,13 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 							lCurrentTime = lCurveZ->KeyGetTime(keyindexz); \
 						} \
 						localtransf.time = lCurrentTime.GetSecondDouble()-starttime; \
-						if (keyindexx<keycounty && lCurrentTime==lCurveX->KeyGetTime(keyindexx)) { \
+						if (keyindexx<keycountx && lCurrentTime==lCurveX->KeyGetTime(keyindexx)) { \
 							localtransf.VALUE ## VALUEFIELDX = lCurveX->KeyGetValue(keyindexx); \
 /*							localtransf.VALUE ## 1 ## VALUEFIELDX = lCurveX->KeyGetLeftDerivative(keyindexx); \
 							localtransf.VALUE ## 2 ## VALUEFIELDX = lCurveX->KeyGetRightDerivative(keyindexx); \
 */							keyindexx++; \
 						} else { \
-							localtransf.VALUE ## VALUEFIELDX = lCurveX->Evaluate(lCurrentTime,&keyindexx); \
+							localtransf.VALUE ## VALUEFIELDX = lCurveX->Evaluate(lCurrentTime); \
 /*							localtransf.VALUE ## 1 ## VALUEFIELDX = lCurveX->EvaluateLeftDerivative(lCurrentTime,&keyindexx); \
 							localtransf.VALUE ## 2 ## VALUEFIELDX = lCurveX->EvaluateRightDerivative(lCurrentTime,&keyindexx); \
 */						} \
@@ -1912,7 +1912,7 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 							localtransf.VALUE ## 2 ## VALUEFIELDY = lCurveY->KeyGetRightDerivative(keyindexy); \
 */							keyindexy++; \
 						} else { \
-							localtransf.VALUE ## VALUEFIELDY = lCurveY->Evaluate(lCurrentTime,&keyindexy); \
+							localtransf.VALUE ## VALUEFIELDY = lCurveY->Evaluate(lCurrentTime); \
 /*							localtransf.VALUE ## 1 ## VALUEFIELDY = lCurveY->EvaluateLeftDerivative(lCurrentTime,&keyindexy); \
 							localtransf.VALUE ## 2 ## VALUEFIELDY = lCurveY->EvaluateRightDerivative(lCurrentTime,&keyindexy); \
 */						} \
@@ -1922,7 +1922,7 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 							localtransf.VALUE ## 2 ## VALUEFIELDZ = lCurveZ->KeyGetRightDerivative(keyindexz); \
 */							keyindexz++; \
 						} else { \
-							localtransf.VALUE ## VALUEFIELDZ = lCurveZ->Evaluate(lCurrentTime,&keyindexz); \
+							localtransf.VALUE ## VALUEFIELDZ = lCurveZ->Evaluate(lCurrentTime); \
 /*							localtransf.VALUE ## 1 ## VALUEFIELDZ = lCurveZ->EvaluateLeftDerivative(lCurrentTime,&keyindexz); \
 							localtransf.VALUE ## 2 ## VALUEFIELDZ = lCurveZ->EvaluateRightDerivative(lCurrentTime,&keyindexz); \
 */						} \
@@ -1970,13 +1970,15 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 				Quaternion::EulerToQuaternion(transform.rot,transform.rot.x,transform.rot.y,transform.rot.z);
 				if (k>0) {
 					ModelAnimationTransformW& prevtransform = model.animation[i].localw[j].transform[k-1];
-					FbxQuaternion fbxquat, prevfbxquat, interpolatequat, zeroquat;
+					FbxQuaternion fbxquat, prevfbxquat, interpolatequat;
 					transform.rot.TakeContinuousRepresentative(prevtransform.rot);
-					zeroquat.Set(0.0,0.0,0.0);
 					fbxquat.Set(transform.rot.x,transform.rot.y,transform.rot.z,transform.rot.w);
 					prevfbxquat.Set(prevtransform.rot.x,prevtransform.rot.y,prevtransform.rot.z,prevtransform.rot.w);
+/*					FbxQuaternion zeroquat;
+					zeroquat.Set(0.0,0.0,0.0);
 					prevfbxquat.Conjugate();
-					interpolatequat = zeroquat.Slerp(prevfbxquat.Product(fbxquat),(double)(1.0)/(double)(transform.time-prevtransform.time));
+					interpolatequat = zeroquat.Slerp(prevfbxquat.Product(fbxquat),(double)(1.0)/(double)(transform.time-prevtransform.time));*/
+					interpolatequat = (fbxquat-prevfbxquat)*(double)1.0/(double)(transform.time-prevtransform.time);
 					prevtransform.rot2.x = interpolatequat[0];
 					prevtransform.rot2.y = interpolatequat[1];
 					prevtransform.rot2.z = interpolatequat[2];

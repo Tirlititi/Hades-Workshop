@@ -1,5 +1,7 @@
 #include "Cards.h"
 
+#include "main.h"
+
 #define CARD_HWS_VERSION 1
 
 int CardDataStruct::SetName(wstring newvalue) {
@@ -101,10 +103,14 @@ void CardDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 		string fname = config.steam_dir_data;
 		fname += "resources.assets";
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
-		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.card_name_file[GetSteamLanguage()]));
-		name_space_used = config.meta_res.GetFileSizeByIndex(config.card_name_file[GetSteamLanguage()]);
-		for (i=0;i<CARD_AMOUNT;i++)
-			SteamReadFF9String(ffbin,card[i].name);
+		for (SteamLanguage lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+			if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+				continue;
+			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.card_name_file[lang]));
+			name_space_used = config.meta_res.GetFileSizeByIndex(config.card_name_file[lang]);
+			for (i=0;i<CARD_AMOUNT;i++)
+				SteamReadFF9String(ffbin,card[i].name,lang);
+		}
 		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.card_stat_file));
 		MACRO_CARD_IOFUNCTIONCARDDATA(SteamRead,SteamSeek,true,false,false)
 		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.card_deck_file));
@@ -115,10 +121,10 @@ void CardDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 	}
 }
 
-void CardDataSet::WriteSteamText(fstream& ffbin) {
+void CardDataSet::WriteSteamText(fstream& ffbin, SteamLanguage lang) {
 	unsigned int i;
 	for (i=0;i<CARD_AMOUNT;i++)
-		SteamWriteFF9String(ffbin,card[i].name);
+		SteamWriteFF9String(ffbin,card[i].name,lang);
 }
 
 void CardDataSet::WriteSteamData(fstream& ffbin, unsigned int datatype) {
@@ -231,18 +237,11 @@ void CardDataSet::WriteHWS(fstream& ffbin) {
 		MACRO_CARD_IOFUNCTIONNAME(HWSWrite,HWSSeek,false,false)
 	} else {
 		SteamLanguage lg;
-		size_t strpos;
-		uint16_t strsize;
 		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
 			HWSWriteChar(ffbin,lg);
-			HWSWriteShort(ffbin,0);
-			strpos = ffbin.tellg();
+			HWSWriteShort(ffbin,GetSteamTextSize(lg));
 			for (i=0;i<CARD_AMOUNT;i++)
 				SteamWriteFF9String(ffbin,card[i].name,lg);
-			strsize = (unsigned int)ffbin.tellg()-strpos;
-			ffbin.seekg(strpos-2);
-			HWSWriteShort(ffbin,strsize);
-			ffbin.seekg(strpos+strsize);
 		}
 		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
 	}
@@ -253,20 +252,23 @@ void CardDataSet::WriteHWS(fstream& ffbin) {
 	name_space_total = namesize;
 }
 
+int CardDataSet::GetSteamTextSize(SteamLanguage lang) {
+	unsigned int i;
+	int res = 0;
+	for (i=0;i<CARD_AMOUNT;i++)
+		res += card[i].name.GetLength(lang);
+	return res;
+}
+
 void CardDataSet::UpdateOffset() {
+	if (GetGameType()!=GAME_TYPE_PSX)
+		return;
 	unsigned int i;
 	uint16_t j;
-	if (GetGameType()==GAME_TYPE_PSX) {
-		j = 4*CARD_AMOUNT;
-		for (i=0;i<CARD_AMOUNT;i++) {
-			card[i].name_offset = j;
-			j += card[i].name.length;
-		}
-		name_space_used = j;
-	} else {
-		j = 0;
-		for (i=0;i<CARD_AMOUNT;i++)
-			j += card[i].name.length;
-		name_space_used = j;
+	j = 4*CARD_AMOUNT;
+	for (i=0;i<CARD_AMOUNT;i++) {
+		card[i].name_offset = j;
+		j += card[i].name.length;
 	}
+	name_space_used = j;
 }

@@ -346,7 +346,7 @@ void CDDataStruct::CilDisplayNames(bool create) {
 
 void CDDataStruct::ChangeFF9StringCharmap(wchar_t* chmapdef, wchar_t* chmapa, wchar_t* chmapb, ExtendedCharmap& chmapext) {
 	unsigned int i,j;
-	if (GetGameType()!=GAME_TYPE_PSX)
+	if (gametype!=GAME_TYPE_PSX)
 		return;
 	if (spellloaded) {
 		for (i=0;i<SPELL_AMOUNT;i++) {
@@ -466,7 +466,7 @@ void CDDataStruct::ChangeFF9StringCharmap(wchar_t* chmapdef, wchar_t* chmapa, wc
 
 void CDDataStruct::ChangeFF9StringOpcodeChar(wchar_t newchar) {
 	unsigned int i,j;
-	if (GetGameType()!=GAME_TYPE_PSX)
+	if (gametype!=GAME_TYPE_PSX)
 		return;
 	if (spellloaded) {
 		for (i=0;i<SPELL_AMOUNT;i++) {
@@ -571,6 +571,121 @@ void CDDataStruct::ChangeFF9StringOpcodeChar(wchar_t newchar) {
 		for (i=0;i<ffuiset.special_text->amount;i++)
 			for (j=0;j<ffuiset.special_text->text_block[i].amount;j++)
 				ffuiset.special_text->text_block[i].text[j].SetOpcodeChar(newchar);
+		DisplaySpecialText(m_specialtextlist->GetSelection());
+	}
+}
+
+void CDDataStruct::ChangeFF9StringSteamLanguage(SteamLanguage newlang) {
+	unsigned int i,j;
+	if (gametype==GAME_TYPE_PSX)
+		return;
+	if (spellloaded) {
+		for (i=0;i<SPELL_AMOUNT;i++) {
+			spellset.spell[i].name.ChangeSteamLanguage(newlang);
+			spellset.spell[i].help.ChangeSteamLanguage(newlang);
+			UpdateSpellName(i);
+		}
+		SpellDisplayNames();
+		DisplaySpell(m_spelllist->GetSelection());
+	}
+	if (supportloaded) {
+		for (i=0;i<SUPPORT_AMOUNT;i++) {
+			supportset.support[i].name.ChangeSteamLanguage(newlang);
+			supportset.support[i].help.ChangeSteamLanguage(newlang);
+			UpdateSupportName(i);
+		}
+		SupportDisplayNames();
+		DisplaySupport(m_supportlist->GetSelection());
+	}
+	if (cmdloaded) {
+		for (i=0;i<COMMAND_AMOUNT;i++) {
+			cmdset.cmd[i].name.ChangeSteamLanguage(newlang);
+			cmdset.cmd[i].help.ChangeSteamLanguage(newlang);
+			UpdateCommandName(i);
+		}
+		CommandDisplayNames();
+		DisplayCommand(m_cmdlist->GetSelection());
+	}
+	if (statloaded) {
+		for (i=0;i<PLAYABLE_CHAR_AMOUNT;i++) {
+			statset.initial_stat[i].default_name.ChangeSteamLanguage(newlang);
+		}
+		StatDisplayNames();
+		DisplayStat(m_statlist->GetSelection());
+	}
+	if (enemyloaded) {
+		for (i=0;i<enemyset.battle_amount;i++) {
+			for (j=0;j<enemyset.text[i]->amount;j++)
+				enemyset.text[i]->text[j].ChangeSteamLanguage(newlang);
+			for (j=0;j<enemyset.battle[i]->stat_amount;j++)
+				enemyset.battle[i]->stat[j].name.ChangeSteamLanguage(newlang);
+			for (j=0;j<enemyset.battle[i]->spell_amount;j++)
+				enemyset.battle[i]->spell[j].name.ChangeSteamLanguage(newlang);
+			enemyset.script[i]->ChangeSteamLanguage(newlang);
+			enemyset.UpdateBattleName(i);
+		}
+		EnemyDisplayNames();
+		DisplayEnemy(m_enemylist->GetSelection());
+	}
+	if (itemloaded) {
+		for (i=0;i<ITEM_AMOUNT;i++) {
+			itemset.item[i].name.ChangeSteamLanguage(newlang);
+			itemset.item[i].help.ChangeSteamLanguage(newlang);
+			itemset.item[i].battle_help.ChangeSteamLanguage(newlang);
+			UpdateItemName(i);
+		}
+		for (i=0;i<KEY_ITEM_AMOUNT;i++) {
+			itemset.key_item[i].name.ChangeSteamLanguage(newlang);
+			itemset.key_item[i].help.ChangeSteamLanguage(newlang);
+			itemset.key_item[i].description.ChangeSteamLanguage(newlang);
+		}
+		ItemDisplayNames();
+		KeyItemDisplayNames();
+		DisplayItem(m_itemlist->GetSelection());
+		DisplayKeyItem(m_keyitemlist->GetSelection());
+	}
+	if (cardloaded) {
+		for (i=0;i<CARD_AMOUNT;i++) {
+			cardset.card[i].name.ChangeSteamLanguage(newlang);
+			UpdateCardName(i);
+		}
+		CardDisplayNames();
+		DisplayCard(m_cardlist->GetSelection());
+	}
+	if (textloaded) {
+		for (i=0;i<textset.amount;i++) {
+			if (textset.text_data[i]) {
+				for (j=0;j<textset.text_data[i]->amount;j++) {
+					textset.text_data[i]->text[j].ChangeSteamLanguage(newlang);
+				}
+			}
+		}
+		DisplayText(m_textlist->GetSelection());
+	}
+	if (worldloaded) {
+		for (i=0;i<worldset.amount;i++) {
+			for (j=0;j<worldset.text_data[i]->amount;j++)
+				worldset.text_data[i]->text[j].ChangeSteamLanguage(newlang);
+			worldset.script[i]->ChangeSteamLanguage(newlang);
+		}
+		for (i=0;i<WORLD_MAP_PLACE_AMOUNT;i++) {
+			worldset.world_data->place_name[i].ChangeSteamLanguage(newlang);
+			m_worldplacelist->SetString(i,_(worldset.world_data->place_name[i].GetStr(hades::TEXT_PREVIEW_TYPE)));
+		}
+		DisplayWorldMap(m_worldlist->GetSelection());
+	}
+	if (fieldloaded) {
+		for (i=0;i<fieldset.amount;i++) {
+			fieldset.script_data[i]->name.ChangeSteamLanguage(newlang);
+			fieldset.script_data[i]->ChangeSteamLanguage(newlang);
+		}
+		FieldDisplayNames();
+		DisplayField(m_fieldlist->GetSelection());
+	}
+	if (ffuiloaded) {
+		for (i=0;i<ffuiset.special_text->amount;i++)
+			for (j=0;j<ffuiset.special_text->text_block[i].amount;j++)
+				ffuiset.special_text->text_block[i].text[j].ChangeSteamLanguage(newlang);
 		DisplaySpecialText(m_specialtextlist->GetSelection());
 	}
 }
@@ -846,7 +961,7 @@ wstring* CDDataStruct::ReadHWS(const char* fname, bool* section, bool* sectext, 
 	if (section[DATA_SECTION_MENU_UI])
 		InitMenuUI();
 	if (section[DATA_SECTION_ASSEMBLY]) {
-		if (GetGameType()==GAME_TYPE_PSX)
+		if (gametype==GAME_TYPE_PSX)
 			InitMips();
 		else
 			InitCil();
@@ -913,7 +1028,7 @@ wstring* CDDataStruct::ReadHWS(const char* fname, bool* section, bool* sectext, 
 		fieldmodified = true;
 		FieldDisplayNames();
 	}
-	if (section[DATA_SECTION_BATTLE_SCENE] && GetGameType()==GAME_TYPE_PSX) {
+	if (section[DATA_SECTION_BATTLE_SCENE] && gametype==GAME_TYPE_PSX) {
 		scenemodified = true;
 		BattleSceneDisplayNames();
 	}
@@ -925,7 +1040,7 @@ wstring* CDDataStruct::ReadHWS(const char* fname, bool* section, bool* sectext, 
 		MarkDataMenuUIModified();
 	}
 	if (section[DATA_SECTION_ASSEMBLY]) {
-		if (GetGameType()==GAME_TYPE_PSX)
+		if (gametype==GAME_TYPE_PSX)
 			MarkDataMipsModified(0);
 		else
 			MarkDataCilModified();
@@ -1015,7 +1130,7 @@ void CDDataStruct::MarkDataWorldMapModified(unsigned int worldid, Chunk_Type chu
 		worldset.chartim[worldid][objectnum].MarkDataModified();
 	else if (chunktype==CHUNK_TYPE_IMAGE_MAP) {
 		worldset.preload[worldid]->MarkDataModified();
-		if (GetGameType()==GAME_TYPE_PSX)
+		if (gametype==GAME_TYPE_PSX)
 			worldset.script[worldid]->parent_cluster->MarkDataModified();
 	}
 	GetTopWindow()->MarkDataModified();
@@ -1029,7 +1144,7 @@ void CDDataStruct::MarkDataFieldModified(unsigned int fieldid, Chunk_Type chunkt
 		fieldset.role[fieldid]->MarkDataModified();
 	else if (chunktype==CHUNK_TYPE_IMAGE_MAP) {
 		fieldset.preload[fieldid]->MarkDataModified();
-		if (GetGameType()==GAME_TYPE_PSX)
+		if (gametype==GAME_TYPE_PSX)
 			fieldset.script_data[fieldid]->parent_cluster->MarkDataModified();
 	}
 	GetTopWindow()->MarkDataModified();
@@ -1567,7 +1682,7 @@ void CDDataStruct::DisplaySpell(int spellid) {
 	wxString swordtoken = _(ffuiset.special_text->text_block[SpecialTextDataSet::GetSpellNamingIndex()].text[0].GetStr(hades::TEXT_PREVIEW_TYPE));
 	if (swordtoken[swordtoken.Len()-1]==L' ')
 		perfname.Add(swordtoken+_(sp.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
-	else if (GetGameType()==GAME_TYPE_PSX)
+	else if (gametype==GAME_TYPE_PSX)
 		perfname.Add(_(sp.name.GetStr(hades::TEXT_PREVIEW_TYPE))+swordtoken);
 	else
 		perfname.Add(_(sp.name.GetStr(hades::TEXT_PREVIEW_TYPE))+_(L' ')+swordtoken);
@@ -1645,7 +1760,7 @@ void CDDataStruct::UpdateSpellName(unsigned int spellid) {
 				wxString swordtoken = _(ffuiset.special_text->text_block[SpecialTextDataSet::GetSpellNamingIndex()].text[0].GetStr(hades::TEXT_PREVIEW_TYPE));
 				if (swordtoken[swordtoken.Len()-1]==L' ')
 					m_partyspecialmagicswordlist->SetString(i,swordtoken+_(spellset.spell[spellid].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
-				else if (GetGameType()==GAME_TYPE_PSX)
+				else if (gametype==GAME_TYPE_PSX)
 					m_partyspecialmagicswordlist->SetString(i,_(spellset.spell[spellid].name.GetStr(hades::TEXT_PREVIEW_TYPE))+swordtoken);
 				else
 					m_partyspecialmagicswordlist->SetString(i,_(spellset.spell[spellid].name.GetStr(hades::TEXT_PREVIEW_TYPE))+_(L' ')+swordtoken);
@@ -1805,7 +1920,7 @@ void CDDataStruct::OnSpellChangeButton(wxCommandEvent& event) {
 		}
 	} else if (id==wxID_HELP) {
 		CharmapDataStruct* chmap = NULL;
-		if (GetGameType()==GAME_TYPE_PSX && textloaded)
+		if (gametype==GAME_TYPE_PSX && textloaded)
 			chmap = textset.charmap[textset.main_charmap_index];
 		TextEditDialog ted(this,sp.help,spellset.help_space_total-spellset.help_space_used,TEXT_STYLE_HELP,chmap);
 		if (ted.ShowModal()==wxID_OK) {
@@ -1932,7 +2047,7 @@ void CDDataStruct::OnSupportChangeButton(wxCommandEvent& event) {
 		}
 	} else if (id==wxID_HELP) {
 		CharmapDataStruct* chmap = NULL;
-		if (GetGameType()==GAME_TYPE_PSX && textloaded)
+		if (gametype==GAME_TYPE_PSX && textloaded)
 			chmap = textset.charmap[textset.main_charmap_index];
 		TextEditDialog ted(this,sp.help,supportset.help_space_total-supportset.help_space_used,TEXT_STYLE_HELP,chmap);
 		if (ted.ShowModal()==wxID_OK) {
@@ -2136,7 +2251,7 @@ void CDDataStruct::OnCommandChangeButton(wxCommandEvent& event) {
 		}
 	} else if (id==wxID_HELP) {
 		CharmapDataStruct* chmap = NULL;
-		if (GetGameType()==GAME_TYPE_PSX && textloaded)
+		if (gametype==GAME_TYPE_PSX && textloaded)
 			chmap = textset.charmap[textset.main_charmap_index];
 		TextEditDialog ted(this,cmd.help,cmdset.help_space_total-cmdset.help_space_used,TEXT_STYLE_HELP,chmap);
 		if (ted.ShowModal()==wxID_OK) {
@@ -2222,8 +2337,8 @@ void CDDataStruct::DisplayStat(int statid) {
 	InitialStatDataStruct& is = statset.initial_stat[statid];
 	unsigned int i,cmdamount,equipamount;
 	m_statchardefaultname->ChangeValue(_(is.default_name.str));
-	m_statchardefaultname->Enable(GetGameType()==GAME_TYPE_PSX);
-	m_statchardefaultnamebutton->Enable(GetGameType()==GAME_TYPE_PSX);
+	m_statchardefaultname->Enable(gametype==GAME_TYPE_PSX);
+	m_statchardefaultnamebutton->Enable(gametype==GAME_TYPE_PSX);
 	m_statcharspeed->SetValue(is.speed);
 	m_statcharstrength->SetValue(is.strength);
 	m_statcharmagic->SetValue(is.magic);
@@ -2608,7 +2723,7 @@ void CDDataStruct::DisplayItemStatIdHelp(void) {
 
 // Icon
 void CDDataStruct::DisplayItemIcon(void) {
-	if (GetGameType()!=GAME_TYPE_PSX)
+	if (gametype!=GAME_TYPE_PSX)
 		return;
 	TIMImageDataStruct& tim = textset.chartim[1][2];
 	uint16_t palpos = m_itemiconcolor->GetValue();
@@ -2689,7 +2804,7 @@ void CDDataStruct::DisplayItem(int itemid) {
 		m_itemweaponunk1->SetValue(iw.offset1);
 		m_itemweaponunk2->SetValue(iw.offset2);
 		m_itemweaponmodel->SetValue(iw.model);
-		m_itemweaponmodel->Enable(GetGameType()==GAME_TYPE_PSX);
+		m_itemweaponmodel->Enable(gametype==GAME_TYPE_PSX);
 		m_itemweaponpanel->Layout();
 	}
 	m_itemarmorlabel->Show(isarmor);
@@ -2988,7 +3103,7 @@ void CDDataStruct::OnItemChangeButton(wxCommandEvent& event) {
 			}
 		} else if (id==wxID_KEYHELP) {
 			CharmapDataStruct* chmap = NULL;
-			if (GetGameType()==GAME_TYPE_PSX && textloaded)
+			if (gametype==GAME_TYPE_PSX && textloaded)
 				chmap = textset.charmap[textset.main_charmap_index];
 			TextEditDialog ted(this,ki.help,itemset.key_help_space_total-itemset.key_help_space_used,TEXT_STYLE_HELP,chmap);
 			if (ted.ShowModal()==wxID_OK) {
@@ -2997,7 +3112,7 @@ void CDDataStruct::OnItemChangeButton(wxCommandEvent& event) {
 			}
 		} else if (id==wxID_KEYDESCRIPTION) {
 			CharmapDataStruct* chmap = NULL;
-			if (GetGameType()==GAME_TYPE_PSX && textloaded)
+			if (gametype==GAME_TYPE_PSX && textloaded)
 				chmap = textset.charmap[textset.main_charmap_index];
 			TextEditDialog ted(this,ki.description,itemset.key_desc_space_total-itemset.key_desc_space_used,TEXT_STYLE_DESCRIPTION,chmap);
 			if (ted.ShowModal()==wxID_OK) {
@@ -3017,7 +3132,7 @@ void CDDataStruct::OnItemChangeButton(wxCommandEvent& event) {
 			}
 		} else if (id==wxID_HELP) {
 			CharmapDataStruct* chmap = NULL;
-			if (GetGameType()==GAME_TYPE_PSX && textloaded)
+			if (gametype==GAME_TYPE_PSX && textloaded)
 				chmap = textset.charmap[textset.main_charmap_index];
 			TextEditDialog ted(this,it.help,itemset.help_space_total-itemset.help_space_used,TEXT_STYLE_HELP,chmap);
 			if (ted.ShowModal()==wxID_OK) {
@@ -3026,7 +3141,7 @@ void CDDataStruct::OnItemChangeButton(wxCommandEvent& event) {
 			}
 		} else if (id==wxID_BATTLEHELP) {
 			CharmapDataStruct* chmap = NULL;
-			if (GetGameType()==GAME_TYPE_PSX && textloaded)
+			if (gametype==GAME_TYPE_PSX && textloaded)
 				chmap = textset.charmap[textset.main_charmap_index];
 			TextEditDialog ted(this,it.battle_help,itemset.help2_space_total-itemset.help2_space_used,TEXT_STYLE_HELP,chmap);
 			if (ted.ShowModal()==wxID_OK) {
@@ -3375,7 +3490,7 @@ void CDDataStruct::DisplayCardPowerHelp(void) {
 	infolabelnpc.Printf(wxT("%X%s%X%X\n%X%s%X%X"),/*
 						*/ cd.npc_attack >> 5,typestr,cd.npc_defence >> 5,cd.npc_magicdefence >> 5,/*
 						*/ max(0,cd.npc_attack-2) >> 4,typestr,max(0,cd.npc_defence-2) >> 4,max(0,cd.npc_magicdefence-2) >> 4);
-	if (GetGameType()==GAME_TYPE_PSX) {
+	if (gametype==GAME_TYPE_PSX) {
 		if (infolabelplayer!=m_cardplayerpowerlabel->GetLabel())
 			m_cardplayerpowerlabel->SetLabel(infolabelplayer);
 		if (infolabelnpc!=m_cardnpcpowerlabel->GetLabel())
@@ -3391,7 +3506,7 @@ void CDDataStruct::DisplayCard(int cardid) {
 	unsigned int* sortid = (unsigned int*)m_cardlist->GetClientData(cardid);
 	CardDataStruct& cd = cardset.card[*sortid];
 	m_cardname->ChangeValue(_(cd.name.str));
-	if (GetGameType()==GAME_TYPE_PSX) {
+	if (gametype==GAME_TYPE_PSX) {
 		m_cardstatsteampanel->Show(false);
 		m_cardstatpsxpanel->Show(true);
 		m_cardplayertype->SetSelection(cd.player_type);
@@ -3511,19 +3626,19 @@ void CDDataStruct::OnCardChangeSpin(wxSpinEvent& event) {
 	CardDeckDataStruct& cd = cardset.deck[m_carddecklist->GetSelection()];
 	int id = event.GetId();
 	if (id==wxID_ATTPLY) { // Keep the parity of the stats
-		if (GetGameType()==GAME_TYPE_PSX)
+		if (gametype==GAME_TYPE_PSX)
 			cs.player_attack = (cs.player_attack & 1) | (m_cardplayerattack->GetValue() << 1);
 		else
 			cs.player_attack = (cs.player_attack & 1) | (m_cardattack->GetValue() << 1);
 		DisplayCardPowerHelp();
 	} else if (id==wxID_DEFPLY) {
-		if (GetGameType()==GAME_TYPE_PSX)
+		if (gametype==GAME_TYPE_PSX)
 			cs.player_defence = (cs.player_defence & 1) | (m_cardplayerdefence->GetValue() << 1);
 		else
 			cs.player_defence = (cs.player_defence & 1) | (m_carddefence->GetValue() << 1);
 		DisplayCardPowerHelp();
 	} else if (id==wxID_MDEFPLY) {
-		if (GetGameType()==GAME_TYPE_PSX)
+		if (gametype==GAME_TYPE_PSX)
 			cs.player_magicdefence = (cs.player_magicdefence & 1) | (m_cardplayermagicdefence->GetValue() << 1);
 		else
 			cs.player_magicdefence = (cs.player_magicdefence & 1) | (m_cardmagicdefence->GetValue() << 1);
@@ -3556,7 +3671,7 @@ void CDDataStruct::DisplayEnemyStat(int battleid, int statid) {
 	m_enemystatscrolledwindow->Show(true);
 	m_enemygroupscrolledwindow->Show(false);
 	m_enemyspellscrolledwindow->Show(false);
-	m_enemystatmodel->Enable(GetGameType()!=GAME_TYPE_PSX);
+	m_enemystatmodel->Enable(gametype!=GAME_TYPE_PSX);
 	m_enemyspelllist->SetSelection(wxNOT_FOUND);
 	m_enemygrouplist->SetSelection(wxNOT_FOUND);
 	m_enemystatname->ChangeValue(_(es.name.str));
@@ -3963,14 +4078,14 @@ void CDDataStruct::OnEnemyChangeChoice(wxCommandEvent& event) {
 	int id = event.GetId();
 	if (id==wxID_SCENE) {
 		unsigned int* newscene = (unsigned int*)event.GetClientData();
-		if (GetGameType()==GAME_TYPE_PSX) {
+		if (gametype==GAME_TYPE_PSX) {
 			ImageMapDataStruct& em = *enemyset.preload[*sortid];
 			int extrablock = em.RemoveData(MAP_OBJECT_SCENE,eb.scene_id);
 			em.AddData(MAP_OBJECT_SCENE,*newscene,&cluster.global_map,cluster.enemy_shared_map,em.GetExtraSize()/0x10+extrablock);
 			em.UpdateOffset();
 		}
 		enemyset.ChangeBattleScene(enemyset.battle_data[*sortid]->object_id,*newscene);
-		MarkDataEnemyModified(*sortid,GetGameType()==GAME_TYPE_PSX ? CHUNK_TYPE_IMAGE_MAP : CHUNK_TYPE_BATTLE_SCENE);
+		MarkDataEnemyModified(*sortid,gametype==GAME_TYPE_PSX ? CHUNK_TYPE_IMAGE_MAP : CHUNK_TYPE_BATTLE_SCENE);
 		return;
 	} else if (m_enemystatlist->GetSelection()!=wxNOT_FOUND) {
 		EnemyStatDataStruct& es = eb.stat[m_enemystatlist->GetSelection()];
@@ -4161,7 +4276,7 @@ void CDDataStruct::OnEnemyChangeButton(wxCommandEvent& event) {
 			MarkDataSpellModified();
 		}
 	} else if (id==wxID_SCRIPT) {
-		bool dataloaded[7] = { statloaded, enemyloaded, fieldloaded, itemloaded, spellloaded, cmdloaded, cardloaded };
+		bool dataloaded[8] = { statloaded, enemyloaded, fieldloaded, itemloaded, spellloaded, supportloaded, cmdloaded, cardloaded };
 		ScriptEditDialog dial(this,*enemyset.script[*sortid],SCRIPT_TYPE_BATTLE,&saveset,&eb,enemyset.text[*sortid],dataloaded);
 		if (dial.ShowModal()==wxID_OK) {
 			*enemyset.script[*sortid] = dial.script;
@@ -4219,7 +4334,7 @@ void CDDataStruct::OnEnemyStatRightClick(wxMouseEvent& event) {
 		m_enemystatlist->SetSelection(newsel);
 		DisplayEnemyStat(m_enemylist->GetSelection(),newsel);
 		enemystatmenupaste->Enable(copyenemystat_battleid>=0);
-		if (GetGameType()!=GAME_TYPE_PSX)
+		if (gametype!=GAME_TYPE_PSX)
 			m_enemystatlist->PopupMenu(enemystatmenu);
 	}
 }
@@ -4504,7 +4619,7 @@ void CDDataStruct::OnTextEditText(wxCommandEvent& event) {
 	int sizex = -1, sizey = -1;
 	uint16_t formatamount = 0;
 	TextFormatStruct* formatdata = NULL;
-	if (GetGameType()==GAME_TYPE_PSX) {
+	if (gametype==GAME_TYPE_PSX) {
 		chmap = textset.charmap[textset.main_charmap_index];
 		if (event.GetId()==wxID_TEXT)
 			chmapext = textset.charmap[*sortid];
@@ -4522,7 +4637,7 @@ void CDDataStruct::OnTextEditText(wxCommandEvent& event) {
 		td.SetText(textsel,ted.text);
 		td.SetDialogBoxSize(textsel,ted.m_sizex->GetValue(),ted.m_sizey->GetValue(),!(config.language & LANGUAGE_VERSION_JAPAN));
 		unsigned int i,j = 0,famount = 0;
-		if (GetGameType()==GAME_TYPE_PSX)
+		if (gametype==GAME_TYPE_PSX)
 			famount = td.format_amount[textsel];
 		for (i=0;i<famount;i++) {
 			if (ted.format_removed[i])
@@ -4886,7 +5001,7 @@ void CDDataStruct::DisplayField(int fieldid) {
 	unsigned int* sortid = (unsigned int*)m_fieldlist->GetClientData(fieldid);
 	fieldselection = *sortid;
 	unsigned int i;
-	if (GetGameType()!=GAME_TYPE_PSX && fieldset.tim_data[fieldselection]!=NULL) {
+	if (gametype!=GAME_TYPE_PSX && fieldset.tim_data[fieldselection]!=NULL) {
 		fstream ftmp;
 		fieldset.tim_data[*sortid]->Read(ftmp);
 	}
@@ -4908,7 +5023,7 @@ void CDDataStruct::DisplayField(int fieldid) {
 }
 
 void CDDataStruct::OnListBoxField(wxCommandEvent& event) {
-	if (GetGameType()!=GAME_TYPE_PSX && fieldset.tim_data[fieldselection]!=NULL)
+	if (gametype!=GAME_TYPE_PSX && fieldset.tim_data[fieldselection]!=NULL)
 		fieldset.tim_data[fieldselection]->Flush();
 	DisplayField(m_fieldlist->GetSelection());
 }
@@ -4946,7 +5061,7 @@ void CDDataStruct::OnFieldChangeButton(wxCommandEvent& event) {
 	int id = event.GetId();
 	if (id==wxID_NAME) {
 		CharmapDataStruct* chmap = NULL;
-		if (GetGameType()==GAME_TYPE_PSX && textloaded)
+		if (gametype==GAME_TYPE_PSX && textloaded)
 			chmap = textset.charmap[textset.main_charmap_index];
 		TextEditDialog ted(this,sc->name,SCRIPT_NAME_MAX_LENGTH-sc->name.length,TEXT_STYLE_DEFAULT,chmap);
 		if (ted.ShowModal()==wxID_OK) {
@@ -4954,7 +5069,7 @@ void CDDataStruct::OnFieldChangeButton(wxCommandEvent& event) {
 			m_fieldname->SetValue(sc->name.str);
 		}
 	} else if (id==wxID_SCRIPT) {
-		bool dataloaded[7] = { statloaded, enemyloaded, fieldloaded, itemloaded, spellloaded, cmdloaded, cardloaded };
+		bool dataloaded[8] = { statloaded, enemyloaded, fieldloaded, itemloaded, spellloaded, supportloaded, cmdloaded, cardloaded };
 		TextDataStruct* textobj = fieldset.related_text[*sortid];
 //fstream fout("aaaa.txt",ios::app|ios::out); fout << "Go" << endl; fout.close();
 		ScriptEditDialog dial(this,*sc,SCRIPT_TYPE_FIELD,&saveset,NULL,textobj,dataloaded);
@@ -5005,7 +5120,7 @@ walkbmp.SaveFile(_(L"aaaa.bmp"),wxBITMAP_TYPE_BMP);*/
 			MarkDataFieldModified(*sortid,CHUNK_TYPE_SCRIPT);
 		}
 	} else if (id==wxID_PRELOAD) {
-		if (GetGameType()==GAME_TYPE_PSX) {
+		if (gametype==GAME_TYPE_PSX) {
 			bool dataloaded[2] = { enemyloaded, fieldloaded };
 			ImageMapEditDialog dial(this,fieldset.preload[*sortid],cluster.enemy_shared_map,&cluster.global_map,saveset,dataloaded);
 			if (dial.ShowModal()==wxID_OK) {
@@ -5103,7 +5218,7 @@ void CDDataStruct::DisplayWorldMap(int worldid) {
 	m_worldtextlist->Clear();
 	for (i=0;i<td.amount;i++)
 		m_worldtextlist->Append(_(td.text[i].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
-	m_worldpreload->Enable(GetGameType()==GAME_TYPE_PSX); // DEBUG
+	m_worldpreload->Enable(gametype==GAME_TYPE_PSX); // DEBUG
 	m_worldtextcharmaplist->Clear();
 	for (i=0;i<worldset.tim_amount[*sortid];i++) {
 		wstringstream buffer;
@@ -5212,7 +5327,7 @@ void CDDataStruct::OnWorldChangeButton(wxCommandEvent& event) {
 		unsigned int sel = m_worldlist->GetSelection();
 		unsigned int* sortid = (unsigned int*)m_worldlist->GetClientData(sel);
 		ScriptDataStruct* sc = worldset.script[*sortid];
-		bool dataloaded[7] = { statloaded, enemyloaded, fieldloaded, itemloaded, spellloaded, cmdloaded, cardloaded };
+		bool dataloaded[8] = { statloaded, enemyloaded, fieldloaded, itemloaded, spellloaded, supportloaded, cmdloaded, cardloaded };
 		ScriptEditDialog dial(this,*sc,SCRIPT_TYPE_WORLD,&saveset,NULL,worldset.text_data[*sortid],dataloaded);
 		if (dial.ShowModal()==wxID_OK) {
 			*sc = dial.script;
@@ -5229,7 +5344,7 @@ void CDDataStruct::OnWorldChangeButton(wxCommandEvent& event) {
 	} else if (id==wxID_PRELOAD) {
 		unsigned int sel = m_worldlist->GetSelection();
 		unsigned int* sortid = (unsigned int*)m_worldlist->GetClientData(sel);
-		if (GetGameType()==GAME_TYPE_PSX) {
+		if (gametype==GAME_TYPE_PSX) {
 			bool dataloaded[2] = { enemyloaded, fieldloaded };
 			ImageMapEditDialog dial(this,worldset.preload[*sortid],cluster.enemy_shared_map,&cluster.global_map,saveset,dataloaded);
 			if (dial.ShowModal()==wxID_OK) {
@@ -5248,7 +5363,7 @@ void CDDataStruct::OnWorldChangeButton(wxCommandEvent& event) {
 	} else if (id==wxID_NAME) {
 		unsigned int sel = m_worldplacelist->GetSelection();
 		WorldMapDataStruct& wm = *worldset.world_data;
-		CharmapDataStruct* chmap = GetGameType()==GAME_TYPE_PSX ? worldset.charmap[0] : NULL;
+		CharmapDataStruct* chmap = gametype==GAME_TYPE_PSX ? worldset.charmap[0] : NULL;
 		TextEditDialog ted(this,wm.place_name[sel],wm.place_name_extra_size,TEXT_STYLE_DEFAULT,chmap);
 		if (ted.ShowModal()==wxID_OK) {
 			wm.SetName(sel,ted.text);
@@ -5721,8 +5836,12 @@ void CDDataStruct::DisplaySpecialText(int textblockid) {
 	SpecialTextDataStruct& st = ffuiset.special_text->text_block[textblockid];
 	unsigned int i;
 	m_specialtextdatalist->Clear();
-	for (i=0;i<st.amount;i++)
-		m_specialtextdatalist->Append(_(st.text[i].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
+	if (st.is_localization)
+		for (i=0;i<st.amount;i++)
+			m_specialtextdatalist->Append(_(st.localization_field[i])+_(L": ")+_(st.text[i].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
+	else
+		for (i=0;i<st.amount;i++)
+			m_specialtextdatalist->Append(_(st.text[i].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
 	m_textscrolledwindow->Layout();
 	m_textscrolledwindow->Refresh();
 }
@@ -5735,12 +5854,15 @@ void CDDataStruct::OnSpecialTextEditText(wxCommandEvent& event) {
 	int textsel = m_specialtextdatalist->GetSelection();
 	SpecialTextDataStruct& st = ffuiset.special_text->text_block[m_specialtextlist->GetSelection()];
 	CharmapDataStruct* chmap = NULL;
-	if (GetGameType()==GAME_TYPE_PSX && textloaded)
+	if (gametype==GAME_TYPE_PSX && textloaded)
 		chmap = textset.charmap[textset.main_charmap_index];
 	TextEditDialog ted(this,st.text[textsel],st.space_total-st.space_used,TEXT_STYLE_DESCRIPTION,chmap);
 	if (ted.ShowModal()==wxID_OK) {
 		st.SetText(textsel,ted.text);
-		m_specialtextdatalist->SetString(textsel,_(st.text[textsel].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
+		if (st.is_localization)
+			m_specialtextdatalist->SetString(textsel,_(st.localization_field[textsel])+_(L": ")+_(st.text[textsel].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
+		else
+			m_specialtextdatalist->SetString(textsel,_(st.text[textsel].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
 		MarkDataMenuUIModified();
 	}
 }
@@ -5772,9 +5894,7 @@ void CDDataStruct::OnSpecialTextRightClickMenu(wxCommandEvent& event) {
 		newsel = min((int)td.amount-1,objid);
 	}
 	if (newsel>=0) {
-		m_specialtextdatalist->Clear();
-		for (i=0;i<td.amount;i++)
-			m_specialtextdatalist->Append(_(td.text[i].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
+		DisplaySpecialText(sel);
 		m_specialtextdatalist->SetSelection(newsel);
 	}
 	MarkDataMenuUIModified();
@@ -6077,7 +6197,7 @@ void CDDataStruct::InitPartySpecial(void) {
 		wxString swordtoken = _(ffuiset.special_text->text_block[SpecialTextDataSet::GetSpellNamingIndex()].text[0].GetStr(hades::TEXT_PREVIEW_TYPE));
 		if (swordtoken[swordtoken.Len()-1]==L' ')
 			m_partyspecialmagicswordlist->Append(swordtoken+_(spellset.spell[partyspecialset.magic_sword[i]].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
-		else if (GetGameType()==GAME_TYPE_PSX)
+		else if (gametype==GAME_TYPE_PSX)
 			m_partyspecialmagicswordlist->Append(_(spellset.spell[partyspecialset.magic_sword[i]].name.GetStr(hades::TEXT_PREVIEW_TYPE))+swordtoken);
 		else
 			m_partyspecialmagicswordlist->Append(_(spellset.spell[partyspecialset.magic_sword[i]].name.GetStr(hades::TEXT_PREVIEW_TYPE))+_(L' ')+swordtoken);
@@ -6330,7 +6450,7 @@ void CDDataStruct::InitField(void) {
 }
 
 void CDDataStruct::InitBattleScene(void) {
-	if (sceneloaded || GetGameType()!=GAME_TYPE_PSX)
+	if (sceneloaded || gametype!=GAME_TYPE_PSX)
 		return;
 	fstream f;
 	if (gametype==GAME_TYPE_PSX) f.open(filename.c_str(),ios::in | ios::binary);
@@ -6374,7 +6494,7 @@ void CDDataStruct::InitMenuUI(void) {
 }
 
 void CDDataStruct::InitMips(void) {
-	if (mipsloaded || GetGameType()!=GAME_TYPE_PSX)
+	if (mipsloaded || gametype!=GAME_TYPE_PSX)
 		return;
 	unsigned int i;
 	fstream f;
@@ -6390,7 +6510,7 @@ void CDDataStruct::InitMips(void) {
 }
 
 void CDDataStruct::InitCil(void) {
-	if (cilloaded || GetGameType()==GAME_TYPE_PSX)
+	if (cilloaded || gametype==GAME_TYPE_PSX)
 		return;
 	unsigned int i;
 	fstream f;
@@ -6455,7 +6575,7 @@ void CDDataStruct::DisplayCurrentData() {
 		if (sel2==0)
 			DisplaySpecialText(m_specialtextlist->GetSelection());
 	} else if (sel1==6) {
-		if (GetGameType()==GAME_TYPE_PSX) {
+		if (gametype==GAME_TYPE_PSX) {
 			sel2 = m_notebookmips->GetSelection();
 			if (sel2==0)
 				DisplayMipsBattle(m_mipsbattlelist->GetSelection());
@@ -6492,7 +6612,7 @@ void CDDataStruct::OnNotebookMain(wxNotebookEvent& event) {
 		InitMenuUI();
 		DisplaySpecialText(m_specialtextlist->GetSelection());
 	} else if (sel==6) {
-		if (GetGameType()==GAME_TYPE_PSX) {
+		if (gametype==GAME_TYPE_PSX) {
 			InitMips();
 			DisplayMipsBattle(m_mipsbattlelist->GetSelection());
 		} else {
@@ -6560,7 +6680,7 @@ void CDDataStruct::OnNotebookEnvironment(wxNotebookEvent& event) {
 		InitField();
 		DisplayField(m_fieldlist->GetSelection());
 	} else if (sel==3) {
-		if (GetGameType()==GAME_TYPE_PSX) {
+		if (gametype==GAME_TYPE_PSX) {
 			InitBattleScene();
 			DisplayBattleScene(m_battlescenelist->GetSelection());
 		} else {
@@ -6673,7 +6793,6 @@ CDDataStruct::CDDataStruct(wxWindow* parent, string fname, ConfigurationSet& cfg
 	fieldtexpreview(wxNullBitmap) {
 	unsigned int i;
 	gametype = GetGameType();
-	steamlang = GetSteamLanguage();
 	cluster.config = &config;
 	if (gametype==GAME_TYPE_PSX) {
 		m_notebookmain->RemovePage(7);

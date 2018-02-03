@@ -185,7 +185,8 @@ public:
 	DllMetaDataModification* ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount);
 	// texttype: 0 for item name, 1 for item help, 2 for item battle help,
 	//  3 for key item name, 4 for key item help, 5 for key item description
-	void WriteSteamText(fstream& ffbin, unsigned int texttype);
+	void WriteSteamText(fstream& ffbin, unsigned int texttype, SteamLanguage lang = GetSteamLanguage());
+	int GetSteamTextSize(unsigned int texttype, SteamLanguage lang = GetSteamLanguage());
 	void UpdateOffset();
 };
 

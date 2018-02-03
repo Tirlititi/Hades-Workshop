@@ -44,8 +44,8 @@ const static wxColour POSITION_POINT_COLOR(0,0,255);
  *        <------/				*
  * 								*
  * ************************ ifnot/then *******************************
- * 03 Condition					* ifnot (Condition) {
- * 02 Jump ---\					*   CODE_A()
+ * 05 Condition					* ifnot (Condition) {
+ * 03 Jump ---\					*   CODE_A()
  * CODE_A     |					* }
  *        <---/					*
  * 								*
@@ -91,7 +91,7 @@ const static wxColour POSITION_POINT_COLOR(0,0,255);
  * 								*
  *********************************************************************/
 
-#define DEFAULT_SET_STR	L"set VAR_B1_0 = 0"
+#define DEFAULT_SET_STR	L"set VAR_GenInt8_0 = 0"
 #define TAB_STR			L"    "
 #define SS_ARG_ID		500
 #define SS_ARGBOX_MAXID	32
@@ -235,18 +235,148 @@ wxString GetNextThing(wxString& line) {
 	return res;
 }
 
-ScriptEditHandler::ScriptEditHandler(ScriptDataStruct& scpt) :
+wxString ScriptEditHandler::GetArgumentDescription(int64_t argvalue, uint8_t argtype) {
+	int64_t i;
+	switch (argtype) {
+	case AT_TEXT:
+		if (use_text) {
+			if (argvalue>=text->amount) return _(L"[Invalid Text ID]");
+			wxString onelinestr = _(text->text[argvalue].str_nice);
+			onelinestr.Replace(_(L"\n"),_(L" "));
+			return _(L"\"")+onelinestr+_(L"\"");
+		}
+		break;
+	case AT_BATTLE:
+		if (use_battle) {
+			for (i=0;i<datas->enemyset->battle_amount;i++)
+				if (datas->enemyset->battle_data[i]->object_id==argvalue)
+					return _(datas->enemyset->battle_name[i]);
+			return _(L"[Missing Battle]");
+		}
+		break;
+	case AT_FIELD:
+		if (use_field) {
+			for (i=0;i<datas->fieldset->amount;i++)
+				if (datas->fieldset->script_data[i]->object_id==argvalue)
+					return _(datas->fieldset->script_data[i]->name.str_nice);
+			return _(L"[Missing Field]");
+		}
+		break;
+	case AT_ATTACK:
+		if (use_attack) {
+			if (argvalue>=enemy->spell_amount) return _(L"[Invalid Attack ID]");
+			return _(enemy->spell[argvalue].name.str_nice);
+		}
+		break;
+	case AT_ITEM:
+		if (use_item && argvalue<ITEM_AMOUNT) return _(datas->itemset->item[argvalue].name.str_nice);
+		if (use_item && argvalue>=0x100 && argvalue<0x100+KEY_ITEM_AMOUNT) return _(datas->itemset->key_item[argvalue-0x100].name.str_nice);
+		if (use_card && argvalue>=0x200 && argvalue<0x200+CARD_AMOUNT) return _(datas->cardset->card[argvalue-0x200].name.str_nice);
+		break;
+	case AT_CHARACTER:
+		if (use_character) {
+			wxString charlist;
+			for (i=0;i<12;i++)
+				if (argvalue & (1LL << i))
+					charlist += _(datas->statset->initial_stat[i].default_name.str_nice)+_(L"|");
+			if (charlist.Len()>0) charlist.Truncate(charlist.Len()-1);
+			return charlist;
+		}
+		break;
+	case AT_LCHARACTER:
+		if (use_character) {
+			if (argvalue==0xFF) return _(HADES_STRING_NULL_CHARACTER_SLOT);
+			if (argvalue<12) return _(datas->statset->initial_stat[argvalue].default_name.str_nice);
+			return _(L"[Invalid Character ID]");
+		}
+		break;
+	case AT_ENTRY:
+		if (argvalue==0xFA) return _(L"Player Character");
+		if (argvalue==0xFB) return _(L"Team Character 1");
+		if (argvalue==0xFC) return _(L"Team Character 2");
+		if (argvalue==0xFD) return _(L"Team Character 3");
+		if (argvalue==0xFE) return _(L"Team Character 4");
+		if (argvalue==0xFF) return _(L"This");
+		if (argvalue>=script.entry_amount) return _(L"[Invalid Entry ID]");
+		return entry_name[argvalue];
+	case AT_MODEL:
+		for (i=0;i<G_N_ELEMENTS(HADES_STRING_MODEL_NAME);i++)
+			if (HADES_STRING_MODEL_NAME[i].id==argvalue)
+				return _(HADES_STRING_MODEL_NAME[i].label);
+		return _(L"[Invalid Model ID]");
+	case AT_SOUND:
+	case AT_AUDIO:
+		for (i=0;i<G_N_ELEMENTS(HADES_STRING_MUSIC_NAME);i++) // DEBUG: Should retrieve whether it's audio or music
+			if (HADES_STRING_MUSIC_NAME[i].id==argvalue)
+				return _(HADES_STRING_MUSIC_NAME[i].label);
+		for (i=0;i<G_N_ELEMENTS(HADES_STRING_AUDIO_NAME);i++)
+			if (HADES_STRING_AUDIO_NAME[i].id==argvalue)
+				return _(HADES_STRING_AUDIO_NAME[i].label);
+		return _(L"[Unknown Audio]");
+	case AT_WORLDMAP:
+		for (i=0;i<G_N_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME);i++)
+			if (HADES_STRING_WORLD_BLOCK_NAME[i].id==argvalue)
+				return _(HADES_STRING_WORLD_BLOCK_NAME[i].label);
+		return _(L"[Unknown World Map]");
+	case AT_ABILITY:
+		if (use_ability && argvalue<SPELL_AMOUNT) return _(datas->spellset->spell[argvalue].name.str_nice);
+		if (use_support && argvalue>=SPELL_AMOUNT) return _(datas->supportset->support[argvalue-SPELL_AMOUNT].name.str_nice);
+		break;
+	case AT_BATTLECODE:
+		for (i=0;i<G_N_ELEMENTS(BattleCodeName);i++)
+			if (BattleCodeName[i].id==argvalue)
+				return _(BattleCodeName[i].name);
+		return _(L"[Invalid Battle Code]");
+	case AT_MODELCODE:
+		for (i=0;i<G_N_ELEMENTS(ModelCodeName);i++)
+			if (ModelCodeName[i].id==argvalue)
+				return _(ModelCodeName[i].name);
+		return _(L"[Invalid Model Code]");
+	case AT_WORLDCODE:
+		for (i=0;i<G_N_ELEMENTS(WorldCodeName);i++)
+			if (WorldCodeName[i].id==argvalue)
+				return _(WorldCodeName[i].name);
+		return _(L"[Invalid World Map Code]");
+	case AT_SOUNDCODE:
+		for (i=0;i<G_N_ELEMENTS(SoundCodeName);i++)
+			if (SoundCodeName[i].id==argvalue)
+				return _(SoundCodeName[i].name);
+		return _(L"[Invalid Sound Code]");
+	case AT_SPSCODE:
+		for (i=0;i<G_N_ELEMENTS(SpsCodeName);i++)
+			if (SpsCodeName[i].id==argvalue)
+				return _(SpsCodeName[i].name);
+		return _(L"[Invalid SPS Code]");
+	case AT_ANIMATION:
+		i = AnimationDatabase::GetIndex(argvalue);
+		if (i>=0) return AnimationDatabase::GetDescription(i);
+		return _(L"[Invalid Animation ID]");
+	case AT_DECK:
+		return _(HADES_STRING_DECK_NAME[argvalue].label);
+	}
+	return wxEmptyString;
+}
+
+ScriptEditHandler::ScriptEditHandler(ScriptDataStruct& scpt, int scpttype, SaveSet* sv, EnemyDataStruct* ed, TextDataStruct* td, bool* dataloaded) :
 	script(scpt),
+	enemy(ed),
+	text(td),
+	datas(sv),
+	script_type(scpttype),
+	use_character(dataloaded[0]),
+	use_text(td),
+	use_battle(dataloaded[1]),
+	use_attack(ed),
+	use_field(dataloaded[2]),
+	use_item(dataloaded[3]),
+	use_ability(dataloaded[4]),
+	use_support(dataloaded[5]),
+	use_command(dataloaded[6]),
+	use_card(dataloaded[7]),
 	entry_selection(SCRIPT_ID_NO_ENTRY),
 	handler_dialog(NULL) {
 //fstream fout("aaaa.txt",ios::app|ios::out); fout << "0.3" << endl; fout.close();
 	unsigned int i;
-	modellist_id = new uint16_t*[G_N_ELEMENTS(HADES_STRING_MODEL_NAME)];
-	modellist_str.Alloc(G_N_ELEMENTS(HADES_STRING_MODEL_NAME));
-	for (i=0;i<G_N_ELEMENTS(HADES_STRING_MODEL_NAME);i++) {
-		modellist_str.Add(_(HADES_STRING_MODEL_NAME[i].label));
-		modellist_id[i] = new uint16_t(HADES_STRING_MODEL_NAME[i].id);
-	}
 	entry_name.Alloc(script.entry_amount);
 	if (script.entry_amount>0)
 		entry_name.Add(_(L"Main"));
@@ -259,20 +389,12 @@ ScriptEditHandler::ScriptEditHandler(ScriptDataStruct& scpt) :
 }
 
 ScriptEditHandler::~ScriptEditHandler() {
-	unsigned int i;
-	for (i=0;i<modellist_str.Count();i++)
-		delete[] modellist_id[i];
-	delete[] modellist_id;
 	delete[] entry_model_index;
 }
 
 ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int scpttype, SaveSet* sv, EnemyDataStruct* ed, TextDataStruct* td, bool* dataloaded) :
 	ScriptEditWindow(parent),
-	ScriptEditHandler(scpt),
-	enemy(ed),
-	text(td),
-	datas(sv),
-	script_type(scpttype),
+	ScriptEditHandler(scpt,scpttype,sv,ed,td,dataloaded),
 	animlist_id(NULL),
 	current_opcode(0xFFFF),
 	arg_control_type(NULL),
@@ -280,11 +402,9 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 	refresh_control_disable(false),
 	timer(new wxTimer(this)),
 	help_dial(NULL) {
-//fstream fout("aaaa.txt",ios::app|ios::out); fout << "1" << endl; fout.close();
 	unsigned int i;
 	handler_dialog = this;
 	script.Copy(scpt);
-//fout.open("aaaa.txt",ios::app|ios::out); fout << "2" << endl; fout.close();
 	if (script_type==SCRIPT_TYPE_FIELD) {
 		gl_window = new GLWindow(m_fielddisplaypanel,NULL);
 		FieldTilesDataStruct* tiles = NULL;
@@ -312,8 +432,14 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 			entry_name[i] = _(enemy->stat[i-1].name.GetStr(2));
 			entry_name[i].Replace(_(L" "),_(L"_"));
 		}
+	modellist_id = new uint16_t*[G_N_ELEMENTS(HADES_STRING_MODEL_NAME)];
+	modellist_str.Alloc(G_N_ELEMENTS(HADES_STRING_MODEL_NAME));
+	for (i=0;i<G_N_ELEMENTS(HADES_STRING_MODEL_NAME);i++) {
+		modellist_str.Add(_(HADES_STRING_MODEL_NAME[i].label));
+		modellist_id[i] = new uint16_t(HADES_STRING_MODEL_NAME[i].id);
+	}
 	DisplayFunctionList(true);
-	if (dataloaded[0]) {
+	if (use_character) {
 		character_str.Alloc(13);
 		for (i=0;i<8;i++)
 			character_str.Add(_(datas->statset->initial_stat[i].default_name.str_nice));
@@ -326,10 +452,8 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 		for (i=0;i<12;i++)
 			character_id[i] = new uint16_t(i);
 		character_id[12] = new uint16_t(0xFF);
-		use_character = true;
-	} else
-		use_character = false;
-	if (dataloaded[1]) {
+	}
+	if (use_battle) {
 		battle_str.Alloc(datas->enemyset->battle_amount);
 		battle_id = new uint16_t*[datas->enemyset->battle_amount];
 		for (i=0;i<datas->enemyset->battle_amount;i++) {
@@ -337,19 +461,15 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 			battle_id[i] = new uint16_t[1];
 			battle_id[i][0] = datas->enemyset->battle_data[i]->object_id;
 		}
-		use_battle = true;
-	} else
-		use_battle = false;
+	}
 	m_intvalueattack->Enable(enemy!=NULL);
 	m_intvalueattacklabel->Enable(enemy!=NULL);
-	if (enemy) {
+	if (use_attack) {
 		attack_str.Alloc(enemy->spell_amount);
 		for (i=0;i<enemy->spell_amount;i++)
 			attack_str.Add(_(enemy->spell[i].name.str_nice));
-		use_attack = true;
-	} else
-		use_attack = false;
-	if (dataloaded[2]) {
+	}
+	if (use_field) {
 		field_str.Alloc(datas->fieldset->amount+1);
 		field_id = new uint16_t*[datas->fieldset->amount+1];
 		for (i=0;i<datas->fieldset->amount;i++) {
@@ -360,12 +480,10 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 		field_str.Add(_(FIELD_ENDING_NAME));
 		field_id[datas->fieldset->amount] = new uint16_t[1];
 		field_id[datas->fieldset->amount][0] = FIELD_ENDING_ID;
-		use_field = true;
-	} else
-		use_field = false;
-	m_intvalueitem->Enable(dataloaded[3]);
-	m_intvalueitemlabel->Enable(dataloaded[3]);
-	if (dataloaded[3]) {
+	}
+	m_intvalueitem->Enable(use_item);
+	m_intvalueitemlabel->Enable(use_item);
+	if (use_item) {
 		item_str.Alloc(ITEM_AMOUNT+KEY_ITEM_AMOUNT+CARD_AMOUNT);
 		item_id = new uint16_t*[ITEM_AMOUNT+KEY_ITEM_AMOUNT+CARD_AMOUNT];
 		for (i=0;i<ITEM_AMOUNT;i++) {
@@ -378,7 +496,7 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 			item_id[ITEM_AMOUNT+i] = new uint16_t[1];
 			item_id[ITEM_AMOUNT+i][0] = 0x100+i;
 		}
-		if (dataloaded[6]) {
+		if (use_card) {
 			for (i=0;i<CARD_AMOUNT;i++) {
 				item_str.Add(_(datas->cardset->card[i].name.str_nice));
 				item_id[ITEM_AMOUNT+KEY_ITEM_AMOUNT+i] = new uint16_t[1];
@@ -391,36 +509,31 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 				item_id[ITEM_AMOUNT+KEY_ITEM_AMOUNT+i][0] = 0x200+HADES_STRING_CARD_NAME[i].id;
 			}
 		}
-		use_item = true;
-	} else
-		use_item = false;
-	m_intvaluespell->Enable(dataloaded[4]);
-	m_intvaluespelllabel->Enable(dataloaded[4]);
-	if (dataloaded[4]) {
-		ability_str.Alloc(SPELL_AMOUNT);
+	}
+	m_intvaluespell->Enable(use_ability);
+	m_intvaluespelllabel->Enable(use_ability);
+	if (use_ability) {
+		ability_str.Alloc(use_support ? SPELL_AMOUNT+SUPPORT_AMOUNT : SPELL_AMOUNT);
 		for (i=0;i<SPELL_AMOUNT;i++)
 			ability_str.Add(_(datas->spellset->spell[i].name.str_nice));
-		use_ability = true;
-	} else
-		use_ability = false;
-	m_intvaluecmd->Enable(dataloaded[5]);
-	m_intvaluecmdlabel->Enable(dataloaded[5]);
-	if (dataloaded[5]) {
+		if (use_support)
+			for (i=0;i<SUPPORT_AMOUNT;i++)
+				ability_str.Add(_(datas->supportset->support[i].name.str_nice));
+	}
+	m_intvaluecmd->Enable(use_command);
+	m_intvaluecmdlabel->Enable(use_command);
+	if (use_command) {
 		command_str.Alloc(COMMAND_AMOUNT);
 		for (i=0;i+1<COMMAND_AMOUNT;i++)
 			command_str.Add(_(datas->cmdset->cmd[i].name.str_nice));
 		for (i=0;i<G_N_ELEMENTS(CommandAddendaName);i++)
 			command_str.Add(_(CommandAddendaName[i]));
-		use_command = true;
-	} else
-		use_command = false;
-	if (text) {
+	}
+	if (use_text) {
 		text_str.Alloc(text->amount);
 		for (i=0;i<text->amount;i++)
 			text_str.Add(_(text->text[i].str_nice.substr(0,30)));
-		use_text = true;
-	} else
-		use_text = false;
+	}
 	defaultbool_str.Alloc(16);
 	for (i=0;i<16;i++)
 		defaultbool_str.Add(_(wxString::Format(wxT("%u"),i+1)));
@@ -502,6 +615,9 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 
 ScriptEditDialog::~ScriptEditDialog() {
 	unsigned int i;
+	for (i=0;i<modellist_str.Count();i++)
+		delete[] modellist_id[i];
+	delete[] modellist_id;
 	for (i=0;i<script.entry_amount+6;i++)
 		delete[] entrylist_id[i];
 	delete[] entrylist_id;
@@ -561,7 +677,7 @@ ScriptEditDialog::~ScriptEditDialog() {
 
 int ScriptEditDialog::ShowModal() {
 	unsigned int entryid = 0;
-	GenerateFunctionStrings();
+	GenerateFunctionStrings(false);
 	m_buttonok->SetFocus();
 	while (script.entry_function_amount[entryid]==0)
 		entryid++;
@@ -792,7 +908,7 @@ wxString ScriptEditHandler::ConvertVarArgument(ScriptArgument& arg) {
 #define BLOCK_TYPE_SWITCHDEF	6
 #define BLOCK_TYPE_SWITCHEX		7
 #define BLOCK_TYPE_SWITCHEXDEF	8
-bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunction& func, unsigned int& funcpos, unsigned int& oppos, int endfuncpos, unsigned int tabpos, int blocktype, int endblockpos) {
+bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunction& func, unsigned int& funcpos, unsigned int& oppos, int endfuncpos, unsigned int tabpos, int blocktype, int endblockpos, bool appendcomment) {
 	int macroop,macropos;
 	#define MACRO_FINDOP(OFFSET) \
 		macroop = oppos+1; \
@@ -831,7 +947,7 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 					str += _(L" ) {\n");
 					funcpostrack[functrackline++] = funcpos;
 					funcpos += func.op[oppos++].size;
-					GenerateFunctionStrings_Rec(str,func,funcpos,oppos,funcpos+macropos,tabpos+1,BLOCK_TYPE_WHILE,funcpos+macropos);
+					GenerateFunctionStrings_Rec(str,func,funcpos,oppos,funcpos+macropos,tabpos+1,BLOCK_TYPE_WHILE,funcpos+macropos,appendcomment);
 					str += tabstr+_(L"}\n");
 					funcpostrack[functrackline] = funcpostrack[functrackline-1];
 					functrackline++;
@@ -870,10 +986,10 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 			str += _(L" ) {\n");
 			funcpostrack[functrackline++] = funcpos;
 			funcpos += func.op[oppos++].size;
-			if (GenerateFunctionStrings_Rec(str,func,funcpos,oppos,funcpos+func.op[oppos-1].arg[0].GetValue(),tabpos+1,BLOCK_TYPE_IF,endblockpos)) {
+			if (GenerateFunctionStrings_Rec(str,func,funcpos,oppos,funcpos+func.op[oppos-1].arg[0].GetValue(),tabpos+1,BLOCK_TYPE_IF,endblockpos,appendcomment)) {
 				str += tabstr+_(L"} else {\n");
 				funcpostrack[functrackline++] = funcpos;
-				bool allreturn = GenerateFunctionStrings_Rec(str,func,funcpos,oppos,funcpos+func.op[oppos-1].arg[0].GetValue(),tabpos+1,BLOCK_TYPE_ELSE,endblockpos);
+				bool allreturn = GenerateFunctionStrings_Rec(str,func,funcpos,oppos,funcpos+func.op[oppos-1].arg[0].GetValue(),tabpos+1,BLOCK_TYPE_ELSE,endblockpos,appendcomment);
 				str += tabstr+_(L"}\n");
 				funcpostrack[functrackline] = funcpostrack[functrackline-1];
 				functrackline++;
@@ -892,7 +1008,7 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 				str += _(L" ) {\n");
 				funcpostrack[functrackline++] = funcpos;
 				funcpos += func.op[oppos++].size;
-				GenerateFunctionStrings_Rec(str,func,funcpos,oppos,funcpos+func.op[oppos-1].arg[0].GetValue(),tabpos+1,BLOCK_TYPE_IFN,endblockpos);
+				GenerateFunctionStrings_Rec(str,func,funcpos,oppos,funcpos+func.op[oppos-1].arg[0].GetValue(),tabpos+1,BLOCK_TYPE_IFN,endblockpos,appendcomment);
 				str += tabstr+_(L"}\n");
 				funcpostrack[functrackline] = funcpostrack[functrackline-1];
 				functrackline++;
@@ -996,7 +1112,7 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 					oppos++;
 				}
 				funcpostrack[functrackline++] = funcpos;
-				GenerateFunctionStrings_Rec(str,func,funcpos,oppos,swpos+nextcasepos,tabpos+1,BLOCK_TYPE_SWITCHEX,swpos+nextcasepos);
+				GenerateFunctionStrings_Rec(str,func,funcpos,oppos,swpos+nextcasepos,tabpos+1,BLOCK_TYPE_SWITCHEX,swpos+nextcasepos,appendcomment);
 				if (func.op[oppos-1].opcode==0x01)
 					swendpos = funcpos+func.op[oppos-1].arg[0].GetValue();
 				currentcasepos = nextcasepos;
@@ -1010,7 +1126,7 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 			if (swendpos>=0 && funcpos<swendpos) {
 				str += tabstr+_(L"default:\n");
 				funcpostrack[functrackline++] = funcpos;
-				GenerateFunctionStrings_Rec(str,func,funcpos,oppos,swendpos,tabpos+1,BLOCK_TYPE_SWITCHEXDEF,swendpos);
+				GenerateFunctionStrings_Rec(str,func,funcpos,oppos,swendpos,tabpos+1,BLOCK_TYPE_SWITCHEXDEF,swendpos,appendcomment);
 			}
 			str += tabstr+_(L"}\n");
 			funcpostrack[functrackline] = funcpostrack[functrackline-1];
@@ -1079,7 +1195,7 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 					oppos++;
 				}
 				funcpostrack[functrackline++] = funcpos;
-				GenerateFunctionStrings_Rec(str,func,funcpos,oppos,nextcasepos!=0xFFFF ? swpos+nextcasepos : caseendpos,tabpos+1,BLOCK_TYPE_SWITCH,nextcasepos!=0xFFFF ? swpos+nextcasepos : -1);
+				GenerateFunctionStrings_Rec(str,func,funcpos,oppos,nextcasepos!=0xFFFF ? swpos+nextcasepos : caseendpos,tabpos+1,BLOCK_TYPE_SWITCH,nextcasepos!=0xFFFF ? swpos+nextcasepos : -1,appendcomment);
 				if (highestendpos<funcpos)
 					highestendpos = funcpos;
 				if (func.op[oppos-1].opcode==0x01 && swendpos==-1)
@@ -1097,7 +1213,7 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 			if (swendpos>=0 && funcpos<swendpos) {
 				str += tabstr+_(L"default:\n");
 				funcpostrack[functrackline++] = funcpos;
-				GenerateFunctionStrings_Rec(str,func,funcpos,oppos,swendpos,tabpos+1,BLOCK_TYPE_SWITCHDEF,swendpos);
+				GenerateFunctionStrings_Rec(str,func,funcpos,oppos,swendpos,tabpos+1,BLOCK_TYPE_SWITCHDEF,swendpos,appendcomment);
 			}
 			while (funcpos<highestendpos) {
 				funcpos += func.op[oppos].size;
@@ -1109,6 +1225,7 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 			break;
 		}
 		default: {
+			wxArrayString argcomment;
 			str += tabstr+_(HADES_STRING_SCRIPT_OPCODE[func.op[oppos].opcode].label)+_(L"( ");
 			for (i=0;i<func.op[oppos].arg_amount;i++) {
 				ScriptArgument& arg = func.op[oppos].arg[i];
@@ -1120,14 +1237,25 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 					str << arg.GetValue();
 				if (i+1<func.op[oppos].arg_amount)
 					str += _(L", ");
+				if (appendcomment && !arg.is_var) {
+					wxString argcommenttoken = GetArgumentDescription(arg.GetValue(),HADES_STRING_SCRIPT_OPCODE[func.op[oppos].opcode].arg_type[i]);
+					if (argcommenttoken.Len()>0)
+						argcomment.Add(argcommenttoken);
+				}
 			}
-			str += _(L" )\n");
+			str += _(L" )");
+			if (argcomment.GetCount()>0) {
+				str += _(L" // ")+argcomment[0];
+				for (i=1;i<argcomment.GetCount();i++)
+					str += _(L" ; ")+argcomment[i];
+			}
+			str += _(L"\n");
 			funcpostrack[functrackline++] = funcpos;
 			if (func.op[oppos].opcode==0x2F) {
-				for (j=0;j<modellist_str.Count();j++)
-					if (func.op[oppos].arg[0].GetValue()==*modellist_id[j]) {
+				for (j=0;j<G_N_ELEMENTS(HADES_STRING_MODEL_NAME);j++)
+					if (func.op[oppos].arg[0].GetValue()==HADES_STRING_MODEL_NAME[j].id) {
 						entry_model_index[entry_selection] = j;
-						wxString entrynewname = modellist_str[j];
+						wxString entrynewname = HADES_STRING_MODEL_NAME[j].label;
 						entrynewname.Replace(_(L" "),_(L"_"));
 						EntryChangeName(entry_selection,entrynewname);
 						break;
@@ -1146,7 +1274,7 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 	return false;
 }
 
-void ScriptEditHandler::GenerateFunctionStrings() {
+void ScriptEditHandler::GenerateFunctionStrings(bool appendcomment) {
 	unsigned int i,j,funci = 0,funcpos,oppos,entrytmp = entry_selection;
 	func_str = new wxString*[script.entry_amount];
 	localvar_str = new wxString[script.entry_amount];
@@ -1205,7 +1333,7 @@ fout << endl;} fout << endl;}*/
 			functrackline = 0;
 			funcpostrack[functrackline++] = funcpos;
 			while (funcpos<script.func[i][j].length)
-				GenerateFunctionStrings_Rec(func_str[i][j],script.func[i][j],funcpos,oppos);
+				GenerateFunctionStrings_Rec(func_str[i][j],script.func[i][j],funcpos,oppos,-1,1,BLOCK_TYPE_ROOT,-1,appendcomment);
 			funcpostrack[functrackline++] = script.func[i][j].length;
 			func_str[i][j] = functionlist_str[funci]+_(L"\n")+func_str[i][j];
 			funci++;

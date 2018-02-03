@@ -15,6 +15,7 @@ struct EnemyDataSet;
 
 #include <inttypes.h>
 #include <fstream>
+#include <vector>
 #include "Configuration.h"
 #include "Database_Script.h"
 using namespace std;
@@ -57,7 +58,7 @@ public:
 	uint32_t unknown4;
 	
 	// Return 0 if success ; 1 if the value is too long
-	int SetName(wstring newvalue);
+	int SetName(wstring newvalue, SteamLanguage lang = GetSteamLanguage());
 	int SetName(FF9String& newvalue);
 	
 	uint8_t id;
@@ -133,7 +134,7 @@ public:
 	uint8_t sequence_anim_amount;
 	
 	// Return 0 if success ; 1 if the value is too long
-	int SetName(wstring newvalue);
+	int SetName(wstring newvalue, SteamLanguage lang = GetSteamLanguage());
 	int SetName(FF9String& newvalue);
 	
 	uint8_t id;
@@ -164,9 +165,9 @@ public:
 	uint8_t group_amount;
 	uint8_t stat_amount;
 	uint8_t spell_amount;
-	EnemyGroupDataStruct* group;
-	EnemyStatDataStruct* stat;
-	EnemySpellDataStruct* spell;
+	vector<EnemyGroupDataStruct> group;
+	vector<EnemyStatDataStruct> stat;
+	vector<EnemySpellDataStruct> spell;
 	uint16_t flag;
 	
 	// Battle Scene ID are from the PSX version ; Use SteamBattleScenePSXId[] for conversion

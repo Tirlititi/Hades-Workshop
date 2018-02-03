@@ -165,6 +165,9 @@ namespace hades {
 	extern wchar_t* SPECIAL_STRING_CHARMAP_B;
 	extern ExtendedCharmap SPECIAL_STRING_CHARMAP_EXT;
 	extern wchar_t SPECIAL_STRING_OPCODE_WCHAR;
+	extern SteamLanguage CURRENT_STEAM_LANGUAGE;
+	extern bool STEAM_LANGUAGE_SAVE_LIST[STEAM_LANGUAGE_AMOUNT];
+	extern bool STEAM_SINGLE_LANGUAGE_MODE;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

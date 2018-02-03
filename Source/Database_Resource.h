@@ -235,6 +235,20 @@ static SortedChoiceSteamItem HADES_STRING_WORLD_BLOCK_NAME[] = {
 	{ 287, "EVT_WORLD_WORLD_TRE00" }*/
 };
 
+//-- Shared Audio
+#define AUDIO_TYPE_MUSIC	0
+#define AUDIO_TYPE_SONG		1
+#define AUDIO_TYPE_SFX		2
+#define AUDIO_TYPE_MOVIE	3
+
+static wxString HADES_STRING_AUDIO_TYPE[] = {
+	L"music",
+	L"song",
+	L"soundeffect",
+//	L"SoundEffectExtended",
+	L"movieaudio"
+};
+
 //-- Music
 static SortedChoiceItem HADES_STRING_MUSIC_NAME[] = {
 	{ 34,	L"Zidane's Theme" },
@@ -348,7 +362,7 @@ static SortedChoiceItem HADES_STRING_MUSIC_NAME[] = {
 	{ 148,	L"Doga and Une" },
 };
 
-//-- Audio
+//-- Audio (SFX plus others...)
 static SortedChoiceItem HADES_STRING_AUDIO_NAME[] = {
 	{ 665,	L"Battle Sound Metallic Slice" }, // Trouble Knife;Knife;Rusty Knife;Claws;Slash;Clamp Pinch;Attack;Battlemes1;Battlemes2;Battlemes3;Chop
 	{ 670,	L"Battle Sound Heavy Slice" }, // Axe;Trouble Knife;Attack;MEScounter;Dagger's first hit;MEShit1;MEShit2;Hatchet;Mask Jump

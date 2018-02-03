@@ -1106,7 +1106,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	int m_statchartranceattackNChoices = sizeof( m_statchartranceattackChoices ) / sizeof( wxString );
 	m_statchartranceattack = new wxChoice( m_statcharscrolledwindow, wxID_TRANCE_ATTACK, wxDefaultPosition, wxDefaultSize, m_statchartranceattackNChoices, m_statchartranceattackChoices, 0 );
 	m_statchartranceattack->SetSelection( 0 );
-	m_statchartranceattack->SetToolTip( _("Commands in the specified slot (normal and trance)\nare linked together in term of ability availability") );
+	m_statchartranceattack->SetToolTip( _("Commands in the specified slot (normal and trance)\nare linked together in term of ability availability.\nWarning! If the linked normal command contains spells,\nmake sure that they are learnable in the Ability Set.\nAlso, if there are more trance spells than normal ones,\nthe excess should be in the Ability Set as well.") );
 	
 	bSizer114->Add( m_statchartranceattack, 0, wxALL, 3 );
 	
@@ -6553,7 +6553,7 @@ SpellStatusWindow::SpellStatusWindow( wxWindow* parent, wxWindowID id, const wxS
 	m_statusbox30 = new wxCheckBox( this, wxID_ANY, _("Reflect"), wxDefaultPosition, wxDefaultSize, 0 );
 	gSizer46->Add( m_statusbox30, 0, wxALL, 5 );
 	
-	m_statusbox31 = new wxCheckBox( this, wxID_ANY, _("Unknown"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_statusbox31 = new wxCheckBox( this, wxID_ANY, _("Jump"), wxDefaultPosition, wxDefaultSize, 0 );
 	gSizer46->Add( m_statusbox31, 0, wxALL, 5 );
 	
 	m_statusbox32 = new wxCheckBox( this, wxID_ANY, _("Gradual Petrify"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -7025,6 +7025,70 @@ PreferencesWindow::PreferencesWindow( wxWindow* parent, wxWindowID id, const wxS
 	fgSizer182->SetFlexibleDirection( wxBOTH );
 	fgSizer182->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
+	m_staticText334 = new wxStaticText( m_panel172, wxID_ANY, _("Game Language"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText334->Wrap( -1 );
+	fgSizer182->Add( m_staticText334, 0, wxALL, 5 );
+	
+	wxString m_steamlanguageChoices[] = { _("English (US)"), _("English (UK)"), _("Japanese"), _("German"), _("French"), _("Italian"), _("Spanish") };
+	int m_steamlanguageNChoices = sizeof( m_steamlanguageChoices ) / sizeof( wxString );
+	m_steamlanguage = new wxChoice( m_panel172, wxID_STEAMLANG, wxDefaultPosition, wxDefaultSize, m_steamlanguageNChoices, m_steamlanguageChoices, 0 );
+	m_steamlanguage->SetSelection( 0 );
+	fgSizer182->Add( m_steamlanguage, 0, wxALL, 2 );
+	
+	m_staticText336 = new wxStaticText( m_panel172, wxID_ANY, _("Single Language Mode"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText336->Wrap( -1 );
+	fgSizer182->Add( m_staticText336, 0, wxALL, 5 );
+	
+	m_steamsinglelanguage = new wxCheckBox( m_panel172, wxID_ANY, _("Enable"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_steamsinglelanguage->SetToolTip( _("Warning!\nWhen this option is enabled, Steam games will load faster\nHowever, you can not change the language setting anymore\nas long as the game is opened") );
+	
+	fgSizer182->Add( m_steamsinglelanguage, 0, wxALL, 5 );
+	
+	m_staticText335 = new wxStaticText( m_panel172, wxID_ANY, _("Saved Languages"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText335->Wrap( -1 );
+	fgSizer182->Add( m_staticText335, 0, wxALL, 5 );
+	
+	wxGridSizer* gSizer38;
+	gSizer38 = new wxGridSizer( 0, 2, 0, 0 );
+	
+	m_steamsaveus = new wxCheckBox( m_panel172, wxID_ANY, _("English (US)"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_steamsaveus->SetToolTip( _("Languages to save in .hws mods, file batches\nand when generating Steam Mod") );
+	
+	gSizer38->Add( m_steamsaveus, 0, wxALL, 2 );
+	
+	m_steamsaveuk = new wxCheckBox( m_panel172, wxID_ANY, _("English (UK)"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_steamsaveuk->SetToolTip( _("Languages to save in .hws mods, file batches\nand when generating Steam Mod") );
+	
+	gSizer38->Add( m_steamsaveuk, 0, wxALL, 2 );
+	
+	m_steamsavejap = new wxCheckBox( m_panel172, wxID_ANY, _("Japanese"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_steamsavejap->SetToolTip( _("Languages to save in .hws mods, file batches\nand when generating Steam Mod") );
+	
+	gSizer38->Add( m_steamsavejap, 0, wxALL, 2 );
+	
+	m_steamsaveger = new wxCheckBox( m_panel172, wxID_ANY, _("German"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_steamsaveger->SetToolTip( _("Languages to save in .hws mods, file batches\nand when generating Steam Mod") );
+	
+	gSizer38->Add( m_steamsaveger, 0, wxALL, 2 );
+	
+	m_steamsavefr = new wxCheckBox( m_panel172, wxID_ANY, _("French"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_steamsavefr->SetToolTip( _("Languages to save in .hws mods, file batches\nand when generating Steam Mod") );
+	
+	gSizer38->Add( m_steamsavefr, 0, wxALL, 2 );
+	
+	m_steamsaveit = new wxCheckBox( m_panel172, wxID_ANY, _("Italian"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_steamsaveit->SetToolTip( _("Languages to save in .hws mods, file batches\nand when generating Steam Mod") );
+	
+	gSizer38->Add( m_steamsaveit, 0, wxALL, 2 );
+	
+	m_steamsavesp = new wxCheckBox( m_panel172, wxID_ANY, _("Spanish"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_steamsavesp->SetToolTip( _("Languages to save in .hws mods, file batches\nand when generating Steam Mod") );
+	
+	gSizer38->Add( m_steamsavesp, 0, wxALL, 2 );
+	
+	
+	fgSizer182->Add( gSizer38, 1, wxEXPAND, 5 );
+	
 	m_staticText901 = new wxStaticText( m_panel172, wxID_ANY, _("Background Resolution"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText901->Wrap( -1 );
 	fgSizer182->Add( m_staticText901, 0, wxALL, 5 );
@@ -7106,6 +7170,8 @@ PreferencesWindow::PreferencesWindow( wxWindow* parent, wxWindowID id, const wxS
 	this->Centre( wxBOTH );
 	
 	// Connect Events
+	m_steamlanguage->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( PreferencesWindow::OnSteamLanguageChange ), NULL, this );
+	m_steamsinglelanguage->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( PreferencesWindow::OnSingleLanguageMode ), NULL, this );
 	m_buttoncancel->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( PreferencesWindow::OnButtonClick ), NULL, this );
 	m_buttonok->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( PreferencesWindow::OnButtonClick ), NULL, this );
 }
@@ -7113,6 +7179,8 @@ PreferencesWindow::PreferencesWindow( wxWindow* parent, wxWindowID id, const wxS
 PreferencesWindow::~PreferencesWindow()
 {
 	// Disconnect Events
+	m_steamlanguage->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( PreferencesWindow::OnSteamLanguageChange ), NULL, this );
+	m_steamsinglelanguage->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( PreferencesWindow::OnSingleLanguageMode ), NULL, this );
 	m_buttoncancel->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( PreferencesWindow::OnButtonClick ), NULL, this );
 	m_buttonok->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( PreferencesWindow::OnButtonClick ), NULL, this );
 	
@@ -8245,6 +8313,30 @@ BatchExportWindow::BatchExportWindow( wxWindow* parent, wxWindowID id, const wxS
 	bSizer159->Fit( m_splitfilepanel );
 	bSizer162->Add( m_splitfilepanel, 1, wxEXPAND | wxALL, 0 );
 	
+	m_scriptpanel = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	m_scriptpanel->Hide();
+	
+	wxBoxSizer* bSizer198;
+	bSizer198 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_scriptsplitfile = new wxCheckBox( m_scriptpanel, wxID_ANY, _("Split Files"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_scriptsplitfile->SetValue(true); 
+	m_scriptsplitfile->SetToolTip( _("When unchecked, all the datas\nare written in one big file") );
+	
+	bSizer198->Add( m_scriptsplitfile, 0, wxALL, 5 );
+	
+	m_scriptcomment = new wxCheckBox( m_scriptpanel, wxID_ANY, _("Readability Comments"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_scriptcomment->SetValue(true); 
+	m_scriptcomment->SetToolTip( _("Generate comments in the script for a better readability") );
+	
+	bSizer198->Add( m_scriptcomment, 0, wxALL, 5 );
+	
+	
+	m_scriptpanel->SetSizer( bSizer198 );
+	m_scriptpanel->Layout();
+	bSizer198->Fit( m_scriptpanel );
+	bSizer162->Add( m_scriptpanel, 1, wxEXPAND | wxALL, 0 );
+	
 	m_backgroundpanel = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	m_backgroundpanel->Hide();
 	
@@ -8315,6 +8407,7 @@ BatchExportWindow::BatchExportWindow( wxWindow* parent, wxWindowID id, const wxS
 	// Connect Events
 	m_filepicker->Connect( wxEVT_COMMAND_FILEPICKER_CHANGED, wxFileDirPickerEventHandler( BatchExportWindow::OnFilePick ), NULL, this );
 	m_splitfile->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( BatchExportWindow::OnSplitFileCheck ), NULL, this );
+	m_scriptsplitfile->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( BatchExportWindow::OnSplitFileCheck ), NULL, this );
 	m_exportlist->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( BatchExportWindow::OnListRightClick ), NULL, this );
 	m_buttoncancel->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BatchExportWindow::OnButtonClick ), NULL, this );
 	m_buttonok->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BatchExportWindow::OnButtonClick ), NULL, this );
@@ -8325,6 +8418,7 @@ BatchExportWindow::~BatchExportWindow()
 	// Disconnect Events
 	m_filepicker->Disconnect( wxEVT_COMMAND_FILEPICKER_CHANGED, wxFileDirPickerEventHandler( BatchExportWindow::OnFilePick ), NULL, this );
 	m_splitfile->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( BatchExportWindow::OnSplitFileCheck ), NULL, this );
+	m_scriptsplitfile->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( BatchExportWindow::OnSplitFileCheck ), NULL, this );
 	m_exportlist->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( BatchExportWindow::OnListRightClick ), NULL, this );
 	m_buttoncancel->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BatchExportWindow::OnButtonClick ), NULL, this );
 	m_buttonok->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BatchExportWindow::OnButtonClick ), NULL, this );

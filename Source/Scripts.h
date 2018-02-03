@@ -23,6 +23,7 @@ struct ScriptArgument;
 struct ScriptOperation;
 struct ScriptFunction;
 struct ScriptDataStruct;
+struct MultiLanguageScriptDataStruct;
 
 #include <inttypes.h>
 #include <fstream>
@@ -95,6 +96,28 @@ struct ScriptFunction {
 	void WriteHWS(fstream& f);
 };
 
+struct MultiLanguageScriptDataStruct {
+	ScriptFunction** func[STEAM_LANGUAGE_AMOUNT];
+	uint16_t magic_number[STEAM_LANGUAGE_AMOUNT];
+	uint8_t header_unknown1[STEAM_LANGUAGE_AMOUNT];
+	uint8_t entry_amount[STEAM_LANGUAGE_AMOUNT];
+	uint8_t header_unknown2[STEAM_LANGUAGE_AMOUNT][20];
+	uint8_t header_unknown3[STEAM_LANGUAGE_AMOUNT][20];
+	uint8_t header_name[STEAM_LANGUAGE_AMOUNT][SCRIPT_NAME_MAX_LENGTH];
+	uint16_t* entry_offset[STEAM_LANGUAGE_AMOUNT];
+	uint16_t* entry_size[STEAM_LANGUAGE_AMOUNT];
+	uint8_t* entry_local_var[STEAM_LANGUAGE_AMOUNT];
+	uint8_t* entry_flag[STEAM_LANGUAGE_AMOUNT];
+	uint8_t* entry_type[STEAM_LANGUAGE_AMOUNT];
+	uint8_t* entry_function_amount[STEAM_LANGUAGE_AMOUNT];
+	uint16_t** function_type[STEAM_LANGUAGE_AMOUNT];
+	uint16_t** function_point[STEAM_LANGUAGE_AMOUNT];
+	ScriptLocalVariableSet global_data[STEAM_LANGUAGE_AMOUNT];
+	ScriptLocalVariableSet* local_data[STEAM_LANGUAGE_AMOUNT];
+	bool is_loaded[STEAM_LANGUAGE_AMOUNT];
+	bool is_modified[STEAM_LANGUAGE_AMOUNT];
+};
+
 struct ScriptDataStruct : public ChunkChild {
 public:
 	FF9String name; // readonly
@@ -116,24 +139,29 @@ public:
 	ScriptLocalVariableSet global_data;
 	ScriptLocalVariableSet* local_data;
 	
+	MultiLanguageScriptDataStruct* multi_lang_script = NULL; // Storage for multiple language scripts ; note that accessing its pointers of index "current_language" is unsafe (use the normal variables instead)
+	SteamLanguage current_language;
 	uint16_t related_charmap_id;
 	
-	// Limited by a size of 24 bytes ; return 1 if too long
-	int SetName(wstring newvalue, SteamLanguage lang = STEAM_LANGUAGE_NONE);
-	int SetName(FF9String& newvalue, SteamLanguage lang = STEAM_LANGUAGE_NONE);
+	// Limited by a size of 24 bytes ; return 1 if too long (PSX)
+	int SetName(wstring newvalue, SteamLanguage lang = GetSteamLanguage());
+	int SetName(FF9String& newvalue);
 	void AddFunction(int entryid, int funcidpos, uint16_t functype); // Needs 4 or 8 bytes available
 	int RemoveFunction(int entryid, int funcid); // Returns nb of bytes freed
 	void AddEntry(int entrypos, uint8_t entrytype); // Needs 16 bytes available
 	int RemoveEntry(int entrypos, int* modifiedargamount = NULL); // Returns nb of bytes freed ; *modifiedargamount is incremented by the amount of arguments previously using the removed entry
-	
-	void Read(fstream& f);
+	void ChangeSteamLanguage(SteamLanguage newlang);
+
+	void Read(fstream& f, SteamLanguage lang = STEAM_LANGUAGE_NONE);
 	void Write(fstream& f);
 	void WritePPF(fstream& f);
-	void ReadHWS(fstream& f, bool usetext = true);
-	void WriteHWS(fstream& f);
-	void ReadLocalHWS(fstream& f);
-	void WriteLocalHWS(fstream& f);
+	void ReadHWS(fstream& f, bool usetext = true, SteamLanguage lang = STEAM_LANGUAGE_NONE);
+	void WriteHWS(fstream& f, SteamLanguage lang = STEAM_LANGUAGE_NONE); // Remark: unlike other WriteHWS methods, this writes only 1 language by calls, not all those flagged by hades::STEAM_LANGUAGE_SAVE_LIST
+	void ReadLocalHWS(fstream& f, SteamLanguage lang = STEAM_LANGUAGE_NONE);
+	void WriteLocalHWS(fstream& f, SteamLanguage lang = STEAM_LANGUAGE_NONE);
 	void Copy(ScriptDataStruct& from, bool deleteold = false);
+	bool IsDataModified(SteamLanguage lang = GetSteamLanguage());
+	int GetDataSize(SteamLanguage lang = GetSteamLanguage());
 	void UpdateOffset();
 };
 

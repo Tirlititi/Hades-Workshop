@@ -1,6 +1,7 @@
 #include "Enemies.h"
 
 #include <algorithm>
+#include "main.h"
 #include "Gui_LoadingDialog.h"
 #include "Database_Steam.h"
 #include "Database_Resource.h"
@@ -8,8 +9,8 @@
 
 #define HWS_BATTLE_SCENE_MOD_ID		0xFFF0
 
-int EnemySpellDataStruct::SetName(wstring newvalue) {
-	if (parent->parent->text[parent->id]->SetText(id+parent->stat_amount,newvalue))
+int EnemySpellDataStruct::SetName(wstring newvalue, SteamLanguage lang) {
+	if (parent->parent->text[parent->id]->SetText(id+parent->stat_amount,newvalue,lang))
 		return 1;
 	name.SetValue(newvalue);
 	return 0;
@@ -22,8 +23,8 @@ int EnemySpellDataStruct::SetName(FF9String& newvalue) {
 	return 0;
 }
 
-int EnemyStatDataStruct::SetName(wstring newvalue) {
-	if (parent->parent->text[parent->id]->SetText(id,newvalue))
+int EnemyStatDataStruct::SetName(wstring newvalue, SteamLanguage lang) {
+	if (parent->parent->text[parent->id]->SetText(id,newvalue,lang))
 		return 1;
 	name.SetValue(newvalue);
 	parent->parent->UpdateBattleName(parent->id);
@@ -58,18 +59,13 @@ int EnemyDataStruct::AddStat(EnemyStatDataStruct* copystat) {
 		SetSize(size-sizereqes);
 		return 1;
 	}
-	EnemyStatDataStruct* newstat = new EnemyStatDataStruct[stat_amount+1];
-	for (i=0;i<stat_amount;i++) { // DEBUG: memcpy on wstring bugs ; this is a solution (the usual one is to copy fields 1 by 1)
-		newstat[i].name = stat[i].name;
-		memcpy(&newstat[i]+sizeof(FF9String),&stat[i]+sizeof(FF9String),sizeof(EnemyStatDataStruct)-sizeof(FF9String));
-	}
-	newstat[stat_amount].name = copystat->name;
-	memcpy(&newstat[stat_amount]+sizeof(FF9String),copystat+sizeof(FF9String),sizeof(EnemyStatDataStruct)-sizeof(FF9String));
-	newstat[stat_amount].default_attack = 0;
-	newstat[stat_amount].text_amount = 0;
-	newstat[stat_amount].sequence_anim_base = bd.animation_amount;
-	newstat[stat_amount].id = stat_amount;
-	newstat[stat_amount].parent = this;
+	stat.resize(stat_amount+1);
+	stat[stat_amount] = *copystat;
+	stat[stat_amount].default_attack = 0;
+	stat[stat_amount].text_amount = 0;
+	stat[stat_amount].sequence_anim_base = bd.animation_amount;
+	stat[stat_amount].id = stat_amount;
+	stat[stat_amount].parent = this;
 	stat_amount++;
 	uint16_t* newseqanimid = new uint16_t[bd.animation_amount+copystat->sequence_anim_amount];
 	memcpy(newseqanimid,bd.animation_id,bd.animation_amount*sizeof(uint16_t));
@@ -77,97 +73,9 @@ int EnemyDataStruct::AddStat(EnemyStatDataStruct* copystat) {
 	bd.animation_amount += copystat->sequence_anim_amount;
 	delete[] bd.animation_id;
 	bd.animation_id = newseqanimid;
-	delete[] stat;
-	stat = newstat;
 	parent->UpdateBattleName(id);
 	return 0;
 }
-
-/*int EnemyDataStruct::AddStat(EnemyStatDataStruct* copystat) {
-	BattleModelLinks& modelinfo = BattleModelLinks::GetLinksByModel(modelid);
-	BattleDataStruct& bd = *parent->battle_data[id];
-	TextDataStruct& td = *parent->text[id];
-	uint32_t sizereqbd = 2*modelinfo.sequence_anim_amount;
-	uint32_t sizereqes = 0x74;
-	FF9String newname;
-	unsigned int i;
-	if (bd.GetExtraSize()<sizereqbd)
-		return 1;
-	bd.SetSize(bd.size+sizereqbd);
-	if (GetExtraSize()<sizereqes) {
-		bd.SetSize(bd.size-sizereqbd);
-		return 1;
-	}
-	SetSize(size+sizereqes);
-	newname.CreateEmpty();
-	if (GetGameType()!=GAME_TYPE_PSX)
-		newname.SetValue(L"[STRT=0,1]");
-	if (td.AddText(stat_amount,newname)) {
-		bd.SetSize(bd.size-sizereqbd);
-		SetSize(size-sizereqes);
-		return 1;
-	}
-	EnemyStatDataStruct* newstat = new EnemyStatDataStruct[stat_amount+1];
-	for (i=0;i<stat_amount;i++) { // DEBUG: memcpy on wstring bugs ; this is a solution (the usual one is to copy fields 1 by 1)
-		newstat[i].name = stat[i].name;
-		memcpy(&newstat[i]+sizeof(FF9String),&stat[i]+sizeof(FF9String),sizeof(EnemyStatDataStruct)-sizeof(FF9String));
-	}
-	modelinfo.ApplyToEnemyStat(newstat[stat_amount]);
-	newstat[stat_amount].name = newname;
-	newstat[stat_amount].lvl = 1;
-	newstat[stat_amount].classification = 0;
-	newstat[stat_amount].hp = 1;
-	newstat[stat_amount].mp = 0;
-	newstat[stat_amount].gils = 0;
-	newstat[stat_amount].exp = 0;
-	for (i=0;i<4;i++) {
-		newstat[stat_amount].item_drop[i] = 255;
-		newstat[stat_amount].item_steal[i] = 255;
-	}
-	newstat[stat_amount].card_drop = 255;
-	newstat[stat_amount].attack = 0;
-	newstat[stat_amount].accuracy = 0;
-	newstat[stat_amount].cur_capa = 0;
-	newstat[stat_amount].max_capa = 0;
-	newstat[stat_amount].trans = 0;
-	newstat[stat_amount].speed = 1;
-	newstat[stat_amount].strength = 1;
-	newstat[stat_amount].magic = 1;
-	newstat[stat_amount].spirit = 1;
-	newstat[stat_amount].defence = 0;
-	newstat[stat_amount].evade = 0;
-	newstat[stat_amount].magic_defence = 0;
-	newstat[stat_amount].magic_evade = 0;
-	newstat[stat_amount].element_immune = 0;
-	newstat[stat_amount].element_absorb = 0;
-	newstat[stat_amount].element_half = 0;
-	newstat[stat_amount].element_weak = 0;
-	newstat[stat_amount].status_immune = 0;
-	newstat[stat_amount].status_auto = 0;
-	newstat[stat_amount].status_initial = 0;
-	newstat[stat_amount].default_attack = 0;
-	newstat[stat_amount].blue_magic = 0;
-	newstat[stat_amount].death_flag = 0;
-	newstat[stat_amount].text_amount = 0;
-	newstat[stat_amount].zero1 = 0;
-	newstat[stat_amount].zero2 = 0;
-	newstat[stat_amount].zero3 = 0;
-	newstat[stat_amount].sequence_anim_base = bd.animation_amount;
-	newstat[stat_amount].sequence_anim_amount = modelinfo.sequence_anim_amount;
-	newstat[stat_amount].id = stat_amount;
-	newstat[stat_amount].parent = this;
-	delete[] stat;
-	stat = newstat;
-	stat_amount++;
-	uint16_t* newseqanimid = new uint16_t[bd.animation_amount+modelinfo.sequence_anim_amount];
-	memcpy(newseqanimid,bd.animation_id,bd.animation_amount*sizeof(uint16_t));
-	memcpy(newseqanimid+bd.animation_amount,modelinfo.sequence_anim,modelinfo.sequence_anim_amount*sizeof(uint16_t));
-	delete[] bd.animation_id;
-	bd.animation_amount += modelinfo.sequence_anim_amount;
-	bd.animation_id = newseqanimid;
-	parent->UpdateBattleName(id);
-	return 0;
-}*/
 
 void EnemyDataStruct::RemoveStat(uint16_t statid) {
 	BattleDataStruct& bd = *parent->battle_data[id];
@@ -189,17 +97,7 @@ void EnemyDataStruct::RemoveStat(uint16_t statid) {
 		if (stat[i].sequence_anim_base>stat[statid].sequence_anim_base)
 			stat[i].sequence_anim_base -= stat[statid].sequence_anim_amount;
 	SetSize(size-0x74);
-	EnemyStatDataStruct* newstat = new EnemyStatDataStruct[stat_amount-1];
-	for (i=0;i<statid;i++) {
-		newstat[i].name = stat[i].name;
-		memcpy(&newstat[i]+sizeof(FF9String),&stat[i]+sizeof(FF9String),sizeof(EnemyStatDataStruct)-sizeof(FF9String));
-	}
-	for (i=statid;i+1<stat_amount;i++) {
-		newstat[i].name = stat[i+1].name;
-		memcpy(&newstat[i]+sizeof(FF9String),&stat[i+1]+sizeof(FF9String),sizeof(EnemyStatDataStruct)-sizeof(FF9String));
-	}
-	delete[] stat;
-	stat = newstat;
+	stat.erase(stat.begin()+statid);
 	stat_amount--;
 	td.RemoveText(statid);
 	parent->UpdateBattleName(id);
@@ -227,17 +125,10 @@ int EnemyDataStruct::AddSpell(EnemySpellDataStruct* copyspell) {
 	if (td.AddText(stat_amount+spell_amount,copyspell->name))
 		return 1;
 	SetSize(size+reqlenspell);
-	EnemySpellDataStruct* newspell = new EnemySpellDataStruct[spell_amount+1];
-	for (i=0;i<spell_amount;i++) {
-		newspell[i].name = spell[i].name;
-		memcpy(&newspell[i]+sizeof(FF9String),&spell[i]+sizeof(FF9String),sizeof(EnemySpellDataStruct)-sizeof(FF9String));
-	}
-	newspell[spell_amount].name = copyspell->name;
-	memcpy(&newspell[spell_amount]+sizeof(FF9String),copyspell+sizeof(FF9String),sizeof(EnemySpellDataStruct)-sizeof(FF9String));
-	newspell[spell_amount].id = spell_amount;
-	newspell[spell_amount].parent = this;
-	delete[] spell;
-	spell = newspell;
+	spell.resize(spell_amount+1);
+	spell[spell_amount] = *copyspell;
+	spell[spell_amount].id = spell_amount;
+	spell[spell_amount].parent = this;
 	spell_amount++;
 	unsigned int seqamount = bs.sequence_amount;
 	unsigned int newseqindex = bs.sequence_amount-1;
@@ -292,30 +183,7 @@ void EnemyDataStruct::RemoveSpell(uint16_t spellid) {
 	BattleDataStruct* bs = parent->battle_data[id];
 	TextDataStruct* td = parent->text[id];
 	spell_amount--;
-	EnemySpellDataStruct* newspell = new EnemySpellDataStruct[spell_amount];
-	for (i=0;i<spell_amount;i++) {
-		if (i<spellid)
-			j = i;
-		else
-			j = i+1;
-		newspell[i].name = spell[j].name;
-		newspell[i].effect = spell[j].effect;
-		newspell[i].power = spell[j].power;
-		newspell[i].element = spell[j].element;
-		newspell[i].accuracy = spell[j].accuracy;
-		newspell[i].flag = spell[j].flag;
-		newspell[i].status = spell[j].status;
-		newspell[i].mp = spell[j].mp;
-		newspell[i].model = spell[j].model;
-		newspell[i].target_type = spell[j].target_type;
-		newspell[i].target_flag = spell[j].target_flag;
-		newspell[i].unknown3 = spell[j].unknown3;
-		newspell[i].unknown4 = spell[j].unknown4;
-		newspell[i].id = i;
-		newspell[i].parent = this;
-	}
-	delete[] spell;
-	spell = newspell;
+	spell.erase(spell.begin()+spellid);
 	UpdateOffset();
 	bool lastisdummy = false;
 	if (bs->sequence_amount>1)
@@ -358,35 +226,28 @@ int EnemyDataStruct::AddGroup() {
 		return 1;
 	unsigned int i;
 	SetSize(size+0x38);
-	EnemyGroupDataStruct* newgroup = new EnemyGroupDataStruct[group_amount+1];
-	memcpy(newgroup,group,group_amount*sizeof(EnemyGroupDataStruct));
-	newgroup[group_amount].frequence = 0;
-	newgroup[group_amount].enemy_amount = 1;
-	newgroup[group_amount].camera_engage = 0;
-	newgroup[group_amount].ap = 0;
+	group.resize(group_amount+1);
+	group[group_amount].frequence = 0;
+	group[group_amount].enemy_amount = 1;
+	group[group_amount].camera_engage = 0;
+	group[group_amount].ap = 0;
 	for (i=0;i<4;i++) {
-		newgroup[group_amount].enemy_id[i] = 0;
-		newgroup[group_amount].targetable[i] = 1;
-		newgroup[group_amount].enemy_posx[i] = 1500-1000*i;
-		newgroup[group_amount].enemy_posz[i] = 0;
-		newgroup[group_amount].enemy_posy[i] = 600;
-		newgroup[group_amount].enemy_angle[i] = 0;
+		group[group_amount].enemy_id[i] = 0;
+		group[group_amount].targetable[i] = 1;
+		group[group_amount].enemy_posx[i] = 1500-1000*i;
+		group[group_amount].enemy_posz[i] = 0;
+		group[group_amount].enemy_posy[i] = 600;
+		group[group_amount].enemy_angle[i] = 0;
 	}
-	newgroup[group_amount].id = group_amount;
-	newgroup[group_amount].parent = this;
-	delete[] group;
-	group = newgroup;
+	group[group_amount].id = group_amount;
+	group[group_amount].parent = this;
 	group_amount++;
 	return 0;
 }
 
 void EnemyDataStruct::RemoveGroup(uint16_t groupid) {
 	SetSize(size-0x38);
-	EnemyGroupDataStruct* newgroup = new EnemyGroupDataStruct[group_amount-1];
-	memcpy(newgroup,group,groupid*sizeof(EnemyGroupDataStruct));
-	memcpy(newgroup+groupid,group+groupid+1,(group_amount-groupid-1)*sizeof(EnemyGroupDataStruct));
-	delete[] group;
-	group = newgroup;
+	group.erase(group.begin()+groupid);
 	group_amount--;
 }
 
@@ -401,9 +262,9 @@ void EnemyDataStruct::RemoveGroup(uint16_t groupid) {
 	IO ## Short(f,flag); \
 	IO ## Short(f,zero16); \
 	if (READ) { \
-		group = new EnemyGroupDataStruct[group_amount]; \
-		stat = new EnemyStatDataStruct[stat_amount]; \
-		spell = new EnemySpellDataStruct[spell_amount]; \
+		group.resize(group_amount); \
+		stat.resize(stat_amount); \
+		spell.resize(spell_amount); \
 	} \
 	for (i=0;i<group_amount;i++) { \
 		if (READ) group[i].parent = this; \
@@ -893,25 +754,37 @@ void EnemyDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 		ClusterData** dummyclus = new ClusterData*[battle_amount];
 		ConfigurationSet& config = *clusset.config;
 		string fname = config.steam_dir_data;
+		uint16_t text_lang_amount[STEAM_LANGUAGE_AMOUNT];
+		SteamLanguage lang;
 		uint32_t fsize;
 		char* buffer;
 		fname += "resources.assets";
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
 		for (i=0;i<battle_amount;i++) {
-			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.enmy_text_file[GetSteamLanguage()][i]));
-			fsize = config.meta_res.GetFileSizeByIndex(config.enmy_text_file[GetSteamLanguage()][i]);
-			buffer = new char[fsize];
-			ffbin.read(buffer,fsize);
 			text[i] = new TextDataStruct[1];
 			text[i]->Init(true,CHUNK_TYPE_TEXT,config.enmy_id[i],&dummyclus[i],CLUSTER_TYPE_ENEMY);
-			text[i]->amount = FF9String::CountSteamTextAmount(buffer,fsize);
+			text[i]->amount = 0;
+			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+				if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+					continue;
+				ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.enmy_text_file[lang][i]));
+				fsize = config.meta_res.GetFileSizeByIndex(config.enmy_text_file[lang][i]);
+				buffer = new char[fsize];
+				ffbin.read(buffer,fsize);
+				text_lang_amount[lang] = FF9String::CountSteamTextAmount(buffer,fsize);
+				text[i]->amount = max(text[i]->amount,text_lang_amount[lang]);
+				delete[] buffer;
+			}
 			text[i]->text = new FF9String[text[i]->amount];
 			text[i]->loaded = true;
-			delete[] buffer;
-			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.enmy_text_file[GetSteamLanguage()][i]));
-			text[i]->size = config.meta_res.GetFileSizeByIndex(config.enmy_text_file[GetSteamLanguage()][i]);
-			for (j=0;j<text[i]->amount;j++)
-				SteamReadFF9String(ffbin,text[i]->text[j]);
+			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+				if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+					continue;
+				ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.enmy_text_file[lang][i]));
+				for (j=0;j<text_lang_amount[lang];j++)
+					SteamReadFF9String(ffbin,text[i]->text[j],lang);
+			}
+//			text[i]->size = config.meta_res.GetFileSizeByIndex(config.enmy_text_file[lang][i]);
 			LoadingDialogUpdate(i);
 		}
 		ffbin.close();
@@ -939,11 +812,16 @@ void EnemyDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 		fname = config.steam_dir_assets + "p0data7.bin";
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
 		for (i=0;i<battle_amount;i++) {
-			ffbin.seekg(config.meta_script.GetFileOffsetByIndex(config.enmy_script_file[GetSteamLanguage()][i]));
 			script[i] = new ScriptDataStruct[1];
 			script[i]->Init(false,CHUNK_TYPE_SCRIPT,config.enmy_id[i],&dummyclus[i]);
-			script[i]->size = config.meta_battle.GetFileSizeByIndex(config.enmy_script_file[GetSteamLanguage()][i]);
-			script[i]->Read(ffbin);
+			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+				if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+					continue;
+				ffbin.seekg(config.meta_script.GetFileOffsetByIndex(config.enmy_script_file[lang][i]));
+				script[i]->Read(ffbin,lang);
+			}
+			script[i]->ChangeSteamLanguage(GetSteamLanguage());
+			script[i]->size = config.meta_battle.GetFileSizeByIndex(config.enmy_script_file[GetSteamLanguage()][i]); // DEBUG: Verify that Steam doesn't about this
 			l = 0;
 			for (k=0;k<battle[i]->stat_amount && l<text[i]->amount;k++)
 				battle[i]->stat[k].name = text[i]->text[l++];
@@ -1107,6 +985,7 @@ int* EnemyDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 	unsigned int i,j,k,l;
 	uint32_t chunksize,clustersize,chunkpos,objectpos,objectsize;
 	uint16_t nbmodified,objectid;
+	SteamLanguage lang;
 	uint8_t chunktype;
 	ClusterData* clus;
 	int* res = new int[4];
@@ -1212,6 +1091,39 @@ int* EnemyDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 						} else if (chunktype==CHUNK_SPECIAL_TYPE_LOCAL) {
 							if (loadlocal)
 								script[j]->ReadLocalHWS(ffhws);
+						} else if (chunktype==CHUNK_STEAM_TEXT_MULTILANG) {
+							if (usetext && loadmain)
+								text[j]->ReadHWS(ffhws,true);
+						} else if (chunktype==CHUNK_STEAM_SCRIPT_MULTILANG) {
+							if (loadmain) {
+								uint8_t langflag;
+								HWSReadChar(ffhws,lang);
+								while (lang!=STEAM_LANGUAGE_NONE) {
+									uint32_t langdatasize;
+									HWSReadChar(ffhws,langflag);
+									HWSReadLong(ffhws,langdatasize);
+									if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+										ffhws.seekg(langdatasize,ios::cur);
+									else
+										script[j]->ReadHWS(ffhws,false,lang);
+									HWSReadChar(ffhws,lang);
+								}
+							}
+						} else if (chunktype==CHUNK_SPECIAL_TYPE_LOCAL_MULTILANG) {
+							if (loadlocal) {
+								uint8_t langflag;
+								HWSReadChar(ffhws,lang);
+								while (lang!=STEAM_LANGUAGE_NONE) {
+									uint32_t langdatasize;
+									HWSReadChar(ffhws,langflag);
+									HWSReadLong(ffhws,langdatasize);
+									if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+										ffhws.seekg(langdatasize,ios::cur);
+									else
+										script[j]->ReadLocalHWS(ffhws,lang);
+									HWSReadChar(ffhws,lang);
+								}
+							}
 						} else
 							res[1]++;
 						ffhws.seekg(chunkpos+chunksize);
@@ -1267,7 +1179,8 @@ int* EnemyDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 void EnemyDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsigned int localflag) {
 	unsigned int i,j;
 	uint16_t nbmodified = 0;
-	uint32_t chunkpos, nboffset = ffhws.tellg();
+	uint32_t chunkpos, chunksize, nboffset = ffhws.tellg();
+	SteamLanguage lang;
 	ClusterData* clus = NULL;
 	bool savemain = localflag & 1;
 	bool savelocal = localflag & 2;
@@ -1315,37 +1228,96 @@ void EnemyDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsign
 				battle[i]->WriteHWS(ffhws);
 				ffhws.seekg(chunkpos+battle[i]->size);
 			}
-			if (text[i]->modified && savemain) {
-				HWSWriteChar(ffhws,CHUNK_TYPE_TEXT);
-				HWSWriteLong(ffhws,text[i]->size+2);
-				chunkpos = ffhws.tellg();
-				text[i]->WriteHWS(ffhws);
-				ffhws.seekg(chunkpos+text[i]->size+2);
-			}
-			if (script[i]->modified && savemain) {
-				HWSWriteChar(ffhws,CHUNK_TYPE_SCRIPT);
-				HWSWriteLong(ffhws,script[i]->size);
-				chunkpos = ffhws.tellg();
-				script[i]->WriteHWS(ffhws);
-				ffhws.seekg(chunkpos+script[i]->size);
-			}
-			if (GetGameType()==GAME_TYPE_PSX && preload[i]->modified && savemain) {
-				HWSWriteChar(ffhws,CHUNK_TYPE_IMAGE_MAP);
-				HWSWriteLong(ffhws,preload[i]->size);
-				chunkpos = ffhws.tellg();
-				preload[i]->WriteHWS(ffhws);
-				ffhws.seekg(chunkpos+preload[i]->size);
-			}
-			if (savelocal) {
-				uint32_t localsize = 0;
-				HWSWriteChar(ffhws,CHUNK_SPECIAL_TYPE_LOCAL);
-				HWSWriteLong(ffhws,localsize);
-				chunkpos = ffhws.tellg();
-				script[i]->WriteLocalHWS(ffhws);
-				localsize = (long long)ffhws.tellg()-chunkpos;
-				ffhws.seekg(chunkpos-4);
-				HWSWriteLong(ffhws,localsize);
-				ffhws.seekg(chunkpos+localsize);
+			if (GetGameType()==GAME_TYPE_PSX) {
+				if (text[i]->modified && savemain) {
+					HWSWriteChar(ffhws,CHUNK_TYPE_TEXT);
+					HWSWriteLong(ffhws,text[i]->size+2);
+					chunkpos = ffhws.tellg();
+					text[i]->WriteHWS(ffhws);
+					ffhws.seekg(chunkpos+text[i]->size+2);
+				}
+				if (script[i]->modified && savemain) {
+					HWSWriteChar(ffhws,CHUNK_TYPE_SCRIPT);
+					HWSWriteLong(ffhws,script[i]->size);
+					chunkpos = ffhws.tellg();
+					script[i]->WriteHWS(ffhws);
+					ffhws.seekg(chunkpos+script[i]->size);
+				}
+				if (savelocal) {
+					uint32_t localsize = 0;
+					HWSWriteChar(ffhws,CHUNK_SPECIAL_TYPE_LOCAL);
+					HWSWriteLong(ffhws,localsize);
+					chunkpos = ffhws.tellg();
+					script[i]->WriteLocalHWS(ffhws);
+					localsize = (long long)ffhws.tellg()-chunkpos;
+					ffhws.seekg(chunkpos-4);
+					HWSWriteLong(ffhws,localsize);
+					ffhws.seekg(chunkpos+localsize);
+				}
+				if (preload[i]->modified && savemain) {
+					HWSWriteChar(ffhws,CHUNK_TYPE_IMAGE_MAP);
+					HWSWriteLong(ffhws,preload[i]->size);
+					chunkpos = ffhws.tellg();
+					preload[i]->WriteHWS(ffhws);
+					ffhws.seekg(chunkpos+preload[i]->size);
+				}
+			} else {
+				if (text[i]->modified && savemain) {
+					HWSWriteChar(ffhws,CHUNK_STEAM_TEXT_MULTILANG);
+					HWSWriteLong(ffhws,0);
+					chunkpos = ffhws.tellg();
+					text[i]->WriteHWS(ffhws,true);
+					chunksize = (uint32_t)ffhws.tellg()-chunkpos;
+					ffhws.seekg(chunkpos-4);
+					HWSWriteLong(ffhws,chunksize);
+					ffhws.seekg(chunkpos+chunksize);
+				}
+				for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+					if (savemain && hades::STEAM_LANGUAGE_SAVE_LIST[lang] && script[i]->IsDataModified(lang))
+						break;
+				if (lang<STEAM_LANGUAGE_AMOUNT) {
+					HWSWriteChar(ffhws,CHUNK_STEAM_SCRIPT_MULTILANG);
+					HWSWriteLong(ffhws,0);
+					chunkpos = ffhws.tellg();
+					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+						if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && script[i]->IsDataModified(lang)) {
+							HWSWriteChar(ffhws,lang);
+							HWSWriteChar(ffhws,0); // TODO: Use this as an options (eg. two scripts are actually the same)
+							HWSWriteLong(ffhws,script[i]->GetDataSize(lang));
+							script[i]->WriteHWS(ffhws,lang);
+						}
+					HWSWriteChar(ffhws,STEAM_LANGUAGE_NONE);
+					chunksize = (uint32_t)ffhws.tellg()-chunkpos;
+					ffhws.seekg(chunkpos-4);
+					HWSWriteLong(ffhws,chunksize);
+					ffhws.seekg(chunkpos+chunksize);
+				}
+				for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+					if (savelocal && hades::STEAM_LANGUAGE_SAVE_LIST[lang])
+						break;
+				if (lang<STEAM_LANGUAGE_AMOUNT) {
+					uint32_t langdatasize, langdatapos;
+					HWSWriteChar(ffhws,CHUNK_SPECIAL_TYPE_LOCAL_MULTILANG);
+					HWSWriteLong(ffhws,0);
+					chunkpos = ffhws.tellg();
+					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+						if (hades::STEAM_LANGUAGE_SAVE_LIST[lang]) {
+							HWSWriteChar(ffhws,lang);
+							HWSWriteChar(ffhws,0); // TODO: Use this as an options
+							HWSWriteLong(ffhws,0);
+							langdatapos = ffhws.tellg();
+							script[i]->WriteLocalHWS(ffhws,lang);
+							langdatasize = (long long)ffhws.tellg()-langdatapos;
+							ffhws.seekg(langdatapos-4);
+							HWSWriteLong(ffhws,langdatasize);
+							ffhws.seekg(langdatapos+langdatasize);
+						}
+					HWSWriteChar(ffhws,STEAM_LANGUAGE_NONE);
+					chunksize = (long long)ffhws.tellg()-chunkpos;
+					ffhws.seekg(chunkpos-4);
+					HWSWriteLong(ffhws,chunksize);
+					ffhws.seekg(chunkpos+chunksize);
+				}
 			}
 			HWSWriteChar(ffhws,0xFF);
 			nbmodified++;

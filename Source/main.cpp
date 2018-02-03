@@ -32,6 +32,9 @@ namespace hades {
 	wchar_t* SPECIAL_STRING_CHARMAP_B = DEFAULT_SECONDARY_CHARMAP;
 	ExtendedCharmap SPECIAL_STRING_CHARMAP_EXT = ExtendedCharmap::CreateEmpty();
 	wchar_t SPECIAL_STRING_OPCODE_WCHAR = OPCODE_WCHAR;
+	SteamLanguage CURRENT_STEAM_LANGUAGE = STEAM_LANGUAGE_US;
+	bool STEAM_LANGUAGE_SAVE_LIST[STEAM_LANGUAGE_AMOUNT] = { true, false, false, false, false, false, false };
+	bool STEAM_SINGLE_LANGUAGE_MODE = false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -66,6 +69,7 @@ MainFrame::MainFrame(wxWindow *parent) :
 	PreferenceWindow = new PreferencesDialog(this);
 	PreferencesUpdate();
 	PreferencesDialog::LoadMainFrameConfig(this);
+	SetSteamLanguage(hades::CURRENT_STEAM_LANGUAGE);
 	LoadingDialogCreate(this);
 }
 
@@ -185,9 +189,6 @@ void MainFrame::OnOpenClick(wxCommandEvent& event) {
 			CDPanel[CDPanelAmount] = new CDDataStruct(m_cdbook,filename,config);
 			CDName[CDPanelAmount] = filename.substr(dirsep);
 		} else {
-			SteamLanguageMessage langmess(this);
-			langmess.ShowModal();
-			SetSteamLanguage(langmess.m_choice->GetSelection());
 			CDPanel[CDPanelAmount] = new CDDataStruct(m_cdbook,filename.substr(0,dirsep),config);
 			CDName[CDPanelAmount] = HADES_STRING_OPEN_STEAM_DEFAULT;
 			SteamSaveDir = CDPanel[CDPanelAmount]->filename+_(HADES_STRING_STEAM_SAVE_DEFAULT);
@@ -569,6 +570,7 @@ void MainFrame::PreferencesUpdate() {
 		for (i=0;i<CDPanelAmount;i++)
 			CDPanel[i]->ChangeFF9StringCharmap(hades::SPECIAL_STRING_CHARMAP_DEFAULT,hades::SPECIAL_STRING_CHARMAP_A,hades::SPECIAL_STRING_CHARMAP_B,hades::SPECIAL_STRING_CHARMAP_EXT);
 	}
+	hades::STEAM_SINGLE_LANGUAGE_MODE = PreferenceWindow->steam_single_lang_mode;
 	if (hades::SPECIAL_STRING_OPCODE_WCHAR!=PreferenceWindow->charmap_opchar) {
 		hades::SPECIAL_STRING_OPCODE_WCHAR = PreferenceWindow->charmap_opchar;
 		for (i=0;i<CDPanelAmount;i++)
@@ -579,6 +581,14 @@ void MainFrame::PreferencesUpdate() {
 	else
 		hades::TEXT_WINDOW_COLOR.Set(0,60,255);
 	hades::TEXT_PREVIEW_TYPE = PreferenceWindow->text_preview_type;
+	if (hades::CURRENT_STEAM_LANGUAGE!=PreferenceWindow->steam_language) {
+		hades::CURRENT_STEAM_LANGUAGE = PreferenceWindow->steam_language;
+		SetSteamLanguage(hades::CURRENT_STEAM_LANGUAGE);
+		for (i=0;i<CDPanelAmount;i++)
+			CDPanel[i]->ChangeFF9StringSteamLanguage(hades::CURRENT_STEAM_LANGUAGE);
+	}
+	for (i=0;i<STEAM_LANGUAGE_AMOUNT;i++)
+		hades::STEAM_LANGUAGE_SAVE_LIST[i] = PreferenceWindow->save_lang[i];
 	if (hades::FIELD_BACKGROUND_RESOLUTION!=PreferenceWindow->background_resolution) {
 		hades::FIELD_BACKGROUND_RESOLUTION = PreferenceWindow->background_resolution;
 		for (i=0;i<CDPanelAmount;i++)
@@ -593,7 +603,14 @@ void MainFrame::PreferencesUpdate() {
 }
 
 void MainFrame::OnPreferencesClick( wxCommandEvent& event ) {
-	int res = PreferenceWindow->ShowModal();
+	unsigned int i;
+	bool steamloaded = false;
+	for (i=0;i<CDPanelAmount;i++)
+		if (CDPanel[i]->gametype!=GAME_TYPE_PSX) {
+			steamloaded = true;
+			break;
+		}
+	int res = PreferenceWindow->ShowModal(!hades::STEAM_SINGLE_LANGUAGE_MODE || !steamloaded,!steamloaded);
 	if (res==wxID_OK) {
 		PreferencesUpdate();
 	} else if (res==wxID_EXIT) {
@@ -604,24 +621,25 @@ void MainFrame::OnPreferencesClick( wxCommandEvent& event ) {
 void MainFrame::OnBatchExportClick( wxCommandEvent& event ) {
 	unsigned int currentpanel = m_cdbook->GetSelection();
 	int id = event.GetId();
+	bool dataloaded[8] = { CDPanel[currentpanel]->statloaded, CDPanel[currentpanel]->enemyloaded, CDPanel[currentpanel]->fieldloaded, CDPanel[currentpanel]->itemloaded, CDPanel[currentpanel]->spellloaded, CDPanel[currentpanel]->supportloaded, CDPanel[currentpanel]->cmdloaded, CDPanel[currentpanel]->cardloaded };
 	if (id==wxID_TEXT) {
 		BatchExportDialog dial(this);
-		dial.ShowModal(1,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->m_textlist->GetStrings(),CDPanel[currentpanel]->textsorted);
+		dial.ShowModal(1,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->m_textlist->GetStrings(),CDPanel[currentpanel]->textsorted,dataloaded);
 	} else if (id==wxID_UITEXT) {
 		BatchExportDialog dial(this);
-		dial.ShowModal(2,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->m_specialtextlist->GetStrings(),NULL);
+		dial.ShowModal(2,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->m_specialtextlist->GetStrings(),NULL,dataloaded);
 	} else if (id==wxID_ENMYSCRIPT) {
 		BatchExportDialog dial(this);
-		dial.ShowModal(3,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->m_enemylist->GetStrings(),CDPanel[currentpanel]->enemysorted);
+		dial.ShowModal(3,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->m_enemylist->GetStrings(),CDPanel[currentpanel]->enemysorted,dataloaded);
 	} else if (id==wxID_WORLDSCRIPT) {
 		BatchExportDialog dial(this);
-		dial.ShowModal(4,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->m_worldlist->GetStrings(),NULL);
+		dial.ShowModal(4,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->m_worldlist->GetStrings(),NULL,dataloaded);
 	} else if (id==wxID_FIELDSCRIPT) {
 		BatchExportDialog dial(this);
-		dial.ShowModal(5,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->m_fieldlist->GetStrings(),CDPanel[currentpanel]->fieldsorted);
+		dial.ShowModal(5,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->m_fieldlist->GetStrings(),CDPanel[currentpanel]->fieldsorted,dataloaded);
 	} else if (id==wxID_BACKGROUND) {
 		BatchExportDialog dial(this);
-		dial.ShowModal(10,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->m_fieldlist->GetStrings(),CDPanel[currentpanel]->fieldsorted);
+		dial.ShowModal(10,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->m_fieldlist->GetStrings(),CDPanel[currentpanel]->fieldsorted,dataloaded);
 	}
 }
 
@@ -737,7 +755,6 @@ void MainFrame::UpdateMenuAvailability(int panel) {
 		return;
 	}
 	SetGameType(CDPanel[panel]->gametype);
-	SetSteamLanguage(CDPanel[panel]->steamlang);
 	m_openhws->Enable(true);
 	m_close->Enable(true);
 	m_closeall->Enable(true);

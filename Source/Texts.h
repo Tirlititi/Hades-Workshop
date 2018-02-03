@@ -42,7 +42,7 @@ public:
 	// Return 0 if success ; 1 if the value is too long
 	int AddText(uint16_t id, FF9String& value);
 	void RemoveText(uint16_t id);
-	int SetText(uint16_t id, wstring& newvalue);
+	int SetText(uint16_t id, wstring& newvalue, SteamLanguage lang = GetSteamLanguage());
 	int SetText(uint16_t id, FF9String& newvalue); // Copy the new value
 	int AddFormatCode(uint16_t id, uint8_t opcode, uint8_t* arg); // arg must be malloc'ed and have the proper size depending of the opcode
 	int RemoveFormatCode(uint16_t id, uint8_t formatid);
@@ -50,9 +50,10 @@ public:
 	void Read(fstream& f);
 	void Write(fstream& f);
 	void WritePPF(fstream& f);
-	void ReadHWS(fstream& f);
-	void WriteHWS(fstream& f);
-	void WriteSteam(fstream& f);
+	void ReadHWS(fstream& f, bool multilang = false);
+	void WriteHWS(fstream& f, bool multilang = false);
+	void WriteSteam(fstream& f, SteamLanguage lang = GetSteamLanguage());
+	int GetDataSize(SteamLanguage lang = GetSteamLanguage());
 	void UpdateOffset();
 };
 
@@ -86,13 +87,16 @@ public:
 	uint16_t* size_x; // PSX only
 	uint32_t space_total; // 4 bytes of "amount" not counted (PSX)
 	uint32_t space_used; // Warning: for PSX, space is 16-bits long but for Steam, it's 32-bits long
-	bool localizationfile; // Steam only
+	bool is_localization; // Steam only
+	wstring* localization_field; // Localization only
 	
 	// Return 0 if success ; 1 if the value is too long
 	int AddText(uint16_t id, FF9String& value);
 	void RemoveText(uint16_t id);
 	int SetText(uint16_t id, wstring& newvalue);
 	int SetText(uint16_t id, FF9String& newvalue); // Copy the new value
+	int GetHWSDataSize(SteamLanguage lang = GetSteamLanguage());
+	int GetDataSize(SteamLanguage lang = GetSteamLanguage());
 	void UpdateOffset();
 	
 private:
@@ -113,7 +117,8 @@ public:
 	// {Number of oversized blocks, Number of unknown data}
 	int* LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup);
 	void WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup);
-	void WriteSteam(fstream& ffbin, unsigned int blockid);
+	void WriteSteam(fstream& ffbin, unsigned int blockid, SteamLanguage lang = GetSteamLanguage());
+	void WriteHWSSteam(fstream& ffbin, unsigned int blockid, SteamLanguage lang = GetSteamLanguage());
 	
 	static int GetSpellNamingIndex();
 };

@@ -581,7 +581,7 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 	#define MACRO_WRITE_ADDED_FILE() \
 		if (addfile) { \
 			macroi = 0; \
-			while (macroi<addfile->file_type.size()) \
+			while (macroi<addfile->file_index.size()) \
 				if (addfile->file_index[macroi]==curfileindex) { \
 					filenewsizetmp = addfile->file_size[macroi]; \
 					if (addfile->file_type[macroi]==49) \
@@ -615,7 +615,7 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 					if (newmetadata) { \
 						newmetadata->file_info[curfileindex] = addfile->file_info[macroi]; \
 						newmetadata->file_type1[curfileindex] = addfile->file_type[macroi]; \
-						newmetadata->file_type2[curfileindex] = addfile->file_type[macroi]; \
+						newmetadata->file_type2[curfileindex] = addfile->file_type[macroi] | 0xFFFF0000; \
 						newmetadata->file_flags[curfileindex] = addfile->file_unknown[macroi]; \
 						newmetadata->file_name_len[curfileindex] = addfile->file_name[macroi].length(); \
 						newmetadata->file_name[curfileindex] = addfile->file_name[macroi]; \
@@ -717,33 +717,27 @@ uint32_t* UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest, bool* 
 	fdest.seekp(0,ios::end);
 	if (copyfileamount==header_file_amount && copylist[header_file_amount-1] && file_type1[header_file_amount-1]==49)
 		fdest.put(0);
-	uint32_t fdestfullfilesize = fdest.tellp();
 	while (fdest.tellp()%8!=0)
 		fdest.put(0);
-	if (archive_type==0) {
-		WriteLongBE(fdest,copyfileheadersize);
-		WriteLongBE(fdest,fdestfullfilesize);
-		fdest.seekp(4,ios::cur);
-		WriteLongBE(fdest,copyfileoffset);
-	} else {
-		uint32_t fdestsize = fdest.tellp();
+	uint32_t fdestarchsize = (uint32_t)fdest.tellp()-archivestart;
+	if (archive_type!=0) {
+		uint32_t fdestfullsize = fdest.tellp();
 		uint32_t size;
 		fdest.seekp(0x1B);
-		WriteLongBE(fdest,fdestsize);
+		WriteLongBE(fdest,fdestfullsize);
 		fdest.seekp(0x2B);
-		size = fdestsize-0x3C;
+		size = fdestfullsize-0x3C;
 		WriteLongBE(fdest,size);
 		WriteLongBE(fdest,size);
-		WriteLongBE(fdest,fdestsize);
+		WriteLongBE(fdest,fdestfullsize);
 		fdest.seekp(0x69);
-		size = fdestfullfilesize-archivestart;
-		WriteLongBE(fdest,size);
-		fdest.seekp(archivestart);
-		WriteLongBE(fdest,copyfileheadersize);
-		WriteLongBE(fdest,size);
-		fdest.seekp(4,ios::cur);
-		WriteLongBE(fdest,copyfileoffset);
+		WriteLongBE(fdest,fdestarchsize);
 	}
+	fdest.seekp(archivestart);
+	WriteLongBE(fdest,copyfileheadersize);
+	WriteLongBE(fdest,fdestarchsize);
+	fdest.seekp(4,ios::cur);
+	WriteLongBE(fdest,copyfileoffset);
 	return res;
 }
 
@@ -1083,11 +1077,11 @@ void UnityArchiveFileCreator::Add(uint32_t type, uint32_t size, int64_t info, st
 	unsigned int i;
 	while (index>0 && meta_data->file_info[index-1]>=info)
 		index--;
-	for (i=0;i<file_type.size();i++) {
+	for (i=0;i<file_info.size();i++) {
 		if (info>=file_info[i])
 			index++;
 		else
-			file_info[i]++;
+			file_index[i]++;
 	}
 	file_info.push_back(info);
 	file_size.push_back(size);

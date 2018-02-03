@@ -320,24 +320,20 @@ void ScriptFunction::WriteHWS(fstream& f) {
 }
 
 int ScriptDataStruct::SetName(wstring newvalue, SteamLanguage lang) {
-	FF9String tmp(name);
-	tmp.SetValue(newvalue);
-	if (tmp.length>SCRIPT_NAME_MAX_LENGTH)
-		return 1;
-	if (lang==STEAM_LANGUAGE_NONE || GetGameType()==GAME_TYPE_PSX)
-		name.SetValue(newvalue);
-	else
-		name.multi_lang_str[lang] = newvalue;
+	if (GetGameType()==GAME_TYPE_PSX) {
+		FF9String tmp(name);
+		tmp.SetValue(newvalue);
+		if (tmp.length>SCRIPT_NAME_MAX_LENGTH)
+			return 1;
+	}
+	name.SetValue(newvalue,lang);
 	return 0;
 }
 
-int ScriptDataStruct::SetName(FF9String& newvalue, SteamLanguage lang) {
-	if (newvalue.length>SCRIPT_NAME_MAX_LENGTH)
+int ScriptDataStruct::SetName(FF9String& newvalue) {
+	if (GetGameType()==GAME_TYPE_PSX && newvalue.length>SCRIPT_NAME_MAX_LENGTH)
 		return 1;
-	if (lang==STEAM_LANGUAGE_NONE || GetGameType()==GAME_TYPE_PSX)
-		name = newvalue;
-	else
-		name.multi_lang_str[lang] = newvalue.str;
+	name = newvalue;
 	return 0;
 }
 
@@ -582,6 +578,57 @@ int ScriptDataStruct::RemoveEntry(int entrypos, int* modifiedargamount) {
 	return res;
 }
 
+void ScriptDataStruct::ChangeSteamLanguage(SteamLanguage newlang) {
+	if (multi_lang_script==NULL)
+		return;
+	unsigned int i;
+	multi_lang_script->func[current_language] = func;
+	multi_lang_script->magic_number[current_language] = magic_number;
+	multi_lang_script->header_unknown1[current_language] = header_unknown1;
+	multi_lang_script->entry_amount[current_language] = entry_amount;
+	for (i=0;i<20;i++) {
+		multi_lang_script->header_unknown2[current_language][i] = header_unknown2[i];
+		multi_lang_script->header_unknown3[current_language][i] = header_unknown3[i];
+	}
+	for (i=0;i<SCRIPT_NAME_MAX_LENGTH;i++)
+		multi_lang_script->header_name[current_language][i] = header_name[i];
+	multi_lang_script->entry_offset[current_language] = entry_offset;
+	multi_lang_script->entry_size[current_language] = entry_size;
+	multi_lang_script->entry_local_var[current_language] = entry_local_var;
+	multi_lang_script->entry_flag[current_language] = entry_flag;
+	multi_lang_script->entry_type[current_language] = entry_type;
+	multi_lang_script->entry_function_amount[current_language] = entry_function_amount;
+	multi_lang_script->function_type[current_language] = function_type;
+	multi_lang_script->function_point[current_language] = function_point;
+	multi_lang_script->global_data[current_language] = global_data;
+	multi_lang_script->local_data[current_language] = local_data;
+	multi_lang_script->is_loaded[current_language] = loaded;
+	multi_lang_script->is_modified[current_language] = modified;
+	func = multi_lang_script->func[newlang];
+	magic_number = multi_lang_script->magic_number[newlang];
+	header_unknown1 = multi_lang_script->header_unknown1[newlang];
+	entry_amount = multi_lang_script->entry_amount[newlang];
+	for (i=0;i<20;i++) {
+		header_unknown2[i] = multi_lang_script->header_unknown2[newlang][i];
+		header_unknown3[i] = multi_lang_script->header_unknown3[newlang][i];
+	}
+	for (i=0;i<SCRIPT_NAME_MAX_LENGTH;i++)
+		header_name[i] = multi_lang_script->header_name[newlang][i];
+	entry_offset = multi_lang_script->entry_offset[newlang];
+	entry_size = multi_lang_script->entry_size[newlang];
+	entry_local_var = multi_lang_script->entry_local_var[newlang];
+	entry_flag = multi_lang_script->entry_flag[newlang];
+	entry_type = multi_lang_script->entry_type[newlang];
+	entry_function_amount = multi_lang_script->entry_function_amount[newlang];
+	function_type = multi_lang_script->function_type[newlang];
+	function_point = multi_lang_script->function_point[newlang];
+	global_data = multi_lang_script->global_data[newlang];
+	local_data = multi_lang_script->local_data[newlang];
+	loaded = multi_lang_script->is_loaded[newlang];
+	modified = multi_lang_script->is_modified[newlang];
+	current_language = newlang;
+}
+
 #define MACRO_SCRIPT_IOFUNCTION(IO,SEEK,READ,PPF,FUNC) \
 	unsigned int i,j; \
 	uint32_t entry_pos, function_pos; \
@@ -654,18 +701,27 @@ int ScriptDataStruct::RemoveEntry(int entrypos, int* modifiedargamount) {
 	}
 
 
-void ScriptDataStruct::Read(fstream& f) {
-	if (loaded)
+void ScriptDataStruct::Read(fstream& f, SteamLanguage lang) {
+	if (loaded && lang==STEAM_LANGUAGE_NONE)
 		return;
+	if (lang!=STEAM_LANGUAGE_NONE && multi_lang_script==NULL) {
+		multi_lang_script = new MultiLanguageScriptDataStruct();
+		for (SteamLanguage lg=0;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
+			multi_lang_script->is_loaded[lg] = false;
+			multi_lang_script->is_modified[lg] = false;
+		}
+	}
 	if (GetGameType()==GAME_TYPE_PSX && parent_cluster->parent_cluster && parent_cluster->parent_cluster->clus_type==CLUSTER_TYPE_WORLD_MAP && object_id>=9100) {
 		ChunkChild::Read(f);
 	} else {
 		if (GetGameType()==GAME_TYPE_PSX) {
 			MACRO_SCRIPT_IOFUNCTION(FFIXRead,FFIXSeek,true,false,Read)
+			name.ReadFromChar(header_name);
 		} else {
 			MACRO_SCRIPT_IOFUNCTION(SteamRead,SteamSeek,true,false,Read)
+			if (!name.created)
+				name.CreateEmpty();
 		}
-		name.ReadFromChar(header_name);
 		local_data = new ScriptLocalVariableSet[entry_amount];
 		for (unsigned int i=0;i<entry_amount;i++) {
 			local_data[i].allocate_amount = entry_local_var[i];
@@ -673,6 +729,10 @@ void ScriptDataStruct::Read(fstream& f) {
 		}
 		global_data.allocate_amount = 0;
 		global_data.amount = 0;
+		current_language = lang;
+		loaded = true;
+		if (lang!=STEAM_LANGUAGE_NONE)
+			ChangeSteamLanguage(lang); // Setup the values and pointers of multi_lang_script's language
 	}
 	loaded = true;
 }
@@ -694,7 +754,10 @@ void ScriptDataStruct::WritePPF(fstream& f) {
 	}
 }
 
-void ScriptDataStruct::ReadHWS(fstream& f, bool usetext) {
+void ScriptDataStruct::ReadHWS(fstream& f, bool usetext, SteamLanguage lang) {
+	SteamLanguage oldlang = current_language;
+	if (lang!=STEAM_LANGUAGE_NONE && oldlang!=STEAM_LANGUAGE_NONE)
+		ChangeSteamLanguage(lang);
 	uint8_t oldentryamount = entry_amount;
 	MACRO_SCRIPT_IOFUNCTION(HWSRead,HWSSeek,true,false,ReadHWS)
 	if (usetext)
@@ -711,13 +774,23 @@ void ScriptDataStruct::ReadHWS(fstream& f, bool usetext) {
 		local_data = newlocaldata;
 	}
 	MarkDataModified();
+	if (lang!=STEAM_LANGUAGE_NONE && oldlang!=STEAM_LANGUAGE_NONE)
+		ChangeSteamLanguage(oldlang);
 }
 
-void ScriptDataStruct::WriteHWS(fstream& f) {
+void ScriptDataStruct::WriteHWS(fstream& f, SteamLanguage lang) {
+	SteamLanguage oldlang = current_language;
+	if (lang!=STEAM_LANGUAGE_NONE && oldlang!=STEAM_LANGUAGE_NONE)
+		ChangeSteamLanguage(lang);
 	MACRO_SCRIPT_IOFUNCTION(HWSWrite,HWSSeek,false,false,WriteHWS)
+	if (lang!=STEAM_LANGUAGE_NONE && oldlang!=STEAM_LANGUAGE_NONE)
+		ChangeSteamLanguage(oldlang);
 }
 
-void ScriptDataStruct::ReadLocalHWS(fstream& f) {
+void ScriptDataStruct::ReadLocalHWS(fstream& f, SteamLanguage lang) {
+	SteamLanguage oldlang = current_language;
+	if (lang!=STEAM_LANGUAGE_NONE && oldlang!=STEAM_LANGUAGE_NONE)
+		ChangeSteamLanguage(lang);
 	unsigned int i,j;
 	uint32_t localpos, entrypos, vardatapos, localsize;
 	uint16_t entryheadersize, vardatasize, tmp16;
@@ -819,9 +892,14 @@ void ScriptDataStruct::ReadLocalHWS(fstream& f) {
 	}
 	HWSSeek(f,localpos,localsize);
 	MarkDataModified();
+	if (lang!=STEAM_LANGUAGE_NONE && oldlang!=STEAM_LANGUAGE_NONE)
+		ChangeSteamLanguage(oldlang);
 }
 
-void ScriptDataStruct::WriteLocalHWS(fstream& f) {
+void ScriptDataStruct::WriteLocalHWS(fstream& f, SteamLanguage lang) {
+	SteamLanguage oldlang = current_language;
+	if (lang!=STEAM_LANGUAGE_NONE && oldlang!=STEAM_LANGUAGE_NONE)
+		ChangeSteamLanguage(lang);
 	unsigned int i,j,k;
 	uint32_t localpos, localsize = 0;
 	uint16_t zero16 = 0;
@@ -865,6 +943,8 @@ void ScriptDataStruct::WriteLocalHWS(fstream& f) {
 	f.seekg(localpos);
 	HWSWriteLong(f,localsize);
 	HWSSeek(f,localpos,localsize);
+	if (lang!=STEAM_LANGUAGE_NONE && oldlang!=STEAM_LANGUAGE_NONE)
+		ChangeSteamLanguage(oldlang);
 }
 
 void ScriptDataStruct::Copy(ScriptDataStruct& from, bool deleteold) {
@@ -975,6 +1055,46 @@ void ScriptDataStruct::Copy(ScriptDataStruct& from, bool deleteold) {
 	memcpy(global_data.name,from.global_data.name,global_data.amount*sizeof(wstring));
 	memcpy(global_data.cat,from.global_data.cat,global_data.amount*sizeof(uint8_t));
 	memcpy(global_data.id,from.global_data.id,global_data.amount*sizeof(uint16_t));
+}
+
+bool ScriptDataStruct::IsDataModified(SteamLanguage lang) {
+	if (multi_lang_script==NULL || lang==current_language)
+		return modified;
+	return multi_lang_script->is_modified[lang];
+}
+
+int ScriptDataStruct::GetDataSize(SteamLanguage lang) {
+	SteamLanguage oldlang = current_language;
+	if (lang!=STEAM_LANGUAGE_NONE && oldlang!=STEAM_LANGUAGE_NONE)
+		ChangeSteamLanguage(lang);
+	uint16_t funcpos, entrypos = 8*entry_amount, lastentrypos = entrypos;
+	unsigned int i,j;
+	int res = 128;
+	for (i=0;i<entry_amount;i++) {
+		if (entry_function_amount[i]>0) {
+			entry_offset[i] = entrypos;
+			funcpos = 4*entry_function_amount[i];
+			for (j=0;j<entry_function_amount[i];j++) {
+				function_point[i][j] = funcpos;
+				funcpos += func[i][j].length;
+			}
+			entry_size[i] = funcpos+2;
+			if (entry_size[i]%4)
+				entry_size[i] += 4-entry_size[i]%4;
+			lastentrypos = entrypos;
+			entrypos += entry_size[i];
+		} else {
+			entry_offset[i] = entrypos;
+			entry_size[i] = 0;
+		}
+	}
+	if (entry_amount>0) // Just for mimicking the game's behavior
+		for (i=entry_amount-1;entry_size[i]==0;i--)
+			entry_offset[i] = lastentrypos;
+	res += entrypos;
+	if (lang!=STEAM_LANGUAGE_NONE && oldlang!=STEAM_LANGUAGE_NONE)
+		ChangeSteamLanguage(oldlang);
+	return res;
 }
 
 void ScriptDataStruct::UpdateOffset() {

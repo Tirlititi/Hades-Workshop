@@ -13,7 +13,6 @@ public:
 	SaveSet saveset;
 	UnusedSaveBackup backupset;
 	GameType gametype;
-	SteamLanguage steamlang;
 	SpellDataSet spellset;
 	bool spellloaded;
 	bool spellmodified;
@@ -100,6 +99,7 @@ public:
 	void MarkDataCilModified();
 	void ChangeFF9StringCharmap(wchar_t* chmapdef, wchar_t* chmapa, wchar_t* chmapb, ExtendedCharmap& chmapext);
 	void ChangeFF9StringOpcodeChar(wchar_t newchar);
+	void ChangeFF9StringSteamLanguage(SteamLanguage newlang);
 	bool OverwriteBinary();
 	bool ExportPPF();
 	wstring* ReadHWS(const char* fname, bool* section, bool* sectext, bool* localsec);

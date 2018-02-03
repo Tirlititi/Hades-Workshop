@@ -4,6 +4,7 @@
 #include <sstream>
 #include <cstring>
 #include <string>
+#include "main.h"
 #include "Gui_LoadingDialog.h"
 #include "Hades_Strings.h"
 #include "Database_Steam.h"
@@ -1422,6 +1423,7 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, SaveSet& saveset, bool deleteold) {
 	// For chunks, we use the functions WriteHWS as the writing process is the same
 	// A WriteSteam function is needed only when texts are involved
+	SteamLanguage lang;
 	unsigned int i,j;
 	string dirassets = destfolder+"\\StreamingAssets\\";
 	string dirdata = destfolder+"\\x64\\FF9_Data\\";
@@ -1584,62 +1586,73 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			filenewsize[i] = config.meta_script.file_size[i];
 			if (section[DATA_SECTION_ENMY])
 				for (j=0;j<config.enmy_amount;j++)
-					if (i==config.enmy_script_file[GetSteamLanguage()][j]) {
-						if (saveset.enemyset->script[j]->modified) {
-							copylist[i] = false;
-							filenewsize[i] = saveset.enemyset->script[j]->size;
+					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+						if (i==config.enmy_script_file[lang][j]) {
+							if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && saveset.enemyset->script[j]->IsDataModified(lang)) {
+								copylist[i] = false;
+								filenewsize[i] = saveset.enemyset->script[j]->GetDataSize(lang);
+							}
+							j = config.enmy_amount;
+							break;
 						}
-						break;
-					}
 			if (copylist[i] && section[DATA_SECTION_FIELD])
 				for (j=0;j<config.field_amount;j++)
-					if (i==config.field_script_file[GetSteamLanguage()][j]) {
-						if (saveset.fieldset->script_data[j]->modified) {
-							copylist[i] = false;
-							filenewsize[i] = saveset.fieldset->script_data[j]->size;
+					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+						if (i==config.field_script_file[lang][j]) {
+							if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && saveset.fieldset->script_data[j]->IsDataModified(lang)) {
+								copylist[i] = false;
+								filenewsize[i] = saveset.fieldset->script_data[j]->GetDataSize(lang);
+							}
+							j = config.field_amount;
+							break;
 						}
-						break;
-					}
 			if (copylist[i] && section[DATA_SECTION_WORLD_MAP])
 				for (j=0;j<config.world_amount;j++)
-					if (i==config.world_script_file[GetSteamLanguage()][j]) {
-						if (saveset.worldset->script[j]->modified) {
-							copylist[i] = false;
-							filenewsize[i] = saveset.worldset->script[j]->size;
+					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+						if (i==config.world_script_file[lang][j]) {
+							if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && saveset.worldset->script[j]->IsDataModified(lang)) {
+								copylist[i] = false;
+								filenewsize[i] = saveset.worldset->script[j]->GetDataSize(lang);
+							}
+							j = config.world_amount;
+							break;
 						}
-						break;
-					}
 		}
 		uint32_t* unitydataoff = config.meta_script.Duplicate(filebase,filedest,copylist,filenewsize);
 		for (i=0;i<config.meta_script.header_file_amount;i++) {
 			if (section[DATA_SECTION_ENMY])
 				for (j=0;j<config.enmy_amount;j++)
-//for (unsigned int k=0;k<STEAM_LANGUAGE_AMOUNT;k++)
-					if (i==config.enmy_script_file[GetSteamLanguage()][j]) {
-						if (saveset.enemyset->script[j]->modified) {
-							filedest.seekg(unitydataoff[i]);
-							saveset.enemyset->script[j]->WriteHWS(filedest);
+					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+						if (i==config.enmy_script_file[lang][j]) {
+							if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && saveset.enemyset->script[j]->IsDataModified(lang)) {
+								filedest.seekg(unitydataoff[i]);
+								saveset.enemyset->script[j]->WriteHWS(filedest,lang);
+							}
+							j = config.enmy_amount;
+							break;
 						}
-						break;
-					}
 			if (section[DATA_SECTION_FIELD])
 				for (j=0;j<config.field_amount;j++)
-					if (i==config.field_script_file[GetSteamLanguage()][j]) {
-						if (saveset.fieldset->script_data[j]->modified) {
-							filedest.seekg(unitydataoff[i]);
-							saveset.fieldset->script_data[j]->WriteHWS(filedest);
+					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+						if (i==config.field_script_file[lang][j]) {
+							if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && saveset.fieldset->script_data[j]->IsDataModified(lang)) {
+								filedest.seekg(unitydataoff[i]);
+								saveset.fieldset->script_data[j]->WriteHWS(filedest,lang);
+							}
+							j = config.field_amount;
+							break;
 						}
-						break;
-					}
 			if (section[DATA_SECTION_WORLD_MAP])
 				for (j=0;j<config.world_amount;j++)
-					if (i==config.world_script_file[GetSteamLanguage()][j]) {
-						if (saveset.worldset->script[j]->modified) {
-							filedest.seekg(unitydataoff[i]);
-							saveset.worldset->script[j]->WriteHWS(filedest);
+					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+						if (i==config.world_script_file[lang][j]) {
+							if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && saveset.worldset->script[j]->IsDataModified(lang)) {
+								filedest.seekg(unitydataoff[i]);
+								saveset.worldset->script[j]->WriteHWS(filedest,lang);
+							}
+							j = config.world_amount;
+							break;
 						}
-						break;
-					}
 		}
 		filebase.close();
 		filedest.close();
@@ -1672,38 +1685,42 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 					filenewsize[i] = SIZE; \
 				}
 			
-			MACRO_STEAM_CHECKFILEUPDATE(spell_name_file[GetSteamLanguage()],section[DATA_SECTION_SPELL],saveset.spellset->name_space_used)
-			MACRO_STEAM_CHECKFILEUPDATE(spell_help_file[GetSteamLanguage()],section[DATA_SECTION_SPELL],saveset.spellset->help_space_used)
-			MACRO_STEAM_CHECKFILEUPDATE(cmd_name_file[GetSteamLanguage()],section[DATA_SECTION_CMD],saveset.cmdset->name_space_used)
-			MACRO_STEAM_CHECKFILEUPDATE(cmd_help_file[GetSteamLanguage()],section[DATA_SECTION_CMD],saveset.cmdset->help_space_used)
-			MACRO_STEAM_CHECKFILEUPDATE(support_name_file[GetSteamLanguage()],section[DATA_SECTION_SUPPORT],saveset.supportset->name_space_used)
-			MACRO_STEAM_CHECKFILEUPDATE(support_help_file[GetSteamLanguage()],section[DATA_SECTION_SUPPORT],saveset.supportset->help_space_used)
-			MACRO_STEAM_CHECKFILEUPDATE(item_name_file[GetSteamLanguage()],section[DATA_SECTION_ITEM],saveset.itemset->name_space_used)
-			MACRO_STEAM_CHECKFILEUPDATE(item_help_file[GetSteamLanguage()],section[DATA_SECTION_ITEM],saveset.itemset->help_space_used)
-			MACRO_STEAM_CHECKFILEUPDATE(item_help2_file[GetSteamLanguage()],section[DATA_SECTION_ITEM],saveset.itemset->help2_space_used)
-			MACRO_STEAM_CHECKFILEUPDATE(itemkey_name_file[GetSteamLanguage()],section[DATA_SECTION_ITEM],saveset.itemset->key_name_space_used)
-			MACRO_STEAM_CHECKFILEUPDATE(itemkey_help_file[GetSteamLanguage()],section[DATA_SECTION_ITEM],saveset.itemset->key_help_space_used)
-			MACRO_STEAM_CHECKFILEUPDATE(itemkey_desc_file[GetSteamLanguage()],section[DATA_SECTION_ITEM],saveset.itemset->key_desc_space_used)
-			MACRO_STEAM_CHECKFILEUPDATE(field_text_file[GetSteamLanguage()],section[DATA_SECTION_FIELD],saveset.fieldset->name_space_used)
-			MACRO_STEAM_CHECKFILEUPDATE(world_text_file[GetSteamLanguage()],section[DATA_SECTION_WORLD_MAP],saveset.worldset->text_data[0]->size)
-			MACRO_STEAM_CHECKFILEUPDATE(world_worldplace_name_file[GetSteamLanguage()],section[DATA_SECTION_WORLD_MAP],saveset.worldset->world_data->place_name_size)
-			MACRO_STEAM_CHECKFILEUPDATE(card_name_file[GetSteamLanguage()],section[DATA_SECTION_CARD],saveset.cardset->name_space_used)
-			MACRO_STEAM_CHECKFILEUPDATE(spetext_battleinfo_file[GetSteamLanguage()],section[DATA_SECTION_MENU_UI],saveset.ffuiset->special_text->text_block[0].space_used)
-			MACRO_STEAM_CHECKFILEUPDATE(spetext_battlescan_file[GetSteamLanguage()],section[DATA_SECTION_MENU_UI],saveset.ffuiset->special_text->text_block[1].space_used)
-			MACRO_STEAM_CHECKFILEUPDATE(spetext_spellnaming_file[GetSteamLanguage()],section[DATA_SECTION_MENU_UI],saveset.ffuiset->special_text->text_block[2].space_used)
-			MACRO_STEAM_CHECKFILEUPDATE(spetext_chocomenu_file[GetSteamLanguage()],section[DATA_SECTION_MENU_UI],saveset.ffuiset->special_text->text_block[3].space_used)
-			MACRO_STEAM_CHECKFILEUPDATE(spetext_cardrank_file[GetSteamLanguage()],section[DATA_SECTION_MENU_UI],saveset.ffuiset->special_text->text_block[4].space_used)
-			MACRO_STEAM_CHECKFILEUPDATE(spetext_tetramaster_file[GetSteamLanguage()],section[DATA_SECTION_MENU_UI],saveset.ffuiset->special_text->text_block[5].space_used)
-			MACRO_STEAM_CHECKFILEUPDATE(spetext_localization_file,section[DATA_SECTION_MENU_UI],saveset.ffuiset->special_text->text_block[6].space_used)
+			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+				if (!hades::STEAM_LANGUAGE_SAVE_LIST[lang])
+					continue;
+				MACRO_STEAM_CHECKFILEUPDATE(spell_name_file[lang],section[DATA_SECTION_SPELL],saveset.spellset->GetSteamTextSize(0,lang))
+				MACRO_STEAM_CHECKFILEUPDATE(spell_help_file[lang],section[DATA_SECTION_SPELL],saveset.spellset->GetSteamTextSize(1,lang))
+				MACRO_STEAM_CHECKFILEUPDATE(cmd_name_file[lang],section[DATA_SECTION_CMD],saveset.cmdset->GetSteamTextSize(0,lang))
+				MACRO_STEAM_CHECKFILEUPDATE(cmd_help_file[lang],section[DATA_SECTION_CMD],saveset.cmdset->GetSteamTextSize(1,lang))
+				MACRO_STEAM_CHECKFILEUPDATE(support_name_file[lang],section[DATA_SECTION_SUPPORT],saveset.supportset->GetSteamTextSize(0,lang))
+				MACRO_STEAM_CHECKFILEUPDATE(support_help_file[lang],section[DATA_SECTION_SUPPORT],saveset.supportset->GetSteamTextSize(1,lang))
+				MACRO_STEAM_CHECKFILEUPDATE(item_name_file[lang],section[DATA_SECTION_ITEM],saveset.itemset->GetSteamTextSize(0,lang))
+				MACRO_STEAM_CHECKFILEUPDATE(item_help_file[lang],section[DATA_SECTION_ITEM],saveset.itemset->GetSteamTextSize(1,lang))
+				MACRO_STEAM_CHECKFILEUPDATE(item_help2_file[lang],section[DATA_SECTION_ITEM],saveset.itemset->GetSteamTextSize(2,lang))
+				MACRO_STEAM_CHECKFILEUPDATE(itemkey_name_file[lang],section[DATA_SECTION_ITEM],saveset.itemset->GetSteamTextSize(3,lang))
+				MACRO_STEAM_CHECKFILEUPDATE(itemkey_help_file[lang],section[DATA_SECTION_ITEM],saveset.itemset->GetSteamTextSize(4,lang))
+				MACRO_STEAM_CHECKFILEUPDATE(itemkey_desc_file[lang],section[DATA_SECTION_ITEM],saveset.itemset->GetSteamTextSize(5,lang))
+				MACRO_STEAM_CHECKFILEUPDATE(field_text_file[lang],section[DATA_SECTION_FIELD],saveset.fieldset->GetSteamTextSize(lang))
+				MACRO_STEAM_CHECKFILEUPDATE(world_text_file[lang],section[DATA_SECTION_WORLD_MAP],saveset.worldset->GetSteamTextSize(0,lang))
+				MACRO_STEAM_CHECKFILEUPDATE(world_worldplace_name_file[lang],section[DATA_SECTION_WORLD_MAP],saveset.worldset->GetSteamTextSize(1,lang))
+				MACRO_STEAM_CHECKFILEUPDATE(card_name_file[lang],section[DATA_SECTION_CARD],saveset.cardset->GetSteamTextSize(lang))
+				MACRO_STEAM_CHECKFILEUPDATE(spetext_battleinfo_file[lang],section[DATA_SECTION_MENU_UI],saveset.ffuiset->special_text->text_block[0].GetDataSize(lang))
+				MACRO_STEAM_CHECKFILEUPDATE(spetext_battlescan_file[lang],section[DATA_SECTION_MENU_UI],saveset.ffuiset->special_text->text_block[1].GetDataSize(lang))
+				MACRO_STEAM_CHECKFILEUPDATE(spetext_spellnaming_file[lang],section[DATA_SECTION_MENU_UI],saveset.ffuiset->special_text->text_block[2].GetDataSize(lang))
+				MACRO_STEAM_CHECKFILEUPDATE(spetext_chocomenu_file[lang],section[DATA_SECTION_MENU_UI],saveset.ffuiset->special_text->text_block[3].GetDataSize(lang))
+				MACRO_STEAM_CHECKFILEUPDATE(spetext_cardrank_file[lang],section[DATA_SECTION_MENU_UI],saveset.ffuiset->special_text->text_block[4].GetDataSize(lang))
+				MACRO_STEAM_CHECKFILEUPDATE(spetext_tetramaster_file[lang],section[DATA_SECTION_MENU_UI],saveset.ffuiset->special_text->text_block[5].GetDataSize(lang))
+				for (j=0;j<config.enmy_amount;j++) {
+					MACRO_STEAM_CHECKFILEUPDATE(enmy_text_file[lang][j],section[DATA_SECTION_ENMY] && saveset.enemyset->text[j]->modified,saveset.enemyset->text[j]->GetDataSize(lang))
+				}
+				for (j=0;j<config.text_amount;j++) {
+					MACRO_STEAM_CHECKFILEUPDATE(text_file[lang][j],section[DATA_SECTION_TEXT] && saveset.textset->text_data[j]->modified,saveset.textset->text_data[j]->GetDataSize(lang))
+				}
+			}
+			MACRO_STEAM_CHECKFILEUPDATE(spetext_localization_file,section[DATA_SECTION_MENU_UI],saveset.ffuiset->special_text->text_block[6].GetDataSize())
 			MACRO_STEAM_CHECKFILEUPDATE(card_stat_file,section[DATA_SECTION_CARD],5*CARD_AMOUNT)
 			MACRO_STEAM_CHECKFILEUPDATE(card_deck_file,section[DATA_SECTION_CARD],2*CARD_DECK_AMOUNT)
 			MACRO_STEAM_CHECKFILEUPDATE(card_set_file,section[DATA_SECTION_CARD],CARD_SET_AMOUNT*CARD_SET_CAPACITY)
-			for (j=0;j<config.enmy_amount;j++) {
-				MACRO_STEAM_CHECKFILEUPDATE(enmy_text_file[GetSteamLanguage()][j],section[DATA_SECTION_ENMY] && saveset.enemyset->text[j]->modified,saveset.enemyset->text[j]->size)
-			}
-			for (j=0;j<config.text_amount;j++) {
-				MACRO_STEAM_CHECKFILEUPDATE(text_file[GetSteamLanguage()][j],section[DATA_SECTION_TEXT] && saveset.textset->text_data[j]->modified,saveset.textset->text_data[j]->size)
-			}
 			for (j=0;j<SPELL_ANIMATION_AMOUNT;j++) {
 				MACRO_STEAM_CHECKFILEUPDATE(spellanim_steam_file[j],section[DATA_SECTION_SPELL_ANIM],saveset.spellanimset->spell[j].raw_size)
 			}
@@ -1719,63 +1736,70 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 						break; \
 				}
 			
-			if (section[DATA_SECTION_SPELL]) {
-//for (unsigned int k=0;k<STEAM_LANGUAGE_AMOUNT;k++)
-				MACRO_STEAM_WRITEFILEUPDATE(spell_name_file[GetSteamLanguage()],spellset->WriteSteamText(filedest,0),false)
-				MACRO_STEAM_WRITEFILEUPDATE(spell_help_file[GetSteamLanguage()],spellset->WriteSteamText(filedest,1),false)
+			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+				if (!hades::STEAM_LANGUAGE_SAVE_LIST[lang])
+					continue;
+				if (section[DATA_SECTION_SPELL]) {
+					MACRO_STEAM_WRITEFILEUPDATE(spell_name_file[lang],spellset->WriteSteamText(filedest,0,lang),false)
+					MACRO_STEAM_WRITEFILEUPDATE(spell_help_file[lang],spellset->WriteSteamText(filedest,1,lang),false)
+				}
+				if (section[DATA_SECTION_CMD]) {
+					MACRO_STEAM_WRITEFILEUPDATE(cmd_name_file[lang],cmdset->WriteSteamText(filedest,0,lang),false)
+					MACRO_STEAM_WRITEFILEUPDATE(cmd_help_file[lang],cmdset->WriteSteamText(filedest,1,lang),false)
+				}
+				if (section[DATA_SECTION_ENMY])
+					for (j=0;j<config.enmy_amount;j++)
+						if (saveset.enemyset->text[j]->modified) {
+							MACRO_STEAM_WRITEFILEUPDATE(enmy_text_file[lang][j],enemyset->text[j]->WriteSteam(filedest,lang),true)
+						}
+				if (section[DATA_SECTION_TEXT])
+					for (j=0;j<config.text_amount;j++)
+						if (saveset.textset->text_data[j]->modified) {
+							MACRO_STEAM_WRITEFILEUPDATE(text_file[lang][j],textset->text_data[j]->WriteSteam(filedest,lang),true)
+						}
+				if (section[DATA_SECTION_WORLD_MAP]) {
+					MACRO_STEAM_WRITEFILEUPDATE(world_text_file[lang],worldset->WriteSteamText(filedest,0,lang),false)
+					MACRO_STEAM_WRITEFILEUPDATE(world_worldplace_name_file[lang],worldset->WriteSteamText(filedest,1,lang),false)
+				}
+				if (section[DATA_SECTION_ITEM]) {
+					MACRO_STEAM_WRITEFILEUPDATE(item_name_file[lang],itemset->WriteSteamText(filedest,0,lang),false)
+					MACRO_STEAM_WRITEFILEUPDATE(item_help_file[lang],itemset->WriteSteamText(filedest,1,lang),false)
+					MACRO_STEAM_WRITEFILEUPDATE(item_help2_file[lang],itemset->WriteSteamText(filedest,2,lang),false)
+					MACRO_STEAM_WRITEFILEUPDATE(itemkey_name_file[lang],itemset->WriteSteamText(filedest,3,lang),false)
+					MACRO_STEAM_WRITEFILEUPDATE(itemkey_help_file[lang],itemset->WriteSteamText(filedest,4,lang),false)
+					MACRO_STEAM_WRITEFILEUPDATE(itemkey_desc_file[lang],itemset->WriteSteamText(filedest,5,lang),false)
+				}
+				if (section[DATA_SECTION_SUPPORT]) {
+					MACRO_STEAM_WRITEFILEUPDATE(support_name_file[lang],supportset->WriteSteamText(filedest,0,lang),false)
+					MACRO_STEAM_WRITEFILEUPDATE(support_help_file[lang],supportset->WriteSteamText(filedest,1,lang),false)
+				}
+				if (section[DATA_SECTION_CARD]) {
+					MACRO_STEAM_WRITEFILEUPDATE(card_name_file[lang],cardset->WriteSteamText(filedest,lang),false)
+				}
+				if (section[DATA_SECTION_FIELD]) {
+					MACRO_STEAM_WRITEFILEUPDATE(field_text_file[lang],fieldset->WriteSteamText(filedest,lang),false)
+				}
+				if (section[DATA_SECTION_MENU_UI]) {
+					MACRO_STEAM_WRITEFILEUPDATE(spetext_battleinfo_file[lang],ffuiset->special_text->WriteSteam(filedest,0,lang),false)
+					MACRO_STEAM_WRITEFILEUPDATE(spetext_battlescan_file[lang],ffuiset->special_text->WriteSteam(filedest,1,lang),false)
+					MACRO_STEAM_WRITEFILEUPDATE(spetext_spellnaming_file[lang],ffuiset->special_text->WriteSteam(filedest,2,lang),false)
+					MACRO_STEAM_WRITEFILEUPDATE(spetext_chocomenu_file[lang],ffuiset->special_text->WriteSteam(filedest,3,lang),false)
+					MACRO_STEAM_WRITEFILEUPDATE(spetext_cardrank_file[lang],ffuiset->special_text->WriteSteam(filedest,4,lang),false)
+					MACRO_STEAM_WRITEFILEUPDATE(spetext_tetramaster_file[lang],ffuiset->special_text->WriteSteam(filedest,5,lang),false)
+				}
 			}
-			if (section[DATA_SECTION_CMD]) {
-				MACRO_STEAM_WRITEFILEUPDATE(cmd_name_file[GetSteamLanguage()],cmdset->WriteSteamText(filedest,0),false)
-				MACRO_STEAM_WRITEFILEUPDATE(cmd_help_file[GetSteamLanguage()],cmdset->WriteSteamText(filedest,1),false)
-			}
-			if (section[DATA_SECTION_ENMY])
-				for (j=0;j<config.enmy_amount;j++)
-					if (saveset.enemyset->text[j]->modified) {
-						MACRO_STEAM_WRITEFILEUPDATE(enmy_text_file[GetSteamLanguage()][j],enemyset->text[j]->WriteSteam(filedest),true)
-					}
-			if (section[DATA_SECTION_TEXT])
-				for (j=0;j<config.text_amount;j++)
-					if (saveset.textset->text_data[j]->modified) {
-						MACRO_STEAM_WRITEFILEUPDATE(text_file[GetSteamLanguage()][j],textset->text_data[j]->WriteSteam(filedest),true)
-					}
-			if (section[DATA_SECTION_WORLD_MAP]) {
-				MACRO_STEAM_WRITEFILEUPDATE(world_text_file[GetSteamLanguage()],worldset->WriteSteamText(filedest,0),false)
-				MACRO_STEAM_WRITEFILEUPDATE(world_worldplace_name_file[GetSteamLanguage()],worldset->WriteSteamText(filedest,1),false)
-			}
-			if (section[DATA_SECTION_ITEM]) {
-				MACRO_STEAM_WRITEFILEUPDATE(item_name_file[GetSteamLanguage()],itemset->WriteSteamText(filedest,0),false)
-				MACRO_STEAM_WRITEFILEUPDATE(item_help_file[GetSteamLanguage()],itemset->WriteSteamText(filedest,1),false)
-				MACRO_STEAM_WRITEFILEUPDATE(item_help2_file[GetSteamLanguage()],itemset->WriteSteamText(filedest,2),false)
-				MACRO_STEAM_WRITEFILEUPDATE(itemkey_name_file[GetSteamLanguage()],itemset->WriteSteamText(filedest,3),false)
-				MACRO_STEAM_WRITEFILEUPDATE(itemkey_help_file[GetSteamLanguage()],itemset->WriteSteamText(filedest,4),false)
-				MACRO_STEAM_WRITEFILEUPDATE(itemkey_desc_file[GetSteamLanguage()],itemset->WriteSteamText(filedest,5),false)
-			}
-			if (section[DATA_SECTION_SUPPORT]) {
-				MACRO_STEAM_WRITEFILEUPDATE(support_name_file[GetSteamLanguage()],supportset->WriteSteamText(filedest,0),false)
-				MACRO_STEAM_WRITEFILEUPDATE(support_help_file[GetSteamLanguage()],supportset->WriteSteamText(filedest,1),false)
+			if (section[DATA_SECTION_MENU_UI]) {
+				MACRO_STEAM_WRITEFILEUPDATE(spetext_localization_file,ffuiset->special_text->WriteSteam(filedest,6),false)
 			}
 			if (section[DATA_SECTION_CARD]) {
-				MACRO_STEAM_WRITEFILEUPDATE(card_name_file[GetSteamLanguage()],cardset->WriteSteamText(filedest),false)
 				MACRO_STEAM_WRITEFILEUPDATE(card_stat_file,cardset->WriteSteamData(filedest,0),false)
 				MACRO_STEAM_WRITEFILEUPDATE(card_deck_file,cardset->WriteSteamData(filedest,1),false)
 				MACRO_STEAM_WRITEFILEUPDATE(card_set_file,cardset->WriteSteamData(filedest,2),false)
-			}
-			if (section[DATA_SECTION_FIELD]) {
-				MACRO_STEAM_WRITEFILEUPDATE(field_text_file[GetSteamLanguage()],fieldset->WriteSteamText(filedest),false)
 			}
 			if (section[DATA_SECTION_SPELL_ANIM])
 				for (j=0;j<SPELL_ANIMATION_AMOUNT;j++) {
 					MACRO_STEAM_WRITEFILEUPDATE(spellanim_steam_file[j],spellanimset->spell[j].Write(filedest),true)
 				}
-			if (section[DATA_SECTION_MENU_UI]) {
-				MACRO_STEAM_WRITEFILEUPDATE(spetext_battleinfo_file[GetSteamLanguage()],ffuiset->special_text->WriteSteam(filedest,0),false)
-				MACRO_STEAM_WRITEFILEUPDATE(spetext_battlescan_file[GetSteamLanguage()],ffuiset->special_text->WriteSteam(filedest,1),false)
-				MACRO_STEAM_WRITEFILEUPDATE(spetext_spellnaming_file[GetSteamLanguage()],ffuiset->special_text->WriteSteam(filedest,2),false)
-				MACRO_STEAM_WRITEFILEUPDATE(spetext_chocomenu_file[GetSteamLanguage()],ffuiset->special_text->WriteSteam(filedest,3),false)
-				MACRO_STEAM_WRITEFILEUPDATE(spetext_cardrank_file[GetSteamLanguage()],ffuiset->special_text->WriteSteam(filedest,4),false)
-				MACRO_STEAM_WRITEFILEUPDATE(spetext_tetramaster_file[GetSteamLanguage()],ffuiset->special_text->WriteSteam(filedest,5),false)
-				MACRO_STEAM_WRITEFILEUPDATE(spetext_localization_file,ffuiset->special_text->WriteSteam(filedest,6),false)
-			}
 		}
 		filebase.close();
 		filedest.close();

@@ -15,10 +15,16 @@ public:
 	wchar_t charmap_opchar;
 	int menu_color;
 	int text_preview_type;
+	SteamLanguage steam_language;
+	bool steam_single_lang_mode;
+	wxCheckBox* save_lang_box[STEAM_LANGUAGE_AMOUNT];
+	bool save_lang[STEAM_LANGUAGE_AMOUNT];
 	int background_resolution;
+
+	bool lang_change_allowed;
 	
 	PreferencesDialog(wxWindow* parent);
-	int ShowModal();
+	int ShowModal(bool allowsteamlangchange = true, bool enablesinglemodeoption = true);
 	bool SavePreferences();
 	bool ReadConfiguration();
 	static bool SaveMainFrameConfig(MainFrameBase* configwindow);
@@ -33,6 +39,11 @@ private:
 	wxArrayString CharmapNames;
 	
 	static bool GetBeforeAndAfterSection(wxString section, wxString& before, wxString& after);
+
+	void UpdateSteamLanguageAvailability();
+
+	void OnSteamLanguageChange(wxCommandEvent& event);
+	void OnSingleLanguageMode(wxCommandEvent& event);
 	void OnButtonClick(wxCommandEvent& event);
 };
 

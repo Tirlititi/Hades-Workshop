@@ -74,7 +74,8 @@ public:
 	// Return a modifamount-long pointer, to be deleted[]
 	DllMetaDataModification* ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount);
 	// texttype: 0 for name, 1 for help
-	void WriteSteamText(fstream& ffbin, unsigned int texttype);
+	void WriteSteamText(fstream& ffbin, unsigned int texttype, SteamLanguage lang = GetSteamLanguage());
+	int GetSteamTextSize(unsigned int texttype, SteamLanguage lang = GetSteamLanguage());
 	void UpdateOffset();
 
 private:

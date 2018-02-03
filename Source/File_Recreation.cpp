@@ -1,5 +1,6 @@
 #include "File_Recreation.h"
 
+/*
 #include "File_Manipulation.h"
 #include "ImageMaps.h"
 
@@ -34,9 +35,10 @@ uint32_t GetNextImgPacketIndexer(uint32_t indexer) {
 		indexer += (0x100000-(indexer & 0xF0000));
 	return (indexer << 8) | 0x2;
 }
+*/
 
 void RecreateTest(const char* fname, unsigned int fieldid) {
-	fstream f(fname,ios::in | ios::binary);
+/*	fstream f(fname,ios::in | ios::binary);
 	fstream fout("aaaa.bin",ios::out | ios::binary);
 	size_t posi = 0, fsize;
 	unsigned int i;
@@ -105,5 +107,5 @@ void RecreateTest(const char* fname, unsigned int fieldid) {
 	cpybeg = f.tellg();
 	cpyend = fsize;
 	MACRO_COPYTEST(cpybeg,cpyend)
-	fout.write((char*)binarydata,posi);
+	fout.write((char*)binarydata,posi);*/
 }

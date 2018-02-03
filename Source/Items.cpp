@@ -1,6 +1,7 @@
 #include "Items.h"
 
 #include "DllEditor.h"
+#include "main.h"
 
 #define ITEM_HWS_VERSION 1
 
@@ -434,30 +435,34 @@ void ItemDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 		string fname = config.steam_dir_data;
 		fname += "resources.assets";
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
-		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.item_name_file[GetSteamLanguage()]));
-		name_space_used = config.meta_res.GetFileSizeByIndex(config.item_name_file[GetSteamLanguage()]);
-		for (i=0;i<ITEM_AMOUNT;i++)
-			SteamReadFF9String(ffbin,item[i].name);
-		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.item_help_file[GetSteamLanguage()]));
-		help_space_used = config.meta_res.GetFileSizeByIndex(config.item_help_file[GetSteamLanguage()]);
-		for (i=0;i<ITEM_AMOUNT;i++)
-			SteamReadFF9String(ffbin,item[i].help);
-		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.item_help2_file[GetSteamLanguage()]));
-		help2_space_used = config.meta_res.GetFileSizeByIndex(config.item_help2_file[GetSteamLanguage()]);
-		for (i=0;i<ITEM_AMOUNT;i++)
-			SteamReadFF9String(ffbin,item[i].battle_help);
-		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.itemkey_name_file[GetSteamLanguage()]));
-		key_name_space_used = config.meta_res.GetFileSizeByIndex(config.itemkey_name_file[GetSteamLanguage()]);
-		for (i=0;i<KEY_ITEM_AMOUNT;i++)
-			SteamReadFF9String(ffbin,key_item[i].name);
-		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.itemkey_help_file[GetSteamLanguage()]));
-		key_help_space_used = config.meta_res.GetFileSizeByIndex(config.itemkey_help_file[GetSteamLanguage()]);
-		for (i=0;i<KEY_ITEM_AMOUNT;i++)
-			SteamReadFF9String(ffbin,key_item[i].help);
-		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.itemkey_desc_file[GetSteamLanguage()]));
-		key_desc_space_used = config.meta_res.GetFileSizeByIndex(config.itemkey_desc_file[GetSteamLanguage()]);
-		for (i=0;i<KEY_ITEM_AMOUNT;i++)
-			SteamReadFF9String(ffbin,key_item[i].description);
+		for (SteamLanguage lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+			if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+				continue;
+			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.item_name_file[lang]));
+			name_space_used = config.meta_res.GetFileSizeByIndex(config.item_name_file[lang]);
+			for (i=0;i<ITEM_AMOUNT;i++)
+				SteamReadFF9String(ffbin,item[i].name,lang);
+			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.item_help_file[lang]));
+			help_space_used = config.meta_res.GetFileSizeByIndex(config.item_help_file[lang]);
+			for (i=0;i<ITEM_AMOUNT;i++)
+				SteamReadFF9String(ffbin,item[i].help,lang);
+			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.item_help2_file[lang]));
+			help2_space_used = config.meta_res.GetFileSizeByIndex(config.item_help2_file[lang]);
+			for (i=0;i<ITEM_AMOUNT;i++)
+				SteamReadFF9String(ffbin,item[i].battle_help,lang);
+			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.itemkey_name_file[lang]));
+			key_name_space_used = config.meta_res.GetFileSizeByIndex(config.itemkey_name_file[lang]);
+			for (i=0;i<KEY_ITEM_AMOUNT;i++)
+				SteamReadFF9String(ffbin,key_item[i].name,lang);
+			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.itemkey_help_file[lang]));
+			key_help_space_used = config.meta_res.GetFileSizeByIndex(config.itemkey_help_file[lang]);
+			for (i=0;i<KEY_ITEM_AMOUNT;i++)
+				SteamReadFF9String(ffbin,key_item[i].help,lang);
+			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.itemkey_desc_file[lang]));
+			key_desc_space_used = config.meta_res.GetFileSizeByIndex(config.itemkey_desc_file[lang]);
+			for (i=0;i<KEY_ITEM_AMOUNT;i++)
+				SteamReadFF9String(ffbin,key_item[i].description,lang);
+		}
 		ffbin.close();
 		dlldata.dll_file.seekg(dlldata.GetMethodOffset(config.dll_item_method_id));
 		methinfo.ReadMethodInfo(dlldata.dll_file);
@@ -649,26 +654,57 @@ DllMetaDataModification* ItemDataSet::ComputeSteamMod(ConfigurationSet& config, 
 	return res;
 }
 
-void ItemDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype) {
+int ItemDataSet::GetSteamTextSize(unsigned int texttype, SteamLanguage lang) {
+	unsigned int i;
+	int res = 0;
+	switch (texttype) {
+	case 0:
+		for (i=0;i<ITEM_AMOUNT;i++)
+			res += item[i].name.GetLength(lang);
+		break;
+	case 1:
+		for (i=0;i<ITEM_AMOUNT;i++)
+			res += item[i].help.GetLength(lang);
+		break;
+	case 2:
+		for (i=0;i<ITEM_AMOUNT;i++)
+			res += item[i].battle_help.GetLength(lang);
+		break;
+	case 3:
+		for (i=0;i<KEY_ITEM_AMOUNT;i++)
+			res += key_item[i].name.GetLength(lang);
+		break;
+	case 4:
+		for (i=0;i<KEY_ITEM_AMOUNT;i++)
+			res += key_item[i].help.GetLength(lang);
+		break;
+	default:
+		for (i=0;i<KEY_ITEM_AMOUNT;i++)
+			res += key_item[i].description.GetLength(lang);
+	}
+	return res;
+}
+
+void ItemDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype, SteamLanguage lang) {
 	unsigned int i;
 	if (texttype==0) {
 		for (i=0;i<ITEM_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,item[i].name);
+			SteamWriteFF9String(ffbin,item[i].name,lang);
 	} else if (texttype==1) {
 		for (i=0;i<ITEM_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,item[i].help);
+			SteamWriteFF9String(ffbin,item[i].help,lang);
 	} else if (texttype==2) {
 		for (i=0;i<ITEM_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,item[i].battle_help);
+			SteamWriteFF9String(ffbin,item[i].battle_help,lang);
 	} else if (texttype==3) {
 		for (i=0;i<KEY_ITEM_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,key_item[i].name);
+			SteamWriteFF9String(ffbin,key_item[i].name,lang);
 	} else if (texttype==4) {
 		for (i=0;i<KEY_ITEM_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,key_item[i].help);
+			SteamWriteFF9String(ffbin,key_item[i].help,lang);
 	} else {
 		for (i=0;i<KEY_ITEM_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,key_item[i].description);
+			SteamWriteFF9String(ffbin,key_item[i].description,lang);
 	}
 }
 
@@ -897,84 +933,22 @@ void ItemDataSet::WriteHWS(fstream& ffbin) {
 	key_desc_space_total = kdescsize;
 	if (GetGameType()!=GAME_TYPE_PSX) {
 		SteamLanguage lg;
-		size_t strpos;
-		uint16_t strsize;
-		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
-			HWSWriteChar(ffbin,lg);
-			HWSWriteShort(ffbin,0);
-			strpos = ffbin.tellg();
-			for (i=0;i<ITEM_AMOUNT;i++)
-				SteamWriteFF9String(ffbin,item[i].name,lg);
-			strsize = (unsigned int)ffbin.tellg()-strpos;
-			ffbin.seekg(strpos-2);
-			HWSWriteShort(ffbin,strsize);
-			ffbin.seekg(strpos+strsize);
+		for (i=0;i<6;i++) {
+			for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
+				if (hades::STEAM_LANGUAGE_SAVE_LIST[lg]) {
+					HWSWriteChar(ffbin,lg);
+					HWSWriteShort(ffbin,GetSteamTextSize(i,lg));
+					WriteSteamText(ffbin,i,lg);
+				}
+			}
+			HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
 		}
-		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
-		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
-			HWSWriteChar(ffbin,lg);
-			HWSWriteShort(ffbin,0);
-			strpos = ffbin.tellg();
-			for (i=0;i<ITEM_AMOUNT;i++)
-				SteamWriteFF9String(ffbin,item[i].help,lg);
-			strsize = (unsigned int)ffbin.tellg()-strpos;
-			ffbin.seekg(strpos-2);
-			HWSWriteShort(ffbin,strsize);
-			ffbin.seekg(strpos+strsize);
-		}
-		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
-		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
-			HWSWriteChar(ffbin,lg);
-			HWSWriteShort(ffbin,0);
-			strpos = ffbin.tellg();
-			for (i=0;i<ITEM_AMOUNT;i++)
-				SteamWriteFF9String(ffbin,item[i].battle_help,lg);
-			strsize = (unsigned int)ffbin.tellg()-strpos;
-			ffbin.seekg(strpos-2);
-			HWSWriteShort(ffbin,strsize);
-			ffbin.seekg(strpos+strsize);
-		}
-		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
-		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
-			HWSWriteChar(ffbin,lg);
-			HWSWriteShort(ffbin,0);
-			strpos = ffbin.tellg();
-			for (i=0;i<KEY_ITEM_AMOUNT;i++)
-				SteamWriteFF9String(ffbin,key_item[i].name,lg);
-			strsize = (unsigned int)ffbin.tellg()-strpos;
-			ffbin.seekg(strpos-2);
-			HWSWriteShort(ffbin,strsize);
-			ffbin.seekg(strpos+strsize);
-		}
-		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
-		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
-			HWSWriteChar(ffbin,lg);
-			HWSWriteShort(ffbin,0);
-			strpos = ffbin.tellg();
-			for (i=0;i<KEY_ITEM_AMOUNT;i++)
-				SteamWriteFF9String(ffbin,key_item[i].help,lg);
-			strsize = (unsigned int)ffbin.tellg()-strpos;
-			ffbin.seekg(strpos-2);
-			HWSWriteShort(ffbin,strsize);
-			ffbin.seekg(strpos+strsize);
-		}
-		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
-		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
-			HWSWriteChar(ffbin,lg);
-			HWSWriteShort(ffbin,0);
-			strpos = ffbin.tellg();
-			for (i=0;i<KEY_ITEM_AMOUNT;i++)
-				SteamWriteFF9String(ffbin,key_item[i].description,lg);
-			strsize = (unsigned int)ffbin.tellg()-strpos;
-			ffbin.seekg(strpos-2);
-			HWSWriteShort(ffbin,strsize);
-			ffbin.seekg(strpos+strsize);
-		}
-		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
 	}
 }
 
 void ItemDataSet::UpdateOffset() {
+	if (GetGameType()!=GAME_TYPE_PSX)
+		return;
 	uint16_t j=0,k=0,l=0;
 	unsigned int i;
 	for (i=0;i<ITEM_AMOUNT;i++) {
@@ -996,7 +970,7 @@ void ItemDataSet::UpdateOffset() {
 		j += key_item[i].name.length;
 		key_item[i].help_offset = k;
 		k += key_item[i].help.length;
-		if (GetGameType()==GAME_TYPE_PSX && key_item[i].description_out_of_bounds)
+		if (key_item[i].description_out_of_bounds)
 			key_item[i].description_offset = key_desc_space_total;
 		else {
 			key_item[i].description_offset = l;

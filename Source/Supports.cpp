@@ -1,5 +1,6 @@
 #include "Supports.h"
 
+#include "main.h"
 #include "DllEditor.h"
 
 #define SUPPORT_HWS_VERSION 1
@@ -105,14 +106,18 @@ void SupportDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 		string fname = config.steam_dir_data;
 		fname += "resources.assets";
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
-		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.support_name_file[GetSteamLanguage()]));
-		name_space_used = config.meta_res.GetFileSizeByIndex(config.support_name_file[GetSteamLanguage()]);
-		for (i=0;i<SUPPORT_AMOUNT;i++)
-			SteamReadFF9String(ffbin,support[i].name);
-		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.support_help_file[GetSteamLanguage()]));
-		help_space_used = config.meta_res.GetFileSizeByIndex(config.support_help_file[GetSteamLanguage()]);
-		for (i=0;i<SUPPORT_AMOUNT;i++)
-			SteamReadFF9String(ffbin,support[i].help);
+		for (SteamLanguage lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+			if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+				continue;
+			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.support_name_file[lang]));
+			name_space_used = config.meta_res.GetFileSizeByIndex(config.support_name_file[lang]);
+			for (i=0;i<SUPPORT_AMOUNT;i++)
+				SteamReadFF9String(ffbin,support[i].name,lang);
+			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.support_help_file[lang]));
+			help_space_used = config.meta_res.GetFileSizeByIndex(config.support_help_file[lang]);
+			for (i=0;i<SUPPORT_AMOUNT;i++)
+				SteamReadFF9String(ffbin,support[i].help,lang);
+		}
 		ffbin.close();
 		dlldata.dll_file.seekg(dlldata.GetMethodOffset(config.dll_ability_method_id));
 		methinfo.ReadMethodInfo(dlldata.dll_file);
@@ -158,14 +163,26 @@ DllMetaDataModification* SupportDataSet::ComputeSteamMod(ConfigurationSet& confi
 	return res;
 }
 
-void SupportDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype) {
+int SupportDataSet::GetSteamTextSize(unsigned int texttype, SteamLanguage lang) {
+	unsigned int i;
+	int res = 0;
+	if (texttype==0)
+		for (i=0;i<SUPPORT_AMOUNT;i++)
+			res += support[i].name.GetLength(lang);
+	else
+		for (i=0;i<SUPPORT_AMOUNT;i++)
+			res += support[i].help.GetLength(lang);
+	return res;
+}
+
+void SupportDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype, SteamLanguage lang) {
 	unsigned int i;
 	if (texttype==0) {
 		for (i=0;i<SUPPORT_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,support[i].name);
+			SteamWriteFF9String(ffbin,support[i].name,lang);
 	} else {
 		for (i=0;i<SUPPORT_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,support[i].help);
+			SteamWriteFF9String(ffbin,support[i].help,lang);
 	}
 }
 
@@ -315,30 +332,20 @@ void SupportDataSet::WriteHWS(fstream& ffbin) {
 		MACRO_SUPPORT_IOFUNCTIONHELP(HWSWrite,HWSSeek,false,false)
 	} else {
 		SteamLanguage lg;
-		size_t strpos;
-		uint16_t strsize;
 		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
-			HWSWriteChar(ffbin,lg);
-			HWSWriteShort(ffbin,0);
-			strpos = ffbin.tellg();
-			for (i=0;i<SUPPORT_AMOUNT;i++)
-				SteamWriteFF9String(ffbin,support[i].name,lg);
-			strsize = (unsigned int)ffbin.tellg()-strpos;
-			ffbin.seekg(strpos-2);
-			HWSWriteShort(ffbin,strsize);
-			ffbin.seekg(strpos+strsize);
+			if (hades::STEAM_LANGUAGE_SAVE_LIST[lg]) {
+				HWSWriteChar(ffbin,lg);
+				HWSWriteShort(ffbin,GetSteamTextSize(0,lg));
+				WriteSteamText(ffbin,0,lg);
+			}
 		}
 		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
 		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
-			HWSWriteChar(ffbin,lg);
-			HWSWriteShort(ffbin,0);
-			strpos = ffbin.tellg();
-			for (i=0;i<SUPPORT_AMOUNT;i++)
-				SteamWriteFF9String(ffbin,support[i].help,lg);
-			strsize = (unsigned int)ffbin.tellg()-strpos;
-			ffbin.seekg(strpos-2);
-			HWSWriteShort(ffbin,strsize);
-			ffbin.seekg(strpos+strsize);
+			if (hades::STEAM_LANGUAGE_SAVE_LIST[lg]) {
+				HWSWriteChar(ffbin,lg);
+				HWSWriteShort(ffbin,GetSteamTextSize(1,lg));
+				WriteSteamText(ffbin,1,lg);
+			}
 		}
 		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
 	}
@@ -347,6 +354,8 @@ void SupportDataSet::WriteHWS(fstream& ffbin) {
 }
 
 void SupportDataSet::UpdateOffset() {
+	if (GetGameType()!=GAME_TYPE_PSX)
+		return;
 	uint16_t j=0,k=0;
 	unsigned int i;
 	for (i=0;i<SUPPORT_AMOUNT;i++) {

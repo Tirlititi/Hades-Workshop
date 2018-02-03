@@ -55,30 +55,33 @@ struct ClusterSet;
 using namespace std;
 
 typedef uint8_t Chunk_Type;
-#define CHUNK_TYPE_VARIOUS			0x00
-#define CHUNK_TYPE_MODEL			0x02
-#define CHUNK_TYPE_ANIMATION		0x03
-#define CHUNK_TYPE_TIM				0x04
-#define CHUNK_TYPE_SCRIPT			0x05
-#define CHUNK_TYPE_TEXT				0x06
-#define CHUNK_TYPE_SEQUENCER		0x07
-#define CHUNK_TYPE_SOUND			0x08
-#define CHUNK_TYPE_AUDIO			0x09
-#define CHUNK_TYPE_FIELD_TILES		0x0A
-#define CHUNK_TYPE_FIELD_WALK		0x0B
-#define CHUNK_TYPE_BATTLE_SCENE		0x0C
-#define CHUNK_TYPE_CHARMAP			0x0D
-#define CHUNK_TYPE_ENEMY_STATS		0x10
-#define CHUNK_TYPE_BATTLE_DATA		0x11
-#define CHUNK_TYPE_CLUT_TPAGE		0x12
-#define CHUNK_TYPE_IMAGE_MAP		0x14
-#define CHUNK_TYPE_CLUSTER_DATA		0x1B
-#define CHUNK_TYPE_WORLD_MAP		0x1D
-#define CHUNK_TYPE_FIELD_ROLE		0x1F
-#define CHUNK_STEAM_FIELD_NAME		0x80 // Steam field single-language name
-#define CHUNK_STEAM_FIELD_MULTINAME	0x81 // Steam field multi-language name
-#define CHUNK_SPECIAL_TYPE_LOCAL	0xFE // Hades Workshop's custom type
-#define CHUNK_SPECIAL_END			0xFF // End of cluster
+#define CHUNK_TYPE_VARIOUS					0x00
+#define CHUNK_TYPE_MODEL					0x02
+#define CHUNK_TYPE_ANIMATION				0x03
+#define CHUNK_TYPE_TIM						0x04
+#define CHUNK_TYPE_SCRIPT					0x05
+#define CHUNK_TYPE_TEXT						0x06
+#define CHUNK_TYPE_SEQUENCER				0x07
+#define CHUNK_TYPE_SOUND					0x08
+#define CHUNK_TYPE_AUDIO					0x09
+#define CHUNK_TYPE_FIELD_TILES				0x0A
+#define CHUNK_TYPE_FIELD_WALK				0x0B
+#define CHUNK_TYPE_BATTLE_SCENE				0x0C
+#define CHUNK_TYPE_CHARMAP					0x0D
+#define CHUNK_TYPE_ENEMY_STATS				0x10
+#define CHUNK_TYPE_BATTLE_DATA				0x11
+#define CHUNK_TYPE_CLUT_TPAGE				0x12
+#define CHUNK_TYPE_IMAGE_MAP				0x14
+#define CHUNK_TYPE_CLUSTER_DATA				0x1B
+#define CHUNK_TYPE_WORLD_MAP				0x1D
+#define CHUNK_TYPE_FIELD_ROLE				0x1F
+#define CHUNK_STEAM_FIELD_NAME				0x80 // Steam field single-language name
+#define CHUNK_STEAM_FIELD_MULTINAME			0x81 // Steam field multi-language name
+#define CHUNK_STEAM_TEXT_MULTILANG			0x82 // Steam text block with multi-language support
+#define CHUNK_STEAM_SCRIPT_MULTILANG		0x83 // Steam script with multi-language support
+#define CHUNK_SPECIAL_TYPE_LOCAL_MULTILANG	0xFD // Hades Workshop's custom type: local variables with multi-language support
+#define CHUNK_SPECIAL_TYPE_LOCAL			0xFE // Hades Workshop's custom type: local variables
+#define CHUNK_SPECIAL_END					0xFF // End of cluster
 
 typedef uint8_t Cluster_Type;
 #define CLUSTER_TYPE_UNKNOWN		0

@@ -25,19 +25,39 @@ PreferencesDialog::PreferencesDialog(wxWindow* parent) :
 	charmap_opchar(OPCODE_WCHAR),
 	menu_color(0),
 	text_preview_type(0),
+	steam_language(STEAM_LANGUAGE_US),
+	steam_single_lang_mode(false),
 	background_resolution(32),
+	lang_change_allowed(true),
 	CharmapNames() {
+	unsigned int i;
+	save_lang_box[STEAM_LANGUAGE_US] = m_steamsaveus;
+	save_lang_box[STEAM_LANGUAGE_EN] = m_steamsaveuk;
+	save_lang_box[STEAM_LANGUAGE_JA] = m_steamsavejap;
+	save_lang_box[STEAM_LANGUAGE_GE] = m_steamsaveger;
+	save_lang_box[STEAM_LANGUAGE_FR] = m_steamsavefr;
+	save_lang_box[STEAM_LANGUAGE_IT] = m_steamsaveit;
+	save_lang_box[STEAM_LANGUAGE_SP] = m_steamsavesp;
+	for (i=0;i<STEAM_LANGUAGE_AMOUNT;i++)
+		save_lang[i] = false;
+	save_lang[STEAM_LANGUAGE_US] = true;
 	charmap_ext.id = new uint16_t[G_N_ELEMENTS(HADES_STRING_TEXT_BLOCK_NAME)];
 	charmap_ext.letter = new wchar_t*[G_N_ELEMENTS(HADES_STRING_TEXT_BLOCK_NAME)];
-	for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_TEXT_BLOCK_NAME);i++)
+	for (i=0;i<G_N_ELEMENTS(HADES_STRING_TEXT_BLOCK_NAME);i++)
 		charmap_ext.letter[i] = new wchar_t[256];
 	ReadConfiguration();
 	ReadCharmaps();
 }
 
-int PreferencesDialog::ShowModal() {
+int PreferencesDialog::ShowModal(bool allowsteamlangchange, bool enablesinglemodeoption) {
+	lang_change_allowed = allowsteamlangchange;
+	m_steamsinglelanguage->Enable(enablesinglemodeoption);
 	if (!ReadConfiguration())
 		return wxID_EXIT;
+	if (!enablesinglemodeoption && allowsteamlangchange && steam_single_lang_mode) { // Someone messed up with the .conf
+		steam_single_lang_mode = false;
+		m_steamsinglelanguage->SetValue(false);
+	}
 	return wxDialog::ShowModal();
 }
 
@@ -81,8 +101,29 @@ bool PreferencesDialog::GetBeforeAndAfterSection(wxString section, wxString& bef
 	return true;
 }
 
+void PreferencesDialog::UpdateSteamLanguageAvailability() {
+	SteamLanguage lang;
+	if (!lang_change_allowed) {
+		m_steamsinglelanguage->SetValue(true);
+		m_steamlanguage->Enable(false);
+	} else {
+		m_steamlanguage->Enable(true);
+	}
+	if (m_steamsinglelanguage->IsChecked()) {
+		for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+			save_lang[lang] = lang==m_steamlanguage->GetSelection();
+			save_lang_box[lang]->SetValue(save_lang[lang]);
+			save_lang_box[lang]->Enable(false);
+		}
+	} else {
+		for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+			save_lang_box[lang]->Enable(true);
+	}
+}
+
 bool PreferencesDialog::SavePreferences() {
-	wxString before, after;
+	unsigned int i;
+	wxString before, after, comma = _(L"");
 	if (!GetBeforeAndAfterSection(_(L"[Preferences]"), before, after))
 		return false;
 	wxFile configfileout(_(PREFERENCE_FILE_NAME),wxFile::write);
@@ -93,6 +134,11 @@ bool PreferencesDialog::SavePreferences() {
 	configfileout.Write(wxString(charmap_opchar));
 	configfileout.Write(_(L"\nMenuColor=")+wxString::Format(wxT("%i"),menu_color));
 	configfileout.Write(_(L"\nTextPreview=")+wxString::Format(wxT("%i"),text_preview_type));
+	configfileout.Write(_(L"\nSteamLanguage=")+wxString::Format(wxT("%s"),HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[steam_language]));
+	configfileout.Write(_(L"\nSteamSingleLanguage=")+wxString::Format(wxT("%i"),steam_single_lang_mode ? 1 : 0));
+	configfileout.Write(_(L"\nSteamSaveLanguage="));
+	for (i=0;i<STEAM_LANGUAGE_AMOUNT;i++)
+		if (save_lang[i])	{ configfileout.Write(comma+wxString::Format(wxT("%s"),HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[i])); comma = _(L","); }
 	configfileout.Write(_(L"\nBackgroundResolution=")+wxString::Format(wxT("%i"),background_resolution));
 	configfileout.Write(_(L"\n\n") + after);
 	configfileout.Close();
@@ -149,6 +195,31 @@ bool PreferencesDialog::ReadConfiguration() {
 		if (SearchField(cfgfield,_(L"TextPreview"),TmpArgs,argcount))
 			text_preview_type = wxAtoi(TmpArgs[argcount]);
 		cfgfield = cfgsection;
+		if (SearchField(cfgfield,_(L"SteamLanguage"),TmpArgs,argcount))
+			for (i=0;i<STEAM_LANGUAGE_AMOUNT;i++)
+				if (TmpArgs[argcount].IsSameAs(HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[i])) {
+					steam_language = i;
+					break;
+				}
+		cfgfield = cfgsection;
+		if (SearchField(cfgfield,_(L"SteamSingleLanguage"),TmpArgs,argcount))
+			steam_single_lang_mode = wxAtoi(TmpArgs[argcount])>0;
+		cfgfield = cfgsection;
+		if (SearchField(cfgfield,_(L"SteamSaveLanguage"),TmpArgs,argcount)) {
+			wxStringTokenizer savelist(TmpArgs[argcount],L",");
+			wxString savetoken;
+			for (i=0;i<STEAM_LANGUAGE_AMOUNT;i++)
+				save_lang[i] = false;
+			while (savelist.HasMoreTokens()) {
+				savetoken = savelist.GetNextToken();
+				for (i=0;i<STEAM_LANGUAGE_AMOUNT;i++)
+					if (savetoken.IsSameAs(HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[i])) {
+						save_lang[i] = true;
+						break;
+					}
+			}
+		}
+		cfgfield = cfgsection;
 		if (SearchField(cfgfield,_(L"BackgroundResolution"),TmpArgs,argcount))
 			background_resolution = wxAtoi(TmpArgs[argcount]);
 	}
@@ -158,7 +229,12 @@ bool PreferencesDialog::ReadConfiguration() {
 	m_opcodechar->ChangeValue(_(charmap_opchar));
 	m_gamewindowcolor->SetSelection(menu_color);
 	m_textpreviewtype->SetSelection(text_preview_type);
+	m_steamlanguage->SetSelection(steam_language);
+	m_steamsinglelanguage->SetValue(steam_single_lang_mode);
+	for (i=0;i<STEAM_LANGUAGE_AMOUNT;i++)
+		save_lang_box[i]->SetValue(save_lang[i]);
 	m_backgroundresolution->SetValue(background_resolution);
+	UpdateSteamLanguageAvailability();
 	return true;
 }
 
@@ -598,6 +674,34 @@ bool PreferencesDialog::ReadCharmaps() {
 	return true;
 }
 
+void PreferencesDialog::OnSteamLanguageChange(wxCommandEvent& event) {
+	SteamLanguage lang, newlang = event.GetSelection();
+	if (m_steamsinglelanguage->IsChecked()) {
+		for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+			save_lang_box[lang]->SetValue(lang==newlang);
+	} else {
+		SteamLanguage lastlang = STEAM_LANGUAGE_AMOUNT;
+		bool unchecklast = false;
+		for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+			if (save_lang_box[lang]->IsChecked()) {
+				if (lastlang==STEAM_LANGUAGE_AMOUNT) {
+					lastlang = lang;
+					unchecklast = true;
+				} else {
+					unchecklast = false;
+					break;
+				}
+			}
+		if (unchecklast)
+			save_lang_box[lastlang]->SetValue(false);
+		save_lang_box[newlang]->SetValue(true);
+	}
+}
+
+void PreferencesDialog::OnSingleLanguageMode(wxCommandEvent & event) {
+	UpdateSteamLanguageAvailability();
+}
+
 void PreferencesDialog::OnButtonClick(wxCommandEvent& event) {
 	int id = event.GetId();
 	if (id==wxID_OK) {
@@ -609,6 +713,10 @@ void PreferencesDialog::OnButtonClick(wxCommandEvent& event) {
 		ReadCharmaps();
 		menu_color = m_gamewindowcolor->GetSelection();
 		text_preview_type = m_textpreviewtype->GetSelection();
+		steam_language = m_steamlanguage->GetSelection();
+		steam_single_lang_mode = m_steamsinglelanguage->IsChecked();
+		for (unsigned int i=0;i<STEAM_LANGUAGE_AMOUNT;i++)
+			save_lang[i] = save_lang_box[i]->IsChecked();
 		background_resolution = m_backgroundresolution->GetValue();
 		SavePreferences();
 		return EndModal(id);

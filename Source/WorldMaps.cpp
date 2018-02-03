@@ -1,5 +1,6 @@
 #include "WorldMaps.h"
 
+#include "main.h"
 #include "Gui_LoadingDialog.h"
 #include "Database_Resource.h"
 
@@ -241,33 +242,49 @@ void WorldMapDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 		ClusterData** dummyclus = new ClusterData*[amount];
 		ConfigurationSet& config = *clusset.config;
 		string fname = config.steam_dir_data;
+		SteamLanguage lang;
+		uint16_t text_lang_amount[STEAM_LANGUAGE_AMOUNT];
 		uint32_t fsize;
 		char* buffer;
 		fname += "resources.assets";
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
-		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.world_text_file[GetSteamLanguage()]));
-		fsize = config.meta_res.GetFileSizeByIndex(config.world_text_file[GetSteamLanguage()]);
-		buffer = new char[fsize];
-		ffbin.read(buffer,fsize);
 		text_data = new TextDataStruct*[amount];
 		text_data[0] = new TextDataStruct[1];
 		text_data[0]->Init(true,CHUNK_TYPE_TEXT,STEAM_WORLD_MAP_TEXT_ID,&dummyclus[0],CLUSTER_TYPE_WORLD_MAP);
-		text_data[0]->amount = FF9String::CountSteamTextAmount(buffer,fsize);
+		text_data[0]->amount = 0;
+		for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+			if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+				continue;
+			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.world_text_file[lang]));
+			fsize = config.meta_res.GetFileSizeByIndex(config.world_text_file[lang]);
+			buffer = new char[fsize];
+			ffbin.read(buffer,fsize);
+			text_lang_amount[lang] = FF9String::CountSteamTextAmount(buffer,fsize);
+			text_data[0]->amount = max(text_data[0]->amount,text_lang_amount[lang]);
+			delete[] buffer;
+		}
 		text_data[0]->text = new FF9String[text_data[0]->amount];
-		text_data[0]->size = fsize;
+//		text_data[0]->size = fsize;
 		text_data[0]->loaded = true;
-		delete[] buffer;
-		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.world_text_file[GetSteamLanguage()]));
-		for (i=0;i<text_data[0]->amount;i++)
-			SteamReadFF9String(ffbin,text_data[0]->text[i]);
+		for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+			if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+				continue;
+			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.world_text_file[lang]));
+			for (i=0;i<text_lang_amount[lang];i++)
+				SteamReadFF9String(ffbin,text_data[0]->text[i],lang);
+		}
 		for (i=1;i<amount;i++)
 			text_data[i] = text_data[0];
-		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.world_worldplace_name_file[GetSteamLanguage()]));
 		world_data = new WorldMapDataStruct[1];
 		world_data->Init(false,CHUNK_TYPE_VARIOUS,STEAM_WORLD_MAP_TEXT_ID,&dummyclus[0]);
-		world_data->place_name_size = config.meta_res.GetFileSizeByIndex(config.world_worldplace_name_file[GetSteamLanguage()]);
-		for (i=0;i<WORLD_MAP_PLACE_AMOUNT;i++)
-			SteamReadFF9String(ffbin,world_data->place_name[i]);
+		for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+			if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+				continue;
+			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.world_worldplace_name_file[lang]));
+			for (i=0;i<WORLD_MAP_PLACE_AMOUNT;i++)
+				SteamReadFF9String(ffbin,world_data->place_name[i],lang);
+		}
+//		world_data->place_name_size = config.meta_res.GetFileSizeByIndex(config.world_worldplace_name_file[GetSteamLanguage()]);
 		ffbin.close();
 		fname = config.steam_dir_assets + "p0data3.bin";
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
@@ -287,14 +304,19 @@ void WorldMapDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
 		for (i=0;i<amount;i++) {
 			tim_amount[i] = 0;
-			ffbin.seekg(config.meta_script.GetFileOffsetByIndex(config.world_script_file[GetSteamLanguage()][i]));
 			script[i] = new ScriptDataStruct[1];
 			if (i==0)
 				script[i]->Init(false,CHUNK_TYPE_SCRIPT,config.world_id[i],&dummyclus[i]);
 			else
 				script[i]->Init(true,CHUNK_TYPE_SCRIPT,config.world_id[i],&dummyclus[i],CLUSTER_TYPE_WORLD_MAP);
+			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+				if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+					continue;
+				ffbin.seekg(config.meta_script.GetFileOffsetByIndex(config.world_script_file[lang][i]));
+				script[i]->Read(ffbin,lang);
+			}
+			script[i]->ChangeSteamLanguage(GetSteamLanguage());
 			script[i]->size = config.meta_script.GetFileSizeByIndex(config.world_script_file[GetSteamLanguage()][i]);
-			script[i]->Read(ffbin);
 			script[i]->related_charmap_id = 0;
 			for (j=0;j<G_N_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME);j++)
 				if (script[i]->object_id==HADES_STRING_WORLD_BLOCK_NAME[j].id) {
@@ -309,14 +331,24 @@ void WorldMapDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 	LoadingDialogEnd();
 }
 
-void WorldMapDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype) {
+int WorldMapDataSet::GetSteamTextSize(unsigned int texttype, SteamLanguage lang) {
+	if (texttype==0)
+		return text_data[0]->GetDataSize(lang);
+	unsigned int i;
+	int res = 0;
+	for (i=0;i<WORLD_MAP_PLACE_AMOUNT;i++)
+		res += world_data->place_name[i].GetLength(lang);
+	return res;
+}
+
+void WorldMapDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype, SteamLanguage lang) {
 	unsigned int i;
 	if (texttype==0) {
 		for (i=0;i<text_data[0]->amount;i++)
-			SteamWriteFF9String(ffbin,text_data[0]->text[i]);
+			SteamWriteFF9String(ffbin,text_data[0]->text[i],lang);
 	} else {
 		for (i=0;i<WORLD_MAP_PLACE_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,world_data->place_name[i]);
+			SteamWriteFF9String(ffbin,world_data->place_name[i],lang);
 	}
 }
 
@@ -344,6 +376,7 @@ int* WorldMapDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool
 	unsigned int i,j,k;
 	uint32_t chunksize,clustersize,chunkpos,objectpos,objectsize;
 	uint16_t nbmodified,objectid;
+	SteamLanguage lang;
 	uint8_t chunktype;
 	ClusterData* clus;
 	int* res = new int[5];
@@ -371,6 +404,21 @@ int* WorldMapDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool
 							SteamReadFF9String(ffhws,world_data->place_name[j]);
 							if (GetGameType()==GAME_TYPE_PSX)
 								world_data->place_name[j].SteamToPSX();
+						}
+					} else if (chunktype==0x82) {
+						uint32_t namesize;
+						HWSReadChar(ffhws,lang);
+						while (lang!=STEAM_LANGUAGE_NONE) {
+							HWSReadLong(ffhws,namesize);
+							if (GetGameType()==GAME_TYPE_PSX && lang!=GetSteamLanguage()) {
+								ffhws.seekg(namesize,ios::cur);
+								continue;
+							}
+							for (j=0;j<WORLD_MAP_PLACE_AMOUNT;j++) {
+								SteamReadFF9String(ffhws,world_data->place_name[j],lang);
+								if (GetGameType()==GAME_TYPE_PSX)
+									world_data->place_name[j].SteamToPSX();
+							}
 						}
 					} else
 						res[1]++;
@@ -439,14 +487,42 @@ int* WorldMapDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool
 									} else
 										res[3]++;
 								}
-							} else if (chunktype==CHUNK_TYPE_TEXT) {
-								if (usetext && loadmain) {
-									text_data[j]->ReadHWS(ffhws);
-									text_data[j]->SetSize(chunksize);
-								}
 							} else if (chunktype==CHUNK_SPECIAL_TYPE_LOCAL) {
 								if (loadlocal)
 									script[j]->ReadLocalHWS(ffhws);
+							} else if (chunktype==CHUNK_STEAM_TEXT_MULTILANG) {
+								if (usetext && loadmain)
+									text_data[j]->ReadHWS(ffhws,true);
+							} else if (chunktype==CHUNK_STEAM_SCRIPT_MULTILANG) {
+								if (loadmain) {
+									uint8_t langflag;
+									HWSReadChar(ffhws,lang);
+									while (lang!=STEAM_LANGUAGE_NONE) {
+										uint32_t langdatasize;
+										HWSReadChar(ffhws,langflag);
+										HWSReadLong(ffhws,langdatasize);
+										if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+											ffhws.seekg(langdatasize,ios::cur);
+										else
+											script[j]->ReadHWS(ffhws,false,lang);
+										HWSReadChar(ffhws,lang);
+									}
+								}
+							} else if (chunktype==CHUNK_SPECIAL_TYPE_LOCAL_MULTILANG) {
+								if (loadlocal) {
+									uint8_t langflag;
+									HWSReadChar(ffhws,lang);
+									while (lang!=STEAM_LANGUAGE_NONE) {
+										uint32_t langdatasize;
+										HWSReadChar(ffhws,langflag);
+										HWSReadLong(ffhws,langdatasize);
+										if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+											ffhws.seekg(langdatasize,ios::cur);
+										else
+											script[j]->ReadLocalHWS(ffhws,lang);
+										HWSReadChar(ffhws,lang);
+									}
+								}
 							} else
 								res[1]++;
 							ffhws.seekg(chunkpos+chunksize);
@@ -488,7 +564,8 @@ int* WorldMapDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool
 void WorldMapDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsigned int localflag) {
 	unsigned int i,j;
 	uint16_t nbmodified = 0;
-	uint32_t chunkpos, nboffset = ffhws.tellg();
+	uint32_t chunkpos, chunksize, nboffset = ffhws.tellg();
+	SteamLanguage lang;
 	ClusterData* clus;
 	bool savemain = localflag & 1;
 	bool savelocal = localflag & 2;
@@ -504,12 +581,14 @@ void WorldMapDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, uns
 			world_data->WriteHWS(ffhws);
 			ffhws.seekg(chunkpos+world_data->size);
 			if (GetGameType()!=GAME_TYPE_PSX) {
-				HWSWriteChar(ffhws,2);
-				HWSWriteLong(ffhws,world_data->place_name_size);
-				chunkpos = ffhws.tellg();
-				for (j=0;j<WORLD_MAP_PLACE_AMOUNT;j++)
-					SteamWriteFF9String(ffhws,world_data->place_name[j]);
-				ffhws.seekg(chunkpos+world_data->place_name_size);
+				HWSWriteChar(ffhws,0x82);
+				for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+					if (hades::STEAM_LANGUAGE_SAVE_LIST[lang]) {
+						HWSWriteLong(ffhws,GetSteamTextSize(1,lang));
+						for (j=0;j<WORLD_MAP_PLACE_AMOUNT;j++)
+							SteamWriteFF9String(ffhws,world_data->place_name[j],lang);
+					}
+				HWSWriteChar(ffhws,STEAM_LANGUAGE_NONE);
 			}
 		}
 		HWSWriteChar(ffhws,0xFF);
@@ -521,57 +600,116 @@ void WorldMapDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, uns
 			clus->UpdateOffset();
 			HWSWriteShort(ffhws,script[i]->object_id);
 			HWSWriteLong(ffhws,clus->size);
-			if (script[i]->modified && savemain) {
-				HWSWriteChar(ffhws,CHUNK_TYPE_SCRIPT);
-				HWSWriteLong(ffhws,script[i]->size);
-				chunkpos = ffhws.tellg();
-				script[i]->WriteHWS(ffhws);
-				ffhws.seekg(chunkpos+script[i]->size);
-			}
-			if ((GetGameType()==GAME_TYPE_PSX || i==0) && text_data[i]->modified && savemain) {
-				HWSWriteChar(ffhws,CHUNK_TYPE_TEXT);
-				HWSWriteLong(ffhws,text_data[i]->size+2);
-				chunkpos = ffhws.tellg();
-				text_data[i]->WriteHWS(ffhws);
-				ffhws.seekg(chunkpos+text_data[i]->size+2);
-			}
-			if (GetGameType()==GAME_TYPE_PSX && charmap[i] && charmap[i]->modified && savemain) {
-				HWSWriteChar(ffhws,CHUNK_TYPE_CHARMAP);
-				HWSWriteLong(ffhws,charmap[i]->size);
-				chunkpos = ffhws.tellg();
-				charmap[i]->WriteHWS(ffhws);
-				ffhws.seekg(chunkpos+charmap[i]->size);
-			}
-			if (GetGameType()==GAME_TYPE_PSX && chartim[i] && savemain) {
-				for (j=0;j<chartim[i]->parent_chunk->object_amount;j++)
-					if (chartim[i][j].modified) {
-						HWSWriteChar(ffhws,CHUNK_TYPE_TIM);
-						HWSWriteLong(ffhws,chartim[i][j].size+2);
-						chunkpos = ffhws.tellg();
-						HWSWriteShort(ffhws,chartim[i][j].object_id);
-						chartim[i][j].WriteHWS(ffhws);
-						ffhws.seekg(chunkpos+chartim[i][j].size+2);
-					}
-			}
-			if (GetGameType()==GAME_TYPE_PSX && preload[i]->modified && savemain) {
-				preload[i]->parent_cluster->UpdateOffset();
-				HWSWriteChar(ffhws,CHUNK_TYPE_IMAGE_MAP);
-				HWSWriteLong(ffhws,preload[i]->size+4);
-				chunkpos = ffhws.tellg();
-				HWSWriteLong(ffhws,preload[i]->parent_cluster->size);
-				preload[i]->WriteHWS(ffhws);
-				ffhws.seekg(chunkpos+preload[i]->size+4);
-			}
-			if (savelocal) {
-				uint32_t localsize = 0;
-				HWSWriteChar(ffhws,CHUNK_SPECIAL_TYPE_LOCAL);
-				HWSWriteLong(ffhws,localsize);
-				chunkpos = ffhws.tellg();
-				script[i]->WriteLocalHWS(ffhws);
-				localsize = (long long)ffhws.tellg()-chunkpos;
-				ffhws.seekg(chunkpos-4);
-				HWSWriteLong(ffhws,localsize);
-				ffhws.seekg(chunkpos+localsize);
+			if (GetGameType()==GAME_TYPE_PSX) {
+				if (text_data[i]->modified && savemain) {
+					HWSWriteChar(ffhws,CHUNK_TYPE_TEXT);
+					HWSWriteLong(ffhws,text_data[i]->size+2);
+					chunkpos = ffhws.tellg();
+					text_data[i]->WriteHWS(ffhws);
+					ffhws.seekg(chunkpos+text_data[i]->size+2);
+				}
+				if (charmap[i] && charmap[i]->modified && savemain) {
+					HWSWriteChar(ffhws,CHUNK_TYPE_CHARMAP);
+					HWSWriteLong(ffhws,charmap[i]->size);
+					chunkpos = ffhws.tellg();
+					charmap[i]->WriteHWS(ffhws);
+					ffhws.seekg(chunkpos+charmap[i]->size);
+				}
+				if (chartim[i] && savemain) {
+					for (j=0;j<chartim[i]->parent_chunk->object_amount;j++)
+						if (chartim[i][j].modified) {
+							HWSWriteChar(ffhws,CHUNK_TYPE_TIM);
+							HWSWriteLong(ffhws,chartim[i][j].size+2);
+							chunkpos = ffhws.tellg();
+							HWSWriteShort(ffhws,chartim[i][j].object_id);
+							chartim[i][j].WriteHWS(ffhws);
+							ffhws.seekg(chunkpos+chartim[i][j].size+2);
+						}
+				}
+				if (preload[i]->modified && savemain) {
+					preload[i]->parent_cluster->UpdateOffset();
+					HWSWriteChar(ffhws,CHUNK_TYPE_IMAGE_MAP);
+					HWSWriteLong(ffhws,preload[i]->size+4);
+					chunkpos = ffhws.tellg();
+					HWSWriteLong(ffhws,preload[i]->parent_cluster->size);
+					preload[i]->WriteHWS(ffhws);
+					ffhws.seekg(chunkpos+preload[i]->size+4);
+				}
+				if (script[i]->modified && savemain) {
+					HWSWriteChar(ffhws,CHUNK_TYPE_SCRIPT);
+					HWSWriteLong(ffhws,script[i]->size);
+					chunkpos = ffhws.tellg();
+					script[i]->WriteHWS(ffhws);
+					ffhws.seekg(chunkpos+script[i]->size);
+				}
+				if (savelocal) {
+					uint32_t localsize = 0;
+					HWSWriteChar(ffhws,CHUNK_SPECIAL_TYPE_LOCAL);
+					HWSWriteLong(ffhws,localsize);
+					chunkpos = ffhws.tellg();
+					script[i]->WriteLocalHWS(ffhws);
+					localsize = (long long)ffhws.tellg()-chunkpos;
+					ffhws.seekg(chunkpos-4);
+					HWSWriteLong(ffhws,localsize);
+					ffhws.seekg(chunkpos+localsize);
+				}
+			} else {
+				if (i==0 && text_data[i]->modified && savemain) {
+					HWSWriteChar(ffhws,CHUNK_STEAM_TEXT_MULTILANG);
+					HWSWriteLong(ffhws,0);
+					chunkpos = ffhws.tellg();
+					text_data[i]->WriteHWS(ffhws,true);
+					chunksize = (uint32_t)ffhws.tellg()-chunkpos;
+					ffhws.seekg(chunkpos-4);
+					HWSWriteLong(ffhws,chunksize);
+					ffhws.seekg(chunkpos+chunksize);
+				}
+				for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+					if (savemain && hades::STEAM_LANGUAGE_SAVE_LIST[lang] && script[i]->IsDataModified(lang))
+						break;
+				if (lang<STEAM_LANGUAGE_AMOUNT) {
+					HWSWriteChar(ffhws,CHUNK_STEAM_SCRIPT_MULTILANG);
+					HWSWriteLong(ffhws,0);
+					chunkpos = ffhws.tellg();
+					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+						if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && script[i]->IsDataModified(lang)) {
+							HWSWriteChar(ffhws,lang);
+							HWSWriteChar(ffhws,0); // TODO: Use this as an options (eg. two scripts are actually the same)
+							HWSWriteLong(ffhws,script[i]->GetDataSize(lang));
+							script[i]->WriteHWS(ffhws,lang);
+						}
+					HWSWriteChar(ffhws,STEAM_LANGUAGE_NONE);
+					chunksize = (uint32_t)ffhws.tellg()-chunkpos;
+					ffhws.seekg(chunkpos-4);
+					HWSWriteLong(ffhws,chunksize);
+					ffhws.seekg(chunkpos+chunksize);
+				}
+				for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+					if (savelocal && hades::STEAM_LANGUAGE_SAVE_LIST[lang])
+						break;
+				if (lang<STEAM_LANGUAGE_AMOUNT) {
+					uint32_t langdatasize, langdatapos;
+					HWSWriteChar(ffhws,CHUNK_SPECIAL_TYPE_LOCAL_MULTILANG);
+					HWSWriteLong(ffhws,0);
+					chunkpos = ffhws.tellg();
+					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+						if (hades::STEAM_LANGUAGE_SAVE_LIST[lang]) {
+							HWSWriteChar(ffhws,lang);
+							HWSWriteChar(ffhws,0); // TODO: Use this as an options
+							HWSWriteLong(ffhws,0);
+							langdatapos = ffhws.tellg();
+							script[i]->WriteLocalHWS(ffhws,lang);
+							langdatasize = (long long)ffhws.tellg()-langdatapos;
+							ffhws.seekg(langdatapos-4);
+							HWSWriteLong(ffhws,langdatasize);
+							ffhws.seekg(langdatapos+langdatasize);
+						}
+					HWSWriteChar(ffhws,STEAM_LANGUAGE_NONE);
+					chunksize = (long long)ffhws.tellg()-chunkpos;
+					ffhws.seekg(chunkpos-4);
+					HWSWriteLong(ffhws,chunksize);
+					ffhws.seekg(chunkpos+chunksize);
+				}
 			}
 			HWSWriteChar(ffhws,0xFF);
 			nbmodified++;

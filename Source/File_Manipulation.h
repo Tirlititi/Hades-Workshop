@@ -20,15 +20,20 @@ using namespace std;
 #define OPCODE_WCHAR L'µ'
 
 typedef uint8_t SteamLanguage;
-#define STEAM_LANGUAGE_US	0
-#define STEAM_LANGUAGE_EN	1
-#define STEAM_LANGUAGE_JA	2
-#define STEAM_LANGUAGE_GE	3
-#define STEAM_LANGUAGE_FR	4
-#define STEAM_LANGUAGE_IT	5
-#define STEAM_LANGUAGE_SP	6
+#define STEAM_LANGUAGE_US		0
+#define STEAM_LANGUAGE_EN		1
+#define STEAM_LANGUAGE_JA		2
+#define STEAM_LANGUAGE_GE		3
+#define STEAM_LANGUAGE_FR		4
+#define STEAM_LANGUAGE_IT		5
+#define STEAM_LANGUAGE_SP		6
 #define STEAM_LANGUAGE_AMOUNT	7
 #define STEAM_LANGUAGE_NONE		0xFF
+
+SteamLanguage GetSteamLanguage();
+void SetSteamLanguage(SteamLanguage gt);
+SteamLanguage GetHWSSteamLanguage();
+void SetHWSSteamLanguage(SteamLanguage gt);
 
 static wchar_t DEFAULT_CHARMAP[256] = {	L'0',L'1',L'2',L'3',L'4',L'5',L'6',L'7',L'8',L'9',L'+',L'-',L'=',L'*',L'%',L' ',
 										L'A',L'B',L'C',L'D',L'E',L'F',L'G',L'H',L'I',L'J',L'K',L'L',L'M',L'N',L'O',L'P',
@@ -94,9 +99,9 @@ public:
 	wchar_t* charmap_B;
 	wchar_t* charmap_Ext;
 	wchar_t opcode_wchar;
-	// Steam only
-	bool has_multi_lang;
-	wstring* multi_lang_str;
+	// Steam multiple language
+	bool multi_lang_init[STEAM_LANGUAGE_AMOUNT];
+	wstring multi_lang_str[STEAM_LANGUAGE_AMOUNT];
 	
 	FF9String();
 	FF9String(FF9String& cp);
@@ -104,15 +109,16 @@ public:
 	void CreateEmpty();
 	void Read(fstream& ffbin, void (*ReadCharFunc)(fstream& fs,uint8_t& ch));
 	void ReadFromChar(uint8_t* rawvalue);
-	void SetValue(wstring value); // If there are more µ than "code_amount", the latest ones are ignored
+	void SetValue(wstring value, SteamLanguage = GetSteamLanguage()); // If there are more µ than "code_amount", the latest ones are ignored
 	void SetCharmaps(wchar_t* newmapdef, wchar_t* newmapa, wchar_t* newmapb, wchar_t* newmapext); // newmaps must be 256-sized arrays, never destroyed
 	void SetOpcodeChar(wchar_t newchar);
-	void ChangeSteamLanguage(SteamLanguage newlang, bool saveprevious = true); // If saveprevious==true, the current Steam Language must match the current FF9String's str
+	void ChangeSteamLanguage(SteamLanguage newlang);
 	void PermuteCode(uint16_t code1, uint16_t code2); // Assume they are < code_amount
 	void AddCode(uint8_t* codearg, uint8_t codelength, uint16_t pos); // codearg must be an array of size codelength
 	void SetCode(uint16_t codeid, uint8_t* codearg, uint8_t codelength);
 	void RemoveCode(uint16_t codeid); // Assume codeid < code_amount
 	wstring& GetStr(int strtype); // 0 = str ; 1 = str_ext ; 2 = str_nice
+	uint16_t GetLength(SteamLanguage lang = GetSteamLanguage(), bool withend = true);
 	void SteamToPSX();
 	void PSXToSteam();
 	
@@ -164,11 +170,6 @@ void SteamWriteShort(fstream& f, uint16_t value);
 uint8_t SteamReadChar(fstream& f, uint8_t& destvalue);
 void SteamWriteChar(fstream& f, uint8_t value);
 void SteamSeek(fstream& f, uint32_t abspos, uint32_t offset);
-
-SteamLanguage GetSteamLanguage();
-void SetSteamLanguage(SteamLanguage gt);
-SteamLanguage GetHWSSteamLanguage();
-void SetHWSSteamLanguage(SteamLanguage gt);
 
 // For PPF conversion
 void PPFInitScanStep(fstream& f, bool datastring = false, uint16_t len = 0); // len is only used for strings

@@ -359,8 +359,18 @@ wxString ToolUnityViewer::GetInfoString(wxString filename, uint32_t filetype, Un
 			if (patharray[4].IsSameAs(L"song_",false) && id[id.Len()-2]==L'_')
 				id[id.Len()-1] = '0';
 			int soundid = audio_data.GetObjectIndex("name",id.ToStdString());
-			if (soundid>=0) return _(audio_data.GetObjectValue("type",soundid))+_(L" of index ")+_(audio_data.GetObjectValue("soundIndex",soundid));
-			return _(L"[Unknown Sound]");
+			if (soundid<0) return _(L"[Unknown Sound]");
+			string soundtype = audio_data.GetObjectValue("type",soundid);
+			int soundindex = atoi(audio_data.GetObjectValue("soundIndex",soundid).c_str());
+			if (soundtype==HADES_STRING_AUDIO_TYPE[AUDIO_TYPE_MUSIC])
+				for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_MUSIC_NAME);i++)
+					if (HADES_STRING_MUSIC_NAME[i].id==soundindex)
+						return _(soundtype)+_(L" ")+HADES_STRING_MUSIC_NAME[i].label;
+			if (soundtype==HADES_STRING_AUDIO_TYPE[AUDIO_TYPE_SFX])
+				for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_AUDIO_NAME);i++)
+					if (HADES_STRING_AUDIO_NAME[i].id==soundindex)
+						return _(soundtype)+_(L" ")+HADES_STRING_AUDIO_NAME[i].label;
+			return _(soundtype)+_(L" of index ")+_(audio_data.GetObjectValue("soundIndex",soundid));
 		}
 	} else if (archive==UNITY_ARCHIVE_DATA7) {
 		if (patharray.Count()>=4 && patharray[2].IsSameAs(L"commonasset",false) && /*
@@ -567,12 +577,15 @@ void InitLinkFileDialog(UnityLinkFileDialog& dial, wxListCtrl* listctrl, UnityAr
 	dial.m_fileinfo->ChangeValue(ConvertLongToString(dial.fileinfolist[0]));
 }
 
-bool ToolUnityViewer::PrepareAssetForImport(bool isnewfile, fstream& filebase, wxString path, uint32_t ftype, vector<ModelDataStruct>& importmodel, UnityArchiveFileCreator& filestoadd, UnityLinkFileDialog& linkfiledialog, bool linkfiledialoginit, bool* copylist, /*	Common Arguments
+bool ToolUnityViewer::PrepareAssetForImport(bool isnewfile, fstream& filebase, wxString path, uint32_t ftype, vector<ModelDataStruct>& importmodel, vector<int64_t>& infotoavoid, UnityArchiveFileCreator& filestoadd, UnityLinkFileDialog& linkfiledialog, bool linkfiledialoginit, bool* copylist, /*	Common Arguments
 										*/	uint32_t* filenewsize, unsigned int impfileid, long it, wxString filearchivedir, vector<GameObjectHierarchy>* importmodelbasehierarchy, /* Replace file
 										*/	int64_t newfileinfo, string newfileinternalname, string newfilepath) { // New file
 	bool newfilehasbundle = newfilepath.length()>0;
 	unsigned int i,j;
 	char* buffer;
+	wxString wxnewfilepath = _(newfilepath);
+	wxnewfilepath.Replace(_(L"\\"),_(L"/"));
+	newfilepath = wxnewfilepath.ToStdString();
 	if (ftype==28 && !m_menuconvertimgnone->IsChecked()) {
 		wxImage img;
 		bool success;
@@ -592,7 +605,13 @@ bool ToolUnityViewer::PrepareAssetForImport(bool isnewfile, fstream& filebase, w
 		else if (m_menuconvertimgqualityargb->IsChecked())	textureformat = 0x05;
 		else if (m_menuconvertimgqualitydxt1->IsChecked())	textureformat = 0x0A;
 		else if (m_menuconvertimgqualitydxt5->IsChecked())	textureformat = 0x0C;
-		else if (!isnewfile && meta_data[current_archive].GetFileSizeByIndex(impfileid)>=0x10) {
+		else if (isnewfile) {
+			wxString warningstr;
+			warningstr.Printf(wxT(HADES_STRING_UNITYVIEWER_IMPORT_DEFAULT_FORMAT),path);
+			wxMessageDialog popupwarning(this,warningstr,HADES_STRING_WARNING,wxOK|wxCENTRE);
+			popupwarning.ShowModal();
+			textureformat = 0x04;
+		} else if (meta_data[current_archive].GetFileSizeByIndex(impfileid)>=0x10) {
 			filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(impfileid)+0xC);
 			textureformat = ReadLong(filebase);
 		}
@@ -605,7 +624,7 @@ bool ToolUnityViewer::PrepareAssetForImport(bool isnewfile, fstream& filebase, w
 			filestoadd.Add(ftype,newsizetmp,newfileinfo,newfileinternalname);
 			if (newfilehasbundle) {
 				int32_t bundleindex = meta_data[current_archive].GetFileIndex("",142);
-				bundle_data[current_archive-UNITY_ARCHIVE_DATA11].AddFile(newfilepath,meta_data[current_archive].header_file_amount+filestoadd.file_type.size(),newfileinfo);
+				bundle_data[current_archive-UNITY_ARCHIVE_DATA11].AddFile(newfilepath,filestoadd.file_index[filestoadd.file_index.size()-1],newfileinfo);
 				if (bundle_data[current_archive-UNITY_ARCHIVE_DATA11].bundle_index_start[0]==0)
 					bundle_data[current_archive-UNITY_ARCHIVE_DATA11].AddFileToBundle(newfileinfo);
 				copylist[bundleindex] = false;
@@ -613,27 +632,52 @@ bool ToolUnityViewer::PrepareAssetForImport(bool isnewfile, fstream& filebase, w
 		} else {
 			filenewsize[impfileid] = newsizetmp;
 		}
-	} else if (ftype==49 && !isnewfile && path.Len()>=10 && path.Mid(path.Len()-10).IsSameAs(L".akb.bytes",false) && !m_menuconvertaudionone->IsChecked()) {
-		filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(impfileid));
-		uint32_t magicakb = ReadLong(filebase);
-		if (magicakb!=0x32424B41) {
-			wxLogError(HADES_STRING_UNITYVIEWER_IMPORT_ERROR_FORMAT,path);
-			return false;
+	} else if (ftype==49 && path.Len()>=10 && path.Mid(path.Len()-10).IsSameAs(L".akb.bytes",false) && !m_menuconvertaudionone->IsChecked()) {
+		if (isnewfile) {
+			fstream fileasset((const char*)path.c_str(),ios::in|ios::binary);
+			if (!fileasset.is_open()) {
+				wxLogError(HADES_STRING_OPEN_ERROR_FAIL,path);
+				return false;
+			}
+			uint32_t magicogg = ReadLong(fileasset);
+			if (magicogg!=0x5367674F) {
+				wxLogError(HADES_STRING_UNITYVIEWER_MISSING_OGG,path);
+				return false;
+			}
+			fileasset.seekg(0,ios::end);
+			if (isnewfile) {
+				filestoadd.Add(ftype,fileasset.tellg(),newfileinfo);
+				if (newfilehasbundle) {
+					int32_t bundleindex = meta_data[current_archive].GetFileIndex("",142);
+					bundle_data[current_archive-UNITY_ARCHIVE_DATA11].AddFile(newfilepath,filestoadd.file_index[filestoadd.file_index.size()-1],newfileinfo);
+					copylist[bundleindex] = false;
+				}
+			} else {
+				filenewsize[impfileid] = fileasset.tellg();
+			}
+			fileasset.close();
+		} else {
+			filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(impfileid));
+			uint32_t magicakb = ReadLong(filebase);
+			if (magicakb!=0x32424B41) {
+				wxLogError(HADES_STRING_UNITYVIEWER_IMPORT_ERROR_FORMAT,path);
+				return false;
+			}
+			fstream fileasset((const char*)path.c_str(),ios::in|ios::binary);
+			if (!fileasset.is_open()) {
+				wxLogError(HADES_STRING_OPEN_ERROR_FAIL,path);
+				return false;
+			}
+			uint32_t magicogg = ReadLong(fileasset);
+			if (magicogg!=0x5367674F) {
+				wxLogError(HADES_STRING_UNITYVIEWER_MISSING_OGG,path);
+				return false;
+			}
+			fileasset.seekg(0,ios::end);
+			filenewsize[impfileid] = (uint32_t)fileasset.tellg()+0x130;
+			filenewsize[impfileid] += GetAlignOffset(filenewsize[impfileid],0x10);
+			fileasset.close();
 		}
-		fstream fileasset((const char*)path.c_str(),ios::in|ios::binary);
-		if (!fileasset.is_open()) {
-			wxLogError(HADES_STRING_OPEN_ERROR_FAIL,path);
-			return false;
-		}
-		uint32_t magicogg = ReadLong(fileasset);
-		if (magicogg!=0x5367674F) {
-			wxLogError(HADES_STRING_UNITYVIEWER_MISSING_OGG,path);
-			return false;
-		}
-		fileasset.seekg(0,ios::end);
-		filenewsize[impfileid] = (uint32_t)fileasset.tellg()+0x130;
-		filenewsize[impfileid] += GetAlignOffset(filenewsize[impfileid],0x10);
-		fileasset.close();
 	} else if (ftype==1 && (path.AfterLast(L'.').IsSameAs(L"fbx",false) || path.AfterLast(L'.').IsSameAs(L"prefab",false)) && !m_menuconvertmodelnone->IsChecked()) {
 		bool modelflushunused = m_menuimportmodelflush->IsChecked() && !isnewfile;
 		bool modelimportmesh = m_menuimportmodelmesh->IsChecked();
@@ -663,7 +707,7 @@ bool ToolUnityViewer::PrepareAssetForImport(bool isnewfile, fstream& filebase, w
 		}
 		importmodel.resize(importmodel.size()+1);
 		ModelDataStruct& newmodel = importmodel[importmodel.size()-1];
-		newmodel.steam_name = isnewfile ? "" : m_assetlist->GetItemText(it,1).BeforeLast(L'.').AfterLast(L'/').AfterLast(L'\\').ToStdString();
+		newmodel.steam_name = (isnewfile ? _(newfilepath).AfterLast(L'/').BeforeFirst(L'.') : m_assetlist->GetItemText(it,1).BeforeFirst(L'.').AfterLast(L'/')).ToStdString();
 		if (newmodel.Import((const char*)path.c_str())!=0) {
 			wxLogError(HADES_STRING_UNITYVIEWER_UNKNOWN_FORMAT,path);
 			importmodelbasehierarchy->pop_back();
@@ -680,110 +724,140 @@ bool ToolUnityViewer::PrepareAssetForImport(bool isnewfile, fstream& filebase, w
 			}
 		}
 //		newmodel.hierarchy->DEBUGDisplayHierarchy();
-		if (modelmergepolicy==2) {
-			if (newmodel.hierarchy->root_node->node_type==4 && static_cast<TransformStruct*>(newmodel.hierarchy->root_node)->child_object) {
-				GameObjectNode* rootobj = static_cast<TransformStruct*>(newmodel.hierarchy->root_node)->child_object;
-				if (isnewfile) {
-					rootobj->node_info = newfileinfo;
-					rootobj->file_index = meta_data[current_archive].header_file_amount;
-				} else {
-					rootobj->node_info = meta_data[current_archive].file_info[impfileid];
-					rootobj->file_index = impfileid;
-				}
+		if (newmodel.hierarchy->root_node->node_type==4 && static_cast<TransformStruct*>(newmodel.hierarchy->root_node)->child_object) {
+			GameObjectNode* rootobj = static_cast<TransformStruct*>(newmodel.hierarchy->root_node)->child_object;
+			if (isnewfile) {
+				rootobj->node_info = newfileinfo;
+				rootobj->file_index = meta_data[current_archive].header_file_amount;
+			} else {
+				rootobj->node_info = meta_data[current_archive].file_info[impfileid];
+				rootobj->file_index = impfileid;
 			}
 		}
-		newmodel.SetupPostImportData(potentiallylinkedfiles,meta_data,&bundle_data[UNITY_ARCHIVE_DATA5-UNITY_ARCHIVE_DATA11],modelhierarchy,modelmergepolicy);
-		for (i=0;i<newmodel.material.size();i++) {
-			for (j=0;j<newmodel.material[i].size();j++) {
-				if (newmodel.material[i][j].maintex.file_info==0) {
-					if (!linkfiledialoginit) {
-						InitLinkFileDialog(linkfiledialog,m_assetlist,&meta_data[current_archive]);
-						linkfiledialoginit = true;
-					}
-					wxString message = _(HADES_STRING_UNITYVIEWER_LINK_TEXTURE);
-					message += path.AfterLast(L'\\') + _(L", Mesh ") + newmodel.mesh[i].name + _(L" --> ") + newmodel.material[i][j].maintex.file_name;
-					if (linkfiledialog.ShowModal(message)==wxID_OK) {
-						newmodel.material[i][j].maintex.file_info = linkfiledialog.info_selected;
+		newmodel.SetupPostImportData(potentiallylinkedfiles,meta_data,infotoavoid,&bundle_data[UNITY_ARCHIVE_DATA5-UNITY_ARCHIVE_DATA11],modelhierarchy,modelmergepolicy);
+		path.Replace(_(L"\\"),_(L"/"));
+		if (modelimportmesh) {
+			for (i=0;i<newmodel.material.size();i++) {
+				for (j=0;j<newmodel.material[i].size();j++) {
+					if (newmodel.material[i][j].maintex.file_info==0) {
+						if (!linkfiledialoginit) {
+							InitLinkFileDialog(linkfiledialog,m_assetlist,&meta_data[current_archive]);
+							linkfiledialoginit = true;
+						}
+						wxString message = _(HADES_STRING_UNITYVIEWER_LINK_TEXTURE);
+						message += path.AfterLast(L'/') + _(L" (Mesh ") + newmodel.mesh[i].name + _(L")\t") + newmodel.material[i][j].maintex.file_name;
+						if (linkfiledialog.ShowModal(message)==wxID_OK) {
+							newmodel.material[i][j].maintex.file_info = linkfiledialog.info_selected;
+						}
 					}
 				}
 			}
-		}
-		unsigned int nodefileindex,nodefiletype,meshcounter = 0, meshmatcounter = 0, animcounter = 0;
-		vector<int64_t> modelbundle;
-		uint32_t nodefilesize;
-		unsigned int missedfiles = 0;
-		for (i=0;i<newmodel.hierarchy->node_list.size();i++) {
-			nodefileindex = newmodel.hierarchy->node_list[i]->file_index;
-			nodefiletype = newmodel.hierarchy->node_list[i]->node_type;
-			if (nodefiletype==43)		nodefilesize = newmodel.mesh[meshcounter].GetDataSize();
-			else if (nodefiletype==21)	nodefilesize = newmodel.material[meshcounter][meshmatcounter].GetDataSize();
-			else if (nodefiletype==74)	nodefilesize = newmodel.animation[animcounter].GetDataSize();
-			else						nodefilesize = newmodel.hierarchy->node_list[i]->GetDataSize();
-			if (newmodel.hierarchy->node_list[i]->node_info==0) { // New file without new allocation
-				missedfiles++;
-			} else if (nodefileindex>=meta_data[current_archive].header_file_amount) { // New file with new allocation
-				modelbundle.push_back(newmodel.hierarchy->node_list[i]->node_info);
-				if (newmodel.hierarchy->root_node->node_type==4 && static_cast<TransformStruct*>(newmodel.hierarchy->root_node)->child_object==newmodel.hierarchy->node_list[i]) {
-					filestoadd.Add(newmodel.hierarchy->node_list[i]->node_type,nodefilesize,newmodel.hierarchy->node_list[i]->node_info,newfileinternalname);
-					if (isnewfile && newfilehasbundle) {
-						bundle_data[current_archive-UNITY_ARCHIVE_DATA11].AddFile(newfilepath,meta_data[current_archive].header_file_amount+filestoadd.file_type.size(),newmodel.hierarchy->node_list[i]->node_info);
+			unsigned int nodefileindex,nodefiletype,meshcounter = 0, meshmatcounter = 0, totalmatcounter = 0, animcounter = 0;
+			unsigned int missedfiles = 0;
+			vector<int> nodebundledataindex;
+			vector<int64_t> modelbundle;
+			uint32_t nodefilesize;
+			string importassetinternalname, importassetpath;
+			string rootassetshortname = (isnewfile ? _(newfilepath) : path).AfterLast(L'/').BeforeFirst(L'.');
+			for (i=0;i<newmodel.hierarchy->node_list.size();i++) {
+				nodefileindex = newmodel.hierarchy->node_list[i]->file_index;
+				nodefiletype = newmodel.hierarchy->node_list[i]->node_type;
+				if (nodefiletype==43)		nodefilesize = newmodel.mesh[meshcounter].GetDataSize();
+				else if (nodefiletype==21)	nodefilesize = newmodel.material[meshcounter][meshmatcounter].GetDataSize();
+				else if (nodefiletype==74)	nodefilesize = newmodel.animation[animcounter].GetDataSize();
+				else						nodefilesize = newmodel.hierarchy->node_list[i]->GetDataSize();
+				if (newmodel.hierarchy->node_list[i]->node_info==0) { // New file without new allocation
+					missedfiles++;
+				} else if (nodefileindex>=meta_data[current_archive].header_file_amount) { // New file with new allocation
+					modelbundle.push_back(newmodel.hierarchy->node_list[i]->node_info);
+					infotoavoid.push_back(newmodel.hierarchy->node_list[i]->node_info);
+					importassetinternalname = "";
+					importassetpath = "";
+					if (nodefiletype==43) {
+						importassetinternalname = wxString::Format(wxT("custmesh%d"),meshcounter);
+						importassetpath = isnewfile ? newfilepath : path.ToStdString();
+					} else if (nodefiletype==21) {
+						importassetinternalname = wxString::Format(wxT("%s_%d"),rootassetshortname,totalmatcounter);
+						importassetpath = (isnewfile ? _(newfilepath) : path).BeforeLast(L'/').ToStdString();
+						if (importassetpath.length()>0)
+							importassetpath += "/";
+						importassetpath += wxString::Format(wxT("materials/%s_%d.mat"),rootassetshortname,totalmatcounter).ToStdString();
+					} else if (nodefiletype==74) {
+						importassetpath = isnewfile ? newfilepath : path.ToStdString();
+					} else if (isnewfile && newmodel.hierarchy->root_node->node_type==4 && static_cast<TransformStruct*>(newmodel.hierarchy->root_node)->child_object==newmodel.hierarchy->node_list[i]) {
+						importassetpath = newfilepath;
+						infotoavoid.pop_back(); // Was already listed
+					}
+					filestoadd.Add(newmodel.hierarchy->node_list[i]->node_type,nodefilesize,newmodel.hierarchy->node_list[i]->node_info,importassetinternalname);
+					if (importassetpath.length()>0 && bundleindex>=0) {
+						nodebundledataindex.push_back(filestoadd.file_index.size()-1);
+						bundle_data[current_archive-UNITY_ARCHIVE_DATA11].AddFile(importassetpath,filestoadd.file_index[filestoadd.file_index.size()-1],newmodel.hierarchy->node_list[i]->node_info);
 						copylist[bundleindex] = false;
 					}
-				} else {
-					filestoadd.Add(newmodel.hierarchy->node_list[i]->node_type,nodefilesize,newmodel.hierarchy->node_list[i]->node_info);
+				} else { // Old file updated
+					modelbundle.push_back(newmodel.hierarchy->node_list[i]->node_info);
+					filenewsize[nodefileindex] = nodefilesize;
+					copylist[nodefileindex] = false;
 				}
-			} else { // Old file updated
-				modelbundle.push_back(newmodel.hierarchy->node_list[i]->node_info);
-				filenewsize[nodefileindex] = nodefilesize;
-				copylist[nodefileindex] = false;
+				if (nodefiletype==43) {
+					meshcounter++;
+					meshmatcounter = 0;
+				} else if (nodefiletype==21) {
+					meshmatcounter++;
+					totalmatcounter++;
+				} else if (nodefiletype==74) {
+					animcounter++;
+				}
 			}
-			if (nodefiletype==43) {
-				meshcounter++;
-				meshmatcounter = 0;
-			} else if (nodefiletype==21) {
-				meshmatcounter++;
-			} else if (nodefiletype==74) {
-				animcounter++;
+			if (missedfiles>0) {
+				wxString warningstr;
+				warningstr.Printf(wxT(HADES_STRING_UNITYVIEWER_IMPORT_MISSING),missedfiles);
+				wxMessageDialog popupwarning(this,warningstr,HADES_STRING_WARNING,wxOK|wxCENTRE);
+				popupwarning.ShowModal();
 			}
-		}
-		if (missedfiles>0) {
-			wxString warningstr;
-			warningstr.Printf(wxT(HADES_STRING_UNITYVIEWER_IMPORT_MISSING),missedfiles);
-			wxMessageDialog popupwarning(this,warningstr,HADES_STRING_WARNING,wxOK|wxCENTRE);
-			popupwarning.ShowModal();
-		}
+			for (i=0;i<nodebundledataindex.size();i++) // DEBUG: Importing 1 model + another file at once may bug because the bundle_data index is wrong
+				bundle_data[current_archive-UNITY_ARCHIVE_DATA11].index[bundle_data[current_archive-UNITY_ARCHIVE_DATA11].amount-nodebundledataindex.size()+i] = filestoadd.file_index[nodebundledataindex[i]];
+			for (meshcounter=0;meshcounter<newmodel.material.size();meshcounter++)
+				for (meshmatcounter=0;meshmatcounter<newmodel.material[meshcounter].size();meshmatcounter++) {
+					ModelMaterialData& mat = newmodel.material[meshcounter][meshmatcounter];
+					if (mat.shader_info!=0) {
+						for (i=0;i<modelbundle.size();i++)
+							if (modelbundle[i]==mat.shader_info)
+								break;
+						if (i>=modelbundle.size())
+							modelbundle.push_back(mat.shader_info);
+					}
+					if (mat.maintex.file_info!=0) {
+						for (i=0;i<modelbundle.size();i++)
+							if (modelbundle[i]==mat.maintex.file_info)
+								break;
+						if (i>=modelbundle.size())
+							modelbundle.push_back(mat.maintex.file_info);
+					}
+				}
+			if (!isnewfile && bundleindex>=0 && bundlefilelist>=0) {
+				for (i=bundle_data[current_archive-UNITY_ARCHIVE_DATA11].bundle_index_start[bundlefilelist]+1;i<bundle_data[current_archive-UNITY_ARCHIVE_DATA11].bundle_index_end[bundlefilelist];i++) {
+					int auxfileindex = meta_data[current_archive].GetFileIndexByInfo(bundle_data[current_archive-UNITY_ARCHIVE_DATA11].bundle_info[i]);
+					if (auxfileindex>=0 && meta_data[current_archive].file_type1[auxfileindex]==49 && meta_data[current_archive].file_name[auxfileindex].length()>4 && meta_data[current_archive].file_name[auxfileindex].substr(meta_data[current_archive].file_name[auxfileindex].length()-4)==".tab")
+						modelbundle.push_back(bundle_data[current_archive-UNITY_ARCHIVE_DATA11].bundle_info[i]);
+				}
+			}
+			if (bundleindex>=0) {
+				if (bundlefilelist>=0)
+					bundle_data[current_archive-UNITY_ARCHIVE_DATA11].RemoveFileBundle(bundlefilelist);
+				bundle_data[current_archive-UNITY_ARCHIVE_DATA11].AddFileBundle(6,modelbundle);
+				copylist[bundleindex] = false;
+			}
+		} // if (modelimportmesh)
+		bool countassetforimport = modelimportmesh;
 		for (i=0;i<newmodel.animation.size();i++)
 			if (newmodel.animation[i].file_id>=0 && newmodel.animation[i].anim_id==0xFFFFFFFF) { // Animations that are in the same archive as the model
 				filenewsize[newmodel.animation[i].file_id] = newmodel.animation[i].GetDataSize();
 				copylist[newmodel.animation[i].file_id] = false;
+				countassetforimport = true;
 			} else if (current_archive==UNITY_ARCHIVE_DATA5) { // ToDo: handle that case (filestoadd.Add)...
 			}
-		for (meshcounter=0;meshcounter<newmodel.material.size();meshcounter++)
-			for (meshmatcounter=0;meshmatcounter<newmodel.material[meshcounter].size();meshmatcounter++) {
-				ModelMaterialData& mat = newmodel.material[meshcounter][meshmatcounter];
-				if (mat.shader_info!=0) {
-					for (i=0;i<modelbundle.size();i++)
-						if (modelbundle[i]==mat.shader_info)
-							break;
-					if (i>=modelbundle.size())
-						modelbundle.push_back(mat.shader_info);
-				}
-				if (mat.maintex.file_info!=0) {
-					for (i=0;i<modelbundle.size();i++)
-						if (modelbundle[i]==mat.maintex.file_info)
-							break;
-					if (i>=modelbundle.size())
-						modelbundle.push_back(mat.maintex.file_info);
-				}
-			}
-		if (!isnewfile && bundleindex>=0 && bundlefilelist>=0) {
-			for (i=bundle_data[current_archive-UNITY_ARCHIVE_DATA11].bundle_index_start[bundlefilelist]+1;i<bundle_data[current_archive-UNITY_ARCHIVE_DATA11].bundle_index_end[bundlefilelist];i++) {
-				int auxfileindex = meta_data[current_archive].GetFileIndexByInfo(bundle_data[current_archive-UNITY_ARCHIVE_DATA11].bundle_info[i]);
-				if (auxfileindex>=0 && meta_data[current_archive].file_type1[auxfileindex]==49 && meta_data[current_archive].file_name[auxfileindex].length()>4 && meta_data[current_archive].file_name[auxfileindex].substr(meta_data[current_archive].file_name[auxfileindex].length()-4)==".tab")
-					modelbundle.push_back(bundle_data[current_archive-UNITY_ARCHIVE_DATA11].bundle_info[i]);
-			}
-		}
-		if (modelflushunused) {
+		if (modelflushunused && !isnewfile) {
 			for (i=0;i<modelhierarchy->node_list.size();i++) {
 				for (j=0;j<newmodel.hierarchy->node_list.size();j++)
 					if (modelhierarchy->node_list[i]->file_index==newmodel.hierarchy->node_list[j]->file_index)
@@ -793,13 +867,7 @@ bool ToolUnityViewer::PrepareAssetForImport(bool isnewfile, fstream& filebase, w
 				}
 			}
 		}
-		if (bundleindex>=0) {
-			if (bundlefilelist>=0)
-				bundle_data[current_archive-UNITY_ARCHIVE_DATA11].RemoveFileBundle(bundlefilelist);
-			bundle_data[current_archive-UNITY_ARCHIVE_DATA11].AddFileBundle(6,modelbundle);
-			copylist[bundleindex] = false;
-		}
-//		newmodel.hierarchy->DEBUGDisplayHierarchy();
+		return countassetforimport;
 	} else {
 		fstream fileasset((const char*)path.c_str(),ios::in|ios::binary);
 		if (!fileasset.is_open()) {
@@ -811,7 +879,7 @@ bool ToolUnityViewer::PrepareAssetForImport(bool isnewfile, fstream& filebase, w
 			filestoadd.Add(ftype,fileasset.tellg(),newfileinfo);
 			if (newfilehasbundle) {
 				int32_t bundleindex = meta_data[current_archive].GetFileIndex("",142);
-				bundle_data[current_archive-UNITY_ARCHIVE_DATA11].AddFile(newfilepath,meta_data[current_archive].header_file_amount+filestoadd.file_type.size(),newfileinfo);
+				bundle_data[current_archive-UNITY_ARCHIVE_DATA11].AddFile(newfilepath,filestoadd.file_index[filestoadd.file_index.size()-1],newfileinfo);
 				copylist[bundleindex] = false;
 			}
 		} else {
@@ -855,15 +923,16 @@ bool ToolUnityViewer::PerformImportOfAsset(bool isnewfile, fstream& filebase, fs
 		img.Destroy();
 		uint32_t textureformat = 0;
 		int quality =	m_menuconvertimgqualitylow->IsChecked() ? 0 :
-			m_menuconvertimgqualitymedium->IsChecked() ? 1 :
-			m_menuconvertimgqualityhigh->IsChecked() ? 2 : -1;
+						m_menuconvertimgqualitymedium->IsChecked() ? 1 :
+						m_menuconvertimgqualityhigh->IsChecked() ? 2 : -1;
 		if (m_menuconvertimgqualityalpha->IsChecked())		textureformat = 0x01;
 		else if (m_menuconvertimgqualityrgb->IsChecked())	textureformat = 0x03;
 		else if (m_menuconvertimgqualityrgba->IsChecked())	textureformat = 0x04;
 		else if (m_menuconvertimgqualityargb->IsChecked())	textureformat = 0x05;
 		else if (m_menuconvertimgqualitydxt1->IsChecked())	textureformat = 0x0A;
 		else if (m_menuconvertimgqualitydxt5->IsChecked())	textureformat = 0x0C;
-		else if (!isnewfile && meta_data[current_archive].GetFileSizeByIndex(impfileid)>=0x10) {
+		else if (isnewfile)									textureformat = 0x04;
+		else if (meta_data[current_archive].GetFileSizeByIndex(impfileid)>=0x10) {
 			filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(impfileid)+0xC);
 			textureformat = ReadLong(filebase);
 		}
@@ -915,7 +984,7 @@ bool ToolUnityViewer::PerformImportOfAsset(bool isnewfile, fstream& filebase, fs
 		newmodel.hierarchy->meta_data = &newmetadata;
 		for (i=0;i<newmodel.hierarchy->node_list.size();i++)
 			if (newmodel.hierarchy->node_list[i]->file_index>=meta_data[current_archive].header_file_amount)
-				for (j=meta_data[current_archive].header_file_amount;j<newmetadata.header_file_amount;j++) // New node: the node's file_index may be wrong
+				for (j=newmetadata.header_file_amount ; j-- > 0 ;) // New node: the node's file_index is most likely wrong
 					if (newmodel.hierarchy->node_list[i]->node_info==newmetadata.file_info[j]) {
 						newmodel.hierarchy->node_list[i]->file_index = j;
 						break;
@@ -946,9 +1015,138 @@ bool ToolUnityViewer::PerformImportOfAsset(bool isnewfile, fstream& filebase, fs
 	return true;
 }
 
+int ToolUnityViewer::PerformImportOfAnimations(vector<ModelDataStruct>& importmodel) {
+	int modelmergepolicy =	m_menuimportmodelexistingfiles->IsChecked() ? 0 :
+		m_menuimportmodelmerge->IsChecked() ? 1 :
+		m_menuimportmodelimportall->IsChecked() ? 2 : -1;
+	wxString animarchivename = root_path+_(UnityArchiveMetaData::GetArchiveName(UNITY_ARCHIVE_DATA5,use_x86));
+	unsigned int i,j,k,importmodelcounter;
+	int nbanimtoupdate = 0;
+	if (modelmergepolicy<0 || current_archive==UNITY_ARCHIVE_DATA5 || !m_menuimportmodelanims->IsChecked())
+		return 0;
+	for (i=0;i<importmodel.size();i++)
+		for (j=0;j<importmodel[i].animation.size();j++)
+			if ((modelmergepolicy!=0 && (importmodel[i].animation[j].anim_id!=0xFFFFFFFF || importmodel[i].animation[j].file_id<0))
+			 || (modelmergepolicy==0 && importmodel[i].animation[j].anim_id!=0xFFFFFFFF && importmodel[i].animation[j].file_id<0))
+				nbanimtoupdate++;
+	if (nbanimtoupdate==0)
+		return 0;
+	fstream filebaseanim((const char*)(animarchivename.c_str()),ios::in|ios::binary);
+	fstream filedestanim((const char*)(animarchivename+_(L".tmp")).c_str(),ios::out|ios::binary);
+	if (!filebaseanim.is_open())
+		return -1;
+	if (!filedestanim.is_open())
+		return -2;
+	bool* copylistanim = new bool[meta_data[UNITY_ARCHIVE_DATA5].header_file_amount];
+	uint32_t* filenewsizeanim = new uint32_t[meta_data[UNITY_ARCHIVE_DATA5].header_file_amount];
+	for (i=0;i<meta_data[UNITY_ARCHIVE_DATA5].header_file_amount;i++) {
+		copylistanim[i] = true;
+		filenewsizeanim[i] = meta_data[UNITY_ARCHIVE_DATA5].file_size[i];
+	}
+	UnityArchiveFileCreator filestoaddanim(&meta_data[UNITY_ARCHIVE_DATA5]);
+	UnityAddFileDialog adddial(this,meta_data,UNITY_ARCHIVE_DATA5);
+	adddial.m_buttonadd->Enable(false);
+	int animtypechoice = 0;
+	for (i=0;i<adddial.file_type_choice.size();i++)
+		if (adddial.file_type_choice[i]==74) {
+			animtypechoice = i;
+			break;
+		}
+	for (importmodelcounter=0;importmodelcounter<importmodel.size();importmodelcounter++) {
+		ModelDataStruct& model = importmodel[importmodelcounter];
+		for (i=0;i<model.animation.size();i++)
+			if (model.animation[i].anim_id!=0xFFFFFFFF || model.animation[i].file_id<0) {
+				if ((modelmergepolicy!=0 && model.animation[i].file_id<0) || modelmergepolicy==2) { // New animation: ask the import properties to the user
+					UnityAddFilePanelDialog* newanimpanel = adddial.AddPanel();
+					adddial.m_filebook->SetPageText(adddial.m_filebook->GetPageCount()-1,_(model.animation[i].name));
+					newanimpanel->m_filepicker->SetPath(_(model.animation[i].name));
+					newanimpanel->m_filepicker->Enable(false);
+					newanimpanel->m_filetype->SetSelection(animtypechoice);
+					newanimpanel->m_filetype->Enable(false);
+					newanimpanel->m_fileinternalname->Enable(UnityArchiveMetaData::HasFileTypeName(74));
+					if (adddial.has_bundle) {
+						newanimpanel->m_addbundleinfo->SetValue(true);
+						newanimpanel->EnableBundlePanel(true);
+						newanimpanel->m_filename->SetValue(_(L"assets/resources/animations/")+_(model.steam_name)+(model.steam_name.length()>0 ? _("/") : _(L""))+_(model.animation[i].name)+_(L".anim"));
+					}
+				} else if (model.animation[i].file_id>=0) { // Update existing animation
+					copylistanim[model.animation[i].file_id] = false;
+					filenewsizeanim[model.animation[i].file_id] = model.animation[i].GetDataSize();
+				}
+			}
+	}
+	if (adddial.panel_amount>0)
+		adddial.m_filebook->SetSelection(0);
+	if (adddial.panel_amount>0 && adddial.ShowModal()!=wxID_OK) {
+		filebaseanim.close();
+		filedestanim.close();
+		delete[] copylistanim;
+		delete[] filenewsizeanim;
+		return -3;
+	}
+	j = 0;
+	int32_t bundleindexanim = meta_data[UNITY_ARCHIVE_DATA5].GetFileIndex("",142);
+	for (importmodelcounter=0;importmodelcounter<importmodel.size();importmodelcounter++) {
+		ModelDataStruct& model = importmodel[importmodelcounter];
+		for (i=0;i<model.animation.size();i++)
+			if (model.animation[i].anim_id!=0xFFFFFFFF || model.animation[i].file_id<0) {
+				if ((modelmergepolicy!=0 && model.animation[i].file_id<0) || modelmergepolicy==2) {
+					UnityAddFilePanelDialog* panel = static_cast<UnityAddFilePanelDialog*>(adddial.m_filebook->GetPage(j++));
+					uint32_t ftype = adddial.file_type_choice[panel->m_filetype->GetSelection()];
+					int64_t newfileinfo = ConvertStringToLong(panel->m_fileinfo->GetValue());
+					string newfilename = panel->m_fileinternalname->IsEnabled() ? panel->m_fileinternalname->GetValue() : "";
+					string newfilepath = panel->m_addbundleinfo->IsChecked() ? panel->m_filename->GetValue() : "";
+					filestoaddanim.Add(ftype,model.animation[i].GetDataSize(),newfileinfo);
+					if (newfilepath.length()>0) {
+						bundle_data[UNITY_ARCHIVE_DATA5-UNITY_ARCHIVE_DATA11].AddFile(newfilepath,filestoaddanim.file_index[filestoaddanim.file_index.size()-1],newfileinfo);
+						bundle_data[UNITY_ARCHIVE_DATA5-UNITY_ARCHIVE_DATA11].AddFileToBundle(newfileinfo);
+						copylistanim[bundleindexanim] = false;
+					}
+				}
+			}
+	}
+	if (bundleindexanim>=0 && !copylistanim[bundleindexanim])
+		filenewsizeanim[bundleindexanim] = bundle_data[UNITY_ARCHIVE_DATA5-UNITY_ARCHIVE_DATA11].GetDataSize();
+	filebaseanim.seekg(0);
+	UnityArchiveMetaData newmetadataanim;
+	meta_data[UNITY_ARCHIVE_DATA5].Duplicate(filebaseanim,filedestanim,copylistanim,filenewsizeanim,&filestoaddanim,&newmetadataanim);
+	if (bundleindexanim>=0 && !copylistanim[bundleindexanim]) {
+		for (k=0;k<filestoaddanim.file_index.size();k++)
+			if (filestoaddanim.file_index[k]<=bundleindexanim)
+				bundleindexanim++;
+		filedestanim.seekg(newmetadataanim.GetFileOffsetByIndex(bundleindexanim));
+		bundle_data[UNITY_ARCHIVE_DATA5-UNITY_ARCHIVE_DATA11].Write(filedestanim);
+	}
+	delete[] copylistanim;
+	delete[] filenewsizeanim;
+	j = 0;
+	for (importmodelcounter=0;importmodelcounter<importmodel.size();importmodelcounter++) {
+		ModelDataStruct& model = importmodel[importmodelcounter];
+		for (i=0;i<model.animation.size();i++)
+			if (model.animation[i].anim_id!=0xFFFFFFFF || model.animation[i].file_id<0) {
+				if ((modelmergepolicy!=0 && model.animation[i].file_id<0) || modelmergepolicy==2) {
+					filedestanim.seekg(newmetadataanim.GetFileOffsetByIndex(filestoaddanim.file_index[j++]));
+					model.animation[i].Write(filedestanim);
+				} else if (model.animation[i].file_id>=0) {
+					for (k=0;k<filestoaddanim.file_index.size();k++)
+						if (filestoaddanim.file_index[k]<=model.animation[i].file_id)
+							model.animation[i].file_id++;
+					filedestanim.seekg(newmetadataanim.GetFileOffsetByIndex(model.animation[i].file_id));
+					model.animation[i].Write(filedestanim);
+				}
+			}
+	}
+	filebaseanim.close();
+	filedestanim.close();
+	wxRenameFile(animarchivename+_(L".tmp"),animarchivename,true);
+	meta_data[UNITY_ARCHIVE_DATA5].Flush();
+	meta_data[UNITY_ARCHIVE_DATA5].Copy(&newmetadataanim);
+	return nbanimtoupdate;
+}
+
 void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 	int id = event.GetId();
-	unsigned int i,j,k;
+	unsigned int i;
 	if (id==wxID_EXPORT) {
 		fstream filebase((const char*)(root_path+archive_name).c_str(),ios::in|ios::binary);
 		if (!filebase.is_open()) {
@@ -1051,8 +1249,10 @@ fout.close();*/
 				GameObjectHierarchy modelhierarchy;
 				modelhierarchy.BuildHierarchy(filebase,meta_data[current_archive],modelrootid);
 				wxString filepathbase = m_assetlist->GetItemText(it,1).BeforeLast(L'.');
-				ModelDataStruct model;
 				wxString descriptionstr = m_assetlist->GetItemText(it, 5);
+				ModelDataStruct model;
+				if (filepathbase.Len()==0)
+					filepathbase = m_assetlist->GetItemText(it,1);
 				descriptionstr.Replace(_(UnityArchiveMetaData::GetTypeName(meta_data[current_archive].file_type1[expfileid])), _(L"Full Model"));
 				model.description = descriptionstr.ToStdString();
 				model.steam_name = filepathbase.AfterLast(L'/').AfterLast(L'\\').ToStdString();
@@ -1093,6 +1293,13 @@ fout.close();*/
 							fileanimbase.seekg(meta_data[UNITY_ARCHIVE_DATA5].GetFileOffsetByIndex(i));
 							animation.Read(fileanimbase);
 							animation.anim_id = wxAtoi(animarchivefilename.Mid(animsearchpath.Len()));
+							if (_(animation.name).IsNumber()) { // If possible, name the animation with its Steam ID, not numerical ID
+								int32_t animdbindex = AnimationDatabase::GetIndex(animation.anim_id);
+								if (animdbindex>=0) {
+									animation.name = AnimationDatabase::GetSteamId(animdbindex);
+									animation.name_len = animation.name.length();
+								}
+							}
 							model.animation.push_back(animation);
 						}
 					}
@@ -1177,6 +1384,7 @@ fout.close();*/
 		vector<ModelDataStruct> importmodel;
 		unsigned int importmodelcounter = 0;
 		UnityArchiveFileCreator filestoadd(&meta_data[current_archive]);
+		vector<int64_t> infotoavoid;
 		long it = -1;
 		for (;;) {
 			it = m_assetlist->GetNextItem(it,wxLIST_NEXT_ALL,wxLIST_STATE_SELECTED);
@@ -1195,8 +1403,9 @@ fout.close();*/
 			if (!wxFileName::FileExists(path))
 				continue;
 			impfileid = wxAtoi(m_assetlist->GetItemText(it,0))-1;
-			if (!PrepareAssetForImport(false,filebase,path,meta_data[current_archive].file_type1[impfileid],importmodel,filestoadd,linkfiledialog,linkfiledialoginit,copylist,filenewsize,impfileid,it,filearchivedir,&importmodelbasehierarchy,0,"",""))
+			if (!PrepareAssetForImport(false,filebase,path,meta_data[current_archive].file_type1[impfileid],importmodel,infotoavoid,filestoadd,linkfiledialog,linkfiledialoginit,copylist,filenewsize,impfileid,it,filearchivedir,&importmodelbasehierarchy,0,"",""))
 				continue;
+			itcounter++;
 		}
 		m_loadgauge->SetValue(10);
 		int32_t bundleindex = meta_data[current_archive].GetFileIndex("",142);
@@ -1205,16 +1414,17 @@ fout.close();*/
 			filenewsize[bundleindex] = bundle_data[current_archive-UNITY_ARCHIVE_DATA11].GetDataSize();
 		filebase.seekg(0);
 		UnityArchiveMetaData newmetadata;
-		meta_data[current_archive].Duplicate(filebase,filedest,copylist,filenewsize,&filestoadd,&newmetadata);
-		if (bundleisupdated) {
-			filedest.seekg(newmetadata.GetFileOffsetByIndex(bundleindex));
-			bundle_data[current_archive-UNITY_ARCHIVE_DATA11].Write(filedest);
+		if (itcounter>0) {
+			meta_data[current_archive].Duplicate(filebase,filedest,copylist,filenewsize,&filestoadd,&newmetadata);
+			if (bundleisupdated) {
+				filedest.seekg(newmetadata.GetFileOffsetByIndex(bundleindex));
+				bundle_data[current_archive-UNITY_ARCHIVE_DATA11].Write(filedest);
+			}
 		}
 		m_loadgauge->SetValue(50);
 		for (it = -1;;) {
 			it = m_assetlist->GetNextItem(it,wxLIST_NEXT_ALL,wxLIST_STATE_SELECTED);
 			if (it==-1) break;
-			itcounter++;
 			impfileid = wxAtoi(m_assetlist->GetItemText(it,0))-1;
 			if (copylist[impfileid])
 				continue;
@@ -1231,139 +1441,15 @@ fout.close();*/
 		}
 		filebase.close();
 		filedest.close();
-		int nbanimtoupdate = 0, nbanimupdated = 0;
-		int modelmergepolicy =	m_menuimportmodelexistingfiles->IsChecked() ? 0 :
-								m_menuimportmodelmerge->IsChecked() ? 1 :
-								m_menuimportmodelimportall->IsChecked() ? 2 : -1;
 		wxString animarchivename = root_path+_(UnityArchiveMetaData::GetArchiveName(UNITY_ARCHIVE_DATA5,use_x86));
-		if (!overwritefile || modelmergepolicy<=0 || current_archive==UNITY_ARCHIVE_DATA5 || !m_menuimportmodelanims->IsChecked())
-			goto block_finishimportation;
-		for (i=0;i<importmodel.size();i++)
-			for (j=0;j<importmodel[i].animation.size();j++)
-				if (importmodel[i].animation[j].anim_id!=0xFFFFFFFF || importmodel[i].animation[j].file_id<0)
-					nbanimtoupdate++;
-		if (nbanimtoupdate>0) {
-			m_loadgauge->SetValue(90);
-			fstream filebaseanim((const char*)(animarchivename.c_str()),ios::in|ios::binary);
-			fstream filedestanim((const char*)(animarchivename+_(L".tmp")).c_str(),ios::out|ios::binary);
-			if (!filebaseanim.is_open()) {
-				nbanimtoupdate = -1;
-				goto block_finishimportation;
-			}
-			if (!filedestanim.is_open()) {
-				nbanimtoupdate = -2;
-				goto block_finishimportation;
-			}
-			bool* copylistanim = new bool[meta_data[UNITY_ARCHIVE_DATA5].header_file_amount];
-			uint32_t* filenewsizeanim = new uint32_t[meta_data[UNITY_ARCHIVE_DATA5].header_file_amount];
-			for (i=0;i<meta_data[UNITY_ARCHIVE_DATA5].header_file_amount;i++) {
-				copylistanim[i] = true;
-				filenewsizeanim[i] = meta_data[UNITY_ARCHIVE_DATA5].file_size[i];
-			}
-			UnityArchiveFileCreator filestoaddanim(&meta_data[UNITY_ARCHIVE_DATA5]);
-			UnityAddFileDialog adddial(this,meta_data,UNITY_ARCHIVE_DATA5);
-			adddial.m_buttonadd->Enable(false);
-			int animtypechoice = 0;
-			for (i=0;i<adddial.file_type_choice.size();i++)
-				if (adddial.file_type_choice[i]==74) {
-					animtypechoice = i;
-					break;
-				}
-			for (importmodelcounter=0;importmodelcounter<importmodel.size();importmodelcounter++) {
-				ModelDataStruct& model = importmodel[importmodelcounter];
-				for (i=0;i<model.animation.size();i++)
-					if (model.animation[i].anim_id!=0xFFFFFFFF || model.animation[i].file_id<0) {
-						if (model.animation[i].file_id<0 || modelmergepolicy==2) { // New animation: ask the import properties to the user
-							UnityAddFilePanelDialog* newanimpanel = adddial.AddPanel();
-							newanimpanel->m_filepicker->SetPath(_(model.animation[i].name));
-							newanimpanel->m_filepicker->Enable(false);
-							newanimpanel->m_filetype->SetSelection(animtypechoice);
-							newanimpanel->m_filetype->Enable(false);
-							newanimpanel->m_fileinternalname->Enable(UnityArchiveMetaData::HasFileTypeName(animtypechoice));
-							if (adddial.has_bundle) {
-								newanimpanel->m_addbundleinfo->SetValue(true);
-								newanimpanel->EnableBundlePanel(true);
-								newanimpanel->m_filename->SetValue(_(L"assets/resources/animations/")+_(model.steam_name)+(model.steam_name.length()>0 ? _("/") : _(L""))+_(model.animation[i].name)+_(L".anim"));
-							}
-						} else { // Update existing animation
-							copylistanim[model.animation[i].file_id] = false;
-							filenewsizeanim[model.animation[i].file_id] = model.animation[i].GetDataSize();
-						}
-					}
-			}
-			if (adddial.panel_amount>0 && adddial.ShowModal()!=wxID_OK) {
-				filebaseanim.close();
-				filedestanim.close();
-				delete[] copylistanim;
-				delete[] filenewsizeanim;
-				nbanimtoupdate = -3;
-				goto block_finishimportation;
-			}
-			j = 0;
-			int32_t bundleindexanim = meta_data[UNITY_ARCHIVE_DATA5].GetFileIndex("",142);
-			for (importmodelcounter=0;importmodelcounter<importmodel.size();importmodelcounter++) {
-				ModelDataStruct& model = importmodel[importmodelcounter];
-				for (i=0;i<model.animation.size();i++)
-					if (model.animation[i].anim_id!=0xFFFFFFFF || model.animation[i].file_id<0) {
-						if (model.animation[i].file_id<0 || modelmergepolicy==2) {
-							UnityAddFilePanelDialog* panel = static_cast<UnityAddFilePanelDialog*>(adddial.m_filebook->GetPage(j++));
-							uint32_t ftype = adddial.file_type_choice[panel->m_filetype->GetSelection()];
-							int64_t newfileinfo = ConvertStringToLong(panel->m_fileinfo->GetValue());
-							string newfilename = panel->m_fileinternalname->IsEnabled() ? panel->m_fileinternalname->GetValue() : "";
-							string newfilepath = panel->m_addbundleinfo->IsChecked() ? panel->m_filename->GetValue() : "";
-							filestoaddanim.Add(ftype,model.animation[i].GetDataSize(),newfileinfo);
-							if (newfilepath.length()>0) {
-								bundle_data[UNITY_ARCHIVE_DATA5-UNITY_ARCHIVE_DATA11].AddFile(newfilepath,meta_data[UNITY_ARCHIVE_DATA5].header_file_amount+filestoaddanim.file_type.size(),newfileinfo);
-								bundle_data[UNITY_ARCHIVE_DATA5-UNITY_ARCHIVE_DATA11].AddFileToBundle(newfileinfo);
-								copylistanim[bundleindexanim] = false;
-							}
-						}
-					}
-			}
-			if (bundleindexanim>=0 && !copylistanim[bundleindexanim])
-				filenewsizeanim[bundleindexanim] = bundle_data[UNITY_ARCHIVE_DATA5-UNITY_ARCHIVE_DATA11].GetDataSize();
-			filebaseanim.seekg(0);
-			UnityArchiveMetaData newmetadataanim;
-			meta_data[UNITY_ARCHIVE_DATA5].Duplicate(filebaseanim,filedestanim,copylistanim,filenewsizeanim,&filestoaddanim,&newmetadataanim);
-			if (bundleindexanim>=0 && !copylistanim[bundleindexanim]) {
-				for (k=0;k<filestoaddanim.file_index.size();k++)
-					if (filestoaddanim.file_index[k]<=bundleindexanim)
-						bundleindexanim++;
-				filedestanim.seekg(newmetadataanim.GetFileOffsetByIndex(bundleindexanim));
-				bundle_data[UNITY_ARCHIVE_DATA5-UNITY_ARCHIVE_DATA11].Write(filedestanim);
-			}
-			delete[] copylistanim;
-			delete[] filenewsizeanim;
-			j = 0;
-			for (importmodelcounter=0;importmodelcounter<importmodel.size();importmodelcounter++) {
-				ModelDataStruct& model = importmodel[importmodelcounter];
-				for (i=0;i<model.animation.size();i++)
-					if (model.animation[i].anim_id!=0xFFFFFFFF || model.animation[i].file_id<0) {
-						if (model.animation[i].file_id<0 || modelmergepolicy==2) {
-							filedestanim.seekg(newmetadataanim.GetFileOffsetByIndex(filestoaddanim.file_index[j++]));
-							model.animation[i].Write(filedestanim);
-							nbanimupdated++;
-						} else {
-							for (k=0;k<filestoaddanim.file_index.size();k++)
-								if (filestoaddanim.file_index[k]<=model.animation[i].file_id)
-									model.animation[i].file_id++;
-							filedestanim.seekg(newmetadataanim.GetFileOffsetByIndex(model.animation[i].file_id));
-							model.animation[i].Write(filedestanim);
-							nbanimupdated++;
-						}
-					}
-			}
-			filebaseanim.close();
-			filedestanim.close();
-			wxRenameFile(animarchivename+_(L".tmp"),animarchivename,true);
-			meta_data[UNITY_ARCHIVE_DATA5].Flush();
-			meta_data[UNITY_ARCHIVE_DATA5].Copy(&newmetadataanim);
-		}
-		block_finishimportation:
-		m_loadgauge->SetValue(100);
+		int nbanimtoupdate = 0;
+		m_loadgauge->SetValue(90);
 		if (overwritefile)
+			nbanimtoupdate = PerformImportOfAnimations(importmodel);
+		m_loadgauge->SetValue(100);
+		if (overwritefile && itcounter>0)
 			overwritefile = wxRenameFile(root_path+archive_name+_(L".tmp"),root_path+archive_name,true);
-		if (overwritefile) {
+		if (overwritefile && itcounter>0) {
 			meta_data[current_archive].Flush();
 			meta_data[current_archive].Copy(&newmetadata);
 			fstream unityarchive((const char*)(root_path+archive_name).c_str(),ios::in | ios::binary);
@@ -1388,7 +1474,7 @@ fout.close();*/
 				}
 			}
 			unityarchive.close();
-			if (filestoadd.file_type.size()>0) { // New files added or removed: refresh the list
+			if (filestoadd.file_index.size()>0) { // New files added or removed: refresh the list
 				DisplayArchive(current_archive);
 			} else { // Files are only updated: display the updated sizes
 				for (it = -1;;) {
@@ -1412,25 +1498,23 @@ fout.close();*/
 		}
 		delete[] copylist;
 		delete[] filenewsize;
+		wxString popupmessage, popuptitle;
+		wxString animresultstring = _(L"");
+		if (nbanimtoupdate==-3) animresultstring = _(HADES_STRING_UNITYVIEWER_IMPORTANIM_CANCEL);
+		else if (nbanimtoupdate==-2) animresultstring.Printf(HADES_STRING_OPEN_ERROR_FAIL/* + */HADES_STRING_UNITYVIEWER_IMPORTANIM_CANCEL,animarchivename);
+		else if (nbanimtoupdate==-1) animresultstring.Printf(HADES_STRING_OPEN_ERROR_CREATE/* + */HADES_STRING_UNITYVIEWER_IMPORTANIM_CANCEL,animarchivename+_(L".tmp"));
+		else if (nbanimtoupdate>0) animresultstring.Printf(wxT(HADES_STRING_UNITYVIEWER_IMPORTANIM_SUCCESS),nbanimtoupdate);
 		if (itsuccesscounter==itamount) {
-			wxString successtring;
-			wxString animresultstring = _(L"");
-			successtring.Printf(wxT(HADES_STRING_UNITYVIEWER_IMPORT_SUCCESS),itsuccesscounter);
-			if (!overwritefile) successtring += _(HADES_STRING_UNITYVIEWER_IMPORT_NO_REPLACE);
-			if (nbanimtoupdate==-3) animresultstring = _(HADES_STRING_UNITYVIEWER_IMPORTANIM_CANCEL);
-			else if (nbanimtoupdate==-2) animresultstring.Printf(HADES_STRING_OPEN_ERROR_FAIL/* + */HADES_STRING_UNITYVIEWER_IMPORTANIM_CANCEL,animarchivename);
-			else if (nbanimtoupdate==-1) animresultstring.Printf(HADES_STRING_OPEN_ERROR_CREATE/* + */HADES_STRING_UNITYVIEWER_IMPORTANIM_CANCEL,animarchivename+_(L".tmp"));
-			else if (nbanimtoupdate>0) animresultstring.Printf(wxT(HADES_STRING_UNITYVIEWER_IMPORTANIM_SUCCESS),nbanimtoupdate);
-			if (animresultstring.Len()>0) successtring += _(L"\n\n");
-			wxMessageDialog popupsuccess(this,successtring+animresultstring,HADES_STRING_SUCCESS,wxOK|wxCENTRE);
-			popupsuccess.ShowModal();
+			popuptitle = _(HADES_STRING_SUCCESS);
+			popupmessage.Printf(wxT(HADES_STRING_UNITYVIEWER_IMPORT_SUCCESS),itsuccesscounter);
 		} else {
-			wxString failstring;
-			failstring.Printf(wxT(HADES_STRING_UNITYVIEWER_IMPORT_ERROR),itsuccesscounter,itamount-itsuccesscounter);
-			if (!overwritefile) failstring += _(HADES_STRING_UNITYVIEWER_IMPORT_NO_REPLACE);
-			wxMessageDialog popupfail(this,failstring,HADES_STRING_WARNING,wxOK|wxCENTRE);
-			popupfail.ShowModal();
+			popuptitle = _(HADES_STRING_WARNING);
+			popupmessage.Printf(wxT(HADES_STRING_UNITYVIEWER_IMPORT_ERROR),itsuccesscounter,itamount-itsuccesscounter);
 		}
+		if (!overwritefile) popupmessage += _(HADES_STRING_UNITYVIEWER_IMPORT_NO_REPLACE);
+		if (animresultstring.Len()>0) popupmessage += _(L"\n\n");
+		wxMessageDialog popupdialog(this,popupmessage+animresultstring,popuptitle,wxOK|wxCENTRE);
+		popupdialog.ShowModal();
 	} else if (id==wxID_ADD) {
 		UnityAddFileDialog adddial(this,meta_data,current_archive);
 		if (adddial.ShowModal()==wxID_OK) {
@@ -1452,6 +1536,7 @@ fout.close();*/
 			vector<ModelDataStruct> importmodel;
 			unsigned int importmodelcounter = 0;
 			UnityArchiveFileCreator filestoadd(&meta_data[current_archive]);
+			vector<int64_t> infotoavoid;
 			vector<int> bookaddfileindex;
 			bookaddfileindex.resize(adddial.m_filebook->GetPageCount());
 			bool* copylist = new bool[meta_data[current_archive].header_file_amount];
@@ -1459,6 +1544,12 @@ fout.close();*/
 			for (i=0;i<meta_data[current_archive].header_file_amount;i++) {
 				copylist[i] = true;
 				filenewsize[i] = meta_data[current_archive].file_size[i];
+			}
+			for (i=0;i<adddial.m_filebook->GetPageCount();i++) {
+				UnityAddFilePanelDialog* panel = static_cast<UnityAddFilePanelDialog*>(adddial.m_filebook->GetPage(i));
+				if (panel->m_filepicker->GetPath().Len()==0)
+					continue;
+				infotoavoid.push_back(ConvertStringToLong(panel->m_fileinfo->GetValue()));
 			}
 			for (i=0;i<adddial.m_filebook->GetPageCount();i++) {
 				bookaddfileindex[i] = -1;
@@ -1471,10 +1562,18 @@ fout.close();*/
 				int64_t newfileinfo = ConvertStringToLong(panel->m_fileinfo->GetValue());
 				string newfilename = panel->m_fileinternalname->IsEnabled() ? panel->m_fileinternalname->GetValue() : "";
 				string newfilepath = panel->m_addbundleinfo->IsChecked() ? panel->m_filename->GetValue() : "";
-				bookaddfileindex[i] = filestoadd.file_type.size();
-				if (!PrepareAssetForImport(true,filebase,path,ftype,importmodel,filestoadd,linkfiledialog,linkfiledialoginit,copylist,NULL,0,0,"",NULL,newfileinfo,newfilename,newfilepath)) {
+				unsigned int tmpcnt = importmodel.size();
+				bookaddfileindex[i] = filestoadd.file_index.size();
+				if (!PrepareAssetForImport(true,filebase,path,ftype,importmodel,infotoavoid,filestoadd,linkfiledialog,linkfiledialoginit,copylist,NULL,0,0,"",NULL,newfileinfo,newfilename,newfilepath)) {
 					bookaddfileindex[i] = -1;
 					continue;
+				}
+				if (tmpcnt<importmodel.size()) { // Point bookaddfileindex[i] to the root's object and not the root itself
+					for (tmpcnt=bookaddfileindex[i];tmpcnt<filestoadd.file_index.size();tmpcnt++)
+						if (filestoadd.file_info[tmpcnt]==newfileinfo) {
+							bookaddfileindex[i] = tmpcnt;
+							break;
+						}
 				}
 				itcounter++;
 			}
@@ -1485,34 +1584,39 @@ fout.close();*/
 				filenewsize[bundleindex] = bundle_data[current_archive-UNITY_ARCHIVE_DATA11].GetDataSize();
 			filebase.seekg(0);
 			UnityArchiveMetaData newmetadata;
-			meta_data[current_archive].Duplicate(filebase,filedest,copylist,filenewsize,&filestoadd,&newmetadata);
-			if (bundleisupdated) {
-				filedest.seekg(newmetadata.GetFileOffsetByIndex(bundleindex));
-				bundle_data[current_archive-UNITY_ARCHIVE_DATA11].Write(filedest);
+			if (itcounter>0) {
+				meta_data[current_archive].Duplicate(filebase,filedest,copylist,filenewsize,&filestoadd,&newmetadata);
+				if (bundleisupdated) {
+					filedest.seekg(newmetadata.GetFileOffsetByIndex(bundleindex));
+					bundle_data[current_archive-UNITY_ARCHIVE_DATA11].Write(filedest);
+				}
 			}
 			m_loadgauge->SetValue(50);
-			unsigned int impfileid = meta_data[current_archive].header_file_amount;
-			unsigned int impfileidincr;
+			unsigned int impfileid;
 			for (i=0;i<adddial.m_filebook->GetPageCount();i++) {
 				if (bookaddfileindex[i]<0)
 					continue;
 				UnityAddFilePanelDialog* panel = static_cast<UnityAddFilePanelDialog*>(adddial.m_filebook->GetPage(i));
 				path = panel->m_filepicker->GetPath();
 				uint32_t ftype = filestoadd.file_type[bookaddfileindex[i]];
-				impfileidincr = (i+1>=adddial.m_filebook->GetPageCount() ? filestoadd.file_type.size() : bookaddfileindex[i+1]) - bookaddfileindex[i];
-				impfileid += impfileidincr;
-				if (!PerformImportOfAsset(false,filebase,filedest,newmetadata,path,ftype,importmodel,importmodelcounter,impfileid-impfileidincr))
+				impfileid = filestoadd.file_index[bookaddfileindex[i]];
+				if (!PerformImportOfAsset(true,filebase,filedest,newmetadata,path,ftype,importmodel,importmodelcounter,impfileid))
 					continue;
 				itsuccesscounter++;
 				m_loadgauge->SetValue(50+itsuccesscounter*50/itamount);
 			}
 			filebase.close();
 			filedest.close();
-			m_loadgauge->SetValue(100);
 			bool overwritefile = itsuccesscounter==itamount;
+			wxString animarchivename = root_path+_(UnityArchiveMetaData::GetArchiveName(UNITY_ARCHIVE_DATA5,use_x86));
+			int nbanimtoupdate = 0;
+			m_loadgauge->SetValue(90);
 			if (overwritefile)
+				nbanimtoupdate = PerformImportOfAnimations(importmodel);
+			m_loadgauge->SetValue(100);
+			if (overwritefile && itcounter>0)
 				overwritefile = wxRenameFile(root_path+archive_name+_(L".tmp"),root_path+archive_name,true);
-			if (overwritefile) {
+			if (overwritefile && itcounter>0) {
 				meta_data[current_archive].Flush();
 				meta_data[current_archive].Copy(&newmetadata);
 				fstream unityarchive((const char*)(root_path+archive_name).c_str(),ios::in | ios::binary);
@@ -1549,19 +1653,23 @@ fout.close();*/
 			}
 			delete[] copylist;
 			delete[] filenewsize;
-			if (itsuccesscounter==itamount && itcounter==itamount) {
-				wxString successtring;
-				successtring.Printf(wxT(HADES_STRING_UNITYVIEWER_IMPORT_SUCCESS),itsuccesscounter);
-				if (!overwritefile) successtring += _(HADES_STRING_UNITYVIEWER_IMPORT_NO_REPLACE);
-				wxMessageDialog popupsuccess(this,successtring,HADES_STRING_SUCCESS,wxOK|wxCENTRE);
-				popupsuccess.ShowModal();
+			wxString popupmessage, popuptitle;
+			wxString animresultstring = _(L"");
+			if (nbanimtoupdate==-3) animresultstring = _(HADES_STRING_UNITYVIEWER_IMPORTANIM_CANCEL);
+			else if (nbanimtoupdate==-2) animresultstring.Printf(HADES_STRING_OPEN_ERROR_FAIL/* + */HADES_STRING_UNITYVIEWER_IMPORTANIM_CANCEL,animarchivename);
+			else if (nbanimtoupdate==-1) animresultstring.Printf(HADES_STRING_OPEN_ERROR_CREATE/* + */HADES_STRING_UNITYVIEWER_IMPORTANIM_CANCEL,animarchivename+_(L".tmp"));
+			else if (nbanimtoupdate>0) animresultstring.Printf(wxT(HADES_STRING_UNITYVIEWER_IMPORTANIM_SUCCESS),nbanimtoupdate);
+			if (itsuccesscounter==itamount) {
+				popuptitle = _(HADES_STRING_SUCCESS);
+				popupmessage.Printf(wxT(HADES_STRING_UNITYVIEWER_IMPORT_SUCCESS),itsuccesscounter);
 			} else {
-				wxString failstring;
-				failstring.Printf(wxT(HADES_STRING_UNITYVIEWER_IMPORT_ERROR),itsuccesscounter,itamount-itsuccesscounter);
-				if (!overwritefile) failstring += _(HADES_STRING_UNITYVIEWER_IMPORT_NO_REPLACE);
-				wxMessageDialog popupfail(this,failstring,HADES_STRING_WARNING,wxOK|wxCENTRE);
-				popupfail.ShowModal();
+				popuptitle = _(HADES_STRING_WARNING);
+				popupmessage.Printf(wxT(HADES_STRING_UNITYVIEWER_IMPORT_ERROR),itsuccesscounter,itamount-itsuccesscounter);
 			}
+			if (!overwritefile) popupmessage += _(HADES_STRING_UNITYVIEWER_IMPORT_NO_REPLACE);
+			if (animresultstring.Len()>0) popupmessage += _(L"\n\n");
+			wxMessageDialog popupdialog(this,popupmessage+animresultstring,popuptitle,wxOK|wxCENTRE);
+			popupdialog.ShowModal();
 		}
 	}
 }
@@ -1752,7 +1860,7 @@ void UnityAddFilePanelDialog::OnFilePick(wxFileDirPickerEvent& event) {
 		SetLabel(_(HADES_STRING_GENERIC_NEW));
 		return;
 	}
-	wxString shortname = event.GetPath().AfterLast(L'\\').AfterLast(L'/');
+	wxString shortname = event.GetPath().AfterLast(L'\\').AfterLast(L'/').BeforeFirst(L'.');
 	SetLabel(shortname);
 	m_fileinternalname->SetValue(shortname);
 	parent->m_filebook->SetPageText(parent->m_filebook->FindPage(this),shortname);
