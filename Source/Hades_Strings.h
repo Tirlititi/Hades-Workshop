@@ -194,9 +194,13 @@ static wxString HADES_STRING_PARTY_SPECIAL_DATA[] = {
 };
 
 //-- Enemy Panel
-#define HADES_STRING_GROUPEDIT_ERROR_TEXT L"A battle data is too short-spaced : failed to change the text."
-#define HADES_STRING_STAT_WARN_LIMIT L"A battle with 4 different enemy types or more will bug."
-#define HADES_STRING_SPELL_WARN_LIMIT L"A battle with 19 different attacks or more will bug."
+#define HADES_STRING_NOGROUPEDIT	L"Warning: this type of data is not modified on similar enemies"
+#define HADES_STRING_GROUPEDIT_ERROR_TEXT L"A similar battle is limited in size : failed to change the text."
+#define HADES_STRING_GROUPEDIT_ERROR_DATA L"A similar battle is limited in size : failed to change some of its data."
+#define HADES_STRING_STAT_WARN_LIMIT	L"A battle with more than 3 different enemy types will bug\n"\
+										L"unless you increase the limit in the CIL method FF9StateBattleSystem::.ctor (Steam only)"
+#define HADES_STRING_SPELL_WARN_LIMIT	L"A battle with more than 18 different attacks will bug\n"\
+										L"unless you increase the limit in the CIL method FF9StateBattleSystem::.ctor (Steam only)"
 
 //-- Shop Panel
 #define HADES_STRING_SHOP_REACH_LIMIT			L"Can't add more than 32 items to a shop."

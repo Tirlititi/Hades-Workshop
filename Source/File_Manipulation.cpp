@@ -99,7 +99,7 @@ FF9String::FF9String() :
 	}
 }
 
-FF9String::FF9String(FF9String& cp) :
+FF9String::FF9String(const FF9String& cp) :
 	created(true),
 	length(cp.length),
 	str(cp.str),
@@ -127,7 +127,7 @@ FF9String::FF9String(FF9String& cp) :
 	}
 	for (unsigned int i=0;i<STEAM_LANGUAGE_AMOUNT;i++) {
 		multi_lang_init[i] = cp.multi_lang_init[i];
-		if (multi_lang_init)
+		if (multi_lang_init[i])
 			multi_lang_str[i] = cp.multi_lang_str[i];
 		else
 			multi_lang_str[i] = L"";

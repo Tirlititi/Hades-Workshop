@@ -6,6 +6,7 @@ class AnimSequenceEditDialog;
 class EnemyAnimSequenceCodeSizer;
 class EnemyAnimSequenceEditDialog;
 
+#include <vector>
 #include "gui.h"
 #include "SpellAnimations.h"
 #include "Enemies.h"
@@ -73,7 +74,7 @@ public:
 	BattleDataStruct& battle;
 	uint16_t anim_id;
 	unsigned int sequence_code_amount;
-	EnemySequenceCodeLine* sequence_code;
+	vector<EnemySequenceCodeLine> sequence_code;
 	wxArrayString code_list;
 	wxArrayString arg_animation;
 	wxArrayString arg_battletext;
@@ -84,7 +85,7 @@ public:
 	uint32_t** arg_spellanim_id;
 	uint32_t** arg_sound_id;
 	wxFlexGridSizer* m_sequencesizer;
-	EnemyAnimSequenceCodeSizer** sequence_code_sizer;
+	vector<EnemyAnimSequenceCodeSizer*> sequence_code_sizer;
 	
 	EnemyAnimSequenceEditDialog(wxWindow* parent, BattleDataStruct& b, uint16_t animid);
 	

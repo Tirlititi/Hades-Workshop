@@ -3090,7 +3090,7 @@ static AnimationDatabaseItem DATABASE_ANIMATION_SINGLEID[] = {
 	{ 569,	10297,	L"ANH_MON_B3_168_B",		L"Dummy B" },
 	{ 569,	10299,	L"ANH_MON_B3_168_P",		L"Dummy P" },
 	{ 671,	9963,	L"ANH_MON_B3_169_000",		L"Idle" },
-	{ 671,	9957,	L"ANH_MON_B3_169_002",		L"Unexisting" },
+	{ 671,	9957,	L"ANH_MON_B3_169_002",		L"Unexisting Death" },
 	{ 671,	9959,	L"ANH_MON_B3_169_003",		L"Hit" },
 	{ 671,	9961,	L"ANH_MON_B3_169_007",		L"Hit Alternate" },
 	{ 671,	9947,	L"ANH_MON_B3_169_010",		L"Attack 1" },
@@ -3517,7 +3517,7 @@ static AnimationDatabaseItem DATABASE_ANIMATION_SINGLEID[] = {
 	{ 663,	8368,	L"ANH_MON_B3_197_031",		L"Glowing Eyes 2" },
 	{ 663,	8370,	L"ANH_MON_B3_197_032",		L"Glowing Eyes 3" },
 	{ 663,	8372,	L"ANH_MON_B3_197_033",		L"Glowing Eyes 4" },
-	{ 663,	8374,	L"ANH_MON_B3_197_034",		L"Unexisting" },
+	{ 663,	8374,	L"ANH_MON_B3_197_034",		L"Unexisting Glowing Eyes 5" },
 	{ 663,	7968,	L"ANH_MON_B3_197_B",		L"Dummy B" },
 	{ 663,	7970,	L"ANH_MON_B3_197_P",		L"Dummy P" },
 	{ 664,	6616,	L"ANH_MON_B3_198_000",		L"Idle" },
@@ -5062,6 +5062,7 @@ static AnimationDatabaseDoubledItem DATABASE_ANIMATION_DOUBLEID[] = {
 	{ 306,	1484,	1483,	L"ANH_ACC_F1_GRG_IDLE",				L"Idle" },
 	{ 306,	1163,	1162,	L"ANH_ACC_F1_GRG_RUN",				L"Run" },
 	{ 306,	1486,	1485,	L"ANH_ACC_F1_GRG_WALK",				L"Walk" },
+	{ 306,	6132,	-1,		L"ANH_ACC_F1_GRG_RUN_1F",			L"Unexisting Run_1f" },
 	{ 525,	4178,	4176,	L"ANH_ACC_F1_HDB_B",				L"Dummy B" },
 	{ 525,	4182,	4180,	L"ANH_ACC_F1_HDB_P",				L"Dummy P" },
 	{ 633,	13138,	13137,	L"ANH_ACC_F1_HKG_B",				L"Dummy B" },
@@ -6631,7 +6632,7 @@ static AnimationDatabaseDoubledItem DATABASE_ANIMATION_DOUBLEID[] = {
 	{ 246,	7030,	7029,	L"ANH_MON_F0_BAN_IKAKU",		L"Ikaku" },
 	{ 246,	7038,	7037,	L"ANH_MON_F0_BAN_JUMP",			L"Jump" },
 	{ 246,	2415,	2414,	L"ANH_MON_F0_BAN_P",			L"P" },
-	{ 246,	7027,	7028,	L"ANH_MON_F0_BAN_RUN",			L"Run", },
+	{ 246,	7027,	7028,	L"ANH_MON_F0_BAN_RUN",			L"Run" },
 	{ 246,	7035,	7036,	L"ANH_MON_F0_BAN_TURN_L",		L"Turn_L" },
 	{ 246,	7031,	7032,	L"ANH_MON_F0_BAN_TURN_R",		L"Turn_R" },
 	{ 245,	2409,	2408,	L"ANH_MON_F0_BFF_B",			L"B" },
@@ -7627,6 +7628,26 @@ static AnimationDatabaseDoubledItem DATABASE_ANIMATION_DOUBLEID[] = {
 	{ 121,	676,	94,		L"ANH_NPC_F0_RTC_WALK",			L"Walk" },
 	{ 121,	862,	850,	L"ANH_NPC_F0_RTC_WALK_LD",			L"Walk_Ld" },
 	{ 121,	859,	847,	L"ANH_NPC_F0_RTC_WHICH_LD",			L"Which_Ld" },
+	{ 121,	2195,	-1,		L"ANH_NPC_F0_RTC_SK_ANGRY",			L"Unexisting Sk_Angry" },
+	{ 121,	2192,	-1,		L"ANH_NPC_F0_RTC_SK_CRUSH",			L"Unexisting Sk_Crush" },
+	{ 121,	2183,	-1,		L"ANH_NPC_F0_RTC_SK_GET_LD",		L"Unexisting Sk_Get_Ld" },
+	{ 121,	2193,	-1,		L"ANH_NPC_F0_RTC_SK_GO_UP1_LD",		L"Unexisting Sk_Go_Up1_Ld" },
+	{ 121,	2194,	-1,		L"ANH_NPC_F0_RTC_SK_GO_UP2_LD",		L"Unexisting Sk_Go_Up2_Ld" },
+	{ 121,	2187,	-1,		L"ANH_NPC_F0_RTC_SK_HURRY_UP_LD",	L"Unexisting Sk_Hurry_Up_Ld" },
+	{ 121,	2177,	-1,		L"ANH_NPC_F0_RTC_SK_IDLE",			L"Unexisting Sk_Idle" },
+	{ 121,	2184,	-1,		L"ANH_NPC_F0_RTC_SK_IDL_LD",		L"Unexisting Sk_Idl_Ld" },
+	{ 121,	2188,	-1,		L"ANH_NPC_F0_RTC_SK_LIFT_LD",		L"Unexisting Sk_Lift_Ld" },
+	{ 121,	2191,	-1,		L"ANH_NPC_F0_RTC_SK_PUT_LD",		L"Unexisting Sk_Put_Ld" },
+	{ 121,	2181,	-1,		L"ANH_NPC_F0_RTC_SK_ROGER",			L"Unexisting Sk_Roger" },
+	{ 121,	2186,	-1,		L"ANH_NPC_F0_RTC_SK_RUN",			L"Unexisting Sk_Run" },
+	{ 121,	2190,	-1,		L"ANH_NPC_F0_RTC_SK_RUN_LD",		L"Unexisting Sk_Run_Ld" },
+	{ 121,	2182,	-1,		L"ANH_NPC_F0_RTC_SK_TURN_L",		L"Unexisting Sk_Turn_L" },
+	{ 121,	2179,	-1,		L"ANH_NPC_F0_RTC_SK_TURN_L_LD",		L"Unexisting Sk_Turn_L_Ld" },
+	{ 121,	2185,	-1,		L"ANH_NPC_F0_RTC_SK_TURN_R",		L"Unexisting Sk_Turn_R" },
+	{ 121,	2180,	-1,		L"ANH_NPC_F0_RTC_SK_TURN_R_LD",		L"Unexisting Sk_Turn_R_Ld" },
+	{ 121,	2196,	-1,		L"ANH_NPC_F0_RTC_SK_WALK",			L"Unexisting Sk_Walk" },
+	{ 121,	2189,	-1,		L"ANH_NPC_F0_RTC_SK_WALK_LD",		L"Unexisting Sk_Walk_Ld" },
+	{ 121,	2178,	-1,		L"ANH_NPC_F0_RTC_SK_WHICH_LD",		L"Unexisting Sk_Which_Ld" },
 	{ 210,	1634,	1633,	L"ANH_NPC_F0_STR_B",			L"Dummy B" },
 	{ 210,	2968,	2967,	L"ANH_NPC_F0_STR_IDLE",			L"Idle" },
 	{ 210,	9009,	9008,	L"ANH_NPC_F0_STR_P",			L"Dummy P" },
@@ -9391,27 +9412,6 @@ static AnimationDatabaseDoubledItem DATABASE_ANIMATION_DOUBLEID[] = {
 	{ 452,	12998,	12997,	L"ANH_SUB_W0_025_B",			L"Dummy B" },
 	{ 452,	11135,	11132,	L"ANH_SUB_W0_025_P",			L"Dummy P" },
 	{ 452,	8011,	8012,	L"ANH_SUB_W0_025_STAND",		L"Dummy Stand" },
-	{ 306,	6132,	-1,	L"ANH_ACC_F1_GRG_RUN_1F",			L"Unexisting Run_1f" },
-	{ 121,	2195,	-1,	L"ANH_NPC_F0_RTC_SK_ANGRY",			L"Unexisting Sk_Angry" },
-	{ 121,	2192,	-1,	L"ANH_NPC_F0_RTC_SK_CRUSH",			L"Unexisting Sk_Crush" },
-	{ 121,	2183,	-1,	L"ANH_NPC_F0_RTC_SK_GET_LD",		L"Unexisting Sk_Get_Ld" },
-	{ 121,	2193,	-1,	L"ANH_NPC_F0_RTC_SK_GO_UP1_LD",		L"Unexisting Sk_Go_Up1_Ld" },
-	{ 121,	2194,	-1,	L"ANH_NPC_F0_RTC_SK_GO_UP2_LD",		L"Unexisting Sk_Go_Up2_Ld" },
-	{ 121,	2187,	-1,	L"ANH_NPC_F0_RTC_SK_HURRY_UP_LD",	L"Unexisting Sk_Hurry_Up_Ld" },
-	{ 121,	2177,	-1,	L"ANH_NPC_F0_RTC_SK_IDLE",			L"Unexisting Sk_Idle" },
-	{ 121,	2184,	-1,	L"ANH_NPC_F0_RTC_SK_IDL_LD",		L"Unexisting Sk_Idl_Ld" },
-	{ 121,	2188,	-1,	L"ANH_NPC_F0_RTC_SK_LIFT_LD",		L"Unexisting Sk_Lift_Ld" },
-	{ 121,	2191,	-1,	L"ANH_NPC_F0_RTC_SK_PUT_LD",		L"Unexisting Sk_Put_Ld" },
-	{ 121,	2181,	-1,	L"ANH_NPC_F0_RTC_SK_ROGER",			L"Unexisting Sk_Roger" },
-	{ 121,	2186,	-1,	L"ANH_NPC_F0_RTC_SK_RUN",			L"Unexisting Sk_Run" },
-	{ 121,	2190,	-1,	L"ANH_NPC_F0_RTC_SK_RUN_LD",		L"Unexisting Sk_Run_Ld" },
-	{ 121,	2182,	-1,	L"ANH_NPC_F0_RTC_SK_TURN_L",		L"Unexisting Sk_Turn_L" },
-	{ 121,	2179,	-1,	L"ANH_NPC_F0_RTC_SK_TURN_L_LD",		L"Unexisting Sk_Turn_L_Ld" },
-	{ 121,	2185,	-1,	L"ANH_NPC_F0_RTC_SK_TURN_R",		L"Unexisting Sk_Turn_R" },
-	{ 121,	2180,	-1,	L"ANH_NPC_F0_RTC_SK_TURN_R_LD",		L"Unexisting Sk_Turn_R_Ld" },
-	{ 121,	2196,	-1,	L"ANH_NPC_F0_RTC_SK_WALK",			L"Unexisting Sk_Walk" },
-	{ 121,	2189,	-1,	L"ANH_NPC_F0_RTC_SK_WALK_LD",		L"Unexisting Sk_Walk_Ld" },
-	{ 121,	2178,	-1,	L"ANH_NPC_F0_RTC_SK_WHICH_LD",		L"Unexisting Sk_Which_Ld" },
 };
 
 namespace AnimationDatabase {
@@ -9446,7 +9446,8 @@ namespace AnimationDatabase {
 		return -1;
 	}
 
-	static int32_t GetIndexFromModelIndex(uint32_t modelindex) { // Warning: modelindex is index of HADES_STRING_MODEL_NAME, not model id
+	// Warning: modelindex is index of HADES_STRING_MODEL_NAME, not model id
+	static int32_t GetIndexFromModelIndex(uint32_t modelindex) {
 		uint8_t categories = DATABASE_MODEL_CATEGORY_TO_LIST(HADES_STRING_MODEL_NAME[modelindex].category);
 		uint32_t i;
 		if (categories & 0x26) {
@@ -9459,6 +9460,17 @@ namespace AnimationDatabase {
 				if (DATABASE_ANIMATION_DOUBLEID[i].model_id==HADES_STRING_MODEL_NAME[modelindex].id)
 					return i | (1 << 30);
 		}
+		return -1;
+	}
+
+	static int32_t GetIndexFromModelId(uint32_t modelid) {
+		uint32_t i;
+		for (i=0;i<G_N_ELEMENTS(DATABASE_ANIMATION_SINGLEID);i++)
+			if (DATABASE_ANIMATION_SINGLEID[i].model_id==modelid)
+				return i;
+		for (i=0;i<G_N_ELEMENTS(DATABASE_ANIMATION_DOUBLEID);i++)
+			if (DATABASE_ANIMATION_DOUBLEID[i].model_id==modelid)
+				return i | (1 << 30);
 		return -1;
 	}
 

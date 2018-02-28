@@ -931,6 +931,7 @@ void UnityArchiveAssetBundle::AddFileBundle(uint64_t type, vector<int64_t> filei
 	bundle_flag.push_back(1);
 	bundle_info.push_back(type);
 	bundle_index_start.push_back(bundle_flag.size());
+	sort(fileinfolist.begin(),fileinfolist.end());
 	for (unsigned int i=0;i<fileinfolist.size();i++) {
 		bundle_flag.push_back(0);
 		bundle_info.push_back(fileinfolist[i]);

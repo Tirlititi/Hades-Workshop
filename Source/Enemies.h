@@ -60,6 +60,8 @@ public:
 	// Return 0 if success ; 1 if the value is too long
 	int SetName(wstring newvalue, SteamLanguage lang = GetSteamLanguage());
 	int SetName(FF9String& newvalue);
+
+	EnemyStatDataStruct* GetAssociatedStat();
 	
 	uint8_t id;
 	EnemyDataStruct* parent;
@@ -77,8 +79,8 @@ public:
 	uint8_t item_drop[4];
 	uint8_t item_steal[4];
 	uint8_t card_drop;
-	uint16_t attack; // unused
-	uint8_t accuracy; // unused
+	uint16_t attack; // Unused
+	uint8_t accuracy; // Unused
 	uint8_t cur_capa;
 	uint8_t max_capa;
 	uint8_t trans;
@@ -118,12 +120,12 @@ public:
 	uint8_t selection_bone[6];
 	int8_t selection_offsetz[6];
 	int8_t selection_offsety[6];
-	uint16_t shadow_x;
-	uint16_t shadow_y;
+	uint16_t shadow_size_x;
+	uint16_t shadow_size_y;
 	uint8_t shadow_bone1;
 	uint8_t shadow_bone2;
-	int16_t shadow_offset_x;
-	int16_t shadow_offset_y;
+	int16_t shadow_offset_x; // Unused
+	int16_t shadow_offset_y; // Unused
 	uint16_t sound_engage;
 	uint16_t sound_death;
 	uint8_t zero1;
@@ -177,9 +179,11 @@ public:
 	int AddStat(EnemyStatDataStruct* copystat);
 	int AddSpell(EnemySpellDataStruct* copyspell);
 	int AddGroup();
+	int AddAnimation(uint16_t statid, uint16_t animid);
 	void RemoveStat(uint16_t statid);
 	void RemoveSpell(uint16_t spellid);
 	void RemoveGroup(uint16_t groupid);
+	void RemoveAnimation(uint16_t animindex);
 	
 	void Read(fstream& f);
 	void Write(fstream& f);
@@ -204,12 +208,12 @@ public:
 	uint16_t id;
 	uint16_t animblock_offset;
 	uint16_t animation_amount;
-	uint16_t* animation_id;
+	vector<uint16_t> animation_id;
 	uint16_t sequence_amount;
-	uint16_t* sequence_offset; // If sequence_amount should be odd, a dummy sequence is added with same offset as the 1st one
-	uint8_t* sequence_base_anim;
-	unsigned int* sequence_code_amount;
-	EnemySequenceCodeLine** sequence_code;
+	vector<uint16_t> sequence_offset; // If sequence_amount should be odd, a dummy sequence is added with same offset as the 1st one
+	vector<uint8_t> sequence_base_anim;
+	vector<unsigned int> sequence_code_amount;
+	vector< vector<EnemySequenceCodeLine> > sequence_code;
 	uint16_t camerablock_offset;
 	
 	unsigned int camera_size; // ToDo : read cameras
@@ -220,6 +224,8 @@ public:
 	uint16_t* camera_offset; // array[9] ?
 	uint16_t* camera_flag;
 	uint16_t** camera_struct_offset;
+
+	vector<uint8_t> sequence_stat_id;
 	
 	void Read(fstream& f);
 	void Write(fstream& f);
@@ -255,8 +261,9 @@ public:
 	uint32_t steam_method_position;
 	uint32_t steam_method_base_length;
 	
-	// Return temporary array not to be destroyed (as for statids)
+	// Return temporary array not to be destroyed (as for battleids)
 	EnemyStatDataStruct** GetSimilarEnemyStats(EnemyStatDataStruct& stat, unsigned int* amountfound, unsigned int** battleid);
+	EnemySpellDataStruct** GetSimilarEnemySpells(EnemySpellDataStruct& stat, unsigned int* amountfound, unsigned int** battleid);
 	// Change "battle_name[battleid]" according to battle's monster names
 	void UpdateBattleName(unsigned int battleid);
 	// For PSX: Make the modifications inside field and world map image maps only... Mark the updated image maps as modified
@@ -303,8 +310,8 @@ struct BattleModelLinks {
 	uint8_t selection_bone[6];
 	int8_t selection_offsetz[6];
 	int8_t selection_offsety[6];
-	uint16_t shadow_x;
-	uint16_t shadow_y;
+	uint16_t shadow_size_x;
+	uint16_t shadow_size_y;
 	uint8_t shadow_bone1;
 	uint8_t shadow_bone2;
 	int16_t shadow_offset_x;

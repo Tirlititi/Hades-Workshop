@@ -398,8 +398,7 @@ EnemyAnimSequenceEditDialog::EnemyAnimSequenceEditDialog(wxWindow* parent, Battl
 	anim_id(animid) {
 	unsigned int i,j;
 	sequence_code_amount = battle.sequence_code_amount[anim_id];
-	sequence_code = new EnemySequenceCodeLine[sequence_code_amount];
-	memcpy(sequence_code,battle.sequence_code[anim_id],sequence_code_amount*sizeof(EnemySequenceCodeLine));
+	sequence_code = battle.sequence_code[anim_id];
 	for (i=0;i<sequence_code_amount;i++) {
 		EnemySequenceCode& seqcode = GetEnemySequenceCode(sequence_code[i].code);
 		sequence_code[i].arg = new uint32_t[seqcode.arg_amount];
@@ -423,6 +422,12 @@ EnemyAnimSequenceEditDialog::EnemyAnimSequenceEditDialog(wxWindow* parent, Battl
 	arg_animation_id[animamount] = new uint32_t(0xFF);
 	arg_animation.Add(_(L"Stand Animation"));
 	unsigned int texti = battle.parent->battle[battle.id]->spell_amount+battle.parent->battle[battle.id]->stat_amount;
+	for (i=0;i<battle.parent->battle[battle.id]->stat_amount;i++)
+		if (battle.parent->battle[battle.id]->stat[i].sequence_anim_base==battle.sequence_base_anim[anim_id]) {
+			for (j=0;j<i;j++)
+				texti += battle.parent->battle[battle.id]->stat[j].text_amount;
+			break;
+		}
 	unsigned int textamount = battle.parent->text[battle.id]->amount-texti+1;
 	arg_battletext_id = new uint32_t*[textamount];
 	arg_battletext.Alloc(textamount);
@@ -466,7 +471,7 @@ EnemyAnimSequenceEditDialog::EnemyAnimSequenceEditDialog(wxWindow* parent, Battl
 	m_sequencesizer = new wxFlexGridSizer(0,1,0,0);
 	m_sequencesizer->SetFlexibleDirection(wxBOTH);
 	m_sequencesizer->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
-	sequence_code_sizer = new EnemyAnimSequenceCodeSizer*[sequence_code_amount];
+	sequence_code_sizer.resize(sequence_code_amount);
 	for (i=0;i<sequence_code_amount;i++) {
 		sequence_code_sizer[i] = new EnemyAnimSequenceCodeSizer(this,i,&sequence_code[i]);
 		m_sequencesizer->Add(sequence_code_sizer[i],1,wxEXPAND);
@@ -506,26 +511,20 @@ void EnemyAnimSequenceEditDialog::OnAddCode(wxCommandEvent& event) {
 			sequence_code_sizer[i]->m_arg[j]->Destroy();
 		}
 	}
-	EnemySequenceCodeLine* buffer = new EnemySequenceCodeLine[sequence_code_amount+1];
-	memcpy(buffer,sequence_code,l*sizeof(EnemySequenceCodeLine));
-	buffer[l].parent = &battle;
-	buffer[l].code = newcode;
-	buffer[l].arg = new uint32_t[newseq.arg_amount];
+	EnemySequenceCodeLine newseqcodeline;
+	newseqcodeline.parent = &battle;
+	newseqcodeline.code = newcode;
+	newseqcodeline.arg = new uint32_t[newseq.arg_amount];
 	for (i=0;i<newseq.arg_amount;i++) {
 		if (newseq.arg_type[i]==EAAT_TIME)
-			buffer[l].arg[i] = 1;
+			newseqcodeline.arg[i] = 1;
 		else
-			buffer[l].arg[i] = 0;
+			newseqcodeline.arg[i] = 0;
 	}
-	memcpy(buffer+l+1,sequence_code+l,(sequence_code_amount-l)*sizeof(EnemySequenceCodeLine));
-	delete[] sequence_code;
-	sequence_code = buffer;
 	sequence_code_amount++;
+	sequence_code.insert(sequence_code.begin()+l,newseqcodeline);
 	battle.SetSize(battle.size+newlen);
-	EnemyAnimSequenceCodeSizer** newsizerlist = new EnemyAnimSequenceCodeSizer*[sequence_code_amount];
-	memcpy(newsizerlist,sequence_code_sizer,(sequence_code_amount-1)*sizeof(EnemyAnimSequenceCodeSizer*));
-	delete[] sequence_code_sizer;
-	sequence_code_sizer = newsizerlist;
+	sequence_code_sizer.resize(sequence_code_amount);
 	for (i=0;i<l;i++)
 		sequence_code_sizer[i]->codeline = &sequence_code[i];
 	for (i=l;i+1<sequence_code_amount;i++) {
@@ -564,18 +563,11 @@ void EnemyAnimSequenceEditDialog::OnDeleteCode(wxCommandEvent& event) {
 			sequence_code_sizer[i]->m_arg[j]->Destroy();
 		}
 	}
-	EnemySequenceCodeLine* buffer = new EnemySequenceCodeLine[sequence_code_amount-1];
-	memcpy(buffer,sequence_code,l*sizeof(EnemySequenceCodeLine));
-	memcpy(buffer+l,sequence_code+l+1,(sequence_code_amount-l-1)*sizeof(EnemySequenceCodeLine));
-	delete[] sequence_code;
-	sequence_code = buffer;
 	sequence_code_amount--;
+	sequence_code.erase(sequence_code.begin()+l);
 	battle.SetSize(battle.size-oldlen);
-	EnemyAnimSequenceCodeSizer** newsizerlist = new EnemyAnimSequenceCodeSizer*[sequence_code_amount];
-	memcpy(newsizerlist,sequence_code_sizer,sequence_code_amount*sizeof(EnemyAnimSequenceCodeSizer*));
 	sequence_code_sizer[sequence_code_amount]->DestroyLine();
-	delete[] sequence_code_sizer;
-	sequence_code_sizer = newsizerlist;
+	sequence_code_sizer.resize(sequence_code_amount);
 	for (i=0;i<l;i++)
 		sequence_code_sizer[i]->codeline = &sequence_code[i];
 	for (i=l;i<sequence_code_amount;i++) {

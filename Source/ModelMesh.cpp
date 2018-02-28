@@ -941,7 +941,7 @@ void ModelDataStruct::SetupPostImportData(vector<unsigned int> folderfiles, Unit
 				FMAP.file_info = 0; \
 				if (FMAP.file_name!="") { \
 					for (k=0;k<folderfiles.size();k++) \
-						if (hierarchy->meta_data->file_name[folderfiles[k]]==FMAP.file_name) { \
+						if (hierarchy->meta_data->file_name[folderfiles[k]]==FMAP.file_name && hierarchy->meta_data->file_type1[folderfiles[k]]==28) { \
 							FMAP.file_info = hierarchy->meta_data->file_info[folderfiles[k]]; \
 							break; \
 						} \
@@ -1454,18 +1454,24 @@ Tvect GetVertexGeometryElement(FbxMesh* lMesh, Tgeoelement* lGeometryElement, un
 	if (lGeometryElement==NULL)
 		return Tvect();
 	int mappingid = vertindex;
-	if (lGeometryElement->GetReferenceMode()==FbxLayerElement::eIndex || lGeometryElement->GetReferenceMode()==FbxLayerElement::eIndexToDirect) {
-		mappingid = lGeometryElement->GetIndexArray()[vertindex];
-		if (mappingid<0)
-			return Tvect();
-	}
 	switch (lGeometryElement->GetMappingMode()) {
 	case FbxLayerElement::eByControlPoint:
+		if (lGeometryElement->GetReferenceMode()==FbxLayerElement::eIndex || lGeometryElement->GetReferenceMode()==FbxLayerElement::eIndexToDirect) {
+			mappingid = lGeometryElement->GetIndexArray()[vertindex];
+			if (mappingid<0)
+				return Tvect();
+		}
 		return lGeometryElement->FbxLayerElementTemplate::GetDirectArray()[mappingid];
 		break;
-	case FbxLayerElement::eByPolygonVertex:
-		return Tvect(); // TODO: Find a vertex's polygon and return the value...
+	case FbxLayerElement::eByPolygonVertex: {
+		unsigned int i,j;
+		for (i=0;i<lMesh->GetPolygonCount();i++)
+			for (j=0;j<lMesh->GetPolygonSize(i);j++)
+				if (lMesh->GetPolygonVertex(i,j)==vertindex)
+					return lGeometryElement->FbxLayerElementTemplate::GetDirectArray()[lMesh->GetTextureUVIndex(i,j)];
+		return Tvect();
 		break;
+	}
 	case FbxLayerElement::eByPolygon:
 		return Tvect();
 		break;
@@ -1675,8 +1681,6 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 				else
 					newmesh.mat_info[j].vert_start = newmesh.mat_info[j-1].vert_start+newmesh.mat_info[j-1].vert_amount;
 			}
-
-			// ToDo: the rest
 			// Materials
 			vector<ModelMaterialData> newmatlist;
 			newskinmesh->child_material_amount = lMaterialList.size();

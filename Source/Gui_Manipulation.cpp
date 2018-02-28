@@ -18,6 +18,7 @@
 #include "Database_Spell.h"
 #include "Database_SpellAnimation.h"
 #include "Database_Resource.h"
+#include "Database_Animation.h"
 
 //=============================//
 //          Strings            //
@@ -311,7 +312,7 @@ void CDDataStruct::SpellAnimationDisplayNames(bool create) {
 				break;
 			}
 		if (j==G_N_ELEMENTS(HADES_STRING_SPELL_MODEL))
-			names.Add(wxString::Format(wxT("Spell Animation %u"),i+1));
+			names.Add(wxString::Format(wxT("Spell Animation %u"),i));
 	}
 	if (spellanimsorted!=OrderedIndex)
 		delete[] spellanimsorted;
@@ -3664,6 +3665,177 @@ void CDDataStruct::OnCardChangeSpin(wxSpinEvent& event) {
 //          Enemies            //
 //=============================//
 
+class EnemyResourceDialog : public EnemyResourceWindow {
+public:
+	vector<wxChoice*> m_listanim;
+	vector<wxSpinCtrl*> m_listanimid;
+	vector<wxButton*> m_listanimdelete;
+	wxArrayString anim;
+	vector<uint16_t> anim_id;
+
+	EnemyResourceDialog(wxWindow* parent) : EnemyResourceWindow(parent) {}
+
+	int ShowModal(EnemyStatDataStruct& es, BattleDataStruct& bd) {
+		unsigned int i,j;
+		unsigned int maxtextamount = es.parent->parent->text[es.parent->id]->amount-es.parent->stat_amount-es.parent->spell_amount;
+		for (i=0;i<es.parent->stat_amount;i++)
+			if (i!=es.id)
+				maxtextamount -= es.parent->stat[i].text_amount;
+		m_textamount->SetMax(maxtextamount);
+		m_textamount->SetValue(es.text_amount);
+		m_radius->SetValue(es.radius);
+		m_mesh->SetValue(es.mesh);							m_meshvanish->SetValue(es.mesh_vanish);
+		m_bonetarget->SetValue(es.bone_target);
+		m_bonecamera1->SetValue(es.bone_camera1);			m_bonecamera2->SetValue(es.bone_camera2);			m_bonecamera3->SetValue(es.bone_camera3);
+		m_boneselection1->SetValue(es.selection_bone[0]);	m_boneselection2->SetValue(es.selection_bone[1]);	m_boneselection3->SetValue(es.selection_bone[2]);
+		m_boneselection4->SetValue(es.selection_bone[3]);	m_boneselection5->SetValue(es.selection_bone[4]);	m_boneselection6->SetValue(es.selection_bone[5]);
+		m_boneshadow1->SetValue(es.shadow_bone1);			m_boneshadow2->SetValue(es.shadow_bone2);
+		m_shadowsizex->SetValue(es.shadow_size_x);			m_shadowsizey->SetValue(es.shadow_size_y);
+		m_soundengage->SetValue(es.sound_engage);			m_sounddeath->SetValue(es.sound_death);
+		m_animidle->SetValue(es.anim_idle);					m_animhit->SetValue(es.anim_hit);					m_animdeath->SetValue(es.anim_death);
+		m_animidlealt->SetValue(es.anim_idle_alt);			m_animhitalt->SetValue(es.anim_hit_alt);			m_animdeathalt->SetValue(es.anim_death_alt);
+		m_listanim.resize(es.sequence_anim_amount);			m_listanimid.resize(es.sequence_anim_amount);		m_listanimdelete.resize(es.sequence_anim_amount);
+		int32_t animindex = AnimationDatabase::GetIndexFromModelId(es.model);
+		if (animindex>=0)
+			while (AnimationDatabase::GetModelId(animindex)==es.model) {
+				anim.Add(AnimationDatabase::GetDescription(animindex));
+				anim_id.push_back(AnimationDatabase::GetId(animindex));
+				animindex++;
+			}
+		m_animidlechoice->Append(anim);		m_animhitchoice->Append(anim);		m_animdeathchoice->Append(anim);
+		m_animidlealtchoice->Append(anim);	m_animhitaltchoice->Append(anim);	m_animdeathaltchoice->Append(anim);
+		for (i=0;i<anim_id.size();i++) {
+			if (es.anim_idle==anim_id[i])		m_animidlechoice->SetSelection(i);
+			if (es.anim_hit==anim_id[i])		m_animhitchoice->SetSelection(i);
+			if (es.anim_death==anim_id[i])		m_animdeathchoice->SetSelection(i);
+			if (es.anim_idle_alt==anim_id[i])	m_animidlealtchoice->SetSelection(i);
+			if (es.anim_hit_alt==anim_id[i])	m_animhitaltchoice->SetSelection(i);
+			if (es.anim_death_alt==anim_id[i])	m_animdeathaltchoice->SetSelection(i);
+		}
+		if (GetGameType()==GAME_TYPE_PSX) {
+			m_animidle->Enable(false);		m_animhit->Enable(false);		m_animdeath->Enable(false);
+			m_animidlealt->Enable(false);	m_animhitalt->Enable(false);	m_animdeathalt->Enable(false);
+			m_attackanimadd->Enable(false);
+		}
+		for (i=0;i<es.sequence_anim_amount;i++) {
+			m_listanim[i] = new wxChoice(m_animscrolled,wxID_ANY,wxDefaultPosition,wxDefaultSize,anim);
+			m_listanimid[i] = new wxSpinCtrl(m_animscrolled,wxID_ANY,wxEmptyString,wxDefaultPosition,wxDefaultSize,wxSP_ARROW_KEYS,0,65535,bd.animation_id[es.sequence_anim_base+i]);
+			m_listanimdelete[i] = new wxButton(m_animscrolled,wxID_ANY,_(L"x"),wxDefaultPosition,wxDefaultSize,wxBU_EXACTFIT);
+			for (j=0;j<anim.GetCount();j++)
+				if (anim_id[j]==bd.animation_id[es.sequence_anim_base+i]) {
+					m_listanim[i]->SetSelection(j);
+					break;
+				}
+			m_animsizer->Add(m_listanim[i],0,wxALL | wxEXPAND,2);
+			m_animsizer->Add(m_listanimid[i],0,wxALL,2);
+			m_animsizer->Add(m_listanimdelete[i],0,wxALL,2);
+			if (GetGameType()==GAME_TYPE_PSX) {
+				m_listanim[i]->Enable(false);
+				m_listanimid[i]->Enable(false);
+				m_listanimdelete[i]->Enable(false);
+			} else {
+				m_listanim[i]->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( EnemyResourceDialog::OnAnimChoice ), NULL, this );
+				m_listanimdelete[i]->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( EnemyResourceDialog::OnButtonClick ), NULL, this );
+			}
+		}
+		m_animscrolled->Layout();
+		m_animscrolled->Refresh();
+		return wxDialog::ShowModal();
+	}
+
+	void OnAnimChoice(wxCommandEvent& event) {
+		wxSpinCtrl* linkedspin = NULL;
+		int id = event.GetId();
+		switch (id) {
+			case wxID_IDLE:		linkedspin = m_animidle;		break;
+			case wxID_HIT:		linkedspin = m_animhit;			break;
+			case wxID_DEATH:	linkedspin = m_animdeath;		break;
+			case wxID_IDLEALT:	linkedspin = m_animidlealt;		break;
+			case wxID_HITALT:	linkedspin = m_animhitalt;		break;
+			case wxID_DEATHALT:	linkedspin = m_animdeathalt;	break;
+			default:
+				for (unsigned int i=0;i<m_listanim.size();i++)
+					if (m_listanim[i]==event.GetEventObject()) {
+						linkedspin = m_listanimid[i];
+						break;
+					}
+		}
+		linkedspin->SetValue(anim_id[event.GetSelection()]);
+	}
+
+	void OnButtonClick(wxCommandEvent& event) {
+		int id = event.GetId();
+		if (id==wxID_OK || id==wxID_CANCEL) {
+			for (unsigned int i=0;i<m_listanim.size();i++) {
+				m_listanim[i]->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( EnemyResourceDialog::OnAnimChoice ), NULL, this );
+				m_listanimdelete[i]->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( EnemyResourceDialog::OnButtonClick ), NULL, this );
+			}
+			EndModal(id);
+		} else if (id==wxID_ANIM) {
+			m_listanim.push_back(new wxChoice(m_animscrolled,wxID_ANY,wxDefaultPosition,wxDefaultSize,anim));
+			m_listanimid.push_back(new wxSpinCtrl(m_animscrolled,wxID_ANY,wxEmptyString,wxDefaultPosition,wxDefaultSize,wxSP_ARROW_KEYS,0,65535));
+			m_listanimdelete.push_back(new wxButton(m_animscrolled,wxID_ANY,_(L"x"),wxDefaultPosition,wxDefaultSize,wxBU_EXACTFIT));
+			if (anim.GetCount()>0) {
+				m_listanim.back()->SetSelection(0);
+				m_listanimid.back()->SetValue(anim_id[0]);
+			}
+			m_animsizer->Add(m_listanim.back(),0,wxALL | wxEXPAND,2);
+			m_animsizer->Add(m_listanimid.back(),0,wxALL,2);
+			m_animsizer->Add(m_listanimdelete.back(),0,wxALL,2);
+			m_listanim.back()->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( EnemyResourceDialog::OnAnimChoice ), NULL, this );
+			m_listanimdelete.back()->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( EnemyResourceDialog::OnButtonClick ), NULL, this );
+			m_animscrolled->FitInside();
+			m_animscrolled->Layout();
+			m_animscrolled->Refresh();
+		} else {
+			wxButton* deletechoice = static_cast<wxButton*>(event.GetEventObject());
+			int deleteid;
+			for (deleteid=0;deleteid<m_listanimdelete.size();deleteid++)
+				if (deletechoice==m_listanimdelete[deleteid])
+					break;
+			if (deleteid<m_listanimdelete.size()) {
+				m_listanim[deleteid]->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( EnemyResourceDialog::OnAnimChoice ), NULL, this );
+				m_listanimdelete[deleteid]->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( EnemyResourceDialog::OnButtonClick ), NULL, this );
+				m_listanim[deleteid]->Destroy();
+				m_listanimid[deleteid]->Destroy();
+				m_listanimdelete[deleteid]->Destroy();
+				m_listanim.erase(m_listanim.begin()+deleteid);
+				m_listanimid.erase(m_listanimid.begin()+deleteid);
+				m_listanimdelete.erase(m_listanimdelete.begin()+deleteid);
+			}
+		}
+	}
+
+	bool ApplyModifications(EnemyStatDataStruct& es, BattleDataStruct& bd) {
+		bool result = true;
+		es.text_amount = m_textamount->GetValue();
+		es.radius = m_radius->GetValue();
+		es.mesh = m_mesh->GetValue();							es.mesh_vanish = m_meshvanish->GetValue();
+		es.bone_target = m_bonetarget->GetValue();
+		es.bone_camera1 = m_bonecamera1->GetValue();			es.bone_camera2 = m_bonecamera2->GetValue();			es.bone_camera3 = m_bonecamera3->GetValue();
+		es.selection_bone[0] = m_boneselection1->GetValue();	es.selection_bone[1] = m_boneselection2->GetValue();	es.selection_bone[2] = m_boneselection3->GetValue();
+		es.selection_bone[3] = m_boneselection4->GetValue();	es.selection_bone[4] = m_boneselection5->GetValue();	es.selection_bone[5] = m_boneselection6->GetValue();
+		es.shadow_bone1 = m_boneshadow1->GetValue();			es.shadow_bone2 = m_boneshadow2->GetValue();
+		es.shadow_size_x = m_shadowsizex->GetValue();			es.shadow_size_y = m_shadowsizey->GetValue();
+		es.sound_engage = m_soundengage->GetValue();			es.sound_death = m_sounddeath->GetValue();
+		es.anim_idle = m_animidle->GetValue();					es.anim_hit = m_animhit->GetValue();					es.anim_death = m_animdeath->GetValue();
+		es.anim_idle_alt = m_animidlealt->GetValue();			es.anim_hit_alt = m_animhitalt->GetValue();				es.anim_death_alt = m_animdeathalt->GetValue();
+		if (GetGameType()!=GAME_TYPE_PSX) {
+			unsigned int i, firstmodif;
+			for (i=0;i<m_listanimid.size() && i<es.sequence_anim_amount;i++)
+				if (m_listanimid[i]->GetValue()!=bd.animation_id[es.sequence_anim_base+i])
+					break;
+			firstmodif = i;
+			for (i=firstmodif;i<es.sequence_anim_amount;)
+				es.parent->RemoveAnimation(es.sequence_anim_base+i);
+			for (i=firstmodif;i<m_listanimid.size();i++)
+				result = (es.parent->AddAnimation(es.id,m_listanimid[i]->GetValue())==0) && result;
+		}
+		return result;
+	}
+
+};
+
 void CDDataStruct::DisplayEnemyStat(int battleid, int statid) {
 	unsigned int* sortid = (unsigned int*)m_enemylist->GetClientData(battleid);
 	EnemyStatDataStruct& es = enemyset.battle[*sortid]->stat[statid];
@@ -3672,6 +3844,7 @@ void CDDataStruct::DisplayEnemyStat(int battleid, int statid) {
 	m_enemygroupscrolledwindow->Show(false);
 	m_enemyspellscrolledwindow->Show(false);
 	m_enemystatmodel->Enable(gametype!=GAME_TYPE_PSX);
+	m_enemystatmodelid->Enable(gametype!=GAME_TYPE_PSX);
 	m_enemyspelllist->SetSelection(wxNOT_FOUND);
 	m_enemygrouplist->SetSelection(wxNOT_FOUND);
 	m_enemystatname->ChangeValue(_(es.name.str));
@@ -3709,6 +3882,7 @@ void CDDataStruct::DisplayEnemyStat(int battleid, int statid) {
 			break;
 		}
 	}
+	m_enemystatmodelid->SetValue(es.model);
 	
 	MACRO_FLAG_DISPLAY8(es.element_absorb,m_enemystatelementabsorb)
 	MACRO_FLAG_DISPLAY8(es.element_immune,m_enemystatelementimmune)
@@ -3755,9 +3929,7 @@ void CDDataStruct::DisplayEnemySpell(int battleid, int spellid) {
 			m_enemyspellanimreflect->SetSelection(i);
 			break;
 		}
-	for (i=0;i<ed.stat_amount;i++)
-		if (ed.stat[i].sequence_anim_base==bd.sequence_base_anim[spellid])
-			m_enemyspellbaseanim->SetSelection(i);
+	m_enemyspellbaseanim->SetSelection(bd.sequence_stat_id[spellid]);
 	m_enemyspelltargetflagdead->SetValue(ep.target_flag & TARGET_FLAG_CAN_TARGET_DEAD);
 	m_enemyspelltargetflagcamera->SetValue(ep.target_flag & TARGET_FLAG_CAMERA);
 	m_enemyspelltargetflagdeadfirst->SetValue(ep.target_flag & TARGET_FLAG_TARGET_DEAD_FIRST);
@@ -3953,73 +4125,111 @@ void CDDataStruct::OnEnemySpellChangeName(wxCommandEvent& event) {
 	int spellsel = m_enemyspelllist->GetSelection();
 	unsigned int* sortid = (unsigned int*)m_enemylist->GetClientData(m_enemylist->GetSelection());
 	EnemySpellDataStruct& ep = enemyset.battle[*sortid]->spell[spellsel];
-	if (ep.SetName(m_enemyspellname->GetValue().ToStdWstring())) {
-		wxTextPos ip = m_enemyspellname->GetInsertionPoint();
-		m_enemyspellname->ChangeValue(_(ep.name.str));
-		m_enemyspellname->SetInsertionPoint(ip);
-		TextReachLimit();
+	wstring newname = m_enemyspellname->GetValue().ToStdWstring();
+	if (GetTopWindow()->m_editsimilarenemy->IsChecked()) {
+		unsigned int i,nb,*similarbattleid;
+		EnemySpellDataStruct** similarspells = enemyset.GetSimilarEnemySpells(ep,&nb,&similarbattleid);
+		for (i=0;i<nb;i++) {
+			if (similarspells[i]->SetName(newname)) {
+				wxMessageDialog popup(this,HADES_STRING_GROUPEDIT_ERROR_TEXT,HADES_STRING_WARNING,wxOK|wxSTAY_ON_TOP|wxCENTRE);
+				popup.ShowModal();
+				if (similarspells[i]==&ep) {
+					wxTextPos ip = m_enemyspellname->GetInsertionPoint();
+					m_enemyspellname->ChangeValue(_(ep.name.str));
+					m_enemyspellname->SetInsertionPoint(ip);
+				}
+			} else {
+				MarkDataEnemyModified(similarbattleid[i],CHUNK_TYPE_TEXT);
+			}
+		}
 	} else {
-		m_enemyspelllist->SetString(spellsel,_(ep.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
-		MarkDataEnemyModified(*sortid,CHUNK_TYPE_TEXT);
+		if (ep.SetName(newname)) {
+			wxTextPos ip = m_enemyspellname->GetInsertionPoint();
+			m_enemyspellname->ChangeValue(_(ep.name.str));
+			m_enemyspellname->SetInsertionPoint(ip);
+			TextReachLimit();
+		} else {
+			MarkDataEnemyModified(*sortid,CHUNK_TYPE_TEXT);
+		}
 	}
+	m_enemyspelllist->SetString(spellsel,_(ep.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 }
 
-#define MACRO_ENEMY_CHANGE_DATA(DATA,VALUE) \
+#define MACRO_ENEMY_CHANGE_DATA(TYPE,DATA,VALUE) \
 	if (GetTopWindow()->m_editsimilarenemy->IsChecked()) { \
 		unsigned int macroi,macronb,*macrobattleid; \
-		EnemyStatDataStruct** macrostats = enemyset.GetSimilarEnemyStats(es,&macronb,&macrobattleid); \
+		Enemy ## TYPE ## DataStruct** macrolist = enemyset.GetSimilarEnemy ## TYPE ## s(enmydata,&macronb,&macrobattleid); \
 		for (macroi=0;macroi<macronb;macroi++) { \
-			macrostats[macroi]->DATA = VALUE; \
+			macrolist[macroi]->DATA = VALUE; \
 			MarkDataEnemyModified(macrobattleid[macroi],CHUNK_TYPE_ENEMY_STATS); \
 		} \
 	} else { \
-		es.DATA = VALUE; \
+		enmydata.DATA = VALUE; \
 		MarkDataEnemyModified(*sortid,CHUNK_TYPE_ENEMY_STATS); \
 	}
 
+bool DiscardSimilarEnemyUnaffected = false;
 void CDDataStruct::OnEnemyChangeSpin(wxSpinEvent& event) {
 	unsigned int* sortid = (unsigned int*)m_enemylist->GetClientData(m_enemylist->GetSelection());
 	EnemyDataStruct& eb = *enemyset.battle[*sortid];
 	int id = event.GetId();
 	if (m_enemystatlist->GetSelection()!=wxNOT_FOUND) {
-		EnemyStatDataStruct& es = eb.stat[m_enemystatlist->GetSelection()];
+		EnemyStatDataStruct& enmydata = eb.stat[m_enemystatlist->GetSelection()];
 		if (id==wxID_LVL) {
-			MACRO_ENEMY_CHANGE_DATA(lvl,event.GetPosition())
+			MACRO_ENEMY_CHANGE_DATA(Stat,lvl,event.GetPosition())
 		} else if (id==wxID_HP) {
-			MACRO_ENEMY_CHANGE_DATA(hp,event.GetPosition())
+			MACRO_ENEMY_CHANGE_DATA(Stat,hp,event.GetPosition())
 		} else if (id==wxID_MP) {
-			MACRO_ENEMY_CHANGE_DATA(mp,event.GetPosition())
+			MACRO_ENEMY_CHANGE_DATA(Stat,mp,event.GetPosition())
 		} else if (id==wxID_ATTACK) {
-			MACRO_ENEMY_CHANGE_DATA(attack,event.GetPosition())
+			MACRO_ENEMY_CHANGE_DATA(Stat,attack,event.GetPosition())
 		} else if (id==wxID_SPEED) {
-			MACRO_ENEMY_CHANGE_DATA(speed,event.GetPosition())
+			MACRO_ENEMY_CHANGE_DATA(Stat,speed,event.GetPosition())
 		} else if (id==wxID_STRENGTH) {
-			MACRO_ENEMY_CHANGE_DATA(strength,event.GetPosition())
+			MACRO_ENEMY_CHANGE_DATA(Stat,strength,event.GetPosition())
 		} else if (id==wxID_MAGIC) {
-			MACRO_ENEMY_CHANGE_DATA(magic,event.GetPosition())
+			MACRO_ENEMY_CHANGE_DATA(Stat,magic,event.GetPosition())
 		} else if (id==wxID_SPIRIT) {
-			MACRO_ENEMY_CHANGE_DATA(spirit,event.GetPosition())
+			MACRO_ENEMY_CHANGE_DATA(Stat,spirit,event.GetPosition())
 		} else if (id==wxID_DEFENCE) {
-			MACRO_ENEMY_CHANGE_DATA(defence,event.GetPosition())
+			MACRO_ENEMY_CHANGE_DATA(Stat,defence,event.GetPosition())
 		} else if (id==wxID_EVADE) {
-			MACRO_ENEMY_CHANGE_DATA(evade,event.GetPosition())
+			MACRO_ENEMY_CHANGE_DATA(Stat,evade,event.GetPosition())
 		} else if (id==wxID_MDEFENCE) {
-			MACRO_ENEMY_CHANGE_DATA(magic_defence,event.GetPosition())
+			MACRO_ENEMY_CHANGE_DATA(Stat,magic_defence,event.GetPosition())
 		} else if (id==wxID_MEVADE) {
-			MACRO_ENEMY_CHANGE_DATA(magic_evade,event.GetPosition())
+			MACRO_ENEMY_CHANGE_DATA(Stat,magic_evade,event.GetPosition())
 		} else if (id==wxID_EXP) {
-			MACRO_ENEMY_CHANGE_DATA(exp,event.GetPosition())
+			MACRO_ENEMY_CHANGE_DATA(Stat,exp,event.GetPosition())
 		} else if (id==wxID_GILS) {
-			MACRO_ENEMY_CHANGE_DATA(gils,event.GetPosition())
+			MACRO_ENEMY_CHANGE_DATA(Stat,gils,event.GetPosition())
+		} else if (id==wxID_MODEL) {
+			BattleModelLinks& linkeddata = BattleModelLinks::GetLinksByModel(event.GetPosition());
+			unsigned int i;
+			// Due to the need to change the spell sequences, it is not a good idea to use the "Edit Similar Enemies" feature
+			enemyset.ChangeBattleModel(*sortid,m_enemystatlist->GetSelection(),linkeddata);
+			enmydata.model = event.GetPosition();
+			MarkDataEnemyModified(*sortid,CHUNK_TYPE_BATTLE_DATA);
+			if (linkeddata.model!=0xFFFF)
+				for (i=0;i<m_enemystatmodel->GetCount();i++)
+					if (((SortedChoiceItem*)m_enemystatmodel->GetClientData(i))->id==event.GetPosition()) {
+						m_enemystatmodel->SetSelection(i);
+						break;
+					}
+			if (GetTopWindow()->m_editsimilarenemy->IsChecked() && !DiscardSimilarEnemyUnaffected) {
+				DiscardableMessageWindow popup(wxGetApp().GetTopWindow(),HADES_STRING_NOGROUPEDIT);
+				if (popup.ShowModal()==wxID_DISCARD)
+					DiscardSimilarEnemyUnaffected = true;
+			}
 		}
 	} else if (m_enemyspelllist->GetSelection()!=wxNOT_FOUND) {
-		EnemySpellDataStruct& ep = eb.spell[m_enemyspelllist->GetSelection()];
+		EnemySpellDataStruct& enmydata = eb.spell[m_enemyspelllist->GetSelection()];
 		if (id==wxID_POWER) {
-			ep.power = event.GetPosition();
+			MACRO_ENEMY_CHANGE_DATA(Spell,power,event.GetPosition())
 		} else if (id==wxID_ACCURACY) {
-			ep.accuracy = event.GetPosition();
+			MACRO_ENEMY_CHANGE_DATA(Spell,accuracy,event.GetPosition())
 		} else if (id==wxID_SPELLMP) {
-			ep.mp = event.GetPosition();
+			MACRO_ENEMY_CHANGE_DATA(Spell,mp,event.GetPosition())
 		}
 	} else if (m_enemygrouplist->GetSelection()!=wxNOT_FOUND) {
 		EnemyGroupDataStruct& eg = eb.group[m_enemygrouplist->GetSelection()];
@@ -4088,67 +4298,69 @@ void CDDataStruct::OnEnemyChangeChoice(wxCommandEvent& event) {
 		MarkDataEnemyModified(*sortid,gametype==GAME_TYPE_PSX ? CHUNK_TYPE_IMAGE_MAP : CHUNK_TYPE_BATTLE_SCENE);
 		return;
 	} else if (m_enemystatlist->GetSelection()!=wxNOT_FOUND) {
-		EnemyStatDataStruct& es = eb.stat[m_enemystatlist->GetSelection()];
+		EnemyStatDataStruct& enmydata = eb.stat[m_enemystatlist->GetSelection()];
 		if (id==wxID_STEAL1) {
-			MACRO_ENEMY_CHANGE_DATA(item_steal[0],event.GetSelection())
+			MACRO_ENEMY_CHANGE_DATA(Stat,item_steal[0],event.GetSelection())
 		} else if (id==wxID_STEAL2) {
-			MACRO_ENEMY_CHANGE_DATA(item_steal[1],event.GetSelection())
+			MACRO_ENEMY_CHANGE_DATA(Stat,item_steal[1],event.GetSelection())
 		} else if (id==wxID_STEAL3) {
-			MACRO_ENEMY_CHANGE_DATA(item_steal[2],event.GetSelection())
+			MACRO_ENEMY_CHANGE_DATA(Stat,item_steal[2],event.GetSelection())
 		} else if (id==wxID_STEAL4) {
-			MACRO_ENEMY_CHANGE_DATA(item_steal[3],event.GetSelection())
+			MACRO_ENEMY_CHANGE_DATA(Stat,item_steal[3],event.GetSelection())
 		} else if (id==wxID_DROP1) {
-			MACRO_ENEMY_CHANGE_DATA(item_drop[0],event.GetSelection())
+			MACRO_ENEMY_CHANGE_DATA(Stat,item_drop[0],event.GetSelection())
 		} else if (id==wxID_DROP2) {
-			MACRO_ENEMY_CHANGE_DATA(item_drop[1],event.GetSelection())
+			MACRO_ENEMY_CHANGE_DATA(Stat,item_drop[1],event.GetSelection())
 		} else if (id==wxID_DROP3) {
-			MACRO_ENEMY_CHANGE_DATA(item_drop[2],event.GetSelection())
+			MACRO_ENEMY_CHANGE_DATA(Stat,item_drop[2],event.GetSelection())
 		} else if (id==wxID_DROP4) {
-			MACRO_ENEMY_CHANGE_DATA(item_drop[3],event.GetSelection())
+			MACRO_ENEMY_CHANGE_DATA(Stat,item_drop[3],event.GetSelection())
 		} else if (id==wxID_CARD) {
 			if (event.GetSelection()==0) {
-				MACRO_ENEMY_CHANGE_DATA(card_drop,255)
+				MACRO_ENEMY_CHANGE_DATA(Stat,card_drop,255)
 			} else {
-				MACRO_ENEMY_CHANGE_DATA(card_drop,event.GetSelection()-1)
+				MACRO_ENEMY_CHANGE_DATA(Stat,card_drop,event.GetSelection()-1)
 			}
 		} else if (id==wxID_DEFATTACK) {
-			MACRO_ENEMY_CHANGE_DATA(default_attack,event.GetSelection())
+			MACRO_ENEMY_CHANGE_DATA(Stat,default_attack,event.GetSelection())
 		} else if (id==wxID_MODEL) {
 			SortedChoiceItem* item = (SortedChoiceItem*)event.GetClientData();
 			BattleModelLinks& linkeddata = BattleModelLinks::GetLinksByModel(item->id);
-			// DEBUG: due to the need to change the spell sequences, it is not a good idea to use this feature here...
-			if (false && GetTopWindow()->m_editsimilarenemy->IsChecked()) {
-				unsigned int i,nb,*similarbattleid;
-				EnemyStatDataStruct** similarstats = enemyset.GetSimilarEnemyStats(es,&nb,&similarbattleid);
-				for (i=0;i<nb;i++) {
-					enemyset.ChangeBattleModel(similarbattleid[i],similarstats[i]->id,linkeddata);
-					MarkDataEnemyModified(similarbattleid[i],CHUNK_TYPE_ENEMY_STATS);
-					MarkDataEnemyModified(similarbattleid[i],CHUNK_TYPE_BATTLE_DATA);
-				}
-			} else {
-				enemyset.ChangeBattleModel(*sortid,m_enemystatlist->GetSelection(),linkeddata);
-				MarkDataEnemyModified(*sortid,CHUNK_TYPE_BATTLE_DATA);
+			// Due to the need to change the spell sequences, it is not a good idea to use the "Edit Similar Enemies" feature
+			enemyset.ChangeBattleModel(*sortid,m_enemystatlist->GetSelection(),linkeddata);
+			MarkDataEnemyModified(*sortid,CHUNK_TYPE_BATTLE_DATA);
+			m_enemystatmodelid->SetValue(linkeddata.model);
+			if (GetTopWindow()->m_editsimilarenemy->IsChecked() && !DiscardSimilarEnemyUnaffected) {
+				DiscardableMessageWindow popup(wxGetApp().GetTopWindow(),HADES_STRING_NOGROUPEDIT);
+				if (popup.ShowModal()==wxID_DISCARD)
+					DiscardSimilarEnemyUnaffected = true;
 			}
 		} else if (id==wxID_BLUEMAGIC) {
-			MACRO_ENEMY_CHANGE_DATA(blue_magic,event.GetSelection())
+			MACRO_ENEMY_CHANGE_DATA(Stat,blue_magic,event.GetSelection())
 		}
 	} else if (m_enemyspelllist->GetSelection()!=wxNOT_FOUND) {
-		EnemySpellDataStruct& es = eb.spell[m_enemyspelllist->GetSelection()];
+		EnemySpellDataStruct& enmydata = eb.spell[m_enemyspelllist->GetSelection()];
 		if (id==wxID_EFFECT) {
 			SortedChoiceItemWithHelp* item = (SortedChoiceItemWithHelp*)event.GetClientData();
-			es.effect = item->id;
+			MACRO_ENEMY_CHANGE_DATA(Spell,effect,item->id)
 			m_enemyspelleffecthelp->SetLabel(item->help);
 			int x,y;
 			m_enemyspelleffecthelp->GetSize(&x,&y);
 			m_enemyspelleffecthelpwindow->SetScrollbars(20,5,x/20,y/5);
 		} else if (id==wxID_STATUS) {
-			es.status = event.GetSelection();
+			MACRO_ENEMY_CHANGE_DATA(Spell,status,event.GetSelection())
 		} else if (id==wxID_ANIM) {
 			SortedChoiceItemModel* item = (SortedChoiceItemModel*)event.GetClientData();
-			es.model = item->id;
+			MACRO_ENEMY_CHANGE_DATA(Spell,model,item->id)
 		} else if (id==wxID_SEQANIM) {
+			enemyset.battle_data[*sortid]->sequence_stat_id[m_enemyspelllist->GetSelection()] = event.GetSelection();
 			enemyset.battle_data[*sortid]->sequence_base_anim[m_enemyspelllist->GetSelection()] = enemyset.battle[*sortid]->stat[event.GetSelection()].sequence_anim_base;
 			MarkDataEnemyModified(*sortid,CHUNK_TYPE_BATTLE_DATA);
+			if (GetTopWindow()->m_editsimilarenemy->IsChecked() && !DiscardSimilarEnemyUnaffected) {
+				DiscardableMessageWindow popup(wxGetApp().GetTopWindow(),HADES_STRING_NOGROUPEDIT);
+				if (popup.ShowModal()==wxID_DISCARD)
+					DiscardSimilarEnemyUnaffected = true;
+			}
 			return;
 		}
 	} else if (m_enemygrouplist->GetSelection()!=wxNOT_FOUND) {
@@ -4166,41 +4378,56 @@ void CDDataStruct::OnEnemyChangeChoice(wxCommandEvent& event) {
 	MarkDataEnemyModified(*sortid,CHUNK_TYPE_ENEMY_STATS);
 }
 
-#define MACRO_ENEMY_CHANGE_DATA_FLAG(AMOUNT,DATA,IDNAME) \
-	if (GetTopWindow()->m_editsimilarenemy->IsChecked()) { \
-		unsigned int macroi,macronb,*macrobattleid; \
-		EnemyStatDataStruct** macrostats = enemyset.GetSimilarEnemyStats(es,&macronb,&macrobattleid); \
-		for (macroi=0;macroi<macronb;macroi++) { \
-			MACRO_FLAG_SET ## AMOUNT(macrostats[macroi]->DATA,IDNAME) \
-			MarkDataEnemyModified(macrobattleid[macroi],CHUNK_TYPE_ENEMY_STATS); \
-		} \
-	} else { \
-		MACRO_FLAG_SET ## AMOUNT(es.DATA,IDNAME) \
-		MarkDataEnemyModified(*sortid,CHUNK_TYPE_ENEMY_STATS); \
-	}
-
 void CDDataStruct::OnEnemyChangeFlags(wxCommandEvent& event) {
 	unsigned int* sortid = (unsigned int*)m_enemylist->GetClientData(m_enemylist->GetSelection());
 	EnemyDataStruct& eb = *enemyset.battle[*sortid];
 	int id = event.GetId();
 	bool on = event.GetInt();
 	if (m_enemystatlist->GetSelection()!=wxNOT_FOUND) {
-		EnemyStatDataStruct& es = eb.stat[m_enemystatlist->GetSelection()];
-		MACRO_ENEMY_CHANGE_DATA_FLAG(8,element_absorb,wxID_EA)
-		MACRO_ENEMY_CHANGE_DATA_FLAG(8,element_immune,wxID_EI)
-		MACRO_ENEMY_CHANGE_DATA_FLAG(8,element_half,wxID_EH)
-		MACRO_ENEMY_CHANGE_DATA_FLAG(8,element_weak,wxID_EW)
-		MACRO_ENEMY_CHANGE_DATA_FLAG(8,classification,wxID_EC)
-		MACRO_ENEMY_CHANGE_DATA_FLAG(32,status_immune,wxID_SI)
-		MACRO_ENEMY_CHANGE_DATA_FLAG(32,status_auto,wxID_SA)
-		MACRO_ENEMY_CHANGE_DATA_FLAG(32,status_initial,wxID_ST)
+		EnemyStatDataStruct& enmydata = eb.stat[m_enemystatlist->GetSelection()];
+
+		#define MACRO_ENEMY_CHECK_STAT_FLAG(STAT) \
+			MACRO_FLAG_SET8(STAT ## .element_absorb,wxID_EA) \
+			MACRO_FLAG_SET8(STAT ## .element_immune,wxID_EI) \
+			MACRO_FLAG_SET8(STAT ## .element_half,wxID_EH) \
+			MACRO_FLAG_SET8(STAT ## .element_weak,wxID_EW) \
+			MACRO_FLAG_SET8(STAT ## .classification,wxID_EC) \
+			MACRO_FLAG_SET32(STAT ## .status_immune,wxID_SI) \
+			MACRO_FLAG_SET32(STAT ## .status_auto,wxID_SA) \
+			MACRO_FLAG_SET32(STAT ## .status_initial,wxID_ST)
+
+		if (GetTopWindow()->m_editsimilarenemy->IsChecked()) {
+			unsigned int macroi,macronb,*macrobattleid;
+			EnemyStatDataStruct** macrolist = enemyset.GetSimilarEnemyStats(enmydata,&macronb,&macrobattleid);
+			for (macroi=0;macroi<macronb;macroi++) {
+				MACRO_ENEMY_CHECK_STAT_FLAG(macrolist[macroi][0])
+				MarkDataEnemyModified(macrobattleid[macroi],CHUNK_TYPE_ENEMY_STATS);
+			}
+		} else {
+			MACRO_ENEMY_CHECK_STAT_FLAG(enmydata)
+			MarkDataEnemyModified(*sortid,CHUNK_TYPE_ENEMY_STATS);
+		}
 	} else if (m_enemyspelllist->GetSelection()!=wxNOT_FOUND) {
-		EnemySpellDataStruct& ep = eb.spell[m_enemyspelllist->GetSelection()];
-		MACRO_FLAG_SET8(ep.element,wxID_SE)
-		MACRO_FLAG_SET8(ep.flag,wxID_SF)
-		MACRO_FLAG_SET(ep.target_flag,wxID_CAN_TARGET_DEAD,TARGET_FLAG_CAN_TARGET_DEAD)
-		MACRO_FLAG_SET(ep.target_flag,wxID_TARGET_CAMERA,TARGET_FLAG_CAMERA)
-		MACRO_FLAG_SET(ep.target_flag,wxID_TARGET_DEAD_FIRST,TARGET_FLAG_TARGET_DEAD_FIRST)
+		EnemySpellDataStruct& enmydata = eb.spell[m_enemyspelllist->GetSelection()];
+
+		#define MACRO_ENEMY_CHECK_SPELL_FLAG(SPELL) \
+			MACRO_FLAG_SET8(SPELL ## .element,wxID_SE) \
+			MACRO_FLAG_SET8(SPELL ## .flag,wxID_SF) \
+			MACRO_FLAG_SET(SPELL ## .target_flag,wxID_CAN_TARGET_DEAD,TARGET_FLAG_CAN_TARGET_DEAD) \
+			MACRO_FLAG_SET(SPELL ## .target_flag,wxID_TARGET_CAMERA,TARGET_FLAG_CAMERA) \
+			MACRO_FLAG_SET(SPELL ## .target_flag,wxID_TARGET_DEAD_FIRST,TARGET_FLAG_TARGET_DEAD_FIRST)
+
+		if (GetTopWindow()->m_editsimilarenemy->IsChecked()) {
+			unsigned int macroi,macronb,*macrobattleid;
+			EnemySpellDataStruct** macrolist = enemyset.GetSimilarEnemySpells(enmydata,&macronb,&macrobattleid);
+			for (macroi=0;macroi<macronb;macroi++) {
+				MACRO_ENEMY_CHECK_SPELL_FLAG(macrolist[macroi][0])
+				MarkDataEnemyModified(macrobattleid[macroi],CHUNK_TYPE_ENEMY_STATS);
+			}
+		} else {
+			MACRO_ENEMY_CHECK_SPELL_FLAG(enmydata)
+			MarkDataEnemyModified(*sortid,CHUNK_TYPE_ENEMY_STATS);
+		}
 	} else if (m_enemygrouplist->GetSelection()!=wxNOT_FOUND) {
 		EnemyGroupDataStruct& eg = eb.group[m_enemygrouplist->GetSelection()];
 		if (id==wxID_TARGETABLE1) {
@@ -4264,8 +4491,19 @@ void CDDataStruct::OnEnemyChangeButton(wxCommandEvent& event) {
 		EnemySpellDataStruct& ep = eb.spell[m_enemyspelllist->GetSelection()];
 		TextEditDialog ted(this,ep.name,eb.GetExtraSize());
 		if (ted.ShowModal()==wxID_OK) {
-			ep.SetName(ted.text);
-			m_enemyspellname->SetValue(ep.name.str);
+			if (GetTopWindow()->m_editsimilarenemy->IsChecked()) {
+				unsigned int i,nb,*similarbattleid;
+				EnemySpellDataStruct** similarspells = enemyset.GetSimilarEnemySpells(ep,&nb,&similarbattleid);
+				for (i=0;i<nb;i++) {
+					if (similarspells[i]->SetName(ted.text)) {
+						wxMessageDialog popup(this,HADES_STRING_GROUPEDIT_ERROR_TEXT,HADES_STRING_WARNING,wxOK|wxSTAY_ON_TOP|wxCENTRE);
+						popup.ShowModal();
+					}
+				}
+			} else {
+				ep.SetName(ted.text);
+			}
+			m_enemyspellname->ChangeValue(ep.name.str);
 		}
 	} else if (id==wxID_STATUS) {
 		EnemySpellDataStruct& ep = eb.spell[m_enemyspelllist->GetSelection()];
@@ -4317,12 +4555,48 @@ void CDDataStruct::OnEnemyChangeButton(wxCommandEvent& event) {
 		if (dial.ShowModal()==wxID_OK) {
 			for (unsigned int i=0;i<enemyset.battle_data[*sortid]->sequence_code_amount[spellsel];i++)
 				delete[] enemyset.battle_data[*sortid]->sequence_code[spellsel][i].arg;
-			delete[] enemyset.battle_data[*sortid]->sequence_code[spellsel];
 			enemyset.battle_data[*sortid]->sequence_code[spellsel] = dial.sequence_code;
 			enemyset.battle_data[*sortid]->sequence_code_amount[spellsel] = dial.sequence_code_amount;
 			MarkDataEnemyModified(*sortid,CHUNK_TYPE_BATTLE_DATA);
+			if (GetTopWindow()->m_editsimilarenemy->IsChecked() && !DiscardSimilarEnemyUnaffected) {
+				DiscardableMessageWindow popup(wxGetApp().GetTopWindow(),HADES_STRING_NOGROUPEDIT);
+				if (popup.ShowModal()==wxID_DISCARD)
+					DiscardSimilarEnemyUnaffected = true;
+			}
 		} else
 			enemyset.battle_data[*sortid]->SetSize(battlesize);
+	} else if (id==wxID_RESOURCES) {
+		int statsel = m_enemystatlist->GetSelection();
+		EnemyStatDataStruct& es = eb.stat[statsel];
+		BattleDataStruct& bd = *enemyset.battle_data[*sortid];
+		EnemyResourceDialog dial(this);
+		if (dial.ShowModal(es,bd)==wxID_OK) {
+			if (GetTopWindow()->m_editsimilarenemy->IsChecked()) {
+				unsigned int i,nb,*similarbattleid;
+				EnemyStatDataStruct** similarstats = enemyset.GetSimilarEnemyStats(es,&nb,&similarbattleid);
+				for (i=0;i<nb;i++) {
+					if (es.model!=similarstats[i]->model)
+						continue;
+					if (dial.ApplyModifications(*similarstats[i],*similarstats[i]->parent->parent->battle_data[similarstats[i]->parent->id])) {
+						if (GetGameType()!=GAME_TYPE_PSX)
+							MarkDataEnemyModified(similarbattleid[i],CHUNK_TYPE_BATTLE_DATA);
+					} else {
+						wxMessageDialog popup(this,HADES_STRING_GROUPEDIT_ERROR_DATA,HADES_STRING_WARNING,wxOK|wxSTAY_ON_TOP|wxCENTRE);
+						popup.ShowModal();
+					}
+					MarkDataEnemyModified(similarbattleid[i],CHUNK_TYPE_ENEMY_STATS);
+				}
+			} else {
+				if (dial.ApplyModifications(es,bd)) {
+					if (GetGameType()!=GAME_TYPE_PSX)
+						MarkDataEnemyModified(*sortid,CHUNK_TYPE_BATTLE_DATA);
+				} else {
+					wxMessageDialog popup(this,HADES_STRING_DATA_REACH_LIMIT,HADES_STRING_ERROR,wxOK|wxSTAY_ON_TOP|wxCENTRE);
+					popup.ShowModal();
+				}
+				MarkDataEnemyModified(*sortid,CHUNK_TYPE_ENEMY_STATS);
+			}
+		}
 	}
 }
 
@@ -5879,7 +6153,6 @@ void CDDataStruct::OnSpecialTextRightClickMenu(wxCommandEvent& event) {
 	int id = event.GetId();
 	SpecialTextDataStruct& td = ffuiset.special_text->text_block[sel];
 	int objid = m_specialtextdatalist->GetSelection();
-	unsigned int i;
 	int newsel = -1;
 	if (id==wxID_ADD) {
 		newsel = td.amount;

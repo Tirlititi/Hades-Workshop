@@ -104,7 +104,7 @@ public:
 	wstring multi_lang_str[STEAM_LANGUAGE_AMOUNT];
 	
 	FF9String();
-	FF9String(FF9String& cp);
+	FF9String(const FF9String& cp);
 	~FF9String();
 	void CreateEmpty();
 	void Read(fstream& ffbin, void (*ReadCharFunc)(fstream& fs,uint8_t& ch));
