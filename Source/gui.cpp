@@ -8326,6 +8326,200 @@ TextEditWindow::~TextEditWindow()
 	
 }
 
+TextSteamEditWindow::TextSteamEditWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	
+	wxFlexGridSizer* fgSizer98;
+	fgSizer98 = new wxFlexGridSizer( 0, 1, 0, 0 );
+	fgSizer98->SetFlexibleDirection( wxBOTH );
+	fgSizer98->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	wxGridBagSizer* gbSizer2;
+	gbSizer2 = new wxGridBagSizer( 0, 0 );
+	gbSizer2->SetFlexibleDirection( wxBOTH );
+	gbSizer2->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	m_textctrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 300,200 ), wxHSCROLL|wxTE_MULTILINE );
+	gbSizer2->Add( m_textctrl, wxGBPosition( 0, 0 ), wxGBSpan( 2, 2 ), wxALL|wxEXPAND, 0 );
+	
+	wxGridBagSizer* gbSizer49;
+	gbSizer49 = new wxGridBagSizer( 0, 0 );
+	gbSizer49->SetFlexibleDirection( wxBOTH );
+	gbSizer49->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	wxFlexGridSizer* fgSizer101;
+	fgSizer101 = new wxFlexGridSizer( 0, 3, 0, 0 );
+	fgSizer101->AddGrowableCol( 2 );
+	fgSizer101->SetFlexibleDirection( wxBOTH );
+	fgSizer101->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	m_multilangshowimg = new wxStaticBitmap( this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize( 16,16 ), 0 );
+	fgSizer101->Add( m_multilangshowimg, 0, wxALIGN_CENTER_VERTICAL, 5 );
+	
+	m_multilangtitle = new wxStaticText( this, wxID_ANY, _("Multi-Language Panel"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_multilangtitle->Wrap( -1 );
+	fgSizer101->Add( m_multilangtitle, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	m_langtranslateall = new wxButton( this, wxID_TRANSLATE, _("Auto-Translate All"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer101->Add( m_langtranslateall, 0, wxALIGN_RIGHT|wxALL, 5 );
+	
+	
+	gbSizer49->Add( fgSizer101, wxGBPosition( 0, 0 ), wxGBSpan( 1, 3 ), wxEXPAND, 5 );
+	
+	m_langname1 = new wxStaticText( this, wxID_ANY, _("English"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_langname1->Wrap( -1 );
+	gbSizer49->Add( m_langname1, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	m_langtext1 = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 400,30 ), wxTE_MULTILINE );
+	gbSizer49->Add( m_langtext1, wxGBPosition( 1, 1 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
+	
+	m_langtranslate1 = new wxButton( this, wxID_TRANSLATE, _("Auto-Translate"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer49->Add( m_langtranslate1, wxGBPosition( 1, 2 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	m_langname2 = new wxStaticText( this, wxID_ANY, _("Japanese"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_langname2->Wrap( -1 );
+	gbSizer49->Add( m_langname2, wxGBPosition( 2, 0 ), wxGBSpan( 1, 1 ), wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	m_langtext2 = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 400,30 ), wxTE_MULTILINE );
+	gbSizer49->Add( m_langtext2, wxGBPosition( 2, 1 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	m_langtranslate2 = new wxButton( this, wxID_TRANSLATE, _("Auto-Translate"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer49->Add( m_langtranslate2, wxGBPosition( 2, 2 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	m_langname3 = new wxStaticText( this, wxID_ANY, _("German"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_langname3->Wrap( -1 );
+	gbSizer49->Add( m_langname3, wxGBPosition( 3, 0 ), wxGBSpan( 1, 1 ), wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	m_langtext3 = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 400,30 ), wxTE_MULTILINE );
+	gbSizer49->Add( m_langtext3, wxGBPosition( 3, 1 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	m_langtranslate3 = new wxButton( this, wxID_TRANSLATE, _("Auto-Translate"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer49->Add( m_langtranslate3, wxGBPosition( 3, 2 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	m_langname4 = new wxStaticText( this, wxID_ANY, _("French"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_langname4->Wrap( -1 );
+	gbSizer49->Add( m_langname4, wxGBPosition( 4, 0 ), wxGBSpan( 1, 1 ), wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	m_langtext4 = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 400,30 ), wxTE_MULTILINE );
+	gbSizer49->Add( m_langtext4, wxGBPosition( 4, 1 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	m_langtranslate4 = new wxButton( this, wxID_TRANSLATE, _("Auto-Translate"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer49->Add( m_langtranslate4, wxGBPosition( 4, 2 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	m_langname5 = new wxStaticText( this, wxID_ANY, _("Italian"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_langname5->Wrap( -1 );
+	gbSizer49->Add( m_langname5, wxGBPosition( 5, 0 ), wxGBSpan( 1, 1 ), wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	m_langtext5 = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 400,30 ), wxTE_MULTILINE );
+	gbSizer49->Add( m_langtext5, wxGBPosition( 5, 1 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	m_langtranslate5 = new wxButton( this, wxID_TRANSLATE, _("Auto-Translate"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer49->Add( m_langtranslate5, wxGBPosition( 5, 2 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	m_langname6 = new wxStaticText( this, wxID_ANY, _("Spanish"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_langname6->Wrap( -1 );
+	gbSizer49->Add( m_langname6, wxGBPosition( 6, 0 ), wxGBSpan( 1, 1 ), wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	m_langtext6 = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 400,30 ), wxTE_MULTILINE );
+	gbSizer49->Add( m_langtext6, wxGBPosition( 6, 1 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	m_langtranslate6 = new wxButton( this, wxID_TRANSLATE, _("Auto-Translate"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer49->Add( m_langtranslate6, wxGBPosition( 6, 2 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	
+	gbSizer49->AddGrowableCol( 1 );
+	gbSizer49->AddGrowableRow( 1 );
+	gbSizer49->AddGrowableRow( 2 );
+	gbSizer49->AddGrowableRow( 3 );
+	gbSizer49->AddGrowableRow( 4 );
+	gbSizer49->AddGrowableRow( 5 );
+	gbSizer49->AddGrowableRow( 6 );
+	
+	gbSizer2->Add( gbSizer49, wxGBPosition( 2, 0 ), wxGBSpan( 1, 3 ), wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer28;
+	bSizer28 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_buttonbubble = new wxButton( this, wxID_BUBBLE, _("Auto-Size"), wxDefaultPosition, wxDefaultSize, wxNO_BORDER );
+	bSizer28->Add( m_buttonbubble, 0, wxALL, 2 );
+	
+	m_buttonset = new wxButton( this, wxID_SET, _("Apply"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer28->Add( m_buttonset, 0, wxALL, 2 );
+	
+	m_buttonopcodelist = new wxButton( this, wxID_HELP, _("Opcode List"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer28->Add( m_buttonopcodelist, 0, wxALL, 2 );
+	
+	
+	gbSizer2->Add( bSizer28, wxGBPosition( 1, 2 ), wxGBSpan( 1, 1 ), wxALIGN_BOTTOM, 5 );
+	
+	m_richtextctrl = new PreviewTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY|wxVSCROLL|wxHSCROLL|wxNO_BORDER|wxWANTS_CHARS );
+	m_richtextctrl->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_APPWORKSPACE ) );
+	
+	gbSizer2->Add( m_richtextctrl, wxGBPosition( 0, 2 ), wxGBSpan( 1, 1 ), wxEXPAND | wxALL, 2 );
+	
+	
+	gbSizer2->AddGrowableCol( 0 );
+	gbSizer2->AddGrowableRow( 0 );
+	
+	fgSizer98->Add( gbSizer2, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer20;
+	bSizer20 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_buttoncancel = new wxButton( this, wxID_CANCEL, _("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer20->Add( m_buttoncancel, 0, wxALL, 5 );
+	
+	m_buttonok = new wxButton( this, wxID_OK, _("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer20->Add( m_buttonok, 0, wxALL, 5 );
+	
+	
+	fgSizer98->Add( bSizer20, 1, wxALIGN_RIGHT, 5 );
+	
+	
+	this->SetSizer( fgSizer98 );
+	this->Layout();
+	fgSizer98->Fit( this );
+	
+	this->Centre( wxBOTH );
+	
+	// Connect Events
+	m_textctrl->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( TextSteamEditWindow::OnTextEdit ), NULL, this );
+	m_multilangshowimg->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( TextSteamEditWindow::OnShowHideLocalVar ), NULL, this );
+	m_multilangtitle->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( TextSteamEditWindow::OnShowHideLocalVar ), NULL, this );
+	m_langtext1->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( TextSteamEditWindow::OnTextEdit ), NULL, this );
+	m_langtext2->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( TextSteamEditWindow::OnTextEdit ), NULL, this );
+	m_langtext3->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( TextSteamEditWindow::OnTextEdit ), NULL, this );
+	m_langtext4->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( TextSteamEditWindow::OnTextEdit ), NULL, this );
+	m_langtext5->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( TextSteamEditWindow::OnTextEdit ), NULL, this );
+	m_langtext6->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( TextSteamEditWindow::OnTextEdit ), NULL, this );
+	m_buttonbubble->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( TextSteamEditWindow::OnButtonClick ), NULL, this );
+	m_buttonset->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( TextSteamEditWindow::OnButtonClick ), NULL, this );
+	m_buttonopcodelist->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( TextSteamEditWindow::OnButtonClick ), NULL, this );
+	m_buttoncancel->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( TextSteamEditWindow::OnButtonClick ), NULL, this );
+	m_buttonok->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( TextSteamEditWindow::OnButtonClick ), NULL, this );
+}
+
+TextSteamEditWindow::~TextSteamEditWindow()
+{
+	// Disconnect Events
+	m_textctrl->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( TextSteamEditWindow::OnTextEdit ), NULL, this );
+	m_multilangshowimg->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( TextSteamEditWindow::OnShowHideLocalVar ), NULL, this );
+	m_multilangtitle->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( TextSteamEditWindow::OnShowHideLocalVar ), NULL, this );
+	m_langtext1->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( TextSteamEditWindow::OnTextEdit ), NULL, this );
+	m_langtext2->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( TextSteamEditWindow::OnTextEdit ), NULL, this );
+	m_langtext3->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( TextSteamEditWindow::OnTextEdit ), NULL, this );
+	m_langtext4->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( TextSteamEditWindow::OnTextEdit ), NULL, this );
+	m_langtext5->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( TextSteamEditWindow::OnTextEdit ), NULL, this );
+	m_langtext6->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( TextSteamEditWindow::OnTextEdit ), NULL, this );
+	m_buttonbubble->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( TextSteamEditWindow::OnButtonClick ), NULL, this );
+	m_buttonset->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( TextSteamEditWindow::OnButtonClick ), NULL, this );
+	m_buttonopcodelist->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( TextSteamEditWindow::OnButtonClick ), NULL, this );
+	m_buttoncancel->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( TextSteamEditWindow::OnButtonClick ), NULL, this );
+	m_buttonok->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( TextSteamEditWindow::OnButtonClick ), NULL, this );
+	
+}
+
 TextOpcodeWindow::TextOpcodeWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
 {
 	this->SetSizeHints( wxSize( -1,-1 ), wxDefaultSize );

@@ -27,9 +27,9 @@ long StrFindN(wxString str, wchar_t c, int n) {
 	}
 	return pos+nbline;
 }
-void UnknownTextOp(TextEditDialog* dialog, uint8_t* args) {
+void UnknownTextOp(TextEditDialogBase* dialog, uint8_t* args) {
 }
-void SpeedTextOp(TextEditDialog* dialog, uint8_t* args) {
+void SpeedTextOp(TextEditDialogBase* dialog, uint8_t* args) {
 	if (args[0]==0x02)
 		dialog->wait = args[1]>0 ? 320/args[1] : 0xFFFF;
 	else if (args[0]==0x0C)
@@ -40,30 +40,29 @@ void SpeedTextOp(TextEditDialog* dialog, uint8_t* args) {
 		dialog->wait = DEFAULT_SPEED;
 	dialog->timer->Start(dialog->wait);
 }
-void PartyNTextOp(TextEditDialog* dialog, uint8_t* args) {
-	static wxString GTE_PARTYNAMES[] = { L"Zidane", L"Vivi", L"Dagger", L"Steiner", L"Freya", L"Quina", L"Eiko", L"Tarask", L"Zidane", L"Vivi", L"Steiner", L"Dagger" };
-	dialog->m_richtextctrl->WriteText(GTE_PARTYNAMES[args[0]-0x10]);
+void PartyNTextOp(TextEditDialogBase* dialog, uint8_t* args) {
+	dialog->preview_ctrl->WriteText(HADES_STRING_CHARACTER_DEFAULT_NAME[args[0]-0x10]);
 }
-void ColorTextOp(TextEditDialog* dialog, uint8_t* args) {
+void ColorTextOp(TextEditDialogBase* dialog, uint8_t* args) {
 	static uint8_t GTE_COLORS[][3] = { {255,255,255}, {220,220,220}, {127,127,127}, {255,0,0}, {255,255,0}, {0,127,255}, {255,0,127}, {0,255,0}, {0,0,0}, {255,0,0} };
 	dialog->text_colour.Set(GTE_COLORS[args[0]-0x20][0],GTE_COLORS[args[0]-0x20][1],GTE_COLORS[args[0]-0x20][2]);
-	dialog->m_richtextctrl->BeginTextColour(dialog->text_colour);
+	dialog->preview_ctrl->BeginTextColour(dialog->text_colour);
 }
-void VarTextOp(TextEditDialog* dialog, uint8_t* args) {
+void VarTextOp(TextEditDialogBase* dialog, uint8_t* args) {
 	if (args[0]==0x06)
-		dialog->m_richtextctrl->WriteText(_("TOKEN"));
+		dialog->preview_ctrl->WriteText(_("TOKEN"));
 	else if (args[0]==0x0E)
-		dialog->m_richtextctrl->WriteText(_("ITEM"));
+		dialog->preview_ctrl->WriteText(_("ITEM"));
 	else if (args[0]==0x40)
-		dialog->m_richtextctrl->WriteText(_("0"));
+		dialog->preview_ctrl->WriteText(_("0"));
 	else if (args[0]==0x68)
-		dialog->m_richtextctrl->WriteText(_("0"));
+		dialog->preview_ctrl->WriteText(_("0"));
 	else if (args[0]==0x69)
-		dialog->m_richtextctrl->WriteText(_("TEXT"));
+		dialog->preview_ctrl->WriteText(_("TEXT"));
 	else if (args[0]==0x6C)
-		dialog->m_richtextctrl->WriteText(_("0"));
+		dialog->preview_ctrl->WriteText(_("0"));
 }
-void ButtonOp(TextEditDialog* dialog, uint8_t* args) {
+void ButtonOp(TextEditDialogBase* dialog, uint8_t* args) {
 	static wxBitmap GTE_BUTTONS[] = {
 		InitButton(wxBITMAP(buttoncircle_image)), InitButton(wxBITMAP(buttoncross_image)), InitButton(wxBITMAP(buttontriangle_image)), InitButton(wxBITMAP(buttonsquare_image)),
 		InitButton(wxBITMAP(buttonl1_image)), InitButton(wxBITMAP(buttonr1_image)), InitButton(wxBITMAP(buttonl2_image)), InitButton(wxBITMAP(buttonr2_image)),
@@ -74,14 +73,14 @@ void ButtonOp(TextEditDialog* dialog, uint8_t* args) {
 	};
 	static wxBitmap GTE_NEW = InitButton(wxBITMAP(indicatornew_image));
 	if (args[0]==0x2F)
-		dialog->m_richtextctrl->WriteImage(GTE_BUTTONS[0x10]);
+		dialog->preview_ctrl->WriteImage(GTE_BUTTONS[0x10]);
 	else if (args[0]==0x70)
-		dialog->m_richtextctrl->WriteImage(GTE_NEW);
+		dialog->preview_ctrl->WriteImage(GTE_NEW);
 	else
-		dialog->m_richtextctrl->WriteImage(GTE_BUTTONS[args[0]%0x30]);
+		dialog->preview_ctrl->WriteImage(GTE_BUTTONS[args[0]%0x30]);
 }
 
-void (*TextOp[256])(TextEditDialog* dialog, uint8_t* args) = {
+void (*TextOp[256])(TextEditDialogBase* dialog, uint8_t* args) = {
 	&UnknownTextOp,	&UnknownTextOp,	&SpeedTextOp,	&UnknownTextOp,	&UnknownTextOp,	&UnknownTextOp,	&VarTextOp,		&UnknownTextOp,	&UnknownTextOp,	&UnknownTextOp,	&UnknownTextOp,	&UnknownTextOp,	&SpeedTextOp,	&UnknownTextOp,	&VarTextOp,		&UnknownTextOp,
 	&PartyNTextOp,	&PartyNTextOp,	&PartyNTextOp,	&PartyNTextOp,	&PartyNTextOp,	&PartyNTextOp,	&PartyNTextOp,	&PartyNTextOp,	&PartyNTextOp,	&PartyNTextOp,	&PartyNTextOp,	&PartyNTextOp,	&UnknownTextOp,	&UnknownTextOp,	&UnknownTextOp,	&UnknownTextOp,
 	&ColorTextOp,	&ColorTextOp,	&ColorTextOp,	&ColorTextOp,	&ColorTextOp,	&ColorTextOp,	&ColorTextOp,	&ColorTextOp,	&ColorTextOp,	&ColorTextOp,	&UnknownTextOp,	&UnknownTextOp,	&UnknownTextOp,	&UnknownTextOp,	&UnknownTextOp,	&ButtonOp,
@@ -102,11 +101,9 @@ void (*TextOp[256])(TextEditDialog* dialog, uint8_t* args) = {
 
 TextEditDialog::TextEditDialog(wxWindow* parent, FF9String& str, unsigned int extrasize, int style, CharmapDataStruct* chmap, CharmapDataStruct* chmapext, int sizex, int sizey, uint16_t formatamount, TextFormatStruct* format) :
 	TextEditWindow(parent),
-	text(str),
+	TextEditDialogBase(str,new wxTimer(this),m_richtextctrl,style),
 	charmap(chmap),
 	charmap_Ext(chmapext),
-	timer(new wxTimer(this)),
-	text_style(style),
 	op_dial(NULL) {
 	max_length = str.length+extrasize;
 	format_amount = formatamount;
@@ -145,21 +142,19 @@ int TextEditDialog::ShowModal() {
 
 bool TextEditDialog::ProcessPreviewText() {
 	wstring::size_type len = text.str.length();
-	m_richtextctrl->SetInsertionPointEnd();
-	m_richtextctrl->BeginTextColour(text_colour);
-	if (GetGameType()==GAME_TYPE_PSX) {
-		while (str_pos<len && text.str[str_pos]==text.opcode_wchar) {
-			str_pos++;
-			TextOp[text.code_arg[code_pos][0]](this,text.code_arg[code_pos++]);
-		}
+	preview_ctrl->SetInsertionPointEnd();
+	preview_ctrl->BeginTextColour(text_colour);
+	while (str_pos<len && text.str[str_pos]==text.opcode_wchar) {
+		str_pos++;
+		TextOp[text.code_arg[code_pos][0]](this,text.code_arg[code_pos++]);
 	}
 	if (str_pos<len) {
 		if (text.str[str_pos]==NEW_PAGE_CHAR) {
 			Sleep(500);
-			m_richtextctrl->Clear();
+			preview_ctrl->Clear();
 			str_pos++;
 		} else
-			m_richtextctrl->WriteText(_(text.str[str_pos++]));
+			preview_ctrl->WriteText(_(text.str[str_pos++]));
 		if (str_pos>=len)
 			timer->Stop();
 	} else {
@@ -169,7 +164,7 @@ bool TextEditDialog::ProcessPreviewText() {
 }
 
 void TextEditDialog::PreviewText() {
-	m_richtextctrl->Clear();
+	preview_ctrl->Clear();
 	if (text_style==TEXT_STYLE_DEFAULT)
 		text_colour.Set(255,255,255);
 	else
@@ -190,7 +185,7 @@ void TextEditDialog::RefreshOpcodeList() {
 			j++;
 		}
 	for (i=0;i<text.code_amount;i++)
-		m_opcodelist->Append(_(HADES_STRING_TEXT_OPCODE[text.code_arg[i][0]].label));
+		m_opcodelist->Append(_(L"["+HADES_STRING_TEXT_OPCODE[text.code_arg[i][0]].label+L"]"));
 }
 
 void TextEditDialog::CalculateBestSize(bool x, bool y) {
@@ -239,16 +234,16 @@ void TextEditDialog::OnButtonClick(wxCommandEvent& event) {
 		int sel = m_opcodelist->GetSelection();
 		if (sel!=wxNOT_FOUND && sel>format_amount) {
 			text.PermuteCode(sel-format_amount,sel-format_amount-1);
-			m_opcodelist->SetString(sel,_(HADES_STRING_TEXT_OPCODE[text.code_arg[sel-format_amount][0]].label));
-			m_opcodelist->SetString(sel-1,_(HADES_STRING_TEXT_OPCODE[text.code_arg[sel-format_amount-1][0]].label));
+			m_opcodelist->SetString(sel,_(L"["+HADES_STRING_TEXT_OPCODE[text.code_arg[sel-format_amount][0]].label+L"]"));
+			m_opcodelist->SetString(sel-1,_(L"["+HADES_STRING_TEXT_OPCODE[text.code_arg[sel-format_amount-1][0]].label+L"]"));
 			m_opcodelist->SetSelection(sel-1);
 		}
 	} else if (id==wxID_DOWN) {
 		int sel = m_opcodelist->GetSelection();
 		if (sel!=wxNOT_FOUND && sel!=text.code_amount+format_amount-1 && sel>=format_amount) {
 			text.PermuteCode(sel-format_amount,sel-format_amount+1);
-			m_opcodelist->SetString(sel,_(HADES_STRING_TEXT_OPCODE[text.code_arg[sel-format_amount][0]].label));
-			m_opcodelist->SetString(sel+1,_(HADES_STRING_TEXT_OPCODE[text.code_arg[sel-format_amount+1][0]].label));
+			m_opcodelist->SetString(sel,_(L"["+HADES_STRING_TEXT_OPCODE[text.code_arg[sel-format_amount][0]].label+L"]"));
+			m_opcodelist->SetString(sel+1,_(L"["+HADES_STRING_TEXT_OPCODE[text.code_arg[sel-format_amount+1][0]].label+L"]"));
 			m_opcodelist->SetSelection(sel+1);
 		}
 	} else if (id==wxID_ADD) {
@@ -311,6 +306,123 @@ void TextEditDialog::OnOpcodeEdit(wxCommandEvent& event) {
 }
 
 void TextEditDialog::OnTimer(wxTimerEvent& event) {
+	ProcessPreviewText();
+}
+
+TextSteamEditDialog::TextSteamEditDialog(wxWindow* parent, FF9String& str, int style) :
+	TextSteamEditWindow(parent),
+	TextEditDialogBase(str,new wxTimer(this),m_richtextctrl,style) {
+	SteamLanguage lang;
+	unsigned int i = 0;
+	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+		if (lang!=GetSteamLanguage() && text.multi_lang_init[lang])
+			multilang[i++] = lang;
+	if (i<STEAM_LANGUAGE_AMOUNT)
+		multilang[i] = STEAM_LANGUAGE_NONE;
+	has_multilang = i>0;
+	multilangname[0] = m_langname1;		multilangname[1] = m_langname2;		multilangname[2] = m_langname3;
+	multilangname[3] = m_langname4;		multilangname[4] = m_langname5;		multilangname[5] = m_langname6;
+	multilangctrl[0] = m_langtext1;		multilangctrl[1] = m_langtext2;		multilangctrl[2] = m_langtext3;
+	multilangctrl[3] = m_langtext4;		multilangctrl[4] = m_langtext5;		multilangctrl[5] = m_langtext6;
+	multilangbtn[0] = m_langtranslate1;	multilangbtn[1] = m_langtranslate2;	multilangbtn[2] = m_langtranslate3;
+	multilangbtn[3] = m_langtranslate4;	multilangbtn[4] = m_langtranslate5;	multilangbtn[5] = m_langtranslate6;
+	if (has_multilang) {
+		for (i=0;i+1<STEAM_LANGUAGE_AMOUNT && multilang[i]!=STEAM_LANGUAGE_NONE;i++) {
+			multilangname[i]->SetLabelText(HADES_STRING_STEAM_LANGUAGE_LONG_NAME[multilang[i]]);
+			multilangctrl[i]->ChangeValue(text.multi_lang_str[multilang[i]]);
+		}
+		while (i+1<STEAM_LANGUAGE_AMOUNT) {
+			multilangname[i]->SetLabelText(_(HADES_STRING_GENERIC_UNUSED));
+			multilangname[i]->Enable(false);
+			multilangctrl[i]->Enable(false);
+			multilangbtn[i]->Enable(false);
+		}
+	} else {
+	}
+	Connect(wxEVT_TIMER,wxTimerEventHandler(TextSteamEditDialog::OnTimer),NULL,this);
+}
+
+TextSteamEditDialog::~TextSteamEditDialog() {
+	Disconnect(wxEVT_TIMER,wxTimerEventHandler(TextSteamEditDialog::OnTimer),NULL,this);
+	delete timer;
+}
+
+int TextSteamEditDialog::ShowModal() {
+	m_buttonok->SetFocus();
+	m_textctrl->ChangeValue(_(text.str));
+	PreviewText();
+	return wxDialog::ShowModal();
+}
+
+bool TextSteamEditDialog::ProcessPreviewText() {
+	wstring::size_type len = text.str.length();
+	preview_ctrl->SetInsertionPointEnd();
+	preview_ctrl->BeginTextColour(text_colour);
+	if (str_pos<len) {
+		if (text.str[str_pos]==L'[') {
+			wstring::size_type opcodelen;
+			str_pos++;
+			for (opcodelen=0;str_pos+opcodelen<text.str.length();opcodelen++)
+				if (text.str[str_pos+opcodelen]==L']')
+					break;
+			if (str_pos+opcodelen<text.str.length()) {
+				wxString opcodestr = _(text.str.substr(str_pos,opcodelen));
+				str_pos += opcodelen+1;
+				// TODO
+			} else
+				preview_ctrl->WriteText(_(text.str[str_pos-1]));
+		} else
+			preview_ctrl->WriteText(_(text.str[str_pos++]));
+		if (str_pos>=len)
+			timer->Stop();
+	} else {
+		timer->Stop();
+	}
+	return str_pos<len;
+}
+
+void TextSteamEditDialog::PreviewText() {
+	preview_ctrl->Clear();
+	if (text_style==TEXT_STYLE_DEFAULT)
+		text_colour.Set(255,255,255);
+	else
+		text_colour.Set(0,0,0);
+	str_pos = 0;
+	choice_pos = 0;
+	wait = DEFAULT_SPEED;
+	timer->Start(wait);
+}
+
+void TextSteamEditDialog::CalculateBestSize() {
+	uint16_t sizex, sizey;
+	// TODO
+}
+
+void TextSteamEditDialog::OnButtonClick(wxCommandEvent& event) {
+	int id = event.GetId();
+	if (id==wxID_PREVIEW)
+		PreviewText();
+	else if (id==wxID_SET) {
+		text.SetValue(m_textctrl->GetValue().ToStdWstring());
+		m_textctrl->ChangeValue(_(text.str));
+		PreviewText();
+	} else if (id==wxID_BUBBLE) {
+		text.SetValue(m_textctrl->GetValue().ToStdWstring());
+		CalculateBestSize();
+	} else if (id==wxID_HELP) {
+		// TODO
+	} else if (id==wxID_TRANSLATE) {
+		// TODO
+	} else {
+		unsigned int i;
+		text.SetValue(m_textctrl->GetValue().ToStdWstring());
+		for (i=0;i+1<STEAM_LANGUAGE_AMOUNT && multilang[i]!=STEAM_LANGUAGE_NONE;i++)
+			text.multi_lang_str[multilang[i]] = multilangctrl[i]->GetValue().ToStdWstring();
+		EndModal(id);
+	}
+}
+
+void TextSteamEditDialog::OnTimer(wxTimerEvent& event) {
 	ProcessPreviewText();
 }
 

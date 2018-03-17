@@ -112,7 +112,7 @@ FF9String::FF9String(const FF9String& cp) :
 	charmap_B(cp.charmap_B),
 	charmap_Ext(cp.charmap_Ext),
 	opcode_wchar(cp.opcode_wchar) {
-	if (GetGameType()==GAME_TYPE_PSX) { // DEBUG
+	if (GetGameType()==GAME_TYPE_PSX) { // DEBUG ; maybe use a check on the str instead
 		raw = new uint8_t[length];
 		code_arg_length = new uint8_t[code_amount];
 		code_arg = new uint8_t*[code_amount];
@@ -177,37 +177,39 @@ void FF9String::Read(fstream& ffbin,void (*ReadCharFunc)(fstream& fs,uint8_t& ch
 	ReadCharFunc(ffbin,tmpstr[length++]);
 	while (tmpstr[length-1]!=0xFF) {
 		if (tmpstr[length-1]==OPCODE_CHAR) {
-			str += opcode_wchar;
-			i = 0;
 			ReadCharFunc(ffbin,tmpstr[length++]);
-			tmparg[code_amount][i++] = tmpstr[length-1];
-			opcode = tmpstr[length-1];
-			if (HADES_STRING_TEXT_OPCODE[opcode].length!=-1) {
-				tmparglen[code_amount] = HADES_STRING_TEXT_OPCODE[opcode].length+1;
-			} else if (opcode==0x04) { // TOKENIZE
-				ReadCharFunc(ffbin,tmpstr[length++]);
+			if (tmpstr[length-1]<G_N_ELEMENTS(HADES_STRING_TEXT_OPCODE)) {
+				str += opcode_wchar;
+				i = 0;
 				tmparg[code_amount][i++] = tmpstr[length-1];
-				tmparglen[code_amount] = 2+tmpstr[length-1]*2;
-			} else if (opcode==0x48) { // 0x48
-				ReadCharFunc(ffbin,tmpstr[length++]);
-				tmparg[code_amount][i++] = tmpstr[length-1];
-				ReadCharFunc(ffbin,tmpstr[length++]);
-				tmparglen[code_amount] = 3;
-				while (tmpstr[length-1]!=0xFF) {
-					tmparg[code_amount][i++] = tmpstr[length-1];
-					tmparglen[code_amount]++;
+				opcode = tmpstr[length-1];
+				if (HADES_STRING_TEXT_OPCODE[opcode].length!=-1) {
+					tmparglen[code_amount] = HADES_STRING_TEXT_OPCODE[opcode].length+1;
+				} else if (opcode==0x04) { // TOKENIZE
 					ReadCharFunc(ffbin,tmpstr[length++]);
+					tmparg[code_amount][i++] = tmpstr[length-1];
+					tmparglen[code_amount] = 2+tmpstr[length-1]*2;
+				} else if (opcode==0x48) { // 0x48
+					ReadCharFunc(ffbin,tmpstr[length++]);
+					tmparg[code_amount][i++] = tmpstr[length-1];
+					ReadCharFunc(ffbin,tmpstr[length++]);
+					tmparglen[code_amount] = 3;
+					while (tmpstr[length-1]!=0xFF) {
+						tmparg[code_amount][i++] = tmpstr[length-1];
+						tmparglen[code_amount]++;
+						ReadCharFunc(ffbin,tmpstr[length++]);
+					}
+					tmparg[code_amount][i++] = tmpstr[length-1];
 				}
-				tmparg[code_amount][i++] = tmpstr[length-1];
-			}
-			while (i<tmparglen[code_amount]) {
-				ReadCharFunc(ffbin,tmpstr[length++]);
-				tmparg[code_amount][i++] = tmpstr[length-1];
-			}
-			code_amount++;
-			if (opcode==0x01 || opcode==0x09) {
-				null_terminated = 0;
-				break;
+				while (i<tmparglen[code_amount]) {
+					ReadCharFunc(ffbin,tmpstr[length++]);
+					tmparg[code_amount][i++] = tmpstr[length-1];
+				}
+				code_amount++;
+				if (opcode==0x01 || opcode==0x09) {
+					null_terminated = 0;
+					break;
+				}
 			}
 		} else if (tmpstr[length-1]==CHARMAP_A_CODECHAR) {
 			ReadCharFunc(ffbin,tmpstr[length++]);
@@ -500,7 +502,7 @@ void FF9String::GenerateStrExt() {
 		str_nice = L"";
 		for (i=0;i<len;i++) {
 			if (str[i]==opcode_wchar) {
-				str_ext += HADES_STRING_TEXT_OPCODE[code_arg[codei][0]].label;
+				str_ext += L"["+HADES_STRING_TEXT_OPCODE[code_arg[codei][0]].label+L"]";
 				str_nice += HADES_STRING_TEXT_OPCODE[code_arg[codei++][0]].converted;
 			} else {
 				str_ext += str[i];
@@ -509,6 +511,7 @@ void FF9String::GenerateStrExt() {
 		}
 	} else { // ToDo: improve that (opcode formats are in NGUIText.cs)
 		wstring opcodestr;
+		unsigned int j;
 		str_ext = str;
 		str_nice = L"";
 		for (i=0;i<len;i++) {
@@ -521,22 +524,9 @@ void FF9String::GenerateStrExt() {
 					i++;
 				if (i>=len)
 					break;
-				if (opcodestr.compare(L"ZDNE")==0)
-					str_nice += HADES_STRING_TEXT_OPCODE[0x10].converted;
-				else if (opcodestr.compare(L"VIVI")==0)
-					str_nice += HADES_STRING_TEXT_OPCODE[0x11].converted;
-				else if (opcodestr.compare(L"DGGR")==0)
-					str_nice += HADES_STRING_TEXT_OPCODE[0x12].converted;
-				else if (opcodestr.compare(L"STNR")==0)
-					str_nice += HADES_STRING_TEXT_OPCODE[0x13].converted;
-				else if (opcodestr.compare(L"FRYA")==0)
-					str_nice += HADES_STRING_TEXT_OPCODE[0x14].converted;
-				else if (opcodestr.compare(L"QUIN")==0)
-					str_nice += HADES_STRING_TEXT_OPCODE[0x15].converted;
-				else if (opcodestr.compare(L"EIKO")==0)
-					str_nice += HADES_STRING_TEXT_OPCODE[0x16].converted;
-				else if (opcodestr.compare(L"AMRT")==0)
-					str_nice += HADES_STRING_TEXT_OPCODE[0x17].converted;
+				for (j=0;j<TEXT_OPCODE_FORMAT_TYPE;j++)
+					if (opcodestr.compare(HADES_STRING_TEXT_OPCODE[j].label)==0)
+						str_nice += HADES_STRING_TEXT_OPCODE[j].converted;
 			} else {
 				str_nice += str[i];
 			}

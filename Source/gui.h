@@ -498,122 +498,123 @@ class PreviewTextCtrl;
 #define wxID_ASSEMBLY 1439
 #define wxID_SET 1440
 #define wxID_BUBBLE 1441
-#define wxID_OPCODE 1442
-#define wxID_DEFAULTARG1 1443
-#define wxID_DEFAULTARG2 1444
-#define wxID_DEFAULTARG3 1445
-#define wxID_TOKENIZE 1446
-#define wxID_48 1447
-#define wxID_PALETTE 1448
-#define wxID_PALSEL 1449
-#define wxID_MODIFY 1450
-#define wxID_IMPORT 1451
-#define wxID_POSX 1452
-#define wxID_POSY 1453
-#define wxID_SIZEX 1454
-#define wxID_SIZEY 1455
-#define wxID_TILE 1456
-#define wxID_EXPORT 1457
-#define wxID_INT 1458
-#define wxID_LONG 1459
-#define wxID_HEXA 1460
-#define wxID_BUTTON 1461
-#define wxID_LIST 1462
-#define wxID_SPLIST 1463
-#define wxID_STATUSA 1464
-#define wxID_STATUSB 1465
-#define wxID_FBACK 1466
-#define wxID_FWALK 1467
-#define wxID_PARSE 1468
-#define wxID_FUNCTION 1469
-#define wxID_VARIABLE 1470
-#define wxID_VARCODE 1471
-#define wxID_TYPE 1472
-#define wxID_FULLLIST 1473
-#define wxID_MAPLIST 1474
-#define wxID_SORTLAYER 1475
-#define wxID_REVERTLAYER 1476
-#define wxID_FORMAT 1477
-#define wxID_MASSFORMAT 1478
-#define wxID_REOPEN 1479
-#define wxID_PDATA11 1480
-#define wxID_PDATA12 1481
-#define wxID_PDATA13 1482
-#define wxID_PDATA14 1483
-#define wxID_PDATA15 1484
-#define wxID_PDATA16 1485
-#define wxID_PDATA17 1486
-#define wxID_PDATA18 1487
-#define wxID_PDATA19 1488
-#define wxID_PDATA2 1489
-#define wxID_PDATA3 1490
-#define wxID_PDATA4 1491
-#define wxID_PDATA5 1492
-#define wxID_PDATA61 1493
-#define wxID_PDATA62 1494
-#define wxID_PDATA63 1495
-#define wxID_PDATA7 1496
-#define wxID_LEVEL0 1497
-#define wxID_LEVEL1 1498
-#define wxID_LEVEL2 1499
-#define wxID_LEVEL3 1500
-#define wxID_LEVEL4 1501
-#define wxID_LEVEL5 1502
-#define wxID_LEVEL6 1503
-#define wxID_LEVEL7 1504
-#define wxID_LEVEL8 1505
-#define wxID_LEVEL9 1506
-#define wxID_LEVEL10 1507
-#define wxID_LEVEL11 1508
-#define wxID_LEVEL12 1509
-#define wxID_LEVEL13 1510
-#define wxID_LEVEL14 1511
-#define wxID_LEVEL15 1512
-#define wxID_LEVEL16 1513
-#define wxID_LEVEL17 1514
-#define wxID_LEVEL18 1515
-#define wxID_LEVEL19 1516
-#define wxID_LEVEL20 1517
-#define wxID_LEVEL21 1518
-#define wxID_LEVEL22 1519
-#define wxID_LEVEL23 1520
-#define wxID_LEVEL24 1521
-#define wxID_LEVEL25 1522
-#define wxID_LEVEL26 1523
-#define wxID_LEVEL27 1524
-#define wxID_MAINDATA 1525
-#define wxID_SHARED0 1526
-#define wxID_SHARED1 1527
-#define wxID_SHARED2 1528
-#define wxID_SHARED3 1529
-#define wxID_SHARED4 1530
-#define wxID_SHARED5 1531
-#define wxID_SHARED6 1532
-#define wxID_SHARED7 1533
-#define wxID_SHARED8 1534
-#define wxID_SHARED9 1535
-#define wxID_SHARED10 1536
-#define wxID_SHARED11 1537
-#define wxID_SHARED12 1538
-#define wxID_SHARED13 1539
-#define wxID_SHARED14 1540
-#define wxID_SHARED15 1541
-#define wxID_SHARED16 1542
-#define wxID_SHARED17 1543
-#define wxID_SHARED18 1544
-#define wxID_SHARED19 1545
-#define wxID_SHARED20 1546
-#define wxID_SHARED21 1547
-#define wxID_SHARED22 1548
-#define wxID_SHARED23 1549
-#define wxID_SHARED24 1550
-#define wxID_SHARED25 1551
-#define wxID_SHARED26 1552
-#define wxID_SHARED27 1553
-#define wxID_SHARED28 1554
-#define wxID_PATH 1555
-#define wxID_FOLDER64 1556
-#define wxID_FOLDER86 1557
+#define wxID_TRANSLATE 1442
+#define wxID_OPCODE 1443
+#define wxID_DEFAULTARG1 1444
+#define wxID_DEFAULTARG2 1445
+#define wxID_DEFAULTARG3 1446
+#define wxID_TOKENIZE 1447
+#define wxID_48 1448
+#define wxID_PALETTE 1449
+#define wxID_PALSEL 1450
+#define wxID_MODIFY 1451
+#define wxID_IMPORT 1452
+#define wxID_POSX 1453
+#define wxID_POSY 1454
+#define wxID_SIZEX 1455
+#define wxID_SIZEY 1456
+#define wxID_TILE 1457
+#define wxID_EXPORT 1458
+#define wxID_INT 1459
+#define wxID_LONG 1460
+#define wxID_HEXA 1461
+#define wxID_BUTTON 1462
+#define wxID_LIST 1463
+#define wxID_SPLIST 1464
+#define wxID_STATUSA 1465
+#define wxID_STATUSB 1466
+#define wxID_FBACK 1467
+#define wxID_FWALK 1468
+#define wxID_PARSE 1469
+#define wxID_FUNCTION 1470
+#define wxID_VARIABLE 1471
+#define wxID_VARCODE 1472
+#define wxID_TYPE 1473
+#define wxID_FULLLIST 1474
+#define wxID_MAPLIST 1475
+#define wxID_SORTLAYER 1476
+#define wxID_REVERTLAYER 1477
+#define wxID_FORMAT 1478
+#define wxID_MASSFORMAT 1479
+#define wxID_REOPEN 1480
+#define wxID_PDATA11 1481
+#define wxID_PDATA12 1482
+#define wxID_PDATA13 1483
+#define wxID_PDATA14 1484
+#define wxID_PDATA15 1485
+#define wxID_PDATA16 1486
+#define wxID_PDATA17 1487
+#define wxID_PDATA18 1488
+#define wxID_PDATA19 1489
+#define wxID_PDATA2 1490
+#define wxID_PDATA3 1491
+#define wxID_PDATA4 1492
+#define wxID_PDATA5 1493
+#define wxID_PDATA61 1494
+#define wxID_PDATA62 1495
+#define wxID_PDATA63 1496
+#define wxID_PDATA7 1497
+#define wxID_LEVEL0 1498
+#define wxID_LEVEL1 1499
+#define wxID_LEVEL2 1500
+#define wxID_LEVEL3 1501
+#define wxID_LEVEL4 1502
+#define wxID_LEVEL5 1503
+#define wxID_LEVEL6 1504
+#define wxID_LEVEL7 1505
+#define wxID_LEVEL8 1506
+#define wxID_LEVEL9 1507
+#define wxID_LEVEL10 1508
+#define wxID_LEVEL11 1509
+#define wxID_LEVEL12 1510
+#define wxID_LEVEL13 1511
+#define wxID_LEVEL14 1512
+#define wxID_LEVEL15 1513
+#define wxID_LEVEL16 1514
+#define wxID_LEVEL17 1515
+#define wxID_LEVEL18 1516
+#define wxID_LEVEL19 1517
+#define wxID_LEVEL20 1518
+#define wxID_LEVEL21 1519
+#define wxID_LEVEL22 1520
+#define wxID_LEVEL23 1521
+#define wxID_LEVEL24 1522
+#define wxID_LEVEL25 1523
+#define wxID_LEVEL26 1524
+#define wxID_LEVEL27 1525
+#define wxID_MAINDATA 1526
+#define wxID_SHARED0 1527
+#define wxID_SHARED1 1528
+#define wxID_SHARED2 1529
+#define wxID_SHARED3 1530
+#define wxID_SHARED4 1531
+#define wxID_SHARED5 1532
+#define wxID_SHARED6 1533
+#define wxID_SHARED7 1534
+#define wxID_SHARED8 1535
+#define wxID_SHARED9 1536
+#define wxID_SHARED10 1537
+#define wxID_SHARED11 1538
+#define wxID_SHARED12 1539
+#define wxID_SHARED13 1540
+#define wxID_SHARED14 1541
+#define wxID_SHARED15 1542
+#define wxID_SHARED16 1543
+#define wxID_SHARED17 1544
+#define wxID_SHARED18 1545
+#define wxID_SHARED19 1546
+#define wxID_SHARED20 1547
+#define wxID_SHARED21 1548
+#define wxID_SHARED22 1549
+#define wxID_SHARED23 1550
+#define wxID_SHARED24 1551
+#define wxID_SHARED25 1552
+#define wxID_SHARED26 1553
+#define wxID_SHARED27 1554
+#define wxID_SHARED28 1555
+#define wxID_PATH 1556
+#define wxID_FOLDER64 1557
+#define wxID_FOLDER86 1558
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class MainFrameBase
@@ -2373,6 +2374,56 @@ class TextEditWindow : public wxDialog
 		
 		TextEditWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Edit Text"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,460 ), long style = wxDEFAULT_DIALOG_STYLE|wxMAXIMIZE_BOX|wxRESIZE_BORDER ); 
 		~TextEditWindow();
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class TextSteamEditWindow
+///////////////////////////////////////////////////////////////////////////////
+class TextSteamEditWindow : public wxDialog 
+{
+	private:
+	
+	protected:
+		wxStaticBitmap* m_multilangshowimg;
+		wxStaticText* m_multilangtitle;
+		wxButton* m_langtranslateall;
+		wxStaticText* m_langname1;
+		wxButton* m_langtranslate1;
+		wxStaticText* m_langname2;
+		wxButton* m_langtranslate2;
+		wxStaticText* m_langname3;
+		wxButton* m_langtranslate3;
+		wxStaticText* m_langname4;
+		wxButton* m_langtranslate4;
+		wxStaticText* m_langname5;
+		wxButton* m_langtranslate5;
+		wxStaticText* m_langname6;
+		wxButton* m_langtranslate6;
+		wxButton* m_buttonbubble;
+		wxButton* m_buttonset;
+		wxButton* m_buttonopcodelist;
+		PreviewTextCtrl* m_richtextctrl;
+		wxButton* m_buttoncancel;
+		wxButton* m_buttonok;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void OnTextEdit( wxCommandEvent& event ) { event.Skip(); }
+		virtual void OnShowHideLocalVar( wxMouseEvent& event ) { event.Skip(); }
+		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
+		
+	
+	public:
+		wxTextCtrl* m_textctrl;
+		wxTextCtrl* m_langtext1;
+		wxTextCtrl* m_langtext2;
+		wxTextCtrl* m_langtext3;
+		wxTextCtrl* m_langtext4;
+		wxTextCtrl* m_langtext5;
+		wxTextCtrl* m_langtext6;
+		
+		TextSteamEditWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Edit Text"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE|wxMAXIMIZE_BOX|wxRESIZE_BORDER ); 
+		~TextSteamEditWindow();
 	
 };
 

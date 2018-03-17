@@ -20,6 +20,7 @@
 #define HADES_STRING_GENERIC_DESELECT_ALL L"Deselect All"
 #define HADES_STRING_GENERIC_EXPORT_SEL L"Export Selection"
 #define HADES_STRING_GENERIC_IMPORT_SEL L"Import Selection"
+#define HADES_STRING_GENERIC_UNUSED L"Unused"
 #define HADES_STRING_NYI L"Not yet implemented"
 #define HADES_STRING_NO_STEAM L"This feature is disabled for the Steam version"
 #define HADES_STRING_VOID L"_"
@@ -119,6 +120,17 @@ static wxString HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[] = {
 	L"it",
 	L"sp"
 };
+
+static wxString HADES_STRING_STEAM_LANGUAGE_LONG_NAME[] = {
+	L"English (US)",
+	L"English (UK)",
+	L"Japanese",
+	L"German",
+	L"French",
+	L"Italian",
+	L"Spanish"
+};
+
 
 //-- HWS Frame
 #define HADES_STRING_HWS_OPEN_TITLE L"Open hws..."

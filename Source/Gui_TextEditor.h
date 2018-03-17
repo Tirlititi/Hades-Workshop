@@ -2,7 +2,9 @@
 #define _GUI_TEXTEDITOR_H
 
 class PreviewTextCtrl;
+class TextEditDialogBase;
 class TextEditDialog;
+class TextSteamEditDialog;
 class TextOpcodeDialog;
 class TextExportDialog;
 
@@ -23,22 +25,31 @@ public:
 	PreviewTextCtrl(wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& value = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxRE_MULTILINE);
 };
 
-class TextEditDialog : public TextEditWindow {
+class TextEditDialogBase {
 public:
 	FF9String text;
-	CharmapDataStruct* charmap;
-	CharmapDataStruct* charmap_Ext;
 	wxTimer* timer;
+	PreviewTextCtrl* preview_ctrl;
 	wxColour text_colour;
 	wstring::size_type str_pos;
-	uint16_t code_pos;
 	uint16_t choice_pos;
 	uint16_t wait;
+	int text_style;
+
+	TextEditDialogBase(FF9String& str, wxTimer* tim, PreviewTextCtrl* richctrl, int style) : text(str), timer(tim), preview_ctrl(richctrl), text_style(style) {}
+
+	virtual bool ProcessPreviewText() { return true; }
+};
+
+class TextEditDialog : public TextEditWindow, public TextEditDialogBase {
+public:
+	CharmapDataStruct* charmap;
+	CharmapDataStruct* charmap_Ext;
 	uint32_t max_length;
+	uint16_t code_pos;
 	uint16_t format_amount;
 	TextFormatStruct* format_data;
 	bool* format_removed;
-	int text_style;
 	
 	TextEditDialog(wxWindow* parent, FF9String& str, unsigned int extrasize, int style = TEXT_STYLE_DEFAULT, CharmapDataStruct* chmap = NULL, CharmapDataStruct* chmapext = NULL, int sizex = -1, int sizey = -1, uint16_t formatamount = 0, TextFormatStruct* format = NULL);
 	~TextEditDialog();
@@ -50,7 +61,7 @@ private:
 	TextOpcodeDialog* op_dial;
 	
 	void RefreshOpcodeList();
-	void CalculateBestSize(bool x = true, bool y = true); 
+	void CalculateBestSize(bool x = true, bool y = true);
 	
 	void OnTextEdit(wxCommandEvent& event);
 	void OnOpcodeEdit(wxCommandEvent& event);
@@ -66,7 +77,7 @@ public:
 	uint8_t length;
 	uint32_t max_length;
 	uint16_t code_pos;
-	
+
 	TextOpcodeDialog(TextEditDialog* parent);
 	~TextOpcodeDialog();
 	int ShowModal(int codeindex);
@@ -76,7 +87,7 @@ private:
 	wxString token_str;
 	wxSpinCtrl* var_spin[10];
 	uint8_t token_sel;
-	
+
 	void SetOpcodeSelection();
 	void DisplayTokens(wxDC& dc);
 	void OnOpcodeChange(wxCommandEvent& event);
@@ -84,6 +95,29 @@ private:
 	void OnButtonClick(wxCommandEvent& event);
 	void OnTokenMouse(wxMouseEvent& event);
 	void OnTokenPaint(wxPaintEvent& event);
+};
+
+class TextSteamEditDialog : public TextSteamEditWindow, public TextEditDialogBase {
+public:
+	bool has_multilang;
+	SteamLanguage multilang[STEAM_LANGUAGE_AMOUNT];
+	wxStaticText* multilangname[STEAM_LANGUAGE_AMOUNT-1];
+	wxTextCtrl* multilangctrl[STEAM_LANGUAGE_AMOUNT-1];
+	wxButton* multilangbtn[STEAM_LANGUAGE_AMOUNT-1];
+
+	TextSteamEditDialog(wxWindow* parent, FF9String& str, int style = TEXT_STYLE_DEFAULT);
+	~TextSteamEditDialog();
+	int ShowModal();
+	bool ProcessPreviewText();
+	void PreviewText();
+
+private:
+//	TextOpcodeDialog* op_dial;
+
+	void CalculateBestSize();
+
+	void OnButtonClick(wxCommandEvent& event);
+	void OnTimer(wxTimerEvent& event);
 };
 
 class TextExportDialog : public TextExportWindow {
