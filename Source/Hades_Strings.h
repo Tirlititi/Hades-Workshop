@@ -110,6 +110,7 @@
 #define HADES_STRING_TEXTURE_SAVE_SUCCESS L"Texture successfully exported !"
 #define HADES_STRING_FIELDTEXTURE_SAVE_SUCCESS L"Background successfully exported !"
 #define HADES_STRING_SCENE_SAVE_SUCCESS L"Battle Scene model successfully exported !"
+#define HADES_STRING_TEXT_TRANSLATE L"Auto-Translate"
 
 static wxString HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[] = {
 	L"us",

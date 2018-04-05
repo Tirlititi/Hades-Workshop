@@ -1376,6 +1376,7 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 					script_data[i]->name = fieldname[j];
 					break;
 				}
+			script_data[i]->LinkSimilarLanguageScripts();
 			ffbin.seekg(config.meta_script.GetFileOffsetByIndex(config.field_role_file[i]));
 			role[i] = new FieldRoleDataStruct[1];
 			role[i]->Init(false,CHUNK_TYPE_FIELD_ROLE,config.field_id[i],&dummyclus[i]);

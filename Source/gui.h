@@ -2400,8 +2400,8 @@ class TextSteamEditWindow : public wxDialog
 		wxButton* m_langtranslate5;
 		wxStaticText* m_langname6;
 		wxButton* m_langtranslate6;
-		wxButton* m_buttonbubble;
 		wxButton* m_buttonset;
+		wxButton* m_buttonbubble;
 		wxButton* m_buttonopcodelist;
 		PreviewTextCtrl* m_richtextctrl;
 		wxButton* m_buttoncancel;
@@ -2409,7 +2409,7 @@ class TextSteamEditWindow : public wxDialog
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnTextEdit( wxCommandEvent& event ) { event.Skip(); }
-		virtual void OnShowHideLocalVar( wxMouseEvent& event ) { event.Skip(); }
+		virtual void OnShowHideMultiLang( wxMouseEvent& event ) { event.Skip(); }
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
 		
 	

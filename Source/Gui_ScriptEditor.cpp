@@ -3918,6 +3918,7 @@ void ScriptEditDialog::OnShowHideLocalVar(wxMouseEvent& event) {
 	m_scripttext->Layout();
 	Layout();
 	Refresh();
+	event.Skip();
 }
 
 void ScriptEditDialog::OnButtonClick(wxCommandEvent& event) {

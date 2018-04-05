@@ -323,6 +323,7 @@ void WorldMapDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 					name[i] = HADES_STRING_WORLD_BLOCK_NAME[j].label;
 					break;
 				}
+			script[i]->LinkSimilarLanguageScripts();
 			LoadingDialogUpdate(i);
 		}
 		delete[] dummyclus;

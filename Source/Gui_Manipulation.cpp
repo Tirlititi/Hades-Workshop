@@ -1914,19 +1914,35 @@ void CDDataStruct::OnSpellChangeButton(wxCommandEvent& event) {
 	SpellDataStruct& sp = spellset.spell[*sortid];
 	int id = event.GetId();
 	if (id==wxID_NAME) {
-		TextEditDialog ted(this,sp.name,spellset.name_space_total-spellset.name_space_used);
-		if (ted.ShowModal()==wxID_OK) {
-			sp.SetName(ted.text);
-			m_spellname->SetValue(sp.name.str);
+		if (gametype==GAME_TYPE_PSX) {
+			TextEditDialog ted(this,sp.name,spellset.name_space_total-spellset.name_space_used);
+			if (ted.ShowModal()==wxID_OK) {
+				sp.SetName(ted.text);
+				m_spellname->SetValue(sp.name.str);
+			}
+		} else {
+			TextSteamEditDialog ted(this,sp.name);
+			if (ted.ShowModal()==wxID_OK) {
+				sp.SetName(ted.text);
+				m_spellname->SetValue(sp.name.str);
+			}
 		}
 	} else if (id==wxID_HELP) {
-		CharmapDataStruct* chmap = NULL;
-		if (gametype==GAME_TYPE_PSX && textloaded)
-			chmap = textset.charmap[textset.main_charmap_index];
-		TextEditDialog ted(this,sp.help,spellset.help_space_total-spellset.help_space_used,TEXT_STYLE_HELP,chmap);
-		if (ted.ShowModal()==wxID_OK) {
-			sp.SetHelp(ted.text);
-			m_spellhelp->SetValue(sp.help.str);
+		if (gametype==GAME_TYPE_PSX) {
+			CharmapDataStruct* chmap = NULL;
+			if (textloaded)
+				chmap = textset.charmap[textset.main_charmap_index];
+			TextEditDialog ted(this,sp.help,spellset.help_space_total-spellset.help_space_used,TEXT_STYLE_HELP,chmap);
+			if (ted.ShowModal()==wxID_OK) {
+				sp.SetHelp(ted.text);
+				m_spellhelp->SetValue(sp.help.str);
+			}
+		} else {
+			TextSteamEditDialog ted(this,sp.help,TEXT_STYLE_HELP);
+			if (ted.ShowModal()==wxID_OK) {
+				sp.SetHelp(ted.text);
+				m_spellhelp->SetValue(sp.help.str);
+			}
 		}
 	} else if (id==wxID_STATUS) {
 		SpellStatusDialog spstat(this);
@@ -2041,19 +2057,35 @@ void CDDataStruct::OnSupportChangeButton(wxCommandEvent& event) {
 	SupportDataStruct& sp = supportset.support[*sortid];
 	int id = event.GetId();
 	if (id==wxID_NAME) {
-		TextEditDialog ted(this,sp.name,supportset.name_space_total-supportset.name_space_used);
-		if (ted.ShowModal()==wxID_OK) {
-			sp.SetName(ted.text);
-			m_supportname->SetValue(sp.name.str);
+		if (gametype==GAME_TYPE_PSX) {
+			TextEditDialog ted(this,sp.name,supportset.name_space_total-supportset.name_space_used);
+			if (ted.ShowModal()==wxID_OK) {
+				sp.SetName(ted.text);
+				m_supportname->SetValue(sp.name.str);
+			}
+		} else {
+			TextSteamEditDialog ted(this,sp.name);
+			if (ted.ShowModal()==wxID_OK) {
+				sp.SetName(ted.text);
+				m_supportname->SetValue(sp.name.str);
+			}
 		}
 	} else if (id==wxID_HELP) {
-		CharmapDataStruct* chmap = NULL;
-		if (gametype==GAME_TYPE_PSX && textloaded)
-			chmap = textset.charmap[textset.main_charmap_index];
-		TextEditDialog ted(this,sp.help,supportset.help_space_total-supportset.help_space_used,TEXT_STYLE_HELP,chmap);
-		if (ted.ShowModal()==wxID_OK) {
-			sp.SetHelp(ted.text);
-			m_supporthelp->SetValue(sp.help.str);
+		if (gametype==GAME_TYPE_PSX) {
+			CharmapDataStruct* chmap = NULL;
+			if (textloaded)
+				chmap = textset.charmap[textset.main_charmap_index];
+			TextEditDialog ted(this,sp.help,supportset.help_space_total-supportset.help_space_used,TEXT_STYLE_HELP,chmap);
+			if (ted.ShowModal()==wxID_OK) {
+				sp.SetHelp(ted.text);
+				m_supporthelp->SetValue(sp.help.str);
+			}
+		} else {
+			TextSteamEditDialog ted(this,sp.help,TEXT_STYLE_HELP);
+			if (ted.ShowModal()==wxID_OK) {
+				sp.SetHelp(ted.text);
+				m_supporthelp->SetValue(sp.help.str);
+			}
 		}
 	}
 }
@@ -2245,19 +2277,35 @@ void CDDataStruct::OnCommandChangeButton(wxCommandEvent& event) {
 		} else
 			return;
 	} else if (id==wxID_NAME) {
-		TextEditDialog ted(this,cmd.name,cmdset.name_space_total-cmdset.name_space_used);
-		if (ted.ShowModal()==wxID_OK) {
-			cmd.SetName(ted.text);
-			m_cmdname->SetValue(cmd.name.str);
+		if (gametype==GAME_TYPE_PSX) {
+			TextEditDialog ted(this,cmd.name,cmdset.name_space_total-cmdset.name_space_used);
+			if (ted.ShowModal()==wxID_OK) {
+				cmd.SetName(ted.text);
+				m_cmdname->SetValue(cmd.name.str);
+			}
+		} else {
+			TextSteamEditDialog ted(this,cmd.name);
+			if (ted.ShowModal()==wxID_OK) {
+				cmd.SetName(ted.text);
+				m_cmdname->SetValue(cmd.name.str);
+			}
 		}
 	} else if (id==wxID_HELP) {
-		CharmapDataStruct* chmap = NULL;
-		if (gametype==GAME_TYPE_PSX && textloaded)
-			chmap = textset.charmap[textset.main_charmap_index];
-		TextEditDialog ted(this,cmd.help,cmdset.help_space_total-cmdset.help_space_used,TEXT_STYLE_HELP,chmap);
-		if (ted.ShowModal()==wxID_OK) {
-			cmd.SetHelp(ted.text);
-			m_cmdhelp->SetValue(cmd.help.str);
+		if (gametype==GAME_TYPE_PSX) {
+			CharmapDataStruct* chmap = NULL;
+			if (textloaded)
+				chmap = textset.charmap[textset.main_charmap_index];
+			TextEditDialog ted(this,cmd.help,cmdset.help_space_total-cmdset.help_space_used,TEXT_STYLE_HELP,chmap);
+			if (ted.ShowModal()==wxID_OK) {
+				cmd.SetHelp(ted.text);
+				m_cmdhelp->SetValue(cmd.help.str);
+			}
+		} else {
+			TextSteamEditDialog ted(this,cmd.help,TEXT_STYLE_HELP);
+			if (ted.ShowModal()==wxID_OK) {
+				cmd.SetHelp(ted.text);
+				m_cmdhelp->SetValue(cmd.help.str);
+			}
 		}
 	}
 	MarkDataCommandModified();
@@ -2513,10 +2561,18 @@ void CDDataStruct::OnStatChangeButton(wxCommandEvent& event) {
 	unsigned int i;
 	if (id==wxID_NAME) {
 		InitialStatDataStruct& is = statset.initial_stat[sel];
-		TextEditDialog ted(this,is.default_name,statset.default_name_space_total-statset.default_name_space_used);
-		if (ted.ShowModal()==wxID_OK) {
-			is.SetDefaultName(ted.text);
-			m_statchardefaultname->SetValue(is.default_name.str);
+		if (gametype==GAME_TYPE_PSX) {
+			TextEditDialog ted(this,is.default_name,statset.default_name_space_total-statset.default_name_space_used);
+			if (ted.ShowModal()==wxID_OK) {
+				is.SetDefaultName(ted.text);
+				m_statchardefaultname->SetValue(is.default_name.str);
+			}
+		} else {
+			TextSteamEditDialog ted(this,is.default_name);
+			if (ted.ShowModal()==wxID_OK) {
+				is.SetDefaultName(ted.text);
+				m_statchardefaultname->SetValue(is.default_name.str);
+			}
 		}
 	} else if (id==wxID_EXP) {
 		CurveEditorDialog statdial(this);
@@ -3097,28 +3153,52 @@ void CDDataStruct::OnItemChangeButton(wxCommandEvent& event) {
 		unsigned int* sortid = (unsigned int*)m_keyitemlist->GetClientData(sel);
 		KeyItemDataStruct& ki = itemset.key_item[*sortid];
 		if (id==wxID_KEYNAME) {
-			TextEditDialog ted(this,ki.name,itemset.key_name_space_total-itemset.key_name_space_used);
-			if (ted.ShowModal()==wxID_OK) {
-				ki.SetName(ted.text);
-				m_keyitemname->SetValue(ki.name.str);
+			if (gametype==GAME_TYPE_PSX) {
+				TextEditDialog ted(this,ki.name,itemset.key_name_space_total-itemset.key_name_space_used);
+				if (ted.ShowModal()==wxID_OK) {
+					ki.SetName(ted.text);
+					m_keyitemname->SetValue(ki.name.str);
+				}
+			} else {
+				TextSteamEditDialog ted(this,ki.name);
+				if (ted.ShowModal()==wxID_OK) {
+					ki.SetName(ted.text);
+					m_keyitemname->SetValue(ki.name.str);
+				}
 			}
 		} else if (id==wxID_KEYHELP) {
-			CharmapDataStruct* chmap = NULL;
-			if (gametype==GAME_TYPE_PSX && textloaded)
-				chmap = textset.charmap[textset.main_charmap_index];
-			TextEditDialog ted(this,ki.help,itemset.key_help_space_total-itemset.key_help_space_used,TEXT_STYLE_HELP,chmap);
-			if (ted.ShowModal()==wxID_OK) {
-				ki.SetHelp(ted.text);
-				m_keyitemhelp->SetValue(ki.help.str);
+			if (gametype==GAME_TYPE_PSX) {
+				CharmapDataStruct* chmap = NULL;
+				if (textloaded)
+					chmap = textset.charmap[textset.main_charmap_index];
+				TextEditDialog ted(this,ki.help,itemset.key_help_space_total-itemset.key_help_space_used,TEXT_STYLE_HELP,chmap);
+				if (ted.ShowModal()==wxID_OK) {
+					ki.SetHelp(ted.text);
+					m_keyitemhelp->SetValue(ki.help.str);
+				}
+			} else {
+				TextSteamEditDialog ted(this,ki.help,TEXT_STYLE_HELP);
+				if (ted.ShowModal()==wxID_OK) {
+					ki.SetHelp(ted.text);
+					m_keyitemhelp->SetValue(ki.help.str);
+				}
 			}
 		} else if (id==wxID_KEYDESCRIPTION) {
-			CharmapDataStruct* chmap = NULL;
-			if (gametype==GAME_TYPE_PSX && textloaded)
-				chmap = textset.charmap[textset.main_charmap_index];
-			TextEditDialog ted(this,ki.description,itemset.key_desc_space_total-itemset.key_desc_space_used,TEXT_STYLE_DESCRIPTION,chmap);
-			if (ted.ShowModal()==wxID_OK) {
-				ki.SetDescription(ted.text);
-				m_keyitemdescription->SetValue(ki.description.str);
+			if (gametype==GAME_TYPE_PSX) {
+				CharmapDataStruct* chmap = NULL;
+				if (textloaded)
+					chmap = textset.charmap[textset.main_charmap_index];
+				TextEditDialog ted(this,ki.description,itemset.key_desc_space_total-itemset.key_desc_space_used,TEXT_STYLE_DESCRIPTION,chmap);
+				if (ted.ShowModal()==wxID_OK) {
+					ki.SetDescription(ted.text);
+					m_keyitemdescription->SetValue(ki.description.str);
+				}
+			} else {
+				TextSteamEditDialog ted(this,ki.description,TEXT_STYLE_DESCRIPTION);
+				if (ted.ShowModal()==wxID_OK) {
+					ki.SetDescription(ted.text);
+					m_keyitemdescription->SetValue(ki.description.str);
+				}
 			}
 		}
 	} else {
@@ -3126,28 +3206,52 @@ void CDDataStruct::OnItemChangeButton(wxCommandEvent& event) {
 		unsigned int* sortid = (unsigned int*)m_itemlist->GetClientData(sel);
 		ItemDataStruct& it = itemset.item[*sortid];
 		if (id==wxID_NAME) {
-			TextEditDialog ted(this,it.name,itemset.name_space_total-itemset.name_space_used);
-			if (ted.ShowModal()==wxID_OK) {
-				it.SetName(ted.text);
-				m_itemname->SetValue(it.name.str);
+			if (gametype==GAME_TYPE_PSX) {
+				TextEditDialog ted(this,it.name,itemset.name_space_total-itemset.name_space_used);
+				if (ted.ShowModal()==wxID_OK) {
+					it.SetName(ted.text);
+					m_itemname->SetValue(it.name.str);
+				}
+			} else {
+				TextSteamEditDialog ted(this,it.name);
+				if (ted.ShowModal()==wxID_OK) {
+					it.SetName(ted.text);
+					m_itemname->SetValue(it.name.str);
+				}
 			}
 		} else if (id==wxID_HELP) {
-			CharmapDataStruct* chmap = NULL;
-			if (gametype==GAME_TYPE_PSX && textloaded)
-				chmap = textset.charmap[textset.main_charmap_index];
-			TextEditDialog ted(this,it.help,itemset.help_space_total-itemset.help_space_used,TEXT_STYLE_HELP,chmap);
-			if (ted.ShowModal()==wxID_OK) {
-				it.SetHelp(ted.text);
-				m_itemhelp->SetValue(it.help.str);
+			if (gametype==GAME_TYPE_PSX) {
+				CharmapDataStruct* chmap = NULL;
+				if (textloaded)
+					chmap = textset.charmap[textset.main_charmap_index];
+				TextEditDialog ted(this,it.help,itemset.help_space_total-itemset.help_space_used,TEXT_STYLE_HELP,chmap);
+				if (ted.ShowModal()==wxID_OK) {
+					it.SetHelp(ted.text);
+					m_itemhelp->SetValue(it.help.str);
+				}
+			} else {
+				TextSteamEditDialog ted(this,it.help,TEXT_STYLE_HELP);
+				if (ted.ShowModal()==wxID_OK) {
+					it.SetHelp(ted.text);
+					m_itemhelp->SetValue(it.help.str);
+				}
 			}
 		} else if (id==wxID_BATTLEHELP) {
-			CharmapDataStruct* chmap = NULL;
-			if (gametype==GAME_TYPE_PSX && textloaded)
-				chmap = textset.charmap[textset.main_charmap_index];
-			TextEditDialog ted(this,it.battle_help,itemset.help2_space_total-itemset.help2_space_used,TEXT_STYLE_HELP,chmap);
-			if (ted.ShowModal()==wxID_OK) {
-				it.SetBattleHelp(ted.text);
-				m_itemhelp2->SetValue(it.battle_help.str);
+			if (gametype==GAME_TYPE_PSX) {
+				CharmapDataStruct* chmap = NULL;
+				if (textloaded)
+					chmap = textset.charmap[textset.main_charmap_index];
+				TextEditDialog ted(this,it.battle_help,itemset.help2_space_total-itemset.help2_space_used,TEXT_STYLE_HELP,chmap);
+				if (ted.ShowModal()==wxID_OK) {
+					it.SetBattleHelp(ted.text);
+					m_itemhelp2->SetValue(it.battle_help.str);
+				}
+			} else {
+				TextSteamEditDialog ted(this,it.battle_help,TEXT_STYLE_HELP);
+				if (ted.ShowModal()==wxID_OK) {
+					it.SetBattleHelp(ted.text);
+					m_itemhelp2->SetValue(it.battle_help.str);
+				}
 			}
 		} else if (id==wxID_STAT) {
 			ItemStatDataStruct& is = itemset.stat[it.stat_id];
@@ -3579,10 +3683,18 @@ void CDDataStruct::OnCardChangeButton(wxCommandEvent& event) {
 	CardSetDataStruct& cs = cardset.set[cardset.deck[m_carddecklist->GetSelection()].set];
 	int id = event.GetId();
 	if (id==wxID_NAME) {
-		TextEditDialog ted(this,cd.name,cardset.name_space_total-cardset.name_space_used);
-		if (ted.ShowModal()==wxID_OK) {
-			cd.SetName(ted.text);
-			m_cardname->SetValue(cd.name.str);
+		if (gametype==GAME_TYPE_PSX) {
+			TextEditDialog ted(this,cd.name,cardset.name_space_total-cardset.name_space_used);
+			if (ted.ShowModal()==wxID_OK) {
+				cd.SetName(ted.text);
+				m_cardname->SetValue(cd.name.str);
+			}
+		} else {
+			TextSteamEditDialog ted(this,cd.name);
+			if (ted.ShowModal()==wxID_OK) {
+				cd.SetName(ted.text);
+				m_cardname->SetValue(cd.name.str);
+			}
 		}
 	} else if (id==wxID_DECKSET) {
 		CardSetDialog dial(this);
@@ -4068,11 +4180,20 @@ void CDDataStruct::OnListBoxEnemyText(wxCommandEvent& event) {
 	unsigned int textsel = m_enemytextlist->GetSelection();
 	unsigned int id = textsel+enemyset.battle[*sortid]->stat_amount+enemyset.battle[*sortid]->spell_amount;
 	TextDataStruct& td = *enemyset.text[*sortid];
-	TextEditDialog ted(this,td.text[id],td.GetExtraSize());
-	if (ted.ShowModal()==wxID_OK) {
-		td.SetText(id,ted.text);
-		MarkDataEnemyModified(*sortid,CHUNK_TYPE_TEXT);
-		m_enemytextlist->SetString(textsel,td.text[id].GetStr(hades::TEXT_PREVIEW_TYPE));
+	if (gametype==GAME_TYPE_PSX) {
+		TextEditDialog ted(this,td.text[id],td.GetExtraSize());
+		if (ted.ShowModal()==wxID_OK) {
+			td.SetText(id,ted.text);
+			MarkDataEnemyModified(*sortid,CHUNK_TYPE_TEXT);
+			m_enemytextlist->SetString(textsel,td.text[id].GetStr(hades::TEXT_PREVIEW_TYPE));
+		}
+	} else {
+		TextSteamEditDialog ted(this,td.text[id]);
+		if (ted.ShowModal()==wxID_OK) {
+			td.SetText(id,ted.text);
+			MarkDataEnemyModified(*sortid,CHUNK_TYPE_TEXT);
+			m_enemytextlist->SetString(textsel,td.text[id].GetStr(hades::TEXT_PREVIEW_TYPE));
+		}
 	}
 }
 
@@ -4153,6 +4274,7 @@ void CDDataStruct::OnEnemySpellChangeName(wxCommandEvent& event) {
 		}
 	}
 	m_enemyspelllist->SetString(spellsel,_(ep.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+	m_enemystatdefaultattack->SetString(spellsel,_(ep.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 }
 
 #define MACRO_ENEMY_CHANGE_DATA(TYPE,DATA,VALUE) \
@@ -4460,13 +4582,27 @@ void CDDataStruct::OnEnemyChangeButton(wxCommandEvent& event) {
 	if (id==wxID_STATNAME) {
 		int statsel = m_enemystatlist->GetSelection();
 		EnemyStatDataStruct& es = eb.stat[statsel];
-		TextEditDialog ted(this,es.name,eb.GetExtraSize());
-		if (ted.ShowModal()==wxID_OK) {
+		FF9String newstr;
+		bool confirmed = false;
+		if (gametype==GAME_TYPE_PSX) {
+			TextEditDialog ted(this,es.name,eb.GetExtraSize());
+			if (ted.ShowModal()==wxID_OK) {
+				newstr = ted.text;
+				confirmed = true;
+			}
+		} else {
+			TextSteamEditDialog ted(this,es.name);
+			if (ted.ShowModal()==wxID_OK) {
+				newstr = ted.text;
+				confirmed = true;
+			}
+		}
+		if (confirmed) {
 			if (GetTopWindow()->m_editsimilarenemy->IsChecked()) {
 				unsigned int i,j,nb,*battleid;
 				EnemyStatDataStruct** stats = enemyset.GetSimilarEnemyStats(es,&nb,&battleid);
 				for (i=0;i<nb;i++) {
-					if (stats[i]->SetName(ted.text)) {
+					if (stats[i]->SetName(newstr)) {
 						wxMessageDialog popup(this,HADES_STRING_GROUPEDIT_ERROR_TEXT,HADES_STRING_WARNING,wxOK|wxSTAY_ON_TOP|wxCENTRE);
 						popup.ShowModal();
 					} else {
@@ -4480,7 +4616,7 @@ void CDDataStruct::OnEnemyChangeButton(wxCommandEvent& event) {
 					}
 				}
 			} else {
-				es.SetName(ted.text);
+				es.SetName(newstr);
 				m_enemylist->SetString(sel,GetEnemyBattleName(*sortid));
 				MarkDataEnemyModified(*sortid,CHUNK_TYPE_TEXT);
 			}
@@ -4488,22 +4624,42 @@ void CDDataStruct::OnEnemyChangeButton(wxCommandEvent& event) {
 			m_enemystatlist->SetString(statsel,_(es.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 		}
 	} else if (id==wxID_SPELLNAME) {
-		EnemySpellDataStruct& ep = eb.spell[m_enemyspelllist->GetSelection()];
-		TextEditDialog ted(this,ep.name,eb.GetExtraSize());
-		if (ted.ShowModal()==wxID_OK) {
+		unsigned int spellsel = m_enemyspelllist->GetSelection();
+		EnemySpellDataStruct& ep = eb.spell[spellsel];
+		FF9String newstr;
+		bool confirmed = false;
+		if (gametype==GAME_TYPE_PSX) {
+			TextEditDialog ted(this,ep.name,eb.GetExtraSize());
+			if (ted.ShowModal()==wxID_OK) {
+				newstr = ted.text;
+				confirmed = true;
+			}
+		} else {
+			TextSteamEditDialog ted(this,ep.name);
+			if (ted.ShowModal()==wxID_OK) {
+				newstr = ted.text;
+				confirmed = true;
+			}
+		}
+		if (confirmed) {
 			if (GetTopWindow()->m_editsimilarenemy->IsChecked()) {
 				unsigned int i,nb,*similarbattleid;
 				EnemySpellDataStruct** similarspells = enemyset.GetSimilarEnemySpells(ep,&nb,&similarbattleid);
 				for (i=0;i<nb;i++) {
-					if (similarspells[i]->SetName(ted.text)) {
+					if (similarspells[i]->SetName(newstr)) {
 						wxMessageDialog popup(this,HADES_STRING_GROUPEDIT_ERROR_TEXT,HADES_STRING_WARNING,wxOK|wxSTAY_ON_TOP|wxCENTRE);
 						popup.ShowModal();
+					} else {
+						MarkDataEnemyModified(similarbattleid[i],CHUNK_TYPE_TEXT);
 					}
 				}
 			} else {
-				ep.SetName(ted.text);
+				ep.SetName(newstr);
+				MarkDataEnemyModified(*sortid,CHUNK_TYPE_TEXT);
 			}
 			m_enemyspellname->ChangeValue(ep.name.str);
+			m_enemyspelllist->SetString(spellsel,_(ep.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+			m_enemystatdefaultattack->SetString(spellsel,_(ep.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 		}
 	} else if (id==wxID_STATUS) {
 		EnemySpellDataStruct& ep = eb.spell[m_enemyspelllist->GetSelection()];
@@ -4906,20 +5062,31 @@ void CDDataStruct::OnTextEditText(wxCommandEvent& event) {
 		formatamount = td.format_amount[textsel];
 		formatdata = td.format_data[textsel];
 	}
-	TextEditDialog ted(this,text,td.GetExtraSize(),TEXT_STYLE_DEFAULT,chmap,chmapext,sizex,sizey,formatamount,formatdata);
-	if (ted.ShowModal()==wxID_OK) {
-		td.SetText(textsel,ted.text);
-		td.SetDialogBoxSize(textsel,ted.m_sizex->GetValue(),ted.m_sizey->GetValue(),!(config.language & LANGUAGE_VERSION_JAPAN));
-		unsigned int i,j = 0,famount = 0;
-		if (gametype==GAME_TYPE_PSX)
-			famount = td.format_amount[textsel];
-		for (i=0;i<famount;i++) {
-			if (ted.format_removed[i])
-				td.RemoveFormatCode(textsel,j);
-			else
-				j++;
+	bool modified = false;
+	if (gametype==GAME_TYPE_PSX) {
+		TextEditDialog ted(this,text,td.GetExtraSize(),TEXT_STYLE_DEFAULT,chmap,chmapext,sizex,sizey,formatamount,formatdata);
+		if (ted.ShowModal()==wxID_OK) {
+			td.SetText(textsel,ted.text);
+			td.SetDialogBoxSize(textsel,ted.m_sizex->GetValue(),ted.m_sizey->GetValue(),!(config.language & LANGUAGE_VERSION_JAPAN));
+			unsigned int i,j = 0;
+			unsigned int famount = td.format_amount[textsel];
+			for (i=0;i<famount;i++) {
+				if (ted.format_removed[i])
+					td.RemoveFormatCode(textsel,j);
+				else
+					j++;
+			}
+//			td.format_amount[textsel] = ted.format_amount;
+			modified = true;
 		}
-//		td.format_amount[textsel] = ted.format_amount;
+	} else {
+		TextSteamEditDialog ted(this,text);
+		if (ted.ShowModal()==wxID_OK) {
+			td.SetText(textsel,ted.text);
+			modified = true;
+		}
+	}
+	if (modified) {
 		subitemlist->SetString(textsel,_(text.GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
 		(this->*markmodified)(*sortid,CHUNK_TYPE_TEXT,0);
 	}
@@ -5334,13 +5501,21 @@ void CDDataStruct::OnFieldChangeButton(wxCommandEvent& event) {
 	ScriptDataStruct* sc = fieldset.script_data[*sortid];
 	int id = event.GetId();
 	if (id==wxID_NAME) {
-		CharmapDataStruct* chmap = NULL;
-		if (gametype==GAME_TYPE_PSX && textloaded)
-			chmap = textset.charmap[textset.main_charmap_index];
-		TextEditDialog ted(this,sc->name,SCRIPT_NAME_MAX_LENGTH-sc->name.length,TEXT_STYLE_DEFAULT,chmap);
-		if (ted.ShowModal()==wxID_OK) {
-			fieldset.SetFieldName(*sortid,ted.text);
-			m_fieldname->SetValue(sc->name.str);
+		if (gametype==GAME_TYPE_PSX) {
+			CharmapDataStruct* chmap = NULL;
+			if (textloaded)
+				chmap = textset.charmap[textset.main_charmap_index];
+			TextEditDialog ted(this,sc->name,SCRIPT_NAME_MAX_LENGTH-sc->name.length,TEXT_STYLE_DEFAULT,chmap);
+			if (ted.ShowModal()==wxID_OK) {
+				fieldset.SetFieldName(*sortid,ted.text);
+				m_fieldname->SetValue(sc->name.str);
+			}
+		} else {
+			TextSteamEditDialog ted(this,sc->name);
+			if (ted.ShowModal()==wxID_OK) {
+				fieldset.SetFieldName(*sortid,ted.text);
+				m_fieldname->SetValue(sc->name.str);
+			}
 		}
 	} else if (id==wxID_SCRIPT) {
 		bool dataloaded[8] = { statloaded, enemyloaded, fieldloaded, itemloaded, spellloaded, supportloaded, cmdloaded, cardloaded };
@@ -5637,11 +5812,19 @@ void CDDataStruct::OnWorldChangeButton(wxCommandEvent& event) {
 	} else if (id==wxID_NAME) {
 		unsigned int sel = m_worldplacelist->GetSelection();
 		WorldMapDataStruct& wm = *worldset.world_data;
-		CharmapDataStruct* chmap = gametype==GAME_TYPE_PSX ? worldset.charmap[0] : NULL;
-		TextEditDialog ted(this,wm.place_name[sel],wm.place_name_extra_size,TEXT_STYLE_DEFAULT,chmap);
-		if (ted.ShowModal()==wxID_OK) {
-			wm.SetName(sel,ted.text);
-			m_worldplacename->SetValue(wm.place_name[sel].str);
+		if (gametype==GAME_TYPE_PSX) {
+			CharmapDataStruct* chmap = worldset.charmap[0];
+			TextEditDialog ted(this,wm.place_name[sel],wm.place_name_extra_size,TEXT_STYLE_DEFAULT,chmap);
+			if (ted.ShowModal()==wxID_OK) {
+				wm.SetName(sel,ted.text);
+				m_worldplacename->SetValue(wm.place_name[sel].str);
+			}
+		} else {
+			TextSteamEditDialog ted(this,wm.place_name[sel]);
+			if (ted.ShowModal()==wxID_OK) {
+				wm.SetName(sel,ted.text);
+				m_worldplacename->SetValue(wm.place_name[sel].str);
+			}
 		}
 	}
 }
@@ -6127,17 +6310,29 @@ void CDDataStruct::OnListBoxSpecialText(wxCommandEvent& event) {
 void CDDataStruct::OnSpecialTextEditText(wxCommandEvent& event) {
 	int textsel = m_specialtextdatalist->GetSelection();
 	SpecialTextDataStruct& st = ffuiset.special_text->text_block[m_specialtextlist->GetSelection()];
-	CharmapDataStruct* chmap = NULL;
-	if (gametype==GAME_TYPE_PSX && textloaded)
-		chmap = textset.charmap[textset.main_charmap_index];
-	TextEditDialog ted(this,st.text[textsel],st.space_total-st.space_used,TEXT_STYLE_DESCRIPTION,chmap);
-	if (ted.ShowModal()==wxID_OK) {
-		st.SetText(textsel,ted.text);
-		if (st.is_localization)
-			m_specialtextdatalist->SetString(textsel,_(st.localization_field[textsel])+_(L": ")+_(st.text[textsel].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
-		else
-			m_specialtextdatalist->SetString(textsel,_(st.text[textsel].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
-		MarkDataMenuUIModified();
+	if (gametype==GAME_TYPE_PSX) {
+		CharmapDataStruct* chmap = NULL;
+		if (textloaded)
+			chmap = textset.charmap[textset.main_charmap_index];
+		TextEditDialog ted(this,st.text[textsel],st.space_total-st.space_used,TEXT_STYLE_DESCRIPTION,chmap);
+		if (ted.ShowModal()==wxID_OK) {
+			st.SetText(textsel,ted.text);
+			if (st.is_localization)
+				m_specialtextdatalist->SetString(textsel,_(st.localization_field[textsel])+_(L": ")+_(st.text[textsel].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
+			else
+				m_specialtextdatalist->SetString(textsel,_(st.text[textsel].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
+			MarkDataMenuUIModified();
+		}
+	} else {
+		TextSteamEditDialog ted(this,st.text[textsel],TEXT_STYLE_DESCRIPTION);
+		if (ted.ShowModal()==wxID_OK) {
+			st.SetText(textsel,ted.text);
+			if (st.is_localization)
+				m_specialtextdatalist->SetString(textsel,_(st.localization_field[textsel])+_(L": ")+_(st.text[textsel].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
+			else
+				m_specialtextdatalist->SetString(textsel,_(st.text[textsel].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
+			MarkDataMenuUIModified();
+		}
 	}
 }
 

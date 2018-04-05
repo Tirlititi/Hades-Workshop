@@ -524,9 +524,11 @@ void FF9String::GenerateStrExt() {
 					i++;
 				if (i>=len)
 					break;
-				for (j=0;j<TEXT_OPCODE_FORMAT_TYPE;j++)
-					if (opcodestr.compare(HADES_STRING_TEXT_OPCODE[j].label)==0)
-						str_nice += HADES_STRING_TEXT_OPCODE[j].converted;
+				for (j=0;j<TEXT_STEAM_OPCODE_CLOSING_TAG;j++)
+					if (opcodestr.compare(HADES_STRING_TEXT_STEAM_OPCODE[j].id)==0) {
+						str_nice += HADES_STRING_TEXT_STEAM_OPCODE[j].converted;
+						break;
+					}
 			} else {
 				str_nice += str[i];
 			}

@@ -10,6 +10,21 @@ ScriptOperation scriptoptmp[0x8000];
 bool ScriptArgument::SetValue(long long newvalue) {
 //	if (is_var)
 //		delete[] var;
+	if (typesize==2 && !is_signed) {
+		SteamLanguage curlang = parent->parent->parent->current_language;
+		if (curlang!=STEAM_LANGUAGE_NONE && parent->parent->parent->multi_lang_script!=NULL && parent->parent->parent->multi_lang_script->base_script_lang[curlang]!=curlang)
+			for (unsigned int i=0;i<parent->arg_amount;i++)
+				if (this==&parent->arg[i] && (int)i<HADES_STRING_SCRIPT_OPCODE[parent->opcode].arg_amount && HADES_STRING_SCRIPT_OPCODE[parent->opcode].arg_type[i]==AT_TEXT) {
+					MultiLanguageScriptDataStruct* multilangdata = parent->parent->parent->multi_lang_script;
+					SteamLanguage baselang = multilangdata->base_script_lang[curlang];
+					for (unsigned int j=0;j<multilangdata->lang_script_text_id[curlang].size();j++)
+						if (newvalue==multilangdata->lang_script_text_id[curlang][j]) {
+							newvalue = multilangdata->base_script_text_id[curlang][j];
+							break;
+						}
+					break;
+				}
+	}
 	if (newvalue<0) {
 		uint32_t sign = 0x1 << (typesize*8-1);
 		value = ~(-newvalue-1 & ~sign) | sign;
@@ -45,6 +60,19 @@ int64_t ScriptArgument::GetValue() {
 			return *num;
 		} else if (typesize==2) {
 			uint16_t* num = (uint16_t*)&value;
+			SteamLanguage curlang = parent->parent->parent->current_language;
+			if (curlang!=STEAM_LANGUAGE_NONE && parent->parent->parent->multi_lang_script!=NULL && parent->parent->parent->multi_lang_script->base_script_lang[curlang]!=curlang)
+				for (unsigned int i=0;i<parent->arg_amount;i++)
+					if (this==&parent->arg[i] && (int)i<HADES_STRING_SCRIPT_OPCODE[parent->opcode].arg_amount && HADES_STRING_SCRIPT_OPCODE[parent->opcode].arg_type[i]==AT_TEXT) {
+						MultiLanguageScriptDataStruct* multilangdata = parent->parent->parent->multi_lang_script;
+						SteamLanguage baselang = multilangdata->base_script_lang[curlang];
+						for (unsigned int j=0;j<multilangdata->base_script_text_id[curlang].size();j++)
+							if (*num==multilangdata->base_script_text_id[curlang][j]) {
+								*num = multilangdata->lang_script_text_id[curlang][j];
+								break;
+							}
+						break;
+					}
 			return *num;
 		}
 	}
@@ -107,11 +135,18 @@ int64_t ScriptArgument::GetValue() {
 	if (is_var) \
 		for (i=0;i<size;i++) \
 			IO ## Char(f,var[i]); \
-	else \
+	else if (size!=2 || !is_signed) \
 		for (i=0;i<size;i++) { \
 			buffer = (value >> i*8) & 0xFF; \
 			IO ## Char(f,buffer); \
 		} \
+	else { \
+		uint16_t translatedval = GetValue(); \
+		for (i=0;i<size;i++) { \
+			buffer = (translatedval >> i*8) & 0xFF; \
+			IO ## Char(f,buffer); \
+		} \
+	} \
 	if (PPF) PPFEndScanStep();
 
 
@@ -582,51 +617,212 @@ void ScriptDataStruct::ChangeSteamLanguage(SteamLanguage newlang) {
 	if (multi_lang_script==NULL)
 		return;
 	unsigned int i;
-	multi_lang_script->func[current_language] = func;
-	multi_lang_script->magic_number[current_language] = magic_number;
-	multi_lang_script->header_unknown1[current_language] = header_unknown1;
-	multi_lang_script->entry_amount[current_language] = entry_amount;
-	for (i=0;i<20;i++) {
-		multi_lang_script->header_unknown2[current_language][i] = header_unknown2[i];
-		multi_lang_script->header_unknown3[current_language][i] = header_unknown3[i];
-	}
 	for (i=0;i<SCRIPT_NAME_MAX_LENGTH;i++)
 		multi_lang_script->header_name[current_language][i] = header_name[i];
-	multi_lang_script->entry_offset[current_language] = entry_offset;
-	multi_lang_script->entry_size[current_language] = entry_size;
-	multi_lang_script->entry_local_var[current_language] = entry_local_var;
-	multi_lang_script->entry_flag[current_language] = entry_flag;
-	multi_lang_script->entry_type[current_language] = entry_type;
-	multi_lang_script->entry_function_amount[current_language] = entry_function_amount;
-	multi_lang_script->function_type[current_language] = function_type;
-	multi_lang_script->function_point[current_language] = function_point;
-	multi_lang_script->global_data[current_language] = global_data;
-	multi_lang_script->local_data[current_language] = local_data;
-	multi_lang_script->is_loaded[current_language] = loaded;
-	multi_lang_script->is_modified[current_language] = modified;
-	func = multi_lang_script->func[newlang];
-	magic_number = multi_lang_script->magic_number[newlang];
-	header_unknown1 = multi_lang_script->header_unknown1[newlang];
-	entry_amount = multi_lang_script->entry_amount[newlang];
-	for (i=0;i<20;i++) {
-		header_unknown2[i] = multi_lang_script->header_unknown2[newlang][i];
-		header_unknown3[i] = multi_lang_script->header_unknown3[newlang][i];
-	}
 	for (i=0;i<SCRIPT_NAME_MAX_LENGTH;i++)
 		header_name[i] = multi_lang_script->header_name[newlang][i];
-	entry_offset = multi_lang_script->entry_offset[newlang];
-	entry_size = multi_lang_script->entry_size[newlang];
-	entry_local_var = multi_lang_script->entry_local_var[newlang];
-	entry_flag = multi_lang_script->entry_flag[newlang];
-	entry_type = multi_lang_script->entry_type[newlang];
-	entry_function_amount = multi_lang_script->entry_function_amount[newlang];
-	function_type = multi_lang_script->function_type[newlang];
-	function_point = multi_lang_script->function_point[newlang];
-	global_data = multi_lang_script->global_data[newlang];
-	local_data = multi_lang_script->local_data[newlang];
-	loaded = multi_lang_script->is_loaded[newlang];
-	modified = multi_lang_script->is_modified[newlang];
+	SteamLanguage oldlenbase = multi_lang_script->base_script_lang[current_language];
+	SteamLanguage newlangbase = multi_lang_script->base_script_lang[newlang];
+	multi_lang_script->func[oldlenbase] = func;
+	multi_lang_script->magic_number[oldlenbase] = magic_number;
+	multi_lang_script->header_unknown1[oldlenbase] = header_unknown1;
+	multi_lang_script->entry_amount[oldlenbase] = entry_amount;
+	for (i=0;i<20;i++) {
+		multi_lang_script->header_unknown2[oldlenbase][i] = header_unknown2[i];
+		multi_lang_script->header_unknown3[oldlenbase][i] = header_unknown3[i];
+	}
+	multi_lang_script->entry_offset[oldlenbase] = entry_offset;
+	multi_lang_script->entry_size[oldlenbase] = entry_size;
+	multi_lang_script->entry_local_var[oldlenbase] = entry_local_var;
+	multi_lang_script->entry_flag[oldlenbase] = entry_flag;
+	multi_lang_script->entry_type[oldlenbase] = entry_type;
+	multi_lang_script->entry_function_amount[oldlenbase] = entry_function_amount;
+	multi_lang_script->function_type[oldlenbase] = function_type;
+	multi_lang_script->function_point[oldlenbase] = function_point;
+	multi_lang_script->global_data[oldlenbase] = global_data;
+	multi_lang_script->local_data[oldlenbase] = local_data;
+	multi_lang_script->is_loaded[oldlenbase] = loaded;
+	multi_lang_script->is_modified[oldlenbase] = modified;
+	func = multi_lang_script->func[newlangbase];
+	magic_number = multi_lang_script->magic_number[newlangbase];
+	header_unknown1 = multi_lang_script->header_unknown1[newlangbase];
+	entry_amount = multi_lang_script->entry_amount[newlangbase];
+	for (i=0;i<20;i++) {
+		header_unknown2[i] = multi_lang_script->header_unknown2[newlangbase][i];
+		header_unknown3[i] = multi_lang_script->header_unknown3[newlangbase][i];
+	}
+	entry_offset = multi_lang_script->entry_offset[newlangbase];
+	entry_size = multi_lang_script->entry_size[newlangbase];
+	entry_local_var = multi_lang_script->entry_local_var[newlangbase];
+	entry_flag = multi_lang_script->entry_flag[newlangbase];
+	entry_type = multi_lang_script->entry_type[newlangbase];
+	entry_function_amount = multi_lang_script->entry_function_amount[newlangbase];
+	function_type = multi_lang_script->function_type[newlangbase];
+	function_point = multi_lang_script->function_point[newlangbase];
+	global_data = multi_lang_script->global_data[newlangbase];
+	local_data = multi_lang_script->local_data[newlangbase];
+	loaded = multi_lang_script->is_loaded[newlangbase];
+	modified = multi_lang_script->is_modified[newlangbase];
 	current_language = newlang;
+}
+
+bool ScriptDataStruct::CheckLanguageSimilarity(SteamLanguage lang, SteamLanguage baselang, vector<uint16_t>* langtextid, vector<uint16_t>* baselangtextid) {
+	if (multi_lang_script==NULL || !multi_lang_script->is_loaded[lang] || !multi_lang_script->is_loaded[baselang])
+		return false;
+fstream fout("aaaa.txt",ios::app|ios::out); fout << "CML: 1 (" << HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[lang] << "," << HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[baselang] << ")" << endl; fout.close();
+	baselang = multi_lang_script->base_script_lang[baselang];
+	if (multi_lang_script->base_script_lang[lang]==baselang) {
+		if (langtextid!=NULL)
+			*langtextid = multi_lang_script->lang_script_text_id[lang];
+		if (baselangtextid!=NULL)
+			*baselangtextid = multi_lang_script->base_script_text_id[lang];
+		return true;
+	}
+	if (multi_lang_script->base_script_lang[lang]!=lang)
+		return false;
+	if (multi_lang_script->entry_amount[lang]!=multi_lang_script->entry_amount[baselang])
+		return false;
+	unsigned int ei,fi,oi,ai,vai,tli;
+	vector<uint16_t> linktextid;
+	vector<uint16_t> linktextbaseid;
+	for (ei=0;ei<multi_lang_script->entry_amount[lang];ei++) {
+		if (multi_lang_script->entry_size[lang][ei]!=multi_lang_script->entry_size[baselang][ei])
+			return false;
+		if (multi_lang_script->entry_function_amount[lang][ei]!=multi_lang_script->entry_function_amount[baselang][ei])
+			return false;
+		for (fi=0;fi<multi_lang_script->entry_function_amount[lang][ei];fi++) {
+			ScriptFunction& f = multi_lang_script->func[lang][ei][fi];
+			ScriptFunction& bf = multi_lang_script->func[baselang][ei][fi];
+			if (f.op_amount!=bf.op_amount)
+				return false;
+			for (oi=0;oi<f.op_amount;oi++) {
+				ScriptOperation& op = f.op[oi];
+				ScriptOperation& bop = bf.op[oi];
+				if (op.opcode!=bop.opcode || op.arg_amount!=bop.arg_amount)
+					return false;
+				for (ai=0;ai<op.arg_amount;ai++) {
+					ScriptArgument& a = op.arg[ai];
+					ScriptArgument& ba = bop.arg[ai];
+					if (a.is_var!=ba.is_var)
+						return false;
+					if (a.is_var) {
+						if (a.size!=ba.size)
+							return false;
+						for (vai=0;vai<a.size;vai++)
+							if (a.var[vai]!=ba.var[vai])
+								return false;
+					} else if ((int)ai>=HADES_STRING_SCRIPT_OPCODE[op.opcode].arg_amount || HADES_STRING_SCRIPT_OPCODE[op.opcode].arg_type[ai]!=AT_TEXT) {
+						if (a.value!=ba.value)
+							return false;
+					} else {
+						for (tli=0;tli<linktextid.size();tli++)
+							if (linktextid[tli]==a.value) {
+								if (linktextbaseid[tli]!=ba.value)
+									return false;
+								break;
+							}
+						if (tli>=linktextid.size()) {
+							linktextid.push_back(a.value);
+							linktextbaseid.push_back(ba.value);
+						}
+					}
+				}
+			}
+		}
+	}
+	if (langtextid!=NULL)
+		*langtextid = linktextid;
+	if (baselangtextid!=NULL)
+		*baselangtextid = linktextbaseid;
+	return true;
+}
+
+void ScriptDataStruct::LinkLanguageScripts(SteamLanguage lang, SteamLanguage baselang, vector<uint16_t> langtextid, vector<uint16_t> baselangtextid) {
+	if (multi_lang_script==NULL || !multi_lang_script->is_loaded[lang] || !multi_lang_script->is_loaded[baselang])
+		return;
+	unsigned int i,j,k,l;
+	if (multi_lang_script->base_script_lang[lang]==lang) {
+		for (i=0;i<multi_lang_script->entry_amount[lang];i++) {
+			for (j=0;j<multi_lang_script->entry_function_amount[lang][i];j++) {
+				for (k=0;k<multi_lang_script->func[lang][i][j].op_amount;k++) {
+					for (l=0;l<multi_lang_script->func[lang][i][j].op[k].arg_amount;l++) {
+						if (multi_lang_script->func[lang][i][j].op[k].arg[l].is_var)
+							delete[] multi_lang_script->func[lang][i][j].op[k].arg[l].var;
+					}
+					delete[] multi_lang_script->func[lang][i][j].op[k].arg;
+				}
+				delete[] multi_lang_script->func[lang][i][j].op;
+			}
+			delete[] multi_lang_script->func[lang][i];
+			delete[] multi_lang_script->function_type[lang][i];
+			delete[] multi_lang_script->function_point[lang][i];
+		}
+		delete[] multi_lang_script->entry_offset[lang];
+		delete[] multi_lang_script->entry_size[lang];
+		delete[] multi_lang_script->entry_flag[lang];
+		delete[] multi_lang_script->entry_type[lang];
+		delete[] multi_lang_script->entry_function_amount[lang];
+		delete[] multi_lang_script->local_data[lang];
+	}
+	multi_lang_script->base_script_lang[lang] = multi_lang_script->base_script_lang[baselang];
+	if (baselang==multi_lang_script->base_script_lang[baselang]) {
+		multi_lang_script->lang_script_text_id[lang] = langtextid;
+		multi_lang_script->base_script_text_id[lang] = baselangtextid;
+	} else {
+		multi_lang_script->lang_script_text_id[lang].clear();
+		multi_lang_script->base_script_text_id[lang].clear();
+		for (i=0;i<langtextid.size();i++)
+			for (j=0;j<multi_lang_script->lang_script_text_id[baselang].size();j++)
+				if (baselangtextid[j]==multi_lang_script->lang_script_text_id[baselang][j]) {
+					multi_lang_script->lang_script_text_id[lang].push_back(langtextid[i]);
+					multi_lang_script->base_script_text_id[lang].push_back(multi_lang_script->base_script_text_id[baselang][j]);
+					break;
+				}
+	}
+	if (current_language==lang) {
+		SteamLanguage newlangbase = multi_lang_script->base_script_lang[baselang];
+		unsigned int i;
+		func = multi_lang_script->func[newlangbase];
+		magic_number = multi_lang_script->magic_number[newlangbase];
+		header_unknown1 = multi_lang_script->header_unknown1[newlangbase];
+		entry_amount = multi_lang_script->entry_amount[newlangbase];
+		for (i=0;i<20;i++) {
+			header_unknown2[i] = multi_lang_script->header_unknown2[newlangbase][i];
+			header_unknown3[i] = multi_lang_script->header_unknown3[newlangbase][i];
+		}
+		entry_offset = multi_lang_script->entry_offset[newlangbase];
+		entry_size = multi_lang_script->entry_size[newlangbase];
+		entry_local_var = multi_lang_script->entry_local_var[newlangbase];
+		entry_flag = multi_lang_script->entry_flag[newlangbase];
+		entry_type = multi_lang_script->entry_type[newlangbase];
+		entry_function_amount = multi_lang_script->entry_function_amount[newlangbase];
+		function_type = multi_lang_script->function_type[newlangbase];
+		function_point = multi_lang_script->function_point[newlangbase];
+		global_data = multi_lang_script->global_data[newlangbase];
+		local_data = multi_lang_script->local_data[newlangbase];
+		loaded = multi_lang_script->is_loaded[newlangbase];
+		modified = multi_lang_script->is_modified[newlangbase];
+	}
+}
+
+void ScriptDataStruct::LinkSimilarLanguageScripts() {
+	if (multi_lang_script==NULL)
+		return;
+	SteamLanguage lang,baselang;
+	vector<uint16_t> langtextid;
+	vector<uint16_t> baselangtextid;
+	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+		if (!multi_lang_script->is_loaded[lang])
+			continue;
+		for (baselang=0;baselang<lang;baselang++) {
+			if (!multi_lang_script->is_loaded[baselang] || multi_lang_script->base_script_lang[baselang]!=baselang)
+				continue;
+			if (CheckLanguageSimilarity(lang,baselang,&langtextid,&baselangtextid)) {
+				LinkLanguageScripts(lang,baselang,langtextid,baselangtextid);
+				break;
+			}
+		}
+	}
 }
 
 #define MACRO_SCRIPT_IOFUNCTION(IO,SEEK,READ,PPF,FUNC) \
@@ -731,8 +927,10 @@ void ScriptDataStruct::Read(fstream& f, SteamLanguage lang) {
 		global_data.amount = 0;
 		current_language = lang;
 		loaded = true;
-		if (lang!=STEAM_LANGUAGE_NONE)
+		if (lang!=STEAM_LANGUAGE_NONE) {
+			multi_lang_script->base_script_lang[lang] = lang;
 			ChangeSteamLanguage(lang); // Setup the values and pointers of multi_lang_script's language
+		}
 	}
 	loaded = true;
 }

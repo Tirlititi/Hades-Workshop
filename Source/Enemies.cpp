@@ -7,6 +7,8 @@
 #include "Database_Resource.h"
 #include "Database_SpellAnimation.h"
 
+#include "Hades_Strings.h"
+
 #define HWS_BATTLE_SCENE_MOD_ID		0xFFF0
 
 int EnemySpellDataStruct::SetName(wstring newvalue, SteamLanguage lang) {
@@ -788,7 +790,8 @@ void EnemyDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 				script[i]->Read(ffbin,lang);
 			}
 			script[i]->ChangeSteamLanguage(GetSteamLanguage());
-			script[i]->size = config.meta_battle.GetFileSizeByIndex(config.enmy_script_file[GetSteamLanguage()][i]); // DEBUG: Verify that Steam doesn't about this
+			script[i]->size = config.meta_battle.GetFileSizeByIndex(config.enmy_script_file[GetSteamLanguage()][i]); // DEBUG: Verify that Steam doesn't care about this
+			script[i]->LinkSimilarLanguageScripts();
 			l = 0;
 			for (k=0;k<battle[i]->stat_amount && l<text[i]->amount;k++)
 				battle[i]->stat[k].name = text[i]->text[l++];
@@ -796,6 +799,16 @@ void EnemyDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 				battle[i]->spell[k].name = text[i]->text[l++];
 			UpdateBattleName(i);
 			SetupEnemyInfo(i);
+wfstream fout("aaaa.txt",ios::app|ios::out);
+bool haslink = false;
+for (SteamLanguage lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+if (script[i]->multi_lang_script->is_loaded[lang] && script[i]->multi_lang_script->base_script_lang[lang]!=lang) {
+if (!haslink) fout << battle_name[i];
+fout << L" : " << HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[lang] << L"," << HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[script[i]->multi_lang_script->base_script_lang[lang]];
+haslink = true;
+}
+if (haslink) fout << endl;
+fout.close();
 /*wfstream fout("aaaa.txt",ios::app|ios::out);
 for (j=0;j<battle[i]->stat_amount;j++)
 fout << battle[i]->stat[j].name.str_nice << L" : " << (unsigned int)battle[i]->stat[j].model << L" : " << (unsigned int)battle[i]->stat[j].sound_engage << L" : " << (unsigned int)battle[i]->stat[j].sound_death << endl;

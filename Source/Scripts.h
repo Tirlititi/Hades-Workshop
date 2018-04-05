@@ -27,6 +27,7 @@ struct MultiLanguageScriptDataStruct;
 
 #include <inttypes.h>
 #include <fstream>
+#include <vector>
 #include "File_Manipulation.h"
 #include "Configuration.h"
 using namespace std;
@@ -116,6 +117,11 @@ struct MultiLanguageScriptDataStruct {
 	ScriptLocalVariableSet* local_data[STEAM_LANGUAGE_AMOUNT];
 	bool is_loaded[STEAM_LANGUAGE_AMOUNT];
 	bool is_modified[STEAM_LANGUAGE_AMOUNT];
+	//  If scripts are the same in different languages (except possibly for AT_TEXT arguments),
+	// do not duplicate the functions but use a base script and an AT_TEXT argument correspondancy
+	SteamLanguage base_script_lang[STEAM_LANGUAGE_AMOUNT];
+	vector<uint16_t> base_script_text_id[STEAM_LANGUAGE_AMOUNT]; // lang_script_text_id[lang][i] == Translation(base_script_text_id[base_script_lang[lang]][i])
+	vector<uint16_t> lang_script_text_id[STEAM_LANGUAGE_AMOUNT];
 };
 
 struct ScriptDataStruct : public ChunkChild {
@@ -151,6 +157,11 @@ public:
 	void AddEntry(int entrypos, uint8_t entrytype); // Needs 16 bytes available
 	int RemoveEntry(int entrypos, int* modifiedargamount = NULL); // Returns nb of bytes freed ; *modifiedargamount is incremented by the amount of arguments previously using the removed entry
 	void ChangeSteamLanguage(SteamLanguage newlang);
+
+	// Note: Requires multi_lang_script to be up-to-date if lang or baselang is the current_language
+	bool CheckLanguageSimilarity(SteamLanguage lang, SteamLanguage baselang, vector<uint16_t>* langtextid = NULL, vector<uint16_t>* baselangtextid = NULL);
+	void LinkLanguageScripts(SteamLanguage lang, SteamLanguage baselang, vector<uint16_t> langtextid, vector<uint16_t> baselangtextid);
+	void LinkSimilarLanguageScripts();
 
 	void Read(fstream& f, SteamLanguage lang = STEAM_LANGUAGE_NONE);
 	void Write(fstream& f);

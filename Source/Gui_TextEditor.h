@@ -19,7 +19,7 @@ using namespace std;
 
 class PreviewTextCtrl : public wxRichTextCtrl {
 public:
-	TextEditDialog* parent_dialog;
+	TextEditDialogBase* parent_dialog;
 
 	virtual void PaintBackground(wxDC& dc);
 	PreviewTextCtrl(wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& value = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxRE_MULTILINE);
@@ -30,15 +30,26 @@ public:
 	FF9String text;
 	wxTimer* timer;
 	PreviewTextCtrl* preview_ctrl;
-	wxColour text_colour;
 	wstring::size_type str_pos;
+	int line_num;
 	uint16_t choice_pos;
+	int choice_line;
 	uint16_t wait;
+	bool must_reset_timer;
+	wxRichTextAttr preview_style;
+	wxRichTextAttr normal_style;
+	bool display_immediate;
 	int text_style;
 
-	TextEditDialogBase(FF9String& str, wxTimer* tim, PreviewTextCtrl* richctrl, int style) : text(str), timer(tim), preview_ctrl(richctrl), text_style(style) {}
+	TextEditDialogBase(FF9String& str, wxTimer* tim, PreviewTextCtrl* richctrl, int style) : text(str), timer(tim), preview_ctrl(richctrl), must_reset_timer(false), has_shadow(true), display_immediate(false), text_style(style) {
+		richctrl->parent_dialog = this;
+		normal_style = richctrl->GetDefaultStyleEx();
+		preview_style = normal_style;
+	}
 
 	virtual bool ProcessPreviewText() { return true; }
+	virtual int GetBubbleSizeX() { return 0; }
+	virtual int GetBubbleSizeY() { return 0; }
 };
 
 class TextEditDialog : public TextEditWindow, public TextEditDialogBase {
@@ -56,6 +67,8 @@ public:
 	int ShowModal();
 	bool ProcessPreviewText();
 	void PreviewText();
+	int GetBubbleSizeX();
+	int GetBubbleSizeY();
 	
 private:
 	TextOpcodeDialog* op_dial;
@@ -104,19 +117,26 @@ public:
 	wxStaticText* multilangname[STEAM_LANGUAGE_AMOUNT-1];
 	wxTextCtrl* multilangctrl[STEAM_LANGUAGE_AMOUNT-1];
 	wxButton* multilangbtn[STEAM_LANGUAGE_AMOUNT-1];
+	bool must_clear_text;
+	bool ignore_color;
+	int bubble_size_x;
+	int bubble_size_y;
 
 	TextSteamEditDialog(wxWindow* parent, FF9String& str, int style = TEXT_STYLE_DEFAULT);
 	~TextSteamEditDialog();
 	int ShowModal();
 	bool ProcessPreviewText();
 	void PreviewText();
+	int GetBubbleSizeX();
+	int GetBubbleSizeY();
 
 private:
 //	TextOpcodeDialog* op_dial;
 
-	void CalculateBestSize();
+	void CalculateBestSize(SteamLanguage lang = GetSteamLanguage());
 
 	void OnButtonClick(wxCommandEvent& event);
+	void OnShowHideMultiLang(wxMouseEvent& event);
 	void OnTimer(wxTimerEvent& event);
 };
 
