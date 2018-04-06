@@ -779,7 +779,7 @@ TextSteamEditDialog::TextSteamEditDialog(wxWindow* parent, FF9String& str, int s
 	unsigned int i = 0;
 	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
 		if (lang!=GetSteamLanguage())
-			multilang[lang<GetSteamLanguage() ? lang : lang+1] = lang;
+			multilang[lang<GetSteamLanguage() ? lang : lang-1] = lang;
 	has_multilang = !hades::STEAM_SINGLE_LANGUAGE_MODE;
 	multilangname[0] = m_langname1;		multilangname[1] = m_langname2;		multilangname[2] = m_langname3;
 	multilangname[3] = m_langname4;		multilangname[4] = m_langname5;		multilangname[5] = m_langname6;

@@ -850,6 +850,82 @@ void FieldWalkmeshDataStruct::WriteHWS(fstream& f) {
 	MACRO_WALKMESH_IOFUNCTION(HWSWrite,HWSSeek,false,false)
 }
 
+int FieldWalkmeshDataStruct::ExportAsObj(const char* outputbase) {
+	unsigned int i,j,k;
+	char buffer[256];
+	const char* filename = outputbase;
+	for (i=strlen(outputbase)-1;i>0;i--)
+		if (outputbase[i] == '/' || outputbase[i]=='\\') {
+			filename = outputbase+i+1;
+			break;
+		}
+	sprintf(buffer,"%s.obj",outputbase);
+	fstream fobj(buffer,ios::out);
+	if (!fobj.is_open())
+		return 1;
+	fobj << std::showpoint;
+	uint16_t vertcount = 1;
+	uint16_t vertncount = 1;
+	vector<uint16_t>* vertlistbypath = new vector<uint16_t>[walkpath_amount];
+	vector<uint16_t> vertlistpathindexbypath(vertex_amount,0);
+	for (i=0;i<walkpath_amount;i++) {
+		fobj << "o Walhpath_" << i << endl;
+		for (j=0;j<walkpath_triangleamount[i];j++) {
+			for (k=0;k<vertlistbypath[i].size();k++)
+				if (vertlistbypath[i][k]==triangle_vertex1[walkpath_trianglelist[i][j]]) {
+					vertlistpathindexbypath[triangle_vertex1[walkpath_trianglelist[i][j]]] = k;
+					break;
+				}
+			if (k>=vertlistbypath[i].size()) {
+				vertlistpathindexbypath[triangle_vertex1[walkpath_trianglelist[i][j]]] = vertlistbypath[i].size();
+				vertlistbypath[i].push_back(triangle_vertex1[walkpath_trianglelist[i][j]]);
+			}
+			for (k=0;k<vertlistbypath[i].size();k++)
+				if (vertlistbypath[i][k]==triangle_vertex2[walkpath_trianglelist[i][j]]) {
+					vertlistpathindexbypath[triangle_vertex2[walkpath_trianglelist[i][j]]] = k;
+					break;
+				}
+			if (k>=vertlistbypath[i].size()) {
+				vertlistpathindexbypath[triangle_vertex2[walkpath_trianglelist[i][j]]] = vertlistbypath[i].size();
+				vertlistbypath[i].push_back(triangle_vertex2[walkpath_trianglelist[i][j]]);
+			}
+			for (k=0;k<vertlistbypath[i].size();k++)
+				if (vertlistbypath[i][k]==triangle_vertex3[walkpath_trianglelist[i][j]]) {
+					vertlistpathindexbypath[triangle_vertex3[walkpath_trianglelist[i][j]]] = k;
+					break;
+				}
+			if (k>=vertlistbypath[i].size()) {
+				vertlistpathindexbypath[triangle_vertex3[walkpath_trianglelist[i][j]]] = vertlistbypath[i].size();
+				vertlistbypath[i].push_back(triangle_vertex3[walkpath_trianglelist[i][j]]);
+			}
+		}
+		for (j=0;j<vertlistbypath[i].size();j++) {
+			double xx = vertex_x[vertlistbypath[i][j]];
+			double yy = vertex_y[vertlistbypath[i][j]];
+			double zz = vertex_z[vertlistbypath[i][j]];
+			fobj << "v " << xx << " " << -yy << " " << zz << endl;
+		}
+		for (j=0;j<walkpath_triangleamount[i];j++) {
+			double nxx = normal_x[triangle_normal[walkpath_trianglelist[i][j]]];
+			double nyy = normal_y[triangle_normal[walkpath_trianglelist[i][j]]];
+			double nzz = normal_z[triangle_normal[walkpath_trianglelist[i][j]]];
+			fobj << "vn " << nxx << " " << -nyy << " " << nzz << endl;
+		}
+		for (j=0;j<walkpath_triangleamount[i];j++) {
+			int vertindex = vertlistpathindexbypath[triangle_vertex1[walkpath_trianglelist[i][j]]]+vertcount;
+			fobj << "f " << vertindex << "//" << j+vertncount;
+			vertindex = vertlistpathindexbypath[triangle_vertex2[walkpath_trianglelist[i][j]]]+vertcount;
+			fobj << " " << vertindex << "//" << j+vertncount;
+			vertindex = vertlistpathindexbypath[triangle_vertex3[walkpath_trianglelist[i][j]]]+vertcount;
+			fobj << " " << vertindex << "//" << j+vertncount << endl;
+		}
+		vertcount += vertlistbypath[i].size();
+		vertncount += walkpath_triangleamount[i];
+	}
+	fobj.close();
+	return 0;
+}
+
 int FieldRoleDataStruct::AddModelRole(uint16_t modelid) {
 	if (GetExtraSize()<0x10)
 		return 1;
@@ -1204,7 +1280,7 @@ int FieldDataSet::SetFieldName(unsigned int fieldid, FF9String& newvalue) {
 void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textset) {
 	unsigned int i,j,k,l;
 	int relatedtxtid;
-	amount = clusset.field_amount;
+	amount = 10;//clusset.field_amount;
 	struct_id = new uint16_t[amount];
 	script_data = new ScriptDataStruct*[amount];
 	preload = new ImageMapDataStruct*[amount];
@@ -1411,6 +1487,9 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 			walkmesh[i]->Init(false,CHUNK_TYPE_FIELD_WALK,config.field_id[i],&dummyclus[i]);
 			walkmesh[i]->size = config.meta_field[config.field_file_id[i]-1].GetFileSizeByIndex(config.field_walkmesh_file[i]);
 			walkmesh[i]->Read(ffbin);
+wxString objexp;
+objexp << (int)script_data[i]->object_id << L" - " << script_data[i]->name.str_nice;
+walkmesh[i]->ExportAsObj(objexp.ToStdString().c_str());
 //			ffbin.seekg(config.meta_field[config.field_file_id[i]-1].GetFileOffsetByIndex(config.field_image_file[i]));
 			tim_data[i] = new TIMImageDataStruct[1];
 			tim_data[i]->Init(false,CHUNK_TYPE_TIM,config.field_id[i],&dummyclus[i]);

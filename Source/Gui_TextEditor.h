@@ -41,7 +41,7 @@ public:
 	bool display_immediate;
 	int text_style;
 
-	TextEditDialogBase(FF9String& str, wxTimer* tim, PreviewTextCtrl* richctrl, int style) : text(str), timer(tim), preview_ctrl(richctrl), must_reset_timer(false), has_shadow(true), display_immediate(false), text_style(style) {
+	TextEditDialogBase(FF9String& str, wxTimer* tim, PreviewTextCtrl* richctrl, int style) : text(str), timer(tim), preview_ctrl(richctrl), must_reset_timer(false), display_immediate(false), text_style(style) {
 		richctrl->parent_dialog = this;
 		normal_style = richctrl->GetDefaultStyleEx();
 		preview_style = normal_style;

@@ -296,6 +296,8 @@ public:
 	void WritePPF(fstream& f);
 	void ReadHWS(fstream& f);
 	void WriteHWS(fstream& f);
+
+	int ExportAsObj(const char* outputbase);
 };
 
 struct FieldRoleDataStruct : public ChunkChild {
