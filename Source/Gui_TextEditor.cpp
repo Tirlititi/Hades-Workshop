@@ -17,6 +17,7 @@ wxBitmap InitButton(wxBitmap bmp) {
 	return bmp;
 }
 
+
 //==================================//
 //              PSX                 //
 //==================================//
@@ -149,7 +150,8 @@ bool TextEditDialog::ProcessPreviewText() {
 	preview_ctrl->BeginStyle(preview_style);
 	while (str_pos<len && text.str[str_pos]==text.opcode_wchar) {
 		str_pos++;
-		TextOp[text.code_arg[code_pos][0]](this,text.code_arg[code_pos++]);
+		TextOp[text.code_arg[code_pos][0]](this,text.code_arg[code_pos]);
+		code_pos++;
 	}
 	if (must_reset_timer)
 		return str_pos<len;
@@ -774,7 +776,8 @@ TextSteamEditDialog::TextSteamEditDialog(wxWindow* parent, FF9String& str, int s
 	must_clear_text(false),
 	ignore_color(false),
 	bubble_size_x(-1),
-	bubble_size_y(-1) {
+	bubble_size_y(-1),
+	help_dial(NULL) {
 	SteamLanguage lang;
 	unsigned int i = 0;
 	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
@@ -983,7 +986,12 @@ void TextSteamEditDialog::OnButtonClick(wxCommandEvent& event) {
 		text.SetValue(m_textctrl->GetValue().ToStdWstring());
 		CalculateBestSize();
 	} else if (id==wxID_HELP) {
-		// TODO
+		if (help_dial==NULL) {
+			help_dial = new TextSteamHelpDialog(this);
+			help_dial->Show();
+		} else {
+			help_dial->SetFocus();
+		}
 	} else if (id==wxID_TRANSLATE) {
 		wxButton* clicked = static_cast<wxButton*>(event.GetEventObject());
 		for (unsigned int i=0;i+1<STEAM_LANGUAGE_AMOUNT;i++)
@@ -1046,6 +1054,39 @@ void TextSteamEditDialog::OnTimer(wxTimerEvent& event) {
 	ProcessPreviewText();
 }
 
+void TextSteamHelpDialog::OnListClick(wxCommandEvent& event) {
+	m_helptextctrl->ChangeValue(HADES_STRING_TEXT_STEAM_OPCODE[event.GetSelection()].help);
+}
+
+void TextSteamHelpDialog::OnListDoubleClick(wxCommandEvent& event) {
+	SortedChoiceItemTextSteamOpcode& opitem = HADES_STRING_TEXT_STEAM_OPCODE[event.GetSelection()];
+	wxString opstr = _(L"[")+_(opitem.id);
+	if (opitem.arg_amount==-1) {
+		if (_(L"WDTH").IsSameAs(opitem.id))
+			opstr += _(L"=0,0,-1]");
+		else
+			opstr += _(L"]");
+	} else if (opitem.arg_amount==0) {
+		opstr += _(L"]");
+	} else {
+		opstr += _(L"=");
+		if (_(L"TAIL").IsSameAs(opitem.id))
+			opstr += _(L"DEFT");
+		else if (_(L"DBTN").IsSameAs(opitem.id) || _(L"CBTN").IsSameAs(opitem.id) || _(L"KCBT").IsSameAs(opitem.id) || _(L"JCBT").IsSameAs(opitem.id))
+			opstr += _(L"START");
+		else if (_(L"url").IsSameAs(opitem.id))
+			opstr += _(L"http://www.example.com");
+		else
+			for (unsigned int i=0;i<opitem.arg_amount;i++)
+				opstr += (i>0 ? _(L",0") : _(L"0"));
+		opstr += _(L"]");
+	}
+	if (event.GetSelection()>=TEXT_STEAM_OPCODE_CLOSING_TAG) {
+		opstr += _(L"[/")+_(opitem.id)+_(L"]");
+	}
+	parent->m_textctrl->WriteText(opstr);
+}
+
 //==================================//
 //             Shared               //
 //==================================//
@@ -1087,5 +1128,3 @@ void PreviewTextCtrl::PaintBackground(wxDC& dc) {
 void TextExportDialog::OnButtonClick(wxCommandEvent& event) {
 	EndModal(event.GetId());
 }
-
-

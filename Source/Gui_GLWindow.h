@@ -9,6 +9,7 @@ class GLWindow;
 
 #define GL_WINDOW_FIELD_MAX_POINTS	20
 
+#define DISPLAY_GL_TYPE_NONE	0
 #define DISPLAY_GL_TYPE_FIELD	1
 
 class GLWindow : public wxGLCanvas {
@@ -18,7 +19,8 @@ public:
 	unsigned int field_camera;
 	bool field_showtiles;
 	bool field_showwalk;
-	
+
+	unsigned int field_walk_triangle_amount;
 	GLint** field_walk_triangle_pos;
 	int field_walk_path_highlight;
 	int field_walk_triangle_highlight;

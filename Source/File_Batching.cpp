@@ -492,6 +492,7 @@ LogStruct BatchImportDialog::ImportSpecialText(wxString filetext, bool fatalwarn
 
 int BatchExportDialog::ExportEnemyScript(wxString path, bool* exportlist, bool splitfile, int addedinfo) {
 	EnemyDataSet& data = *dataset->enemyset;
+	SteamLanguage lang,sublang,curlang;
 	wxString line,tmprest,localstr;
 	unsigned int i,j,k;
 	wxFile output;
@@ -510,39 +511,79 @@ int BatchExportDialog::ExportEnemyScript(wxString path, bool* exportlist, bool s
 			if (addedinfo & BATCHING_SCRIPT_INFO_FILENAME)
 				output.Write(_(L" // ")+_(data.battle_name[i]));
 			output.Write(_(L"\n"));
-			ScriptEditHandler scpthand(*data.script[i],SCRIPT_TYPE_BATTLE,dataset,data.battle[i],data.text[i],dataloaded);
-			for (j=1;j<scpthand.script.entry_amount;j++)
-				if (j<=data.battle[i]->stat_amount) {
-					scpthand.entry_name[j] = _(data.battle[i]->stat[j-1].name.GetStr(2));
-					scpthand.entry_name[j].Replace(_(L" "),_(L"_"));
+			curlang = data.script[i]->current_language;
+			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+				if (GetGameType()!=GAME_TYPE_PSX) {
+					if (data.script[i]->multi_lang_script==NULL) {
+						output.Write(_(L"#HW language ")+HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[GetSteamLanguage()]+_(L"\n"));
+						lang = STEAM_LANGUAGE_AMOUNT;
+					} else if (data.script[i]->multi_lang_script->base_script_lang[lang]!=lang && hades::STEAM_LANGUAGE_SAVE_LIST[data.script[i]->multi_lang_script->base_script_lang[lang]]) {
+						continue;
+					} else if (data.script[i]->multi_lang_script->base_script_lang[lang]==lang && !hades::STEAM_LANGUAGE_SAVE_LIST[lang]) {
+						continue;
+					} else {
+						output.Write(_(L"#HW language ")+HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[lang]+_(L"\n"));
+						for (sublang=0;sublang<STEAM_LANGUAGE_AMOUNT;sublang++)
+							if (sublang!=lang && data.script[i]->multi_lang_script->base_script_lang[sublang]==lang && hades::STEAM_LANGUAGE_SAVE_LIST[sublang]) {
+								unsigned int langtextlinkcount = data.script[i]->multi_lang_script->base_script_text_id[sublang].size();
+								uint16_t btextid,textid;
+								output.Write(_(L"#HW languagelink ")+HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[sublang]+_(L"\n"));
+								if (langtextlinkcount>0) {
+									output.Write(_(L"#HW languagetextlink ")+wxString::Format(wxT("%u"),langtextlinkcount)+_(L"\n"));
+									for (j=0;j<langtextlinkcount;j++) {
+										btextid = data.script[i]->multi_lang_script->base_script_text_id[sublang][j];
+										textid = data.script[i]->multi_lang_script->lang_script_text_id[sublang][j];
+										wxString line = wxString::Format(wxT("%u %u"),btextid,textid);
+										if (addedinfo & BATCHING_SCRIPT_INFO_TEXT_LINK) {
+											line += _(L" // \"")+_(FF9String::RemoveOpcodes(data.text[i]->text[btextid].multi_lang_str[lang]))+_(L"\" = \"")+_(FF9String::RemoveOpcodes(data.text[i]->text[textid].multi_lang_str[sublang]))+_(L"\"");
+											line.Replace(_(L"\n"),_(L" "));
+										}
+										output.Write(line+_(L"\n"));
+									}
+									output.Write(_(L"\n"));
+								}
+							}
+						data.script[i]->ChangeSteamLanguage(lang);
+					}
+				} else {
+					lang = STEAM_LANGUAGE_AMOUNT;
 				}
-			scpthand.GenerateFunctionList(true);
-			scpthand.GenerateFunctionStrings(addedinfo & BATCHING_SCRIPT_INFO_ARGUMENT);
-			if (scpthand.script.global_data.amount>0) {
-				output.Write(_(L"#HW globals\n"));
-				output.Write(scpthand.globalvar_str);
-				output.Write(_(L"#HW endglobals\n\n"));
-			}
-			for (j=0;j<scpthand.script.entry_amount;j++) {
-				if (scpthand.script.entry_function_amount[j]>0) {
-					output.Write(_(L"#HW newentry ")+wxString::Format(wxT("%u"),j)+_(L"\n"));
-					if (scpthand.script.local_data[j].allocate_amount>0 || scpthand.script.local_data[j].amount>0) {
-						localstr = scpthand.localvar_str[j];
-						output.Write(_(L"#HW locals\n"));
-						while (localstr.Len()>0) {
-							line = localstr.BeforeFirst(L'\n',&tmprest);
-							localstr = tmprest;
-							if (!line.Mid(0,7).IsSameAs(L"global "))
-								output.Write(line+_(L"\n"));
+				ScriptEditHandler scpthand(*data.script[i],SCRIPT_TYPE_BATTLE,dataset,data.battle[i],data.text[i],dataloaded);
+				for (j=1;j<scpthand.script.entry_amount;j++)
+					if (j<=data.battle[i]->stat_amount) {
+						scpthand.entry_name[j] = _(data.battle[i]->stat[j-1].name.GetStr(2));
+						scpthand.entry_name[j].Replace(_(L" "),_(L"_"));
+					}
+				scpthand.GenerateFunctionList();
+				scpthand.GenerateFunctionStrings(addedinfo & BATCHING_SCRIPT_INFO_ARGUMENT);
+				if (scpthand.script.global_data.amount>0) {
+					output.Write(_(L"#HW globals\n"));
+					output.Write(scpthand.globalvar_str);
+					output.Write(_(L"#HW endglobals\n\n"));
+				}
+				for (j=0;j<scpthand.script.entry_amount;j++) {
+					if (scpthand.script.entry_function_amount[j]>0) {
+						output.Write(_(L"#HW newentry ")+wxString::Format(wxT("%u"),j)+_(L"\n"));
+						if (scpthand.script.local_data[j].allocate_amount>0 || scpthand.script.local_data[j].amount>0) {
+							localstr = scpthand.localvar_str[j];
+							output.Write(_(L"#HW locals\n"));
+							while (localstr.Len()>0) {
+								line = localstr.BeforeFirst(L'\n',&tmprest);
+								localstr = tmprest;
+								if (!line.Mid(0,7).IsSameAs(L"global "))
+									output.Write(line+_(L"\n"));
+							}
+							output.Write(_(L"#HW endlocals\n\n"));
 						}
-						output.Write(_(L"#HW endlocals\n\n"));
-					}
-					for (k=0;k<scpthand.script.entry_function_amount[j];k++) {
-						output.Write(_(L"#HW newfunction ")+wxString::Format(wxT("%u"),scpthand.script.function_type[j][k])+_(L"\n"));
-						output.Write(scpthand.func_str[j][k]+_(L"\n\n"));
+						for (k=0;k<scpthand.script.entry_function_amount[j];k++) {
+							output.Write(_(L"#HW newfunction ")+wxString::Format(wxT("%u"),scpthand.script.function_type[j][k])+_(L"\n"));
+							output.Write(scpthand.func_str[j][k]+_(L"\n\n"));
+						}
 					}
 				}
 			}
+			if (data.script[i]->current_language!=curlang)
+				data.script[i]->ChangeSteamLanguage(curlang);
 			if (splitfile)
 				output.Close();
 			LoadingDialogUpdate(i+1);
@@ -553,6 +594,7 @@ int BatchExportDialog::ExportEnemyScript(wxString path, bool* exportlist, bool s
 
 int BatchExportDialog::ExportWorldScript(wxString path, bool* exportlist, bool splitfile, int addedinfo) {
 	WorldMapDataSet& data = *dataset->worldset;
+	SteamLanguage lang,sublang,curlang;
 	wxString line,tmprest,localstr;
 	unsigned int i,j,k;
 	wxFile output;
@@ -574,34 +616,74 @@ int BatchExportDialog::ExportWorldScript(wxString path, bool* exportlist, bool s
 						break;
 					}
 			output.Write(_(L"\n"));
-			ScriptEditHandler scpthand(*data.script[i],SCRIPT_TYPE_WORLD,dataset,NULL,data.text_data[i],dataloaded);
-			scpthand.GenerateFunctionList(true);
-			scpthand.GenerateFunctionStrings(addedinfo & BATCHING_SCRIPT_INFO_ARGUMENT);
-			if (scpthand.script.global_data.amount>0) {
-				output.Write(_(L"#HW globals\n"));
-				output.Write(scpthand.globalvar_str);
-				output.Write(_(L"#HW endglobals\n\n"));
-			}
-			for (j=0;j<scpthand.script.entry_amount;j++) {
-				if (scpthand.script.entry_function_amount[j]>0) {
-					output.Write(_(L"#HW newentry ")+wxString::Format(wxT("%u"),j)+_(L"\n"));
-					if (scpthand.script.local_data[j].allocate_amount>0 || scpthand.script.local_data[j].amount>0) {
-						localstr = scpthand.localvar_str[j];
-						output.Write(_(L"#HW locals\n"));
-						while (localstr.Len()>0) {
-							line = localstr.BeforeFirst(L'\n',&tmprest);
-							localstr = tmprest;
-							if (!line.Mid(0,7).IsSameAs(L"global "))
-								output.Write(line+_(L"\n"));
-						}
-						output.Write(_(L"#HW endlocals\n\n"));
+			curlang = data.script[i]->current_language;
+			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+				if (GetGameType()!=GAME_TYPE_PSX) {
+					if (data.script[i]->multi_lang_script==NULL) {
+						output.Write(_(L"#HW language ")+HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[GetSteamLanguage()]+_(L"\n"));
+						lang = STEAM_LANGUAGE_AMOUNT;
+					} else if (data.script[i]->multi_lang_script->base_script_lang[lang]!=lang && hades::STEAM_LANGUAGE_SAVE_LIST[data.script[i]->multi_lang_script->base_script_lang[lang]]) {
+						continue;
+					} else if (data.script[i]->multi_lang_script->base_script_lang[lang]==lang && !hades::STEAM_LANGUAGE_SAVE_LIST[lang]) {
+						continue;
+					} else {
+						output.Write(_(L"#HW language ")+HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[lang]+_(L"\n"));
+						for (sublang=0;sublang<STEAM_LANGUAGE_AMOUNT;sublang++)
+							if (sublang!=lang && data.script[i]->multi_lang_script->base_script_lang[sublang]==lang && hades::STEAM_LANGUAGE_SAVE_LIST[sublang]) {
+								unsigned int langtextlinkcount = data.script[i]->multi_lang_script->base_script_text_id[sublang].size();
+								uint16_t btextid,textid;
+								output.Write(_(L"#HW languagelink ")+HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[sublang]+_(L"\n"));
+								if (langtextlinkcount>0) {
+									output.Write(_(L"#HW languagetextlink ")+wxString::Format(wxT("%u"),langtextlinkcount)+_(L"\n"));
+									for (j=0;j<langtextlinkcount;j++) {
+										btextid = data.script[i]->multi_lang_script->base_script_text_id[sublang][j];
+										textid = data.script[i]->multi_lang_script->lang_script_text_id[sublang][j];
+										wxString line = wxString::Format(wxT("%u %u"),btextid,textid);
+										if (addedinfo & BATCHING_SCRIPT_INFO_TEXT_LINK) {
+											line += _(L" // \"")+_(FF9String::RemoveOpcodes(data.text_data[i]->text[btextid].multi_lang_str[lang]))+_(L"\" = \"")+_(FF9String::RemoveOpcodes(data.text_data[i]->text[textid].multi_lang_str[sublang]))+_(L"\"");
+											line.Replace(_(L"\n"),_(L" "));
+										}
+										output.Write(line+_(L"\n"));
+									}
+									output.Write(_(L"\n"));
+								}
+							}
+						data.script[i]->ChangeSteamLanguage(lang);
 					}
-					for (k=0;k<scpthand.script.entry_function_amount[j];k++) {
-						output.Write(_(L"#HW newfunction ")+wxString::Format(wxT("%u"),scpthand.script.function_type[j][k])+_(L"\n"));
-						output.Write(_(scpthand.func_str[j][k])+_(L"\n\n"));
+				} else {
+					lang = STEAM_LANGUAGE_AMOUNT;
+				}
+				ScriptEditHandler scpthand(*data.script[i],SCRIPT_TYPE_WORLD,dataset,NULL,data.text_data[i],dataloaded);
+				scpthand.GenerateFunctionList();
+				scpthand.GenerateFunctionStrings(addedinfo & BATCHING_SCRIPT_INFO_ARGUMENT);
+				if (scpthand.script.global_data.amount>0) {
+					output.Write(_(L"#HW globals\n"));
+					output.Write(scpthand.globalvar_str);
+					output.Write(_(L"#HW endglobals\n\n"));
+				}
+				for (j=0;j<scpthand.script.entry_amount;j++) {
+					if (scpthand.script.entry_function_amount[j]>0) {
+						output.Write(_(L"#HW newentry ")+wxString::Format(wxT("%u"),j)+_(L"\n"));
+						if (scpthand.script.local_data[j].allocate_amount>0 || scpthand.script.local_data[j].amount>0) {
+							localstr = scpthand.localvar_str[j];
+							output.Write(_(L"#HW locals\n"));
+							while (localstr.Len()>0) {
+								line = localstr.BeforeFirst(L'\n',&tmprest);
+								localstr = tmprest;
+								if (!line.Mid(0,7).IsSameAs(L"global "))
+									output.Write(line+_(L"\n"));
+							}
+							output.Write(_(L"#HW endlocals\n\n"));
+						}
+						for (k=0;k<scpthand.script.entry_function_amount[j];k++) {
+							output.Write(_(L"#HW newfunction ")+wxString::Format(wxT("%u"),scpthand.script.function_type[j][k])+_(L"\n"));
+							output.Write(_(scpthand.func_str[j][k])+_(L"\n\n"));
+						}
 					}
 				}
 			}
+			if (data.script[i]->current_language!=curlang)
+				data.script[i]->ChangeSteamLanguage(curlang);
 			if (splitfile)
 				output.Close();
 		}
@@ -610,6 +692,7 @@ int BatchExportDialog::ExportWorldScript(wxString path, bool* exportlist, bool s
 
 int BatchExportDialog::ExportFieldScript(wxString path, bool* exportlist, bool splitfile, int addedinfo) {
 	FieldDataSet& data = *dataset->fieldset;
+	SteamLanguage lang,sublang,curlang;
 	wxString line,tmprest,localstr;
 	unsigned int i,j,k;
 	wxFile output;
@@ -628,34 +711,74 @@ int BatchExportDialog::ExportFieldScript(wxString path, bool* exportlist, bool s
 			if (addedinfo & BATCHING_SCRIPT_INFO_FILENAME)
 				output.Write(_(L" // ")+_(data.script_data[i]->name.str_nice));
 			output.Write(_(L"\n"));
-			ScriptEditHandler scpthand(*data.script_data[i],SCRIPT_TYPE_FIELD,dataset,NULL,data.related_text[i],dataloaded);
-			scpthand.GenerateFunctionList(true);
-			scpthand.GenerateFunctionStrings(addedinfo & BATCHING_SCRIPT_INFO_ARGUMENT);
-			if (scpthand.script.global_data.amount>0) {
-				output.Write(_(L"#HW globals\n"));
-				output.Write(scpthand.globalvar_str);
-				output.Write(_(L"#HW endglobals\n\n"));
-			}
-			for (j=0;j<scpthand.script.entry_amount;j++) {
-				if (scpthand.script.entry_function_amount[j]>0) {
-					output.Write(_(L"#HW newentry ")+wxString::Format(wxT("%u"),j)+_(L"\n"));
-					if (scpthand.script.local_data[j].allocate_amount>0 || scpthand.script.local_data[j].amount>0) {
-						localstr = scpthand.localvar_str[j];
-						output.Write(_(L"#HW locals\n"));
-						while (localstr.Len()>0) {
-							line = localstr.BeforeFirst(L'\n',&tmprest);
-							localstr = tmprest;
-							if (!line.Mid(0,7).IsSameAs(L"global "))
-								output.Write(line+_(L"\n"));
-						}
-						output.Write(_(L"#HW endlocals\n\n"));
+			curlang = data.script_data[i]->current_language;
+			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+				if (GetGameType()!=GAME_TYPE_PSX) {
+					if (data.script_data[i]->multi_lang_script==NULL) {
+						output.Write(_(L"#HW language ")+HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[GetSteamLanguage()]+_(L"\n"));
+						lang = STEAM_LANGUAGE_AMOUNT;
+					} else if (data.script_data[i]->multi_lang_script->base_script_lang[lang]!=lang && hades::STEAM_LANGUAGE_SAVE_LIST[data.script_data[i]->multi_lang_script->base_script_lang[lang]]) {
+						continue;
+					} else if (data.script_data[i]->multi_lang_script->base_script_lang[lang]==lang && !hades::STEAM_LANGUAGE_SAVE_LIST[lang]) {
+						continue;
+					} else {
+						output.Write(_(L"#HW language ")+HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[lang]+_(L"\n"));
+						for (sublang=0;sublang<STEAM_LANGUAGE_AMOUNT;sublang++)
+							if (sublang!=lang && data.script_data[i]->multi_lang_script->base_script_lang[sublang]==lang && hades::STEAM_LANGUAGE_SAVE_LIST[sublang]) {
+								unsigned int langtextlinkcount = data.script_data[i]->multi_lang_script->base_script_text_id[sublang].size();
+								uint16_t btextid,textid;
+								output.Write(_(L"#HW languagelink ")+HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[sublang]+_(L"\n"));
+								if (langtextlinkcount>0) {
+									output.Write(_(L"#HW languagetextlink ")+wxString::Format(wxT("%u"),langtextlinkcount)+_(L"\n"));
+									for (j=0;j<langtextlinkcount;j++) {
+										btextid = data.script_data[i]->multi_lang_script->base_script_text_id[sublang][j];
+										textid = data.script_data[i]->multi_lang_script->lang_script_text_id[sublang][j];
+										wxString line = wxString::Format(wxT("%u %u"),btextid,textid);
+										if ((addedinfo & BATCHING_SCRIPT_INFO_TEXT_LINK) && data.related_text[i]!=NULL) {
+											line += _(L" // \"")+_(FF9String::RemoveOpcodes(data.related_text[i]->text[btextid].multi_lang_str[lang]))+_(L"\" = \"")+_(FF9String::RemoveOpcodes(data.related_text[i]->text[textid].multi_lang_str[sublang]))+_(L"\"");
+											line.Replace(_(L"\n"),_(L" "));
+										}
+										output.Write(line+_(L"\n"));
+									}
+									output.Write(_(L"\n"));
+								}
+							}
+						data.script_data[i]->ChangeSteamLanguage(lang);
 					}
-					for (k=0;k<scpthand.script.entry_function_amount[j];k++) {
-						output.Write(_(L"#HW newfunction ")+wxString::Format(wxT("%u"),scpthand.script.function_type[j][k])+_(L"\n"));
-						output.Write(_(scpthand.func_str[j][k])+_(L"\n\n"));
+				} else {
+					lang = STEAM_LANGUAGE_AMOUNT;
+				}
+				ScriptEditHandler scpthand(*data.script_data[i],SCRIPT_TYPE_FIELD,dataset,NULL,data.related_text[i],dataloaded);
+				scpthand.GenerateFunctionList();
+				scpthand.GenerateFunctionStrings(addedinfo & BATCHING_SCRIPT_INFO_ARGUMENT);
+				if (scpthand.script.global_data.amount>0) {
+					output.Write(_(L"#HW globals\n"));
+					output.Write(scpthand.globalvar_str);
+					output.Write(_(L"#HW endglobals\n\n"));
+				}
+				for (j=0;j<scpthand.script.entry_amount;j++) {
+					if (scpthand.script.entry_function_amount[j]>0) {
+						output.Write(_(L"#HW newentry ")+wxString::Format(wxT("%u"),j)+_(L"\n"));
+						if (scpthand.script.local_data[j].allocate_amount>0 || scpthand.script.local_data[j].amount>0) {
+							localstr = scpthand.localvar_str[j];
+							output.Write(_(L"#HW locals\n"));
+							while (localstr.Len()>0) {
+								line = localstr.BeforeFirst(L'\n',&tmprest);
+								localstr = tmprest;
+								if (!line.Mid(0,7).IsSameAs(L"global "))
+									output.Write(line+_(L"\n"));
+							}
+							output.Write(_(L"#HW endlocals\n\n"));
+						}
+						for (k=0;k<scpthand.script.entry_function_amount[j];k++) {
+							output.Write(_(L"#HW newfunction ")+wxString::Format(wxT("%u"),scpthand.script.function_type[j][k])+_(L"\n"));
+							output.Write(_(scpthand.func_str[j][k])+_(L"\n\n"));
+						}
 					}
 				}
 			}
+			if (data.script_data[i]->current_language!=curlang)
+				data.script_data[i]->ChangeSteamLanguage(curlang);
 			if (splitfile)
 				output.Close();
 			LoadingDialogUpdate(i+1);
@@ -795,13 +918,13 @@ void BatchExportDialog::OnButtonClick(wxCommandEvent& event) {
 			ExportSpecialText(m_filepicker->GetPath(),exportlist,m_splitfile->IsChecked());
 			break;
 		case 3:
-			ExportEnemyScript(m_filepicker->GetPath(),exportlist,m_scriptsplitfile->IsChecked(),BATCHING_SCRIPT_INFO_FILENAME | (m_scriptcomment->IsChecked() ? BATCHING_SCRIPT_INFO_ARGUMENT : 0));
+			ExportEnemyScript(m_filepicker->GetPath(),exportlist,m_scriptsplitfile->IsChecked(),BATCHING_SCRIPT_INFO_FILENAME | BATCHING_SCRIPT_INFO_TEXT_LINK | (m_scriptcomment->IsChecked() ? BATCHING_SCRIPT_INFO_ARGUMENT : 0));
 			break;
 		case 4:
-			ExportWorldScript(m_filepicker->GetPath(),exportlist,m_scriptsplitfile->IsChecked(),BATCHING_SCRIPT_INFO_FILENAME | (m_scriptcomment->IsChecked() ? BATCHING_SCRIPT_INFO_ARGUMENT : 0));
+			ExportWorldScript(m_filepicker->GetPath(),exportlist,m_scriptsplitfile->IsChecked(),BATCHING_SCRIPT_INFO_FILENAME | BATCHING_SCRIPT_INFO_TEXT_LINK | (m_scriptcomment->IsChecked() ? BATCHING_SCRIPT_INFO_ARGUMENT : 0));
 			break;
 		case 5:
-			ExportFieldScript(m_filepicker->GetPath(),exportlist,m_scriptsplitfile->IsChecked(),BATCHING_SCRIPT_INFO_FILENAME | (m_scriptcomment->IsChecked() ? BATCHING_SCRIPT_INFO_ARGUMENT : 0));
+			ExportFieldScript(m_filepicker->GetPath(),exportlist,m_scriptsplitfile->IsChecked(),BATCHING_SCRIPT_INFO_FILENAME | BATCHING_SCRIPT_INFO_TEXT_LINK | (m_scriptcomment->IsChecked() ? BATCHING_SCRIPT_INFO_ARGUMENT : 0));
 			break;
 		case 10:
 			ExportImageBackground(m_filepicker->GetPath(),exportlist,m_mergetile->IsChecked(),m_exportorder->IsChecked(),m_languagetitle->GetSelection()-1);
@@ -915,6 +1038,7 @@ void BatchImportDialog::OnButtonClick(wxCommandEvent& event) {
 					break;
 				}
 				case 3:
+					// ToDo
 					break;
 				case 4:
 					break;

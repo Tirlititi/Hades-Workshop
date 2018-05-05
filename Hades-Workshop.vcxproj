@@ -104,7 +104,6 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release staticdll|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\CodeLite\wxWidgets-3.1.0\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -247,6 +246,7 @@
     <ClCompile Include="Source\Tool_UnityViewer.cpp" />
     <ClCompile Include="Source\UnityArchiver.cpp" />
     <ClCompile Include="Source\WorldMaps.cpp" />
+    <ClCompile Include="Source\YandexTranslation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\BattleScenes.h" />
@@ -324,6 +324,7 @@
     <ClInclude Include="Source\Tool_UnityViewer.h" />
     <ClInclude Include="Source\UnityArchiver.h" />
     <ClInclude Include="Source\WorldMaps.h" />
+    <ClInclude Include="Source\YandexTranslation.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Source\resource.rc" />

@@ -201,6 +201,9 @@
     <ClCompile Include="Source\GameObject.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="Source\YandexTranslation.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\BattleScenes.h">
@@ -426,6 +429,9 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="Source\Database_Animation.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\YandexTranslation.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

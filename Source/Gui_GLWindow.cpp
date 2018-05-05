@@ -36,14 +36,17 @@ void GLWindow::DisplayField(FieldTilesDataStruct* tiles, FieldWalkmeshDataStruct
 	field_walk = walk;
 	field_camera = 0;
 	field_showtiles = false;
-	field_showwalk = true;
+	field_showwalk = field_walk!=NULL;
 	field_walk_path_highlight = -1;
 	field_walk_triangle_highlight = -1;
 	field_region_vertex_amount = 0;
 	field_showpoint = 0;
 	field_showplane = 0;
-	field_walk_triangle_pos = new GLint*[3*field_walk->triangle_amount];
-	for (i=0;i<field_walk->triangle_amount;i++) {
+	field_walk_triangle_amount = 0;
+	if (field_walk!=NULL)
+		field_walk_triangle_amount = field_walk->triangle_amount;
+	field_walk_triangle_pos = new GLint*[3*field_walk_triangle_amount];
+	for (i=0;i<field_walk_triangle_amount;i++) {
 		offx = field_walk->offset_x+field_walk->walkpath_offsetx[field_walk->triangle_walkpath[i]];
 		offy = field_walk->offset_y+field_walk->walkpath_offsety[field_walk->triangle_walkpath[i]];
 		offz = -field_walk->offset_z-field_walk->walkpath_offsetz[field_walk->triangle_walkpath[i]];
@@ -110,14 +113,18 @@ void GLWindow::DisplayFieldRegion(unsigned int vertamount,int16_t* vert) {
 		field_region_vertex_pos[i] = new GLint[3];
 		field_region_vertex_pos[i][0] = vert[2*i];
 		field_region_vertex_pos[i][1] = vert[2*i+1];
-		for (j=0;j<field_walk->triangle_amount;j++)
+		for (j=0;j<field_walk_triangle_amount;j++)
 			if (IsPointInTriangle2D(vert[2*i],vert[2*i+1],field_walk_triangle_pos[3*j][0],field_walk_triangle_pos[3*j][1],field_walk_triangle_pos[3*j+1][0],field_walk_triangle_pos[3*j+1][1],field_walk_triangle_pos[3*j+2][0],field_walk_triangle_pos[3*j+2][1])) {
 				zpos = max(max(max(zpos,field_walk_triangle_pos[3*j][2]),field_walk_triangle_pos[3*j+1][2]),field_walk_triangle_pos[3*j+2][2])+DRAW_OVER_OFFSET;
 				break;
 			}
 	}
-	if (zpos==-0x7FFF)
-		zpos = -field_walk->offset_z;
+	if (zpos==-0x7FFF) {
+		if (field_walk!=NULL)
+			zpos = -field_walk->offset_z;
+		else
+			zpos = 0.0f;
+	}
 	for (i=0;i<vertamount;i++)
 		field_region_vertex_pos[i][2] = zpos;
 	Draw();
@@ -139,7 +146,7 @@ void GLWindow::DisplayFieldPoint2D(int16_t x, int16_t y) {
 	GLdouble* barpos, minbarpos, maxbarpos = DOUBLE_MIN_VALUE;
 	unsigned int i;
 	field_showpoint = 0;
-	for (i=0;i<field_walk->triangle_amount;i++) {
+	for (i=0;i<field_walk_triangle_amount;i++) {
 		barpos = GetPointBarycenterCoef(x,y,field_walk_triangle_pos[3*i][0],field_walk_triangle_pos[3*i][1],field_walk_triangle_pos[3*i+1][0],field_walk_triangle_pos[3*i+1][1],field_walk_triangle_pos[3*i+2][0],field_walk_triangle_pos[3*i+2][1]);
 		if (barpos) {
 			minbarpos = min(min(barpos[0],barpos[1]),barpos[2]);
@@ -156,8 +163,10 @@ void GLWindow::DisplayFieldPoint2D(int16_t x, int16_t y) {
 			}
 		}
 	}
-	if (field_showpoint==0)
+	if (field_showpoint==0) {
 		field_showpoint = 1;
+		field_pointz[0] = 0.0f;
+	}
 	for (i=0;i<field_showpoint;i++) {
 		field_pointx[i] = x;
 		field_pointy[i] = y;
@@ -263,8 +272,7 @@ void GLWindow::Prepare2DViewport(int topleft_x, int topleft_y, int bottomrigth_x
 }
 
 void GLWindow::ResetCamera() {
-	switch (display_type) {
-	case DISPLAY_GL_TYPE_FIELD: {
+	if (field_tiles!=NULL) {
 		FieldTilesCameraDataStruct& cam = field_tiles->camera[field_camera];
 /*		camera_pos_x = cam.offset_centerx+cam.offset_width/2.0-160.0;
 		camera_pos_y = -(cam.offset_centery+cam.offset_height/2.0)+112.0;
@@ -299,9 +307,7 @@ fout.close();*/
 		camera_aspect = cam.offset_width*1.0f/cam.offset_height;//1.0;
 		camera_znear = 1.0;
 		camera_zfar = 100000.0;
-		break;
-	}
-	default:
+	} else {
 		camera_pos_x = 0.0;
 		camera_pos_y = 0.0;
 		camera_pos_z = 0.0;
@@ -387,7 +393,7 @@ void GLWindow::Draw() {
 			glDisable(GL_TEXTURE_2D);*/
 		}
 		if (field_showwalk) {
-			for (i=0;i<field_walk->triangle_amount;i++) {
+			for (i=0;i<field_walk_triangle_amount;i++) {
 				if (field_walk->triangle_walkpath[i]==field_walk_path_highlight || i==field_walk_triangle_highlight)
 					glColor4f(1, 0.9, 0, 1);
 				else

@@ -240,381 +240,382 @@ class PreviewTextCtrl;
 #define wxID_SS8 1181
 #define wxID_SCRIPT 1182
 #define wxID_ENTRY 1183
-#define wxID_SCENE 1184
-#define wxID_BF1 1185
-#define wxID_BF2 1186
-#define wxID_BF3 1187
-#define wxID_BF4 1188
-#define wxID_BF5 1189
-#define wxID_BF6 1190
-#define wxID_BF7 1191
-#define wxID_BF8 1192
-#define wxID_BF9 1193
-#define wxID_BF10 1194
-#define wxID_BF11 1195
-#define wxID_BF12 1196
-#define wxID_BF13 1197
-#define wxID_BF14 1198
-#define wxID_BF15 1199
-#define wxID_BF16 1200
-#define wxID_STATNAME 1201
-#define wxID_LVL 1202
-#define wxID_ATTACK 1203
-#define wxID_STEAL1 1204
-#define wxID_STEAL2 1205
-#define wxID_STEAL3 1206
-#define wxID_STEAL4 1207
-#define wxID_DROP1 1208
-#define wxID_DROP2 1209
-#define wxID_DROP3 1210
-#define wxID_DROP4 1211
-#define wxID_CARD 1212
-#define wxID_GILS 1213
-#define wxID_DEFATTACK 1214
-#define wxID_MODEL 1215
-#define wxID_RESOURCES 1216
-#define wxID_EA1 1217
-#define wxID_EA2 1218
-#define wxID_EA3 1219
-#define wxID_EA4 1220
-#define wxID_EA5 1221
-#define wxID_EA6 1222
-#define wxID_EA7 1223
-#define wxID_EA8 1224
-#define wxID_EI1 1225
-#define wxID_EI2 1226
-#define wxID_EI3 1227
-#define wxID_EI4 1228
-#define wxID_EI5 1229
-#define wxID_EI6 1230
-#define wxID_EI7 1231
-#define wxID_EI8 1232
-#define wxID_EH1 1233
-#define wxID_EH2 1234
-#define wxID_EH3 1235
-#define wxID_EH4 1236
-#define wxID_EH5 1237
-#define wxID_EH6 1238
-#define wxID_EH7 1239
-#define wxID_EH8 1240
-#define wxID_EW1 1241
-#define wxID_EW2 1242
-#define wxID_EW3 1243
-#define wxID_EW4 1244
-#define wxID_EW5 1245
-#define wxID_EW6 1246
-#define wxID_EW7 1247
-#define wxID_EW8 1248
-#define wxID_EC1 1249
-#define wxID_EC2 1250
-#define wxID_EC3 1251
-#define wxID_EC4 1252
-#define wxID_EC5 1253
-#define wxID_EC6 1254
-#define wxID_EC7 1255
-#define wxID_EC8 1256
-#define wxID_SI1 1257
-#define wxID_SI2 1258
-#define wxID_SI3 1259
-#define wxID_SI4 1260
-#define wxID_SI5 1261
-#define wxID_SI6 1262
-#define wxID_SI7 1263
-#define wxID_SI8 1264
-#define wxID_SI9 1265
-#define wxID_SI10 1266
-#define wxID_SI11 1267
-#define wxID_SI12 1268
-#define wxID_SI13 1269
-#define wxID_SI14 1270
-#define wxID_SI15 1271
-#define wxID_SI16 1272
-#define wxID_SI17 1273
-#define wxID_SI18 1274
-#define wxID_SI19 1275
-#define wxID_SI20 1276
-#define wxID_SI21 1277
-#define wxID_SI22 1278
-#define wxID_SI23 1279
-#define wxID_SI24 1280
-#define wxID_SI25 1281
-#define wxID_SI26 1282
-#define wxID_SI27 1283
-#define wxID_SI28 1284
-#define wxID_SI29 1285
-#define wxID_SI30 1286
-#define wxID_SI31 1287
-#define wxID_SI32 1288
-#define wxID_SA1 1289
-#define wxID_SA2 1290
-#define wxID_SA3 1291
-#define wxID_SA4 1292
-#define wxID_SA5 1293
-#define wxID_SA6 1294
-#define wxID_SA7 1295
-#define wxID_SA8 1296
-#define wxID_SA9 1297
-#define wxID_SA10 1298
-#define wxID_SA11 1299
-#define wxID_SA12 1300
-#define wxID_SA13 1301
-#define wxID_SA14 1302
-#define wxID_SA15 1303
-#define wxID_SA16 1304
-#define wxID_SA17 1305
-#define wxID_SA18 1306
-#define wxID_SA19 1307
-#define wxID_SA20 1308
-#define wxID_SA21 1309
-#define wxID_SA22 1310
-#define wxID_SA23 1311
-#define wxID_SA24 1312
-#define wxID_SA25 1313
-#define wxID_SA26 1314
-#define wxID_SA27 1315
-#define wxID_SA28 1316
-#define wxID_SA29 1317
-#define wxID_SA30 1318
-#define wxID_SA31 1319
-#define wxID_SA32 1320
-#define wxID_ST1 1321
-#define wxID_ST2 1322
-#define wxID_ST3 1323
-#define wxID_ST4 1324
-#define wxID_ST5 1325
-#define wxID_ST6 1326
-#define wxID_ST7 1327
-#define wxID_ST8 1328
-#define wxID_ST9 1329
-#define wxID_ST10 1330
-#define wxID_ST11 1331
-#define wxID_ST12 1332
-#define wxID_ST13 1333
-#define wxID_ST14 1334
-#define wxID_ST15 1335
-#define wxID_ST16 1336
-#define wxID_ST17 1337
-#define wxID_ST18 1338
-#define wxID_ST19 1339
-#define wxID_ST20 1340
-#define wxID_ST21 1341
-#define wxID_ST22 1342
-#define wxID_ST23 1343
-#define wxID_ST24 1344
-#define wxID_ST25 1345
-#define wxID_ST26 1346
-#define wxID_ST27 1347
-#define wxID_ST28 1348
-#define wxID_ST29 1349
-#define wxID_ST30 1350
-#define wxID_ST31 1351
-#define wxID_ST32 1352
-#define wxID_BLUEMAGIC 1353
-#define wxID_SPELLNAME 1354
-#define wxID_SPELLMP 1355
-#define wxID_ANIM 1356
-#define wxID_SEQANIM 1357
-#define wxID_FREQUENCE 1358
-#define wxID_AMOUNT 1359
-#define wxID_AP 1360
-#define wxID_CAMERA 1361
-#define wxID_ENEMY1 1362
-#define wxID_TARGETABLE1 1363
-#define wxID_LINK1 1364
-#define wxID_POSX1 1365
-#define wxID_POSY1 1366
-#define wxID_POSZ1 1367
-#define wxID_ANGLE1 1368
-#define wxID_ENEMY2 1369
-#define wxID_TARGETABLE2 1370
-#define wxID_LINK2 1371
-#define wxID_POSX2 1372
-#define wxID_POSY2 1373
-#define wxID_POSZ2 1374
-#define wxID_ANGLE2 1375
-#define wxID_ENEMY3 1376
-#define wxID_TARGETABLE3 1377
-#define wxID_LINK3 1378
-#define wxID_POSX3 1379
-#define wxID_POSY3 1380
-#define wxID_POSZ3 1381
-#define wxID_ANGLE3 1382
-#define wxID_ENEMY4 1383
-#define wxID_TARGETABLE4 1384
-#define wxID_LINK4 1385
-#define wxID_POSX4 1386
-#define wxID_POSY4 1387
-#define wxID_POSZ4 1388
-#define wxID_ANGLE4 1389
-#define wxID_POINTS 1390
-#define wxID_TYPEPLY 1391
-#define wxID_ATTPLY 1392
-#define wxID_DEFPLY 1393
-#define wxID_MDEFPLY 1394
-#define wxID_TYPENPC 1395
-#define wxID_ATTNPC 1396
-#define wxID_DEFNPC 1397
-#define wxID_MDEFNPC 1398
-#define wxID_DIFFICULTY 1399
-#define wxID_DECKSET 1400
-#define wxID_PRELOAD 1401
-#define wxID_WORLD 1402
-#define wxID_BATTLE1 1403
-#define wxID_BATTLE2 1404
-#define wxID_BATTLE3 1405
-#define wxID_BATTLE4 1406
-#define wxID_TEXTURE 1407
-#define wxID_SEQUENCE 1408
-#define wxID_DISCARD 1409
-#define wxID_EB1 1410
-#define wxID_EB2 1411
-#define wxID_EB3 1412
-#define wxID_EB4 1413
-#define wxID_EB5 1414
-#define wxID_EB6 1415
-#define wxID_EB7 1416
-#define wxID_EB8 1417
-#define wxID_IDLE 1418
-#define wxID_HIT 1419
-#define wxID_DEATH 1420
-#define wxID_IDLEALT 1421
-#define wxID_HITALT 1422
-#define wxID_DEATHALT 1423
-#define wxID_WINCOLOR 1424
-#define wxID_TEXTPREVIEW 1425
-#define wxID_STEAMLANG 1426
-#define wxID_RESOLUTION 1427
-#define wxID_ALPHABET 1428
-#define wxID_SPELL 1429
-#define wxID_SUPPORT 1430
-#define wxID_CMD 1431
-#define wxID_PARTY_SPECIAL 1432
-#define wxID_ITEM 1433
-#define wxID_SHOP 1434
-#define wxID_ENMY 1435
-#define wxID_FIELD 1436
-#define wxID_SPELL_ANIM 1437
-#define wxID_MENU_UI 1438
-#define wxID_ASSEMBLY 1439
-#define wxID_SET 1440
-#define wxID_BUBBLE 1441
-#define wxID_TRANSLATE 1442
-#define wxID_OPCODE 1443
-#define wxID_DEFAULTARG1 1444
-#define wxID_DEFAULTARG2 1445
-#define wxID_DEFAULTARG3 1446
-#define wxID_TOKENIZE 1447
-#define wxID_48 1448
-#define wxID_PALETTE 1449
-#define wxID_PALSEL 1450
-#define wxID_MODIFY 1451
-#define wxID_IMPORT 1452
-#define wxID_POSX 1453
-#define wxID_POSY 1454
-#define wxID_SIZEX 1455
-#define wxID_SIZEY 1456
-#define wxID_TILE 1457
-#define wxID_EXPORT 1458
-#define wxID_INT 1459
-#define wxID_LONG 1460
-#define wxID_HEXA 1461
-#define wxID_BUTTON 1462
-#define wxID_LIST 1463
-#define wxID_SPLIST 1464
-#define wxID_STATUSA 1465
-#define wxID_STATUSB 1466
-#define wxID_FBACK 1467
-#define wxID_FWALK 1468
-#define wxID_PARSE 1469
-#define wxID_FUNCTION 1470
-#define wxID_VARIABLE 1471
-#define wxID_VARCODE 1472
-#define wxID_TYPE 1473
-#define wxID_FULLLIST 1474
-#define wxID_MAPLIST 1475
-#define wxID_SORTLAYER 1476
-#define wxID_REVERTLAYER 1477
-#define wxID_FORMAT 1478
-#define wxID_MASSFORMAT 1479
-#define wxID_REOPEN 1480
-#define wxID_PDATA11 1481
-#define wxID_PDATA12 1482
-#define wxID_PDATA13 1483
-#define wxID_PDATA14 1484
-#define wxID_PDATA15 1485
-#define wxID_PDATA16 1486
-#define wxID_PDATA17 1487
-#define wxID_PDATA18 1488
-#define wxID_PDATA19 1489
-#define wxID_PDATA2 1490
-#define wxID_PDATA3 1491
-#define wxID_PDATA4 1492
-#define wxID_PDATA5 1493
-#define wxID_PDATA61 1494
-#define wxID_PDATA62 1495
-#define wxID_PDATA63 1496
-#define wxID_PDATA7 1497
-#define wxID_LEVEL0 1498
-#define wxID_LEVEL1 1499
-#define wxID_LEVEL2 1500
-#define wxID_LEVEL3 1501
-#define wxID_LEVEL4 1502
-#define wxID_LEVEL5 1503
-#define wxID_LEVEL6 1504
-#define wxID_LEVEL7 1505
-#define wxID_LEVEL8 1506
-#define wxID_LEVEL9 1507
-#define wxID_LEVEL10 1508
-#define wxID_LEVEL11 1509
-#define wxID_LEVEL12 1510
-#define wxID_LEVEL13 1511
-#define wxID_LEVEL14 1512
-#define wxID_LEVEL15 1513
-#define wxID_LEVEL16 1514
-#define wxID_LEVEL17 1515
-#define wxID_LEVEL18 1516
-#define wxID_LEVEL19 1517
-#define wxID_LEVEL20 1518
-#define wxID_LEVEL21 1519
-#define wxID_LEVEL22 1520
-#define wxID_LEVEL23 1521
-#define wxID_LEVEL24 1522
-#define wxID_LEVEL25 1523
-#define wxID_LEVEL26 1524
-#define wxID_LEVEL27 1525
-#define wxID_MAINDATA 1526
-#define wxID_SHARED0 1527
-#define wxID_SHARED1 1528
-#define wxID_SHARED2 1529
-#define wxID_SHARED3 1530
-#define wxID_SHARED4 1531
-#define wxID_SHARED5 1532
-#define wxID_SHARED6 1533
-#define wxID_SHARED7 1534
-#define wxID_SHARED8 1535
-#define wxID_SHARED9 1536
-#define wxID_SHARED10 1537
-#define wxID_SHARED11 1538
-#define wxID_SHARED12 1539
-#define wxID_SHARED13 1540
-#define wxID_SHARED14 1541
-#define wxID_SHARED15 1542
-#define wxID_SHARED16 1543
-#define wxID_SHARED17 1544
-#define wxID_SHARED18 1545
-#define wxID_SHARED19 1546
-#define wxID_SHARED20 1547
-#define wxID_SHARED21 1548
-#define wxID_SHARED22 1549
-#define wxID_SHARED23 1550
-#define wxID_SHARED24 1551
-#define wxID_SHARED25 1552
-#define wxID_SHARED26 1553
-#define wxID_SHARED27 1554
-#define wxID_SHARED28 1555
-#define wxID_PATH 1556
-#define wxID_FOLDER64 1557
-#define wxID_FOLDER86 1558
+#define wxID_SCRIPTLINK 1184
+#define wxID_SCENE 1185
+#define wxID_BF1 1186
+#define wxID_BF2 1187
+#define wxID_BF3 1188
+#define wxID_BF4 1189
+#define wxID_BF5 1190
+#define wxID_BF6 1191
+#define wxID_BF7 1192
+#define wxID_BF8 1193
+#define wxID_BF9 1194
+#define wxID_BF10 1195
+#define wxID_BF11 1196
+#define wxID_BF12 1197
+#define wxID_BF13 1198
+#define wxID_BF14 1199
+#define wxID_BF15 1200
+#define wxID_BF16 1201
+#define wxID_STATNAME 1202
+#define wxID_LVL 1203
+#define wxID_ATTACK 1204
+#define wxID_STEAL1 1205
+#define wxID_STEAL2 1206
+#define wxID_STEAL3 1207
+#define wxID_STEAL4 1208
+#define wxID_DROP1 1209
+#define wxID_DROP2 1210
+#define wxID_DROP3 1211
+#define wxID_DROP4 1212
+#define wxID_CARD 1213
+#define wxID_GILS 1214
+#define wxID_DEFATTACK 1215
+#define wxID_MODEL 1216
+#define wxID_RESOURCES 1217
+#define wxID_EA1 1218
+#define wxID_EA2 1219
+#define wxID_EA3 1220
+#define wxID_EA4 1221
+#define wxID_EA5 1222
+#define wxID_EA6 1223
+#define wxID_EA7 1224
+#define wxID_EA8 1225
+#define wxID_EI1 1226
+#define wxID_EI2 1227
+#define wxID_EI3 1228
+#define wxID_EI4 1229
+#define wxID_EI5 1230
+#define wxID_EI6 1231
+#define wxID_EI7 1232
+#define wxID_EI8 1233
+#define wxID_EH1 1234
+#define wxID_EH2 1235
+#define wxID_EH3 1236
+#define wxID_EH4 1237
+#define wxID_EH5 1238
+#define wxID_EH6 1239
+#define wxID_EH7 1240
+#define wxID_EH8 1241
+#define wxID_EW1 1242
+#define wxID_EW2 1243
+#define wxID_EW3 1244
+#define wxID_EW4 1245
+#define wxID_EW5 1246
+#define wxID_EW6 1247
+#define wxID_EW7 1248
+#define wxID_EW8 1249
+#define wxID_EC1 1250
+#define wxID_EC2 1251
+#define wxID_EC3 1252
+#define wxID_EC4 1253
+#define wxID_EC5 1254
+#define wxID_EC6 1255
+#define wxID_EC7 1256
+#define wxID_EC8 1257
+#define wxID_SI1 1258
+#define wxID_SI2 1259
+#define wxID_SI3 1260
+#define wxID_SI4 1261
+#define wxID_SI5 1262
+#define wxID_SI6 1263
+#define wxID_SI7 1264
+#define wxID_SI8 1265
+#define wxID_SI9 1266
+#define wxID_SI10 1267
+#define wxID_SI11 1268
+#define wxID_SI12 1269
+#define wxID_SI13 1270
+#define wxID_SI14 1271
+#define wxID_SI15 1272
+#define wxID_SI16 1273
+#define wxID_SI17 1274
+#define wxID_SI18 1275
+#define wxID_SI19 1276
+#define wxID_SI20 1277
+#define wxID_SI21 1278
+#define wxID_SI22 1279
+#define wxID_SI23 1280
+#define wxID_SI24 1281
+#define wxID_SI25 1282
+#define wxID_SI26 1283
+#define wxID_SI27 1284
+#define wxID_SI28 1285
+#define wxID_SI29 1286
+#define wxID_SI30 1287
+#define wxID_SI31 1288
+#define wxID_SI32 1289
+#define wxID_SA1 1290
+#define wxID_SA2 1291
+#define wxID_SA3 1292
+#define wxID_SA4 1293
+#define wxID_SA5 1294
+#define wxID_SA6 1295
+#define wxID_SA7 1296
+#define wxID_SA8 1297
+#define wxID_SA9 1298
+#define wxID_SA10 1299
+#define wxID_SA11 1300
+#define wxID_SA12 1301
+#define wxID_SA13 1302
+#define wxID_SA14 1303
+#define wxID_SA15 1304
+#define wxID_SA16 1305
+#define wxID_SA17 1306
+#define wxID_SA18 1307
+#define wxID_SA19 1308
+#define wxID_SA20 1309
+#define wxID_SA21 1310
+#define wxID_SA22 1311
+#define wxID_SA23 1312
+#define wxID_SA24 1313
+#define wxID_SA25 1314
+#define wxID_SA26 1315
+#define wxID_SA27 1316
+#define wxID_SA28 1317
+#define wxID_SA29 1318
+#define wxID_SA30 1319
+#define wxID_SA31 1320
+#define wxID_SA32 1321
+#define wxID_ST1 1322
+#define wxID_ST2 1323
+#define wxID_ST3 1324
+#define wxID_ST4 1325
+#define wxID_ST5 1326
+#define wxID_ST6 1327
+#define wxID_ST7 1328
+#define wxID_ST8 1329
+#define wxID_ST9 1330
+#define wxID_ST10 1331
+#define wxID_ST11 1332
+#define wxID_ST12 1333
+#define wxID_ST13 1334
+#define wxID_ST14 1335
+#define wxID_ST15 1336
+#define wxID_ST16 1337
+#define wxID_ST17 1338
+#define wxID_ST18 1339
+#define wxID_ST19 1340
+#define wxID_ST20 1341
+#define wxID_ST21 1342
+#define wxID_ST22 1343
+#define wxID_ST23 1344
+#define wxID_ST24 1345
+#define wxID_ST25 1346
+#define wxID_ST26 1347
+#define wxID_ST27 1348
+#define wxID_ST28 1349
+#define wxID_ST29 1350
+#define wxID_ST30 1351
+#define wxID_ST31 1352
+#define wxID_ST32 1353
+#define wxID_BLUEMAGIC 1354
+#define wxID_SPELLNAME 1355
+#define wxID_SPELLMP 1356
+#define wxID_ANIM 1357
+#define wxID_SEQANIM 1358
+#define wxID_FREQUENCE 1359
+#define wxID_AMOUNT 1360
+#define wxID_AP 1361
+#define wxID_CAMERA 1362
+#define wxID_ENEMY1 1363
+#define wxID_TARGETABLE1 1364
+#define wxID_LINK1 1365
+#define wxID_POSX1 1366
+#define wxID_POSY1 1367
+#define wxID_POSZ1 1368
+#define wxID_ANGLE1 1369
+#define wxID_ENEMY2 1370
+#define wxID_TARGETABLE2 1371
+#define wxID_LINK2 1372
+#define wxID_POSX2 1373
+#define wxID_POSY2 1374
+#define wxID_POSZ2 1375
+#define wxID_ANGLE2 1376
+#define wxID_ENEMY3 1377
+#define wxID_TARGETABLE3 1378
+#define wxID_LINK3 1379
+#define wxID_POSX3 1380
+#define wxID_POSY3 1381
+#define wxID_POSZ3 1382
+#define wxID_ANGLE3 1383
+#define wxID_ENEMY4 1384
+#define wxID_TARGETABLE4 1385
+#define wxID_LINK4 1386
+#define wxID_POSX4 1387
+#define wxID_POSY4 1388
+#define wxID_POSZ4 1389
+#define wxID_ANGLE4 1390
+#define wxID_POINTS 1391
+#define wxID_TYPEPLY 1392
+#define wxID_ATTPLY 1393
+#define wxID_DEFPLY 1394
+#define wxID_MDEFPLY 1395
+#define wxID_TYPENPC 1396
+#define wxID_ATTNPC 1397
+#define wxID_DEFNPC 1398
+#define wxID_MDEFNPC 1399
+#define wxID_DIFFICULTY 1400
+#define wxID_DECKSET 1401
+#define wxID_PRELOAD 1402
+#define wxID_WORLD 1403
+#define wxID_BATTLE1 1404
+#define wxID_BATTLE2 1405
+#define wxID_BATTLE3 1406
+#define wxID_BATTLE4 1407
+#define wxID_TEXTURE 1408
+#define wxID_SEQUENCE 1409
+#define wxID_DISCARD 1410
+#define wxID_EB1 1411
+#define wxID_EB2 1412
+#define wxID_EB3 1413
+#define wxID_EB4 1414
+#define wxID_EB5 1415
+#define wxID_EB6 1416
+#define wxID_EB7 1417
+#define wxID_EB8 1418
+#define wxID_IDLE 1419
+#define wxID_HIT 1420
+#define wxID_DEATH 1421
+#define wxID_IDLEALT 1422
+#define wxID_HITALT 1423
+#define wxID_DEATHALT 1424
+#define wxID_WINCOLOR 1425
+#define wxID_TEXTPREVIEW 1426
+#define wxID_STEAMLANG 1427
+#define wxID_RESOLUTION 1428
+#define wxID_ALPHABET 1429
+#define wxID_SPELL 1430
+#define wxID_SUPPORT 1431
+#define wxID_CMD 1432
+#define wxID_PARTY_SPECIAL 1433
+#define wxID_ITEM 1434
+#define wxID_SHOP 1435
+#define wxID_ENMY 1436
+#define wxID_FIELD 1437
+#define wxID_SPELL_ANIM 1438
+#define wxID_MENU_UI 1439
+#define wxID_ASSEMBLY 1440
+#define wxID_SET 1441
+#define wxID_BUBBLE 1442
+#define wxID_TRANSLATE 1443
+#define wxID_OPCODE 1444
+#define wxID_DEFAULTARG1 1445
+#define wxID_DEFAULTARG2 1446
+#define wxID_DEFAULTARG3 1447
+#define wxID_TOKENIZE 1448
+#define wxID_48 1449
+#define wxID_FUNCTION 1450
+#define wxID_PALETTE 1451
+#define wxID_PALSEL 1452
+#define wxID_MODIFY 1453
+#define wxID_IMPORT 1454
+#define wxID_POSX 1455
+#define wxID_POSY 1456
+#define wxID_SIZEX 1457
+#define wxID_SIZEY 1458
+#define wxID_TILE 1459
+#define wxID_EXPORT 1460
+#define wxID_INT 1461
+#define wxID_LONG 1462
+#define wxID_HEXA 1463
+#define wxID_BUTTON 1464
+#define wxID_LIST 1465
+#define wxID_SPLIST 1466
+#define wxID_STATUSA 1467
+#define wxID_STATUSB 1468
+#define wxID_FBACK 1469
+#define wxID_FWALK 1470
+#define wxID_PARSE 1471
+#define wxID_VARIABLE 1472
+#define wxID_VARCODE 1473
+#define wxID_TYPE 1474
+#define wxID_FULLLIST 1475
+#define wxID_MAPLIST 1476
+#define wxID_SORTLAYER 1477
+#define wxID_REVERTLAYER 1478
+#define wxID_FORMAT 1479
+#define wxID_MASSFORMAT 1480
+#define wxID_REOPEN 1481
+#define wxID_PDATA11 1482
+#define wxID_PDATA12 1483
+#define wxID_PDATA13 1484
+#define wxID_PDATA14 1485
+#define wxID_PDATA15 1486
+#define wxID_PDATA16 1487
+#define wxID_PDATA17 1488
+#define wxID_PDATA18 1489
+#define wxID_PDATA19 1490
+#define wxID_PDATA2 1491
+#define wxID_PDATA3 1492
+#define wxID_PDATA4 1493
+#define wxID_PDATA5 1494
+#define wxID_PDATA61 1495
+#define wxID_PDATA62 1496
+#define wxID_PDATA63 1497
+#define wxID_PDATA7 1498
+#define wxID_LEVEL0 1499
+#define wxID_LEVEL1 1500
+#define wxID_LEVEL2 1501
+#define wxID_LEVEL3 1502
+#define wxID_LEVEL4 1503
+#define wxID_LEVEL5 1504
+#define wxID_LEVEL6 1505
+#define wxID_LEVEL7 1506
+#define wxID_LEVEL8 1507
+#define wxID_LEVEL9 1508
+#define wxID_LEVEL10 1509
+#define wxID_LEVEL11 1510
+#define wxID_LEVEL12 1511
+#define wxID_LEVEL13 1512
+#define wxID_LEVEL14 1513
+#define wxID_LEVEL15 1514
+#define wxID_LEVEL16 1515
+#define wxID_LEVEL17 1516
+#define wxID_LEVEL18 1517
+#define wxID_LEVEL19 1518
+#define wxID_LEVEL20 1519
+#define wxID_LEVEL21 1520
+#define wxID_LEVEL22 1521
+#define wxID_LEVEL23 1522
+#define wxID_LEVEL24 1523
+#define wxID_LEVEL25 1524
+#define wxID_LEVEL26 1525
+#define wxID_LEVEL27 1526
+#define wxID_MAINDATA 1527
+#define wxID_SHARED0 1528
+#define wxID_SHARED1 1529
+#define wxID_SHARED2 1530
+#define wxID_SHARED3 1531
+#define wxID_SHARED4 1532
+#define wxID_SHARED5 1533
+#define wxID_SHARED6 1534
+#define wxID_SHARED7 1535
+#define wxID_SHARED8 1536
+#define wxID_SHARED9 1537
+#define wxID_SHARED10 1538
+#define wxID_SHARED11 1539
+#define wxID_SHARED12 1540
+#define wxID_SHARED13 1541
+#define wxID_SHARED14 1542
+#define wxID_SHARED15 1543
+#define wxID_SHARED16 1544
+#define wxID_SHARED17 1545
+#define wxID_SHARED18 1546
+#define wxID_SHARED19 1547
+#define wxID_SHARED20 1548
+#define wxID_SHARED21 1549
+#define wxID_SHARED22 1550
+#define wxID_SHARED23 1551
+#define wxID_SHARED24 1552
+#define wxID_SHARED25 1553
+#define wxID_SHARED26 1554
+#define wxID_SHARED27 1555
+#define wxID_SHARED28 1556
+#define wxID_PATH 1557
+#define wxID_FOLDER64 1558
+#define wxID_FOLDER86 1559
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class MainFrameBase
@@ -1090,6 +1091,7 @@ class CDPanel : public wxPanel
 		wxStaticText* m_staticText1912;
 		wxButton* m_enemyscriptedit;
 		wxButton* m_enemyscriptentryedit;
+		wxButton* m_enemyscriptlink;
 		wxStaticText* m_staticText216;
 		wxChoice* m_enemyscene;
 		wxStaticText* m_staticText76;
@@ -1478,6 +1480,7 @@ class CDPanel : public wxPanel
 		wxStaticText* m_staticText822;
 		wxButton* m_worldscriptedit;
 		wxButton* m_worldscriptentryedit;
+		wxButton* m_worldscriptlink;
 		wxStaticText* m_staticText217;
 		wxButton* m_worldpreload;
 		wxStaticText* m_staticText1921;
@@ -1521,6 +1524,7 @@ class CDPanel : public wxPanel
 		wxStaticText* m_staticText1911;
 		wxButton* m_fieldeditscript;
 		wxButton* m_fieldscriptentryedit;
+		wxButton* m_fieldscriptlink;
 		wxStaticText* m_staticText218;
 		wxButton* m_fieldpreload;
 		wxStaticText* m_staticText211;
@@ -2479,6 +2483,29 @@ class TextOpcodeWindow : public wxDialog
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+/// Class TextSteamHelpWindow
+///////////////////////////////////////////////////////////////////////////////
+class TextSteamHelpWindow : public wxDialog 
+{
+	private:
+	
+	protected:
+		wxListBox* m_listfunction;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void OnListClick( wxCommandEvent& event ) { event.Skip(); }
+		virtual void OnListDoubleClick( wxCommandEvent& event ) { event.Skip(); }
+		
+	
+	public:
+		wxTextCtrl* m_helptextctrl;
+		
+		TextSteamHelpWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Opcode List"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 550,400 ), long style = wxDEFAULT_DIALOG_STYLE|wxDIALOG_NO_PARENT|wxRESIZE_BORDER ); 
+		~TextSteamHelpWindow();
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
 /// Class TextExportWindow
 ///////////////////////////////////////////////////////////////////////////////
 class TextExportWindow : public wxDialog 
@@ -2903,6 +2930,77 @@ class ScriptEditEntryWindow : public wxDialog
 		
 		ScriptEditEntryWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Entries"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE ); 
 		~ScriptEditEntryWindow();
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class ScriptEditLinkWindow
+///////////////////////////////////////////////////////////////////////////////
+class ScriptEditLinkWindow : public wxDialog 
+{
+	private:
+	
+	protected:
+		wxStaticText* m_staticText367;
+		wxChoice* m_langlink1;
+		wxButton* m_langtext1;
+		wxStaticText* m_staticText368;
+		wxChoice* m_langlink2;
+		wxButton* m_langtext2;
+		wxStaticText* m_staticText369;
+		wxChoice* m_langlink3;
+		wxButton* m_langtext3;
+		wxStaticText* m_staticText370;
+		wxChoice* m_langlink4;
+		wxButton* m_langtext4;
+		wxStaticText* m_staticText371;
+		wxChoice* m_langlink5;
+		wxButton* m_langtext5;
+		wxStaticText* m_staticText372;
+		wxChoice* m_langlink6;
+		wxButton* m_langtext6;
+		wxStaticText* m_staticText373;
+		wxChoice* m_langlink7;
+		wxButton* m_langtext7;
+		wxButton* m_buttoncancel;
+		wxButton* m_buttonok;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void OnChangeLink( wxCommandEvent& event ) { event.Skip(); }
+		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
+		
+	
+	public:
+		
+		ScriptEditLinkWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Language Links"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+		~ScriptEditLinkWindow();
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class ScriptEditTextLinkWindow
+///////////////////////////////////////////////////////////////////////////////
+class ScriptEditTextLinkWindow : public wxDialog 
+{
+	private:
+	
+	protected:
+		wxStaticText* m_staticText367;
+		wxChoice* m_baselangdialog;
+		wxStaticText* m_staticText368;
+		wxBoxSizer* m_translationsizer;
+		wxButton* m_buttoncancel;
+		wxButton* m_buttonok;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void OnChooseDialog( wxCommandEvent& event ) { event.Skip(); }
+		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
+		
+	
+	public:
+		
+		ScriptEditTextLinkWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Dialog Correspondances"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+		~ScriptEditTextLinkWindow();
 	
 };
 

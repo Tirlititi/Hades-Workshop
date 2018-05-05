@@ -67,12 +67,14 @@ struct SortedChoiceItemScriptOpcode {
 #define AT_ANIMFLAG			41
 #define AT_DECK				42
 #define AT_SCRIPTLVL		43
+#define AT_BUTTONLIST		44
 #define AT_COLOR_CYAN		50
 #define AT_COLOR_MAGENTA	51
 #define AT_COLOR_YELLOW		52
 #define AT_COLOR_RED		53
 #define AT_COLOR_GREEN		54
 #define AT_COLOR_BLUE		55
+#define AT_BATTLE_CHARACTER	100
 // Should always be sorted by id
 static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0x00, L"NOTHING", L"Do nothing.", false, 0, NULL, NULL, NULL, 0 },
@@ -260,8 +262,8 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0xB6, L"WorldMap", L"Change the scene to a world map.\n\n1st argument : world map destination.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"World Map" }, new uint8_t[1]{ AT_WORLDMAP }, 0 },
 	{ 0xB7, L"0xB7", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xB8, L"0xB8", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 },
-	{ 0xB9, L"AddControllerMask", L"Prevent the input to be processed by the game.\n\n1st argument : pad number (should only be 0 or 1).\n2nd argument : button list.\n1 : Select\n4 : Start\n5 : Up\n6 : Right\n7 : Down\n8 : Left\n9 : L2\n10 : R2\n11 : L1\n12 : R1\n13 : Triangle\n14 : Circle\n15 : Cross\n16 : Square\n17 : Cancel\n18 : Confirm\n20 : Moogle\n21 : L1 Ex\n22 : R1 Ex\n23 : L2 Ex\n24 : R2 Ex\n25 : Menu\n26 : Select Ex", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Pad", L"Buttons" }, new uint8_t[2]{ AT_USPIN, AT_BOOLLIST }, 0 },
-	{ 0xBA, L"RemoveControllerMask", L"Enable back the controller's inputs.\n\n1st argument : pad number (should only be 0 or 1).\n2nd argument : button list.\n1 : Select\n4 : Start\n5 : Up\n6 : Right\n7 : Down\n8 : Left\n9 : L2\n10 : R2\n11 : L1\n12 : R1\n13 : Triangle\n14 : Circle\n15 : Cross\n16 : Square\n17 : Cancel\n18 : Confirm\n20 : Moogle\n21 : L1 Ex\n22 : R1 Ex\n23 : L2 Ex\n24 : R2 Ex\n25 : Menu\n26 : Select Ex", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Pad", L"Buttons" }, new uint8_t[2]{ AT_USPIN, AT_BOOLLIST }, 0 },
+	{ 0xB9, L"AddControllerMask", L"Prevent the input to be processed by the game.\n\n1st argument : pad number (should only be 0 or 1).\n2nd argument : button list.\n1 : Select\n4 : Start\n5 : Up\n6 : Right\n7 : Down\n8 : Left\n9 : L2\n10 : R2\n11 : L1\n12 : R1\n13 : Triangle\n14 : Circle\n15 : Cross\n16 : Square\n17 : Cancel\n18 : Confirm\n20 : Moogle\n21 : L1 Ex\n22 : R1 Ex\n23 : L2 Ex\n24 : R2 Ex\n25 : Menu\n26 : Select Ex", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Pad", L"Buttons" }, new uint8_t[2]{ AT_USPIN, AT_BUTTONLIST }, 0 },
+	{ 0xBA, L"RemoveControllerMask", L"Enable back the controller's inputs.\n\n1st argument : pad number (should only be 0 or 1).\n2nd argument : button list.\n1 : Select\n4 : Start\n5 : Up\n6 : Right\n7 : Down\n8 : Left\n9 : L2\n10 : R2\n11 : L1\n12 : R1\n13 : Triangle\n14 : Circle\n15 : Cross\n16 : Square\n17 : Cancel\n18 : Confirm\n20 : Moogle\n21 : L1 Ex\n22 : R1 Ex\n23 : L2 Ex\n24 : R2 Ex\n25 : Menu\n26 : Select Ex", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Pad", L"Buttons" }, new uint8_t[2]{ AT_USPIN, AT_BUTTONLIST }, 0 },
 	{ 0xBB, L"TimedTurnEx", L"Make an object face an angle (animated).\n\n1st argument : object's entry.\n2nd argument : angle.\n0 faces south, 64 faces west, 128 faces north and 192 faces east.\n3rd argument : turn speed (1 is slowest).", true, 3, new uint8_t[3]{ 1, 1, 1 }, new wstring[3]{ L"Object", L"Angle", L"Speed" }, new uint8_t[3]{ AT_ENTRY, AT_USPIN, AT_USPIN }, 0 },
 	{ 0xBC, L"WaitTurnEx", L"Wait until an object facing movement has ended.\n\n1st argument : object's entry.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Object" }, new uint8_t[1]{ AT_ENTRY }, 0 },
 	{ 0xBD, L"RunAnimationEx", L"Play an object's animation.\n\n1st argument : object's entry.\n2nd argument : animation ID.", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Object", L"Animation ID" }, new uint8_t[2]{ AT_ENTRY, AT_ANIMATION }, 0 },
@@ -476,7 +478,7 @@ static VariableOperation VarOpList[] = {
 	{ 50, L"Op5C", L"A button holding check." },
 	{ 51, L"Angle", L"Calculate the angle between the entry's object position and the target position, in the XY plane.\n\n 1st argument : target position X.\n 2nd argument : target position Y." },
 	{ 51, L"Distance", L"Calculate the distance between the entry's object position and the target position, in the XY plane.\n\n 1st argument : target position X.\n 2nd argument : target position Y." },
-	{ 19, L"VAR_5F_", L"Retrieve an object's UID." },
+	{ 19, L"ObjectUID_", L"Retrieve an object's UID or 0 if not found.\nOnly useful for (1) checking if an object exists with the UID or (2) convert special entry IDs (250 to 255) to a valid UID." },
 	
 	{ 50, L"Op60", L"An angle calculation." },
 	{ 50, L"Op61", L"A distance calculation." },
@@ -533,6 +535,29 @@ static VariableOperation VarEntryPropList[] = {
 	{ 1005, L"GetEntryUniqueID", L"Return the specified entry's unique ID." },
 	{ 1006, L"GetEntryScriptLevel", L"Return the specified entry's current script level." },
 	{ 1007, L"GetEntryAnimFrame", L"Return the current animation frame of the specified entry." }
+};
+
+struct VariableOperationArgType {
+	uint8_t op;
+	uint8_t type;
+};
+
+// For operations with 2 arguments, put 2nd argument type then 1st argument type
+static VariableOperationArgType VarOpTypeList[] = {
+	{ 79,	AT_BUTTONLIST }, // IsButton
+	{ 82,	AT_LCHARACTER }, // GetHP
+	{ 83,	AT_LCHARACTER }, // GetMaxHP
+	{ 88,	AT_BUTTONLIST }, // IsUnbutton
+	{ 89,	AT_BUTTONLIST }, // IsButtonDown
+	{ 100,	AT_ITEM }, // GetItemCount
+	{ 101,	AT_TILEANIM }, // GetTileAnimFrame
+	{ 106,	AT_ANIMATION }, // GetAnimDuration
+	{ 107,	AT_LCHARACTER }, // IsInParty
+	{ 109,	AT_LCHARACTER }, // AddParty
+	{ 110,	AT_LCHARACTER }, // GetMP
+	{ 111,	AT_LCHARACTER }, // GetMaxMP
+	{ 112,	AT_ENTRY }, // GetWalkpathTriangle
+	{ 113,	AT_ENTRY } // GetWalkpath
 };
 
 #define ARRAY_ADDITIONAL_INFO	L"\n\nAdditional informations :\n"\

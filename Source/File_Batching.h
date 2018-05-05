@@ -10,6 +10,7 @@ class BatchImportDialog;
 
 #define BATCHING_SCRIPT_INFO_FILENAME	1
 #define BATCHING_SCRIPT_INFO_ARGUMENT	2
+#define BATCHING_SCRIPT_INFO_TEXT_LINK	4
 
 class BatchExportDialog : public BatchExportWindow {
 public:

@@ -428,7 +428,7 @@ int CilScriptEditDialog::ShowModal() {
 		script_pos_string += sposline;
 		BufferReadChar(method_raw,tmp8);
 		if (tmp8==0xFE) {
-			tmp16 = (tmp8 << 8) | BufferReadChar(method_raw,tmp8);
+			tmp16 = 0xFE00 | BufferReadChar(method_raw,tmp8);
 			code = GetILCode(tmp16);
 		} else
 			code = GetILCode(tmp8);

@@ -27,6 +27,13 @@
 #define LIST_MAX_AMOUNT 1000
 unsigned int OrderedIndex[LIST_MAX_AMOUNT];
 
+#define MACRO_MULTILANG_INCREASE_COUNTER(BASETEXT,NEWTEXT,BASETEXTARRAY,BASETEXTINDEX) \
+	for (SteamLanguage macrolangi = 0;macrolangi<STEAM_LANGUAGE_AMOUNT;macrolangi++) \
+		if (NEWTEXT.multi_lang_init[macrolangi] && !BASETEXT.multi_lang_init[macrolangi]) \
+			for (int macrobackindex = BASETEXTINDEX-1;macrobackindex>=0 && !BASETEXTARRAY[macrobackindex].multi_lang_init[macrolangi];macrobackindex--) \
+				BASETEXTARRAY[macrobackindex].SetValue(L"",macrolangi);
+
+
 // Only return sorted indexes.
 unsigned int* SortStrings(wxArrayString str) {
 	unsigned int* res = new unsigned int[str.GetCount()];
@@ -4116,6 +4123,7 @@ void CDDataStruct::DisplayEnemy(int battleid) {
 	unsigned int i;
 	EnemyDataStruct& eb = *enemyset.battle[*sortid];
 	TextDataStruct& td = *enemyset.text[*sortid];
+	ScriptDataStruct& sc = *enemyset.script[*sortid];
 	m_enemystatlist->Clear();
 	m_enemyspellbaseanim->Clear();
 	for (i=0;i<eb.stat_amount;i++) {
@@ -4142,6 +4150,7 @@ void CDDataStruct::DisplayEnemy(int battleid) {
 			m_enemyscene->SetSelection(i);
 			break;
 		}
+	m_enemyscriptlink->Enable(sc.multi_lang_script!=NULL);
 	MACRO_FLAG_DISPLAY16(eb.flag,m_enemyflag)
 	m_enemystatlist->SetSelection(0);
 	DisplayEnemyStat(battleid,0);
@@ -4682,6 +4691,12 @@ void CDDataStruct::OnEnemyChangeButton(wxCommandEvent& event) {
 			dial.ApplyModifications(*enemyset.script[*sortid]);
 			MarkDataEnemyModified(*sortid,CHUNK_TYPE_SCRIPT);
 		}
+	} else if (id==wxID_SCRIPTLINK) {
+		ScriptEditLinkDialog dial(this,*enemyset.script[*sortid],*enemyset.text[*sortid]);
+		if (dial.ShowModal()==wxID_OK) {
+			dial.ApplyModifications(*enemyset.script[*sortid]);
+			MarkDataEnemyModified(*sortid,CHUNK_TYPE_SCRIPT);
+		}
 /*	} else if (id==wxID_PRELOAD) {
 		bool dataloaded[2] = { enemyloaded, fieldloaded };
 		uint16_t battlescene = 0xFFFF, newscene = 0xFFFF;
@@ -5082,6 +5097,7 @@ void CDDataStruct::OnTextEditText(wxCommandEvent& event) {
 	} else {
 		TextSteamEditDialog ted(this,text);
 		if (ted.ShowModal()==wxID_OK) {
+			MACRO_MULTILANG_INCREASE_COUNTER(text,ted.text,td.text,textsel)
 			td.SetText(textsel,ted.text);
 			modified = true;
 		}
@@ -5205,6 +5221,8 @@ void CDDataStruct::OnTextCharmapPaletteChoice(wxCommandEvent& event) {
 	TIMImageDataStruct& tdtex = timlist[*sortid][texsel];
 	wxImage img = ConvertFullTIMToImage(tdtex,NULL,palchoice->GetSelection(),false);
 	MACRO_TEXT_DISPLAYTEXTURE(img,previewwindow,previewbmp)
+//	previewwindow->Layout(); // For some reasons, m_textcharmappalchoice has difficulties to validate its selection...
+//	previewwindow->Refresh();
 }
 
 CharmapTextureExportWindow* TheCharmapTextureExportDialog;
@@ -5448,6 +5466,7 @@ void CDDataStruct::DisplayField(int fieldid) {
 	}
 	m_fieldname->ChangeValue(_(fieldset.script_data[fieldselection]->name.str));
 	m_fieldpreload->Enable(fieldset.preload[fieldselection]!=NULL);
+	m_fieldscriptlink->Enable(fieldset.script_data[fieldselection]->multi_lang_script!=NULL);
 	m_fieldtexturemanage->Enable(fieldset.background_data[fieldselection]!=NULL);
 	m_fieldtexturechoice->Clear();
 	if (fieldset.background_data[fieldselection]!=NULL) {
@@ -5568,6 +5587,12 @@ walkbmp.SaveFile(_(L"aaaa.bmp"),wxBITMAP_TYPE_BMP);*/
 			dial.ApplyModifications(*sc);
 			MarkDataFieldModified(*sortid,CHUNK_TYPE_SCRIPT);
 		}
+	} else if (id==wxID_SCRIPTLINK) {
+		ScriptEditLinkDialog dial(this,*sc,*fieldset.related_text[*sortid]);
+		if (dial.ShowModal()==wxID_OK) {
+			dial.ApplyModifications(*sc);
+			MarkDataFieldModified(*sortid,CHUNK_TYPE_SCRIPT);
+		}
 	} else if (id==wxID_PRELOAD) {
 		if (gametype==GAME_TYPE_PSX) {
 			bool dataloaded[2] = { enemyloaded, fieldloaded };
@@ -5667,7 +5692,8 @@ void CDDataStruct::DisplayWorldMap(int worldid) {
 	m_worldtextlist->Clear();
 	for (i=0;i<td.amount;i++)
 		m_worldtextlist->Append(_(td.text[i].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
-	m_worldpreload->Enable(gametype==GAME_TYPE_PSX); // DEBUG
+	m_worldpreload->Enable(gametype==GAME_TYPE_PSX);
+	m_worldscriptlink->Enable(worldset.script[*sortid]->multi_lang_script!=NULL);
 	m_worldtextcharmaplist->Clear();
 	for (i=0;i<worldset.tim_amount[*sortid];i++) {
 		wstringstream buffer;
@@ -5786,6 +5812,14 @@ void CDDataStruct::OnWorldChangeButton(wxCommandEvent& event) {
 		unsigned int sel = m_worldlist->GetSelection();
 		unsigned int* sortid = (unsigned int*)m_worldlist->GetClientData(sel);
 		ScriptEditEntryDialog dial(this,*worldset.script[*sortid],SCRIPT_TYPE_WORLD);
+		if (dial.ShowModal()==wxID_OK) {
+			dial.ApplyModifications(*worldset.script[*sortid]);
+			MarkDataWorldMapModified(*sortid,CHUNK_TYPE_SCRIPT);
+		}
+	} else if (id==wxID_SCRIPTLINK) {
+		unsigned int sel = m_worldlist->GetSelection();
+		unsigned int* sortid = (unsigned int*)m_worldlist->GetClientData(sel);
+		ScriptEditLinkDialog dial(this,*worldset.script[*sortid],*worldset.text_data[*sortid]);
 		if (dial.ShowModal()==wxID_OK) {
 			dial.ApplyModifications(*worldset.script[*sortid]);
 			MarkDataWorldMapModified(*sortid,CHUNK_TYPE_SCRIPT);
@@ -6326,6 +6360,7 @@ void CDDataStruct::OnSpecialTextEditText(wxCommandEvent& event) {
 	} else {
 		TextSteamEditDialog ted(this,st.text[textsel],TEXT_STYLE_DESCRIPTION);
 		if (ted.ShowModal()==wxID_OK) {
+			MACRO_MULTILANG_INCREASE_COUNTER(st.text[textsel],ted.text,st.text,textsel)
 			st.SetText(textsel,ted.text);
 			if (st.is_localization)
 				m_specialtextdatalist->SetString(textsel,_(st.localization_field[textsel])+_(L": ")+_(st.text[textsel].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));

@@ -106,10 +106,13 @@ const static wxColour POSITION_POINT_COLOR(0,0,255);
 #define ARG_CONTROL_FLAGS		2
 #define ARG_CONTROL_SPIN		3
 #define ARG_CONTROL_CHOICE		4
-#define ARG_CONTROL_DISC		5
-#define ARG_CONTROL_POSITION	6
-#define ARG_CONTROL_COLOR_CMY	7
-#define ARG_CONTROL_COLOR_RGB	8
+#define ARG_CONTROL_LINKED_DIAL	5
+#define ARG_CONTROL_DISC		6
+#define ARG_CONTROL_POSITION	7
+#define ARG_CONTROL_COLOR_CMY	8
+#define ARG_CONTROL_COLOR_RGB	9
+
+#define SCRIPT_TEXT_LINK_PREVIEW_LENGTH	100
 
 //=============================//
 //          Generic            //
@@ -285,7 +288,7 @@ wxString ScriptEditHandler::GetArgumentDescription(int64_t argvalue, uint8_t arg
 		break;
 	case AT_LCHARACTER:
 		if (use_character) {
-			if (argvalue==0xFF) return _(HADES_STRING_NULL_CHARACTER_SLOT);
+			if (argvalue==0xFF || argvalue==0xFFFF) return _(HADES_STRING_NULL_CHARACTER_SLOT);
 			if (argvalue<12) return _(datas->statset->initial_stat[argvalue].default_name.str_nice);
 			return _(L"[Invalid Character ID]");
 		}
@@ -353,12 +356,19 @@ wxString ScriptEditHandler::GetArgumentDescription(int64_t argvalue, uint8_t arg
 		return _(L"[Invalid Animation ID]");
 	case AT_DECK:
 		return _(HADES_STRING_DECK_NAME[argvalue].label);
+	case AT_BUTTONLIST: {
+		wxString btnlist = wxEmptyString;
+		for (i=0;i<G_N_ELEMENTS(PlaystationButton);i++)
+			if (argvalue & (1LL << i))
+				btnlist += _(PlaystationButton[i])+_(L"|");
+		if (btnlist.Len()>0) btnlist.Truncate(btnlist.Len()-1);
+		return btnlist;
+	}
 	}
 	return wxEmptyString;
 }
 
 ScriptEditHandler::ScriptEditHandler(ScriptDataStruct& scpt, int scpttype, SaveSet* sv, EnemyDataStruct* ed, TextDataStruct* td, bool* dataloaded) :
-	script(scpt),
 	enemy(ed),
 	text(td),
 	datas(sv),
@@ -377,25 +387,24 @@ ScriptEditHandler::ScriptEditHandler(ScriptDataStruct& scpt, int scpttype, SaveS
 	handler_dialog(NULL) {
 //fstream fout("aaaa.txt",ios::app|ios::out); fout << "0.3" << endl; fout.close();
 	unsigned int i;
+	script = scpt;
 	entry_name.Alloc(script.entry_amount);
 	if (script.entry_amount>0)
 		entry_name.Add(_(L"Main"));
 	for (i=1;i<script.entry_amount;i++)
 		entry_name.Add(wxString::Format(wxT("Entry%d"),i));
-	entry_model_index = new int32_t[script.entry_amount];
+	entry_model_index.resize(script.entry_amount);
 	for (i=0;i<script.entry_amount;i++)
 		entry_model_index[i] = -1;
 //fout.open("aaaa.txt",ios::app|ios::out); fout << "0.7" << endl; fout.close();
 }
 
 ScriptEditHandler::~ScriptEditHandler() {
-	delete[] entry_model_index;
 }
 
 ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int scpttype, SaveSet* sv, EnemyDataStruct* ed, TextDataStruct* td, bool* dataloaded) :
 	ScriptEditWindow(parent),
 	ScriptEditHandler(scpt,scpttype,sv,ed,td,dataloaded),
-	animlist_id(NULL),
 	current_opcode(0xFFFF),
 	arg_control_type(NULL),
 	extra_size(script.GetExtraSize()),
@@ -404,7 +413,9 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 	help_dial(NULL) {
 	unsigned int i;
 	handler_dialog = this;
-	script.Copy(scpt);
+	m_panelbattle->Enable(script_type==SCRIPT_TYPE_BATTLE);
+	m_panelfield->Enable(script_type==SCRIPT_TYPE_FIELD);
+	m_panelworld->Enable(script_type==SCRIPT_TYPE_WORLD);
 	if (script_type==SCRIPT_TYPE_FIELD) {
 		gl_window = new GLWindow(m_fielddisplaypanel,NULL);
 		FieldTilesDataStruct* tiles = NULL;
@@ -421,24 +432,23 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 				}
 		}
 		gl_window->DisplayField(tiles,walk);
+		m_fielddisplaybackground->Enable(tiles!=NULL);
+		m_fielddisplaymesh->Enable(walk!=NULL);
 	} else if (script_type==SCRIPT_TYPE_WORLD) {
 		world_pos_type = 0;
 	}
-	m_panelbattle->Enable(script_type==SCRIPT_TYPE_BATTLE);
-	m_panelfield->Enable(script_type==SCRIPT_TYPE_FIELD);
-	m_panelworld->Enable(script_type==SCRIPT_TYPE_WORLD);
 	for (i=1;i<script.entry_amount;i++)
 		if (enemy && i<=enemy->stat_amount) {
 			entry_name[i] = _(enemy->stat[i-1].name.GetStr(2));
 			entry_name[i].Replace(_(L" "),_(L"_"));
 		}
-	modellist_id = new uint16_t*[G_N_ELEMENTS(HADES_STRING_MODEL_NAME)];
+	modellist_id.resize(G_N_ELEMENTS(HADES_STRING_MODEL_NAME));
 	modellist_str.Alloc(G_N_ELEMENTS(HADES_STRING_MODEL_NAME));
 	for (i=0;i<G_N_ELEMENTS(HADES_STRING_MODEL_NAME);i++) {
 		modellist_str.Add(_(HADES_STRING_MODEL_NAME[i].label));
 		modellist_id[i] = new uint16_t(HADES_STRING_MODEL_NAME[i].id);
 	}
-	DisplayFunctionList(true);
+	DisplayFunctionList();
 	if (use_character) {
 		character_str.Alloc(13);
 		for (i=0;i<8;i++)
@@ -448,18 +458,17 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 		character_str.Add(_(datas->statset->initial_stat[9].default_name.str_nice));
 		character_str.Add(_(datas->statset->initial_stat[10].default_name.str_nice));
 		character_str.Add(_(HADES_STRING_NULL_CHARACTER_SLOT));
-		character_id = new uint16_t*[13];
+		character_id.resize(13);
 		for (i=0;i<12;i++)
 			character_id[i] = new uint16_t(i);
 		character_id[12] = new uint16_t(0xFF);
 	}
 	if (use_battle) {
 		battle_str.Alloc(datas->enemyset->battle_amount);
-		battle_id = new uint16_t*[datas->enemyset->battle_amount];
+		battle_id.resize(datas->enemyset->battle_amount);
 		for (i=0;i<datas->enemyset->battle_amount;i++) {
 			battle_str.Add(_(datas->enemyset->battle_name[i]));
-			battle_id[i] = new uint16_t[1];
-			battle_id[i][0] = datas->enemyset->battle_data[i]->object_id;
+			battle_id[i] = new uint16_t(datas->enemyset->battle_data[i]->object_id);
 		}
 	}
 	m_intvalueattack->Enable(enemy!=NULL);
@@ -471,42 +480,36 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 	}
 	if (use_field) {
 		field_str.Alloc(datas->fieldset->amount+1);
-		field_id = new uint16_t*[datas->fieldset->amount+1];
+		field_id.resize(datas->fieldset->amount+1);
 		for (i=0;i<datas->fieldset->amount;i++) {
 			field_str.Add(_(datas->fieldset->script_data[i]->name.str_nice));
-			field_id[i] = new uint16_t[1];
-			field_id[i][0] = datas->fieldset->script_data[i]->object_id;
+			field_id[i] = new uint16_t(datas->fieldset->script_data[i]->object_id);
 		}
 		field_str.Add(_(FIELD_ENDING_NAME));
-		field_id[datas->fieldset->amount] = new uint16_t[1];
-		field_id[datas->fieldset->amount][0] = FIELD_ENDING_ID;
+		field_id[datas->fieldset->amount] = new uint16_t(FIELD_ENDING_ID);
 	}
 	m_intvalueitem->Enable(use_item);
 	m_intvalueitemlabel->Enable(use_item);
 	if (use_item) {
 		item_str.Alloc(ITEM_AMOUNT+KEY_ITEM_AMOUNT+CARD_AMOUNT);
-		item_id = new uint16_t*[ITEM_AMOUNT+KEY_ITEM_AMOUNT+CARD_AMOUNT];
+		item_id.resize(ITEM_AMOUNT+KEY_ITEM_AMOUNT+CARD_AMOUNT);
 		for (i=0;i<ITEM_AMOUNT;i++) {
 			item_str.Add(_(datas->itemset->item[i].name.str_nice));
-			item_id[i] = new uint16_t[1];
-			item_id[i][0] = i;
+			item_id[i] = new uint16_t(i);
 		}
 		for (i=0;i<KEY_ITEM_AMOUNT;i++) {
 			item_str.Add(_(datas->itemset->key_item[i].name.str_nice));
-			item_id[ITEM_AMOUNT+i] = new uint16_t[1];
-			item_id[ITEM_AMOUNT+i][0] = 0x100+i;
+			item_id[ITEM_AMOUNT+i] = new uint16_t(0x100+i);
 		}
 		if (use_card) {
 			for (i=0;i<CARD_AMOUNT;i++) {
 				item_str.Add(_(datas->cardset->card[i].name.str_nice));
-				item_id[ITEM_AMOUNT+KEY_ITEM_AMOUNT+i] = new uint16_t[1];
-				item_id[ITEM_AMOUNT+KEY_ITEM_AMOUNT+i][0] = 0x200+i;
+				item_id[ITEM_AMOUNT+KEY_ITEM_AMOUNT+i] = new uint16_t(0x200+i);
 			}
 		} else {
 			for (i=0;i<CARD_AMOUNT;i++) {
 				item_str.Add(_(HADES_STRING_CARD_NAME[i].label));
-				item_id[ITEM_AMOUNT+KEY_ITEM_AMOUNT+i] = new uint16_t[1];
-				item_id[ITEM_AMOUNT+KEY_ITEM_AMOUNT+i][0] = 0x200+HADES_STRING_CARD_NAME[i].id;
+				item_id[ITEM_AMOUNT+KEY_ITEM_AMOUNT+i] = new uint16_t(0x200+HADES_STRING_CARD_NAME[i].id);
 			}
 		}
 	}
@@ -555,49 +558,49 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 	deck_str.Alloc(G_N_ELEMENTS(HADES_STRING_DECK_NAME));
 	for (i=0;i<G_N_ELEMENTS(HADES_STRING_DECK_NAME);i++)
 		deck_str.Add(_(HADES_STRING_DECK_NAME[i].label));
-	equipset_id = new uint16_t*[G_N_ELEMENTS(EquipSetName)];
+	equipset_id.resize(G_N_ELEMENTS(EquipSetName));
 	equipset_str.Alloc(G_N_ELEMENTS(EquipSetName));
 	for (i=0;i<G_N_ELEMENTS(EquipSetName);i++) {
 		equipset_str.Add(_(EquipSetName[i].name));
 		equipset_id[i] = new uint16_t(EquipSetName[i].id);
 	}
-	fmv_id = new uint16_t*[G_N_ELEMENTS(FMVNameList)];
+	fmv_id.resize(G_N_ELEMENTS(FMVNameList));
 	fmv_str.Alloc(G_N_ELEMENTS(FMVNameList));
 	for (i=0;i<G_N_ELEMENTS(FMVNameList);i++) {
 		fmv_str.Add(_(FMVNameList[i].name));
 		fmv_id[i] = new uint16_t(FMVNameList[i].id);
 	}
-	battlecode_id = new uint16_t*[G_N_ELEMENTS(BattleCodeName)];
+	battlecode_id.resize(G_N_ELEMENTS(BattleCodeName));
 	battlecode_str.Alloc(G_N_ELEMENTS(BattleCodeName));
 	for (i=0;i<G_N_ELEMENTS(BattleCodeName);i++) {
 		battlecode_str.Add(_(BattleCodeName[i].name));
 		battlecode_id[i] = new uint16_t(BattleCodeName[i].id);
 	}
-	modelcode_id = new uint16_t*[G_N_ELEMENTS(ModelCodeName)];
+	modelcode_id.resize(G_N_ELEMENTS(ModelCodeName));
 	modelcode_str.Alloc(G_N_ELEMENTS(ModelCodeName));
 	for (i=0;i<G_N_ELEMENTS(ModelCodeName);i++) {
 		modelcode_str.Add(_(ModelCodeName[i].name));
 		modelcode_id[i] = new uint16_t(ModelCodeName[i].id);
 	}
-	worldcode_id = new uint16_t*[G_N_ELEMENTS(WorldCodeName)];
+	worldcode_id.resize(G_N_ELEMENTS(WorldCodeName));
 	worldcode_str.Alloc(G_N_ELEMENTS(WorldCodeName));
 	for (i=0;i<G_N_ELEMENTS(WorldCodeName);i++) {
 		worldcode_str.Add(_(WorldCodeName[i].name));
 		worldcode_id[i] = new uint16_t(WorldCodeName[i].id);
 	}
-	soundcode_id = new uint16_t*[G_N_ELEMENTS(SoundCodeName)];
+	soundcode_id.resize(G_N_ELEMENTS(SoundCodeName));
 	soundcode_str.Alloc(G_N_ELEMENTS(SoundCodeName));
 	for (i=0;i<G_N_ELEMENTS(SoundCodeName);i++) {
 		soundcode_str.Add(_(SoundCodeName[i].name));
 		soundcode_id[i] = new uint16_t(SoundCodeName[i].id);
 	}
-	spscode_id = new uint16_t*[G_N_ELEMENTS(SpsCodeName)];
+	spscode_id.resize(G_N_ELEMENTS(SpsCodeName));
 	spscode_str.Alloc(G_N_ELEMENTS(SpsCodeName));
 	for (i=0;i<G_N_ELEMENTS(SpsCodeName);i++) {
 		spscode_str.Add(_(SpsCodeName[i].name));
 		spscode_id[i] = new uint16_t(SpsCodeName[i].id);
 	}
-	worldmap_id = new uint16_t*[G_N_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME)];
+	worldmap_id.resize(G_N_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME));
 	worldmap_str.Alloc(G_N_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME));
 	for (i=0;i<G_N_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME);i++) {
 		worldmap_str.Add(_(HADES_STRING_WORLD_BLOCK_NAME[i].label));
@@ -615,61 +618,44 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 
 ScriptEditDialog::~ScriptEditDialog() {
 	unsigned int i;
-	for (i=0;i<modellist_str.Count();i++)
-		delete[] modellist_id[i];
-	delete[] modellist_id;
-	for (i=0;i<script.entry_amount+6;i++)
-		delete[] entrylist_id[i];
-	delete[] entrylist_id;
+	for (i=0;i<modellist_id.size();i++)
+		delete modellist_id[i];
+	for (i=0;i<entrylist_id.size();i++)
+		delete entrylist_id[i];
 	if (use_character) {
-		for (i=0;i<character_str.Count();i++)
-			delete[] character_id[i];
-		delete[] character_id;
+		for (i=0;i<character_id.size();i++)
+			delete character_id[i];
 	}
 	if (use_battle) {
-		for (i=0;i<battle_str.Count();i++)
-			delete[] battle_id[i];
-		delete[] battle_id;
+		for (i=0;i<battle_id.size();i++)
+			delete battle_id[i];
 	}
 	if (use_field) {
-		for (i=0;i<field_str.Count();i++)
-			delete[] field_id[i];
-		delete[] field_id;
+		for (i=0;i<field_id.size();i++)
+			delete field_id[i];
 	}
 	if (use_item) {
-		for (i=0;i<item_str.Count();i++)
-			delete[] item_id[i];
-		delete[] item_id;
+		for (i=0;i<item_id.size();i++)
+			delete item_id[i];
 	}
-	for (i=0;i<equipset_str.Count();i++)
-		delete[] equipset_id[i];
-	delete[] equipset_id;
-	for (i=0;i<fmv_str.Count();i++)
-		delete[] fmv_id[i];
-	delete[] fmv_id;
-	for (i=0;i<battlecode_str.Count();i++)
-		delete[] battlecode_id[i];
-	delete[] battlecode_id;
-	for (i=0;i<modelcode_str.Count();i++)
-		delete[] modelcode_id[i];
-	delete[] modelcode_id;
-	for (i=0;i<worldcode_str.Count();i++)
-		delete[] worldcode_id[i];
-	delete[] worldcode_id;
-	for (i=0;i<soundcode_str.Count();i++)
-		delete[] soundcode_id[i];
-	delete[] soundcode_id;
-	for (i=0;i<spscode_str.Count();i++)
-		delete[] spscode_id[i];
-	delete[] spscode_id;
-	for (i=0;i<worldmap_str.Count();i++)
-		delete[] worldmap_id[i];
-	delete[] worldmap_id;
-	if (animlist_id!=NULL) {
-		for (i=0;i<animlist_str.GetCount();i++)
-			delete[] animlist_id[i];
-		delete[] animlist_id;
-	}
+	for (i=0;i<equipset_id.size();i++)
+		delete equipset_id[i];
+	for (i=0;i<fmv_id.size();i++)
+		delete fmv_id[i];
+	for (i=0;i<battlecode_id.size();i++)
+		delete battlecode_id[i];
+	for (i=0;i<modelcode_id.size();i++)
+		delete modelcode_id[i];
+	for (i=0;i<worldcode_id.size();i++)
+		delete worldcode_id[i];
+	for (i=0;i<soundcode_id.size();i++)
+		delete soundcode_id[i];
+	for (i=0;i<spscode_id.size();i++)
+		delete spscode_id[i];
+	for (i=0;i<worldmap_id.size();i++)
+		delete worldmap_id[i];
+	for (i=0;i<animlist_id.size();i++)
+		delete animlist_id[i];
 	func_popup_menu->Disconnect(wxEVT_COMMAND_MENU_SELECTED,wxCommandEventHandler(ScriptEditDialog::OnFunctionRightClickMenu),NULL,this);
 	Disconnect(wxEVT_TIMER,wxTimerEventHandler(ScriptEditDialog::OnTimer),NULL,this);
 	delete timer;
@@ -690,67 +676,64 @@ int ScriptEditDialog::ShowModal() {
 //        Display Code         //
 //=============================//
 
-void ScriptEditHandler::GenerateFunctionList(bool firsttime) {
+void ScriptEditHandler::GenerateFunctionList() {
 	unsigned int funcamount = 0;
 	unsigned int i,j;
-	if (!firsttime)
-		functionlist_str.Empty();
+	for (i=0;i<functionlist_id.size();i++)
+		delete functionlist_id[i];
 	for (i=0;i<script.entry_amount;i++)
 		funcamount += script.entry_function_amount[i];
-	functionlist_str.Alloc(funcamount);
-	functionlist_id = new uint16_t*[funcamount];
+	functionlist_str.resize(funcamount);
+	functionlist_id.resize(funcamount);
 	funcamount = 0;
 	for (i=0;i<script.entry_amount;i++) {
 		for (j=0;j<script.entry_function_amount[i];j++) {
 			functionlist_id[funcamount] = new uint16_t(script.function_type[i][j]);
 			if (script.function_type[i][j]<G_N_ELEMENTS(FunctionTypeName))
-				functionlist_str.Add(_(L"Function ")+wxString::Format(wxT("%s_%s"),entry_name[i],FunctionTypeName[script.function_type[i][j]]));
+				functionlist_str[funcamount] = _(L"Function ")+wxString::Format(wxT("%s_%s"),entry_name[i],FunctionTypeName[script.function_type[i][j]]);
 			else
-				functionlist_str.Add(_(L"Function ")+wxString::Format(wxT("%s_%u"),entry_name[i],script.function_type[i][j]));
+				functionlist_str[funcamount] = _(L"Function ")+wxString::Format(wxT("%s_%u"),entry_name[i],script.function_type[i][j]);
 			funcamount++;
 		}
 	}
 }
 
-void ScriptEditDialog::DisplayFunctionList(bool firsttime, int newfunc, int removedfunc) {
+void ScriptEditDialog::DisplayFunctionList(int newfunc, int removedfunc) {
 	unsigned int funcamount = 0;
 	unsigned int i,j;
-	GenerateFunctionList(firsttime);
-	if (!firsttime) {
-		delete[] entrylist_id;
-		delete[] functionlist_id;
-		entrylist_str.Empty();
-	}
+	GenerateFunctionList();
+	for (i=0;i<entrylist_id.size();i++)
+		delete entrylist_id[i];
 	entry_selection = SCRIPT_ID_NO_ENTRY;
-	entrylist_str.Alloc(script.entry_amount+6);
-	entrylist_id = new uint16_t*[script.entry_amount+6];
+	entrylist_str.resize(script.entry_amount+6);
+	entrylist_id.resize(script.entry_amount+6);
 	for (i=0;i<script.entry_amount;i++) {
-		entrylist_str.Add(_(L"Entry ")+wxString::Format(wxT("%s"),entry_name[i]));
+		entrylist_str[i] = _(L"Entry ")+wxString::Format(wxT("%s"),entry_name[i]);
 		entrylist_id[i] = new uint16_t(i);
 		funcamount += script.entry_function_amount[i];
 	}
-	entrylist_str.Add(_(L"This"));
+	entrylist_str[i] = _(L"This");
 	entrylist_id[i++] = new uint16_t(0xFF);
-	entrylist_str.Add(_(L"Player Character"));
+	entrylist_str[i] = _(L"Player Character");
 	entrylist_id[i++] = new uint16_t(0xFA);
-	entrylist_str.Add(_(L"Team Character 1"));
+	entrylist_str[i] = _(L"Team Character 1");
 	entrylist_id[i++] = new uint16_t(0xFB);
-	entrylist_str.Add(_(L"Team Character 2"));
+	entrylist_str[i] = _(L"Team Character 2");
 	entrylist_id[i++] = new uint16_t(0xFC);
-	entrylist_str.Add(_(L"Team Character 3"));
+	entrylist_str[i] = _(L"Team Character 3");
 	entrylist_id[i++] = new uint16_t(0xFD);
-	entrylist_str.Add(_(L"Team Character 4"));
+	entrylist_str[i] = _(L"Team Character 4");
 	entrylist_id[i++] = new uint16_t(0xFE);
-	if (!firsttime)
-		m_functionlist->ClearAll();
+	m_functionlist->ClearAll();
 	m_functionlist->AppendColumn(_(L"Functions"),wxLIST_FORMAT_LEFT,202);
-	bool* newshouldparse = NULL;
+	vector<bool> newshouldparse;
+	bool firsttime = func_should_parse.size()==0;
 	if (firsttime)
-		func_should_parse = new bool[funcamount];
+		func_should_parse.resize(funcamount);
 	else if (newfunc>=0)
-		newshouldparse = new bool[funcamount];
+		newshouldparse.resize(funcamount);
 	else
-		newshouldparse = new bool[funcamount];
+		newshouldparse.resize(funcamount);
 	funcamount = 0;
 	for (i=0;i<script.entry_amount;i++) {
 		for (j=0;j<script.entry_function_amount[i];j++) {
@@ -777,10 +760,8 @@ void ScriptEditDialog::DisplayFunctionList(bool firsttime, int newfunc, int remo
 			funcamount++;
 		}
 	}
-	if (!firsttime) {
-		delete[] func_should_parse;
+	if (!firsttime)
 		func_should_parse = newshouldparse;
-	}
 }
 
 wxString operandtmp[SCRPT_MAX_OPERAND];
@@ -789,7 +770,7 @@ unsigned int functrackline;
 // varvoidcounter's purpose is solely to avoid adding a "break" in the functions that lead to World Maps
 // In those, there's a "set Global_ScenarioCounter" dummy line followed by another "JUMP 0" dummy line not to be turned into a "break"
 unsigned int varvoidcounter = 0;
-wxString ScriptEditHandler::ConvertVarArgument(ScriptArgument& arg) {
+wxString ScriptEditHandler::ConvertVarArgument(ScriptArgument& arg, wxArrayString* argcomment) {
 	if (!arg.is_var)
 		return wxEmptyString;
 	
@@ -821,10 +802,26 @@ wxString ScriptEditHandler::ConvertVarArgument(ScriptArgument& arg) {
 			} \
 		}
 	
-	unsigned int operand = 0, i = 0, j, voidcheck = 0;
+	unsigned int operand = 0, i = 0, j, k, voidcheck = 0;
 	uint8_t varbyte = arg.var[i++];
 	int vartype = VarOpList[varbyte].type;
+	int64_t argvalue;
+	bool argisnum;
 	while (vartype!=-1) {
+		if (argcomment!=NULL) {
+			k = 0;
+			for (j=0;j<G_N_ELEMENTS(VarOpTypeList);j++) {
+				if (VarOpTypeList[j].op==varbyte) {
+					k++;
+					argisnum = operandtmp[operand-k].ToLongLong(&argvalue);
+					if (argisnum || (operandtmp[operand-k].Len()>0 && operandtmp[operand-k].Last()==L'L')) {
+						wxString argcommenttoken = GetArgumentDescription(argvalue,VarOpTypeList[j].type);
+						if (argcommenttoken.Len()>0)
+							argcomment->Add(argcommenttoken);
+					}
+				}
+			}
+		}
 		if (vartype==0) {
 			operandtmp[operand-1] = _(L"( ")+_(VarOpList[varbyte].opstring)+operandtmp[operand-1]+_(L" )");
 		} else if (vartype==1) {
@@ -893,7 +890,7 @@ wxString ScriptEditHandler::ConvertVarArgument(ScriptArgument& arg) {
 		if (voidcheck<=1)
 			varvoidcounter = 3;
 		if (operandtmp[0][0]==L'(')
-			return operandtmp[0].substr(2,operandtmp[0].length()-4);
+			operandtmp[0] = operandtmp[0].substr(2,operandtmp[0].length()-4);
 		return operandtmp[0];
 	}
 	return wxEmptyString;
@@ -920,8 +917,19 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 			while (macropos>OFFSET) \
 				macropos -= func.op[--macroop].size;
 	
+	#define MACRO_WRITECEOL() \
+		if (argcomment.GetCount()>0) { \
+			str += _(L" // ")+argcomment[0]; \
+			for (i=1;i<argcomment.GetCount();i++) \
+				str += _(L" ; ")+argcomment[i]; \
+			argcomment.Empty(); \
+		} \
+		str += _(L"\n");
+
 	unsigned int i,j;
 	wxString tabstr = L"";
+	wxArrayString argcomment;
+	wxArrayString* argcommentptr = appendcomment ? &argcomment : NULL;
 	for (i=0;i<tabpos;i++)
 		tabstr += _(TAB_STR);
 	if (endfuncpos==-1)
@@ -941,10 +949,11 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 				return false;
 			} else if (funcpos+3+func.op[oppos].arg[0].GetValue()<endblockpos) {
 				MACRO_FINDOP(func.op[oppos].arg[0].GetValue());
-				if (macroop+1<=func.op_amount && func.op[macroop+1].opcode==0x03 && 3+macropos+func.op[macroop].size+func.op[macroop+1].arg[0].GetValue()==0) {
+				if (macroop+1<func.op_amount && func.op[macroop+1].opcode==0x03 && 3+macropos+func.op[macroop].size+func.op[macroop+1].arg[0].GetValue()==0) {
 					str += tabstr+_(L"while ( ");
-					str += ConvertVarArgument(func.op[macroop].arg[0]);
-					str += _(L" ) {\n");
+					str += ConvertVarArgument(func.op[macroop].arg[0],argcommentptr);
+					str += _(L" ) {");
+					MACRO_WRITECEOL()
 					funcpostrack[functrackline++] = funcpos;
 					funcpos += func.op[oppos++].size;
 					GenerateFunctionStrings_Rec(str,func,funcpos,oppos,funcpos+macropos,tabpos+1,BLOCK_TYPE_WHILE,funcpos+macropos,appendcomment);
@@ -982,8 +991,9 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 		case 0x02: {
 			varvoidcounter = 0;
 			str += tabstr+_(L"if ( ");
-			str += ConvertVarArgument(func.op[oppos-1].arg[0]);
-			str += _(L" ) {\n");
+			str += ConvertVarArgument(func.op[oppos-1].arg[0],argcommentptr);
+			str += _(L" ) {");
+			MACRO_WRITECEOL()
 			funcpostrack[functrackline++] = funcpos;
 			funcpos += func.op[oppos++].size;
 			if (GenerateFunctionStrings_Rec(str,func,funcpos,oppos,funcpos+func.op[oppos-1].arg[0].GetValue(),tabpos+1,BLOCK_TYPE_IF,endblockpos,appendcomment)) {
@@ -1004,8 +1014,9 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 			varvoidcounter = 0;
 			if (func.op[oppos].arg[0].GetValue()>=0) {
 				str += tabstr+_(L"ifnot ( ");
-				str += ConvertVarArgument(func.op[oppos-1].arg[0]);
-				str += _(L" ) {\n");
+				str += ConvertVarArgument(func.op[oppos-1].arg[0],argcommentptr);
+				str += _(L" ) {");
+				MACRO_WRITECEOL()
 				funcpostrack[functrackline++] = funcpos;
 				funcpos += func.op[oppos++].size;
 				GenerateFunctionStrings_Rec(str,func,funcpos,oppos,funcpos+func.op[oppos-1].arg[0].GetValue(),tabpos+1,BLOCK_TYPE_IFN,endblockpos,appendcomment);
@@ -1026,8 +1037,9 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 				funcpostrack[j+1] = funcpostrack[j+2];
 				str = lstr+_(L"\n")+tabstr+_(L"do {")+str+_(L"\n");
 				str += tabstr+_(L"} while ( ");
-				str += ConvertVarArgument(func.op[oppos-1].arg[0]);
-				str += _(L" )\n");
+				str += ConvertVarArgument(func.op[oppos-1].arg[0],argcommentptr);
+				str += _(L" )");
+				MACRO_WRITECEOL()
 				functrackline++;
 				funcpostrack[functrackline++] = funcpos;
 				funcpos += func.op[oppos++].size;
@@ -1060,7 +1072,8 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 		}
 		case 0x05: {
 			if (func.op[oppos+1].opcode!=0x02 && func.op[oppos+1].opcode!=0x03 && func.op[oppos+1].opcode!=0x06 && func.op[oppos+1].opcode!=0x0B) {
-				str += tabstr+_(HADES_STRING_SCRIPT_OPCODE[func.op[oppos].opcode].label)+_(L" ")+ConvertVarArgument(func.op[oppos].arg[0])+_(L"\n");
+				str += tabstr+_(HADES_STRING_SCRIPT_OPCODE[func.op[oppos].opcode].label)+_(L" ")+ConvertVarArgument(func.op[oppos].arg[0],argcommentptr);
+				MACRO_WRITECEOL()
 				funcpostrack[functrackline++] = funcpos;
 			}
 			funcpos += func.op[oppos++].size;
@@ -1071,8 +1084,9 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 			ScriptOperation& swop = func.op[oppos];
 			str += tabstr+_(L"switchex ");
 			str << (unsigned int)swop.size_byte;
-			str += _(L" ( ")+ConvertVarArgument(func.op[oppos-1].arg[0]);
-			str += _(L" ) {\n");
+			str += _(L" ( ")+ConvertVarArgument(func.op[oppos-1].arg[0],argcommentptr);
+			str += _(L" ) {");
+			MACRO_WRITECEOL()
 			funcpostrack[functrackline++] = funcpos;
 			unsigned int swoppos = oppos;
 			unsigned int swpos = funcpos+4;
@@ -1138,10 +1152,11 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 			ScriptOperation& swop = func.op[oppos];
 			str += tabstr+_(L"switch ");
 			str << (unsigned int)swop.size_byte;
-			str += _(L" ( ")+ConvertVarArgument(func.op[oppos-1].arg[0]);
+			str += _(L" ( ")+ConvertVarArgument(func.op[oppos-1].arg[0],argcommentptr);
 			str += _(L" ) from ");
 			str << (unsigned int)swop.arg[0].GetValue();
-			str += _(" {\n");
+			str += _(" {");
+			MACRO_WRITECEOL()
 			funcpostrack[functrackline++] = funcpos;
 			unsigned int swoppos = oppos;
 			unsigned int swpos = funcpos+1;
@@ -1224,13 +1239,12 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 			functrackline++;
 			break;
 		}
-		default: {
-			wxArrayString argcomment;
+		default:
 			str += tabstr+_(HADES_STRING_SCRIPT_OPCODE[func.op[oppos].opcode].label)+_(L"( ");
 			for (i=0;i<func.op[oppos].arg_amount;i++) {
 				ScriptArgument& arg = func.op[oppos].arg[i];
 				if (arg.is_var)
-					str += ConvertVarArgument(arg);
+					str += ConvertVarArgument(arg,argcommentptr);
 				else if (func.op[oppos].opcode==0x29)
 					str << L"( " << (int16_t)(arg.GetValue() & 0xFFFF) << L", " << (int16_t)((arg.GetValue() >> 16) & 0xFFFF) << L" )";
 				else
@@ -1244,12 +1258,7 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 				}
 			}
 			str += _(L" )");
-			if (argcomment.GetCount()>0) {
-				str += _(L" // ")+argcomment[0];
-				for (i=1;i<argcomment.GetCount();i++)
-					str += _(L" ; ")+argcomment[i];
-			}
-			str += _(L"\n");
+			MACRO_WRITECEOL()
 			funcpostrack[functrackline++] = funcpos;
 			if (func.op[oppos].opcode==0x2F) {
 				for (j=0;j<G_N_ELEMENTS(HADES_STRING_MODEL_NAME);j++)
@@ -1269,15 +1278,14 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 			}
 			funcpos += func.op[oppos++].size;
 		}
-		}
 	}
 	return false;
 }
 
 void ScriptEditHandler::GenerateFunctionStrings(bool appendcomment) {
 	unsigned int i,j,funci = 0,funcpos,oppos,entrytmp = entry_selection;
-	func_str = new wxString*[script.entry_amount];
-	localvar_str = new wxString[script.entry_amount];
+	func_str.resize(script.entry_amount);
+	localvar_str.resize(script.entry_amount);
 /*fstream fout("aaaa.txt",ios::app|ios::out);
 for (i=0;i<script.entry_amount;i++) for (j=0;j<script.entry_function_amount[i];j++) {
 fout << "New Function : " << i << " " << j << endl;
@@ -1325,7 +1333,7 @@ fout << endl;} fout << endl;}*/
 				localvar_str[i] += wxString::Format(wxT("%s %s%u\n"),script.local_data[i].name[j],VarOpList[script.local_data[i].cat[j]].opstring,script.local_data[i].id[j]);
 			}
 		}
-		func_str[i] = new wxString[script.entry_function_amount[i]];
+		func_str[i].resize(script.entry_function_amount[i]);
 		entry_selection = i;
 		for (j=0;j<script.entry_function_amount[i];j++) {
 			funcpos = 0;
@@ -1411,7 +1419,6 @@ void ScriptEditHandler::EntryChangeName(unsigned int entry, wxString newname) {
 //         Parse Code          //
 //=============================//
 
-uint8_t varargtmp[0x800];
 bool IsAlphaNum(wchar_t c) {
 	return (c>=L'0' && c<=L'9') || (c>=L'a' && c<=L'z') || (c>=L'A' && c<=L'Z') || c==L'_';
 }
@@ -1439,27 +1446,28 @@ wxString GetNextVarThing(wxString& varstr) {
 	varstr = varstr.Mid(lineshift);
 	return res;
 }
-uint8_t* ConvertStringToVararg(wxString varstr, uint8_t& varsize, wxString& errmsg, ScriptLocalVariableSet* localvar) {
+vector<uint8_t> ConvertStringToVararg(wxString varstr, wxString& errmsg, ScriptLocalVariableSet* localvar) {
 	int objecttype = -1, lastobjecttype = -1;
 	unsigned int i,j,len;
 	unsigned int parlvl = 0, lvlmove[SCRPT_MAX_OPERAND];
 	int expectedval = 1;
 	uint8_t sz = 0, bufferpos = 0;
 	wxString tmpstr;
-	uint8_t* res;
+	vector<uint8_t> res;
 	uint16_t tmp16;
 	uint32_t tmp32;
 	if (varstr.IsEmpty()) {
 		errmsg = _(HADES_STRING_SCRIPT_VARARG_EMPTY);
-		return NULL;
+		return vector<uint8_t>();
 	}
 	
 	unsigned int macroi;
 	#define MACRO_APPEND_BYTE(BYTE,INCREASEPOS) \
+		res.resize(sz+1); \
 		for (macroi=sz;macroi>bufferpos;macroi--) \
-			varargtmp[macroi] = varargtmp[macroi-1]; \
+			res[macroi] = res[macroi-1]; \
 		sz++; \
-		varargtmp[bufferpos] = BYTE; \
+		res[bufferpos] = BYTE; \
 		if (INCREASEPOS) bufferpos++;
 	
 	size_t replacepos;
@@ -1493,18 +1501,18 @@ uint8_t* ConvertStringToVararg(wxString varstr, uint8_t& varsize, wxString& errm
 		} else if (tmpstr.IsSameAs(L")")) {
 			if (parlvl==0) {
 				errmsg = _(HADES_STRING_SCRIPT_VARARG_TOO_PAR);
-				return NULL;
+				return vector<uint8_t>();
 			}
 			if (lvlmove[parlvl]==2) {
 				errmsg = _(HADES_STRING_SCRIPT_VARARG_MISS_COMMA);
-				return NULL;
+				return vector<uint8_t>();
 			}
 			if (lvlmove[parlvl--])
 				bufferpos++;
 		} else if (tmpstr.IsSameAs(L",")) {
 			if (lvlmove[parlvl]<2) {
 				errmsg = _(HADES_STRING_SCRIPT_VARARG_TOO_COMMA);
-				return NULL;
+				return vector<uint8_t>();
 			}
 			lvlmove[parlvl]--;
 		} else if (tmpstr.IsSameAs(L"[")) {
@@ -1520,13 +1528,13 @@ uint8_t* ConvertStringToVararg(wxString varstr, uint8_t& varsize, wxString& errm
 					}
 				if (j==G_N_ELEMENTS(ScriptCharacterField)) {
 					errmsg = _(HADES_STRING_SCRIPT_VARARG_ARRAY);
-					return NULL;
+					return vector<uint8_t>();
 				}
 			}
 			tmpstr = GetNextVarThing(varstr);
 			if (!tmpstr.IsSameAs(L"]")) {
 				errmsg = _(HADES_STRING_SCRIPT_VARARG_BRACKETS);
-				return NULL;
+				return vector<uint8_t>();
 			}
 		} else if (tmpstr.IsNumber() && !tmpstr.IsSameAs(L"-") && !tmpstr.IsSameAs(L"+")) {
 			objecttype = 6;
@@ -1565,7 +1573,7 @@ uint8_t* ConvertStringToVararg(wxString varstr, uint8_t& varsize, wxString& errm
 						wxString num = tmpstr.Mid(VarOpList[i].opstring.length());
 						if (!num.IsNumber()) {
 							errmsg.Printf(wxT(HADES_STRING_SCRIPT_VARARG_UNKNOWN),tmpstr);
-							return NULL;
+							return vector<uint8_t>();
 						}
 						MACRO_APPEND_BYTE(wxAtoi(num),true)
 						expectedval--;
@@ -1574,7 +1582,7 @@ uint8_t* ConvertStringToVararg(wxString varstr, uint8_t& varsize, wxString& errm
 						wxString num = tmpstr.Mid(VarOpList[i].opstring.length());
 						if (!num.IsNumber()) {
 							errmsg.Printf(wxT(HADES_STRING_SCRIPT_VARARG_UNKNOWN),tmpstr);
-							return NULL;
+							return vector<uint8_t>();
 						}
 						tmp16 = wxAtoi(num);
 						MACRO_APPEND_BYTE(tmp16 & 0xFF,true)
@@ -1585,7 +1593,7 @@ uint8_t* ConvertStringToVararg(wxString varstr, uint8_t& varsize, wxString& errm
 						tmpstr = GetNextVarThing(varstr);
 						if (!tmpstr.IsSameAs(L"(")) {
 							errmsg = _(HADES_STRING_SCRIPT_VARARG_OPEN_PAR);
-							return NULL;
+							return vector<uint8_t>();
 						}
 						lvlmove[++parlvl] = 1;
 					} else if (objecttype==51) { // function (2 args)
@@ -1593,7 +1601,7 @@ uint8_t* ConvertStringToVararg(wxString varstr, uint8_t& varsize, wxString& errm
 						tmpstr = GetNextVarThing(varstr);
 						if (!tmpstr.IsSameAs(L"(")) {
 							errmsg = _(HADES_STRING_SCRIPT_VARARG_OPEN_PAR);
-							return NULL;
+							return vector<uint8_t>();
 						}
 						lvlmove[++parlvl] = 2;
 						expectedval++;
@@ -1602,35 +1610,35 @@ uint8_t* ConvertStringToVararg(wxString varstr, uint8_t& varsize, wxString& errm
 						tmpstr = GetNextVarThing(varstr);
 						if (!tmpstr.IsSameAs(L"(")) {
 							errmsg = _(HADES_STRING_SCRIPT_VARARG_OPEN_PAR);
-							return NULL;
+							return vector<uint8_t>();
 						}
 						tmpstr = GetNextVarThing(varstr);
 						if (!tmpstr.IsNumber()) {
 							errmsg = _(HADES_STRING_SCRIPT_VARARG_GETENTRY);
-							return NULL;
+							return vector<uint8_t>();
 						}
 						tmp32 = wxAtoi(tmpstr);
 						tmpstr = GetNextVarThing(varstr);
 						if (!tmpstr.IsSameAs(L",")) {
 							errmsg = _(HADES_STRING_SCRIPT_VARARG_MISS_COMMA);
-							return NULL;
+							return vector<uint8_t>();
 						}
 						tmpstr = GetNextVarThing(varstr);
 						if (!tmpstr.IsNumber()) {
 							errmsg = _(HADES_STRING_SCRIPT_VARARG_GETENTRY);
-							return NULL;
+							return vector<uint8_t>();
 						}
 						MACRO_APPEND_BYTE(wxAtoi(tmpstr),true)
 						MACRO_APPEND_BYTE(tmp32,true)
 						tmpstr = GetNextVarThing(varstr);
 						if (!tmpstr.IsSameAs(L")")) {
 							errmsg = _(HADES_STRING_SCRIPT_VARARG_MISS_PAR);
-							return NULL;
+							return vector<uint8_t>();
 						}
 						expectedval--;
 					} else { // unknown/unused
 						errmsg.Printf(wxT(HADES_STRING_SCRIPT_VARARG_UNKNOWN),tmpstr);
-						return NULL;
+						return vector<uint8_t>();
 					}
 					break;
 				}
@@ -1642,18 +1650,18 @@ uint8_t* ConvertStringToVararg(wxString varstr, uint8_t& varsize, wxString& errm
 						tmpstr = GetNextVarThing(varstr);
 						if (!tmpstr.IsSameAs(L"(")) {
 							errmsg = _(HADES_STRING_SCRIPT_VARARG_OPEN_PAR);
-							return NULL;
+							return vector<uint8_t>();
 						}
 						tmpstr = GetNextVarThing(varstr);
 						if (!tmpstr.IsNumber()) {
 							errmsg = _(HADES_STRING_SCRIPT_VARARG_GETENTRY);
-							return NULL;
+							return vector<uint8_t>();
 						}
 						MACRO_APPEND_BYTE(wxAtoi(tmpstr),true)
 						tmpstr = GetNextVarThing(varstr);
 						if (!tmpstr.IsSameAs(L")")) {
 							errmsg = _(HADES_STRING_SCRIPT_VARARG_MISS_PAR);
-							return NULL;
+							return vector<uint8_t>();
 						}
 						MACRO_APPEND_BYTE(VarEntryPropList[i].type-1000,true)
 						expectedval--;
@@ -1661,7 +1669,7 @@ uint8_t* ConvertStringToVararg(wxString varstr, uint8_t& varsize, wxString& errm
 					}
 				if (i>=G_N_ELEMENTS(VarEntryPropList)) {
 					errmsg.Printf(wxT(HADES_STRING_SCRIPT_VARARG_UNKNOWN),tmpstr);
-					return NULL;
+					return vector<uint8_t>();
 				}
 			}
 		}
@@ -1669,15 +1677,12 @@ uint8_t* ConvertStringToVararg(wxString varstr, uint8_t& varsize, wxString& errm
 	}
 	if (parlvl>0) {
 		errmsg = _(HADES_STRING_SCRIPT_VARARG_MISS_PAR);
-		return NULL;
+		return vector<uint8_t>();
 	}
 	if (expectedval!=0) {
 		errmsg = _(HADES_STRING_SCRIPT_VARARG_OPVAMISMATCH);
-		return NULL;
+		return vector<uint8_t>();
 	}
-	varsize = sz;
-	res = new uint8_t[varsize];
-	memcpy(res,varargtmp,varsize);
 	return res;
 }
 
@@ -1872,12 +1877,12 @@ ScriptLocalVariableSet* ScriptEditDialog::ParseLocal(LogStruct& log, wxString st
 			}
 		}
 	res->amount = vari;
-	res->local_type = new uint8_t[vari];
-	res->type = new int16_t[vari];
-	res->size = new uint8_t[vari];
-	res->name = new wstring[vari];
-	res->cat = new uint8_t[vari];
-	res->id = new uint16_t[vari];
+	res->local_type.resize(vari);
+	res->type.resize(vari);
+	res->size.resize(vari);
+	res->name.resize(vari);
+	res->cat.resize(vari);
+	res->id.resize(vari);
 	for (i=0;i<res->amount;i++) {
 		res->local_type[i] = localvartmp[i].local_type;
 		res->type[i] = localvartmp[i].type;
@@ -1947,10 +1952,8 @@ LogStruct ScriptEditDialog::ParseFunction(wxString str, unsigned int entry, unsi
 	wxString linestr, token, errstr;
 	wxString argstr[SCRPT_MAX_OPERAND];
 	LogStruct res = LogStruct();
-	uint8_t* lvlargval[SCRPT_MAX_OPERAND];
-	uint8_t* argval, *argvalarray[SCRPT_MAX_OPERAND];
-	uint8_t lvlargvalsize[SCRPT_MAX_OPERAND];
-	uint8_t argvalsize, argvalarraysize[SCRPT_MAX_OPERAND];
+	vector<uint8_t> lvlargval[SCRPT_MAX_OPERAND];
+	vector<uint8_t> argval, argvalarray[SCRPT_MAX_OPERAND];
 	uint8_t varargbyte;
 	int tokentype;
 	bool islastarg;
@@ -1959,6 +1962,7 @@ LogStruct ScriptEditDialog::ParseFunction(wxString str, unsigned int entry, unsi
 	unsigned int macroi;
 	wxString macrostr;
 	#define MACRO_NEW_OPCODE(OPCODE) \
+		parseop[opi].parent = &script.func[entry_selection][function_selection]; \
 		parseop[opi].opcode = OPCODE; \
 		if (OPCODE>=0xFF) { \
 			parseop[opi].base_code = 0xFF; \
@@ -1999,9 +2003,9 @@ LogStruct ScriptEditDialog::ParseFunction(wxString str, unsigned int entry, unsi
 			res.AddError(errstr.ToStdWstring()); \
 			break; \
 		}
-	#define MACRO_CHECK_VARARG_ERROR(DEST,SIZEDEST) \
-		DEST = ConvertStringToVararg(token,SIZEDEST,macrostr,localvar); \
-		if (DEST==NULL) { \
+	#define MACRO_CHECK_VARARG_ERROR(DEST) \
+		DEST = ConvertStringToVararg(token,macrostr,localvar); \
+		if (DEST.size()==0) { \
 			errstr.Printf(wxT(HADES_STRING_SCRIPT_VARARG_MAIN),line,macrostr); \
 			res.AddError(errstr.ToStdWstring()); \
 			break; \
@@ -2038,13 +2042,13 @@ LogStruct ScriptEditDialog::ParseFunction(wxString str, unsigned int entry, unsi
 					token = GetNextPunc(linestr);
 					MACRO_CHECK_PUNC_ERROR(L"(")
 					token = GetNextArg(linestr);
-					MACRO_CHECK_VARARG_ERROR(argval,argvalsize)
+					MACRO_CHECK_VARARG_ERROR(argval)
 					token = GetNextPunc(linestr);
 					MACRO_CHECK_PUNC_ERROR(L")")
 					token = GetNextPunc(linestr);
 					MACRO_CHECK_PUNC_ERROR(L"{")
 					MACRO_NEW_OPCODE(0x05)
-					parseop[opi].arg[0].SetValueVar(argval,argvalsize);
+					parseop[opi].arg[0].SetValueVar(argval);
 					MACRO_OPCODE_SIZE_DONE()
 					MACRO_NEW_OPCODE(0x02)
 					parseop[opi].arg[0].SetValue(0);
@@ -2060,13 +2064,13 @@ LogStruct ScriptEditDialog::ParseFunction(wxString str, unsigned int entry, unsi
 					token = GetNextPunc(linestr);
 					MACRO_CHECK_PUNC_ERROR(L"(")
 					token = GetNextArg(linestr);
-					MACRO_CHECK_VARARG_ERROR(argval,argvalsize)
+					MACRO_CHECK_VARARG_ERROR(argval)
 					token = GetNextPunc(linestr);
 					MACRO_CHECK_PUNC_ERROR(L")")
 					token = GetNextPunc(linestr);
 					MACRO_CHECK_PUNC_ERROR(L"{")
 					MACRO_NEW_OPCODE(0x05)
-					parseop[opi].arg[0].SetValueVar(argval,argvalsize);
+					parseop[opi].arg[0].SetValueVar(argval);
 					MACRO_OPCODE_SIZE_DONE()
 					MACRO_NEW_OPCODE(0x03)
 					parseop[opi].arg[0].SetValue(0);
@@ -2078,7 +2082,7 @@ LogStruct ScriptEditDialog::ParseFunction(wxString str, unsigned int entry, unsi
 					token = GetNextPunc(linestr);
 					MACRO_CHECK_PUNC_ERROR(L"(")
 					token = GetNextArg(linestr);
-					MACRO_CHECK_VARARG_ERROR(lvlargval[lvlamount],lvlargvalsize[lvlamount])
+					MACRO_CHECK_VARARG_ERROR(lvlargval[lvlamount])
 					token = GetNextPunc(linestr);
 					MACRO_CHECK_PUNC_ERROR(L")")
 					token = GetNextPunc(linestr);
@@ -2116,7 +2120,7 @@ LogStruct ScriptEditDialog::ParseFunction(wxString str, unsigned int entry, unsi
 					token = GetNextPunc(linestr);
 					MACRO_CHECK_PUNC_ERROR(L"(")
 					token = GetNextArg(linestr);
-					MACRO_CHECK_VARARG_ERROR(argval,argvalsize)
+					MACRO_CHECK_VARARG_ERROR(argval)
 					token = GetNextPunc(linestr);
 					MACRO_CHECK_PUNC_ERROR(L")")
 					token = GetNextThing(linestr);
@@ -2127,7 +2131,7 @@ LogStruct ScriptEditDialog::ParseFunction(wxString str, unsigned int entry, unsi
 					token = GetNextPunc(linestr);
 					MACRO_CHECK_PUNC_ERROR(L"{")
 					MACRO_NEW_OPCODE(0x05)
-					parseop[opi].arg[0].SetValueVar(argval,argvalsize);
+					parseop[opi].arg[0].SetValueVar(argval);
 					MACRO_OPCODE_SIZE_DONE()
 					MACRO_NEW_OPCODE(0x0B)
 					parseop[opi].size_byte = wxAtoi(argstr[0]);
@@ -2153,13 +2157,13 @@ LogStruct ScriptEditDialog::ParseFunction(wxString str, unsigned int entry, unsi
 					token = GetNextPunc(linestr);
 					MACRO_CHECK_PUNC_ERROR(L"(")
 					token = GetNextArg(linestr);
-					MACRO_CHECK_VARARG_ERROR(argval,argvalsize)
+					MACRO_CHECK_VARARG_ERROR(argval)
 					token = GetNextPunc(linestr);
 					MACRO_CHECK_PUNC_ERROR(L")")
 					token = GetNextPunc(linestr);
 					MACRO_CHECK_PUNC_ERROR(L"{")
 					MACRO_NEW_OPCODE(0x05)
-					parseop[opi].arg[0].SetValueVar(argval,argvalsize);
+					parseop[opi].arg[0].SetValueVar(argval);
 					MACRO_OPCODE_SIZE_DONE()
 					MACRO_NEW_OPCODE(0x06)
 					parseop[opi].size_byte = wxAtoi(argstr[0]);
@@ -2304,7 +2308,7 @@ LogStruct ScriptEditDialog::ParseFunction(wxString str, unsigned int entry, unsi
 			case 4: // while
 				parseop[lvloppos[lvlamount]].arg[0].SetValue(rawpos-lvlrawpos[lvlamount]);
 				MACRO_NEW_OPCODE(0x05)
-				parseop[opi].arg[0].SetValueVar(lvlargval[lvlamount],lvlargvalsize[lvlamount]);
+				parseop[opi].arg[0].SetValueVar(lvlargval[lvlamount]);
 				MACRO_OPCODE_SIZE_DONE()
 				MACRO_NEW_OPCODE(0x03)
 				parseop[opi].arg[0].SetValue(lvlrawpos[lvlamount]-(rawpos+3));
@@ -2319,11 +2323,11 @@ LogStruct ScriptEditDialog::ParseFunction(wxString str, unsigned int entry, unsi
 				token = GetNextPunc(linestr);
 				MACRO_CHECK_PUNC_ERROR(L"(")
 				token = GetNextArg(linestr);
-				MACRO_CHECK_VARARG_ERROR(argval,argvalsize)
+				MACRO_CHECK_VARARG_ERROR(argval)
 				token = GetNextPunc(linestr);
 				MACRO_CHECK_PUNC_ERROR(L")")
 				MACRO_NEW_OPCODE(0x05)
-				parseop[opi].arg[0].SetValueVar(argval,argvalsize);
+				parseop[opi].arg[0].SetValueVar(argval);
 				MACRO_OPCODE_SIZE_DONE()
 				MACRO_NEW_OPCODE(0x03)
 				parseop[opi].arg[0].SetValue(lvlrawpos[lvlamount]-(rawpos+3));
@@ -2373,9 +2377,9 @@ LogStruct ScriptEditDialog::ParseFunction(wxString str, unsigned int entry, unsi
 						linestr = wxEmptyString;
 						token.Trim(true);
 						token.Trim(false);
-						MACRO_CHECK_VARARG_ERROR(argval,argvalsize)
+						MACRO_CHECK_VARARG_ERROR(argval)
 						MACRO_NEW_OPCODE(0x05)
-						parseop[opi].arg[0].SetValueVar(argval,argvalsize);
+						parseop[opi].arg[0].SetValueVar(argval);
 						MACRO_OPCODE_SIZE_DONE()
 						break;
 					case 0x29:
@@ -2400,7 +2404,7 @@ LogStruct ScriptEditDialog::ParseFunction(wxString str, unsigned int entry, unsi
 							// ToDo : can't use vararg with FIELD_REGION opcode for now
 /*							token = GetNextArg(linestr);
 							if (!token.IsNumber()) {
-								MACRO_CHECK_VARARG_ERROR(argvalarray[j],argvalarraysize[j])
+								MACRO_CHECK_VARARG_ERROR(argvalarray[j])
 								varargbyte |= 0x1 << j;
 							}
 							argstr[j++] = token;*/
@@ -2426,7 +2430,7 @@ LogStruct ScriptEditDialog::ParseFunction(wxString str, unsigned int entry, unsi
 							if (argstr[2*j].IsNumber())
 								parseop[opi].arg[j].SetValue((wxAtoi(argstr[2*j]) & 0xFFFF) | ((wxAtoi(argstr[2*j+1]) & 0xFFFF) << 16));
 							else
-								parseop[opi].arg[j].SetValueVar(argvalarray[2*j],argvalarraysize[2*j]);
+								parseop[opi].arg[j].SetValueVar(argvalarray[2*j]);
 						}
 						MACRO_OPCODE_SIZE_DONE()
 						break;
@@ -2440,7 +2444,7 @@ LogStruct ScriptEditDialog::ParseFunction(wxString str, unsigned int entry, unsi
 							while (!islastarg) {
 								token = GetNextArg(linestr);
 								if (!token.IsNumber()) {
-									MACRO_CHECK_VARARG_ERROR(argvalarray[j],argvalarraysize[j])
+									MACRO_CHECK_VARARG_ERROR(argvalarray[j])
 									varargbyte |= 0x1 << j;
 								}
 								argstr[j++] = token;
@@ -2479,7 +2483,7 @@ LogStruct ScriptEditDialog::ParseFunction(wxString str, unsigned int entry, unsi
 							if (argstr[j].IsNumber())
 								parseop[opi].arg[j].SetValue(wxAtoi(argstr[j]));
 							else
-								parseop[opi].arg[j].SetValueVar(argvalarray[j],argvalarraysize[j]);
+								parseop[opi].arg[j].SetValueVar(argvalarray[j]);
 						}
 						MACRO_OPCODE_SIZE_DONE()
 						break;
@@ -2513,20 +2517,20 @@ LogStruct ScriptEditDialog::ParseFunction(wxString str, unsigned int entry, unsi
 		script.entry_local_var[entry] = localvar->allocate_amount;
 		script.local_data[entry].allocate_amount = localvar->allocate_amount;
 		script.local_data[entry].amount = localam;
-		script.local_data[entry].local_type = new uint8_t[localam];
-		script.local_data[entry].type = new int16_t[localam];
-		script.local_data[entry].size = new uint8_t[localam];
-		script.local_data[entry].name = new wstring[localam];
-		script.local_data[entry].cat = new uint8_t[localam];
-		script.local_data[entry].id = new uint16_t[localam];
+		script.local_data[entry].local_type.resize(localam);
+		script.local_data[entry].type.resize(localam);
+		script.local_data[entry].size.resize(localam);
+		script.local_data[entry].name.resize(localam);
+		script.local_data[entry].cat.resize(localam);
+		script.local_data[entry].id.resize(localam);
 		script.global_data.allocate_amount = 0;
 		script.global_data.amount = globalam;
-		script.global_data.local_type = new uint8_t[globalam];
-		script.global_data.type = new int16_t[globalam];
-		script.global_data.size = new uint8_t[globalam];
-		script.global_data.name = new wstring[globalam];
-		script.global_data.cat = new uint8_t[globalam];
-		script.global_data.id = new uint16_t[globalam];
+		script.global_data.local_type.resize(globalam);
+		script.global_data.type.resize(globalam);
+		script.global_data.size.resize(globalam);
+		script.global_data.name.resize(globalam);
+		script.global_data.cat.resize(globalam);
+		script.global_data.id.resize(globalam);
 		localam = 0;
 		globalam = 0;
 		for (i=0;i<localvar->amount;i++)
@@ -2722,6 +2726,10 @@ struct FlagsStruct {
 	unsigned int amount;
 	wxCheckBox** box;
 };
+struct LinkedDialogStruct {
+	wxChoice* dialog;
+	wxButton* link_btn;
+};
 struct DiscFieldStruct {
 	wxChoice* field;
 	wxChoice* disc;
@@ -2784,21 +2792,19 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 	int i;
 	unsigned int j;
 	bool cleanarg = true;
-	if (arg_control_type && refreshargcontrol) {
+	if (arg_control_type.size()>0 && refreshargcontrol) {
 		for (i=0;i<arg_amount;i++) {
 			arg_label[i]->Destroy();
 			arg_control[i]->Destroy();
 		}
-		delete[] arg_control_type;
-		delete[] arg_label;
-		delete[] arg_control;
-		arg_control_type = NULL;
+		arg_control_type.clear();
+		arg_label.clear();
+		arg_control.clear();
 	}
-	if (refreshargcontrol && animlist_id!=NULL) {
-		for (i=0;i<animlist_str.GetCount();i++)
-			delete[] animlist_id[i];
-		delete[] animlist_id;
-		animlist_id = NULL;
+	if (refreshargcontrol && animlist_id.size()>0) {
+		for (i=0;i<animlist_id.size();i++)
+			delete animlist_id[i];
+		animlist_id.clear();
 		animlist_str.Empty();
 	}
 	tmpstr = GetNextWord(line);
@@ -2813,7 +2819,7 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 		if (refreshargcontrol) {
 			m_helptextctrl->SetValue(_(HADES_STRING_SCRIPT_OPCODE[0].help));
 			arg_amount = 0;
-			arg_control_type = NULL;
+			arg_control_type.clear();
 			Layout();
 		}
 		return;
@@ -2827,9 +2833,9 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 			 */ HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[i]!=AT_COLOR_MAGENTA && HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[i]!=AT_COLOR_YELLOW && /*
 			 */ HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[i]!=AT_COLOR_GREEN && HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[i]!=AT_COLOR_BLUE)
 				 arg_amount++;
-		arg_control_type = new int[arg_amount];
-		arg_label = new wxStaticText*[arg_amount];
-		arg_control = new wxWindow*[arg_amount];
+		arg_control_type.resize(arg_amount);
+		arg_label.resize(arg_amount);
+		arg_control.resize(arg_amount);
 	}
 	wxString arg;
 	tmpstr = GetNextPunc(line);
@@ -2902,12 +2908,13 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_BOOLLIST:
+			case AT_BUTTONLIST:
 				arg_control[i] = ArgCreateFlags(arg,i,8*HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_length[argi],defaultbool_str);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_TEXT:
 				if (use_text)
-					arg_control[i] = ArgCreateChoice(arg,i,NULL,text_str);
+					arg_control[i] = ArgCreateDialog(arg,i,vector<uint16_t*>(),text_str);
 				else
 					arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_length[argi],false);
 				argsizer->Add(arg_control[i],0,wxALL,5);
@@ -2935,7 +2942,7 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 				break;
 			case AT_ATTACK:
 				if (use_attack)
-					arg_control[i] = ArgCreateChoice(arg,i,NULL,attack_str);
+					arg_control[i] = ArgCreateChoice(arg,i,vector<uint16_t*>(),attack_str);
 				else
 					arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_length[argi],false);
 				argsizer->Add(arg_control[i],0,wxALL,5);
@@ -2948,14 +2955,14 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_MENUTYPE:
-				arg_control[i] = ArgCreateChoice(arg,i,NULL,menutype_str);
+				arg_control[i] = ArgCreateChoice(arg,i,vector<uint16_t*>(),menutype_str);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_MENU:
 				if (static_cast<wxChoice*>(arg_control[0])->GetSelection()==1 && use_character)
 					arg_control[i] = ArgCreateChoice(arg,i,character_id,character_str);
 				else if (static_cast<wxChoice*>(arg_control[0])->GetSelection()==2)
-					arg_control[i] = ArgCreateChoice(arg,i,NULL,shop_str);
+					arg_control[i] = ArgCreateChoice(arg,i,vector<uint16_t*>(),shop_str);
 				else
 					arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_length[argi],false);
 				argsizer->Add(arg_control[i],0,wxALL,5);
@@ -2975,7 +2982,7 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_ABILITYSET:
-				arg_control[i] = ArgCreateChoice(arg,i,NULL,abilityset_str);
+				arg_control[i] = ArgCreateChoice(arg,i,vector<uint16_t*>(),abilityset_str);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_EQUIPSET:
@@ -3014,9 +3021,10 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 				arg_control[i] = ArgCreateChoice(arg,i,functionlist_id,functionlist_str);
 				if ((argi>0 && HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[argi-1]==AT_ENTRY) && static_cast<wxChoice*>(arg_control[i-1])->GetSelection()!=wxNOT_FOUND) {
 					unsigned int entrysel = static_cast<wxChoice*>(arg_control[i-1])->GetSelection();
+					unsigned int k;
 					uint16_t funcid = wxAtoi(arg), funclistpos = 0;
 					for (j=0;j<script.entry_amount;j++)
-						for (unsigned int k=0;k<script.entry_function_amount[j];k++) {
+						for (k=0;k<script.entry_function_amount[j];k++) {
 							if (entrysel==j && script.function_type[j][k]==funcid)
 								static_cast<wxChoice*>(arg_control[i])->SetSelection(funclistpos);
 							funclistpos++;
@@ -3035,7 +3043,7 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 					int32_t animindex2 = animindex;
 					while (AnimationDatabase::GetModelId(animindex)==HADES_STRING_MODEL_NAME[entry_model_index[entry_selection]].id)
 						animlist_str.Add(AnimationDatabase::GetDescription(animindex++));
-					animlist_id = new uint16_t*[animlist_str.GetCount()];
+					animlist_id.resize(animlist_str.GetCount());
 					for (j=0;j<animlist_str.GetCount();j++)
 						animlist_id[j] = new uint16_t(AnimationDatabase::GetId(animindex2+j));
 					arg_control[i] = ArgCreateChoice(arg,i,animlist_id,animlist_str);
@@ -3058,7 +3066,7 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_BUBBLESYMBOL:
-				arg_control[i] = ArgCreateChoice(arg,i,NULL,bubblesymbol_str);
+				arg_control[i] = ArgCreateChoice(arg,i,vector<uint16_t*>(),bubblesymbol_str);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_WORLDMAP:
@@ -3075,13 +3083,13 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 				break;
 			case AT_ABILITY:
 				if (use_ability)
-					arg_control[i] = ArgCreateChoice(arg,i,NULL,ability_str);
+					arg_control[i] = ArgCreateChoice(arg,i,vector<uint16_t*>(),ability_str);
 				else
 					arg_control[i] = ArgCreateSpin(arg,i,HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_length[argi],false);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_DECK:
-				arg_control[i] = ArgCreateChoice(arg,i,NULL,deck_str);
+				arg_control[i] = ArgCreateChoice(arg,i,vector<uint16_t*>(),deck_str);
 				argsizer->Add(arg_control[i],0,wxALL,5);
 				break;
 			case AT_POSITION_X:
@@ -3113,6 +3121,20 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 					break;
 				case ARG_CONTROL_CHOICE: {
 					wxChoice* choicectrl = static_cast<wxChoice*>(arg_control[i]);
+					uint16_t choiceval = wxAtoi(arg);
+					if (choicectrl->GetClientData(0)) {
+						for (unsigned int j=0;j<choicectrl->GetCount();j++)
+							if (*(uint16_t*)choicectrl->GetClientData(j)==choiceval) {
+								choicectrl->SetSelection(j);
+								break;
+							}
+					} else
+						choicectrl->SetSelection(choiceval);
+					break;
+				}
+				case ARG_CONTROL_LINKED_DIAL: {
+					LinkedDialogStruct* dialctrl = static_cast<LinkedDialogStruct*>(static_cast<wxPanel*>(arg_control[i])->GetClientData());
+					wxChoice* choicectrl = dialctrl->dialog;
 					uint16_t choiceval = wxAtoi(arg);
 					if (choicectrl->GetClientData(0)) {
 						for (unsigned int j=0;j<choicectrl->GetCount();j++)
@@ -3362,6 +3384,45 @@ void ScriptEditDialog::UpdateLineHelp(long x, long y) {
 	}
 }
 
+void ScriptEditDialog::UpdateMultiLangDialogHelp(wxChoice* dialogchoice) {
+	if (!use_text || script.multi_lang_script==NULL) {
+		dialogchoice->UnsetToolTip();
+		return;
+	}
+	SteamLanguage lang, baselang = script.multi_lang_script->base_script_lang[script.current_language];
+	int dialsel = dialogchoice->GetSelection();
+	if (dialsel==wxNOT_FOUND)
+		dialsel = 0;
+	uint16_t transdialid, basedialid = dialsel;
+	unsigned int i;
+	if (baselang!=script.current_language)
+		for (i=0;i<script.multi_lang_script->lang_script_text_id[script.current_language].size();i++)
+			if (dialsel==script.multi_lang_script->lang_script_text_id[script.current_language][i]) {
+				basedialid = script.multi_lang_script->base_script_text_id[script.current_language][i];
+				break;
+			}
+	wxString line,translationhelp = _(L"");
+	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+		if (lang!=script.current_language && script.multi_lang_script->base_script_lang[lang]==baselang) {
+			transdialid = basedialid;
+			if (lang!=baselang)
+				for (i=0;i<script.multi_lang_script->base_script_text_id[lang].size();i++)
+					if (basedialid==script.multi_lang_script->base_script_text_id[lang][i]) {
+						transdialid = script.multi_lang_script->lang_script_text_id[lang][i];
+						break;
+					}
+			if (translationhelp.Len()>0)
+				translationhelp += _(L"\n");
+			line = HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[lang].Upper()+_(L": ")+_(FF9String::RemoveOpcodes(text->text[transdialid].multi_lang_str[lang],SCRIPT_TEXT_LINK_PREVIEW_LENGTH/2));
+			line.Replace(_(L"\n"),_(L" "));
+			translationhelp += line;
+		}
+	if (translationhelp.Len()>0)
+		dialogchoice->SetToolTip(translationhelp);
+	else
+		dialogchoice->UnsetToolTip();
+}
+
 wxCheckBox* ScriptEditDialog::ArgCreateFlag(wxString& arg, unsigned int id) {
 	wxCheckBox* res = new wxCheckBox(m_argpanel,SS_ARG_ID+id,wxEmptyString);
 	res->SetLabel(_(HADES_STRING_ON_OFF_BUTTON));
@@ -3395,16 +3456,16 @@ wxSpinCtrl* ScriptEditDialog::ArgCreateSpin(wxString& arg, unsigned int id, int 
 	return res;
 }
 
-wxChoice* ScriptEditDialog::ArgCreateChoice(wxString& arg, unsigned int id, uint16_t** choiceid, wxArrayString& choicestr) {
+wxChoice* ScriptEditDialog::ArgCreateChoice(wxString& arg, unsigned int id, vector<uint16_t*> choiceid, wxArrayString& choicestr) {
 	wxChoice* res = new wxChoice(m_argpanel,SS_ARG_ID+id);
-	if (choiceid)
-		res->Append(choicestr,(void**)choiceid);
+	if (choiceid.size()>0)
+		res->Append(choicestr,(void**)choiceid.data());
 	else
 		res->Append(choicestr);
 	if (arg.IsNumber()) {
 		int argval = wxAtoi(arg);
-		if (choiceid) {
-			for (unsigned int i=0;i<choicestr.Count();i++)
+		if (choiceid.size()>0) {
+			for (unsigned int i=0;i<choiceid.size();i++)
 				if (argval==*choiceid[i]) {
 					res->SetSelection(i);
 					break;
@@ -3418,21 +3479,74 @@ wxChoice* ScriptEditDialog::ArgCreateChoice(wxString& arg, unsigned int id, uint
 	return res;
 }
 
-wxPanel* ScriptEditDialog::ArgCreateDiscFieldChoice(wxString& arg, unsigned int id, uint16_t** choiceid, wxArrayString& choicestr) {
+wxWindow* ScriptEditDialog::ArgCreateDialog(wxString& arg, unsigned int id, vector<uint16_t*> choiceid, wxArrayString& choicestr) {
+	if (script.multi_lang_script==NULL)
+		return ArgCreateChoice(arg,id,choiceid,choicestr);
+	bool uselink = false;
+	SteamLanguage lang;
+	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+		if (lang!=script.current_language && script.multi_lang_script->base_script_lang[lang]==script.multi_lang_script->base_script_lang[script.current_language]) {
+			uselink = true;
+			break;
+		}
+	if (!uselink)
+		return ArgCreateChoice(arg,id,choiceid,choicestr);
+	wxPanel* res = new wxPanel(m_argpanel);
+	wxFlexGridSizer* grid = new wxFlexGridSizer(2);
+	wxChoice* dialchoice = new wxChoice(res,SS_ARG_ID+id);
+	wxButton* linkbtn = new wxButton(res,SS_ARG_ID+id,_(L"..."),wxDefaultPosition,wxDefaultSize,wxBU_EXACTFIT);
+	LinkedDialogStruct* datagroup = new LinkedDialogStruct;
+	grid->AddGrowableCol(0);
+	grid->SetFlexibleDirection(wxBOTH);
+	grid->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
+	grid->Add(dialchoice,0,wxALL | wxEXPAND,5);
+	grid->Add(linkbtn,0,wxALL,5);
+	if (choiceid.size()>0)
+		dialchoice->Append(choicestr,(void**)choiceid.data());
+	else
+		dialchoice->Append(choicestr);
+	if (arg.IsNumber()) {
+		int argval = wxAtoi(arg);
+		if (choiceid.size()>0) {
+			for (unsigned int i=0;i<choiceid.size();i++)
+				if (argval==*choiceid[i]) {
+					dialchoice->SetSelection(i);
+					break;
+				}
+		} else {
+			dialchoice->SetSelection(argval);
+		}
+		UpdateMultiLangDialogHelp(dialchoice);
+	}
+	datagroup->dialog = dialchoice;
+	datagroup->link_btn = linkbtn;
+	res->SetClientData((void*)datagroup);
+	dialchoice->SetClientData((void*)datagroup);
+	linkbtn->SetClientData((void*)datagroup);
+	dialchoice->Connect(wxEVT_COMMAND_CHOICE_SELECTED,wxCommandEventHandler(ScriptEditDialog::OnArgChoice),NULL,this);
+	linkbtn->Connect(wxEVT_COMMAND_BUTTON_CLICKED,wxCommandEventHandler(ScriptEditDialog::OnArgDialogLink),NULL,this);
+	res->SetSizer(grid);
+	res->Layout();
+	grid->Fit(res);
+	arg_control_type[id] = ARG_CONTROL_LINKED_DIAL;
+	return res;
+}
+
+wxPanel* ScriptEditDialog::ArgCreateDiscFieldChoice(wxString& arg, unsigned int id, vector<uint16_t*> choiceid, wxArrayString& choicestr) {
 	wxPanel* res = new wxPanel(m_argpanel);
 	wxGridSizer* grid = new wxGridSizer(0,1,0,0);
 	wxChoice* field = new wxChoice(res,SS_ARG_ID+id);
 	wxChoice* disc = new wxChoice(res,SS_ARG_ID+id);
 	unsigned int i;
-	if (choiceid)
-		field->Append(choicestr,(void**)choiceid);
+	if (choiceid.size()>0)
+		field->Append(choicestr,(void**)choiceid.data());
 	else
 		field->Append(choicestr);
 	disc->Append(disc_str);
 	if (arg.IsNumber()) {
 		int argval = wxAtoi(arg);
-		if (choiceid) {
-			for (i=0;i<choicestr.Count();i++)
+		if (choiceid.size()>0) {
+			for (i=0;i<choiceid.size();i++)
 				if ((argval & 0x3FFF)==*choiceid[i]) {
 					field->SetSelection(i);
 					break;
@@ -3799,7 +3913,6 @@ void ScriptEditDialog::OnFunctionRightClickMenu(wxCommandEvent& event) {
 				funcid++;
 				sel++;
 			}
-			wxArrayString newfuncstr(script.entry_function_amount[entryid],func_str[entryid]);
 //			script.entry_type[entryid] = dial.m_entrytypectrl->GetValue();
 			if (script.entry_function_amount[entryid]==0) {
 				extra_size -= 8;
@@ -3808,12 +3921,8 @@ void ScriptEditDialog::OnFunctionRightClickMenu(wxCommandEvent& event) {
 			} else
 				extra_size -= 4;
 			script.AddFunction(entryid,funcid,dial.m_typectrl->GetValue());
-			DisplayFunctionList(false,sel,-1);
-			newfuncstr.Insert(functionlist_str[sel]+_(L"\n"),funcid);
-			delete[] func_str[entryid];
-			func_str[entryid] = new wxString[script.entry_function_amount[entryid]];
-			for (i=0;i<script.entry_function_amount[entryid];i++)
-				func_str[entryid][i] = newfuncstr[i];
+			DisplayFunctionList(sel,-1);
+			func_str[entryid].Insert(functionlist_str[sel]+_(L"\n"),funcid);
 			m_functionlist->SetItemState(sel, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
 		}
 	} else if (id==wxID_REMOVE) {
@@ -3823,7 +3932,7 @@ void ScriptEditDialog::OnFunctionRightClickMenu(wxCommandEvent& event) {
 			return;
 		}
 		extra_size += script.RemoveFunction(entryid,funcid);
-		DisplayFunctionList(false,-1,sel);
+		DisplayFunctionList(-1,sel);
 		for (i=funcid;i<script.entry_function_amount[entryid];i++)
 			func_str[entryid][i] = func_str[entryid][i+1];
 		if (funcid<m_functionlist->GetItemCount())
@@ -3942,8 +4051,9 @@ void ScriptEditDialog::OnButtonClick(wxCommandEvent& event) {
 			script.entry_size[entry_selection] = entrynewsize;
 			script.func[entry_selection][function_selection].length = parseoplength;
 			script.func[entry_selection][function_selection].op_amount = parseopamount;
-			script.func[entry_selection][function_selection].op = new ScriptOperation[parseopamount];
-			memcpy(script.func[entry_selection][function_selection].op,parseop,parseopamount*sizeof(ScriptOperation));
+			script.func[entry_selection][function_selection].op.resize(parseopamount);
+			for (i=0;i<parseopamount;i++)
+				script.func[entry_selection][function_selection].op[i] = parseop[i];
 			for (i=0;i<entry_selection;i++)
 				for (j=0;j<script.entry_function_amount[i];j++)
 					funclistpos++;
@@ -4017,11 +4127,21 @@ void ScriptEditDialog::OnArgSpin(wxSpinEvent& event) {
 
 void ScriptEditDialog::OnArgChoice(wxCommandEvent& event) {
 	int argi = event.GetId()-SS_ARG_ID;
-	uint16_t* objid = (uint16_t*)event.GetClientData();
-	if (objid)
-		ScriptChangeArg(argi,*objid);
-	else
-		ScriptChangeArg(argi,event.GetInt());
+	if (arg_control_type[argi]==ARG_CONTROL_LINKED_DIAL) {
+		LinkedDialogStruct* datagroup = static_cast<LinkedDialogStruct*>(static_cast<wxChoice*>(event.GetEventObject())->GetClientData());
+		uint16_t* objid = (uint16_t*)datagroup->dialog->GetClientData(event.GetInt());
+		if (objid)
+			ScriptChangeArg(argi,*objid);
+		else
+			ScriptChangeArg(argi,event.GetInt());
+		UpdateMultiLangDialogHelp(static_cast<wxChoice*>(event.GetEventObject()));
+	} else {
+		uint16_t* objid = (uint16_t*)event.GetClientData();
+		if (objid)
+			ScriptChangeArg(argi,*objid);
+		else
+			ScriptChangeArg(argi,event.GetInt());
+	}
 }
 
 void ScriptEditDialog::OnArgFlags(wxCommandEvent& event) {
@@ -4036,7 +4156,7 @@ void ScriptEditDialog::OnArgFlags(wxCommandEvent& event) {
 
 void ScriptEditDialog::OnArgField(wxCommandEvent& event) {
 	int argi = event.GetId()-SS_ARG_ID;
-	DiscFieldStruct* datagroup = static_cast<DiscFieldStruct*>(static_cast<wxCheckBox*>(event.GetEventObject())->GetClientData());
+	DiscFieldStruct* datagroup = static_cast<DiscFieldStruct*>(static_cast<wxChoice*>(event.GetEventObject())->GetClientData());
 	uint16_t* objid = (uint16_t*)datagroup->field->GetClientData(event.GetInt());
 	if (objid)
 		ScriptChangeArg(argi,(datagroup->disc->GetSelection() << 14) | *objid);
@@ -4046,12 +4166,65 @@ void ScriptEditDialog::OnArgField(wxCommandEvent& event) {
 
 void ScriptEditDialog::OnArgDisc(wxCommandEvent& event) {
 	int argi = event.GetId()-SS_ARG_ID;
-	DiscFieldStruct* datagroup = static_cast<DiscFieldStruct*>(static_cast<wxCheckBox*>(event.GetEventObject())->GetClientData());
+	DiscFieldStruct* datagroup = static_cast<DiscFieldStruct*>(static_cast<wxChoice*>(event.GetEventObject())->GetClientData());
 	uint16_t* objid = (uint16_t*)datagroup->field->GetClientData(datagroup->field->GetSelection());
 	if (objid)
 		ScriptChangeArg(argi,(event.GetInt() << 14) | *objid);
 	else
 		ScriptChangeArg(argi,(event.GetInt() << 14) | datagroup->field->GetSelection());
+}
+
+void ScriptEditDialog::OnArgDialogLink(wxCommandEvent& event) {
+	int argi = event.GetId()-SS_ARG_ID;
+	LinkedDialogStruct* datagroup = static_cast<LinkedDialogStruct*>(static_cast<wxButton*>(event.GetEventObject())->GetClientData());
+	SteamLanguage lang, baselang = script.multi_lang_script->base_script_lang[script.current_language];
+	SteamLanguage langShiftedlink[STEAM_LANGUAGE_AMOUNT];
+	int dialsel = datagroup->dialog->GetSelection();
+	if (dialsel==wxNOT_FOUND)
+		dialsel = 0;
+	uint16_t basedialid = dialsel;
+	unsigned int i;
+	if (baselang!=script.current_language)
+		for (i=0;i<script.multi_lang_script->lang_script_text_id[script.current_language].size();i++)
+			if (dialsel==script.multi_lang_script->lang_script_text_id[script.current_language][i]) {
+				basedialid = script.multi_lang_script->base_script_text_id[script.current_language][i];
+				break;
+			}
+	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+		if (script.multi_lang_script->base_script_lang[lang]==baselang)
+			langShiftedlink[lang] = script.current_language;
+		else
+			langShiftedlink[lang] = script.multi_lang_script->base_script_lang[lang];
+	ScriptEditTextLinkDialog dial(this,langShiftedlink,*text,script.current_language);
+	dial.message_link_base.assign(1,dialsel);
+	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+		if (lang!=script.current_language && langShiftedlink[lang]==script.current_language) {
+			dial.message_link[lang].assign(1,basedialid);
+			if (lang!=baselang)
+				for (i=0;i<script.multi_lang_script->base_script_text_id[lang].size();i++)
+					if (basedialid==script.multi_lang_script->base_script_text_id[lang][i]) {
+						dial.message_link[lang][0] = script.multi_lang_script->lang_script_text_id[lang][i];
+						break;
+					}
+		}
+	if (dial.ShowModal(dialsel)==wxID_OK) {
+		if (baselang!=script.current_language)
+			basedialid = dial.message_link[baselang][0];
+		for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+			if (lang!=baselang && langShiftedlink[lang]==script.current_language) {
+				uint16_t langtextid = lang==script.current_language ? dial.message_link_base[0] : dial.message_link[lang][0];
+				for (i=0;i<script.multi_lang_script->base_script_text_id[lang].size();i++)
+					if (basedialid==script.multi_lang_script->base_script_text_id[lang][i]) {
+						script.multi_lang_script->lang_script_text_id[lang][i] = langtextid;
+						break;
+					}
+				if (i>=script.multi_lang_script->base_script_text_id[lang].size()) {
+					script.multi_lang_script->base_script_text_id[lang].push_back(basedialid);
+					script.multi_lang_script->lang_script_text_id[lang].push_back(langtextid);
+				}
+			}
+		UpdateMultiLangDialogHelp(datagroup->dialog);
+	}
 }
 
 void ScriptEditDialog::OnArgPositionPaint(wxPaintEvent& event) {
@@ -4139,8 +4312,8 @@ ScriptEditEntryDialog::ScriptEditEntryDialog(wxWindow* parent, ScriptDataStruct&
 	unsigned int i;
 	base_entry_amount = scpt.entry_amount;
 	entry_amount = scpt.entry_amount;
-	base_entry_id = new int[entry_amount];
-	entry_type = new uint8_t[entry_amount];
+	base_entry_id.resize(entry_amount);
+	entry_type.resize(entry_amount);
 	for (i=0;i<entry_amount;i++) {
 		base_entry_id[i] = i;
 		entry_type[i] = scpt.entry_type[i];
@@ -4150,8 +4323,6 @@ ScriptEditEntryDialog::ScriptEditEntryDialog(wxWindow* parent, ScriptDataStruct&
 }
 
 ScriptEditEntryDialog::~ScriptEditEntryDialog() {
-	delete[] base_entry_id;
-	delete[] entry_type;
 }
 
 int ScriptEditEntryDialog::ShowModal() {
@@ -4253,12 +4424,7 @@ void ScriptEditEntryDialog::OnButtonClick(wxCommandEvent& event) {
 			return;
 		}
 		sel++;
-		uint8_t* newentrytype = new uint8_t[entry_amount+1];
-		memcpy(newentrytype,entry_type,sel*sizeof(uint8_t));
-		newentrytype[sel] = 0;
-		memcpy(newentrytype+sel+1,entry_type+sel,(entry_amount-sel)*sizeof(uint8_t));
-		delete[] entry_type;
-		entry_type = newentrytype;
+		entry_type.insert(entry_type.begin()+sel,0);
 		for (i=0;i<base_entry_amount;i++)
 			if (base_entry_id[i]>=sel)
 				base_entry_id[i]++;
@@ -4271,11 +4437,7 @@ void ScriptEditEntryDialog::OnButtonClick(wxCommandEvent& event) {
 		if (sel==wxNOT_FOUND)
 			return;
 		entry_amount--;
-		uint8_t* newentrytype = new uint8_t[entry_amount];
-		memcpy(newentrytype,entry_type,sel*sizeof(uint8_t));
-		memcpy(newentrytype+sel,entry_type+sel+1,(entry_amount-sel)*sizeof(uint8_t));
-		delete[] entry_type;
-		entry_type = newentrytype;
+		entry_type.erase(entry_type.begin()+sel);
 		for (i=0;i<base_entry_amount;i++)
 			if (base_entry_id[i]==sel)
 				base_entry_id[i] = -1;
@@ -4289,4 +4451,235 @@ void ScriptEditEntryDialog::OnButtonClick(wxCommandEvent& event) {
 		DisplayEntry(sel);
 	} else
 		EndModal(id);
+}
+
+//=====================================//
+// Language Links and Correspondancies //
+//=====================================//
+
+ScriptEditLinkDialog::ScriptEditLinkDialog(wxWindow* parent, ScriptDataStruct& scpt, TextDataStruct& td) :
+	ScriptEditLinkWindow(parent),
+	text(&td) {
+	SteamLanguage lang,baselang,sublang;
+	unsigned int i,j;
+	lang_link[0] = m_langlink1;	lang_link[1] = m_langlink2;	lang_link[2] = m_langlink3;	lang_link[3] = m_langlink4;
+	lang_link[4] = m_langlink5;	lang_link[5] = m_langlink6;	lang_link[6] = m_langlink7;
+	lang_text[0] = m_langtext1;	lang_text[1] = m_langtext2;	lang_text[2] = m_langtext3;	lang_text[3] = m_langtext4;
+	lang_text[4] = m_langtext5;	lang_text[5] = m_langtext6;	lang_text[6] = m_langtext7;
+	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+		baselang = scpt.multi_lang_script->base_script_lang[lang];
+		lang_link[lang]->SetSelection(baselang);
+		message_link[lang] = message_link_base[baselang];
+		for (i=0;i<scpt.multi_lang_script->base_script_text_id[lang].size();i++) {
+			for (j=0;j<message_link_base[baselang].size();j++)
+				if (message_link_base[baselang][j]==scpt.multi_lang_script->base_script_text_id[lang][i]) {
+					message_link[lang][j] = scpt.multi_lang_script->lang_script_text_id[lang][i];
+					break;
+				}
+			if (j>=message_link_base[baselang].size()) {
+				message_link_base[baselang].push_back(scpt.multi_lang_script->base_script_text_id[lang][i]);
+				message_link[lang].push_back(scpt.multi_lang_script->lang_script_text_id[lang][i]);
+			}
+		}
+		lang_link[lang]->Enable(scpt.multi_lang_script->is_loaded[lang]);
+		if (scpt.multi_lang_script->is_loaded[lang]) {
+			bool enabletext = false;
+			for (sublang=0;sublang<STEAM_LANGUAGE_AMOUNT;sublang++)
+				if (lang!=sublang && scpt.multi_lang_script->base_script_lang[sublang]==lang) {
+					enabletext = true;
+					break;
+				}
+			lang_text[lang]->Enable(enabletext);
+		} else {
+			lang_text[lang]->Enable(false);
+		}
+		is_modified[lang] = false;
+	}
+	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+		baselang = scpt.multi_lang_script->base_script_lang[lang];
+		for (i=message_link[lang].size();i<message_link_base[baselang].size();i++)
+			message_link[lang].push_back(message_link_base[baselang][i]);
+	}
+}
+
+ScriptEditLinkDialog::~ScriptEditLinkDialog() {
+}
+
+void ScriptEditLinkDialog::ApplyModifications(ScriptDataStruct& scpt) {
+	SteamLanguage lang,baselang;
+	scpt.UpdateSteamMultiLanguage();
+	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+		if (scpt.multi_lang_script->is_loaded[lang]) {
+			baselang = lang_link[lang]->GetSelection();
+			if (is_modified[lang] || is_modified[baselang]) {
+				if (scpt.multi_lang_script->base_script_lang[baselang]!=baselang)
+					scpt.LinkLanguageScripts(baselang,baselang,message_link[baselang],message_link[baselang]);
+				scpt.LinkLanguageScripts(lang,baselang,message_link[lang],message_link_base[baselang]);
+			}
+		}
+}
+
+void ScriptEditLinkDialog::OnButtonClick(wxCommandEvent& event) {
+	int id = event.GetId();
+	if (id==wxID_OK || id==wxID_CANCEL) {
+		EndModal(id);
+		return;
+	}
+	SteamLanguage lang, sublang;
+	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+		if (static_cast<wxButton*>(event.GetEventObject())==lang_text[lang]) {
+			SteamLanguage link[STEAM_LANGUAGE_AMOUNT];
+			for (sublang=0;sublang<STEAM_LANGUAGE_AMOUNT;sublang++)
+				link[sublang] = lang_link[sublang]->GetSelection();
+			lang = lang_link[lang]->GetSelection();
+			ScriptEditTextLinkDialog dial(this,link,*text,lang);
+			dial.message_link_base = message_link_base[lang];
+			for (sublang=0;sublang<STEAM_LANGUAGE_AMOUNT;sublang++)
+				if (link[sublang]==lang)
+					dial.message_link[sublang] = message_link[sublang];
+			if (dial.ShowModal()==wxID_OK) {
+				message_link_base[lang] = dial.message_link_base;
+				for (sublang=0;sublang<STEAM_LANGUAGE_AMOUNT;sublang++)
+					if (link[sublang]==lang)
+						message_link[sublang] = dial.message_link[sublang];
+				is_modified[lang] = true;
+			}
+			break;
+		}
+}
+
+void ScriptEditLinkDialog::OnChangeLink(wxCommandEvent& event) {
+	SteamLanguage lang,baselang,sublang;
+	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+		if (static_cast<wxChoice*>(event.GetEventObject())==lang_link[lang]) {
+			baselang = lang_link[event.GetSelection()]->GetSelection();
+			if (lang!=event.GetSelection() && lang_link[event.GetSelection()]->GetSelection()!=event.GetSelection())
+				lang_link[lang]->SetSelection(baselang);
+			if (lang!=baselang) {
+				for (sublang=0;sublang<STEAM_LANGUAGE_AMOUNT;sublang++)
+					if (lang_link[sublang]->GetSelection()==lang) {
+						lang_link[sublang]->SetSelection(sublang);
+						is_modified[sublang] = true;
+					}
+				message_link_base[lang].clear();
+				message_link[lang] = message_link_base[baselang];
+			}
+			is_modified[lang] = true;
+			break;
+		}
+	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+		if (lang==lang_link[lang]->GetSelection()) {
+			bool islinked = false;
+			for (sublang=0;sublang<STEAM_LANGUAGE_AMOUNT;sublang++)
+				if (sublang!=lang && lang_link[sublang]->GetSelection()==lang) {
+					islinked = true;
+					break;
+				}
+			lang_text[lang]->Enable(islinked);
+			if (!islinked) {
+				message_link_base[lang].clear();
+				message_link[lang].clear();
+			}
+		} else {
+			lang_text[lang]->Enable(false);
+			message_link_base[lang].clear();
+		}
+}
+
+ScriptEditTextLinkDialog::ScriptEditTextLinkDialog(wxWindow* parent, SteamLanguage* linklang, TextDataStruct& td, SteamLanguage baselang) :
+	ScriptEditTextLinkWindow(parent),
+	text(&td),
+	base_lang(baselang) {
+	wxArrayString dialoglist;
+	SteamLanguage lang;
+	unsigned int i;
+	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+		link[lang] = linklang[lang];
+	for (i=0;i<text->amount;i++)
+		if (text->text[i].multi_lang_init[base_lang])
+			dialoglist.Add(_(FF9String::RemoveOpcodes(text->text[i].multi_lang_str[base_lang],SCRIPT_TEXT_LINK_PREVIEW_LENGTH)));
+		else
+			break;
+	m_baselangdialog->Append(dialoglist);
+	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+		if (link[lang]==base_lang && lang!=base_lang) {
+			dialoglist.Clear();
+			link_choice[lang] = new wxChoice(this,wxID_ANY);
+			for (i=0;i<text->amount;i++)
+				if (text->text[i].multi_lang_init[lang])
+					dialoglist.Add(_(FF9String::RemoveOpcodes(text->text[i].multi_lang_str[lang],SCRIPT_TEXT_LINK_PREVIEW_LENGTH)));
+				else
+					break;
+			link_choice[lang]->Append(dialoglist);
+			m_translationsizer->Add(link_choice[lang],0,wxEXPAND|wxALL,2);
+			link_choice[lang]->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ScriptEditTextLinkDialog::OnChooseDialog ), NULL, this );
+		} else {
+			link_choice[lang] = NULL;
+		}
+	Fit();
+	Layout();
+	Refresh();
+}
+
+ScriptEditTextLinkDialog::~ScriptEditTextLinkDialog() {
+	for (SteamLanguage lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+		if (link_choice[lang]!=NULL)
+			link_choice[lang]->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ScriptEditTextLinkDialog::OnChooseDialog ), NULL, this );
+}
+
+int ScriptEditTextLinkDialog::ShowModal(int dialogid) {
+	if (dialogid<0)
+		dialogid = 0;
+	else
+		m_baselangdialog->Enable(false);
+	m_baselangdialog->SetSelection(dialogid);
+	UpdateDialogSelection();
+	return ScriptEditTextLinkWindow::ShowModal();
+}
+
+void ScriptEditTextLinkDialog::UpdateDialogSelection() {
+	SteamLanguage lang;
+	unsigned int i;
+	int dialogid = m_baselangdialog->GetSelection();
+	for (i=0;i<message_link_base.size();i++)
+		if (message_link_base[i]==dialogid) {
+			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+				if (link_choice[lang]!=NULL)
+					link_choice[lang]->SetSelection(message_link[lang][i]);
+			break;
+		}
+	if (i>=message_link_base.size()) {
+		for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+			if (link_choice[lang]!=NULL)
+				link_choice[lang]->SetSelection(dialogid);
+	}
+}
+
+void ScriptEditTextLinkDialog::OnButtonClick(wxCommandEvent& event) {
+	EndModal(event.GetId());
+}
+
+void ScriptEditTextLinkDialog::OnChooseDialog(wxCommandEvent& event) {
+	wxChoice* dialchoice = static_cast<wxChoice*>(event.GetEventObject());
+	if (dialchoice==m_baselangdialog) {
+		UpdateDialogSelection();
+	} else {
+		SteamLanguage lang;
+		unsigned int dialindex;
+		for (dialindex=0;dialindex<message_link_base.size();dialindex++)
+			if (message_link_base[dialindex]==m_baselangdialog->GetSelection())
+				break;
+		if (dialindex>=message_link_base.size()) {
+			dialindex = message_link_base.size();
+			message_link_base.push_back(m_baselangdialog->GetSelection());
+			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+				if (link_choice[lang]!=NULL)
+					message_link[lang].push_back(m_baselangdialog->GetSelection());
+		}
+		for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+			if (dialchoice==link_choice[lang]) {
+				message_link[lang][dialindex] = event.GetSelection();
+				break;
+			}
+	}
 }

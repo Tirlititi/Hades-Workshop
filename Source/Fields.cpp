@@ -865,62 +865,65 @@ int FieldWalkmeshDataStruct::ExportAsObj(const char* outputbase) {
 		return 1;
 	fobj << std::showpoint;
 	uint16_t vertcount = 1;
-	uint16_t vertncount = 1;
-	vector<uint16_t>* vertlistbypath = new vector<uint16_t>[walkpath_amount];
+//	uint16_t vertncount = 1;
+	vector<uint16_t> vertlistbypath;
 	vector<uint16_t> vertlistpathindexbypath(vertex_amount,0);
 	for (i=0;i<walkpath_amount;i++) {
 		fobj << "o Walhpath_" << i << endl;
+		vertlistbypath.clear();
 		for (j=0;j<walkpath_triangleamount[i];j++) {
-			for (k=0;k<vertlistbypath[i].size();k++)
-				if (vertlistbypath[i][k]==triangle_vertex1[walkpath_trianglelist[i][j]]) {
+			for (k=0;k<vertlistbypath.size();k++)
+				if (vertlistbypath[k]==triangle_vertex1[walkpath_trianglelist[i][j]]) {
 					vertlistpathindexbypath[triangle_vertex1[walkpath_trianglelist[i][j]]] = k;
 					break;
 				}
-			if (k>=vertlistbypath[i].size()) {
-				vertlistpathindexbypath[triangle_vertex1[walkpath_trianglelist[i][j]]] = vertlistbypath[i].size();
-				vertlistbypath[i].push_back(triangle_vertex1[walkpath_trianglelist[i][j]]);
+			if (k>=vertlistbypath.size()) {
+				vertlistpathindexbypath[triangle_vertex1[walkpath_trianglelist[i][j]]] = vertlistbypath.size();
+				vertlistbypath.push_back(triangle_vertex1[walkpath_trianglelist[i][j]]);
 			}
-			for (k=0;k<vertlistbypath[i].size();k++)
-				if (vertlistbypath[i][k]==triangle_vertex2[walkpath_trianglelist[i][j]]) {
+			for (k=0;k<vertlistbypath.size();k++)
+				if (vertlistbypath[k]==triangle_vertex2[walkpath_trianglelist[i][j]]) {
 					vertlistpathindexbypath[triangle_vertex2[walkpath_trianglelist[i][j]]] = k;
 					break;
 				}
-			if (k>=vertlistbypath[i].size()) {
-				vertlistpathindexbypath[triangle_vertex2[walkpath_trianglelist[i][j]]] = vertlistbypath[i].size();
-				vertlistbypath[i].push_back(triangle_vertex2[walkpath_trianglelist[i][j]]);
+			if (k>=vertlistbypath.size()) {
+				vertlistpathindexbypath[triangle_vertex2[walkpath_trianglelist[i][j]]] = vertlistbypath.size();
+				vertlistbypath.push_back(triangle_vertex2[walkpath_trianglelist[i][j]]);
 			}
-			for (k=0;k<vertlistbypath[i].size();k++)
-				if (vertlistbypath[i][k]==triangle_vertex3[walkpath_trianglelist[i][j]]) {
+			for (k=0;k<vertlistbypath.size();k++)
+				if (vertlistbypath[k]==triangle_vertex3[walkpath_trianglelist[i][j]]) {
 					vertlistpathindexbypath[triangle_vertex3[walkpath_trianglelist[i][j]]] = k;
 					break;
 				}
-			if (k>=vertlistbypath[i].size()) {
-				vertlistpathindexbypath[triangle_vertex3[walkpath_trianglelist[i][j]]] = vertlistbypath[i].size();
-				vertlistbypath[i].push_back(triangle_vertex3[walkpath_trianglelist[i][j]]);
+			if (k>=vertlistbypath.size()) {
+				vertlistpathindexbypath[triangle_vertex3[walkpath_trianglelist[i][j]]] = vertlistbypath.size();
+				vertlistbypath.push_back(triangle_vertex3[walkpath_trianglelist[i][j]]);
 			}
 		}
-		for (j=0;j<vertlistbypath[i].size();j++) {
-			double xx = vertex_x[vertlistbypath[i][j]];
-			double yy = vertex_y[vertlistbypath[i][j]];
-			double zz = vertex_z[vertlistbypath[i][j]];
-			fobj << "v " << xx << " " << -yy << " " << zz << endl;
+		for (j=0;j<vertlistbypath.size();j++) {
+			double xx = walkpath_offsetx[i]+vertex_x[vertlistbypath[j]];
+			double yy = walkpath_offsety[i]+vertex_y[vertlistbypath[j]];
+			double zz = walkpath_offsetz[i]+vertex_z[vertlistbypath[j]];
+			fobj << "v " << xx << " " << -zz << " " << -yy << endl;
 		}
-		for (j=0;j<walkpath_triangleamount[i];j++) {
+/*		for (j=0;j<walkpath_triangleamount[i];j++) {
 			double nxx = normal_x[triangle_normal[walkpath_trianglelist[i][j]]];
 			double nyy = normal_y[triangle_normal[walkpath_trianglelist[i][j]]];
 			double nzz = normal_z[triangle_normal[walkpath_trianglelist[i][j]]];
-			fobj << "vn " << nxx << " " << -nyy << " " << nzz << endl;
-		}
+			fobj << "vn " << nxx << " " << nyy << " " << nzz << endl;
+		}*/
 		for (j=0;j<walkpath_triangleamount[i];j++) {
-			int vertindex = vertlistpathindexbypath[triangle_vertex1[walkpath_trianglelist[i][j]]]+vertcount;
-			fobj << "f " << vertindex << "//" << j+vertncount;
-			vertindex = vertlistpathindexbypath[triangle_vertex2[walkpath_trianglelist[i][j]]]+vertcount;
-			fobj << " " << vertindex << "//" << j+vertncount;
-			vertindex = vertlistpathindexbypath[triangle_vertex3[walkpath_trianglelist[i][j]]]+vertcount;
-			fobj << " " << vertindex << "//" << j+vertncount << endl;
+			int vertindex = vertlistpathindexbypath[triangle_vertex1[walkpath_trianglelist[i][j]]]+vertcount; fobj << "f " << vertindex;
+//			fobj << "f " << vertindex << "//" << j+vertncount;
+			vertindex = vertlistpathindexbypath[triangle_vertex2[walkpath_trianglelist[i][j]]]+vertcount; fobj << " " << vertindex;
+			vertindex = vertlistpathindexbypath[triangle_vertex3[walkpath_trianglelist[i][j]]]+vertcount; fobj << " " << vertindex << endl;
+			// Double-side
+			vertindex = vertlistpathindexbypath[triangle_vertex1[walkpath_trianglelist[i][j]]]+vertcount; fobj << "f " << vertindex;
+			vertindex = vertlistpathindexbypath[triangle_vertex3[walkpath_trianglelist[i][j]]]+vertcount; fobj << " " << vertindex;
+			vertindex = vertlistpathindexbypath[triangle_vertex2[walkpath_trianglelist[i][j]]]+vertcount; fobj << " " << vertindex << endl;
 		}
-		vertcount += vertlistbypath[i].size();
-		vertncount += walkpath_triangleamount[i];
+		vertcount += vertlistbypath.size();
+//		vertncount += walkpath_triangleamount[i];
 	}
 	fobj.close();
 	return 0;
@@ -1280,7 +1283,7 @@ int FieldDataSet::SetFieldName(unsigned int fieldid, FF9String& newvalue) {
 void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textset) {
 	unsigned int i,j,k,l;
 	int relatedtxtid;
-	amount = 10;//clusset.field_amount;
+	amount = clusset.field_amount;
 	struct_id = new uint16_t[amount];
 	script_data = new ScriptDataStruct*[amount];
 	preload = new ImageMapDataStruct*[amount];
@@ -1425,7 +1428,7 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 				}
 			for (j=0;j<G_N_ELEMENTS(SteamTextFile);j++) {
 				txtfilename = SteamTextFile[j].name.substr(4); // remove "MES_"
-				if (txtfilename.length()<=fieldfilename.length() && txtfilename.compare(fieldfilename.substr(0,txtfilename.length()))==0) {
+				if (txtfilename.length()<fieldfilename.length() && fieldfilename[txtfilename.length()]=='_' && txtfilename.compare(fieldfilename.substr(0,txtfilename.length()))==0) {
 					relatedtxtid = SteamTextFile[j].id;
 					break;
 				}
@@ -1487,9 +1490,6 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 			walkmesh[i]->Init(false,CHUNK_TYPE_FIELD_WALK,config.field_id[i],&dummyclus[i]);
 			walkmesh[i]->size = config.meta_field[config.field_file_id[i]-1].GetFileSizeByIndex(config.field_walkmesh_file[i]);
 			walkmesh[i]->Read(ffbin);
-wxString objexp;
-objexp << (int)script_data[i]->object_id << L" - " << script_data[i]->name.str_nice;
-walkmesh[i]->ExportAsObj(objexp.ToStdString().c_str());
 //			ffbin.seekg(config.meta_field[config.field_file_id[i]-1].GetFileOffsetByIndex(config.field_image_file[i]));
 			tim_data[i] = new TIMImageDataStruct[1];
 			tim_data[i]->Init(false,CHUNK_TYPE_TIM,config.field_id[i],&dummyclus[i]);
@@ -1558,10 +1558,12 @@ void FieldDataSet::WritePPF(fstream& ffbin, ClusterSet& clusset) {
 }
 
 int* FieldDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool usetext, unsigned int localflag) {
-	unsigned int i,j,k;
+	unsigned int i,j,k,l;
 	uint32_t chunksize,clustersize,chunkpos,objectpos,objectsize;
 	uint16_t nbmodified,objectid;
-	SteamLanguage lang;
+	SteamLanguage lang,sublang;
+	uint8_t langcount;
+	bool shouldread;
 	uint8_t chunktype;
 	ClusterData* clus;
 	int* res = new int[5];
@@ -1649,31 +1651,83 @@ int* FieldDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 								script_data[j]->ReadLocalHWS(ffhws);
 						} else if (chunktype==CHUNK_STEAM_SCRIPT_MULTILANG) {
 							if (loadmain) {
-								uint8_t langflag;
+								uint16_t langcorrcount;
+								uint32_t langcorrpos;
+								vector<uint16_t> corrlinkbase,corrlink;
 								HWSReadChar(ffhws,lang);
 								while (lang!=STEAM_LANGUAGE_NONE) {
 									uint32_t langdatasize;
-									HWSReadChar(ffhws,langflag);
+									shouldread = false;
+									HWSReadChar(ffhws,langcount);
+									langcorrpos = ffhws.tellg();
+									for (k=0;k<langcount;k++) {
+										HWSReadChar(ffhws,sublang);
+										HWSReadLong(ffhws,langdatasize);
+										if (hades::STEAM_SINGLE_LANGUAGE_MODE && sublang==GetSteamLanguage()) {
+											shouldread = true;
+											HWSReadShort(ffhws,langcorrcount);
+											corrlinkbase.resize(langcorrcount);
+											corrlink.resize(langcorrcount);
+											for (l=0;l<langcorrcount;l++) {
+												HWSReadShort(ffhws,corrlinkbase[l]);
+												HWSReadShort(ffhws,corrlink[l]);
+											}
+										} else {
+											ffhws.seekg((long long)ffhws.tellg()+langdatasize);
+										}
+									}
 									HWSReadLong(ffhws,langdatasize);
-									if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
-										ffhws.seekg(langdatasize,ios::cur);
-									else
+									if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage()) {
+										if (shouldread) {
+											script_data[j]->ReadHWS(ffhws,false);
+											script_data[j]->ApplyDialogLink(corrlink,corrlinkbase);
+										} else {
+											ffhws.seekg(langdatasize,ios::cur);
+										}
+									} else {
 										script_data[j]->ReadHWS(ffhws,false,lang);
+										if (script_data[j]->multi_lang_script!=NULL) {
+											uint32_t endlangpos = ffhws.tellg();
+											ffhws.seekg(langcorrpos);
+											for (k=0;k<langcount;k++) {
+												HWSReadChar(ffhws,sublang);
+												HWSReadLong(ffhws,langdatasize);
+												HWSReadShort(ffhws,langcorrcount);
+												corrlinkbase.resize(langcorrcount);
+												corrlink.resize(langcorrcount);
+												for (l=0;l<langcorrcount;l++) {
+													HWSReadShort(ffhws,corrlinkbase[l]);
+													HWSReadShort(ffhws,corrlink[l]);
+												}
+												script_data[j]->LinkLanguageScripts(sublang,lang,corrlink,corrlinkbase);
+											}
+											ffhws.seekg(endlangpos);
+										}
+									}
 									HWSReadChar(ffhws,lang);
 								}
 							}
 						} else if (chunktype==CHUNK_SPECIAL_TYPE_LOCAL_MULTILANG) {
 							if (loadlocal) {
-								uint8_t langflag;
 								HWSReadChar(ffhws,lang);
 								while (lang!=STEAM_LANGUAGE_NONE) {
 									uint32_t langdatasize;
-									HWSReadChar(ffhws,langflag);
+									shouldread = false;
+									HWSReadChar(ffhws,langcount);
+									for (k=0;k<langcount;k++) {
+										HWSReadChar(ffhws,sublang);
+										if (sublang==GetSteamLanguage())
+											shouldread = true;
+									}
 									HWSReadLong(ffhws,langdatasize);
-									if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
-										ffhws.seekg(langdatasize,ios::cur);
-									else
+									if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage()) {
+										if (shouldread)
+											script_data[j]->ReadLocalHWS(ffhws);
+										else
+											ffhws.seekg(langdatasize,ios::cur);
+									} else {
 										script_data[j]->ReadLocalHWS(ffhws,lang);
+									}
 									HWSReadChar(ffhws,lang);
 								}
 							}
@@ -1718,7 +1772,9 @@ void FieldDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsign
 	unsigned int i,j;
 	uint16_t nbmodified = 0;
 	uint32_t chunksize, chunkpos, nboffset = ffhws.tellg();
-	SteamLanguage lang;
+	uint32_t aftlinkpos, linkpos;
+	SteamLanguage lang, sublang;
+	uint8_t nbscriptlink;
 	ClusterData* clus;
 	bool savemain = localflag & 1;
 	bool savelocal = localflag & 2;
@@ -1797,27 +1853,35 @@ void FieldDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsign
 					chunkpos = ffhws.tellg();
 					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
 						if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && script_data[i]->IsDataModified(lang)) {
+							if (script_data[i]->multi_lang_script!=NULL && script_data[i]->multi_lang_script->base_script_lang[lang]!=lang && hades::STEAM_LANGUAGE_SAVE_LIST[script_data[i]->multi_lang_script->base_script_lang[lang]])
+								continue;
 							HWSWriteChar(ffhws,lang);
-							HWSWriteChar(ffhws,0); // TODO: Use this as an options (eg. two scripts are actually the same)
+							HWSWriteChar(ffhws,0);
+							if (script_data[i]->multi_lang_script!=NULL && script_data[i]->multi_lang_script->base_script_lang[lang]==lang) {
+								linkpos = ffhws.tellg();
+								nbscriptlink = 0;
+								for (sublang=0;sublang<STEAM_LANGUAGE_AMOUNT;sublang++)
+									if (lang!=sublang && hades::STEAM_LANGUAGE_SAVE_LIST[sublang] && script_data[i]->multi_lang_script->base_script_lang[sublang]==lang) {
+										uint16_t textcorresp = script_data[i]->multi_lang_script->base_script_text_id[sublang].size();
+										HWSWriteChar(ffhws,sublang);
+										HWSWriteLong(ffhws,2+4*textcorresp);
+										HWSWriteShort(ffhws,textcorresp);
+										for (j=0;j<textcorresp;j++) {
+											HWSWriteShort(ffhws,script_data[i]->multi_lang_script->base_script_text_id[sublang][j]);
+											HWSWriteShort(ffhws,script_data[i]->multi_lang_script->lang_script_text_id[sublang][j]);
+										}
+										nbscriptlink++;
+									}
+								aftlinkpos = ffhws.tellg();
+								ffhws.seekg(linkpos-1);
+								HWSWriteChar(ffhws,nbscriptlink);
+								ffhws.seekg(aftlinkpos);
+							}
 							HWSWriteLong(ffhws,script_data[i]->GetDataSize(lang));
 							script_data[i]->WriteHWS(ffhws,lang);
 						}
 					HWSWriteChar(ffhws,STEAM_LANGUAGE_NONE);
-					chunksize = (uint32_t)ffhws.tellg()-chunkpos;
-					ffhws.seekg(chunkpos-4);
-					HWSWriteLong(ffhws,chunksize);
-					ffhws.seekg(chunkpos+chunksize);
-					HWSWriteChar(ffhws,CHUNK_STEAM_FIELD_MULTINAME);
-					HWSWriteLong(ffhws,0);
-					chunkpos = ffhws.tellg();
-					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
-						if (hades::STEAM_LANGUAGE_SAVE_LIST[lang]) {
-							HWSWriteChar(ffhws,lang);
-							SteamWriteFF9String(ffhws,script_data[i]->name,lang);
-						}
-					}
-					HWSWriteChar(ffhws,STEAM_LANGUAGE_NONE);
-					chunksize = (unsigned int)ffhws.tellg()-chunkpos;
+					chunksize = (long long)ffhws.tellg()-chunkpos;
 					ffhws.seekg(chunkpos-4);
 					HWSWriteLong(ffhws,chunksize);
 					ffhws.seekg(chunkpos+chunksize);
@@ -1832,8 +1896,21 @@ void FieldDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsign
 					chunkpos = ffhws.tellg();
 					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
 						if (hades::STEAM_LANGUAGE_SAVE_LIST[lang]) {
+							if (script_data[i]->multi_lang_script!=NULL && script_data[i]->multi_lang_script->base_script_lang[lang]!=lang && hades::STEAM_LANGUAGE_SAVE_LIST[script_data[i]->multi_lang_script->base_script_lang[lang]])
+								continue;
 							HWSWriteChar(ffhws,lang);
-							HWSWriteChar(ffhws,0); // TODO: Use this as an options
+							HWSWriteChar(ffhws,0);
+							if (script_data[i]->multi_lang_script!=NULL && script_data[i]->multi_lang_script->base_script_lang[lang]==lang) {
+								nbscriptlink = 0;
+								for (sublang=0;sublang<STEAM_LANGUAGE_AMOUNT;sublang++)
+									if (lang!=sublang && hades::STEAM_LANGUAGE_SAVE_LIST[sublang] && script_data[i]->multi_lang_script->base_script_lang[sublang]==lang) {
+										HWSWriteChar(ffhws,sublang);
+										nbscriptlink++;
+									}
+								ffhws.seekg((long long)ffhws.tellg()-nbscriptlink-1);
+								HWSWriteChar(ffhws,nbscriptlink);
+								ffhws.seekg((long long)ffhws.tellg()+nbscriptlink);
+							}
 							HWSWriteLong(ffhws,0);
 							langdatapos = ffhws.tellg();
 							script_data[i]->WriteLocalHWS(ffhws,lang);

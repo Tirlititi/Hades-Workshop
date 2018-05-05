@@ -769,11 +769,11 @@ void MainFrame::UpdateMenuAvailability(int panel) {
 	m_exportuitext->Enable(CDPanel[panel]->ffuiloaded);
 	m_importuitext->Enable(CDPanel[panel]->ffuiloaded);
 	m_exportenemyscript->Enable(CDPanel[panel]->enemyloaded);
-	m_importenemyscript->Enable(CDPanel[panel]->enemyloaded);
+//	m_importenemyscript->Enable(CDPanel[panel]->enemyloaded);
 	m_exportworldscript->Enable(CDPanel[panel]->worldloaded);
-	m_importworldscript->Enable(CDPanel[panel]->worldloaded);
+//	m_importworldscript->Enable(CDPanel[panel]->worldloaded);
 	m_exportfieldscript->Enable(CDPanel[panel]->fieldloaded);
-	m_importfieldscript->Enable(CDPanel[panel]->fieldloaded);
+//	m_importfieldscript->Enable(CDPanel[panel]->fieldloaded);
 	m_exportfieldbackground->Enable(CDPanel[panel]->fieldloaded);
 }
 

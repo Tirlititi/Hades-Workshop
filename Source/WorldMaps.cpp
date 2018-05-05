@@ -374,10 +374,12 @@ void WorldMapDataSet::WritePPF(fstream& ffbin, ClusterSet& clusset) {
 }
 
 int* WorldMapDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool usetext, unsigned int localflag) {
-	unsigned int i,j,k;
+	unsigned int i,j,k,l;
 	uint32_t chunksize,clustersize,chunkpos,objectpos,objectsize;
 	uint16_t nbmodified,objectid;
-	SteamLanguage lang;
+	SteamLanguage lang,sublang;
+	uint8_t langcount;
+	bool shouldread;
 	uint8_t chunktype;
 	ClusterData* clus;
 	int* res = new int[5];
@@ -496,31 +498,83 @@ int* WorldMapDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool
 									text_data[j]->ReadHWS(ffhws,true);
 							} else if (chunktype==CHUNK_STEAM_SCRIPT_MULTILANG) {
 								if (loadmain) {
-									uint8_t langflag;
+									uint16_t langcorrcount;
+									uint32_t langcorrpos;
+									vector<uint16_t> corrlinkbase,corrlink;
 									HWSReadChar(ffhws,lang);
 									while (lang!=STEAM_LANGUAGE_NONE) {
 										uint32_t langdatasize;
-										HWSReadChar(ffhws,langflag);
+										shouldread = false;
+										HWSReadChar(ffhws,langcount);
+										langcorrpos = ffhws.tellg();
+										for (k=0;k<langcount;k++) {
+											HWSReadChar(ffhws,sublang);
+											HWSReadLong(ffhws,langdatasize);
+											if (hades::STEAM_SINGLE_LANGUAGE_MODE && sublang==GetSteamLanguage()) {
+												shouldread = true;
+												HWSReadShort(ffhws,langcorrcount);
+												corrlinkbase.resize(langcorrcount);
+												corrlink.resize(langcorrcount);
+												for (l=0;l<langcorrcount;l++) {
+													HWSReadShort(ffhws,corrlinkbase[l]);
+													HWSReadShort(ffhws,corrlink[l]);
+												}
+											} else {
+												ffhws.seekg((long long)ffhws.tellg()+langdatasize);
+											}
+										}
 										HWSReadLong(ffhws,langdatasize);
-										if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
-											ffhws.seekg(langdatasize,ios::cur);
-										else
+										if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage()) {
+											if (shouldread) {
+												script[j]->ReadHWS(ffhws,false);
+												script[j]->ApplyDialogLink(corrlink,corrlinkbase);
+											} else {
+												ffhws.seekg(langdatasize,ios::cur);
+											}
+										} else {
 											script[j]->ReadHWS(ffhws,false,lang);
+											if (script[j]->multi_lang_script!=NULL) {
+												uint32_t endlangpos = ffhws.tellg();
+												ffhws.seekg(langcorrpos);
+												for (k=0;k<langcount;k++) {
+													HWSReadChar(ffhws,sublang);
+													HWSReadLong(ffhws,langdatasize);
+													HWSReadShort(ffhws,langcorrcount);
+													corrlinkbase.resize(langcorrcount);
+													corrlink.resize(langcorrcount);
+													for (l=0;l<langcorrcount;l++) {
+														HWSReadShort(ffhws,corrlinkbase[l]);
+														HWSReadShort(ffhws,corrlink[l]);
+													}
+													script[j]->LinkLanguageScripts(sublang,lang,corrlink,corrlinkbase);
+												}
+												ffhws.seekg(endlangpos);
+											}
+										}
 										HWSReadChar(ffhws,lang);
 									}
 								}
 							} else if (chunktype==CHUNK_SPECIAL_TYPE_LOCAL_MULTILANG) {
 								if (loadlocal) {
-									uint8_t langflag;
 									HWSReadChar(ffhws,lang);
 									while (lang!=STEAM_LANGUAGE_NONE) {
 										uint32_t langdatasize;
-										HWSReadChar(ffhws,langflag);
+										shouldread = false;
+										HWSReadChar(ffhws,langcount);
+										for (k=0;k<langcount;k++) {
+											HWSReadChar(ffhws,sublang);
+											if (sublang==GetSteamLanguage())
+												shouldread = true;
+										}
 										HWSReadLong(ffhws,langdatasize);
-										if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
-											ffhws.seekg(langdatasize,ios::cur);
-										else
+										if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage()) {
+											if (shouldread)
+												script[j]->ReadLocalHWS(ffhws);
+											else
+												ffhws.seekg(langdatasize,ios::cur);
+										} else {
 											script[j]->ReadLocalHWS(ffhws,lang);
+										}
 										HWSReadChar(ffhws,lang);
 									}
 								}
@@ -566,7 +620,9 @@ void WorldMapDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, uns
 	unsigned int i,j;
 	uint16_t nbmodified = 0;
 	uint32_t chunkpos, chunksize, nboffset = ffhws.tellg();
-	SteamLanguage lang;
+	uint32_t aftlinkpos, linkpos;
+	SteamLanguage lang, sublang;
+	uint8_t nbscriptlink;
 	ClusterData* clus;
 	bool savemain = localflag & 1;
 	bool savelocal = localflag & 2;
@@ -660,7 +716,7 @@ void WorldMapDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, uns
 					HWSWriteLong(ffhws,0);
 					chunkpos = ffhws.tellg();
 					text_data[i]->WriteHWS(ffhws,true);
-					chunksize = (uint32_t)ffhws.tellg()-chunkpos;
+					chunksize = (long long)ffhws.tellg()-chunkpos;
 					ffhws.seekg(chunkpos-4);
 					HWSWriteLong(ffhws,chunksize);
 					ffhws.seekg(chunkpos+chunksize);
@@ -674,13 +730,35 @@ void WorldMapDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, uns
 					chunkpos = ffhws.tellg();
 					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
 						if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && script[i]->IsDataModified(lang)) {
+							if (script[i]->multi_lang_script!=NULL && script[i]->multi_lang_script->base_script_lang[lang]!=lang && hades::STEAM_LANGUAGE_SAVE_LIST[script[i]->multi_lang_script->base_script_lang[lang]])
+								continue;
 							HWSWriteChar(ffhws,lang);
-							HWSWriteChar(ffhws,0); // TODO: Use this as an options (eg. two scripts are actually the same)
+							HWSWriteChar(ffhws,0);
+							if (script[i]->multi_lang_script!=NULL && script[i]->multi_lang_script->base_script_lang[lang]==lang) {
+								linkpos = ffhws.tellg();
+								nbscriptlink = 0;
+								for (sublang=0;sublang<STEAM_LANGUAGE_AMOUNT;sublang++)
+									if (lang!=sublang && hades::STEAM_LANGUAGE_SAVE_LIST[sublang] && script[i]->multi_lang_script->base_script_lang[sublang]==lang) {
+										uint16_t textcorresp = script[i]->multi_lang_script->base_script_text_id[sublang].size();
+										HWSWriteChar(ffhws,sublang);
+										HWSWriteLong(ffhws,2+4*textcorresp);
+										HWSWriteShort(ffhws,textcorresp);
+										for (j=0;j<textcorresp;j++) {
+											HWSWriteShort(ffhws,script[i]->multi_lang_script->base_script_text_id[sublang][j]);
+											HWSWriteShort(ffhws,script[i]->multi_lang_script->lang_script_text_id[sublang][j]);
+										}
+										nbscriptlink++;
+									}
+								aftlinkpos = ffhws.tellg();
+								ffhws.seekg(linkpos-1);
+								HWSWriteChar(ffhws,nbscriptlink);
+								ffhws.seekg(aftlinkpos);
+							}
 							HWSWriteLong(ffhws,script[i]->GetDataSize(lang));
 							script[i]->WriteHWS(ffhws,lang);
 						}
 					HWSWriteChar(ffhws,STEAM_LANGUAGE_NONE);
-					chunksize = (uint32_t)ffhws.tellg()-chunkpos;
+					chunksize = (long long)ffhws.tellg()-chunkpos;
 					ffhws.seekg(chunkpos-4);
 					HWSWriteLong(ffhws,chunksize);
 					ffhws.seekg(chunkpos+chunksize);
@@ -695,8 +773,21 @@ void WorldMapDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, uns
 					chunkpos = ffhws.tellg();
 					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
 						if (hades::STEAM_LANGUAGE_SAVE_LIST[lang]) {
+							if (script[i]->multi_lang_script!=NULL && script[i]->multi_lang_script->base_script_lang[lang]!=lang && hades::STEAM_LANGUAGE_SAVE_LIST[script[i]->multi_lang_script->base_script_lang[lang]])
+								continue;
 							HWSWriteChar(ffhws,lang);
-							HWSWriteChar(ffhws,0); // TODO: Use this as an options
+							HWSWriteChar(ffhws,0);
+							if (script[i]->multi_lang_script!=NULL && script[i]->multi_lang_script->base_script_lang[lang]==lang) {
+								nbscriptlink = 0;
+								for (sublang=0;sublang<STEAM_LANGUAGE_AMOUNT;sublang++)
+									if (lang!=sublang && hades::STEAM_LANGUAGE_SAVE_LIST[sublang] && script[i]->multi_lang_script->base_script_lang[sublang]==lang) {
+										HWSWriteChar(ffhws,sublang);
+										nbscriptlink++;
+									}
+								ffhws.seekg((long long)ffhws.tellg()-nbscriptlink-1);
+								HWSWriteChar(ffhws,nbscriptlink);
+								ffhws.seekg((long long)ffhws.tellg()+nbscriptlink);
+							}
 							HWSWriteLong(ffhws,0);
 							langdatapos = ffhws.tellg();
 							script[i]->WriteLocalHWS(ffhws,lang);

@@ -2495,6 +2495,11 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemyscriptentryedit = new wxButton( m_enemyscrolledwindow, wxID_ENTRY, _("Edit Entries"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer191->Add( m_enemyscriptentryedit, 0, wxALL, 3 );
 	
+	m_enemyscriptlink = new wxButton( m_enemyscrolledwindow, wxID_SCRIPTLINK, _("Languages"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_enemyscriptlink->SetToolTip( _("Script links between different languages.\nScripts of linked languages are the same\nand are modified together.") );
+	
+	bSizer191->Add( m_enemyscriptlink, 0, wxALL, 3 );
+	
 	
 	fgSizer8->Add( bSizer191, 1, wxEXPAND, 5 );
 	
@@ -4339,6 +4344,11 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_worldscriptentryedit = new wxButton( m_worldscrolledwindow, wxID_ENTRY, _("Edit Entries"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer189->Add( m_worldscriptentryedit, 0, wxALL, 3 );
 	
+	m_worldscriptlink = new wxButton( m_worldscrolledwindow, wxID_SCRIPTLINK, _("Languages"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_worldscriptlink->SetToolTip( _("Script links between different languages.\nScripts of linked languages are the same\nand are modified together.") );
+	
+	bSizer189->Add( m_worldscriptlink, 0, wxALL, 3 );
+	
 	
 	fgSizer142->Add( bSizer189, 1, wxEXPAND, 5 );
 	
@@ -4628,6 +4638,11 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	
 	m_fieldscriptentryedit = new wxButton( m_fieldscrolledwindow, wxID_ENTRY, _("Edit Entries"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer190->Add( m_fieldscriptentryedit, 0, wxALL, 3 );
+	
+	m_fieldscriptlink = new wxButton( m_fieldscrolledwindow, wxID_SCRIPTLINK, _("Languages"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_fieldscriptlink->SetToolTip( _("Script links between different languages.\nScripts of linked languages are the same\nand are modified together.") );
+	
+	bSizer190->Add( m_fieldscriptlink, 0, wxALL, 3 );
 	
 	
 	fgSizer39->Add( bSizer190, 1, wxEXPAND, 5 );
@@ -5316,6 +5331,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemytextlist->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnEnemyTextRightClick ), NULL, this );
 	m_enemyscriptedit->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
 	m_enemyscriptentryedit->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
+	m_enemyscriptlink->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
 	m_enemyscene->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
 	m_enemyflag1->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyflag2->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
@@ -5596,6 +5612,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_worldlist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxWorldMap ), NULL, this );
 	m_worldscriptedit->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnWorldChangeButton ), NULL, this );
 	m_worldscriptentryedit->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnWorldChangeButton ), NULL, this );
+	m_worldscriptlink->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnWorldChangeButton ), NULL, this );
 	m_worldpreload->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnWorldChangeButton ), NULL, this );
 	m_worldtextlist->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnTextEditText ), NULL, this );
 	m_worldtextlist->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnTextRightClick ), NULL, this );
@@ -5622,6 +5639,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_fieldnamebutton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldeditscript->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldscriptentryedit->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
+	m_fieldscriptlink->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldpreload->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldtexturechoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnFieldChangeChoice ), NULL, this );
 	m_fieldtexturemanage->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
@@ -5909,6 +5927,7 @@ CDPanel::~CDPanel()
 	m_enemytextlist->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnEnemyTextRightClick ), NULL, this );
 	m_enemyscriptedit->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
 	m_enemyscriptentryedit->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
+	m_enemyscriptlink->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
 	m_enemyscene->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
 	m_enemyflag1->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyflag2->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
@@ -6189,6 +6208,7 @@ CDPanel::~CDPanel()
 	m_worldlist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxWorldMap ), NULL, this );
 	m_worldscriptedit->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnWorldChangeButton ), NULL, this );
 	m_worldscriptentryedit->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnWorldChangeButton ), NULL, this );
+	m_worldscriptlink->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnWorldChangeButton ), NULL, this );
 	m_worldpreload->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnWorldChangeButton ), NULL, this );
 	m_worldtextlist->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnTextEditText ), NULL, this );
 	m_worldtextlist->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnTextRightClick ), NULL, this );
@@ -6215,6 +6235,7 @@ CDPanel::~CDPanel()
 	m_fieldnamebutton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldeditscript->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldscriptentryedit->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
+	m_fieldscriptlink->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldpreload->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldtexturechoice->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnFieldChangeChoice ), NULL, this );
 	m_fieldtexturemanage->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
@@ -8766,6 +8787,45 @@ TextOpcodeWindow::~TextOpcodeWindow()
 	
 }
 
+TextSteamHelpWindow::TextSteamHelpWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	
+	wxGridBagSizer* gbSizer29;
+	gbSizer29 = new wxGridBagSizer( 0, 0 );
+	gbSizer29->SetFlexibleDirection( wxBOTH );
+	gbSizer29->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	m_listfunction = new wxListBox( this, wxID_FUNCTION, wxDefaultPosition, wxSize( 155,-1 ), 0, NULL, wxLB_HSCROLL|wxLB_SINGLE|wxLB_SORT ); 
+	gbSizer29->Add( m_listfunction, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 2 );
+	
+	m_helptextctrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), wxTE_MULTILINE|wxTE_READONLY|wxSIMPLE_BORDER );
+	m_helptextctrl->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
+	
+	gbSizer29->Add( m_helptextctrl, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
+	
+	
+	gbSizer29->AddGrowableCol( 1 );
+	gbSizer29->AddGrowableRow( 0 );
+	
+	this->SetSizer( gbSizer29 );
+	this->Layout();
+	
+	this->Centre( wxBOTH );
+	
+	// Connect Events
+	m_listfunction->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( TextSteamHelpWindow::OnListClick ), NULL, this );
+	m_listfunction->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( TextSteamHelpWindow::OnListDoubleClick ), NULL, this );
+}
+
+TextSteamHelpWindow::~TextSteamHelpWindow()
+{
+	// Disconnect Events
+	m_listfunction->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( TextSteamHelpWindow::OnListClick ), NULL, this );
+	m_listfunction->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( TextSteamHelpWindow::OnListDoubleClick ), NULL, this );
+	
+}
+
 TextExportWindow::TextExportWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
 {
 	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
@@ -10260,6 +10320,232 @@ ScriptEditEntryWindow::~ScriptEditEntryWindow()
 	m_entrytype->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ScriptEditEntryWindow::OnSpinCtrl ), NULL, this );
 	m_buttoncancel->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditEntryWindow::OnButtonClick ), NULL, this );
 	m_buttonok->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditEntryWindow::OnButtonClick ), NULL, this );
+	
+}
+
+ScriptEditLinkWindow::ScriptEditLinkWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	
+	wxGridBagSizer* gbSizer2;
+	gbSizer2 = new wxGridBagSizer( 0, 0 );
+	gbSizer2->SetFlexibleDirection( wxBOTH );
+	gbSizer2->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_NONE );
+	
+	m_staticText367 = new wxStaticText( this, wxID_ANY, _("English (US)"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText367->Wrap( -1 );
+	gbSizer2->Add( m_staticText367, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	wxString m_langlink1Choices[] = { _("English (US)"), _("English (UK)"), _("Japanese"), _("German"), _("French"), _("Italian"), _("Spanish") };
+	int m_langlink1NChoices = sizeof( m_langlink1Choices ) / sizeof( wxString );
+	m_langlink1 = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_langlink1NChoices, m_langlink1Choices, 0 );
+	m_langlink1->SetSelection( 0 );
+	gbSizer2->Add( m_langlink1, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
+	
+	m_langtext1 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	gbSizer2->Add( m_langtext1, wxGBPosition( 0, 2 ), wxGBSpan( 1, 1 ), wxALL, 0 );
+	
+	m_staticText368 = new wxStaticText( this, wxID_ANY, _("English (UK)"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText368->Wrap( -1 );
+	gbSizer2->Add( m_staticText368, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	wxString m_langlink2Choices[] = { _("English (US)"), _("English (UK)"), _("Japanese"), _("German"), _("French"), _("Italian"), _("Spanish") };
+	int m_langlink2NChoices = sizeof( m_langlink2Choices ) / sizeof( wxString );
+	m_langlink2 = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_langlink2NChoices, m_langlink2Choices, 0 );
+	m_langlink2->SetSelection( 0 );
+	gbSizer2->Add( m_langlink2, wxGBPosition( 1, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
+	
+	m_langtext2 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	gbSizer2->Add( m_langtext2, wxGBPosition( 1, 2 ), wxGBSpan( 1, 1 ), wxALL, 0 );
+	
+	m_staticText369 = new wxStaticText( this, wxID_ANY, _("Japanese"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText369->Wrap( -1 );
+	gbSizer2->Add( m_staticText369, wxGBPosition( 2, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	wxString m_langlink3Choices[] = { _("English (US)"), _("English (UK)"), _("Japanese"), _("German"), _("French"), _("Italian"), _("Spanish") };
+	int m_langlink3NChoices = sizeof( m_langlink3Choices ) / sizeof( wxString );
+	m_langlink3 = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_langlink3NChoices, m_langlink3Choices, 0 );
+	m_langlink3->SetSelection( 0 );
+	gbSizer2->Add( m_langlink3, wxGBPosition( 2, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
+	
+	m_langtext3 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	gbSizer2->Add( m_langtext3, wxGBPosition( 2, 2 ), wxGBSpan( 1, 1 ), wxALL, 0 );
+	
+	m_staticText370 = new wxStaticText( this, wxID_ANY, _("German"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText370->Wrap( -1 );
+	gbSizer2->Add( m_staticText370, wxGBPosition( 3, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	wxString m_langlink4Choices[] = { _("English (US)"), _("English (UK)"), _("Japanese"), _("German"), _("French"), _("Italian"), _("Spanish") };
+	int m_langlink4NChoices = sizeof( m_langlink4Choices ) / sizeof( wxString );
+	m_langlink4 = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_langlink4NChoices, m_langlink4Choices, 0 );
+	m_langlink4->SetSelection( 0 );
+	gbSizer2->Add( m_langlink4, wxGBPosition( 3, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
+	
+	m_langtext4 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	gbSizer2->Add( m_langtext4, wxGBPosition( 3, 2 ), wxGBSpan( 1, 1 ), wxALL, 0 );
+	
+	m_staticText371 = new wxStaticText( this, wxID_ANY, _("French"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText371->Wrap( -1 );
+	gbSizer2->Add( m_staticText371, wxGBPosition( 4, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	wxString m_langlink5Choices[] = { _("English (US)"), _("English (UK)"), _("Japanese"), _("German"), _("French"), _("Italian"), _("Spanish") };
+	int m_langlink5NChoices = sizeof( m_langlink5Choices ) / sizeof( wxString );
+	m_langlink5 = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_langlink5NChoices, m_langlink5Choices, 0 );
+	m_langlink5->SetSelection( 0 );
+	gbSizer2->Add( m_langlink5, wxGBPosition( 4, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
+	
+	m_langtext5 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	gbSizer2->Add( m_langtext5, wxGBPosition( 4, 2 ), wxGBSpan( 1, 1 ), wxALL, 0 );
+	
+	m_staticText372 = new wxStaticText( this, wxID_ANY, _("Italian"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText372->Wrap( -1 );
+	gbSizer2->Add( m_staticText372, wxGBPosition( 5, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	wxString m_langlink6Choices[] = { _("English (US)"), _("English (UK)"), _("Japanese"), _("German"), _("French"), _("Italian"), _("Spanish") };
+	int m_langlink6NChoices = sizeof( m_langlink6Choices ) / sizeof( wxString );
+	m_langlink6 = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_langlink6NChoices, m_langlink6Choices, 0 );
+	m_langlink6->SetSelection( 0 );
+	gbSizer2->Add( m_langlink6, wxGBPosition( 5, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
+	
+	m_langtext6 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	gbSizer2->Add( m_langtext6, wxGBPosition( 5, 2 ), wxGBSpan( 1, 1 ), wxALL, 0 );
+	
+	m_staticText373 = new wxStaticText( this, wxID_ANY, _("Spanish"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText373->Wrap( -1 );
+	gbSizer2->Add( m_staticText373, wxGBPosition( 6, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	wxString m_langlink7Choices[] = { _("English (US)"), _("English (UK)"), _("Japanese"), _("German"), _("French"), _("Italian"), _("Spanish") };
+	int m_langlink7NChoices = sizeof( m_langlink7Choices ) / sizeof( wxString );
+	m_langlink7 = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_langlink7NChoices, m_langlink7Choices, 0 );
+	m_langlink7->SetSelection( 0 );
+	gbSizer2->Add( m_langlink7, wxGBPosition( 6, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
+	
+	m_langtext7 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	gbSizer2->Add( m_langtext7, wxGBPosition( 6, 2 ), wxGBSpan( 1, 1 ), wxALL, 0 );
+	
+	wxBoxSizer* bSizer20;
+	bSizer20 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_buttoncancel = new wxButton( this, wxID_CANCEL, _("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer20->Add( m_buttoncancel, 0, wxALL, 5 );
+	
+	m_buttonok = new wxButton( this, wxID_OK, _("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer20->Add( m_buttonok, 0, wxALL, 5 );
+	
+	
+	gbSizer2->Add( bSizer20, wxGBPosition( 7, 0 ), wxGBSpan( 1, 3 ), wxALIGN_RIGHT, 5 );
+	
+	
+	gbSizer2->AddGrowableCol( 1 );
+	
+	this->SetSizer( gbSizer2 );
+	this->Layout();
+	gbSizer2->Fit( this );
+	
+	this->Centre( wxBOTH );
+	
+	// Connect Events
+	m_langlink1->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ScriptEditLinkWindow::OnChangeLink ), NULL, this );
+	m_langtext1->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditLinkWindow::OnButtonClick ), NULL, this );
+	m_langlink2->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ScriptEditLinkWindow::OnChangeLink ), NULL, this );
+	m_langtext2->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditLinkWindow::OnButtonClick ), NULL, this );
+	m_langlink3->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ScriptEditLinkWindow::OnChangeLink ), NULL, this );
+	m_langtext3->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditLinkWindow::OnButtonClick ), NULL, this );
+	m_langlink4->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ScriptEditLinkWindow::OnChangeLink ), NULL, this );
+	m_langtext4->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditLinkWindow::OnButtonClick ), NULL, this );
+	m_langlink5->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ScriptEditLinkWindow::OnChangeLink ), NULL, this );
+	m_langtext5->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditLinkWindow::OnButtonClick ), NULL, this );
+	m_langlink6->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ScriptEditLinkWindow::OnChangeLink ), NULL, this );
+	m_langtext6->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditLinkWindow::OnButtonClick ), NULL, this );
+	m_langlink7->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ScriptEditLinkWindow::OnChangeLink ), NULL, this );
+	m_langtext7->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditLinkWindow::OnButtonClick ), NULL, this );
+	m_buttoncancel->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditLinkWindow::OnButtonClick ), NULL, this );
+	m_buttonok->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditLinkWindow::OnButtonClick ), NULL, this );
+}
+
+ScriptEditLinkWindow::~ScriptEditLinkWindow()
+{
+	// Disconnect Events
+	m_langlink1->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ScriptEditLinkWindow::OnChangeLink ), NULL, this );
+	m_langtext1->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditLinkWindow::OnButtonClick ), NULL, this );
+	m_langlink2->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ScriptEditLinkWindow::OnChangeLink ), NULL, this );
+	m_langtext2->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditLinkWindow::OnButtonClick ), NULL, this );
+	m_langlink3->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ScriptEditLinkWindow::OnChangeLink ), NULL, this );
+	m_langtext3->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditLinkWindow::OnButtonClick ), NULL, this );
+	m_langlink4->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ScriptEditLinkWindow::OnChangeLink ), NULL, this );
+	m_langtext4->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditLinkWindow::OnButtonClick ), NULL, this );
+	m_langlink5->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ScriptEditLinkWindow::OnChangeLink ), NULL, this );
+	m_langtext5->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditLinkWindow::OnButtonClick ), NULL, this );
+	m_langlink6->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ScriptEditLinkWindow::OnChangeLink ), NULL, this );
+	m_langtext6->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditLinkWindow::OnButtonClick ), NULL, this );
+	m_langlink7->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ScriptEditLinkWindow::OnChangeLink ), NULL, this );
+	m_langtext7->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditLinkWindow::OnButtonClick ), NULL, this );
+	m_buttoncancel->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditLinkWindow::OnButtonClick ), NULL, this );
+	m_buttonok->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditLinkWindow::OnButtonClick ), NULL, this );
+	
+}
+
+ScriptEditTextLinkWindow::ScriptEditTextLinkWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	
+	wxGridBagSizer* gbSizer2;
+	gbSizer2 = new wxGridBagSizer( 0, 0 );
+	gbSizer2->SetFlexibleDirection( wxBOTH );
+	gbSizer2->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_NONE );
+	
+	m_staticText367 = new wxStaticText( this, wxID_ANY, _("Base Language"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText367->Wrap( -1 );
+	gbSizer2->Add( m_staticText367, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	wxArrayString m_baselangdialogChoices;
+	m_baselangdialog = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxSize( 200,-1 ), m_baselangdialogChoices, 0 );
+	m_baselangdialog->SetSelection( 0 );
+	gbSizer2->Add( m_baselangdialog, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 2 );
+	
+	m_staticText368 = new wxStaticText( this, wxID_ANY, _("Translations"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText368->Wrap( -1 );
+	gbSizer2->Add( m_staticText368, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	m_translationsizer = new wxBoxSizer( wxVERTICAL );
+	
+	
+	gbSizer2->Add( m_translationsizer, wxGBPosition( 1, 1 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer20;
+	bSizer20 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_buttoncancel = new wxButton( this, wxID_CANCEL, _("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer20->Add( m_buttoncancel, 0, wxALL, 5 );
+	
+	m_buttonok = new wxButton( this, wxID_OK, _("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer20->Add( m_buttonok, 0, wxALL, 5 );
+	
+	
+	gbSizer2->Add( bSizer20, wxGBPosition( 2, 0 ), wxGBSpan( 1, 2 ), wxALIGN_RIGHT, 5 );
+	
+	
+	gbSizer2->AddGrowableCol( 1 );
+	gbSizer2->AddGrowableRow( 1 );
+	
+	this->SetSizer( gbSizer2 );
+	this->Layout();
+	gbSizer2->Fit( this );
+	
+	this->Centre( wxBOTH );
+	
+	// Connect Events
+	m_baselangdialog->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ScriptEditTextLinkWindow::OnChooseDialog ), NULL, this );
+	m_buttoncancel->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditTextLinkWindow::OnButtonClick ), NULL, this );
+	m_buttonok->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditTextLinkWindow::OnButtonClick ), NULL, this );
+}
+
+ScriptEditTextLinkWindow::~ScriptEditTextLinkWindow()
+{
+	// Disconnect Events
+	m_baselangdialog->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ScriptEditTextLinkWindow::OnChooseDialog ), NULL, this );
+	m_buttoncancel->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditTextLinkWindow::OnButtonClick ), NULL, this );
+	m_buttonok->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditTextLinkWindow::OnButtonClick ), NULL, this );
 	
 }
 

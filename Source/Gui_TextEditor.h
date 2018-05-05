@@ -6,6 +6,7 @@ class TextEditDialogBase;
 class TextEditDialog;
 class TextSteamEditDialog;
 class TextOpcodeDialog;
+class TextSteamHelpDialog;
 class TextExportDialog;
 
 #include "gui.h"
@@ -131,13 +132,24 @@ public:
 	int GetBubbleSizeY();
 
 private:
-//	TextOpcodeDialog* op_dial;
+	TextSteamHelpDialog* help_dial;
 
 	void CalculateBestSize(SteamLanguage lang = GetSteamLanguage());
 
 	void OnButtonClick(wxCommandEvent& event);
 	void OnShowHideMultiLang(wxMouseEvent& event);
 	void OnTimer(wxTimerEvent& event);
+};
+
+class TextSteamHelpDialog : public TextSteamHelpWindow {
+public:
+	TextSteamEditDialog* parent;
+
+	TextSteamHelpDialog(TextSteamEditDialog* p) : TextSteamHelpWindow(p), parent(p) {}
+
+private:
+	void OnListClick(wxCommandEvent& event);
+	void OnListDoubleClick(wxCommandEvent& event);
 };
 
 class TextExportDialog : public TextExportWindow {

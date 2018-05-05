@@ -85,6 +85,40 @@ wstring FF9String::GetUTF8FromByteCode(char* raw) {
 	return wxstr.wc_str();
 }
 
+wstring FF9String::RemoveOpcodes(wstring str, int charlim) {
+	uint16_t i,len = str.length();
+	wstring res = L"";
+	if (GetGameType()==GAME_TYPE_PSX) {
+		for (i=0;i<len;i++)
+			if (str[i]!=OPCODE_WCHAR) {
+				if (charlim==0)
+					break;
+				else if (charlim>0)
+					charlim--;
+				res += str[i];
+			}
+	} else {
+		for (i=0;i<len;i++) {
+			if (str[i]==L'[') {
+				i++;
+				while (i<len && str[i]!=L']' && str[i]!=L'=')
+					i++;
+				while (i<len && str[i]!=L']')
+					i++;
+			} else {
+				if (charlim==0)
+					break;
+				else if (charlim>0)
+					charlim--;
+				res += str[i];
+			}
+		}
+	}
+	if (charlim==0 && i<len)
+		res += L"...";
+	return res;
+}
+
 FF9String::FF9String() :
 	created(false),
 	raw(NULL),

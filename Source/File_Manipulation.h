@@ -124,6 +124,7 @@ public:
 	
 	static uint32_t CountSteamTextAmount(char* data, unsigned int size);
 	static wstring GetUTF8FromByteCode(char* raw);
+	static wstring RemoveOpcodes(wstring str, int charlim = -1);
 	
 	void GenerateStrExt();
 };
