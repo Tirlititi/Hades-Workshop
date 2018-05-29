@@ -138,11 +138,11 @@ struct UnityArchiveMetaData {
 	void Flush();
 	void Copy(UnityArchiveMetaData* base, bool copyfiles = true);
 	uint32_t GetFileSizeByIndex(unsigned int fileid);
-	uint32_t GetFileOffset(string filename, uint32_t filetype = 0xFFFFFFFF, unsigned int num = 0, string folder = "");
-	uint32_t GetFileOffsetByInfo(int64_t info, uint32_t filetype = 0xFFFFFFFF, string folder = "");
+	uint32_t GetFileOffset(string filename, uint32_t filetype = 0x7FFFFFFF, unsigned int num = 0, string folder = "");
+	uint32_t GetFileOffsetByInfo(int64_t info, uint32_t filetype = 0x7FFFFFFF, string folder = "");
 	uint32_t GetFileOffsetByIndex(unsigned int fileid, string folder = "");
-	int32_t GetFileIndex(string filename, uint32_t filetype = 0xFFFFFFFF, unsigned int num = 0, string folder = "");
-	int32_t GetFileIndexByInfo(int64_t info, uint32_t filetype = 0xFFFFFFFF, string folder = "");
+	int32_t GetFileIndex(string filename, uint32_t filetype = 0x7FFFFFFF, unsigned int num = 0, string folder = "");
+	int32_t GetFileIndexByInfo(int64_t info, uint32_t filetype = 0x7FFFFFFF, string folder = "");
 	string GetFileFullName(unsigned int fileid, UnityArchiveAssetBundle* bundle = NULL, UnityArchiveIndexListData* indexlist = NULL, bool* found = NULL);
 
 	// Arrays must be of length header_file_amount

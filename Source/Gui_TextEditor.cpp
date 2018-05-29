@@ -4,16 +4,20 @@
 #include <wx/tokenzr.h>
 #include <cstdarg>
 #include <sstream>
+#include "YandexTranslation.h"
 #include "Database_Text.h"
 #include "Hades_Strings.h"
 #include "main.h"
 
 #define DEFAULT_SPEED 5 // 16 for Steam Fields
 #define PAGE_BREAK_WAIT 2000
+#define PIXEL_TO_SIZE 1.15
+#define LINE_HEIGHT 19
 
-wxBitmap InitButton(wxBitmap bmp) {
+wxBitmap InitButton(wxBitmap bmp, bool steam = false) {
+	float scale = steam ? 0.25 : 0.4;
 	wxImage tmpimg = bmp.ConvertToImage();
-	bmp = wxBitmap(tmpimg.Rescale(tmpimg.GetWidth()*0.4,tmpimg.GetHeight()*0.4,wxIMAGE_QUALITY_HIGH));
+	bmp = wxBitmap(tmpimg.Rescale(tmpimg.GetWidth()*scale,tmpimg.GetHeight()*scale,wxIMAGE_QUALITY_HIGH));
 	return bmp;
 }
 
@@ -147,6 +151,7 @@ bool TextEditDialog::ProcessPreviewText() {
 	if (str_pos>0 && text.str[str_pos-1]==NEW_PAGE_CHAR)
 		preview_ctrl->Clear();
 	preview_ctrl->SetInsertionPointEnd();
+	UpdatePreviewStyle();
 	preview_ctrl->BeginStyle(preview_style);
 	while (str_pos<len && text.str[str_pos]==text.opcode_wchar) {
 		str_pos++;
@@ -172,7 +177,15 @@ bool TextEditDialog::ProcessPreviewText() {
 
 void TextEditDialog::PreviewText() {
 	preview_ctrl->Clear();
-	preview_style = normal_style;
+	preview_align = wxTEXT_ALIGNMENT_LEFT;
+	preview_fontweight = wxFONTWEIGHT_NORMAL;
+	preview_fontstyle = wxFONTSTYLE_NORMAL;
+	preview_underlined = false;
+	preview_striked = false;
+	preview_has_url = false;
+	preview_attrflags = wxTEXT_ATTR_TEXT_COLOUR | wxTEXT_ATTR_FONT_WEIGHT | wxTEXT_ATTR_FONT_ITALIC | wxTEXT_ATTR_FONT_UNDERLINE | wxTEXT_ATTR_FONT_STRIKETHROUGH | wxTEXT_ATTR_ALIGNMENT | wxTEXT_ATTR_EFFECTS;
+	preview_effectflags = wxTEXT_ATTR_EFFECT_NONE;
+	preview_effects = wxTEXT_ATTR_EFFECT_NONE;
 	if (text_style==TEXT_STYLE_DEFAULT)
 		preview_style.SetTextColour(wxColour(255,255,255));
 	else
@@ -188,13 +201,13 @@ void TextEditDialog::PreviewText() {
 
 int TextEditDialog::GetBubbleSizeX() {
 	if (m_sizex->IsEnabled())
-		return (int)m_sizex->GetValue()*1.1;
+		return (int)m_sizex->GetValue()*PIXEL_TO_SIZE;
 	return -1;
 }
 
 int TextEditDialog::GetBubbleSizeY() {
 	if (m_sizey->IsEnabled())
-		return m_sizey->GetValue()*19+4;
+		return m_sizey->GetValue()*LINE_HEIGHT+4;
 	return -1;
 }
 
@@ -654,6 +667,54 @@ void TextOpcodeDialog::OnTokenPaint(wxPaintEvent& event) {
 //==================================//
 //             Steam                //
 //==================================//
+static map<wxString,wxString> GTE_BUTTONMAPJOY = { // From FF9UIDataTool
+	{ L"START", L"joystick_start" },
+	{ L"SELECT", L"joystick_select" },
+	{ L"UP", L"ps_dpad_up" },
+	{ L"DOWN", L"ps_dpad_down" },
+	{ L"LEFT", L"ps_dpad_left" },
+	{ L"RIGHT", L"ps_dpad_right" },
+	{ L"CROSS", L"joystick_button_a" },
+	{ L"SQUARE", L"joystick_button_x" },
+	{ L"CIRCLE", L"joystick_button_b" },
+	{ L"TRIANGLE", L"joystick_button_y" },
+	{ L"L1", L"joystick_l1" },
+	{ L"L2", L"joystick_l2" },
+	{ L"R1", L"joystick_r1" },
+	{ L"R2", L"joystick_r2" },
+	{ L"PAD", L"ps_dpad" }
+};
+static map<wxString,wxString> GTE_BUTTONMAPPS = {
+	{ L"START", L"ps_start" },
+	{ L"SELECT", L"ps_select" },
+	{ L"UP", L"ps_dpad_up" },
+	{ L"DOWN", L"ps_dpad_down" },
+	{ L"LEFT", L"ps_dpad_left" },
+	{ L"RIGHT", L"ps_dpad_right" },
+	{ L"CROSS", L"ps_cross" },
+	{ L"SQUARE", L"ps_square" },
+	{ L"CIRCLE", L"ps_circle" },
+	{ L"TRIANGLE", L"ps_triangle" },
+	{ L"L1", L"ps_l1" },
+	{ L"L2", L"ps_l2" },
+	{ L"R1", L"ps_r1" },
+	{ L"R2", L"ps_r2" },
+	{ L"PAD", L"ps_dpad" }
+};
+static map<int,wxString> GTE_ICONSPECIALTEXT = { // From NGUIText
+	{ 34, L"0" },
+	{ 35, L"1" },
+	{ 39, L"5" },
+	{ 45, L"/" },
+	{ 159, L"Miss" },
+	{ 160, L"Death" },
+	{ 161, L"Guard" },
+	{ 163, L"MP" },
+	{ 173, L"9" },
+	{ 174, L"/" },
+	{ 179, L"Critical" }
+};
+
 void UnkSteamTextOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
 }
 void StrtOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
@@ -667,7 +728,11 @@ void StrtOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
 	dialog->preview_ctrl->Refresh();
 }
 void ChooOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
-	dialog->choice_line = dialog->line_num;
+	if (op==2) {
+		dialog->choice_line = dialog->line_num;
+		dialog->choice_pos = dialog->choice_line;
+		dialog->preview_ctrl->WriteImage(InitButton(dialog->menuui->steam_atlas[0].sprite[_(L"cursor_hand_choice")],true));
+	}
 }
 void EndnOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
 }
@@ -685,29 +750,87 @@ void PartySteamOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) 
 	dialog->preview_ctrl->WriteText(HADES_STRING_CHARACTER_DEFAULT_NAME[op-8]);
 }
 void HshdOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
-	dialog->preview_style.SetFlags(dialog->preview_style.GetFlags() | wxTEXT_ATTR_EFFECTS);
+//	dialog->preview_style.SetFlags(dialog->preview_style.GetFlags() | wxTEXT_ATTR_EFFECTS);
 	if (op==20) {
-		dialog->preview_style.SetTextEffectFlags(dialog->preview_style.GetTextEffectFlags() | wxTEXT_ATTR_EFFECT_SHADOW);
-		dialog->preview_style.SetTextEffects(dialog->preview_style.GetTextEffects() | wxTEXT_ATTR_EFFECT_SHADOW);
+		dialog->preview_effectflags |= wxTEXT_ATTR_EFFECT_SHADOW; // Not working in the wx API
+		dialog->preview_effects |= wxTEXT_ATTR_EFFECT_SHADOW;
 	} else {
-		dialog->preview_style.SetTextEffectFlags(dialog->preview_style.GetTextEffectFlags() & ~wxTEXT_ATTR_EFFECT_SHADOW);
-		dialog->preview_style.SetTextEffects(dialog->preview_style.GetTextEffects() & ~wxTEXT_ATTR_EFFECT_SHADOW);
+		dialog->preview_effectflags &= ~wxTEXT_ATTR_EFFECT_SHADOW;
+		dialog->preview_effects &= ~wxTEXT_ATTR_EFFECT_SHADOW;
 	}
+	dialog->UpdatePreviewStyle();
 	dialog->preview_ctrl->BeginStyle(dialog->preview_style);
 }
 void DbtnOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
+	if (op==22) {
+		wxString buttonid = args.GetNextToken();
+		dialog->preview_ctrl->WriteImage(InitButton(dialog->menuui->steam_atlas[0].sprite[GTE_BUTTONMAPJOY[buttonid]],true));
+	} else if (op==25) {
+		wxString buttonid = args.GetNextToken();
+		dialog->preview_ctrl->WriteImage(InitButton(dialog->menuui->steam_atlas[0].sprite[GTE_BUTTONMAPJOY[buttonid]],true));
+	} else if (op==50) {
+	} else if (op==51) {
+		wxString buttonid = args.GetNextToken();
+		dialog->preview_ctrl->WriteImage(InitButton(dialog->menuui->steam_atlas[0].sprite[GTE_BUTTONMAPJOY[buttonid]],true));
+	}
 }
 void IconOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
+	if (op==26) {
+		dialog->preview_ctrl->WriteImage(InitButton(dialog->menuui->steam_atlas[0].sprite[_(L"icon_new_exclamation")],true));
+		dialog->preview_ctrl->WriteImage(InitButton(dialog->menuui->steam_atlas[0].sprite[_(L"icon_new_text")],true));
+	} else if (op==38) {
+		int iconid = wxAtoi(args.GetNextToken());
+		unsigned int i;
+		for (i=0;i<G_N_ELEMENTS(SteamIconAtlas);i++)
+			if (iconid==SteamIconAtlas[i].id) {
+				dialog->preview_ctrl->WriteImage(InitButton(dialog->menuui->steam_atlas[0].sprite[_(SteamIconAtlas[i].name)],true));
+				break;
+			}
+		if (i>=G_N_ELEMENTS(SteamIconAtlas)) {
+			auto it = GTE_ICONSPECIALTEXT.find(iconid);
+			if (it!=GTE_ICONSPECIALTEXT.end())
+				dialog->preview_ctrl->WriteText(it->second);
+		}
+	} else if (op==48) {
+		int iconid = wxAtoi(args.GetNextToken());
+		for (unsigned int i=0;i<G_N_ELEMENTS(SteamIconAtlas);i++)
+			if (iconid==SteamIconAtlas[i].id) {
+				dialog->preview_ctrl->WriteImage(InitButton(dialog->menuui->steam_atlas[0].sprite[_(SteamIconAtlas[i].name)],true));
+				break;
+			}
+	}
 }
 void MoveOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
+	int i, val; // A normal space is of the size of [FEED=4] ; consider using hair space? (L'\x200A')
+	if (op==27) {
+		val = wxAtoi(args.GetNextToken());
+		for (i=0;i*4<val;i++)
+			dialog->preview_ctrl->WriteText(_(L" "));
+	} else if (op==34) {
+		val = wxAtoi(args.GetNextToken());
+		for (i=0;i*4<val;i++)
+			dialog->preview_ctrl->WriteText(_(L" "));
+	} else if (op==35) {
+		wxString lastline = dialog->preview_ctrl->GetValue().AfterLast(L'\n');
+		wxFont textfont( 10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, _(L"Arial") );
+		wxClientDC dc(dialog);
+		dc.SetFont(textfont);
+		int curpos = dc.GetTextExtent(lastline).GetWidth();
+		val = wxAtoi(args.GetNextToken());
+		while (curpos<val) {
+			dialog->preview_ctrl->WriteText(_(L" "));
+			curpos += 4;
+		}
+	} else if (op==36) {
+	} else if (op==37) {}
 }
 void TokenTextOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
-	if (op==29)			dialog->preview_ctrl->WriteText(_("Token"));
+	if (op==29)			dialog->preview_ctrl->WriteText(_(L"Token"));
 	else if (op==44)	{}
 }
 void VarSteamOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
-	if (op==30)			dialog->preview_ctrl->WriteText(_("Item"));
-	else if (op==32)	dialog->preview_ctrl->WriteText(_("0"));
+	if (op==30)			dialog->preview_ctrl->WriteText(_(L"Item"));
+	else if (op==32)	dialog->preview_ctrl->WriteText(_(L"0"));
 }
 void WaitOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
 	dialog->timer->Start(wxAtoi(args.GetNextToken())*40);
@@ -718,7 +841,8 @@ void TailOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
 void WidthOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
 }
 void CentOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
-	dialog->preview_style.SetAlignment(wxTEXT_ALIGNMENT_CENTER);
+	dialog->preview_align = wxTEXT_ALIGNMENT_CENTER;
+	dialog->UpdatePreviewStyle();
 	dialog->preview_ctrl->BeginStyle(dialog->preview_style);
 }
 void PageOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
@@ -727,37 +851,40 @@ void PageOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
 	dialog->must_clear_text = true;
 }
 void TextTagOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
-	if (op==52)			dialog->preview_ctrl->BeginURL(args.GetNextToken(),_(L"URL_Style"));
-	else if (op==53)	dialog->preview_style.SetFontWeight(wxFONTWEIGHT_BOLD);
-	else if (op==54)	dialog->preview_style.SetFontStyle(wxFONTSTYLE_ITALIC);
-	else if (op==55)	dialog->preview_style.SetFontUnderlined(true);
-	else if (op==56)	dialog->preview_style.SetFontStrikethrough(true);
+	if (op==52)			{
+		dialog->preview_url = args.GetNextToken();
+		dialog->preview_has_url = true;
+	} else if (op==53)	dialog->preview_fontweight = wxFONTWEIGHT_BOLD;
+	else if (op==54)	dialog->preview_fontstyle = wxFONTSTYLE_ITALIC;
+	else if (op==55)	dialog->preview_underlined = true;
+	else if (op==56)	dialog->preview_striked = true;
 	else if (op==57)	dialog->ignore_color = true;
 	else if (op==58)	{
-		//dialog->preview_ctrl->WriteText(_(L"_"));
-		dialog->preview_style.SetFlags(dialog->preview_style.GetFlags() | wxTEXT_ATTR_EFFECTS);
-		dialog->preview_style.SetTextEffectFlags(dialog->preview_style.GetTextEffectFlags() | wxTEXT_ATTR_EFFECT_SUBSCRIPT);
-		dialog->preview_style.SetTextEffects(dialog->preview_style.GetTextEffects() | wxTEXT_ATTR_EFFECT_SUBSCRIPT);
+//		dialog->preview_ctrl->WriteText(_(L"_"));
+//		dialog->preview_style.SetFlags(dialog->preview_style.GetFlags() | wxTEXT_ATTR_EFFECTS);
+		dialog->preview_effectflags |= wxTEXT_ATTR_EFFECT_SUBSCRIPT;
+		dialog->preview_effects |= wxTEXT_ATTR_EFFECT_SUBSCRIPT;
 	} else if (op==59)	{
 //		dialog->preview_ctrl->WriteText(_(L"^"));
-		dialog->preview_style.SetFlags(dialog->preview_style.GetFlags() | wxTEXT_ATTR_EFFECTS);
-		dialog->preview_style.SetTextEffectFlags(dialog->preview_style.GetTextEffectFlags() | wxTEXT_ATTR_EFFECT_SUPERSCRIPT);
-		dialog->preview_style.SetTextEffects(dialog->preview_style.GetTextEffects() | wxTEXT_ATTR_EFFECT_SUPERSCRIPT);
-	} else if (op==60)	dialog->preview_ctrl->EndURL();
-	else if (op==61)	dialog->preview_style.SetFontWeight(wxFONTWEIGHT_NORMAL);
-	else if (op==62)	dialog->preview_style.SetFontStyle(wxFONTSTYLE_NORMAL);
-	else if (op==63)	dialog->preview_style.SetFontUnderlined(false);
-	else if (op==64)	dialog->preview_style.SetFontStrikethrough(false);
+//		dialog->preview_style.SetFlags(dialog->preview_style.GetFlags() | wxTEXT_ATTR_EFFECTS);
+		dialog->preview_effectflags |= wxTEXT_ATTR_EFFECT_SUPERSCRIPT;
+		dialog->preview_effects |= wxTEXT_ATTR_EFFECT_SUPERSCRIPT;
+	} else if (op==60)	dialog->preview_has_url = false;
+	else if (op==61)	dialog->preview_fontweight = wxFONTWEIGHT_NORMAL;
+	else if (op==62)	dialog->preview_fontstyle = wxFONTSTYLE_NORMAL;
+	else if (op==63)	dialog->preview_underlined = false;
+	else if (op==64)	dialog->preview_striked = false;
 	else if (op==65)	dialog->ignore_color = false;
 	else if (op==66)	{
-		dialog->preview_style.SetFlags(dialog->preview_style.GetFlags() | wxTEXT_ATTR_EFFECTS);
-		dialog->preview_style.SetTextEffectFlags(dialog->preview_style.GetTextEffectFlags() & ~wxTEXT_ATTR_EFFECT_SUBSCRIPT);
-		dialog->preview_style.SetTextEffects(dialog->preview_style.GetTextEffects() & ~wxTEXT_ATTR_EFFECT_SUBSCRIPT);
+//		dialog->preview_style.SetFlags(dialog->preview_style.GetFlags() | wxTEXT_ATTR_EFFECTS);
+		dialog->preview_effectflags &= ~wxTEXT_ATTR_EFFECT_SUBSCRIPT;
+		dialog->preview_effects &= ~wxTEXT_ATTR_EFFECT_SUBSCRIPT;
 	} else if (op==67)	{
-		dialog->preview_style.SetFlags(dialog->preview_style.GetFlags() | wxTEXT_ATTR_EFFECTS);
-		dialog->preview_style.SetTextEffectFlags(dialog->preview_style.GetTextEffectFlags() & ~wxTEXT_ATTR_EFFECT_SUPERSCRIPT);
-		dialog->preview_style.SetTextEffects(dialog->preview_style.GetTextEffects() & ~wxTEXT_ATTR_EFFECT_SUPERSCRIPT);
+//		dialog->preview_style.SetFlags(dialog->preview_style.GetFlags() | wxTEXT_ATTR_EFFECTS);
+		dialog->preview_effectflags &= ~wxTEXT_ATTR_EFFECT_SUPERSCRIPT;
+		dialog->preview_effects &= ~wxTEXT_ATTR_EFFECT_SUPERSCRIPT;
 	}
+	dialog->UpdatePreviewStyle();
 	dialog->preview_ctrl->BeginStyle(dialog->preview_style);
 }
 
@@ -770,9 +897,10 @@ void (*TextSteamOp[60])(TextSteamEditDialog* dialog, int op, wxStringTokenizer& 
 	/*url */ &TextTagOp,	&TextTagOp,		&TextTagOp,		&TextTagOp,		&TextTagOp,		&TextTagOp,		&TextTagOp,		&TextTagOp
 };
 
-TextSteamEditDialog::TextSteamEditDialog(wxWindow* parent, FF9String& str, int style) :
+TextSteamEditDialog::TextSteamEditDialog(wxWindow* parent, MenuUIDataSet* ui, FF9String& str, int style) :
 	TextSteamEditWindow(parent),
 	TextEditDialogBase(str,new wxTimer(this),m_richtextctrl,style),
+	menuui(ui),
 	must_clear_text(false),
 	ignore_color(false),
 	bubble_size_x(-1),
@@ -790,12 +918,14 @@ TextSteamEditDialog::TextSteamEditDialog(wxWindow* parent, FF9String& str, int s
 	multilangctrl[3] = m_langtext4;		multilangctrl[4] = m_langtext5;		multilangctrl[5] = m_langtext6;
 	multilangbtn[0] = m_langtranslate1;	multilangbtn[1] = m_langtranslate2;	multilangbtn[2] = m_langtranslate3;
 	multilangbtn[3] = m_langtranslate4;	multilangbtn[4] = m_langtranslate5;	multilangbtn[5] = m_langtranslate6;
+	m_langtranslateall->Enable(false); // ToDo
 	if (has_multilang) {
 		for (i=0;i+1<STEAM_LANGUAGE_AMOUNT;i++) {
 			multilangname[i]->SetLabelText(HADES_STRING_STEAM_LANGUAGE_LONG_NAME[multilang[i]]);
 			if (text.multi_lang_init[multilang[i]]) {
 				multilangbtn[i]->SetLabelText(_(HADES_STRING_TEXT_TRANSLATE));
 				multilangctrl[i]->ChangeValue(text.multi_lang_str[multilang[i]]);
+				multilangbtn[i]->Enable(false); // ToDo
 			} else {
 				multilangbtn[i]->SetLabelText(_(HADES_STRING_GENERIC_ADD));
 				multilangname[i]->Enable(false);
@@ -816,25 +946,26 @@ TextSteamEditDialog::TextSteamEditDialog(wxWindow* parent, FF9String& str, int s
 		m_multilangshowimg->Enable(false);
 		m_multilangtitle->Enable(false);
 	}
-	static bool init_extra_style = false;
-	static wxRichTextAttr urltextattrib = preview_ctrl->GetDefaultStyle();
-	static wxRichTextCharacterStyleDefinition urlcharstyle;
-	static wxRichTextStyleSheet previewstylesheet;
-	if (!init_extra_style) {
-		urltextattrib.SetFontUnderlined(true);
-//		urltextattrib.SetTextColour(*wxBLUE);
-		urlcharstyle.SetStyle(urltextattrib);
-		urlcharstyle.SetName(L"URL_Style");
-		previewstylesheet.AddCharacterStyle(&urlcharstyle);
-		init_extra_style = true;
+/*	wxRichTextCharacterStyleDefinition urlcharstyle;
+	wxRichTextAttr urltextattrib = preview_ctrl->GetDefaultStyle();
+	wxRichTextStyleSheet* previewstylesheet = preview_ctrl->GetStyleSheet();
+	if (previewstylesheet==NULL) {
+		previewstylesheet = new wxRichTextStyleSheet();
+		preview_ctrl->SetStyleSheet(previewstylesheet);
 	}
-	preview_ctrl->SetStyleSheet(&previewstylesheet);
+	urltextattrib.SetFontUnderlined(true);
+//	urltextattrib.SetTextColour(*wxBLUE);
+	urlcharstyle.SetStyle(urltextattrib);
+	urlcharstyle.SetName(L"URL_Style");
+	previewstylesheet->AddCharacterStyle(&urlcharstyle);*/
 	Connect(wxEVT_TIMER,wxTimerEventHandler(TextSteamEditDialog::OnTimer),NULL,this);
 }
 
 TextSteamEditDialog::~TextSteamEditDialog() {
 	Disconnect(wxEVT_TIMER,wxTimerEventHandler(TextSteamEditDialog::OnTimer),NULL,this);
 	delete timer;
+	if (help_dial!=NULL)
+		help_dial->Destroy();
 }
 
 int TextSteamEditDialog::ShowModal() {
@@ -852,14 +983,15 @@ bool TextSteamEditDialog::ProcessPreviewText() {
 		must_clear_text = false;
 	}
 	preview_ctrl->SetInsertionPointEnd();
+	UpdatePreviewStyle();
 	preview_ctrl->BeginStyle(preview_style);
 	while (str_pos<len && text.str[str_pos]==L'[') {
 		wstring::size_type opcodelen;
 		str_pos++;
-		for (opcodelen=0;str_pos+opcodelen<len;opcodelen++)
+		for (opcodelen=0;str_pos+opcodelen<len && text.str[str_pos+opcodelen]!=L'\n';opcodelen++)
 			if (text.str[str_pos+opcodelen]==L']')
 				break;
-		if (str_pos+opcodelen<len) {
+		if (str_pos+opcodelen<len && text.str[str_pos+opcodelen]!=L'\n') {
 			wxStringTokenizer opcodeargs(_(text.str.substr(str_pos,opcodelen)),_(L"=,"));
 			wxString opcode = opcodeargs.GetNextToken();
 			bool iscolor = false;
@@ -906,10 +1038,11 @@ bool TextSteamEditDialog::ProcessPreviewText() {
 	if (printnextchar) {
 		preview_ctrl->WriteText(_(text.str[str_pos++]));
 		if (text.str[str_pos-1]==L'\n') {
-			preview_ctrl->BeginAlignment(wxTEXT_ALIGNMENT_LEFT);
+			preview_align = wxTEXT_ALIGNMENT_LEFT;
 			line_num++;
 		}
 	}
+	preview_ctrl->EndAllStyles();
 	if (str_pos>=len && !must_reset_timer)
 		timer->Stop();
 	return str_pos<len;
@@ -917,7 +1050,15 @@ bool TextSteamEditDialog::ProcessPreviewText() {
 
 void TextSteamEditDialog::PreviewText() {
 	preview_ctrl->Clear();
-	preview_style = normal_style;
+	preview_align = wxTEXT_ALIGNMENT_LEFT;
+	preview_fontweight = wxFONTWEIGHT_NORMAL;
+	preview_fontstyle = wxFONTSTYLE_NORMAL;
+	preview_underlined = false;
+	preview_striked = false;
+	preview_has_url = false;
+	preview_attrflags = wxTEXT_ATTR_TEXT_COLOUR | wxTEXT_ATTR_FONT_WEIGHT | wxTEXT_ATTR_FONT_ITALIC | wxTEXT_ATTR_FONT_UNDERLINE | wxTEXT_ATTR_FONT_STRIKETHROUGH | wxTEXT_ATTR_ALIGNMENT | wxTEXT_ATTR_EFFECTS;
+	preview_effectflags = wxTEXT_ATTR_EFFECT_NONE;
+	preview_effects = wxTEXT_ATTR_EFFECT_NONE;
 	if (text_style==TEXT_STYLE_DEFAULT)
 		preview_style.SetTextColour(wxColour(255,255,255));
 	else
@@ -933,18 +1074,18 @@ void TextSteamEditDialog::PreviewText() {
 int TextSteamEditDialog::GetBubbleSizeX() {
 	if (bubble_size_x<0)
 		return -1;
-	return (int)bubble_size_x*1.1;
+	return (int)bubble_size_x*PIXEL_TO_SIZE;
 }
 
 int TextSteamEditDialog::GetBubbleSizeY() {
 	if (bubble_size_y<0)
 		return -1;
-	return bubble_size_y*19+4;
+	return bubble_size_y*LINE_HEIGHT+4;
 }
 
 void TextSteamEditDialog::CalculateBestSize(SteamLanguage lang) {
-	uint16_t sizex = 0, sizey = 0;
-	unsigned int i, multilangindex;
+	unsigned int i, j, multilangindex;
+	bool addwdth = false;
 	wxString textstr;
 	if (lang==GetSteamLanguage()) {
 		textstr = m_textctrl->GetValue();
@@ -958,7 +1099,86 @@ void TextSteamEditDialog::CalculateBestSize(SteamLanguage lang) {
 			return;
 		textstr = multilangctrl[multilangindex]->GetValue();
 	}
-	// ToDo (+WDTH)
+	unsigned int linenum = 0, linecount = 0;
+	vector<uint16_t> sizex(1,0);
+	vector< vector<int> > sizedop(1);
+	uint16_t currentsizex = 0;
+	size_t opcodelen;
+	// DEBUG: Arial font size is not a very good approximation of FF9 font, especially for japanese characters
+	wxFont textfont( 10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, _(L"Arial") );
+	wxClientDC dc(this);
+	dc.SetFont(textfont);
+	for (i=0;i<textstr.Len();i++) {
+		if (textstr[i]==L'[') {
+			i++;
+			for (opcodelen=0;i+opcodelen<textstr.Len();opcodelen++)
+				if (textstr[i+opcodelen]==L']' || textstr[i+opcodelen]==L'\n')
+					break;
+			if (i+opcodelen<textstr.Len() && textstr[i+opcodelen]==L']') {
+				wxStringTokenizer opcodeargs(textstr.Mid(i,opcodelen),_(L"=,"));
+				wxString opcode = opcodeargs.GetNextToken();
+				i += opcodelen;
+				for (j=0;j<G_N_ELEMENTS(HADES_STRING_TEXT_STEAM_OPCODE);j++)
+					if (opcode.IsSameAs(_(HADES_STRING_TEXT_STEAM_OPCODE[j].id))) {
+						if (j>=8 && j<=19) {
+							sizedop[linenum].push_back(8+j);
+						} else if (j==22 || j==25 || j==50 || j==51) {
+							// ToDo: BTN
+						} else if (j==26) {
+							sizedop[linenum].push_back(112);
+						} else if (j==27 || j==34) {
+							currentsizex += wxAtoi(opcodeargs.GetNextToken());
+						} else if (j==29) {
+							opcodeargs.GetNextToken();
+							sizedop[linenum].push_back(6);
+							sizedop[linenum].push_back(wxAtoi(opcodeargs.GetNextToken()));
+						} else if (j==30) {
+							sizedop[linenum].push_back(14);
+							sizedop[linenum].push_back(wxAtoi(opcodeargs.GetNextToken()));
+						} else if (j==32) {
+							sizedop[linenum].push_back(64);
+							sizedop[linenum].push_back(wxAtoi(opcodeargs.GetNextToken()));
+						} else if (j==35) {
+							sizex[linenum] = max(sizex[linenum],currentsizex);
+							currentsizex = wxAtoi(opcodeargs.GetNextToken());
+						} else if (j==38 || j==48) {
+							// ToDo: ICON/MOBI
+						} else if (j==45) {
+							addwdth = true;
+						} else if (j==47) {
+							sizex[linenum] = max(sizex[linenum],currentsizex);
+							currentsizex = 0;
+							linenum = 0;
+						} else if (j==53) {
+							textfont.SetWeight(wxFONTWEIGHT_BOLD);
+						} else if (j==54) {
+							textfont.SetStyle(wxFONTSTYLE_ITALIC);
+						}
+						break;
+					} else if (j>=TEXT_STEAM_OPCODE_CLOSING_TAG && opcode.IsSameAs(_(L"/")+_(HADES_STRING_TEXT_STEAM_OPCODE[j].id))) {
+						if (j==53)
+							textfont.SetWeight(wxFONTWEIGHT_NORMAL);
+						else if (j==54)
+							textfont.SetStyle(wxFONTSTYLE_NORMAL);
+						break;
+					}
+			} else {
+				i--;
+				currentsizex += dc.GetTextExtent(textstr[i]).GetWidth();
+			}
+		} else if (textstr[i]==L'\n') {
+			sizex[linenum] = max(sizex[linenum],currentsizex);
+			currentsizex = 0;
+			linenum++;
+			linecount = max(linenum,linecount);
+			sizex.resize(linecount+1,0);
+			sizedop.resize(linecount+1);
+		} else {
+			currentsizex += dc.GetTextExtent(textstr[i]).GetWidth();
+		}
+	}
+	sizex[linenum] = max(sizex[linenum],currentsizex);
+	linecount = max(linenum+1,linecount);
 	size_t posstr;
 	if (textstr.Len()>=5 && textstr.Mid(0,5).IsSameAs(_(L"[STRT"))) {
 		size_t endofsizeop = 5;
@@ -969,7 +1189,37 @@ void TextSteamEditDialog::CalculateBestSize(SteamLanguage lang) {
 			}
 		textstr = textstr.Mid(endofsizeop);
 	}
-	textstr.Printf(wxT("[STRT=%d,%d]%s"),sizex,sizey,textstr);
+	if (addwdth) {
+		for (i=0;i+5<textstr.Len();i++)
+			if (textstr.Mid(i,5).IsSameAs(_(L"[WDTH"))) {
+				size_t endofsizeop = 5;
+				for (posstr=i+5;posstr<textstr.Len();posstr++)
+					if (textstr[posstr]==L']') {
+						endofsizeop = posstr+1;
+						break;
+					}
+				textstr = textstr.Mid(0,i)+textstr.Mid(endofsizeop);
+				break;
+			}
+		wxString wdthcode = _(L"[WDTH=");
+		bool emptywdth = true;
+		for (linenum=0;linenum<linecount;linenum++)
+			if (sizedop[linenum].size()>0) {
+				if (emptywdth)
+					emptywdth = false;
+				else
+					wdthcode += _(L",");
+				wdthcode += wxString::Format(wxT("%d,%d,"),linenum,sizex[linenum]);
+				for (i=0;i<sizedop[linenum].size();i++)
+					wdthcode += wxString::Format(wxT("%d,"),sizedop[linenum][i]);
+				wdthcode += _(L"-1");
+			}
+		if (!emptywdth)
+			textstr = wdthcode+_(L"]")+textstr;
+	}
+	for (linenum=0;linenum<linecount;linenum++)
+		currentsizex = max(currentsizex,sizex[linenum]);
+	textstr.Printf(wxT("[STRT=%d,%d]%s"),currentsizex,linecount,textstr); // DEBUG: If the x size is too small, the game computes the right size anyway...
 	if (lang==GetSteamLanguage())
 		m_textctrl->SetValue(textstr);
 	else
@@ -980,13 +1230,17 @@ void TextSteamEditDialog::OnButtonClick(wxCommandEvent& event) {
 	int id = event.GetId();
 	if (id==wxID_SET) {
 		text.SetValue(m_textctrl->GetValue().ToStdWstring());
-		m_textctrl->ChangeValue(_(text.str));
+//		m_textctrl->ChangeValue(_(text.str));
 		PreviewText();
 	} else if (id==wxID_BUBBLE) {
 		text.SetValue(m_textctrl->GetValue().ToStdWstring());
 		CalculateBestSize();
+		if (has_multilang && m_langtranslateall->IsShown())
+			for (unsigned int i=0;i+1<STEAM_LANGUAGE_AMOUNT;i++)
+				if (multilangctrl[i]->IsEnabled())
+					CalculateBestSize(multilang[i]);
 	} else if (id==wxID_HELP) {
-		if (help_dial==NULL) {
+		if (help_dial==NULL || !help_dial->IsShown()) {
 			help_dial = new TextSteamHelpDialog(this);
 			help_dial->Show();
 		} else {
@@ -999,12 +1253,18 @@ void TextSteamEditDialog::OnButtonClick(wxCommandEvent& event) {
 				SteamLanguage lang = multilang[i];
 				if (!multilangctrl[i]->IsEnabled()) {
 					multilangbtn[i]->SetLabelText(_(HADES_STRING_TEXT_TRANSLATE));
+					multilangbtn[i]->Refresh();
+					multilangbtn[i]->Layout();
+					multilangbtn[i]->Enable(false); // ToDo
 					multilangctrl[i]->ChangeValue(_(L""));
 					multilangctrl[i]->Enable(true);
 					multilangname[i]->Enable(true);
 					text.SetValue(L"",lang);
 				} else {
-					// TODO
+/*					wxString translatestr = _(L"");
+					int yandexresult = Yandex::Translate(m_textctrl->GetValue(),GetSteamLanguage(),lang,&translatestr);
+					wxMessageDialog popup(NULL,translatestr,wxString::Format(wxT("Result: %d"),yandexresult),wxOK|wxCENTRE);
+					popup.ShowModal();*/
 				}
 			}
 	} else {
@@ -1052,6 +1312,20 @@ void TextSteamEditDialog::OnTimer(wxTimerEvent& event) {
 		timer->Start(wait);
 	}
 	ProcessPreviewText();
+}
+
+TextSteamHelpDialog::TextSteamHelpDialog(TextSteamEditDialog * p) :
+	TextSteamHelpWindow(p),
+	parent(p) {
+	wxArrayString funclist;
+	funclist.Alloc(G_N_ELEMENTS(HADES_STRING_TEXT_STEAM_OPCODE));
+	for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_TEXT_STEAM_OPCODE);i++)
+		funclist.Add(_(HADES_STRING_TEXT_STEAM_OPCODE[i].id));
+	m_listfunction->Append(funclist);
+}
+
+TextSteamHelpDialog::~TextSteamHelpDialog() {
+	parent->help_dial = NULL;
 }
 
 void TextSteamHelpDialog::OnListClick(wxCommandEvent& event) {
@@ -1117,9 +1391,9 @@ void PreviewTextCtrl::PaintBackground(wxDC& dc) {
 		if (parent_dialog->text_style==TEXT_STYLE_DEFAULT)
 			dc.SetBrush(wxBrush(hades::TEXT_WINDOW_COLOR));
 		else if (parent_dialog->text_style==TEXT_STYLE_HELP)
-			dc.SetBrush(wxBrush(wxColour(127,255,255)));
+			dc.SetBrush(wxBrush(wxColour(40,60,130)));
 		else
-			dc.SetBrush(wxBrush(wxColour(190,190,190)));
+			dc.SetBrush(wxBrush(wxColour(90,90,90)));
 		dc.SetPen(wxPen(wxColour(255,255,255),1));
 		dc.DrawRoundedRectangle(2,2,2+bubblex,2+bubbley,5);
 	}

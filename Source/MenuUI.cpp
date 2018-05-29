@@ -1,7 +1,54 @@
 #include "MenuUI.h"
 
+#include <wx/string.h>
+#include <wx/translation.h>
+
 #define MENUUI_HWS_VERSION 1
 
+
+bool AtlasDataStruct::LoadAtlas(fstream& archive, UnityArchiveMetaData& meta, unsigned int img, unsigned int spt) {
+	uint8_t* imgbuffer, *imgrgba;
+	uint32_t imgw, imgh;
+	uint32_t imgfilesize = meta.GetFileSizeByIndex(img);
+	archive.seekg(meta.GetFileOffsetByIndex(img));
+	imgbuffer = new uint8_t[imgfilesize];
+	archive.read((char*)imgbuffer,imgfilesize);
+	bool success = TIMImageDataStruct::ConvertFromSteamTexture(imgbuffer,&imgw,&imgh,&imgrgba);
+	delete[] imgbuffer;
+	if (!success)
+		return false;
+	uint32_t spritex,spritey,spritew,spriteh;
+	uint32_t spritecount,spritenamelen;
+	wxString spritename;
+	wxImage spriteimg;
+	unsigned int imgpixindex;
+	unsigned int i,j,k;
+	archive.seekg(meta.GetFileOffsetByIndex(spt)+0x2C);
+	spritecount = ReadLong(archive);
+	for (i=0;i<spritecount;i++) {
+		spritenamelen = ReadLong(archive);
+		spritename = _(L"");
+		for (j=0;j<spritenamelen;j++)
+			spritename += archive.get();
+		archive.seekg(GetAlignOffset(archive.tellg()),ios::cur);
+		spritex = ReadLong(archive);
+		spritey = ReadLong(archive);
+		spritew = ReadLong(archive);
+		spriteh = ReadLong(archive);
+		spriteimg.Create(spritew,spriteh);
+		spriteimg.SetAlpha();
+		for (j=0;j<spritew;j++)
+			for (k=0;k<spriteh;k++) {
+				imgpixindex = (spritex+j+(spritey+k)*imgw)*4;
+				spriteimg.SetRGB(j,k,imgrgba[imgpixindex],imgrgba[imgpixindex+1],imgrgba[imgpixindex+2]);
+				spriteimg.SetAlpha(j,k,imgrgba[imgpixindex+3]);
+			}
+		sprite.insert(pair<wxString,wxBitmap>(spritename,wxBitmap(spriteimg)));
+		archive.seekg(0x20,ios::cur);
+	}
+	delete[] imgrgba;
+	return true;
+}
 
 void MenuUIDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 	special_text = new SpecialTextDataSet();

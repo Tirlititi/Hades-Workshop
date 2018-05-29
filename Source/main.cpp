@@ -577,9 +577,9 @@ void MainFrame::PreferencesUpdate() {
 			CDPanel[i]->ChangeFF9StringOpcodeChar(hades::SPECIAL_STRING_OPCODE_WCHAR);
 	}
 	if (PreferenceWindow->menu_color==0)
-		hades::TEXT_WINDOW_COLOR.Set(190,190,190);
+		hades::TEXT_WINDOW_COLOR.Set(90,90,90);
 	else
-		hades::TEXT_WINDOW_COLOR.Set(0,60,255);
+		hades::TEXT_WINDOW_COLOR.Set(40,60,130);
 	hades::TEXT_PREVIEW_TYPE = PreferenceWindow->text_preview_type;
 	if (hades::CURRENT_STEAM_LANGUAGE!=PreferenceWindow->steam_language) {
 		hades::CURRENT_STEAM_LANGUAGE = PreferenceWindow->steam_language;

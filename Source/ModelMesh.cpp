@@ -13,7 +13,7 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene*& sdkscene, bool retrieveanims = true);
 
 inline FbxString RemoveFbxStringExtension(FbxString value) {
-	size_t dotpos = value.ReverseFind('.');
+	int dotpos = value.ReverseFind('.');
 	if (dotpos>=0)
 		value = value.Left(dotpos);
 	return value;
@@ -839,7 +839,7 @@ int ModelDataStruct::Import(const char* inputname, bool retrieveanims) {
 	return 0;
 }
 
-void ModelDataStruct::SetupPostImportData(vector<unsigned int> folderfiles, UnityArchiveMetaData archivelist[UNITY_ARCHIVE_AMOUNT], vector<int64_t> additionalinfotoavoid, UnityArchiveAssetBundle* animbundle, GameObjectHierarchy* basehierarchy, int mergepolicy) {
+void ModelDataStruct::SetupPostImportData(fstream& filebase, vector<unsigned int> folderfiles, UnityArchiveMetaData archivelist[UNITY_ARCHIVE_AMOUNT], vector<int64_t> additionalinfotoavoid, UnityArchiveAssetBundle* animbundle, GameObjectHierarchy* basehierarchy, int mergepolicy) {
 	unsigned int i,j,k;
 	if (basehierarchy)
 		hierarchy->MergeHierarchy(archivelist,additionalinfotoavoid,basehierarchy,mergepolicy);
@@ -968,9 +968,28 @@ void ModelDataStruct::SetupPostImportData(vector<unsigned int> folderfiles, Unit
 			for (j=0;j<folderfiles.size();j++)
 				if (hierarchy->meta_data->file_type1[folderfiles[j]]==74) {
 					node->child_clip1 = new GameObjectNode(node,*hierarchy,74,0,hierarchy->meta_data->file_info[folderfiles[j]]);
+					node->child_clip1->file_index = folderfiles[j];
 					node->child_clip2 = node->child_clip1;
 					node->flag2 = 1;
 					hierarchy->node_list.insert(hierarchy->node_list.begin()+i+1,node->child_clip1);
+					bool hastakeanim = false;
+					for (k=0;k<animation.size();k++)
+						if (animation[k].name.substr(0,4)=="Take") {
+							hastakeanim = true;
+							break;
+						}
+					if (!hastakeanim) {
+						ModelAnimationData newanim;
+						filebase.seekg(basehierarchy->meta_data->GetFileOffsetByIndex(folderfiles[j]));
+						newanim.Read(filebase,basehierarchy);
+						newanim.anim_id = 0xFFFFFFFF;
+						newanim.file_id = folderfiles[j];
+						if (newanim.name.substr(0,4)!="Take") {
+							newanim.name = "Take 001";
+							newanim.name_len = newanim.name.length();
+						}
+						animation.push_back(newanim);
+					}
 					break;
 				}
 		} else if (hierarchy->node_list[i]->node_type==137) {
@@ -1523,6 +1542,7 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 				newtransf->parent_transform = transf_list[i];
 				transf_list[i]->child_transform.push_back(newtransf);
 				transf_list[i]->child_transform_amount++;
+				break;
 			}
 		GameObjectStruct* newobj = new GameObjectStruct(newtransf,*model.hierarchy,1,0,0);
 		newobj->child_amount = 1;
@@ -1840,6 +1860,33 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 								}
 							}
 						}
+					}
+					newmesh.vert_attachment.push_back(newvertattach);
+				}
+			} else {
+				// Default bone: take the whole mesh
+				newmesh.bone_amount = 1;
+				newskinmesh->child_bone_amount = 1;
+				ModelMeshBone newbone;
+				newbone.name = obj_list[i]->name;
+				newbone.scoped_name = obj_list[i]->GetScopedName();
+				newskinmesh->child_bone.push_back(transf_list[i]);
+				newskinmesh->child_bone_sample = transf_list[i];
+				for (k=0;k<4;k++)
+					for (l=0;l<4;l++)
+						newbone.transform_matrix.value[k][l] = (l==k ? 1.0 : 0.0);
+				newmesh.bone.push_back(newbone);
+				newmesh.bone_unk_amount = 1;
+				newmesh.bone_unk_list.push_back(1); // DEBUG
+				newmesh.bone_unk_main = newmesh.bone_unk_list[0];
+				newmesh.vertice_attachment_amount = newmesh.vertice_amount;
+				for (j=0;j<newmesh.vertice_attachment_amount;j++) {
+					ModelMeshVertexAttachment newvertattach;
+					newvertattach.bone_id[0] = 0;
+					newvertattach.bone_factor[0] = 1.0;
+					for (k=1;k<4;k++) {
+						newvertattach.bone_id[k] = 0;
+						newvertattach.bone_factor[k] = 0.0;
 					}
 					newmesh.vert_attachment.push_back(newvertattach);
 				}

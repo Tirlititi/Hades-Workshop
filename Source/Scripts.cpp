@@ -932,7 +932,10 @@ void ScriptDataStruct::WritePPF(fstream& f) {
 
 void ScriptDataStruct::ReadHWS(fstream& f, bool usetext, SteamLanguage lang) {
 	SteamLanguage oldlang = current_language;
-	LinkLanguageScripts(lang,lang);
+	if (lang==STEAM_LANGUAGE_NONE)
+		LinkLanguageScripts(oldlang,oldlang);
+	else
+		LinkLanguageScripts(lang,lang);
 	if (lang!=STEAM_LANGUAGE_NONE && oldlang!=STEAM_LANGUAGE_NONE)
 		ChangeSteamLanguage(lang);
 	uint8_t oldentryamount = entry_amount;

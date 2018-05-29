@@ -9,6 +9,7 @@
 #include "Database_Animation.h"
 #include "Database_Item.h"
 #include "Database_Spell.h"
+#include "main.h"
 
 #define SCRIPT_ID_NO_ENTRY			0xFFFF
 #define POSITION_PANEL_SIZE			200
@@ -2632,6 +2633,7 @@ ScriptHelpDialog::ScriptHelpDialog(ScriptEditDialog* p) :
 }
 
 ScriptHelpDialog::~ScriptHelpDialog() {
+	parent->help_dial = NULL;
 }
 
 void ScriptHelpDialog::DisplayHelpFunction(SortedChoiceItemScriptOpcode* item) {
@@ -4481,8 +4483,8 @@ ScriptEditLinkDialog::ScriptEditLinkDialog(wxWindow* parent, ScriptDataStruct& s
 				message_link[lang].push_back(scpt.multi_lang_script->lang_script_text_id[lang][i]);
 			}
 		}
-		lang_link[lang]->Enable(scpt.multi_lang_script->is_loaded[lang]);
-		if (scpt.multi_lang_script->is_loaded[lang]) {
+		lang_link[lang]->Enable(scpt.multi_lang_script->is_loaded[lang] && !hades::STEAM_SINGLE_LANGUAGE_MODE);
+		if (scpt.multi_lang_script->is_loaded[lang] && !hades::STEAM_SINGLE_LANGUAGE_MODE) {
 			bool enabletext = false;
 			for (sublang=0;sublang<STEAM_LANGUAGE_AMOUNT;sublang++)
 				if (lang!=sublang && scpt.multi_lang_script->base_script_lang[sublang]==lang) {

@@ -94,6 +94,7 @@ public:
 	UnityArchiveMetaData meta_battle;
 	UnityArchiveMetaData meta_world;
 	UnityArchiveMetaData meta_field[9];
+	UnityArchiveMetaData meta_atlas;
 	DllMetaData meta_dll;
 	
 	// Assembly-CSharp sections
@@ -242,6 +243,9 @@ public:
 	uint32_t spetext_cardrank_amount;
 	uint32_t spetext_tetramaster_amount;
 	uint32_t spetext_localization_amount;
+
+	int32_t atlas_icontexture_file;
+	int32_t atlas_iconsprite_file;
 	
 	// Party Special
 	uint32_t party_magicsword_offset;

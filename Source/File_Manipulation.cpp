@@ -511,6 +511,8 @@ wstring& FF9String::GetStr(int strtype) {
 }
 
 uint16_t FF9String::GetLength(SteamLanguage lang, bool withend) {
+	if (lang==GetSteamLanguage() && !multi_lang_init[lang])
+		return 0;
 	if (lang>=STEAM_LANGUAGE_AMOUNT || lang==GetSteamLanguage())
 		return length-(!withend && null_terminated==1 ? (GetGameType()==GAME_TYPE_PSX ? 1 : 6) : 0);
 	if (!multi_lang_init[lang])
@@ -843,10 +845,8 @@ void SteamReadFF9String(fstream& f, FF9String& deststr, SteamLanguage lang) {
 }
 
 void SteamWriteFF9String(fstream& f, FF9String& str, SteamLanguage lang, bool writeend) {
-	if (str.length==0)
-		return;
 	bool mainstr = lang==STEAM_LANGUAGE_NONE || lang==GetSteamLanguage();
-	if (!mainstr && str.GetLength(lang)==0)
+	if (str.GetLength(lang)==0)
 		return;
 	wxString wxstr;
 	if (mainstr)

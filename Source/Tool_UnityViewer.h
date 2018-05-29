@@ -26,7 +26,6 @@ public:
 	UnityArchiveAssetBundle bundle_data[UNITY_ARCHIVE_DATA7-UNITY_ARCHIVE_DATA11+1];
 	UnityArchiveIndexListData list_data;
 	UnityArchiveDictionary audio_data;
-	wxArrayString list_data_filename;
 	
 	ToolUnityViewer(wxWindow* parent);
 	~ToolUnityViewer();

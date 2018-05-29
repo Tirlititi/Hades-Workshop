@@ -4486,7 +4486,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	fgSizer14211->SetFlexibleDirection( wxBOTH );
 	fgSizer14211->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	m_staticText82211 = new wxStaticText( m_worldbattlescrolledwindow, wxID_ANY, _("Battles"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText82211 = new wxStaticText( m_worldbattlescrolledwindow, wxID_ANY, _("Normal"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText82211->Wrap( -1 );
 	fgSizer14211->Add( m_staticText82211, 0, wxALL, 5 );
 	
@@ -4496,84 +4496,355 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	fgSizer68->SetFlexibleDirection( wxBOTH );
 	fgSizer68->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	m_worldbattlepanelspin = new wxPanel( m_worldbattlescrolledwindow, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	m_worldbattlepanelspin1 = new wxPanel( m_worldbattlescrolledwindow, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* bSizer157;
 	bSizer157 = new wxBoxSizer( wxVERTICAL );
 	
-	m_worldbattlebattlespin1 = new wxSpinCtrl( m_worldbattlepanelspin, wxID_BATTLE1, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
-	bSizer157->Add( m_worldbattlebattlespin1, 0, wxALL, 2 );
+	m_worldbattlebattlespin11 = new wxSpinCtrl( m_worldbattlepanelspin1, wxID_BATTLE11, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	bSizer157->Add( m_worldbattlebattlespin11, 0, wxALL, 2 );
 	
-	m_worldbattlebattlespin2 = new wxSpinCtrl( m_worldbattlepanelspin, wxID_BATTLE2, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
-	bSizer157->Add( m_worldbattlebattlespin2, 0, wxALL, 2 );
+	m_worldbattlebattlespin12 = new wxSpinCtrl( m_worldbattlepanelspin1, wxID_BATTLE12, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	bSizer157->Add( m_worldbattlebattlespin12, 0, wxALL, 2 );
 	
-	m_worldbattlebattlespin3 = new wxSpinCtrl( m_worldbattlepanelspin, wxID_BATTLE3, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
-	bSizer157->Add( m_worldbattlebattlespin3, 0, wxALL, 2 );
+	m_worldbattlebattlespin13 = new wxSpinCtrl( m_worldbattlepanelspin1, wxID_BATTLE13, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	bSizer157->Add( m_worldbattlebattlespin13, 0, wxALL, 2 );
 	
-	m_worldbattlebattlespin4 = new wxSpinCtrl( m_worldbattlepanelspin, wxID_BATTLE4, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
-	bSizer157->Add( m_worldbattlebattlespin4, 0, wxALL, 2 );
+	m_worldbattlebattlespin14 = new wxSpinCtrl( m_worldbattlepanelspin1, wxID_BATTLE14, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	bSizer157->Add( m_worldbattlebattlespin14, 0, wxALL, 2 );
 	
 	
-	m_worldbattlepanelspin->SetSizer( bSizer157 );
-	m_worldbattlepanelspin->Layout();
-	bSizer157->Fit( m_worldbattlepanelspin );
-	fgSizer68->Add( m_worldbattlepanelspin, 1, 0, 5 );
+	m_worldbattlepanelspin1->SetSizer( bSizer157 );
+	m_worldbattlepanelspin1->Layout();
+	bSizer157->Fit( m_worldbattlepanelspin1 );
+	fgSizer68->Add( m_worldbattlepanelspin1, 1, 0, 5 );
 	
-	m_worldbattlepanelchoice = new wxPanel( m_worldbattlescrolledwindow, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	m_worldbattlepanelchoice->Hide();
+	m_worldbattlepanelchoice1 = new wxPanel( m_worldbattlescrolledwindow, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	m_worldbattlepanelchoice1->Hide();
 	
 	wxBoxSizer* bSizer1571;
 	bSizer1571 = new wxBoxSizer( wxVERTICAL );
 	
-	wxArrayString m_worldbattlebattlechoice1Choices;
-	m_worldbattlebattlechoice1 = new wxChoice( m_worldbattlepanelchoice, wxID_BATTLE1, wxDefaultPosition, wxDefaultSize, m_worldbattlebattlechoice1Choices, 0 );
-	m_worldbattlebattlechoice1->SetSelection( 0 );
-	bSizer1571->Add( m_worldbattlebattlechoice1, 0, wxALL, 2 );
+	wxArrayString m_worldbattlebattlechoice11Choices;
+	m_worldbattlebattlechoice11 = new wxChoice( m_worldbattlepanelchoice1, wxID_BATTLE11, wxDefaultPosition, wxDefaultSize, m_worldbattlebattlechoice11Choices, 0 );
+	m_worldbattlebattlechoice11->SetSelection( 0 );
+	bSizer1571->Add( m_worldbattlebattlechoice11, 0, wxALL, 2 );
 	
-	wxArrayString m_worldbattlebattlechoice2Choices;
-	m_worldbattlebattlechoice2 = new wxChoice( m_worldbattlepanelchoice, wxID_BATTLE2, wxDefaultPosition, wxDefaultSize, m_worldbattlebattlechoice2Choices, 0 );
-	m_worldbattlebattlechoice2->SetSelection( 0 );
-	bSizer1571->Add( m_worldbattlebattlechoice2, 0, wxALL, 2 );
+	wxArrayString m_worldbattlebattlechoice12Choices;
+	m_worldbattlebattlechoice12 = new wxChoice( m_worldbattlepanelchoice1, wxID_BATTLE12, wxDefaultPosition, wxDefaultSize, m_worldbattlebattlechoice12Choices, 0 );
+	m_worldbattlebattlechoice12->SetSelection( 0 );
+	bSizer1571->Add( m_worldbattlebattlechoice12, 0, wxALL, 2 );
 	
-	wxArrayString m_worldbattlebattlechoice3Choices;
-	m_worldbattlebattlechoice3 = new wxChoice( m_worldbattlepanelchoice, wxID_BATTLE3, wxDefaultPosition, wxDefaultSize, m_worldbattlebattlechoice3Choices, 0 );
-	m_worldbattlebattlechoice3->SetSelection( 0 );
-	bSizer1571->Add( m_worldbattlebattlechoice3, 0, wxALL, 2 );
+	wxArrayString m_worldbattlebattlechoice13Choices;
+	m_worldbattlebattlechoice13 = new wxChoice( m_worldbattlepanelchoice1, wxID_BATTLE13, wxDefaultPosition, wxDefaultSize, m_worldbattlebattlechoice13Choices, 0 );
+	m_worldbattlebattlechoice13->SetSelection( 0 );
+	bSizer1571->Add( m_worldbattlebattlechoice13, 0, wxALL, 2 );
 	
-	wxArrayString m_worldbattlebattlechoice4Choices;
-	m_worldbattlebattlechoice4 = new wxChoice( m_worldbattlepanelchoice, wxID_BATTLE4, wxDefaultPosition, wxDefaultSize, m_worldbattlebattlechoice4Choices, 0 );
-	m_worldbattlebattlechoice4->SetSelection( 0 );
-	bSizer1571->Add( m_worldbattlebattlechoice4, 0, wxALL, 2 );
+	wxArrayString m_worldbattlebattlechoice14Choices;
+	m_worldbattlebattlechoice14 = new wxChoice( m_worldbattlepanelchoice1, wxID_BATTLE14, wxDefaultPosition, wxDefaultSize, m_worldbattlebattlechoice14Choices, 0 );
+	m_worldbattlebattlechoice14->SetSelection( 0 );
+	bSizer1571->Add( m_worldbattlebattlechoice14, 0, wxALL, 2 );
 	
 	
-	m_worldbattlepanelchoice->SetSizer( bSizer1571 );
-	m_worldbattlepanelchoice->Layout();
-	bSizer1571->Fit( m_worldbattlepanelchoice );
-	fgSizer68->Add( m_worldbattlepanelchoice, 1, 0, 5 );
+	m_worldbattlepanelchoice1->SetSizer( bSizer1571 );
+	m_worldbattlepanelchoice1->Layout();
+	bSizer1571->Fit( m_worldbattlepanelchoice1 );
+	fgSizer68->Add( m_worldbattlepanelchoice1, 1, 0, 5 );
 	
 	wxBoxSizer* bSizer155;
 	bSizer155 = new wxBoxSizer( wxVERTICAL );
 	
-	m_worldbattlehelplabel1 = new wxStaticText( m_worldbattlescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	m_worldbattlehelplabel1->Wrap( -1 );
-	bSizer155->Add( m_worldbattlehelplabel1, 0, wxALL|wxEXPAND, 5 );
+	m_worldbattlehelplabel11 = new wxStaticText( m_worldbattlescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_worldbattlehelplabel11->Wrap( -1 );
+	bSizer155->Add( m_worldbattlehelplabel11, 0, wxALL|wxEXPAND, 5 );
 	
-	m_worldbattlehelplabel2 = new wxStaticText( m_worldbattlescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	m_worldbattlehelplabel2->Wrap( -1 );
-	bSizer155->Add( m_worldbattlehelplabel2, 0, wxALL|wxEXPAND, 5 );
+	m_worldbattlehelplabel12 = new wxStaticText( m_worldbattlescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_worldbattlehelplabel12->Wrap( -1 );
+	bSizer155->Add( m_worldbattlehelplabel12, 0, wxALL|wxEXPAND, 5 );
 	
-	m_worldbattlehelplabel3 = new wxStaticText( m_worldbattlescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	m_worldbattlehelplabel3->Wrap( -1 );
-	bSizer155->Add( m_worldbattlehelplabel3, 0, wxALL|wxEXPAND, 5 );
+	m_worldbattlehelplabel13 = new wxStaticText( m_worldbattlescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_worldbattlehelplabel13->Wrap( -1 );
+	bSizer155->Add( m_worldbattlehelplabel13, 0, wxALL|wxEXPAND, 5 );
 	
-	m_worldbattlehelplabel4 = new wxStaticText( m_worldbattlescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	m_worldbattlehelplabel4->Wrap( -1 );
-	bSizer155->Add( m_worldbattlehelplabel4, 0, wxALL|wxEXPAND, 5 );
+	m_worldbattlehelplabel14 = new wxStaticText( m_worldbattlescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_worldbattlehelplabel14->Wrap( -1 );
+	bSizer155->Add( m_worldbattlehelplabel14, 0, wxALL|wxEXPAND, 5 );
 	
 	
 	fgSizer68->Add( bSizer155, 1, wxEXPAND, 5 );
 	
 	
 	fgSizer14211->Add( fgSizer68, 1, wxEXPAND, 5 );
+	
+	m_staticText380 = new wxStaticText( m_worldbattlescrolledwindow, wxID_ANY, _("Mist"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText380->Wrap( -1 );
+	fgSizer14211->Add( m_staticText380, 0, wxALL, 5 );
+	
+	wxFlexGridSizer* fgSizer681;
+	fgSizer681 = new wxFlexGridSizer( 0, 3, 0, 0 );
+	fgSizer681->AddGrowableCol( 2 );
+	fgSizer681->SetFlexibleDirection( wxBOTH );
+	fgSizer681->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	m_worldbattlepanelspin2 = new wxPanel( m_worldbattlescrolledwindow, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer1572;
+	bSizer1572 = new wxBoxSizer( wxVERTICAL );
+	
+	m_worldbattlebattlespin21 = new wxSpinCtrl( m_worldbattlepanelspin2, wxID_BATTLE21, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	bSizer1572->Add( m_worldbattlebattlespin21, 0, wxALL, 2 );
+	
+	m_worldbattlebattlespin22 = new wxSpinCtrl( m_worldbattlepanelspin2, wxID_BATTLE22, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	bSizer1572->Add( m_worldbattlebattlespin22, 0, wxALL, 2 );
+	
+	m_worldbattlebattlespin23 = new wxSpinCtrl( m_worldbattlepanelspin2, wxID_BATTLE23, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	bSizer1572->Add( m_worldbattlebattlespin23, 0, wxALL, 2 );
+	
+	m_worldbattlebattlespin24 = new wxSpinCtrl( m_worldbattlepanelspin2, wxID_BATTLE24, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	bSizer1572->Add( m_worldbattlebattlespin24, 0, wxALL, 2 );
+	
+	
+	m_worldbattlepanelspin2->SetSizer( bSizer1572 );
+	m_worldbattlepanelspin2->Layout();
+	bSizer1572->Fit( m_worldbattlepanelspin2 );
+	fgSizer681->Add( m_worldbattlepanelspin2, 1, 0, 5 );
+	
+	m_worldbattlepanelchoice2 = new wxPanel( m_worldbattlescrolledwindow, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	m_worldbattlepanelchoice2->Hide();
+	
+	wxBoxSizer* bSizer15711;
+	bSizer15711 = new wxBoxSizer( wxVERTICAL );
+	
+	wxArrayString m_worldbattlebattlechoice21Choices;
+	m_worldbattlebattlechoice21 = new wxChoice( m_worldbattlepanelchoice2, wxID_BATTLE21, wxDefaultPosition, wxDefaultSize, m_worldbattlebattlechoice21Choices, 0 );
+	m_worldbattlebattlechoice21->SetSelection( 0 );
+	bSizer15711->Add( m_worldbattlebattlechoice21, 0, wxALL, 2 );
+	
+	wxArrayString m_worldbattlebattlechoice22Choices;
+	m_worldbattlebattlechoice22 = new wxChoice( m_worldbattlepanelchoice2, wxID_BATTLE22, wxDefaultPosition, wxDefaultSize, m_worldbattlebattlechoice22Choices, 0 );
+	m_worldbattlebattlechoice22->SetSelection( 0 );
+	bSizer15711->Add( m_worldbattlebattlechoice22, 0, wxALL, 2 );
+	
+	wxArrayString m_worldbattlebattlechoice23Choices;
+	m_worldbattlebattlechoice23 = new wxChoice( m_worldbattlepanelchoice2, wxID_BATTLE23, wxDefaultPosition, wxDefaultSize, m_worldbattlebattlechoice23Choices, 0 );
+	m_worldbattlebattlechoice23->SetSelection( 0 );
+	bSizer15711->Add( m_worldbattlebattlechoice23, 0, wxALL, 2 );
+	
+	wxArrayString m_worldbattlebattlechoice24Choices;
+	m_worldbattlebattlechoice24 = new wxChoice( m_worldbattlepanelchoice2, wxID_BATTLE24, wxDefaultPosition, wxDefaultSize, m_worldbattlebattlechoice24Choices, 0 );
+	m_worldbattlebattlechoice24->SetSelection( 0 );
+	bSizer15711->Add( m_worldbattlebattlechoice24, 0, wxALL, 2 );
+	
+	
+	m_worldbattlepanelchoice2->SetSizer( bSizer15711 );
+	m_worldbattlepanelchoice2->Layout();
+	bSizer15711->Fit( m_worldbattlepanelchoice2 );
+	fgSizer681->Add( m_worldbattlepanelchoice2, 1, 0, 5 );
+	
+	wxBoxSizer* bSizer1551;
+	bSizer1551 = new wxBoxSizer( wxVERTICAL );
+	
+	m_worldbattlehelplabel21 = new wxStaticText( m_worldbattlescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_worldbattlehelplabel21->Wrap( -1 );
+	bSizer1551->Add( m_worldbattlehelplabel21, 0, wxALL|wxEXPAND, 5 );
+	
+	m_worldbattlehelplabel22 = new wxStaticText( m_worldbattlescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_worldbattlehelplabel22->Wrap( -1 );
+	bSizer1551->Add( m_worldbattlehelplabel22, 0, wxALL|wxEXPAND, 5 );
+	
+	m_worldbattlehelplabel23 = new wxStaticText( m_worldbattlescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_worldbattlehelplabel23->Wrap( -1 );
+	bSizer1551->Add( m_worldbattlehelplabel23, 0, wxALL|wxEXPAND, 5 );
+	
+	m_worldbattlehelplabel24 = new wxStaticText( m_worldbattlescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_worldbattlehelplabel24->Wrap( -1 );
+	bSizer1551->Add( m_worldbattlehelplabel24, 0, wxALL|wxEXPAND, 5 );
+	
+	
+	fgSizer681->Add( bSizer1551, 1, wxEXPAND, 5 );
+	
+	
+	fgSizer14211->Add( fgSizer681, 1, wxEXPAND, 5 );
+	
+	m_worldbattlelabelalt = new wxStaticText( m_worldbattlescrolledwindow, wxID_ANY, _("Alternate With Mist"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_worldbattlelabelalt->Wrap( -1 );
+	m_worldbattlelabelalt->SetToolTip( _("Battles at the end of the game in the Mist Continent") );
+	
+	fgSizer14211->Add( m_worldbattlelabelalt, 0, wxALL, 5 );
+	
+	wxFlexGridSizer* fgSizer682;
+	fgSizer682 = new wxFlexGridSizer( 0, 3, 0, 0 );
+	fgSizer682->AddGrowableCol( 2 );
+	fgSizer682->SetFlexibleDirection( wxBOTH );
+	fgSizer682->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	m_worldbattlepanelspin3 = new wxPanel( m_worldbattlescrolledwindow, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer1573;
+	bSizer1573 = new wxBoxSizer( wxVERTICAL );
+	
+	m_worldbattlebattlespin31 = new wxSpinCtrl( m_worldbattlepanelspin3, wxID_BATTLE31, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	bSizer1573->Add( m_worldbattlebattlespin31, 0, wxALL, 2 );
+	
+	m_worldbattlebattlespin32 = new wxSpinCtrl( m_worldbattlepanelspin3, wxID_BATTLE32, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	bSizer1573->Add( m_worldbattlebattlespin32, 0, wxALL, 2 );
+	
+	m_worldbattlebattlespin33 = new wxSpinCtrl( m_worldbattlepanelspin3, wxID_BATTLE33, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	bSizer1573->Add( m_worldbattlebattlespin33, 0, wxALL, 2 );
+	
+	m_worldbattlebattlespin34 = new wxSpinCtrl( m_worldbattlepanelspin3, wxID_BATTLE34, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	bSizer1573->Add( m_worldbattlebattlespin34, 0, wxALL, 2 );
+	
+	
+	m_worldbattlepanelspin3->SetSizer( bSizer1573 );
+	m_worldbattlepanelspin3->Layout();
+	bSizer1573->Fit( m_worldbattlepanelspin3 );
+	fgSizer682->Add( m_worldbattlepanelspin3, 1, 0, 5 );
+	
+	m_worldbattlepanelchoice3 = new wxPanel( m_worldbattlescrolledwindow, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	m_worldbattlepanelchoice3->Hide();
+	
+	wxBoxSizer* bSizer15712;
+	bSizer15712 = new wxBoxSizer( wxVERTICAL );
+	
+	wxArrayString m_worldbattlebattlechoice31Choices;
+	m_worldbattlebattlechoice31 = new wxChoice( m_worldbattlepanelchoice3, wxID_BATTLE31, wxDefaultPosition, wxDefaultSize, m_worldbattlebattlechoice31Choices, 0 );
+	m_worldbattlebattlechoice31->SetSelection( 0 );
+	bSizer15712->Add( m_worldbattlebattlechoice31, 0, wxALL|wxRESERVE_SPACE_EVEN_IF_HIDDEN, 2 );
+	
+	wxArrayString m_worldbattlebattlechoice32Choices;
+	m_worldbattlebattlechoice32 = new wxChoice( m_worldbattlepanelchoice3, wxID_BATTLE32, wxDefaultPosition, wxDefaultSize, m_worldbattlebattlechoice32Choices, 0 );
+	m_worldbattlebattlechoice32->SetSelection( 0 );
+	bSizer15712->Add( m_worldbattlebattlechoice32, 0, wxALL|wxRESERVE_SPACE_EVEN_IF_HIDDEN, 2 );
+	
+	wxArrayString m_worldbattlebattlechoice33Choices;
+	m_worldbattlebattlechoice33 = new wxChoice( m_worldbattlepanelchoice3, wxID_BATTLE33, wxDefaultPosition, wxDefaultSize, m_worldbattlebattlechoice33Choices, 0 );
+	m_worldbattlebattlechoice33->SetSelection( 0 );
+	bSizer15712->Add( m_worldbattlebattlechoice33, 0, wxALL|wxRESERVE_SPACE_EVEN_IF_HIDDEN, 2 );
+	
+	wxArrayString m_worldbattlebattlechoice34Choices;
+	m_worldbattlebattlechoice34 = new wxChoice( m_worldbattlepanelchoice3, wxID_BATTLE34, wxDefaultPosition, wxDefaultSize, m_worldbattlebattlechoice34Choices, 0 );
+	m_worldbattlebattlechoice34->SetSelection( 0 );
+	bSizer15712->Add( m_worldbattlebattlechoice34, 0, wxALL|wxRESERVE_SPACE_EVEN_IF_HIDDEN, 2 );
+	
+	
+	m_worldbattlepanelchoice3->SetSizer( bSizer15712 );
+	m_worldbattlepanelchoice3->Layout();
+	bSizer15712->Fit( m_worldbattlepanelchoice3 );
+	fgSizer682->Add( m_worldbattlepanelchoice3, 1, 0, 5 );
+	
+	wxBoxSizer* bSizer1552;
+	bSizer1552 = new wxBoxSizer( wxVERTICAL );
+	
+	m_worldbattlehelplabel31 = new wxStaticText( m_worldbattlescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_worldbattlehelplabel31->Wrap( -1 );
+	bSizer1552->Add( m_worldbattlehelplabel31, 0, wxALL|wxEXPAND, 5 );
+	
+	m_worldbattlehelplabel32 = new wxStaticText( m_worldbattlescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_worldbattlehelplabel32->Wrap( -1 );
+	bSizer1552->Add( m_worldbattlehelplabel32, 0, wxALL|wxEXPAND, 5 );
+	
+	m_worldbattlehelplabel33 = new wxStaticText( m_worldbattlescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_worldbattlehelplabel33->Wrap( -1 );
+	bSizer1552->Add( m_worldbattlehelplabel33, 0, wxALL|wxEXPAND, 5 );
+	
+	m_worldbattlehelplabel34 = new wxStaticText( m_worldbattlescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_worldbattlehelplabel34->Wrap( -1 );
+	bSizer1552->Add( m_worldbattlehelplabel34, 0, wxALL|wxEXPAND, 5 );
+	
+	
+	fgSizer682->Add( bSizer1552, 1, wxEXPAND, 5 );
+	
+	
+	fgSizer14211->Add( fgSizer682, 1, wxEXPAND, 5 );
+	
+	m_worldbattlelabelaltmist = new wxStaticText( m_worldbattlescrolledwindow, wxID_ANY, _("Alternate"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_worldbattlelabelaltmist->Wrap( -1 );
+	m_worldbattlelabelaltmist->SetToolTip( _("Battles at the end of the game in the Mist Continent") );
+	
+	fgSizer14211->Add( m_worldbattlelabelaltmist, 0, wxALL, 5 );
+	
+	wxFlexGridSizer* fgSizer683;
+	fgSizer683 = new wxFlexGridSizer( 0, 3, 0, 0 );
+	fgSizer683->AddGrowableCol( 2 );
+	fgSizer683->SetFlexibleDirection( wxBOTH );
+	fgSizer683->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	m_worldbattlepanelspin4 = new wxPanel( m_worldbattlescrolledwindow, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer1574;
+	bSizer1574 = new wxBoxSizer( wxVERTICAL );
+	
+	m_worldbattlebattlespin41 = new wxSpinCtrl( m_worldbattlepanelspin4, wxID_BATTLE41, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	bSizer1574->Add( m_worldbattlebattlespin41, 0, wxALL, 2 );
+	
+	m_worldbattlebattlespin42 = new wxSpinCtrl( m_worldbattlepanelspin4, wxID_BATTLE42, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	bSizer1574->Add( m_worldbattlebattlespin42, 0, wxALL, 2 );
+	
+	m_worldbattlebattlespin43 = new wxSpinCtrl( m_worldbattlepanelspin4, wxID_BATTLE43, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	bSizer1574->Add( m_worldbattlebattlespin43, 0, wxALL, 2 );
+	
+	m_worldbattlebattlespin44 = new wxSpinCtrl( m_worldbattlepanelspin4, wxID_BATTLE44, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	bSizer1574->Add( m_worldbattlebattlespin44, 0, wxALL, 2 );
+	
+	
+	m_worldbattlepanelspin4->SetSizer( bSizer1574 );
+	m_worldbattlepanelspin4->Layout();
+	bSizer1574->Fit( m_worldbattlepanelspin4 );
+	fgSizer683->Add( m_worldbattlepanelspin4, 1, 0, 5 );
+	
+	m_worldbattlepanelchoice4 = new wxPanel( m_worldbattlescrolledwindow, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	m_worldbattlepanelchoice4->Hide();
+	
+	wxBoxSizer* bSizer15713;
+	bSizer15713 = new wxBoxSizer( wxVERTICAL );
+	
+	wxArrayString m_worldbattlebattlechoice41Choices;
+	m_worldbattlebattlechoice41 = new wxChoice( m_worldbattlepanelchoice4, wxID_BATTLE41, wxDefaultPosition, wxDefaultSize, m_worldbattlebattlechoice41Choices, 0 );
+	m_worldbattlebattlechoice41->SetSelection( 0 );
+	bSizer15713->Add( m_worldbattlebattlechoice41, 0, wxALL|wxRESERVE_SPACE_EVEN_IF_HIDDEN, 2 );
+	
+	wxArrayString m_worldbattlebattlechoice42Choices;
+	m_worldbattlebattlechoice42 = new wxChoice( m_worldbattlepanelchoice4, wxID_BATTLE42, wxDefaultPosition, wxDefaultSize, m_worldbattlebattlechoice42Choices, 0 );
+	m_worldbattlebattlechoice42->SetSelection( 0 );
+	bSizer15713->Add( m_worldbattlebattlechoice42, 0, wxALL|wxRESERVE_SPACE_EVEN_IF_HIDDEN, 2 );
+	
+	wxArrayString m_worldbattlebattlechoice43Choices;
+	m_worldbattlebattlechoice43 = new wxChoice( m_worldbattlepanelchoice4, wxID_BATTLE43, wxDefaultPosition, wxDefaultSize, m_worldbattlebattlechoice43Choices, 0 );
+	m_worldbattlebattlechoice43->SetSelection( 0 );
+	bSizer15713->Add( m_worldbattlebattlechoice43, 0, wxALL|wxRESERVE_SPACE_EVEN_IF_HIDDEN, 2 );
+	
+	wxArrayString m_worldbattlebattlechoice44Choices;
+	m_worldbattlebattlechoice44 = new wxChoice( m_worldbattlepanelchoice4, wxID_BATTLE44, wxDefaultPosition, wxDefaultSize, m_worldbattlebattlechoice44Choices, 0 );
+	m_worldbattlebattlechoice44->SetSelection( 0 );
+	bSizer15713->Add( m_worldbattlebattlechoice44, 0, wxALL|wxRESERVE_SPACE_EVEN_IF_HIDDEN, 2 );
+	
+	
+	m_worldbattlepanelchoice4->SetSizer( bSizer15713 );
+	m_worldbattlepanelchoice4->Layout();
+	bSizer15713->Fit( m_worldbattlepanelchoice4 );
+	fgSizer683->Add( m_worldbattlepanelchoice4, 1, 0, 5 );
+	
+	wxBoxSizer* bSizer1553;
+	bSizer1553 = new wxBoxSizer( wxVERTICAL );
+	
+	m_worldbattlehelplabel41 = new wxStaticText( m_worldbattlescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_worldbattlehelplabel41->Wrap( -1 );
+	bSizer1553->Add( m_worldbattlehelplabel41, 0, wxALL|wxEXPAND, 5 );
+	
+	m_worldbattlehelplabel42 = new wxStaticText( m_worldbattlescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_worldbattlehelplabel42->Wrap( -1 );
+	bSizer1553->Add( m_worldbattlehelplabel42, 0, wxALL|wxEXPAND, 5 );
+	
+	m_worldbattlehelplabel43 = new wxStaticText( m_worldbattlescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_worldbattlehelplabel43->Wrap( -1 );
+	bSizer1553->Add( m_worldbattlehelplabel43, 0, wxALL|wxEXPAND, 5 );
+	
+	m_worldbattlehelplabel44 = new wxStaticText( m_worldbattlescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_worldbattlehelplabel44->Wrap( -1 );
+	bSizer1553->Add( m_worldbattlehelplabel44, 0, wxALL|wxEXPAND, 5 );
+	
+	
+	fgSizer683->Add( bSizer1553, 1, wxEXPAND, 5 );
+	
+	
+	fgSizer14211->Add( fgSizer683, 1, wxEXPAND, 5 );
 	
 	
 	m_worldbattlescrolledwindow->SetSizer( fgSizer14211 );
@@ -5626,14 +5897,38 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_worldplacename->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnWorldChangeName ), NULL, this );
 	m_worldplacenamebutton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnWorldChangeButton ), NULL, this );
 	m_worldbattlelist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxWorldBattle ), NULL, this );
-	m_worldbattlebattlespin1->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
-	m_worldbattlebattlespin2->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
-	m_worldbattlebattlespin3->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
-	m_worldbattlebattlespin4->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
-	m_worldbattlebattlechoice1->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
-	m_worldbattlebattlechoice2->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
-	m_worldbattlebattlechoice3->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
-	m_worldbattlebattlechoice4->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlespin11->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlespin12->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlespin13->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlespin14->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlechoice11->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlechoice12->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlechoice13->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlechoice14->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlespin21->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlespin22->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlespin23->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlespin24->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlechoice21->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlechoice22->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlechoice23->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlechoice24->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlespin31->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlespin32->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlespin33->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlespin34->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlechoice31->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlechoice32->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlechoice33->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlechoice34->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlespin41->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlespin42->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlespin43->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlespin44->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlechoice41->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlechoice42->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlechoice43->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlechoice44->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
 	m_fieldlist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxField ), NULL, this );
 	m_fieldname->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnFieldChangeName ), NULL, this );
 	m_fieldnamebutton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
@@ -6222,14 +6517,38 @@ CDPanel::~CDPanel()
 	m_worldplacename->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnWorldChangeName ), NULL, this );
 	m_worldplacenamebutton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnWorldChangeButton ), NULL, this );
 	m_worldbattlelist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxWorldBattle ), NULL, this );
-	m_worldbattlebattlespin1->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
-	m_worldbattlebattlespin2->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
-	m_worldbattlebattlespin3->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
-	m_worldbattlebattlespin4->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
-	m_worldbattlebattlechoice1->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
-	m_worldbattlebattlechoice2->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
-	m_worldbattlebattlechoice3->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
-	m_worldbattlebattlechoice4->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlespin11->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlespin12->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlespin13->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlespin14->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlechoice11->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlechoice12->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlechoice13->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlechoice14->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlespin21->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlespin22->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlespin23->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlespin24->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlechoice21->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlechoice22->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlechoice23->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlechoice24->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlespin31->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlespin32->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlespin33->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlespin34->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlechoice31->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlechoice32->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlechoice33->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlechoice34->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlespin41->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlespin42->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlespin43->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlespin44->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnWorldChangeSpin ), NULL, this );
+	m_worldbattlebattlechoice41->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlechoice42->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlechoice43->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
+	m_worldbattlebattlechoice44->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
 	m_fieldlist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxField ), NULL, this );
 	m_fieldname->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnFieldChangeName ), NULL, this );
 	m_fieldnamebutton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
@@ -7984,7 +8303,7 @@ AboutWindow::AboutWindow( wxWindow* parent, wxWindowID id, const wxString& title
 	wxBoxSizer* bSizer16;
 	bSizer16 = new wxBoxSizer( wxVERTICAL );
 	
-	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.39b\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for PSX model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\n - Satoh -\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_CENTRE|wxTE_MULTILINE|wxTE_READONLY|wxSIMPLE_BORDER );
+	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.40\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for PSX model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\n - Satoh -\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_CENTRE|wxTE_MULTILINE|wxTE_READONLY|wxSIMPLE_BORDER );
 	m_textCtrl13->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 	m_textCtrl13->SetMinSize( wxSize( -1,330 ) );
 	
@@ -8796,7 +9115,7 @@ TextSteamHelpWindow::TextSteamHelpWindow( wxWindow* parent, wxWindowID id, const
 	gbSizer29->SetFlexibleDirection( wxBOTH );
 	gbSizer29->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	m_listfunction = new wxListBox( this, wxID_FUNCTION, wxDefaultPosition, wxSize( 155,-1 ), 0, NULL, wxLB_HSCROLL|wxLB_SINGLE|wxLB_SORT ); 
+	m_listfunction = new wxListBox( this, wxID_FUNCTION, wxDefaultPosition, wxSize( 155,-1 ), 0, NULL, wxLB_HSCROLL|wxLB_SINGLE ); 
 	gbSizer29->Add( m_listfunction, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 2 );
 	
 	m_helptextctrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), wxTE_MULTILINE|wxTE_READONLY|wxSIMPLE_BORDER );

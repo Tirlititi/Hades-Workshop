@@ -145,7 +145,6 @@ bool ToolUnityViewer::SetupRootPath(wxString path, bool ignorestreaming) {
 		}
 		if (starti<=UNITY_ARCHIVE_MAINDATA) {
 			list_data.Flush();
-			list_data_filename.Empty();
 		}
 		if (starti<=UNITY_ARCHIVE_RESOURCES) {
 			audio_data.Flush();
@@ -190,9 +189,6 @@ bool ToolUnityViewer::SetupRootPath(wxString path, bool ignorestreaming) {
 			if (fileindex>=0) {
 				unityarchive.seekg(meta_data[i].GetFileOffsetByIndex(fileindex));
 				list_data.Load(unityarchive,meta_data[i].GetFileSizeByIndex(fileindex));
-				list_data_filename.Alloc(list_data.amount);
-				for (j=0;j<list_data.amount;j++)
-					list_data_filename.Add(_(list_data.path[j]).AfterLast(L'/'));
 			}
 		} else if (i==UNITY_ARCHIVE_RESOURCES) {
 			for (j=0;j<G_N_ELEMENTS(AudioFileNames);j++) {
@@ -734,7 +730,7 @@ bool ToolUnityViewer::PrepareAssetForImport(bool isnewfile, fstream& filebase, w
 				rootobj->file_index = impfileid;
 			}
 		}
-		newmodel.SetupPostImportData(potentiallylinkedfiles,meta_data,infotoavoid,&bundle_data[UNITY_ARCHIVE_DATA5-UNITY_ARCHIVE_DATA11],modelhierarchy,modelmergepolicy);
+		newmodel.SetupPostImportData(filebase,potentiallylinkedfiles,meta_data,infotoavoid,&bundle_data[UNITY_ARCHIVE_DATA5-UNITY_ARCHIVE_DATA11],modelhierarchy,modelmergepolicy);
 		path.Replace(_(L"\\"),_(L"/"));
 		if (modelimportmesh) {
 			for (i=0;i<newmodel.material.size();i++) {
@@ -745,10 +741,9 @@ bool ToolUnityViewer::PrepareAssetForImport(bool isnewfile, fstream& filebase, w
 							linkfiledialoginit = true;
 						}
 						wxString message = _(HADES_STRING_UNITYVIEWER_LINK_TEXTURE);
-						message += path.AfterLast(L'/') + _(L" (Mesh ") + newmodel.mesh[i].name + _(L")\t") + newmodel.material[i][j].maintex.file_name;
-						if (linkfiledialog.ShowModal(message)==wxID_OK) {
+						message += path.AfterLast(L'/') + _(L" (Mesh ") + newmodel.mesh[i].name + _(L"):\t") + (newmodel.material[i][j].maintex.file_name!="" ? newmodel.material[i][j].maintex.file_name : "Unamed Texture");
+						if (linkfiledialog.ShowModal(message)==wxID_OK)
 							newmodel.material[i][j].maintex.file_info = linkfiledialog.info_selected;
-						}
 					}
 				}
 			}
@@ -775,15 +770,15 @@ bool ToolUnityViewer::PrepareAssetForImport(bool isnewfile, fstream& filebase, w
 					importassetpath = "";
 					if (nodefiletype==43) {
 						importassetinternalname = wxString::Format(wxT("custmesh%d"),meshcounter);
-						importassetpath = isnewfile ? newfilepath : path.ToStdString();
+						importassetpath = isnewfile ? newfilepath : filearchivedir.ToStdString();
 					} else if (nodefiletype==21) {
 						importassetinternalname = wxString::Format(wxT("%s_%d"),rootassetshortname,totalmatcounter);
-						importassetpath = (isnewfile ? _(newfilepath) : path).BeforeLast(L'/').ToStdString();
+						importassetpath = (isnewfile ? _(newfilepath) : filearchivedir).BeforeLast(L'/').ToStdString();
 						if (importassetpath.length()>0)
 							importassetpath += "/";
 						importassetpath += wxString::Format(wxT("materials/%s_%d.mat"),rootassetshortname,totalmatcounter).ToStdString();
 					} else if (nodefiletype==74) {
-						importassetpath = isnewfile ? newfilepath : path.ToStdString();
+						importassetpath = isnewfile ? newfilepath : filearchivedir.ToStdString();
 					} else if (isnewfile && newmodel.hierarchy->root_node->node_type==4 && static_cast<TransformStruct*>(newmodel.hierarchy->root_node)->child_object==newmodel.hierarchy->node_list[i]) {
 						importassetpath = newfilepath;
 						infotoavoid.pop_back(); // Was already listed
@@ -1167,12 +1162,6 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 			path.Replace(_(L"/"),_(L"\\"));
 			if (!m_menuexportpath->IsChecked()) path = path.AfterLast(L'\\');
 			path = basepath+path;
-			size_t slashpos = filearchivedir.find_last_of(L'/');
-			if (slashpos!=wxString::npos)
-				filearchivedir = filearchivedir.Mid(0,slashpos);
-			slashpos = filearchivedir.find_last_of(L'\\');
-			if (slashpos!=wxString::npos)
-				filearchivedir = filearchivedir.Mid(0,slashpos);
 			wxFileName::Mkdir(path.BeforeLast(L'\\'),wxS_DIR_DEFAULT,wxPATH_MKDIR_FULL);
 			expfileid = wxAtoi(m_assetlist->GetItemText(it,0))-1;
 //{fstream fout("aaab.txt",ios::app|ios::out); fout << "EXPORT: " << expfileid << " with info " << (unsigned long long)meta_data[current_archive].file_info[expfileid] << endl; fout.close();}
@@ -1394,12 +1383,6 @@ fout.close();*/
 			path.Replace(_(L"/"),_(L"\\"));
 			if (!m_menuexportpath->IsChecked()) path = path.AfterLast(L'\\');
 			path = basepath+path;
-			size_t slashpos = filearchivedir.find_last_of(L'/');
-			if (slashpos!=wxString::npos)
-				filearchivedir = filearchivedir.Mid(0,slashpos);
-			slashpos = filearchivedir.find_last_of(L'\\');
-			if (slashpos!=wxString::npos)
-				filearchivedir = filearchivedir.Mid(0,slashpos);
 			if (!wxFileName::FileExists(path))
 				continue;
 			impfileid = wxAtoi(m_assetlist->GetItemText(it,0))-1;
@@ -1463,14 +1446,10 @@ fout.close();*/
 			}
 			if (current_archive==UNITY_ARCHIVE_MAINDATA) {
 				list_data.Flush();
-				list_data_filename.Empty();
 				int32_t listindex = meta_data[i].GetFileIndex("",147);
 				if (listindex>=0) {
 					unityarchive.seekg(meta_data[current_archive].GetFileOffsetByIndex(listindex));
 					list_data.Load(unityarchive,meta_data[i].GetFileSizeByIndex(listindex));
-					list_data_filename.Alloc(list_data.amount);
-					for (i=0;i<list_data.amount;i++)
-						list_data_filename.Add(_(list_data.path[i]).AfterLast(L'/'));
 				}
 			}
 			unityarchive.close();
@@ -1532,7 +1511,7 @@ fout.close();*/
 			}
 			m_loadgauge->SetValue(0);
 			unsigned int itcounter = 0, itsuccesscounter = 0, itamount = 0;
-			wxString path,filearchivedir;
+			wxString path;
 			vector<ModelDataStruct> importmodel;
 			unsigned int importmodelcounter = 0;
 			UnityArchiveFileCreator filestoadd(&meta_data[current_archive]);
@@ -1629,14 +1608,10 @@ fout.close();*/
 				}
 				if (current_archive==UNITY_ARCHIVE_MAINDATA) {
 					list_data.Flush();
-					list_data_filename.Empty();
 					int32_t listindex = meta_data[i].GetFileIndex("",147);
 					if (listindex>=0) {
 						unityarchive.seekg(meta_data[current_archive].GetFileOffsetByIndex(listindex));
 						list_data.Load(unityarchive,meta_data[i].GetFileSizeByIndex(listindex));
-						list_data_filename.Alloc(list_data.amount);
-						for (i=0;i<list_data.amount;i++)
-							list_data_filename.Add(_(list_data.path[i]).AfterLast(L'/'));
 					}
 				}
 				unityarchive.close();

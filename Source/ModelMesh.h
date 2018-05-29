@@ -387,7 +387,7 @@ struct ModelDataStruct {
 	int Export(const char* outputname, int format);
 	int Import(const char* inputname, bool retrieveanims = true);
 
-	void SetupPostImportData(vector<unsigned int> folderfiles, UnityArchiveMetaData archivelist[UNITY_ARCHIVE_AMOUNT], vector<int64_t> additionalinfotoavoid, UnityArchiveAssetBundle* animbundle = NULL, GameObjectHierarchy* basehierarchy = NULL, int mergepolicy = 0);
+	void SetupPostImportData(fstream& filebase, vector<unsigned int> folderfiles, UnityArchiveMetaData archivelist[UNITY_ARCHIVE_AMOUNT], vector<int64_t> additionalinfotoavoid, UnityArchiveAssetBundle* animbundle = NULL, GameObjectHierarchy* basehierarchy = NULL, int mergepolicy = 0);
 };
 
 #endif

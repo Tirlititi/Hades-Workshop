@@ -27,11 +27,11 @@
 #define LIST_MAX_AMOUNT 1000
 unsigned int OrderedIndex[LIST_MAX_AMOUNT];
 
-#define MACRO_MULTILANG_INCREASE_COUNTER(BASETEXT,NEWTEXT,BASETEXTARRAY,BASETEXTINDEX) \
+#define MACRO_MULTILANG_INCREASE_COUNTER(BASETEXT,NEWTEXT,BASETEXTARRAY,BASETEXTINDEX,DEFAULTTEXT) \
 	for (SteamLanguage macrolangi = 0;macrolangi<STEAM_LANGUAGE_AMOUNT;macrolangi++) \
 		if (NEWTEXT.multi_lang_init[macrolangi] && !BASETEXT.multi_lang_init[macrolangi]) \
 			for (int macrobackindex = BASETEXTINDEX-1;macrobackindex>=0 && !BASETEXTARRAY[macrobackindex].multi_lang_init[macrolangi];macrobackindex--) \
-				BASETEXTARRAY[macrobackindex].SetValue(L"",macrolangi);
+				BASETEXTARRAY[macrobackindex].SetValue(DEFAULTTEXT,macrolangi);
 
 
 // Only return sorted indexes.
@@ -1928,7 +1928,7 @@ void CDDataStruct::OnSpellChangeButton(wxCommandEvent& event) {
 				m_spellname->SetValue(sp.name.str);
 			}
 		} else {
-			TextSteamEditDialog ted(this,sp.name);
+			TextSteamEditDialog ted(this,&ffuiset,sp.name);
 			if (ted.ShowModal()==wxID_OK) {
 				sp.SetName(ted.text);
 				m_spellname->SetValue(sp.name.str);
@@ -1945,7 +1945,7 @@ void CDDataStruct::OnSpellChangeButton(wxCommandEvent& event) {
 				m_spellhelp->SetValue(sp.help.str);
 			}
 		} else {
-			TextSteamEditDialog ted(this,sp.help,TEXT_STYLE_HELP);
+			TextSteamEditDialog ted(this,&ffuiset,sp.help,TEXT_STYLE_HELP);
 			if (ted.ShowModal()==wxID_OK) {
 				sp.SetHelp(ted.text);
 				m_spellhelp->SetValue(sp.help.str);
@@ -2071,7 +2071,7 @@ void CDDataStruct::OnSupportChangeButton(wxCommandEvent& event) {
 				m_supportname->SetValue(sp.name.str);
 			}
 		} else {
-			TextSteamEditDialog ted(this,sp.name);
+			TextSteamEditDialog ted(this,&ffuiset,sp.name);
 			if (ted.ShowModal()==wxID_OK) {
 				sp.SetName(ted.text);
 				m_supportname->SetValue(sp.name.str);
@@ -2088,7 +2088,7 @@ void CDDataStruct::OnSupportChangeButton(wxCommandEvent& event) {
 				m_supporthelp->SetValue(sp.help.str);
 			}
 		} else {
-			TextSteamEditDialog ted(this,sp.help,TEXT_STYLE_HELP);
+			TextSteamEditDialog ted(this,&ffuiset,sp.help,TEXT_STYLE_HELP);
 			if (ted.ShowModal()==wxID_OK) {
 				sp.SetHelp(ted.text);
 				m_supporthelp->SetValue(sp.help.str);
@@ -2291,7 +2291,7 @@ void CDDataStruct::OnCommandChangeButton(wxCommandEvent& event) {
 				m_cmdname->SetValue(cmd.name.str);
 			}
 		} else {
-			TextSteamEditDialog ted(this,cmd.name);
+			TextSteamEditDialog ted(this,&ffuiset,cmd.name);
 			if (ted.ShowModal()==wxID_OK) {
 				cmd.SetName(ted.text);
 				m_cmdname->SetValue(cmd.name.str);
@@ -2308,7 +2308,7 @@ void CDDataStruct::OnCommandChangeButton(wxCommandEvent& event) {
 				m_cmdhelp->SetValue(cmd.help.str);
 			}
 		} else {
-			TextSteamEditDialog ted(this,cmd.help,TEXT_STYLE_HELP);
+			TextSteamEditDialog ted(this,&ffuiset,cmd.help,TEXT_STYLE_HELP);
 			if (ted.ShowModal()==wxID_OK) {
 				cmd.SetHelp(ted.text);
 				m_cmdhelp->SetValue(cmd.help.str);
@@ -2575,7 +2575,7 @@ void CDDataStruct::OnStatChangeButton(wxCommandEvent& event) {
 				m_statchardefaultname->SetValue(is.default_name.str);
 			}
 		} else {
-			TextSteamEditDialog ted(this,is.default_name);
+			TextSteamEditDialog ted(this,&ffuiset,is.default_name);
 			if (ted.ShowModal()==wxID_OK) {
 				is.SetDefaultName(ted.text);
 				m_statchardefaultname->SetValue(is.default_name.str);
@@ -2787,12 +2787,17 @@ void CDDataStruct::DisplayItemStatIdHelp(void) {
 
 // Icon
 void CDDataStruct::DisplayItemIcon(void) {
-	if (gametype!=GAME_TYPE_PSX)
-		return;
-	TIMImageDataStruct& tim = textset.chartim[1][2];
-	uint16_t palpos = m_itemiconcolor->GetValue();
-	uint16_t texpos = ((m_itemicon->GetValue()%18)*7) | (((m_itemicon->GetValue()/18)*13) << 8);
-	m_itemiconpreview->SetBitmap(ConvertTIMToBitmap(tim,tim,21,13,palpos,texpos,true));
+	if (gametype==GAME_TYPE_PSX) {
+		TIMImageDataStruct& tim = textset.chartim[1][2];
+		uint16_t palpos = m_itemiconcolor->GetValue();
+		uint16_t texpos = ((m_itemicon->GetValue()%18)*7) | (((m_itemicon->GetValue()/18)*13) << 8);
+		m_itemiconpreview->SetBitmap(ConvertTIMToBitmap(tim,tim,21,13,palpos,texpos,true));
+	} else {
+		wxString spritename = wxString::Format(wxT("item%02d_%02d"),m_itemicon->GetValue(),m_itemiconcolor->GetValue());
+		wxImage tmpicon = ffuiset.steam_atlas[0].sprite[spritename].ConvertToImage();
+		wxBitmap icon(tmpicon.Rescale(21,13,wxIMAGE_QUALITY_HIGH));
+		m_itemiconpreview->SetBitmap(icon);
+	}
 }
 
 // Others
@@ -3167,7 +3172,7 @@ void CDDataStruct::OnItemChangeButton(wxCommandEvent& event) {
 					m_keyitemname->SetValue(ki.name.str);
 				}
 			} else {
-				TextSteamEditDialog ted(this,ki.name);
+				TextSteamEditDialog ted(this,&ffuiset,ki.name);
 				if (ted.ShowModal()==wxID_OK) {
 					ki.SetName(ted.text);
 					m_keyitemname->SetValue(ki.name.str);
@@ -3184,7 +3189,7 @@ void CDDataStruct::OnItemChangeButton(wxCommandEvent& event) {
 					m_keyitemhelp->SetValue(ki.help.str);
 				}
 			} else {
-				TextSteamEditDialog ted(this,ki.help,TEXT_STYLE_HELP);
+				TextSteamEditDialog ted(this,&ffuiset,ki.help,TEXT_STYLE_HELP);
 				if (ted.ShowModal()==wxID_OK) {
 					ki.SetHelp(ted.text);
 					m_keyitemhelp->SetValue(ki.help.str);
@@ -3201,7 +3206,7 @@ void CDDataStruct::OnItemChangeButton(wxCommandEvent& event) {
 					m_keyitemdescription->SetValue(ki.description.str);
 				}
 			} else {
-				TextSteamEditDialog ted(this,ki.description,TEXT_STYLE_DESCRIPTION);
+				TextSteamEditDialog ted(this,&ffuiset,ki.description,TEXT_STYLE_DESCRIPTION);
 				if (ted.ShowModal()==wxID_OK) {
 					ki.SetDescription(ted.text);
 					m_keyitemdescription->SetValue(ki.description.str);
@@ -3220,7 +3225,7 @@ void CDDataStruct::OnItemChangeButton(wxCommandEvent& event) {
 					m_itemname->SetValue(it.name.str);
 				}
 			} else {
-				TextSteamEditDialog ted(this,it.name);
+				TextSteamEditDialog ted(this,&ffuiset,it.name);
 				if (ted.ShowModal()==wxID_OK) {
 					it.SetName(ted.text);
 					m_itemname->SetValue(it.name.str);
@@ -3237,7 +3242,7 @@ void CDDataStruct::OnItemChangeButton(wxCommandEvent& event) {
 					m_itemhelp->SetValue(it.help.str);
 				}
 			} else {
-				TextSteamEditDialog ted(this,it.help,TEXT_STYLE_HELP);
+				TextSteamEditDialog ted(this,&ffuiset,it.help,TEXT_STYLE_HELP);
 				if (ted.ShowModal()==wxID_OK) {
 					it.SetHelp(ted.text);
 					m_itemhelp->SetValue(it.help.str);
@@ -3254,7 +3259,7 @@ void CDDataStruct::OnItemChangeButton(wxCommandEvent& event) {
 					m_itemhelp2->SetValue(it.battle_help.str);
 				}
 			} else {
-				TextSteamEditDialog ted(this,it.battle_help,TEXT_STYLE_HELP);
+				TextSteamEditDialog ted(this,&ffuiset,it.battle_help,TEXT_STYLE_HELP);
 				if (ted.ShowModal()==wxID_OK) {
 					it.SetBattleHelp(ted.text);
 					m_itemhelp2->SetValue(it.battle_help.str);
@@ -3697,7 +3702,7 @@ void CDDataStruct::OnCardChangeButton(wxCommandEvent& event) {
 				m_cardname->SetValue(cd.name.str);
 			}
 		} else {
-			TextSteamEditDialog ted(this,cd.name);
+			TextSteamEditDialog ted(this,&ffuiset,cd.name);
 			if (ted.ShowModal()==wxID_OK) {
 				cd.SetName(ted.text);
 				m_cardname->SetValue(cd.name.str);
@@ -4159,11 +4164,23 @@ void CDDataStruct::DisplayEnemy(int battleid) {
 }
 
 void CDDataStruct::UpdateEnemyName(unsigned int battleid) {
-	if (!m_worldbattlebattlechoice1->IsEmpty()) {
-		m_worldbattlebattlechoice1->SetString(battleid,GetEnemyBattleName(battleid));
-		m_worldbattlebattlechoice2->SetString(battleid,GetEnemyBattleName(battleid));
-		m_worldbattlebattlechoice3->SetString(battleid,GetEnemyBattleName(battleid));
-		m_worldbattlebattlechoice4->SetString(battleid,GetEnemyBattleName(battleid));
+	if (!m_worldbattlebattlechoice11->IsEmpty()) {
+		m_worldbattlebattlechoice11->SetString(battleid,GetEnemyBattleName(battleid));
+		m_worldbattlebattlechoice12->SetString(battleid,GetEnemyBattleName(battleid));
+		m_worldbattlebattlechoice13->SetString(battleid,GetEnemyBattleName(battleid));
+		m_worldbattlebattlechoice14->SetString(battleid,GetEnemyBattleName(battleid));
+		m_worldbattlebattlechoice21->SetString(battleid,GetEnemyBattleName(battleid));
+		m_worldbattlebattlechoice22->SetString(battleid,GetEnemyBattleName(battleid));
+		m_worldbattlebattlechoice23->SetString(battleid,GetEnemyBattleName(battleid));
+		m_worldbattlebattlechoice24->SetString(battleid,GetEnemyBattleName(battleid));
+		m_worldbattlebattlechoice31->SetString(battleid,GetEnemyBattleName(battleid));
+		m_worldbattlebattlechoice32->SetString(battleid,GetEnemyBattleName(battleid));
+		m_worldbattlebattlechoice33->SetString(battleid,GetEnemyBattleName(battleid));
+		m_worldbattlebattlechoice34->SetString(battleid,GetEnemyBattleName(battleid));
+		m_worldbattlebattlechoice41->SetString(battleid,GetEnemyBattleName(battleid));
+		m_worldbattlebattlechoice42->SetString(battleid,GetEnemyBattleName(battleid));
+		m_worldbattlebattlechoice43->SetString(battleid,GetEnemyBattleName(battleid));
+		m_worldbattlebattlechoice44->SetString(battleid,GetEnemyBattleName(battleid));
 	}
 }
 
@@ -4197,7 +4214,7 @@ void CDDataStruct::OnListBoxEnemyText(wxCommandEvent& event) {
 			m_enemytextlist->SetString(textsel,td.text[id].GetStr(hades::TEXT_PREVIEW_TYPE));
 		}
 	} else {
-		TextSteamEditDialog ted(this,td.text[id]);
+		TextSteamEditDialog ted(this,&ffuiset,td.text[id]);
 		if (ted.ShowModal()==wxID_OK) {
 			td.SetText(id,ted.text);
 			MarkDataEnemyModified(*sortid,CHUNK_TYPE_TEXT);
@@ -4600,7 +4617,7 @@ void CDDataStruct::OnEnemyChangeButton(wxCommandEvent& event) {
 				confirmed = true;
 			}
 		} else {
-			TextSteamEditDialog ted(this,es.name);
+			TextSteamEditDialog ted(this,&ffuiset,es.name);
 			if (ted.ShowModal()==wxID_OK) {
 				newstr = ted.text;
 				confirmed = true;
@@ -4644,7 +4661,7 @@ void CDDataStruct::OnEnemyChangeButton(wxCommandEvent& event) {
 				confirmed = true;
 			}
 		} else {
-			TextSteamEditDialog ted(this,ep.name);
+			TextSteamEditDialog ted(this,&ffuiset,ep.name);
 			if (ted.ShowModal()==wxID_OK) {
 				newstr = ted.text;
 				confirmed = true;
@@ -5095,9 +5112,9 @@ void CDDataStruct::OnTextEditText(wxCommandEvent& event) {
 			modified = true;
 		}
 	} else {
-		TextSteamEditDialog ted(this,text);
+		TextSteamEditDialog ted(this,&ffuiset,text);
 		if (ted.ShowModal()==wxID_OK) {
-			MACRO_MULTILANG_INCREASE_COUNTER(text,ted.text,td.text,textsel)
+			MACRO_MULTILANG_INCREASE_COUNTER(text,ted.text,td.text,textsel,L"[STRT=0,1]")
 			td.SetText(textsel,ted.text);
 			modified = true;
 		}
@@ -5530,7 +5547,7 @@ void CDDataStruct::OnFieldChangeButton(wxCommandEvent& event) {
 				m_fieldname->SetValue(sc->name.str);
 			}
 		} else {
-			TextSteamEditDialog ted(this,sc->name);
+			TextSteamEditDialog ted(this,&ffuiset,sc->name);
 			if (ted.ShowModal()==wxID_OK) {
 				fieldset.SetFieldName(*sortid,ted.text);
 				m_fieldname->SetValue(sc->name.str);
@@ -5648,33 +5665,64 @@ void CDDataStruct::OnFieldTexturePaint(wxPaintEvent &event) {
 //=============================//
 
 // World Battle Spots
-void CDDataStruct::DisplayWorldBattleHelp(int whichbattle) {
+int CDDataStruct::GetWorldBattleSetFromSpot(int spot, int spotversion) {
+	if (spotversion==1)
+		return 2*spot+1;
+	else if (spotversion==2)
+		return 2*spot+255;
+	else if (spotversion==3)
+		return 2*spot+254;
+	return 2*spot;
+}
+
+void CDDataStruct::DisplayWorldBattleHelp(int spotversion, int whichbattle) {
 	if (!enemyloaded)
 		return;
 	unsigned int i;
+	if (spotversion==-1) {
+		for (i=0;i<4;i++)
+			DisplayWorldBattleHelp(i,whichbattle);
+		return;
+	}
+	if (whichbattle==-1) {
+		for (i=0;i<4;i++)
+			DisplayWorldBattleHelp(spotversion,i);
+		return;
+	}
 	wxStaticText* txtctrl = NULL;
 	wxChoice* choicectrl = NULL;
-	if (whichbattle==0) {
-		txtctrl = m_worldbattlehelplabel1;
-		choicectrl = m_worldbattlebattlechoice1;
-	} else if (whichbattle==1) {
-		txtctrl = m_worldbattlehelplabel2;
-		choicectrl = m_worldbattlebattlechoice2;
-	} else if (whichbattle==2) {
-		txtctrl = m_worldbattlehelplabel3;
-		choicectrl = m_worldbattlebattlechoice3;
-	} else if (whichbattle==3) {
-		txtctrl = m_worldbattlehelplabel4;
-		choicectrl = m_worldbattlebattlechoice4;
-	} else if (whichbattle==-1) {
-		for (i=0;i<4;i++)
-			DisplayWorldBattleHelp(i);
+
+	#define MACRO_WORLD_BATTLE_HELP(VER,BTL) \
+		if (spotversion==VER-1 && whichbattle==BTL-1) { \
+			txtctrl = m_worldbattlehelplabel ## VER ## BTL; \
+			choicectrl = m_worldbattlebattlechoice ## VER ## BTL; \
+		} else 
+
+	MACRO_WORLD_BATTLE_HELP(1,1)
+	MACRO_WORLD_BATTLE_HELP(1,2)
+	MACRO_WORLD_BATTLE_HELP(1,3)
+	MACRO_WORLD_BATTLE_HELP(1,4)
+	MACRO_WORLD_BATTLE_HELP(2,1)
+	MACRO_WORLD_BATTLE_HELP(2,2)
+	MACRO_WORLD_BATTLE_HELP(2,3)
+	MACRO_WORLD_BATTLE_HELP(2,4)
+	MACRO_WORLD_BATTLE_HELP(3,1)
+	MACRO_WORLD_BATTLE_HELP(3,2)
+	MACRO_WORLD_BATTLE_HELP(3,3)
+	MACRO_WORLD_BATTLE_HELP(3,4)
+	MACRO_WORLD_BATTLE_HELP(4,1)
+	MACRO_WORLD_BATTLE_HELP(4,2)
+	MACRO_WORLD_BATTLE_HELP(4,3)
+	MACRO_WORLD_BATTLE_HELP(4,4)
 		return;
-	} else
+	if (spotversion>=2 && !m_worldbattlepanelchoice3->IsShown()) {
+		txtctrl->SetLabelText(_(L""));
 		return;
+	}
+	uint16_t bsceneid = enemyset.battle[choicectrl->GetSelection()]->scene_id;
 	wxString label = _(L"");
 	for (i=0;i<G_N_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME);i++)
-		if (HADES_STRING_BATTLE_SCENE_NAME[i].id==enemyset.battle[choicectrl->GetSelection()]->scene_id) {
+		if (HADES_STRING_BATTLE_SCENE_NAME[i].id==bsceneid) {
 			label = HADES_STRING_BATTLE_SCENE_NAME[i].label;
 			if (label.Mid(0,9).IsSameAs(L"World Map"))
 				label = label.Mid(11);
@@ -5749,25 +5797,60 @@ void CDDataStruct::DisplayWorldPlace(int placeid) {
 
 void CDDataStruct::DisplayWorldBattle(int worldbattleid) {
 	WorldMapDataStruct& wm = *worldset.world_data;
+	int bset0 = GetWorldBattleSetFromSpot(worldbattleid,0);
+	int bset1 = GetWorldBattleSetFromSpot(worldbattleid,1);
+	int bset2 = GetWorldBattleSetFromSpot(worldbattleid,2);
+	int bset3 = GetWorldBattleSetFromSpot(worldbattleid,3);
+	bool hasalt = bset0<100;
+	m_worldbattlelabelalt->Show(hasalt);
+	m_worldbattlelabelaltmist->Show(hasalt);
 	if (enemyloaded) {
 		unsigned int i;
+		m_worldbattlepanelchoice3->Show(hasalt);
+		m_worldbattlepanelchoice4->Show(hasalt);
 		for (i=0;i<enemyset.battle_amount;i++) {
-			if (enemyset.battle_data[i]->object_id==wm.battle_id[worldbattleid][0])
-				m_worldbattlebattlechoice1->SetSelection(i);
-			if (enemyset.battle_data[i]->object_id==wm.battle_id[worldbattleid][1])
-				m_worldbattlebattlechoice2->SetSelection(i);
-			if (enemyset.battle_data[i]->object_id==wm.battle_id[worldbattleid][2])
-				m_worldbattlebattlechoice3->SetSelection(i);
-			if (enemyset.battle_data[i]->object_id==wm.battle_id[worldbattleid][3])
-				m_worldbattlebattlechoice4->SetSelection(i);
+			if (enemyset.battle_data[i]->object_id==wm.battle_id[bset0][0])	m_worldbattlebattlechoice11->SetSelection(i);
+			if (enemyset.battle_data[i]->object_id==wm.battle_id[bset0][1])	m_worldbattlebattlechoice12->SetSelection(i);
+			if (enemyset.battle_data[i]->object_id==wm.battle_id[bset0][2])	m_worldbattlebattlechoice13->SetSelection(i);
+			if (enemyset.battle_data[i]->object_id==wm.battle_id[bset0][3])	m_worldbattlebattlechoice14->SetSelection(i);
+			if (enemyset.battle_data[i]->object_id==wm.battle_id[bset1][0])	m_worldbattlebattlechoice21->SetSelection(i);
+			if (enemyset.battle_data[i]->object_id==wm.battle_id[bset1][1])	m_worldbattlebattlechoice22->SetSelection(i);
+			if (enemyset.battle_data[i]->object_id==wm.battle_id[bset1][2])	m_worldbattlebattlechoice23->SetSelection(i);
+			if (enemyset.battle_data[i]->object_id==wm.battle_id[bset1][3])	m_worldbattlebattlechoice24->SetSelection(i);
+			if (hasalt) {
+				if (enemyset.battle_data[i]->object_id==wm.battle_id[bset2][0])	m_worldbattlebattlechoice31->SetSelection(i);
+				if (enemyset.battle_data[i]->object_id==wm.battle_id[bset2][1])	m_worldbattlebattlechoice32->SetSelection(i);
+				if (enemyset.battle_data[i]->object_id==wm.battle_id[bset2][2])	m_worldbattlebattlechoice33->SetSelection(i);
+				if (enemyset.battle_data[i]->object_id==wm.battle_id[bset2][3])	m_worldbattlebattlechoice34->SetSelection(i);
+				if (enemyset.battle_data[i]->object_id==wm.battle_id[bset3][0])	m_worldbattlebattlechoice41->SetSelection(i);
+				if (enemyset.battle_data[i]->object_id==wm.battle_id[bset3][1])	m_worldbattlebattlechoice42->SetSelection(i);
+				if (enemyset.battle_data[i]->object_id==wm.battle_id[bset3][2])	m_worldbattlebattlechoice43->SetSelection(i);
+				if (enemyset.battle_data[i]->object_id==wm.battle_id[bset3][3])	m_worldbattlebattlechoice44->SetSelection(i);
+			}
 		}
 	} else {
-		m_worldbattlebattlespin1->SetValue(wm.battle_id[worldbattleid][0]);
-		m_worldbattlebattlespin2->SetValue(wm.battle_id[worldbattleid][1]);
-		m_worldbattlebattlespin3->SetValue(wm.battle_id[worldbattleid][2]);
-		m_worldbattlebattlespin4->SetValue(wm.battle_id[worldbattleid][3]);
+		m_worldbattlepanelspin3->Show(hasalt);
+		m_worldbattlepanelspin4->Show(hasalt);
+		m_worldbattlebattlespin11->SetValue(wm.battle_id[bset0][0]);
+		m_worldbattlebattlespin12->SetValue(wm.battle_id[bset0][1]);
+		m_worldbattlebattlespin13->SetValue(wm.battle_id[bset0][2]);
+		m_worldbattlebattlespin14->SetValue(wm.battle_id[bset0][3]);
+		m_worldbattlebattlespin21->SetValue(wm.battle_id[bset1][0]);
+		m_worldbattlebattlespin22->SetValue(wm.battle_id[bset1][1]);
+		m_worldbattlebattlespin23->SetValue(wm.battle_id[bset1][2]);
+		m_worldbattlebattlespin24->SetValue(wm.battle_id[bset1][3]);
+		if (hasalt) {
+			m_worldbattlebattlespin31->SetValue(wm.battle_id[bset2][0]);
+			m_worldbattlebattlespin32->SetValue(wm.battle_id[bset2][1]);
+			m_worldbattlebattlespin33->SetValue(wm.battle_id[bset2][2]);
+			m_worldbattlebattlespin34->SetValue(wm.battle_id[bset2][3]);
+			m_worldbattlebattlespin41->SetValue(wm.battle_id[bset3][0]);
+			m_worldbattlebattlespin42->SetValue(wm.battle_id[bset3][1]);
+			m_worldbattlebattlespin43->SetValue(wm.battle_id[bset3][2]);
+			m_worldbattlebattlespin44->SetValue(wm.battle_id[bset3][3]);
+		}
 	}
-	DisplayWorldBattleHelp(-1);
+	DisplayWorldBattleHelp(-1,-1);
 }
 
 void CDDataStruct::OnListBoxWorldMap(wxCommandEvent& event) {
@@ -5854,7 +5937,7 @@ void CDDataStruct::OnWorldChangeButton(wxCommandEvent& event) {
 				m_worldplacename->SetValue(wm.place_name[sel].str);
 			}
 		} else {
-			TextSteamEditDialog ted(this,wm.place_name[sel]);
+			TextSteamEditDialog ted(this,&ffuiset,wm.place_name[sel]);
 			if (ted.ShowModal()==wxID_OK) {
 				wm.SetName(sel,ted.text);
 				m_worldplacename->SetValue(wm.place_name[sel].str);
@@ -5868,19 +5951,30 @@ void CDDataStruct::OnWorldChangeChoice(wxCommandEvent& event) {
 	WorldMapDataStruct& wm = *worldset.world_data;
 	BattleDataStruct& bd = *enemyset.battle_data[event.GetSelection()];
 	int id = event.GetId();
-	if (id==wxID_BATTLE1) {
-		wm.battle_id[sel][0] = bd.object_id;
-		DisplayWorldBattleHelp(0);
-	} else if (id==wxID_BATTLE2) {
-		wm.battle_id[sel][1] = bd.object_id;
-		DisplayWorldBattleHelp(1);
-	} else if (id==wxID_BATTLE3) {
-		wm.battle_id[sel][2] = bd.object_id;
-		DisplayWorldBattleHelp(2);
-	} else if (id==wxID_BATTLE4) {
-		wm.battle_id[sel][3] = bd.object_id;
-		DisplayWorldBattleHelp(3);
-	}
+
+	#define MACRO_WORLD_CHANGE_CHOICE(VER,BTL) \
+		if (id==wxID_BATTLE ## VER ## BTL) { \
+			int bset = GetWorldBattleSetFromSpot(sel,VER-1); \
+			wm.battle_id[bset][BTL-1] = bd.object_id; \
+			DisplayWorldBattleHelp(VER-1,BTL-1); \
+		} else 
+
+	MACRO_WORLD_CHANGE_CHOICE(1,1)
+	MACRO_WORLD_CHANGE_CHOICE(1,2)
+	MACRO_WORLD_CHANGE_CHOICE(1,3)
+	MACRO_WORLD_CHANGE_CHOICE(1,4)
+	MACRO_WORLD_CHANGE_CHOICE(2,1)
+	MACRO_WORLD_CHANGE_CHOICE(2,2)
+	MACRO_WORLD_CHANGE_CHOICE(2,3)
+	MACRO_WORLD_CHANGE_CHOICE(2,4)
+	MACRO_WORLD_CHANGE_CHOICE(3,1)
+	MACRO_WORLD_CHANGE_CHOICE(3,2)
+	MACRO_WORLD_CHANGE_CHOICE(3,3)
+	MACRO_WORLD_CHANGE_CHOICE(3,4)
+	MACRO_WORLD_CHANGE_CHOICE(4,1)
+	MACRO_WORLD_CHANGE_CHOICE(4,2)
+	MACRO_WORLD_CHANGE_CHOICE(4,3)
+	MACRO_WORLD_CHANGE_CHOICE(4,4) {}
 	MarkDataWorldMapModified(sel,CHUNK_TYPE_VARIOUS);
 }
 
@@ -5888,19 +5982,30 @@ void CDDataStruct::OnWorldChangeSpin(wxSpinEvent& event) {
 	unsigned int sel = m_worldbattlelist->GetSelection();
 	WorldMapDataStruct& wm = *worldset.world_data;
 	int id = event.GetId();
-	if (id==wxID_BATTLE1) {
-		wm.battle_id[sel][0] = event.GetPosition();
-		DisplayWorldBattleHelp(0);
-	} else if (id==wxID_BATTLE2) {
-		wm.battle_id[sel][1] = event.GetPosition();
-		DisplayWorldBattleHelp(1);
-	} else if (id==wxID_BATTLE3) {
-		wm.battle_id[sel][2] = event.GetPosition();
-		DisplayWorldBattleHelp(2);
-	} else if (id==wxID_BATTLE4) {
-		wm.battle_id[sel][3] = event.GetPosition();
-		DisplayWorldBattleHelp(3);
-	}
+
+	#define MACRO_WORLD_CHANGE_SPIN(VER,BTL) \
+		if (id==wxID_BATTLE ## VER ## BTL) { \
+			int bset = GetWorldBattleSetFromSpot(sel,VER-1); \
+			wm.battle_id[bset][BTL-1] = event.GetPosition(); \
+			DisplayWorldBattleHelp(VER-1,BTL-1); \
+		} else 
+
+	MACRO_WORLD_CHANGE_SPIN(1,1)
+	MACRO_WORLD_CHANGE_SPIN(1,2)
+	MACRO_WORLD_CHANGE_SPIN(1,3)
+	MACRO_WORLD_CHANGE_SPIN(1,4)
+	MACRO_WORLD_CHANGE_SPIN(2,1)
+	MACRO_WORLD_CHANGE_SPIN(2,2)
+	MACRO_WORLD_CHANGE_SPIN(2,3)
+	MACRO_WORLD_CHANGE_SPIN(2,4)
+	MACRO_WORLD_CHANGE_SPIN(3,1)
+	MACRO_WORLD_CHANGE_SPIN(3,2)
+	MACRO_WORLD_CHANGE_SPIN(3,3)
+	MACRO_WORLD_CHANGE_SPIN(3,4)
+	MACRO_WORLD_CHANGE_SPIN(4,1)
+	MACRO_WORLD_CHANGE_SPIN(4,2)
+	MACRO_WORLD_CHANGE_SPIN(4,3)
+	MACRO_WORLD_CHANGE_SPIN(4,4) {}
 	MarkDataWorldMapModified(sel,CHUNK_TYPE_VARIOUS);
 }
 
@@ -6358,9 +6463,9 @@ void CDDataStruct::OnSpecialTextEditText(wxCommandEvent& event) {
 			MarkDataMenuUIModified();
 		}
 	} else {
-		TextSteamEditDialog ted(this,st.text[textsel],TEXT_STYLE_DESCRIPTION);
+		TextSteamEditDialog ted(this,&ffuiset,st.text[textsel],TEXT_STYLE_DESCRIPTION);
 		if (ted.ShowModal()==wxID_OK) {
-			MACRO_MULTILANG_INCREASE_COUNTER(st.text[textsel],ted.text,st.text,textsel)
+			MACRO_MULTILANG_INCREASE_COUNTER(st.text[textsel],ted.text,st.text,textsel,L"")
 			st.SetText(textsel,ted.text);
 			if (st.is_localization)
 				m_specialtextdatalist->SetString(textsel,_(st.localization_field[textsel])+_(L": ")+_(st.text[textsel].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
@@ -6848,14 +6953,36 @@ void CDDataStruct::InitEnemy(void) {
 		m_enemystatdropcard->Append(cardset.card[i].name.GetStr(hades::TEXT_PREVIEW_TYPE));
 	enemyloaded = true;
 	if (worldloaded) {
-		for (i=0;i<enemyset.battle_amount;i++) {
-			m_worldbattlebattlechoice1->Append(GetEnemyBattleName(i));
-			m_worldbattlebattlechoice2->Append(GetEnemyBattleName(i));
-			m_worldbattlebattlechoice3->Append(GetEnemyBattleName(i));
-			m_worldbattlebattlechoice4->Append(GetEnemyBattleName(i));
-		}
-		m_worldbattlepanelspin->Show(false);
-		m_worldbattlepanelchoice->Show(true);
+		bool showalt = m_worldbattlepanelspin3->IsShown();
+		wxArrayString battlenames;
+		battlenames.Alloc(enemyset.battle_amount);
+		for (i=0;i<enemyset.battle_amount;i++)
+			battlenames.Add(GetEnemyBattleName(i));
+		m_worldbattlebattlechoice11->Append(battlenames);
+		m_worldbattlebattlechoice12->Append(battlenames);
+		m_worldbattlebattlechoice13->Append(battlenames);
+		m_worldbattlebattlechoice14->Append(battlenames);
+		m_worldbattlebattlechoice21->Append(battlenames);
+		m_worldbattlebattlechoice22->Append(battlenames);
+		m_worldbattlebattlechoice23->Append(battlenames);
+		m_worldbattlebattlechoice24->Append(battlenames);
+		m_worldbattlebattlechoice31->Append(battlenames);
+		m_worldbattlebattlechoice32->Append(battlenames);
+		m_worldbattlebattlechoice33->Append(battlenames);
+		m_worldbattlebattlechoice34->Append(battlenames);
+		m_worldbattlebattlechoice41->Append(battlenames);
+		m_worldbattlebattlechoice42->Append(battlenames);
+		m_worldbattlebattlechoice43->Append(battlenames);
+		m_worldbattlebattlechoice44->Append(battlenames);
+		m_worldbattlepanelspin1->Show(false);
+		m_worldbattlepanelspin2->Show(false);
+		m_worldbattlepanelspin3->Show(false);
+		m_worldbattlepanelspin4->Show(false);
+		m_worldbattlepanelchoice1->Show(true);
+		m_worldbattlepanelchoice2->Show(true);
+		m_worldbattlepanelchoice3->Show(showalt);
+		m_worldbattlepanelchoice4->Show(showalt);
+		DisplayWorldBattle(m_worldbattlelist->GetSelection());
 	}
 	m_enemylist->SetSelection(0);
 	GetTopWindow()->m_exportenemyscript->Enable();
@@ -6910,18 +7037,38 @@ void CDDataStruct::InitWorldMap(void) {
 	WorldMapDisplayNames(true);
 	for (i=0;i<WORLD_MAP_PLACE_AMOUNT;i++)
 		m_worldplacelist->Append(_(worldset.world_data->place_name[i].GetStr(hades::TEXT_PREVIEW_TYPE)));
-	for (i=0;i<WORLD_MAP_BATTLE_GROUND_AMOUNT;i++)
+	for (i=0;i<WORLD_MAP_BATTLE_SPOT_AMOUNT;i++)
 		m_worldbattlelist->Append(wxString::Format(wxT(HADES_STRING_WORLD_BATTLE_NAME),i+1));
 	if (enemyloaded) {
-		for (i=0;i<enemyset.battle_amount;i++) {
-			m_worldbattlebattlechoice1->Append(GetEnemyBattleName(i));
-			m_worldbattlebattlechoice2->Append(GetEnemyBattleName(i));
-			m_worldbattlebattlechoice3->Append(GetEnemyBattleName(i));
-			m_worldbattlebattlechoice4->Append(GetEnemyBattleName(i));
-		}
+		wxArrayString battlenames;
+		battlenames.Alloc(enemyset.battle_amount);
+		for (i=0;i<enemyset.battle_amount;i++)
+			battlenames.Add(GetEnemyBattleName(i));
+		m_worldbattlebattlechoice11->Append(battlenames);
+		m_worldbattlebattlechoice12->Append(battlenames);
+		m_worldbattlebattlechoice13->Append(battlenames);
+		m_worldbattlebattlechoice14->Append(battlenames);
+		m_worldbattlebattlechoice21->Append(battlenames);
+		m_worldbattlebattlechoice22->Append(battlenames);
+		m_worldbattlebattlechoice23->Append(battlenames);
+		m_worldbattlebattlechoice24->Append(battlenames);
+		m_worldbattlebattlechoice31->Append(battlenames);
+		m_worldbattlebattlechoice32->Append(battlenames);
+		m_worldbattlebattlechoice33->Append(battlenames);
+		m_worldbattlebattlechoice34->Append(battlenames);
+		m_worldbattlebattlechoice41->Append(battlenames);
+		m_worldbattlebattlechoice42->Append(battlenames);
+		m_worldbattlebattlechoice43->Append(battlenames);
+		m_worldbattlebattlechoice44->Append(battlenames);
 	}
-	m_worldbattlepanelspin->Show(!enemyloaded);
-	m_worldbattlepanelchoice->Show(enemyloaded);
+	m_worldbattlepanelspin1->Show(!enemyloaded);
+	m_worldbattlepanelspin2->Show(!enemyloaded);
+	m_worldbattlepanelspin3->Show(!enemyloaded);
+	m_worldbattlepanelspin4->Show(!enemyloaded);
+	m_worldbattlepanelchoice1->Show(enemyloaded);
+	m_worldbattlepanelchoice2->Show(enemyloaded);
+	m_worldbattlepanelchoice3->Show(enemyloaded);
+	m_worldbattlepanelchoice4->Show(enemyloaded);
 	worldloaded = true;
 	m_worldlist->SetSelection(0);
 	m_worldplacelist->SetSelection(0);
@@ -7311,6 +7458,11 @@ CDDataStruct::CDDataStruct(wxWindow* parent, string fname, ConfigurationSet& cfg
 		cluster.field_amount = config.field_amount;
 //		cluster.battle_scene_amount = config.battle_scene_amount;
 		cluster.image_map_amount = 0;
+		if (config.atlas_icontexture_file>=0 && config.atlas_iconsprite_file>=0) {
+			fstream atlasfile(config.steam_dir_data+"sharedassets2.assets", ios::in | ios::binary);
+			ffuiset.steam_atlas[0].LoadAtlas(atlasfile,config.meta_atlas,config.atlas_icontexture_file,config.atlas_iconsprite_file);
+			atlasfile.close();
+		}
 	}
 	for (i=0;i<LIST_MAX_AMOUNT;i++)
 		OrderedIndex[i] = i;

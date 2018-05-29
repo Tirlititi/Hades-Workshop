@@ -402,9 +402,9 @@ void TextDataStruct::WriteHWS(fstream& f, bool multilang) {
 			MACRO_TEXT_IOFUNCTION(HWSWrite,HWSSeek,false,false)
 		}
 	} else {
-		SteamLanguage lang;
-		HWSWriteShort(f,amount);
 		if (multilang) {
+			SteamLanguage lang;
+			HWSWriteShort(f,amount);
 			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
 				if (hades::STEAM_LANGUAGE_SAVE_LIST[lang]) {
 					HWSWriteChar(f,lang);
@@ -414,6 +414,7 @@ void TextDataStruct::WriteHWS(fstream& f, bool multilang) {
 				}
 			HWSWriteChar(f,STEAM_LANGUAGE_NONE);
 		} else {
+			HWSWriteShort(f,amount);
 			for (i=0;i<amount;i++)
 				SteamWriteFF9String(f,text[i]);
 		}

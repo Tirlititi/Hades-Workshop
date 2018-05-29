@@ -1,6 +1,8 @@
 #include "UnityArchiver.h"
 
 #include <algorithm>
+#include <wx/string.h>
+#include <wx/translation.h>
 
 #define X64_FOLDER "x64\\"
 #define X86_FOLDER "x86\\"
@@ -478,7 +480,7 @@ uint32_t UnityArchiveMetaData::GetFileOffsetByIndex(unsigned int fileid, string 
 int32_t UnityArchiveMetaData::GetFileIndex(string filename, uint32_t filetype, unsigned int num, string folder) {
 	unsigned int i;
 	for (i=0;i<header_file_amount;i++)
-		if (file_name[i].compare(filename)==0 && (filetype==0xFFFFFFFF || filetype==file_type1[i])) {
+		if (file_name[i].compare(filename)==0 && (filetype==0x7FFFFFFF || filetype==file_type1[i])) {
 			if (num==0)
 				return i;
 			else
@@ -490,7 +492,7 @@ int32_t UnityArchiveMetaData::GetFileIndex(string filename, uint32_t filetype, u
 int32_t UnityArchiveMetaData::GetFileIndexByInfo(int64_t info, uint32_t filetype, string folder) {
 	unsigned int i;
 	for (i=0;i<header_file_amount;i++)
-		if (file_info[i]==info && (filetype==0xFFFFFFFF || filetype==file_type1[i]))
+		if (file_info[i]==info && (filetype==0x7FFFFFFF || filetype==file_type1[i]))
 			return i;
 	return -1;
 }
@@ -508,7 +510,7 @@ string UnityArchiveMetaData::GetFileFullName(unsigned int fileid, UnityArchiveAs
 			}
 	if (searchfullname && fullname.length()>0 && indexlist)
 		for (i=0;i<indexlist->amount;i++)
-			if (fullname.length()<=indexlist->path[i].length() && fullname==indexlist->path[i].substr(indexlist->path[i].length()-fullname.length()) && indexlist->index[i]==fileid+1) {
+			if (fullname.length()<=indexlist->path[i].length() && _(fullname).IsSameAs(indexlist->path[i].substr(indexlist->path[i].length()-fullname.length()),false) && indexlist->index[i]==fileid+1) {
 				fullname = indexlist->path[i];
 				searchfullname = false;
 				break;

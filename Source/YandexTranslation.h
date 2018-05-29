@@ -6,9 +6,9 @@
 
 namespace Yandex {
 
-	void SendTranslationRequest(wxString text, SteamLanguage from, SteamLanguage to);
+	int Translate(wxString text, SteamLanguage from, SteamLanguage to, wxString* output);
+	int ParseYandexAnswer(wxString jsonstr, wxString* output);
 	wxString GetTranslationURL(wxString text, SteamLanguage from, SteamLanguage to);
-	wxString ParseYandexAnswer(wxString jsonstr);
 
 }
 

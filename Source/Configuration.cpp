@@ -1399,6 +1399,21 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	dest.dll_equipset_field_id[0] = dest.meta_dll.GetStaticFieldIdFromToken(fieldinst.param);
 	for (i=1;i<EQUIP_SET_AMOUNT;i++)
 		dest.dll_equipset_field_id[i] = dest.dll_equipset_field_id[0]+i;
+
+	unityarchivename = dest.steam_dir_data+"sharedassets2.assets";
+	unityarchive.open(unityarchivename.c_str(),ios::in | ios::binary);
+	dest.meta_atlas.Load(unityarchive);
+	for (i=0;;i++) {
+		dest.atlas_iconsprite_file = dest.meta_atlas.GetFileIndex("",-1,i);
+		if (dest.atlas_iconsprite_file<0)
+			break;
+		unityarchive.seekg(dest.meta_atlas.GetFileOffsetByIndex(dest.atlas_iconsprite_file)+0x2C);
+		if (ReadLong(unityarchive)==377) // DEBUG: should find it from GameObject hierarchy?
+			break;
+	}
+	dest.atlas_icontexture_file = dest.meta_atlas.GetFileIndex("Icon Atlas",28);
+	unityarchive.close();
+
 	dest.language = LANGUAGE_VERSION_UNKNOWN;
 	dest.spell_name_space_total = 0xFFFF;
 	dest.spell_help_space_total = 0xFFFF;

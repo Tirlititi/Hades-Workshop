@@ -146,7 +146,8 @@ public:
 	void DisplayWorldMap(int worldid);
 	void DisplayWorldPlace(int placeid);
 	void DisplayWorldBattle(int worldbattleid);
-	void DisplayWorldBattleHelp(int whichbattle);
+	int GetWorldBattleSetFromSpot(int spot, int spotversion = 0);
+	void DisplayWorldBattleHelp(int spotversion, int whichbattle);
 	void InitField(void);
 	void DisplayField(int fieldid);
 	void InitBattleScene(void);

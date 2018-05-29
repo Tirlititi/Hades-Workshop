@@ -2,7 +2,8 @@
 #define _WORLDMAPS_H
 
 #define WORLD_MAP_PLACE_AMOUNT			64
-#define WORLD_MAP_BATTLE_GROUND_AMOUNT	354
+#define WORLD_MAP_BATTLE_SPOT_AMOUNT	127 // Number of Battle Spots
+#define WORLD_MAP_BATTLE_GROUND_AMOUNT	354 // 50 Battle Spots with 4 grounds + 77 with 2 grounds
 #define WORLD_MAP_BATTLE_SET_AMOUNT		4
 
 struct WorldMapInfoStruct;
