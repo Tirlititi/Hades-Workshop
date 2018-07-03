@@ -239,7 +239,7 @@ void ItemUsableDataStruct::SetSound(uint16_t newvalue) {
 		IO ## Char(ffbin,item[i].skill[2]); \
 		IO ## Char(ffbin,item[i].type); \
 		IO ## Char(ffbin,item[i].menu_position); \
-		IO ## Char(ffbin,zero8); \
+		IO ## Char(ffbin,item[i].zero); \
 	} \
 	if (PPF) PPFEndScanStep();
 
@@ -578,6 +578,7 @@ DllMetaDataModification* ItemDataSet::ComputeSteamMod(ConfigurationSet& config, 
 		argvalue[i][10] = item[i].skill[2];
 		argvalue[i][11] = item[i].type;
 		argvalue[i][12] = item[i].menu_position;
+		argvalue[i][13] = item[i].zero;
 	}
 	res[0] = dlldata.ConvertRawToScript_Object(argvalue,steam_method_position[0],steam_method_base_length[0],ITEM_AMOUNT,14,steam_item_field_size,steam_item_field_array);
 	for (i=0;i<ITEM_AMOUNT;i++)

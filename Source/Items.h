@@ -46,6 +46,7 @@ public:
 	uint8_t skill[3];
 	uint8_t type;
 	uint8_t menu_position;
+	uint8_t zero;
 	
 	int usable_id; // -1 if not an usable item
 	int weapon_id; // -1 if not a weapon

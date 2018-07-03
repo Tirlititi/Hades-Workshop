@@ -329,7 +329,7 @@ void EnemyDataStruct::RemoveAnimation(uint16_t animindex) {
 		IO ## Char(f,stat[i].strength); \
 		IO ## Char(f,stat[i].magic); \
 		IO ## Char(f,stat[i].spirit); \
-		IO ## Char(f,stat[i].zero1); \
+		IO ## Char(f,stat[i].zerostat); \
 		IO ## Char(f,stat[i].trans); \
 		IO ## Char(f,stat[i].cur_capa); \
 		IO ## Char(f,stat[i].max_capa); \
@@ -378,8 +378,9 @@ void EnemyDataStruct::RemoveAnimation(uint16_t animindex) {
 		IO ## Short(f,(uint16_t&)stat[i].shadow_offset_x); \
 		IO ## Short(f,(uint16_t&)stat[i].shadow_offset_y); \
 		IO ## Char(f,stat[i].shadow_bone2); \
-		IO ## Char(f,stat[i].zero2); \
-		IO ## Long(f,stat[i].zero3); \
+		IO ## Char(f,stat[i].zero1); \
+		IO ## Short(f,stat[i].zero2); \
+		IO ## Short(f,stat[i].zero3); \
 	} \
 	for (i=0;i<spell_amount;i++) { \
 		if (READ) spell[i].parent = this; \

@@ -125,7 +125,7 @@ int64_t ScriptArgument::GetValue() {
 	if (is_var) \
 		for (i=0;i<size;i++) \
 			IO ## Char(f,var[i]); \
-	else if (size!=2 || !is_signed) \
+	else if (size!=2 || is_signed) \
 		for (i=0;i<size;i++) { \
 			buffer = (value >> i*8) & 0xFF; \
 			IO ## Char(f,buffer); \
@@ -806,9 +806,10 @@ void ScriptDataStruct::ApplyDialogLink(vector<uint16_t> langtextid, vector<uint1
 
 #define MACRO_SCRIPT_IOFUNCTION(IO,SEEK,READ,PPF,FUNC) \
 	unsigned int i,j; \
-	uint32_t entry_pos, function_pos; \
+	uint32_t entry_pos, local_entry_pos, function_pos; \
 	uint32_t zero32 = 0; \
 	uint16_t zero16 = 0; \
+	uint8_t zero8 = 0; \
 	if (PPF) PPFInitScanStep(f); \
 	IO ## Short(f,magic_number); \
 	IO ## Char(f,header_unknown1); \
@@ -842,6 +843,7 @@ void ScriptDataStruct::ApplyDialogLink(vector<uint16_t> langtextid, vector<uint1
 	for (i=0;i<entry_amount;i++) { \
 		if (entry_size[i]>0) { \
 			SEEK(f,entry_pos,entry_offset[i]); \
+			local_entry_pos = f.tellg(); \
 			if (PPF) PPFInitScanStep(f); \
 			IO ## Char(f,entry_type[i]); \
 			IO ## Char(f,entry_function_amount[i]); \
@@ -866,6 +868,8 @@ void ScriptDataStruct::ApplyDialogLink(vector<uint16_t> langtextid, vector<uint1
 				SEEK(f,function_pos,function_point[i][j]); \
 				func[i][j].FUNC(f); \
 			} \
+			while (f.tellg()<local_entry_pos+entry_size[i]) \
+				IO ## Char(f,zero8); \
 		} else if (READ) { \
 			entry_type[i] = 0xFF; \
 			entry_function_amount[i] = 0; \
@@ -1159,7 +1163,7 @@ ScriptDataStruct& ScriptDataStruct::operator=(const ScriptDataStruct& from) {
 bool ScriptDataStruct::IsDataModified(SteamLanguage lang) {
 	if (multi_lang_script==NULL || lang==current_language)
 		return modified;
-	return multi_lang_script->is_modified[lang];
+	return multi_lang_script->is_modified[lang] || multi_lang_script->is_modified[multi_lang_script->base_script_lang[lang]];
 }
 
 int ScriptDataStruct::GetDataSize(SteamLanguage lang) {

@@ -1256,10 +1256,10 @@ void TextSteamEditDialog::OnButtonClick(wxCommandEvent& event) {
 					multilangbtn[i]->Refresh();
 					multilangbtn[i]->Layout();
 					multilangbtn[i]->Enable(false); // ToDo
-					multilangctrl[i]->ChangeValue(_(L""));
+					multilangctrl[i]->ChangeValue(_(L"[STRT=0,1]"));
 					multilangctrl[i]->Enable(true);
 					multilangname[i]->Enable(true);
-					text.SetValue(L"",lang);
+					text.SetValue(L"[STRT=0,1]",lang);
 				} else {
 /*					wxString translatestr = _(L"");
 					int yandexresult = Yandex::Translate(m_textctrl->GetValue(),GetSteamLanguage(),lang,&translatestr);

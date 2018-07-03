@@ -517,9 +517,9 @@ int BatchExportDialog::ExportEnemyScript(wxString path, bool* exportlist, bool s
 					if (data.script[i]->multi_lang_script==NULL) {
 						output.Write(_(L"#HW language ")+HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[GetSteamLanguage()]+_(L"\n"));
 						lang = STEAM_LANGUAGE_AMOUNT;
-					} else if (data.script[i]->multi_lang_script->base_script_lang[lang]!=lang && hades::STEAM_LANGUAGE_SAVE_LIST[data.script[i]->multi_lang_script->base_script_lang[lang]]) {
+					} else if (!hades::STEAM_LANGUAGE_SAVE_LIST[lang]) {
 						continue;
-					} else if (data.script[i]->multi_lang_script->base_script_lang[lang]==lang && !hades::STEAM_LANGUAGE_SAVE_LIST[lang]) {
+					} else if (data.script[i]->multi_lang_script->base_script_lang[lang]!=lang && hades::STEAM_LANGUAGE_SAVE_LIST[data.script[i]->multi_lang_script->base_script_lang[lang]]) {
 						continue;
 					} else {
 						output.Write(_(L"#HW language ")+HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[lang]+_(L"\n"));
@@ -622,9 +622,9 @@ int BatchExportDialog::ExportWorldScript(wxString path, bool* exportlist, bool s
 					if (data.script[i]->multi_lang_script==NULL) {
 						output.Write(_(L"#HW language ")+HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[GetSteamLanguage()]+_(L"\n"));
 						lang = STEAM_LANGUAGE_AMOUNT;
-					} else if (data.script[i]->multi_lang_script->base_script_lang[lang]!=lang && hades::STEAM_LANGUAGE_SAVE_LIST[data.script[i]->multi_lang_script->base_script_lang[lang]]) {
+					} else if (!hades::STEAM_LANGUAGE_SAVE_LIST[lang]) {
 						continue;
-					} else if (data.script[i]->multi_lang_script->base_script_lang[lang]==lang && !hades::STEAM_LANGUAGE_SAVE_LIST[lang]) {
+					} else if (data.script[i]->multi_lang_script->base_script_lang[lang]!=lang && hades::STEAM_LANGUAGE_SAVE_LIST[data.script[i]->multi_lang_script->base_script_lang[lang]]) {
 						continue;
 					} else {
 						output.Write(_(L"#HW language ")+HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[lang]+_(L"\n"));
@@ -717,9 +717,9 @@ int BatchExportDialog::ExportFieldScript(wxString path, bool* exportlist, bool s
 					if (data.script_data[i]->multi_lang_script==NULL) {
 						output.Write(_(L"#HW language ")+HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[GetSteamLanguage()]+_(L"\n"));
 						lang = STEAM_LANGUAGE_AMOUNT;
-					} else if (data.script_data[i]->multi_lang_script->base_script_lang[lang]!=lang && hades::STEAM_LANGUAGE_SAVE_LIST[data.script_data[i]->multi_lang_script->base_script_lang[lang]]) {
+					} else if (!hades::STEAM_LANGUAGE_SAVE_LIST[lang]) {
 						continue;
-					} else if (data.script_data[i]->multi_lang_script->base_script_lang[lang]==lang && !hades::STEAM_LANGUAGE_SAVE_LIST[lang]) {
+					} else if (data.script_data[i]->multi_lang_script->base_script_lang[lang]!=lang && hades::STEAM_LANGUAGE_SAVE_LIST[data.script_data[i]->multi_lang_script->base_script_lang[lang]]) {
 						continue;
 					} else {
 						output.Write(_(L"#HW language ")+HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[lang]+_(L"\n"));

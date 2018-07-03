@@ -1083,7 +1083,7 @@ void CDDataStruct::MarkDataPartySpecialModified() {
 	GetTopWindow()->MarkDataModified();
 }
 
-void CDDataStruct::MarkDataEnemyModified(unsigned int battleid, Chunk_Type chunktype) {
+void CDDataStruct::MarkDataEnemyModified(unsigned int battleid, Chunk_Type chunktype, bool alllang) {
 	enemymodified = true;
 	if (chunktype==CHUNK_TYPE_ENEMY_STATS)
 		enemyset.battle[battleid]->MarkDataModified();
@@ -1091,9 +1091,13 @@ void CDDataStruct::MarkDataEnemyModified(unsigned int battleid, Chunk_Type chunk
 		enemyset.battle_data[battleid]->MarkDataModified();
 	else if (chunktype==CHUNK_TYPE_TEXT)
 		enemyset.text[battleid]->MarkDataModified();
-	else if (chunktype==CHUNK_TYPE_SCRIPT)
+	else if (chunktype==CHUNK_TYPE_SCRIPT) {
+		if (alllang && enemyset.script[battleid]->multi_lang_script!=NULL)
+			for (SteamLanguage lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+				if (enemyset.script[battleid]->multi_lang_script->is_loaded[lang])
+					enemyset.script[battleid]->multi_lang_script->is_modified[lang] = true;
 		enemyset.script[battleid]->MarkDataModified();
-	else if (chunktype==CHUNK_TYPE_IMAGE_MAP)
+	} else if (chunktype==CHUNK_TYPE_IMAGE_MAP)
 		enemyset.preload[battleid]->MarkDataModified();
 	GetTopWindow()->MarkDataModified();
 }
@@ -1144,13 +1148,27 @@ void CDDataStruct::MarkDataWorldMapModified(unsigned int worldid, Chunk_Type chu
 	GetTopWindow()->MarkDataModified();
 }
 
-void CDDataStruct::MarkDataFieldModified(unsigned int fieldid, Chunk_Type chunktype) {
+void CDDataStruct::MarkDataWorldMapScriptModified(unsigned int worldid, bool alllang) {
+	worldmodified = true;
+	if (alllang && worldset.script[worldid]->multi_lang_script!=NULL)
+		for (SteamLanguage lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+			if (worldset.script[worldid]->multi_lang_script->is_loaded[lang])
+				worldset.script[worldid]->multi_lang_script->is_modified[lang] = true;
+	worldset.script[worldid]->MarkDataModified();
+	GetTopWindow()->MarkDataModified();
+}
+
+void CDDataStruct::MarkDataFieldModified(unsigned int fieldid, Chunk_Type chunktype, bool alllang) {
 	fieldmodified = true;
-	if (chunktype==CHUNK_TYPE_SCRIPT)
+	if (chunktype==CHUNK_TYPE_SCRIPT) {
+		if (alllang && fieldset.script_data[fieldid]->multi_lang_script!=NULL)
+			for (SteamLanguage lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+				if (fieldset.script_data[fieldid]->multi_lang_script->is_loaded[lang])
+					fieldset.script_data[fieldid]->multi_lang_script->is_modified[lang] = true;
 		fieldset.script_data[fieldid]->MarkDataModified();
-	else if (chunktype==CHUNK_TYPE_FIELD_ROLE)
+	} else if (chunktype==CHUNK_TYPE_FIELD_ROLE) {
 		fieldset.role[fieldid]->MarkDataModified();
-	else if (chunktype==CHUNK_TYPE_IMAGE_MAP) {
+	} else if (chunktype==CHUNK_TYPE_IMAGE_MAP) {
 		fieldset.preload[fieldid]->MarkDataModified();
 		if (gametype==GAME_TYPE_PSX)
 			fieldset.script_data[fieldid]->parent_cluster->MarkDataModified();
@@ -1718,9 +1736,7 @@ void CDDataStruct::DisplaySpell(int spellid) {
 	m_spellstatus->SetSelection(sp.status);
 	m_spellaccuracy->SetValue(sp.accuracy);
 	m_spellmp->SetValue(sp.mp);
-	m_spellmenuflagmenuuse->SetValue(sp.menu_flag & MENU_FLAG_CAN_USE_IN_MENU);
-	m_spellmenuflaghideap->SetValue(sp.menu_flag & MENU_FLAG_HIDE_AP_PROGRESSION);
-	m_spellmenuflagmpboost->SetValue(sp.menu_flag & MENU_FLAG_MP_COST_BOOST);
+	MACRO_FLAG_DISPLAY8(sp.menu_flag,m_spellmenuflag)
 	bool acc = false;
 	for (i=0;i<G_N_ELEMENTS(HADES_STRING_SPELL_MODEL);i++) {
 		if (HADES_STRING_SPELL_MODEL[i].id==sp.model) {
@@ -1905,9 +1921,7 @@ void CDDataStruct::OnSpellChangeFlags(wxCommandEvent& event) {
 	SpellDataStruct& sp = spellset.spell[*sortid];
 	int id = event.GetId();
 	bool on = event.GetInt();
-	MACRO_FLAG_SET(sp.menu_flag,wxID_CAN_USE_IN_MENU,MENU_FLAG_CAN_USE_IN_MENU)
-	MACRO_FLAG_SET(sp.menu_flag,wxID_HIDE_AP_PROGRESSION,MENU_FLAG_HIDE_AP_PROGRESSION)
-	MACRO_FLAG_SET(sp.menu_flag,wxID_MP_COST_BOOST,MENU_FLAG_MP_COST_BOOST)
+	MACRO_FLAG_SET8(sp.menu_flag,wxID_MF)
 	MACRO_FLAG_SET8(sp.element,wxID_SE)
 	MACRO_FLAG_SET(sp.target_flag,wxID_CAN_TARGET_DEAD,TARGET_FLAG_CAN_TARGET_DEAD)
 	MACRO_FLAG_SET(sp.target_flag,wxID_TARGET_CAMERA,TARGET_FLAG_CAMERA)
@@ -2828,6 +2842,7 @@ void CDDataStruct::DisplayItem(int itemid) {
 	m_itemicon->SetValue(it.icon);
 	m_itemiconcolor->SetValue(it.icon_color);
 	DisplayItemIcon();
+	m_itemzero->SetValue(it.zero);
 	m_itemusablelabel->Show(isusable);
 	m_itemusablepanel->Show(isusable);
 	if (isusable) {
@@ -3068,6 +3083,8 @@ void CDDataStruct::OnItemChangeSpin(wxSpinEvent& event) {
 	} else if (id==wxID_ICONCOLOR) {
 		it.icon_color = event.GetPosition();
 		DisplayItemIcon();
+	} else if (id==wxID_ZERO) {
+		it.zero = event.GetPosition();
 	} else if (id==wxID_POWER) {
 		itemset.usable[it.usable_id].power = event.GetPosition();
 	} else if (id==wxID_WEAPONPOWER) {
@@ -3999,6 +4016,7 @@ void CDDataStruct::DisplayEnemyStat(int battleid, int statid) {
 	m_enemystatexp->SetValue(es.exp);
 	m_enemystatgils->SetValue(es.gils);
 	m_enemystatdefaultattack->SetSelection(es.default_attack);
+	MACRO_FLAG_DISPLAY8(es.death_flag,m_enemydeathflag)
 	for (i=0;i<m_enemystatmodel->GetCount();i++) {
 		SortedChoiceItem* modname = (SortedChoiceItem*)m_enemystatmodel->GetClientData(i);
 		if (modname->id==es.model) {
@@ -4007,6 +4025,10 @@ void CDDataStruct::DisplayEnemyStat(int battleid, int statid) {
 		}
 	}
 	m_enemystatmodelid->SetValue(es.model);
+	m_enemystatzerostat->SetValue(es.zerostat);
+	m_enemystatzero1->SetValue(es.zero1);
+	m_enemystatzero2->SetValue(es.zero2);
+	m_enemystatzero3->SetValue(es.zero3);
 	
 	MACRO_FLAG_DISPLAY8(es.element_absorb,m_enemystatelementabsorb)
 	MACRO_FLAG_DISPLAY8(es.element_immune,m_enemystatelementimmune)
@@ -4216,6 +4238,7 @@ void CDDataStruct::OnListBoxEnemyText(wxCommandEvent& event) {
 	} else {
 		TextSteamEditDialog ted(this,&ffuiset,td.text[id]);
 		if (ted.ShowModal()==wxID_OK) {
+			MACRO_MULTILANG_INCREASE_COUNTER(td.text[id],ted.text,td.text,id,L"[STRT=0,1]")
 			td.SetText(id,ted.text);
 			MarkDataEnemyModified(*sortid,CHUNK_TYPE_TEXT);
 			m_enemytextlist->SetString(textsel,td.text[id].GetStr(hades::TEXT_PREVIEW_TYPE));
@@ -4351,6 +4374,14 @@ void CDDataStruct::OnEnemyChangeSpin(wxSpinEvent& event) {
 			MACRO_ENEMY_CHANGE_DATA(Stat,exp,event.GetPosition())
 		} else if (id==wxID_GILS) {
 			MACRO_ENEMY_CHANGE_DATA(Stat,gils,event.GetPosition())
+		} else if (id==wxID_ZERO0) {
+			MACRO_ENEMY_CHANGE_DATA(Stat,zerostat,event.GetPosition())
+		} else if (id==wxID_ZERO1) {
+			MACRO_ENEMY_CHANGE_DATA(Stat,zero1,event.GetPosition())
+		} else if (id==wxID_ZERO2) {
+			MACRO_ENEMY_CHANGE_DATA(Stat,zero2,event.GetPosition())
+		} else if (id==wxID_ZERO3) {
+			MACRO_ENEMY_CHANGE_DATA(Stat,zero3,event.GetPosition())
 		} else if (id==wxID_MODEL) {
 			BattleModelLinks& linkeddata = BattleModelLinks::GetLinksByModel(event.GetPosition());
 			unsigned int i;
@@ -4535,6 +4566,7 @@ void CDDataStruct::OnEnemyChangeFlags(wxCommandEvent& event) {
 		EnemyStatDataStruct& enmydata = eb.stat[m_enemystatlist->GetSelection()];
 
 		#define MACRO_ENEMY_CHECK_STAT_FLAG(STAT) \
+			MACRO_FLAG_SET8(STAT ## .death_flag,wxID_ED) \
 			MACRO_FLAG_SET8(STAT ## .element_absorb,wxID_EA) \
 			MACRO_FLAG_SET8(STAT ## .element_immune,wxID_EI) \
 			MACRO_FLAG_SET8(STAT ## .element_half,wxID_EH) \
@@ -4712,7 +4744,7 @@ void CDDataStruct::OnEnemyChangeButton(wxCommandEvent& event) {
 		ScriptEditLinkDialog dial(this,*enemyset.script[*sortid],*enemyset.text[*sortid]);
 		if (dial.ShowModal()==wxID_OK) {
 			dial.ApplyModifications(*enemyset.script[*sortid]);
-			MarkDataEnemyModified(*sortid,CHUNK_TYPE_SCRIPT);
+			MarkDataEnemyModified(*sortid,CHUNK_TYPE_SCRIPT,true);
 		}
 /*	} else if (id==wxID_PRELOAD) {
 		bool dataloaded[2] = { enemyloaded, fieldloaded };
@@ -4905,7 +4937,7 @@ void CDDataStruct::OnEnemySpellRightClickMenu(wxCommandEvent& event) {
 					DiscardEnemyNumberLimit = true;
 			}
 		}
-	} else if (id==wxID_REMOVE) {
+	} else if (id==wxID_REMOVE && eb.spell_amount>1) {
 		eb.RemoveSpell(objid);
 		newsel = min(eb.spell_amount-1,objid);
 		if (*sortid==copyenemyspell_battleid) {
@@ -4975,6 +5007,8 @@ void CDDataStruct::OnEnemyTextRightClickMenu(wxCommandEvent& event) {
 		newsel = td.amount;
 		FF9String newstr;
 		newstr.CreateEmpty();
+		if (GetGameType()!=GAME_TYPE_PSX)
+			newstr.SetValue(L"[STRT=0,1]");
 		if (td.AddText(td.amount,newstr)) {
 			newsel = -1;
 			TextReachLimit();
@@ -4982,6 +5016,8 @@ void CDDataStruct::OnEnemyTextRightClickMenu(wxCommandEvent& event) {
 	} else if (id==wxID_REMOVE && objid!=wxNOT_FOUND) {
 		td.RemoveText(eb.stat_amount+eb.spell_amount+objid);
 		newsel = min(td.amount-eb.stat_amount-eb.spell_amount-1,objid);
+		if (newsel<0)
+			m_enemytextlist->Clear();
 	}
 	if (newsel>=0) {
 		m_enemytextlist->Clear();
@@ -5422,6 +5458,8 @@ void CDDataStruct::OnTextRightClickMenu(wxCommandEvent& event) {
 		newsel = td.amount;
 		FF9String newstr;
 		newstr.CreateEmpty();
+		if (GetGameType()!=GAME_TYPE_PSX)
+			newstr.SetValue(L"[STRT=0,1]");
 		if (td.AddText(td.amount,newstr)) {
 			newsel = -1;
 			TextReachLimit();
@@ -5608,7 +5646,7 @@ walkbmp.SaveFile(_(L"aaaa.bmp"),wxBITMAP_TYPE_BMP);*/
 		ScriptEditLinkDialog dial(this,*sc,*fieldset.related_text[*sortid]);
 		if (dial.ShowModal()==wxID_OK) {
 			dial.ApplyModifications(*sc);
-			MarkDataFieldModified(*sortid,CHUNK_TYPE_SCRIPT);
+			MarkDataFieldModified(*sortid,CHUNK_TYPE_SCRIPT,true);
 		}
 	} else if (id==wxID_PRELOAD) {
 		if (gametype==GAME_TYPE_PSX) {
@@ -5905,7 +5943,7 @@ void CDDataStruct::OnWorldChangeButton(wxCommandEvent& event) {
 		ScriptEditLinkDialog dial(this,*worldset.script[*sortid],*worldset.text_data[*sortid]);
 		if (dial.ShowModal()==wxID_OK) {
 			dial.ApplyModifications(*worldset.script[*sortid]);
-			MarkDataWorldMapModified(*sortid,CHUNK_TYPE_SCRIPT);
+			MarkDataWorldMapScriptModified(*sortid,true);
 		}
 	} else if (id==wxID_PRELOAD) {
 		unsigned int sel = m_worldlist->GetSelection();
@@ -6021,6 +6059,8 @@ void CDDataStruct::OnWorldTextRightClickMenu(wxCommandEvent& event) {
 		newsel = td.amount;
 		FF9String newstr;
 		newstr.CreateEmpty();
+		if (GetGameType()!=GAME_TYPE_PSX)
+			newstr.SetValue(L"[STRT=0,1]");
 		if (td.AddText(td.amount,newstr)) {
 			newsel = -1;
 			TextReachLimit();
@@ -6493,6 +6533,9 @@ void CDDataStruct::OnSpecialTextRightClickMenu(wxCommandEvent& event) {
 		newsel = td.amount;
 		FF9String newstr;
 		newstr.CreateEmpty();
+		if (GetGameType()!=GAME_TYPE_PSX)
+			for (SteamLanguage lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+				newstr.SetValue(L"",lang);
 		if (td.AddText(td.amount,newstr)) {
 			newsel = -1;
 			TextReachLimit();

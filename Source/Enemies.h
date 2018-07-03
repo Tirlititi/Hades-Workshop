@@ -101,7 +101,7 @@ public:
 	uint32_t status_initial;
 	uint8_t default_attack;
 	uint8_t blue_magic;
-	uint16_t death_flag; // 1 : die_atk ; 2 : die_dmg
+	uint16_t death_flag; // 1 : die_atk (allow script "Death" function) ; 2 : die_dmg
 	uint8_t text_amount;
 	uint16_t radius;
 	uint16_t model;
@@ -128,9 +128,10 @@ public:
 	int16_t shadow_offset_y; // Unused
 	uint16_t sound_engage;
 	uint16_t sound_death;
+	uint8_t zerostat;
 	uint8_t zero1;
-	uint8_t zero2;
-	uint32_t zero3;
+	uint16_t zero2;
+	uint16_t zero3;
 	
 	uint8_t sequence_anim_base;
 	uint8_t sequence_anim_amount;
