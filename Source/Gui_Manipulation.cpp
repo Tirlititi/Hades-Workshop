@@ -6458,7 +6458,7 @@ void CDDataStruct::OnSpellAnimationChangeButton(wxCommandEvent& event) {
 	if (id==wxID_SEQUENCE) {
 		AnimSequenceEditDialog dial(this,sa);
 		if (dial.ShowModal()==wxID_OK) {
-			sa.Copy(dial.anim,true);
+			sa.Copy(dial.anim);
 			MarkDataSpellAnimationModified(*sortid,SPELL_ANIMATION_DATA_TYPE_SEQUENCE);
 		}
 	}

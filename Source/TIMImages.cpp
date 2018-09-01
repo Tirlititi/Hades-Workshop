@@ -5,6 +5,10 @@
 
 #define ALPHA_LIMIT 0x60
 
+uint8_t vram[1024][512][2];
+uint32_t PaletteBuffer[256];
+uint32_t ImageBuffer[256*256];
+
 uint8_t TIMImageDataStruct::color[32] = { 0,  8, 16, 24,
 										 32, 40, 48, 56,
 										 65, 73, 81, 89,
@@ -103,9 +107,6 @@ void TIMImageDataStruct::Flush() {
 	loaded = false;
 }
 
-uint32_t PaletteBuffer[256];
-uint32_t ImageBuffer[256*256];
-
 uint16_t TIMImageDataStruct::GetPosX() {
 	if (format & 0x8)
 		return pos_x*6;
@@ -127,11 +128,12 @@ void HandleColorAlpha(uint32_t& color, int alphamode) {
 	}
 }
 
-uint32_t* TIMImageDataStruct::ConvertAsPalette(uint16_t palpos, bool usealpha) {
+uint32_t* TIMImageDataStruct::ConvertAsPalette(uint16_t palpos, bool usealpha, bool shortformat) {
 	int i;
 	uint32_t* res = PaletteBuffer;
 	uint8_t pb = 2;//format & 0x3;
 	uint32_t paltmp;
+	uint16_t palsize = shortformat ? 16 : 256;
 	if (format & 0x8) {
 		uint32_t paltmp;
 		for (i=0;i<pal_width*pal_height;i++) {
@@ -143,20 +145,22 @@ uint32_t* TIMImageDataStruct::ConvertAsPalette(uint16_t palpos, bool usealpha) {
 			res[i] = (r << 16) | (g << 8) | b;
 			if (paltmp & 0x8000)
 				res[i] |= 0xFF000000;
-			HandleColorAlpha(res[i],usealpha ? 0 : 1);
+			HandleColorAlpha(res[i], usealpha ? 0 : 1);
 		}
-		while (i<256) {
+		while (i<palsize) {
 			res[i] = res[i-pal_width];
 			i++;
 		}
 	} else {
 		uint16_t palx = (palpos & 0x3F)*32;
-		uint16_t paly = palpos >> 6;
-		if (pos_x>palx || pos_x+width<palx+256 || pos_y>paly || pos_y+height<=paly)
+		uint16_t paly = (palpos >> 6) & 0x1FF;
+		if (shortformat)
+			palx -= (palx-pos_x)/2;
+		if (pos_x>palx || pos_x+width<=palx+palsize/pb || pos_y>paly || pos_y+height<=paly)
 			return NULL;
 		palx -= pos_x;
 		paly -= pos_y;
-		for (i=0;i<256;i++) {
+		for (i=0;i<palsize;i++) {
 			paltmp = pixel_value[(palx+i+paly*width)*pb];
 			paltmp |= pixel_value[(palx+i+paly*width)*pb+1] << 8;
 			uint32_t r = color[paltmp & 0x1F];
@@ -165,7 +169,7 @@ uint32_t* TIMImageDataStruct::ConvertAsPalette(uint16_t palpos, bool usealpha) {
 			res[i] = (r << 16) | (g << 8) | b;
 			if (paltmp & 0x8000)
 				res[i] |= 0xFF000000;
-			HandleColorAlpha(res[i],usealpha ? 0 : 1);
+			HandleColorAlpha(res[i], usealpha ? 0 : 1);
 		}
 	}
 	return res;
@@ -438,7 +442,6 @@ void TIMImageDataStruct::SetPixelValue(uint16_t x, uint16_t y, uint8_t pxvalue, 
 	}
 }
 
-uint8_t vram[1024][512][2];
 void TIMImageDataStruct::LoadInVRam(bool loadallchunk) {
 	TIMImageDataStruct* tim;
 	unsigned int i,x,y,k;
@@ -511,6 +514,20 @@ uint32_t TIMImageDataStruct::GetVRamPixel(unsigned int x, unsigned int y, unsign
 	return res;
 }
 
+uint32_t TIMImageDataStruct::GetVRamPixel(unsigned int x, unsigned int y, uint32_t* pal, bool shortformat) {
+	uint8_t palbyte;
+	if (shortformat) {
+		palbyte = vram[x >> 2][y][(x >> 1) & 1];
+		if (x&1)
+			palbyte = (palbyte & 0xF0) >> 4;
+		else
+			palbyte &= 0x0F;
+	} else {
+		palbyte = vram[x >> 1][y][x & 1];
+	}
+	return pal[palbyte];
+}
+
 uint32_t TIMImageDataStruct::ComputeMidColor(uint32_t leftcolor, uint32_t rightcolor) {
 	uint32_t res;
 	if ((leftcolor >> 24)==0)
@@ -522,6 +539,24 @@ uint32_t TIMImageDataStruct::ComputeMidColor(uint32_t leftcolor, uint32_t rightc
 		res |= ((((leftcolor >> 8) & 0xFF)+((rightcolor >> 8) & 0xFF))/2) << 8;
 		res |= ((((leftcolor >> 16) & 0xFF)+((rightcolor >> 16) & 0xFF))/2) << 16;
 		res |= 0xFF000000;
+	}
+	return res;
+}
+
+uint32_t* TIMImageDataStruct::ConvertPalette16to32(uint16_t* pal, uint32_t size) {
+	uint32_t* res = PaletteBuffer;
+	uint32_t r,g,b;
+	uint16_t paltmp;
+	unsigned int i;
+	for (i=0;i<size;i++) {
+		paltmp = pal[i];
+		r = color[paltmp & 0x1F];
+		g = color[(paltmp >> 5) & 0x1F];
+		b = color[(paltmp >> 10) & 0x1F];
+		res[i] = (r << 16) | (g << 8) | b;
+		if (paltmp & 0x8000)
+			res[i] |= 0xFF000000;
+		HandleColorAlpha(res[i], 1);
 	}
 	return res;
 }

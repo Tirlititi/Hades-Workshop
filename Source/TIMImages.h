@@ -94,27 +94,29 @@ public:
 	uint16_t GetWidth();
 	
 	//  Return temporary array not to be deleted
-	uint32_t* ConvertAsPalette(uint16_t palpos, bool usealpha=true);
+	uint32_t* ConvertAsPalette(uint16_t palpos, bool usealpha = true, bool shortformat = false);
 	//  If NULL is passed as a palette, then palpos must be set
 	// and the TIM must have an internal palette
-	uint32_t* ConvertAsImage(uint16_t texpos, uint16_t sizex, uint16_t sizey, uint32_t* pal=NULL, uint16_t palpos=0, bool usealpha=true);
+	uint32_t* ConvertAsImage(uint16_t texpos, uint16_t sizex, uint16_t sizey, uint32_t* pal = NULL, uint16_t palpos = 0, bool usealpha = true);
 	// Return array allocated with "new" and should be deleted
-	uint32_t* ConvertAsSteamImage(bool usealpha=true);
-	uint32_t* ConvertAsFullImage(uint32_t* pal=NULL, uint16_t palpos=0, bool usealpha=true);
+	uint32_t* ConvertAsSteamImage(bool usealpha = true);
+	uint32_t* ConvertAsFullImage(uint32_t* pal = NULL, uint16_t palpos = 0, bool usealpha = true);
 	// TIFF image exportation
-	int Export(const char* outputfile, bool full=true, uint16_t texpos=0, uint32_t* pal=NULL, uint16_t palpos=0, bool usealpha=true);
+	int Export(const char* outputfile, bool full = true, uint16_t texpos = 0, uint32_t* pal = NULL, uint16_t palpos = 0, bool usealpha = true);
 	// Doesn't check if there is enough space in the cluster : check it manually
 	// Charflag : (-1 = unused) (0 = import in even palettes) (1 = import in odd palettes)
-	void Import(uint8_t* colordata, uint8_t* alphadata, uint16_t posx, uint16_t posy, uint16_t sizex, uint16_t sizey, uint32_t* pal, int charflag=-1);
+	void Import(uint8_t* colordata, uint8_t* alphadata, uint16_t posx, uint16_t posy, uint16_t sizex, uint16_t sizey, uint32_t* pal, int charflag = -1);
 	void ImportPalette(uint16_t amount, uint32_t** paldata);
 	// Change pixel color using the palette value
-	void SetPixelValue(uint16_t x, uint16_t y, uint8_t pxvalue, int charflag=-1);
+	void SetPixelValue(uint16_t x, uint16_t y, uint8_t pxvalue, int charflag = -1);
 	
 	void LoadInVRam(bool loadallchunk = true);
 	static uint32_t GetVRamPixel(unsigned int x, unsigned int y, unsigned int px, unsigned int py, bool shortformat = false);
+	static uint32_t GetVRamPixel(unsigned int x, unsigned int y, uint32_t* pal, bool shortformat = false);
 	
 	static uint32_t ComputeMidColor(uint32_t leftcolor, uint32_t rightcolor);
-	static uint32_t* CreatePaletteFromData(uint8_t* colordata, uint8_t* alphadata, uint16_t sizex, uint16_t sizey);
+	static uint32_t* ConvertPalette16to32(uint16_t* pal, uint32_t size); // Return temporary array
+	static uint32_t* CreatePaletteFromData(uint8_t* colordata, uint8_t* alphadata, uint16_t sizex, uint16_t sizey); // Return array allocated with "new"
 	static TIMImageDataStruct& GetTIMPaletteStruct(TIMImageDataStruct& tim1, TIMImageDataStruct& tim2);
 	static TIMImageDataStruct& GetTIMTextureStruct(TIMImageDataStruct& tim1, TIMImageDataStruct& tim2);
 	
