@@ -7,6 +7,8 @@ set (CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR} CACHE PATH "installation root" FOR
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/share)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 project(Hades-Workshop)
 
 enable_testing()

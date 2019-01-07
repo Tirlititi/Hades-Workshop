@@ -7,7 +7,7 @@ set(UTIL Hades-Workshop)
 
 if (MSVC)
      add_compile_options(/bigobj)
-	 add_definitions(-DWXUSINGDLL -DWXUSINGDLL -DwxMSVC_VERSION_AUTO)
+	 add_definitions(-DWXUSINGDLL -DwxMSVC_VERSION_AUTO)
 endif()
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -31,12 +31,37 @@ source_group(FILES makeppf3.cpp makeppf3.h ${C_SQUISH_FILES} ${H_SQUISH_FILES} P
 
 add_executable(${UTIL} WIN32 ${C_FILES} ${H_FILES} ${C_SQUISH_FILES} ${H_SQUISH_FILES} resource.rc )
 
-target_link_libraries(${UTIL} ${FBXSDK_LIBRARY} base net xml adv aui core gl html net media propgrid qa ribbon richtext stc webview xrc wxexpat wxjpeg wxpng wxregex wxscintilla wxtiff wxzlib)
+target_link_libraries(${UTIL} base net xml adv aui core gl html net media propgrid qa ribbon richtext stc webview xrc wxexpat wxjpeg wxpng wxregex wxscintilla wxtiff wxzlib)
+target_link_libraries(${UTIL} optimized ${FBXSDK_LIBRARY} )
+target_link_libraries(${UTIL} debug ${FBXSDK_LIBRARY_DEBUG} )
 
 set_target_properties(${UTIL} PROPERTIES PREFIX "")
 
+if(MSVC)
+	# Include generator expression to suppress default Debug/Release pair
+	set(wxPLATFORM_LIB_DIR "$<1:/>${wxCOMPILER_PREFIX}${wxARCH_SUFFIX}_${lib_suffix}")
+else()
+	set(wxPLATFORM_LIB_DIR "/${wxCOMPILER_PREFIX}${wxARCH_SUFFIX}_${lib_suffix}")
+endif()
 
+message(STATUS )
 
-
-
-
+add_custom_target(copyWxBinaries
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:base>         	${CMAKE_BINARY_DIR}/bin/$<CONFIG>
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:net>         	${CMAKE_BINARY_DIR}/bin/$<CONFIG>
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:xml>         	${CMAKE_BINARY_DIR}/bin/$<CONFIG>
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:adv>         	${CMAKE_BINARY_DIR}/bin/$<CONFIG>
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:aui>         	${CMAKE_BINARY_DIR}/bin/$<CONFIG>
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:core>         	${CMAKE_BINARY_DIR}/bin/$<CONFIG>
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:gl>         		${CMAKE_BINARY_DIR}/bin/$<CONFIG>
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:html>         	${CMAKE_BINARY_DIR}/bin/$<CONFIG>
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:net>         	${CMAKE_BINARY_DIR}/bin/$<CONFIG>
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:media>       	${CMAKE_BINARY_DIR}/bin/$<CONFIG>
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:propgrid>    ${CMAKE_BINARY_DIR}/bin/$<CONFIG>
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:qa>       		${CMAKE_BINARY_DIR}/bin/$<CONFIG>
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:ribbon>       ${CMAKE_BINARY_DIR}/bin/$<CONFIG>
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:richtext>     ${CMAKE_BINARY_DIR}/bin/$<CONFIG>
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:webview>    ${CMAKE_BINARY_DIR}/bin/$<CONFIG>
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:xrc>            ${CMAKE_BINARY_DIR}/bin/$<CONFIG>
+ 
+)
