@@ -73,6 +73,7 @@ public:
 	void WriteHWS(fstream &ffbin);
 	// Return a modifamount-long pointer, to be deleted[]
 	DllMetaDataModification* ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount);
+	void GenerateCSharp(vector<string>& buffer);
 	// texttype: 0 for name, 1 for help
 	void WriteSteamText(fstream& ffbin, unsigned int texttype, SteamLanguage lang = GetSteamLanguage());
 	int GetSteamTextSize(unsigned int texttype, SteamLanguage lang = GetSteamLanguage());

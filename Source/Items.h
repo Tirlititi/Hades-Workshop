@@ -70,6 +70,7 @@ private:
 
 struct ItemUsableDataStruct {
 public:
+	uint8_t target_type;
 	uint16_t model;
 	uint8_t target_flag;
 	uint8_t effect;
@@ -88,10 +89,6 @@ public:
 	void SetTargetType(Spell_Target_Type newvalue); // Automatically change target_amount and target_priority if needed
 	uint16_t GetSound();
 	void SetSound(uint16_t newvalue);
-
-private:
-	uint8_t target_type;
-	friend ItemDataSet;
 };
 
 struct ItemWeaponDataStruct {
@@ -184,6 +181,7 @@ public:
 	void WriteHWS(fstream& ffhws);
 	// Return a modifamount-long pointer, to be deleted[]
 	DllMetaDataModification* ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount);
+	void GenerateCSharp(vector<string>& buffer);
 	// texttype: 0 for item name, 1 for item help, 2 for item battle help,
 	//  3 for key item name, 4 for key item help, 5 for key item description
 	void WriteSteamText(fstream& ffbin, unsigned int texttype, SteamLanguage lang = GetSteamLanguage());

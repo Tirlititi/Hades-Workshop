@@ -691,7 +691,7 @@ bool ScriptDataStruct::CheckLanguageSimilarity(SteamLanguage lang, SteamLanguage
 	return true;
 }
 
-void ScriptDataStruct::LinkLanguageScripts(SteamLanguage lang, SteamLanguage baselang, vector<uint16_t> langtextid, vector<uint16_t> baselangtextid) {
+void ScriptDataStruct::LinkLanguageScripts(SteamLanguage lang, SteamLanguage baselang, vector<uint16_t> langtextid, vector<uint16_t> baselangtextid, bool markmodified) {
 	if (multi_lang_script==NULL || !multi_lang_script->is_loaded[lang] || !multi_lang_script->is_loaded[baselang])
 		return;
 	unsigned int i,j;
@@ -739,7 +739,8 @@ void ScriptDataStruct::LinkLanguageScripts(SteamLanguage lang, SteamLanguage bas
 					}
 		}
 	}
-	multi_lang_script->is_modified[lang] = true;
+	if (markmodified)
+		multi_lang_script->is_modified[lang] = true;
 	if (oldbaselang==baselang)
 		return;
 	if (current_language==lang) {
@@ -781,7 +782,7 @@ void ScriptDataStruct::LinkSimilarLanguageScripts() {
 			if (!multi_lang_script->is_loaded[baselang] || multi_lang_script->base_script_lang[baselang]!=baselang)
 				continue;
 			if (CheckLanguageSimilarity(lang,baselang,&langtextid,&baselangtextid)) {
-				LinkLanguageScripts(lang,baselang,langtextid,baselangtextid);
+				LinkLanguageScripts(lang,baselang,langtextid,baselangtextid,false);
 				break;
 			}
 		}
@@ -1130,6 +1131,13 @@ void ScriptDataStruct::WriteLocalHWS(fstream& f, SteamLanguage lang) {
 
 ScriptDataStruct& ScriptDataStruct::operator=(const ScriptDataStruct& from) {
 	unsigned int i,j;
+	parent_cluster = from.parent_cluster;
+	parent_chunk = from.parent_chunk;
+	type = from.type;
+	size = from.size;
+	object_id = from.object_id;
+	loaded = from.loaded;
+	modified = false;
 	name = from.name;
 	func = from.func;
 	magic_number = from.magic_number;

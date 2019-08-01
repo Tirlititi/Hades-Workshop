@@ -143,6 +143,7 @@ public:
 	uint32_t GetMethodRange(unsigned int methid);
 	int GetStaticFieldIdFromToken(uint32_t fieldtoken);
 	uint32_t GetStaticFieldOffset(unsigned int staticfieldid);
+	uint32_t GetStaticFieldRange(unsigned int staticfieldid);
 	uint32_t GetTypeTokenIdentifier(const char* tname, const char* namesp = NULL);
 	uint32_t GetTypeRefTokenIdentifier(const char* tname, const char* namesp = NULL);
 	uint32_t GetFieldTokenIdentifier(const char* tname, const char* fname);
@@ -197,11 +198,13 @@ private:
 	
 	// Change dll_file stream - Return a new'd list of methodinfo matching the modif (NULL for non-method modifs)
 	DllMethodInfo** ComputeTinyFatAndMethodInfo(unsigned int modifamount, DllMetaDataModification* modif);
-	uint32_t ApplyOffsetModification(uint32_t offset, unsigned int modifamount, DllMetaDataModification* modif, DllMethodInfo** modifmethinfo, int32_t baseoffset = 0);
 	uint32_t ApplyVirtualOffsetModification(uint32_t baserva, uint32_t newsecoff, unsigned int modifamount, DllMetaDataModification* modif, DllMethodInfo** modifmethinfo);
-	uint32_t ApplySizeModification(uint32_t size, unsigned int modifamount, DllMetaDataModification* modif, DllMethodInfo** modifmethinfo);
+	static uint32_t ApplyOffsetModification(uint32_t offset, unsigned int modifamount, DllMetaDataModification* modif, DllMethodInfo** modifmethinfo, int32_t baseoffset = 0);
+	static uint32_t ApplySizeModification(uint32_t size, unsigned int modifamount, DllMetaDataModification* modif, DllMethodInfo** modifmethinfo);
 	// Change dll_file stream - Return base size
 	uint32_t WriteMethodSizeModification(fstream& fdest, uint32_t methid, unsigned int modifamount, DllMetaDataModification* modif);
+
+	friend DllMetaDataModification;
 };
 
 struct DllMetaDataModification {
@@ -212,9 +215,10 @@ struct DllMetaDataModification {
 	
 	int method_id;
 	int tiny_fat_change;
+	int8_t base_end_padding;
 	uint32_t code_block_pos = 0;
 	
-	int32_t GetSizeModification(unsigned int modifamount, DllMetaDataModification* modif, DllMethodInfo& methinfo);
+	int32_t GetSizeModification(unsigned int modifid, unsigned int modifamount, DllMetaDataModification* modif, DllMethodInfo** methinfolist);
 };
 
 struct DllMethodInfo {
@@ -281,6 +285,7 @@ struct CILDataSet {
 	//  Number of unknown macros, Number of un-activable macro}
 	int* LoadHWS(fstream &ffhws);
 	void WriteHWS(fstream &ffhws);
+	void GenerateCSharp(vector<string>& buffer);
 };
 
 #endif

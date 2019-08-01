@@ -3,6 +3,7 @@
 #include <wx/tokenzr.h>
 #include "Hades_Strings.h"
 #include "Database_Text.h"
+#include "Tool_Randomizer.h"
 
 #define PREFERENCE_FILE_NAME "HadesWorkshop.conf"
 #define UNKNOWN_CHAR L'?'
@@ -261,6 +262,7 @@ bool PreferencesDialog::SaveMainFrameConfig(MainFrameBase* configwindow) {
 	if (configwindow->m_sortspellanim->IsChecked())		{ configfileout.Write(comma+_(L"spellanim")); comma = _(L","); }
 	configfileout.Write(_(L"\nEnemyID=") + wxString::Format(wxT("%i"), configwindow->m_enemyshowid->IsChecked()));
 	configfileout.Write(_(L"\nEnemySimilar=") + wxString::Format(wxT("%i"), configwindow->m_editsimilarenemy->IsChecked()));
+	configfileout.Write(_(L"\nFieldID=") + wxString::Format(wxT("%i"), configwindow->m_fieldshowid->IsChecked()));
 	configfileout.Write(_(L"\n\n") + after);
 	configfileout.Close();
 	return true;
@@ -302,6 +304,9 @@ bool PreferencesDialog::LoadMainFrameConfig(MainFrameBase* configwindow) {
 		cfgfield = cfgstr;
 		if (SearchField(cfgfield, _(L"EnemySimilar"), TmpArgs, argcount))
 			configwindow->m_editsimilarenemy->Check(!TmpArgs[argcount].IsSameAs(_(L"0")));
+		cfgfield = cfgstr;
+		if (SearchField(cfgfield, _(L"FieldID"), TmpArgs, argcount))
+			configwindow->m_fieldshowid->Check(!TmpArgs[argcount].IsSameAs(_(L"0")));
 	}
 	return true;
 }
@@ -576,6 +581,235 @@ bool PreferencesDialog::LoadToolBackgroundConfig(BackgroundEditorWindow* configw
 		cfgfield = cfgstr;
 		if (SearchField(cfgfield, _(L"ImportLauncher"), TmpArgs, argcount))
 			configwindow->m_importlauncher->SetPath(TmpArgs[argcount]);
+	}
+	return true;
+}
+
+bool PreferencesDialog::SaveToolRandomizerConfig(RandomizerWindow* configwindowuncast) {
+	ToolRandomizer* configwindow = static_cast<ToolRandomizer*>(configwindowuncast);
+	wxString before, after;
+	if (!GetBeforeAndAfterSection(_(L"[Randomizer]"), before, after))
+		return false;
+	wxFile configfileout(_(PREFERENCE_FILE_NAME), wxFile::write);
+	unsigned int i;
+	wxString line;
+	configfileout.Write(before);
+	configfileout.Write(_(L"[Randomizer]"));
+	configfileout.Write(_(L"\nUseRandomSeed=") + wxString::Format(wxT("%i"), configwindow->m_enableseed->IsChecked()));
+	if (configwindow->used_seed>=0)
+		configfileout.Write(_(L"\nLastUsedRandomSeed=") + wxString::Format(wxT("%i"), configwindow->used_seed));
+	configfileout.Write(_(L"\nSafeAbilities[SpellStats]="));
+	for (i = 0; i<configwindow->safe_abil_scramble.size(); i++)
+		configfileout.Write(wxString::Format(wxT("%i"), configwindow->safe_abil_scramble[i]) + (i+1==configwindow->safe_abil_scramble.size() ? _(L"") : _(L",")));
+	configfileout.Write(_(L"\nSafeAbilities[Spells]="));
+	for (i = 0; i<configwindow->safe_abil_spell.size(); i++)
+		configfileout.Write(wxString::Format(wxT("%i"), configwindow->safe_abil_spell[i]) + (i+1==configwindow->safe_abil_spell.size() ? _(L"") : _(L",")));
+	configfileout.Write(_(L"\nSafeAbilities[Supports]="));
+	for (i = 0; i<configwindow->safe_abil_support.size(); i++)
+		configfileout.Write(wxString::Format(wxT("%i"), configwindow->safe_abil_support[i]) + (i+1==configwindow->safe_abil_support.size() ? _(L"") : _(L",")));
+	configfileout.Write(_(L"\nSafeAbilities[Weapons]="));
+	for (i = 0; i<configwindow->safe_abil_weap.size(); i++)
+		configfileout.Write(wxString::Format(wxT("%i"), configwindow->safe_abil_weap[i]) + (i+1==configwindow->safe_abil_weap.size() ? _(L"") : _(L",")));
+	configfileout.Write(_(L"\nSafeAbilities[Armors]="));
+	for (i = 0; i<configwindow->safe_abil_armor.size(); i++)
+		configfileout.Write(wxString::Format(wxT("%i"), configwindow->safe_abil_armor[i]) + (i+1==configwindow->safe_abil_armor.size() ? _(L"") : _(L",")));
+	configfileout.Write(_(L"\nQuinaAP=") + wxString::Format(wxT("%i"), configwindow->m_charquinaap->GetValue()));
+	configfileout.Write(_(L"\nWeaponSlotProp=") + wxString::Format(wxT("%i"), configwindow->m_weapslot->GetValue()));
+	configfileout.Write(_(L"\nWeaponSupportProp=") + wxString::Format(wxT("%i"), configwindow->m_weapsupport->GetValue()));
+	configfileout.Write(_(L"\nArmorSlotProp=") + wxString::Format(wxT("%i"), configwindow->m_armorslot->GetValue()));
+	configfileout.Write(_(L"\nArmorSupportProp=") + wxString::Format(wxT("%i"), configwindow->m_armorsupport->GetValue()));
+	configfileout.Write(_(L"\nEnemyMPScaling=") + wxString::Format(wxT("%i"), configwindow->m_battlempfactor->GetValue()));
+	line = _(L"\nOptions[Characters]=");
+	if (configwindow->m_charspellpower->GetSelection()==1)			line += _(L"shuffle_power,");
+	else if (configwindow->m_charspellpower->GetSelection()==2)		line += _(L"randomize_power,");
+	if (configwindow->m_charspellstatus->GetSelection()==1)			line += _(L"shuffle_status,");
+	else if (configwindow->m_charspellstatus->GetSelection()==2)	line += _(L"randomize_status,");
+	if (configwindow->m_charspellstatsafe->IsChecked())				line += _(L"safe_spell_stat,");
+	if (configwindow->m_charspell->IsChecked())						line += _(L"shuffle_spell,");
+	if (configwindow->m_charmpboost->GetSelection()==1)				line += _(L"mpx4_sumspell,");
+	else if (configwindow->m_charmpboost->GetSelection()==2)		line += _(L"mpx4_sumcmd,");
+	if (configwindow->m_charsummon->IsChecked())					line += _(L"summon_apart,");
+	if (configwindow->m_charelan->IsChecked())						line += _(L"elan_principle,");
+	if (configwindow->m_charspellsafe->IsChecked())					line += _(L"safe_spell,");
+	if (configwindow->m_charsupport->IsChecked())					line += _(L"randomize_support,");
+	if (configwindow->m_charsupportsafe->IsChecked())				line += _(L"safe_support,");
+	if (line.Right(1).IsSameAs(L",")) line.RemoveLast();
+	configfileout.Write(line);
+	line = _(L"\nOptions[Weapons]=");
+	if (configwindow->m_weapabil->GetSelection()==1)		line += _(L"shuffle_abil,");
+	else if (configwindow->m_weapabil->GetSelection()==2)	line += _(L"randomize_abil,");
+	if (configwindow->m_weapall->IsChecked())				line += _(L"ensure_all,");
+	if (configwindow->m_weapsafe->IsChecked())				line += _(L"safe_weapon,");
+	if (line.Right(1).IsSameAs(L",")) line.RemoveLast();
+	configfileout.Write(line);
+	line = _(L"\nOptions[Armors]=");
+	if (configwindow->m_armorabil->GetSelection()==1)		line += _(L"shuffle_abil,");
+	else if (configwindow->m_armorabil->GetSelection()==2)	line += _(L"randomize_abil,");
+	if (configwindow->m_armorall->IsChecked())				line += _(L"ensure_all,");
+	if (configwindow->m_armorsafe->IsChecked())				line += _(L"safe_armor,");
+	if (line.Right(1).IsSameAs(L",")) line.RemoveLast();
+	configfileout.Write(line);
+	line = _(L"\nOptions[Battles]=");
+	if (configwindow->m_battlespell->IsChecked())	line += _(L"shuffle_enemy_spell,");
+	if (configwindow->m_battleprop->IsChecked())	line += _(L"same_proportion,");
+	if (configwindow->m_battlemp->IsChecked())		line += _(L"scale_mp,");
+	if (line.Right(1).IsSameAs(L",")) line.RemoveLast();
+	configfileout.Write(line);
+	line = _(L"\nOptions[Cards]=");
+	if (configwindow->m_carddrop->IsChecked())				line += _(L"randomize_drop,");
+	if (configwindow->m_carddeck->GetSelection()==1)		line += _(L"shuffle_deck,");
+	else if (configwindow->m_carddeck->GetSelection()==2)	line += _(L"randomize_deck,");
+	if (line.Right(1).IsSameAs(L",")) line.RemoveLast();
+	configfileout.Write(line);
+	configfileout.Write(_(L"\n\n") + after);
+	configfileout.Close();
+	return true;
+}
+
+bool PreferencesDialog::LoadToolRandomizerConfig(RandomizerWindow* configwindowuncast) {
+	ToolRandomizer* configwindow = static_cast<ToolRandomizer*>(configwindowuncast);
+	wxFile configfile(_(PREFERENCE_FILE_NAME), wxFile::read);
+	if (!configfile.IsOpened())
+		return false;
+	wxString cfgstr, cfgfield;
+	if (!configfile.ReadAll(&cfgstr))
+		return false;
+	configfile.Close();
+	unsigned int argcount;
+	unsigned int i, j;
+	if (GoToSection(cfgstr, _(L"Randomizer"))) {
+		cfgfield = cfgstr;
+		if (SearchField(cfgfield, _(L"UseRandomSeed"), TmpArgs, argcount))
+			configwindow->m_enableseed->SetValue(!TmpArgs[argcount].IsSameAs(_(L"0")));
+		cfgfield = cfgstr;
+		if (SearchField(cfgfield, _(L"LastUsedRandomSeed"), TmpArgs, argcount))
+			configwindow->used_seed = wxAtoi(TmpArgs[argcount]);
+		cfgfield = cfgstr;
+		bool clearsafe[5], safe[5];
+		vector<uint8_t>* safelist[5] = { &configwindow->safe_abil_scramble, &configwindow->safe_abil_spell, &configwindow->safe_abil_support, &configwindow->safe_abil_weap, &configwindow->safe_abil_armor };
+		for (i=0; i<5; i++)
+			clearsafe[i] = true;
+		while (SearchField(cfgfield, _(L"SafeAbilities"), TmpArgs, argcount)) {
+			wxStringTokenizer abillist(TmpArgs[argcount],L",");
+			wxString abiltoken;
+			uint8_t abilid;
+			bool duplicate;
+			safe[0] = argcount==0 || TmpArgs[0].IsSameAs(L"Characters") || TmpArgs[0].IsSameAs(L"SpellStats");
+			safe[1] = argcount==0 || TmpArgs[0].IsSameAs(L"Characters") || TmpArgs[0].IsSameAs(L"Spells");
+			safe[2] = argcount==0 || TmpArgs[0].IsSameAs(L"Characters") || TmpArgs[0].IsSameAs(L"Supports");
+			safe[3] = argcount==0 || TmpArgs[0].IsSameAs(L"Equipments") || TmpArgs[0].IsSameAs(L"Weapons");
+			safe[4] = argcount==0 || TmpArgs[0].IsSameAs(L"Equipments") || TmpArgs[0].IsSameAs(L"Armors");
+			for (i=0; i<5; i++)
+				if (safe[i] && clearsafe[i]) {
+					safelist[i]->clear();
+					clearsafe[i] = false;
+				}
+			while (abillist.HasMoreTokens()) {
+				abiltoken = abillist.GetNextToken();
+				if (!abiltoken.IsNumber())
+					continue;
+				abilid = wxAtoi(abiltoken);
+				for (i=0; i<5; i++)
+					if (safe[i]) {
+						duplicate = false;
+						for (j=0; j<safelist[i]->size(); j++)
+							if ((*safelist[i])[j]==abilid) {
+								duplicate = true;
+								break;
+							}
+						if (!duplicate) safelist[i]->push_back(abilid);
+					}
+			}
+		}
+		cfgfield = cfgstr;
+		if (SearchField(cfgfield, _(L"QuinaAP"), TmpArgs, argcount))
+			configwindow->m_charquinaap->SetValue(wxAtoi(TmpArgs[argcount]));
+		cfgfield = cfgstr;
+		if (SearchField(cfgfield, _(L"WeaponSlotProp"), TmpArgs, argcount))
+			configwindow->m_weapslot->SetValue(wxAtoi(TmpArgs[argcount]));
+		cfgfield = cfgstr;
+		if (SearchField(cfgfield, _(L"WeaponSupportProp"), TmpArgs, argcount))
+			configwindow->m_weapsupport->SetValue(wxAtoi(TmpArgs[argcount]));
+		cfgfield = cfgstr;
+		if (SearchField(cfgfield, _(L"ArmorSlotProp"), TmpArgs, argcount))
+			configwindow->m_armorslot->SetValue(wxAtoi(TmpArgs[argcount]));
+		cfgfield = cfgstr;
+		if (SearchField(cfgfield, _(L"ArmorSupportProp"), TmpArgs, argcount))
+			configwindow->m_armorsupport->SetValue(wxAtoi(TmpArgs[argcount]));
+		cfgfield = cfgstr;
+		if (SearchField(cfgfield, _(L"EnemyMPScaling"), TmpArgs, argcount))
+			configwindow->m_battlempfactor->SetValue(wxAtoi(TmpArgs[argcount]));
+		cfgfield = cfgstr;
+		while (SearchField(cfgfield, _(L"Options"), TmpArgs, argcount)) {
+			wxStringTokenizer optionlist(TmpArgs[argcount],L",");
+			wxString optiontoken;
+			bool sectionchar = argcount==0 || TmpArgs[0].IsSameAs(L"Characters");
+			bool sectionweap = argcount==0 || TmpArgs[0].IsSameAs(L"Equipments") || TmpArgs[0].IsSameAs(L"Weapons");
+			bool sectionarmor = argcount==0 || TmpArgs[0].IsSameAs(L"Equipments") || TmpArgs[0].IsSameAs(L"Armors");
+			bool sectionbattle = argcount==0 || TmpArgs[0].IsSameAs(L"Battles");
+			bool sectioncard = argcount==0 || TmpArgs[0].IsSameAs(L"Cards");
+			if (sectionchar) {
+				configwindow->m_charspellpower->SetSelection(0);
+				configwindow->m_charspellstatus->SetSelection(0);
+				configwindow->m_charspellstatsafe->SetValue(false);
+				configwindow->m_charspell->SetValue(false);
+				configwindow->m_charmpboost->SetSelection(0);
+				configwindow->m_charsummon->SetValue(false);
+				configwindow->m_charelan->SetValue(false);
+				configwindow->m_charspellsafe->SetValue(false);
+				configwindow->m_charsupport->SetValue(false);
+				configwindow->m_charsupportsafe->SetValue(false);
+			}
+			if (sectionweap) {
+				configwindow->m_weapabil->SetSelection(0);
+				configwindow->m_weapall->SetValue(false);
+				configwindow->m_weapsafe->SetValue(false);
+			}
+			if (sectionarmor) {
+				configwindow->m_armorabil->SetSelection(0);
+				configwindow->m_armorall->SetValue(false);
+				configwindow->m_armorsafe->SetValue(false);
+			}
+			if (sectionbattle) {
+				configwindow->m_battlespell->SetValue(false);
+				configwindow->m_battleprop->SetValue(false);
+				configwindow->m_battlemp->SetValue(false);
+			}
+			if (sectioncard) {
+				configwindow->m_carddrop->SetValue(false);
+				configwindow->m_carddeck->SetSelection(0);
+			}
+			while (optionlist.HasMoreTokens()) {
+				optiontoken = optionlist.GetNextToken();
+				if (sectionchar && optiontoken.IsSameAs(L"shuffle_power")) configwindow->m_charspellpower->SetSelection(1);
+				if (sectionchar && optiontoken.IsSameAs(L"randomize_power")) configwindow->m_charspellpower->SetSelection(2);
+				if (sectionchar && optiontoken.IsSameAs(L"shuffle_status")) configwindow->m_charspellstatus->SetSelection(1);
+				if (sectionchar && optiontoken.IsSameAs(L"randomize_status")) configwindow->m_charspellstatus->SetSelection(2);
+				if (sectionchar && optiontoken.IsSameAs(L"safe_spell_stat")) configwindow->m_charspellstatsafe->SetValue(true);
+				if (sectionchar && optiontoken.IsSameAs(L"shuffle_spell")) configwindow->m_charspell->SetValue(true);
+				if (sectionchar && optiontoken.IsSameAs(L"mpx4_sumspell")) configwindow->m_charmpboost->SetSelection(1);
+				if (sectionchar && optiontoken.IsSameAs(L"mpx4_sumcmd")) configwindow->m_charmpboost->SetSelection(2);
+				if (sectionchar && optiontoken.IsSameAs(L"summon_apart")) configwindow->m_charsummon->SetValue(true);
+				if (sectionchar && optiontoken.IsSameAs(L"elan_principle")) configwindow->m_charelan->SetValue(true);
+				if (sectionchar && optiontoken.IsSameAs(L"safe_spell")) configwindow->m_charspellsafe->SetValue(true);
+				if (sectionchar && optiontoken.IsSameAs(L"randomize_support")) configwindow->m_charsupport->SetValue(true);
+				if (sectionchar && optiontoken.IsSameAs(L"safe_support")) configwindow->m_charsupportsafe->SetValue(true);
+				if (sectionweap && optiontoken.IsSameAs(L"shuffle_abil")) configwindow->m_weapabil->SetSelection(1);
+				if (sectionweap && optiontoken.IsSameAs(L"randomize_abil")) configwindow->m_weapabil->SetSelection(2);
+				if (sectionweap && optiontoken.IsSameAs(L"ensure_all")) configwindow->m_weapall->SetValue(true);
+				if (sectionweap && optiontoken.IsSameAs(L"safe_weapon")) configwindow->m_weapsafe->SetValue(true);
+				if (sectionarmor && optiontoken.IsSameAs(L"shuffle_abil")) configwindow->m_armorabil->SetSelection(1);
+				if (sectionarmor && optiontoken.IsSameAs(L"randomize_abil")) configwindow->m_armorabil->SetSelection(2);
+				if (sectionarmor && optiontoken.IsSameAs(L"ensure_all")) configwindow->m_armorall->SetValue(true);
+				if (sectionarmor && optiontoken.IsSameAs(L"safe_armor")) configwindow->m_armorsafe->SetValue(true);
+				if (sectionbattle && optiontoken.IsSameAs(L"shuffle_enemy_spell")) configwindow->m_battlespell->SetValue(true);
+				if (sectionbattle && optiontoken.IsSameAs(L"same_proportion")) configwindow->m_battleprop->SetValue(true);
+				if (sectionbattle && optiontoken.IsSameAs(L"scale_mp")) configwindow->m_battlemp->SetValue(true);
+				if (sectioncard && optiontoken.IsSameAs(L"randomize_drop")) configwindow->m_carddrop->SetValue(true);
+				if (sectioncard && optiontoken.IsSameAs(L"shuffle_deck")) configwindow->m_carddeck->SetSelection(1);
+				if (sectioncard && optiontoken.IsSameAs(L"randomize_deck")) configwindow->m_carddeck->SetSelection(2);
+			}
+		}
 	}
 	return true;
 }

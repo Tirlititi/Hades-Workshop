@@ -204,6 +204,9 @@
     <ClCompile Include="Source\YandexTranslation.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Tool_Randomizer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\BattleScenes.h">
@@ -432,6 +435,9 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="Source\YandexTranslation.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Tool_Randomizer.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

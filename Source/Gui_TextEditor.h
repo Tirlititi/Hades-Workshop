@@ -115,6 +115,7 @@ public:
 	uint8_t length;
 	uint32_t max_length;
 	uint16_t code_pos;
+	int code_index;
 
 	TextOpcodeDialog(TextEditDialog* parent);
 	~TextOpcodeDialog();

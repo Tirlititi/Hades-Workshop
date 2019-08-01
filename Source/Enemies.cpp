@@ -439,6 +439,21 @@ void EnemyDataStruct::UpdateOffset() {
 	SetSize(group_amount*0x38+stat_amount*0x74+spell_amount*0x10+8);
 }
 
+void EnemyDataSet::GetSpellSequenceModelRef(vector<EnemySequenceCodeLine>& sequence, int* code, int* arg) {
+	unsigned int i, j;
+	for (i=0; i<sequence.size(); i++) {
+		EnemySequenceCode& c = GetEnemySequenceCode(sequence[i].code);
+		for (j=0; (int)j<c.arg_amount; j++)
+			if (c.arg_type[j]==EAAT_SPELL_ANIM) {
+				*code = i;
+				*arg = j;
+				return;
+			}
+	}
+	*code = -1;
+	*arg = -1;
+}
+
 EnemyStatDataStruct* GetSimilarEnemyStatsResult[1024];
 EnemySpellDataStruct* GetSimilarEnemySpellsResult[1024];
 unsigned int GetSimilarEnemyBattlesId[1024];
@@ -457,6 +472,7 @@ EnemyStatDataStruct** EnemyDataSet::GetSimilarEnemyStats(EnemyStatDataStruct& st
 }
 
 EnemySpellDataStruct** EnemyDataSet::GetSimilarEnemySpells(EnemySpellDataStruct& spell, unsigned int* amountfound, unsigned int** battleid) {
+	int baseseqcode, basecodearg, seqcode, codearg;
 	unsigned int i,j,nbstat, nb = 0;
 	unsigned int* bid;
 	EnemyStatDataStruct* stat = spell.GetAssociatedStat();
@@ -466,12 +482,18 @@ EnemySpellDataStruct** EnemyDataSet::GetSimilarEnemySpells(EnemySpellDataStruct&
 	}
 	EnemyStatDataStruct** similarstat = GetSimilarEnemyStats(*stat,&nbstat,&bid);
 	wstring& spellname = spell.name.str_nice;
+	GetSpellSequenceModelRef(battle_data[spell.parent->id]->sequence_code[spell.id], &baseseqcode, &basecodearg);
 	for (i=0;i<nbstat;i++)
 		for (j=0;j<battle[bid[i]]->spell_amount;j++)
-			if ((stat!=similarstat[i] || &battle[bid[i]]->spell[j]==&spell) && battle_data[bid[i]]->sequence_stat_id[j]==similarstat[i]->id && battle[bid[i]]->spell[j].name.str_nice==spellname && battle[bid[i]]->spell[j].effect==spell.effect && battle[bid[i]]->spell[j].power==spell.power) {
+			if (stat==similarstat[i] && &battle[bid[i]]->spell[j]==&spell) {
 				GetSimilarEnemySpellsResult[nb] = &(battle[bid[i]]->spell[j]);
 				GetSimilarEnemyBattlesId[nb++] = bid[i];
-				break;
+			} else if (battle_data[bid[i]]->sequence_stat_id[j]==similarstat[i]->id && battle[bid[i]]->spell[j].name.str_nice==spellname && battle[bid[i]]->spell[j].effect==spell.effect && battle[bid[i]]->spell[j].power==spell.power) {
+				GetSpellSequenceModelRef(battle_data[bid[i]]->sequence_code[j], &seqcode, &codearg);
+				if ((baseseqcode<0 && seqcode<0) || (baseseqcode>=0 && battle_data[bid[i]]->sequence_code[j][seqcode].arg[codearg]==battle_data[spell.parent->id]->sequence_code[spell.id][baseseqcode].arg[basecodearg])) {
+					GetSimilarEnemySpellsResult[nb] = &(battle[bid[i]]->spell[j]);
+					GetSimilarEnemyBattlesId[nb++] = bid[i];
+				}
 			}
 	*amountfound = nb;
 	*battleid = GetSimilarEnemyBattlesId;
@@ -914,6 +936,47 @@ DllMetaDataModification* EnemyDataSet::ComputeSteamMod(ConfigurationSet& config,
 	}
 	*modifamount = 1;
 	return res;
+}
+
+void EnemyDataSet::GenerateCSharp(vector<string>& buffer) {
+	if (modified_battle_scene_amount==0)
+		return;
+	unsigned int i, j;
+	int battleindex, bscindex, bbgindex;
+	stringstream bscenedb;
+	bscenedb << "// Method: FF9BattleDB::.cctor\n\n";
+	bscenedb << "\t// Inside \"FF9BattleDB.MapModel\" dictionary:\n";
+	for (i = 0; i < modified_battle_scene_amount; i++) {
+		battleindex = -1;
+		bscindex = -1;
+		bbgindex = -1;
+		for (j = 0; j < battle_amount; j++)
+			if (modified_battle_id[i]==battle_data[j]->object_id) {
+				battleindex = j;
+				break;
+			}
+		for (j = 0; j < G_N_ELEMENTS(SteamBattleScript); j++)
+			if (modified_battle_id[i]==SteamBattleScript[j].battle_id) {
+				bscindex = j;
+				break;
+			}
+		if (battleindex < 0 || bscindex < 0) {
+			bscenedb << "\t\t// Error: unexpected Battle ID " << (int)modified_battle_id[i] << "\n";
+			continue;
+		}
+		for (j = 0; j < G_N_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME); j++)
+			if (modified_scene_id[i]==HADES_STRING_BATTLE_SCENE_NAME[j].id) {
+				bbgindex = j;
+				break;
+			}
+		if (bbgindex < 0) {
+			bscenedb << "\t\t// Error: unexpected Battle Scene ID " << (int)modified_scene_id[i] << "\n";
+			continue;
+		}
+		bscenedb << "\t\t// Replace the entry of \"BSC_" << SteamBattleScript[bscindex].name.substr(11) << "\":\n";
+		bscenedb << "\t\t{ \"BSC_" << SteamBattleScript[bscindex].name.substr(11) << "\", \"BBG_" << HADES_STRING_BATTLE_SCENE_NAME[bbgindex].steamid.ToStdString() << "\" }, // " << ConvertWStrToStr(battle_name[battleindex]) << " (" << (int)modified_battle_id[i] << ")\n";
+	}
+	buffer.push_back(bscenedb.str());
 }
 
 void EnemyDataSet::Write(fstream& ffbin, ClusterSet& clusset, bool saveworldmap, bool savefieldmap) {

@@ -87,7 +87,12 @@ public:
 	string steam_dir_assets;
 	string steam_dir_data;
 	string steam_dir_managed;
-	
+
+	UnityArchiveIndexListData indexlist_res;
+	UnityArchiveAssetBundle bundle_script;
+	UnityArchiveAssetBundle bundle_battle;
+	UnityArchiveAssetBundle bundle_world;
+	UnityArchiveAssetBundle bundle_field[9];
 	UnityArchiveMetaData meta_res;
 	UnityArchiveMetaData meta_main;
 	UnityArchiveMetaData meta_script;
@@ -257,6 +262,8 @@ public:
 	uint32_t mips_battle_offset_list;
 	uint32_t mips_battle_code_offset;
 	uint32_t mips_battle_code_amount;
+
+	string GetSteamAssetPath(UnityArchiveFile arch, int32_t fileid);
 };
 
 struct SaveSet {
@@ -320,7 +327,7 @@ int PreloadHWS(string filepath, bool* section);
 wstring* LoadHWS(string filepath, bool* section, bool* sectext, bool* localsec, SaveSet& saveset, UnusedSaveBackup& backup);
 int WriteHWS(string filepath, bool* section, bool* localsec, SaveSet& saveset, UnusedSaveBackup& backup);
 
-int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, SaveSet& saveset, bool deleteold);
+int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, SaveSet& saveset, int dllformat, int assetformat, bool deleteold);
 
 GameType GetGameType();
 void SetGameType(GameType gt);

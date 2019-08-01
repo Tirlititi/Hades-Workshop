@@ -390,6 +390,8 @@ CilScriptEditDialog::CilScriptEditDialog(wxWindow* parent, CILDataSet* cil, unsi
 		 || (tname.compare("rdata")==0 && mname.compare(".cctor")==0)
 		 || (tname.compare("ff9level")==0 && mname.compare(".cctor")==0)
 		 || (tname.compare("ff9item")==0 && mname.compare(".cctor")==0)
+		 || (tname.compare("ff9play")==0 && mname.compare("FF9Play_SetDefEquips")==0)
+		 || (tname.compare("BattleHUD")==0 && mname.compare(".cctor")==0)
 		 || (tname.compare("FF9.ff9abil")==0 && mname.compare(".cctor")==0)
 		 || (tname.compare("FF9.ff9armor")==0 && mname.compare(".cctor")==0)
 		 || (tname.compare("FF9.ff9weap")==0 && mname.compare(".cctor")==0)
@@ -540,7 +542,7 @@ int CilScriptEditDialog::ShowModal() {
 	return wxDialog::ShowModal();
 }
 
-DllMetaDataModification* CilScriptEditDialog::ComputeModification() {
+DllMetaDataModification* CilScriptEditDialog::ComputeModification() { // ToDo: compute max_stack_size
 	unsigned int absmethid = cilset->data->cil_type_method_id[type_id]-1+method_id;
 	DllMetaDataModification* res = new DllMetaDataModification[1];
 	DllMethodInfo methinfo;

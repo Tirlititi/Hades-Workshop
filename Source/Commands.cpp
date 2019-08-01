@@ -261,7 +261,7 @@ DllMetaDataModification* CommandDataSet::ComputeSteamMod(ConfigurationSet& confi
 		delete[] argvalue[i];
 	delete[] argvalue;
 	res[1].position = config.meta_dll.GetStaticFieldOffset(config.dll_cmdspelllist_field_id);
-	res[1].base_length = 4*COMMAND_SPELL_AMOUNT;
+	res[1].base_length = 4*COMMAND_SPELL_AMOUNT; // config.meta_dll.GetStaticFieldRange(config.dll_cmdspelllist_field_id);
 	res[1].new_length = 4*COMMAND_SPELL_AMOUNT;
 	res[1].value = new uint8_t[res[1].new_length];
 	BufferInitPosition();
@@ -269,6 +269,23 @@ DllMetaDataModification* CommandDataSet::ComputeSteamMod(ConfigurationSet& confi
 		BufferWriteLong(res[1].value,spell_full_list[i]);
 	*modifamount = 2;
 	return res;
+}
+
+void CommandDataSet::GenerateCSharp(vector<string>& buffer) {
+	unsigned int i;
+	stringstream cmddb;
+	cmddb << "// Method: rdata::.cctor\n\n";
+	cmddb << "\trdata._FF9FAbil_ComData = new rdata.FF9COMMAND[] {\n";
+	for (i = 0; i < COMMAND_AMOUNT; i++)
+		cmddb << "\t\tnew rdata.FF9COMMAND(" << (int)cmd[i].name_offset << ", " << (int)cmd[i].help_offset << ", " << (int)cmd[i].help_size_x << ", " << (int)cmd[i].panel << ", " << (int)cmd[i].spell_amount << ", " << (unsigned long)cmd[i].spell_index << (i+1==COMMAND_AMOUNT ? "UL)" : "UL),") << " // " << ConvertWStrToStr(cmd[i].name.str_nice) << "\n";
+	cmddb << "\t};\n";
+	cmddb << "\trdata._FF9BMenu_ComData = rdata._FF9FAbil_ComData;\n";
+	cmddb << "\trdata._FF9BMenu_ComAbil = new int[] { ";
+	for (i = 0; i < COMMAND_SPELL_AMOUNT; i++)
+		cmddb << (int)spell_full_list[i] << (i+1==COMMAND_SPELL_AMOUNT ? " " : ", ");
+	cmddb << "};\n";
+	cmddb << "\trdata._FF9FAbil_ComAbil = rdata._FF9BMenu_ComAbil;\n";
+	buffer.push_back(cmddb.str());
 }
 
 int CommandDataSet::GetSteamTextSize(unsigned int texttype, SteamLanguage lang) {

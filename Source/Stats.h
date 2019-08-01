@@ -98,8 +98,8 @@ public:
 	uint32_t steam_method_base_length_cmdset;
 	
 	// Return a temporary array, not to be deleted
-	uint8_t* GetCharacterEquipmentsId(int charid, unsigned int* amount);
-	uint8_t* GetCharacterCommandsId(int charid, unsigned int* amount);
+	uint8_t* GetCharacterEquipmentsId(int charid, unsigned int* amount = NULL);
+	uint8_t* GetCharacterCommandsId(int charid, unsigned int* amount = NULL);
 	
 	void Load(fstream& ffbin, ConfigurationSet& config);
 	void Write(fstream& ffbin, ConfigurationSet& config);
@@ -109,6 +109,7 @@ public:
 	void WriteHWS(fstream& ffhws);
 	// Return a modifamount-long pointer, to be deleted[]
 	DllMetaDataModification* ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount);
+	void GenerateCSharp(vector<string>& buffer);
 	void UpdateOffset();
 };
 

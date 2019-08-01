@@ -199,6 +199,9 @@ public:
 	
 	void MarkDataModified(); // Mark the selected CD in the cdnotebook as modified
 	void PreferencesUpdate(); // Read and apply configurations from PreferenceWindow
+
+	static void MakeDirForFile(string filename);
+	static void DeleteFullDir(string dirname);
 	
 protected:
 	void RepaintBackground();

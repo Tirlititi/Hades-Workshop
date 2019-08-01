@@ -55,7 +55,7 @@ Spell_Panel SpellDataStruct::GetPanel() {
 }
 
 void SpellDataStruct::SetPanel(Spell_Panel newvalue) {
-	target_type = (target_type & 0x1F) + (newvalue << 5);
+	target_type = (target_type & 0x1F) | (newvalue << 5);
 }
 
 Spell_Target_Priority SpellDataStruct::GetTargetPriority() {
@@ -63,54 +63,68 @@ Spell_Target_Priority SpellDataStruct::GetTargetPriority() {
 }
 
 void SpellDataStruct::SetTargetPriority(Spell_Target_Priority newvalue) {
-	target_type = (target_type & 0xEF) + (newvalue << 4);
+	target_type = (target_type & 0xEF) | (newvalue << 4);
 }
 
 Spell_Target_Type SpellDataStruct::GetTargetType() {
 	uint8_t val = target_type & 0xF;
-	if (val==0xC)
-		return SPELL_TARGET_TYPE_EVERYONE;
-	if (val==0xD)
-		return SPELL_TARGET_TYPE_SELF;
-	if (val==0x0 || val==0x3 || val==0x6 || val==0x9)
+	if (val == 0x0 || val == 0x3 || val == 0x6 || val == 0x9) // In Steam, 0x6 and 0x9 are SPELL_TARGET_TYPE_EVERYONE
 		return SPELL_TARGET_TYPE_ANY;
-	if (val==0x1 || val==0x4 || val==0x7 || val==0xA)
+	if (val == 0x1 || val == 0x4 || val == 0x7 || val == 0xA)
 		return SPELL_TARGET_TYPE_ALLY;
-	return SPELL_TARGET_TYPE_ENEMY;
+	if (val == 0x2 || val == 0x5 || val == 0x8 || val == 0xB)
+		return SPELL_TARGET_TYPE_ENEMY;
+	if (val == 0xC)
+		return SPELL_TARGET_TYPE_EVERYONE;
+	if (val == 0xD)
+		return SPELL_TARGET_TYPE_SELF;
+	return SPELL_TARGET_TYPE_IRRELEVANT;
 }
 
 void SpellDataStruct::SetTargetType(Spell_Target_Type newvalue) {
 	uint8_t ta = target_type & 0xF;
-	ta = ta>=0xC ? 0 : ta/3;
-	if (newvalue==SPELL_TARGET_TYPE_EVERYONE)
+	ta = ta >= 0xC ? 0 : ta / 3;
+	if (newvalue == SPELL_TARGET_TYPE_EVERYONE)
 		target_type = (target_type & 0xF0) + 0xC;
-	else if (newvalue==SPELL_TARGET_TYPE_SELF)
+	else if (newvalue == SPELL_TARGET_TYPE_IRRELEVANT)
+		target_type = (target_type & 0xF0) + 0xE;
+	else if (newvalue == SPELL_TARGET_TYPE_SELF)
 		target_type = (target_type & 0xE0) + 0x10 + 0xD;
-	else if (newvalue==SPELL_TARGET_TYPE_ANY)
-		target_type = (target_type & 0xF0) + 3*ta;
-	else if (newvalue==SPELL_TARGET_TYPE_ALLY)
-		target_type = (target_type & 0xE0) + 0x10 + 3*ta + 1;
-	else if (newvalue==SPELL_TARGET_TYPE_ENEMY)
-		target_type = (target_type & 0xE0) + 3*ta + 2;
+	else if (newvalue == SPELL_TARGET_TYPE_ANY)
+		target_type = (target_type & 0xF0) + 3 * ta;
+	else if (newvalue == SPELL_TARGET_TYPE_ALLY)
+		target_type = (target_type & 0xE0) + 0x10 + 3 * ta + 1;
+	else if (newvalue == SPELL_TARGET_TYPE_ENEMY)
+		target_type = (target_type & 0xE0) + 3 * ta + 2;
 }
 
 Spell_Target_Amount SpellDataStruct::GetTargetAmount() {
 	uint8_t val = target_type & 0xF;
-	if (val<0x3 || val >0xC)
+	if (val < 0x3 || val == 0xD)
 		return SPELL_TARGET_AMOUNT_ONE;
-	if (val<6)
+	if (val < 0x6)
 		return SPELL_TARGET_AMOUNT_VARIABLE;
-	return SPELL_TARGET_AMOUNT_GROUP;
+	if (val < 0x9 || val >= 0xC)
+		return SPELL_TARGET_AMOUNT_GROUP;
+	return SPELL_TARGET_AMOUNT_RANDOM;
 }
 
 void SpellDataStruct::SetTargetAmount(Spell_Target_Amount newvalue) {
+	if (GetTargetType() == SPELL_TARGET_TYPE_SELF && newvalue != SPELL_TARGET_AMOUNT_ONE)
+		SetTargetType(SPELL_TARGET_TYPE_ALLY);
+	if (GetTargetType() == SPELL_TARGET_TYPE_EVERYONE && newvalue != SPELL_TARGET_AMOUNT_GROUP)
+		SetTargetType(SPELL_TARGET_TYPE_ANY);
+	if (GetTargetType() == SPELL_TARGET_TYPE_IRRELEVANT)
+		SetTargetType(SPELL_TARGET_TYPE_ANY);
 	uint8_t tt = target_type & 0xF;
-	if (newvalue==SPELL_TARGET_AMOUNT_ONE)
-		target_type = (target_type & 0xF0) + tt%3;
-	else if (newvalue==SPELL_TARGET_AMOUNT_VARIABLE)
-		target_type = (target_type & 0xF0) + 0x3 + tt%3;
-	else if (newvalue==SPELL_TARGET_AMOUNT_GROUP)
-		target_type = (target_type & 0xF0) + 0x6 + tt%3;
+	if (newvalue == SPELL_TARGET_AMOUNT_ONE)
+		target_type = (target_type & 0xF0) + tt % 3;
+	else if (newvalue == SPELL_TARGET_AMOUNT_VARIABLE)
+		target_type = (target_type & 0xF0) + 0x3 + tt % 3;
+	else if (newvalue == SPELL_TARGET_AMOUNT_GROUP)
+		target_type = (target_type & 0xF0) + 0x6 + tt % 3;
+	else if (newvalue == SPELL_TARGET_AMOUNT_RANDOM)
+		target_type = (target_type & 0xF0) + 0x9 + tt % 3;
 }
 
 uint16_t SpellDataStruct::GetSound() {
@@ -282,20 +296,49 @@ DllMetaDataModification* SpellDataSet::ComputeSteamMod(ConfigurationSet& config,
 		delete[] argvalue[i];
 	delete[] argvalue;
 	res[1].position = config.meta_dll.GetStaticFieldOffset(config.dll_spellnaming_field_id);
-	res[1].base_length = SPELL_AMOUNT;
+	res[1].base_length = SPELL_AMOUNT; // config.meta_dll.GetStaticFieldRange(config.dll_spellnaming_field_id);
 	res[1].new_length = SPELL_AMOUNT;
 	res[1].value = new uint8_t[res[1].new_length];
 	for (i=0;i<SPELL_AMOUNT;i++)
 		res[1].value[i] = spell[i].perform_name;
 	res[2].position = config.meta_dll.GetStaticFieldOffset(config.dll_statusset_field_id);
-	res[2].base_length = 4*STATUS_SET_AMOUNT;
-	res[2].new_length = 4*STATUS_SET_AMOUNT;
+	res[2].base_length = 8*STATUS_SET_AMOUNT; // config.meta_dll.GetStaticFieldRange(config.dll_statusset_field_id);
+	res[2].new_length = 8*STATUS_SET_AMOUNT;
 	res[2].value = new uint8_t[res[2].new_length];
 	BufferInitPosition();
-	for (i=0;i<STATUS_SET_AMOUNT;i++)
-		BufferWriteLong(res[2].value,status_set[i]);
+	for (i = 0; i<STATUS_SET_AMOUNT; i++)
+		BufferWriteLong(res[2].value, status_set[i]);
+	for (i = 0; i<STATUS_SET_AMOUNT; i++) // DEBUG: Steam version has 2x more status sets...
+		BufferWriteLong(res[2].value, 0);
 	*modifamount = 3;
 	return res;
+}
+
+void SpellDataSet::GenerateCSharp(vector<string>& buffer) {
+	unsigned int i;
+	stringstream battledb;
+	battledb << "// Method: FF9BattleDB::.cctor\n\n";
+	battledb << "\tFF9BattleDB.aa_data = new AA_DATA[] {\n";
+	for (i = 0; i < SPELL_AMOUNT; i++)
+		battledb<< "\t\tnew AA_DATA(new CMD_INFO(" << (int)(spell[i].target_type & 0xF) << ", " << (int)((spell[i].target_type >> 4) & 0x1) << ", " << (int)((spell[i].target_type >> 5) & 0x7) << ", " << (int)(spell[i].model & 0x1FF) << ", " << (int)spell[i].GetSound() << ", " << (int)((spell[i].target_flag >> 5) & 0x1) << ", " << (int)((spell[i].target_flag >> 6) & 0x1) << ", " << (int)((spell[i].target_flag >> 7) & 0x1)
+				<< "), new BTL_REF(" << (int)spell[i].effect << ", " << (int)spell[i].power << ", " << StreamAsHex(spell[i].element) << ", " << (int)spell[i].accuracy
+				<< "), " << StreamAsHex(spell[i].flag) << ", " << (int)spell[i].status << ", " << (int)spell[i].mp << ", " << StreamAsHex(spell[i].menu_flag) << ", " << (int)spell[i].model_alt << ", " << (int)spell[i].name_offset << (i+1==SPELL_AMOUNT ? ")" : "),") << " // " << ConvertWStrToStr(spell[i].name.str_nice) << "\n";
+	battledb << "\t};\n";
+	battledb << "\t// ...\n";
+	battledb << "\tFF9BattleDB.add_status = new uint[] { ";
+	for (i = 0; i < STATUS_SET_AMOUNT; i++)
+		battledb << StreamAsHex(status_set[i]) << "u, ";
+	for (i = 0; i < STATUS_SET_AMOUNT; i++)
+		battledb << 0 << (i+1==STATUS_SET_AMOUNT ? "u " : "u, ");
+	battledb << "};\n";
+	buffer.push_back(battledb.str());
+	stringstream spellnaming;
+	spellnaming << "// Method: BattleHUD::.cctor\n\n";
+	spellnaming << "\tBattleHUD.CmdTitleTable = new byte[] { ";
+	for (i = 0; i < SPELL_AMOUNT; i++)
+		spellnaming << (int)spell[i].perform_name << (i+1==SPELL_AMOUNT ? " " : ", ");
+	spellnaming << "};\n";
+	buffer.push_back(spellnaming.str());
 }
 
 int SpellDataSet::GetSteamTextSize(unsigned int texttype, SteamLanguage lang) {
@@ -525,6 +568,8 @@ void SpellDataSet::WriteHWS(fstream& ffbin) {
 }
 
 void SpellDataSet::UpdateOffset() {
+	if (GetGameType() != GAME_TYPE_PSX)
+		return;
 	uint16_t j=0,k=0;
 	unsigned int i;
 	for (i=0;i<SPELL_AMOUNT;i++) {

@@ -247,6 +247,7 @@
     <ClCompile Include="Source\UnityArchiver.cpp" />
     <ClCompile Include="Source\WorldMaps.cpp" />
     <ClCompile Include="Source\YandexTranslation.cpp" />
+    <ClCompile Include="Source\Tool_Randomizer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\BattleScenes.h" />
@@ -325,6 +326,7 @@
     <ClInclude Include="Source\UnityArchiver.h" />
     <ClInclude Include="Source\WorldMaps.h" />
     <ClInclude Include="Source\YandexTranslation.h" />
+    <ClInclude Include="Source\Tool_Randomizer.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Source\resource.rc" />

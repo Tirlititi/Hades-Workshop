@@ -34,7 +34,7 @@ DllMetaDataModification* PartySpecialDataSet::ComputeSteamMod(ConfigurationSet& 
 	DllMetaData& dlldata = config.meta_dll;
 	unsigned int i;
 	res[0].position = dlldata.GetStaticFieldOffset(config.dll_magicsword_field_id);
-	res[0].base_length = 4*MAGIC_SWORD_AMOUNT;
+	res[0].base_length = 4*MAGIC_SWORD_AMOUNT; // config.meta_dll.GetStaticFieldRange(config.dll_magicsword_field_id);
 	res[0].new_length = 4*MAGIC_SWORD_AMOUNT;
 	res[0].value = new uint8_t[res[0].new_length];
 	BufferInitPosition();
@@ -42,6 +42,19 @@ DllMetaDataModification* PartySpecialDataSet::ComputeSteamMod(ConfigurationSet& 
 		BufferWriteLong(res[0].value,magic_sword_requirement[i]);
 	*modifamount = 1;
 	return res;
+}
+
+void PartySpecialDataSet::GenerateCSharp(vector<string>& buffer) {
+	unsigned int i;
+	stringstream mgcswddb;
+	mgcswddb << "// Method: BattleHUD::SetAbilityMagic\n\n";
+	mgcswddb << "\t// ...\n";
+	mgcswddb << "\tint[] array2 = new int[] {\n";
+	for (i = 0; i < MAGIC_SWORD_AMOUNT; i++)
+		mgcswddb << "\t\t" << (int)magic_sword_requirement[i] << (i+1==MAGIC_SWORD_AMOUNT ? "" : ",") << "\n";
+	mgcswddb << "\t};\n";
+	mgcswddb << "\t// ...\n";
+	buffer.push_back(mgcswddb.str());
 }
 
 void PartySpecialDataSet::Write(fstream& ffbin, ConfigurationSet& config) {

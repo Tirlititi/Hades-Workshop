@@ -172,12 +172,13 @@ public:
 	// Note: Similarity and link methods require multi_lang_script to be up-to-date if lang or baselang is the current_language
 	bool CheckLanguageSimilarity(SteamLanguage lang, SteamLanguage baselang, vector<uint16_t>* langtextid = NULL, vector<uint16_t>* baselangtextid = NULL);
 	// Use baselang = lang to break a link
-	void LinkLanguageScripts(SteamLanguage lang, SteamLanguage baselang, vector<uint16_t> langtextid = vector<uint16_t>(), vector<uint16_t> baselangtextid = vector<uint16_t>());
+	void LinkLanguageScripts(SteamLanguage lang, SteamLanguage baselang, vector<uint16_t> langtextid = vector<uint16_t>(), vector<uint16_t> baselangtextid = vector<uint16_t>(), bool markmodified = true);
 	void LinkSimilarLanguageScripts();
 	// Replace the dialog IDs without any linking process
 	void ApplyDialogLink(vector<uint16_t> langtextid, vector<uint16_t> baselangtextid);
 
-	void Read(fstream& f, SteamLanguage lang = STEAM_LANGUAGE_NONE);
+	void Read(fstream& f, SteamLanguage lang);
+	void Read(fstream& f) { Read(f, STEAM_LANGUAGE_NONE); }
 	void Write(fstream& f);
 	void WritePPF(fstream& f);
 	void ReadHWS(fstream& f, bool usetext = true, SteamLanguage lang = STEAM_LANGUAGE_NONE);

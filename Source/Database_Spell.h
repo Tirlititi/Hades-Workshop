@@ -51,7 +51,7 @@ static SortedChoiceItemWithHelp HADES_STRING_SPELL_EFFECT[] = {
 	{ 44, L"Focus", L"Increase target's magic.\nBonus = (100 / Power)%" },
 	{ 45, L"Sacrifice", L"Fully heal targets' HP and MP by consuming caster's HP and MP. Fail on Petrified targets." },
 	{ 46, L"Soul Blade", L"Add status depending on caster's weapon.\nWork only if the equipped weapon is a thief sword (ID between 7 and 15)." },
-	{ 47, L"Apply Effect", L"No effect by itself.\nUsed by the other spell effects to apply damage, status, etc..." },
+	{ 47, L"Apply Effect", L"No effect." },
 	{ 48, L"Spear", L"Physical attack.\nDamage = 1.5 * (Attack - Defence) * Random[Strength, Strength + (Level + Strength) / 8]\n\nDamage Modifiers : Healer, High Jump (factor changed from 1.5 to 2), Mini (Caster - half), Defend, Protect, Sleep and Mini (Target)" },
 	{ 49, L"Eidolon Phoenix", L"Magic Attack on target enemies and Life on target allies.\nDamage = Magic Attack formula using Phoenix's spell datas\nHeal = Life formula using Rebirth Flame's spell datas" },
 	{ 50, L"Six Dragons", L"Randomly change target's HP and/or MP but fail if the target is under Petrify.\nRestore both HP and MP : 10%\nRestore HP : 20%\nRestore MP : 20%\nReduce HP to 1 : 15%\nReduce MP to 1 : 15%\nReduce both HP and MP to 1 : 20%" },

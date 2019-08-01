@@ -386,7 +386,6 @@ ScriptEditHandler::ScriptEditHandler(ScriptDataStruct& scpt, int scpttype, SaveS
 	use_card(dataloaded[7]),
 	entry_selection(SCRIPT_ID_NO_ENTRY),
 	handler_dialog(NULL) {
-//fstream fout("aaaa.txt",ios::app|ios::out); fout << "0.3" << endl; fout.close();
 	unsigned int i;
 	script = scpt;
 	entry_name.Alloc(script.entry_amount);
@@ -397,7 +396,6 @@ ScriptEditHandler::ScriptEditHandler(ScriptDataStruct& scpt, int scpttype, SaveS
 	entry_model_index.resize(script.entry_amount);
 	for (i=0;i<script.entry_amount;i++)
 		entry_model_index[i] = -1;
-//fout.open("aaaa.txt",ios::app|ios::out); fout << "0.7" << endl; fout.close();
 }
 
 ScriptEditHandler::~ScriptEditHandler() {
@@ -1026,11 +1024,17 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 				functrackline++;
 			} else {
 				unsigned int j;
-				wxString lstr = str,rstr;
+				wxString lstr = str, rstr, keywordcheck;
 				str = L"";
 				funcpostrack[functrackline] = funcpostrack[functrackline-1];
 				lstr = lstr.BeforeLast(L'\n',&rstr);
 				for (j=functrackline-1;j>0 && funcpostrack[j]>=funcpos+3+func.op[oppos].arg[0].GetValue();j--) {
+					if (funcpostrack[j] == funcpos + 3 + func.op[oppos].arg[0].GetValue()) {
+						keywordcheck = lstr.AfterLast(L'\n');
+						keywordcheck = GetNextThing(keywordcheck);
+						if (keywordcheck.IsSameAs(L"case") || keywordcheck.IsSameAs(L"default"))
+							break; // "do while" loop immediately after a switch case: keep the "case" or "default" line out of the loop
+					}
 					funcpostrack[j] = funcpostrack[j-1];
 					lstr = lstr.BeforeLast(L'\n',&rstr);
 					str = _(L"\n")+_(TAB_STR)+rstr+str;
@@ -1451,11 +1455,10 @@ vector<uint8_t> ConvertStringToVararg(wxString varstr, wxString& errmsg, ScriptL
 	int objecttype = -1, lastobjecttype = -1;
 	unsigned int i,j,len;
 	unsigned int parlvl = 0, lvlmove[SCRPT_MAX_OPERAND];
-	int expectedval = 1;
+	int tmpnum, expectedval = 1;
 	uint8_t sz = 0, bufferpos = 0;
 	wxString tmpstr;
 	vector<uint8_t> res;
-	uint16_t tmp16;
 	uint32_t tmp32;
 	if (varstr.IsEmpty()) {
 		errmsg = _(HADES_STRING_SCRIPT_VARARG_EMPTY);
@@ -1520,7 +1523,12 @@ vector<uint8_t> ConvertStringToVararg(wxString varstr, wxString& errmsg, ScriptL
 			MACRO_APPEND_BYTE(0x29,true)
 			tmpstr = GetNextVarThing(varstr);
 			if (tmpstr.IsNumber()) {
-				MACRO_APPEND_BYTE(wxAtoi(tmpstr),true)
+				tmpnum = wxAtoi(tmpstr);
+				if (tmpnum>0xFF) {
+					errmsg.Printf(wxT(HADES_STRING_SCRIPT_VARARG_TOO_HIGH), tmpstr, 0xFF);
+					return vector<uint8_t>();
+				}
+				MACRO_APPEND_BYTE(tmpnum, true)
 			} else {
 				for (j=0;j<G_N_ELEMENTS(ScriptCharacterField);j++)
 					if (tmpstr.IsSameAs(ScriptCharacterField[j].name)) {
@@ -1539,14 +1547,18 @@ vector<uint8_t> ConvertStringToVararg(wxString varstr, wxString& errmsg, ScriptL
 			}
 		} else if (tmpstr.IsNumber() && !tmpstr.IsSameAs(L"-") && !tmpstr.IsSameAs(L"+")) {
 			objecttype = 6;
-			tmp16 = wxAtoi(tmpstr);
+			tmp32 = wxAtoi(tmpstr);
+			if (tmp32>0xFFFF) {
+				errmsg.Printf(wxT(HADES_STRING_SCRIPT_VARARG_TOO_HIGH), tmpstr, 0xFFFF);
+				return vector<uint8_t>();
+			}
 			MACRO_APPEND_BYTE(0x7D,true)
-			MACRO_APPEND_BYTE(tmp16 & 0xFF,true)
-			MACRO_APPEND_BYTE((tmp16 >> 8) & 0xFF,true)
+			MACRO_APPEND_BYTE(tmp32 & 0xFF,true)
+			MACRO_APPEND_BYTE((tmp32 >> 8) & 0xFF,true)
 			expectedval--;
 		} else if (tmpstr.Mid(0,len-1).IsNumber() && tmpstr[len-1]==L'L') {
 			objecttype = 7;
-			tmp32 = wxAtoi(tmpstr);
+			tmpstr.ToULong((unsigned long*)&tmp32);
 			MACRO_APPEND_BYTE(0x7E,true)
 			MACRO_APPEND_BYTE(tmp32 & 0xFF,true)
 			MACRO_APPEND_BYTE((tmp32 >> 8) & 0xFF,true)
@@ -1576,7 +1588,12 @@ vector<uint8_t> ConvertStringToVararg(wxString varstr, wxString& errmsg, ScriptL
 							errmsg.Printf(wxT(HADES_STRING_SCRIPT_VARARG_UNKNOWN),tmpstr);
 							return vector<uint8_t>();
 						}
-						MACRO_APPEND_BYTE(wxAtoi(num),true)
+						tmpnum = wxAtoi(num);
+						if (tmpnum>0xFF) {
+							errmsg.Printf(wxT(HADES_STRING_SCRIPT_VARARG_TOO_HIGH), num, 0xFF);
+							return vector<uint8_t>();
+						}
+						MACRO_APPEND_BYTE(tmpnum, true)
 						expectedval--;
 					} else if (objecttype>=20 && objecttype<30) { // get variable (array byte = 2)
 						MACRO_APPEND_BYTE(i,true)
@@ -1585,9 +1602,13 @@ vector<uint8_t> ConvertStringToVararg(wxString varstr, wxString& errmsg, ScriptL
 							errmsg.Printf(wxT(HADES_STRING_SCRIPT_VARARG_UNKNOWN),tmpstr);
 							return vector<uint8_t>();
 						}
-						tmp16 = wxAtoi(num);
-						MACRO_APPEND_BYTE(tmp16 & 0xFF,true)
-						MACRO_APPEND_BYTE((tmp16 >> 8) & 0xFF,true)
+						tmp32 = wxAtoi(num);
+						if (tmp32>0xFFFF) {
+							errmsg.Printf(wxT(HADES_STRING_SCRIPT_VARARG_TOO_HIGH), num, 0xFFFF);
+							return vector<uint8_t>();
+						}
+						MACRO_APPEND_BYTE(tmp32 & 0xFF,true)
+						MACRO_APPEND_BYTE((tmp32 >> 8) & 0xFF,true)
 						expectedval--;
 					} else if (objecttype==50) { // function (1 arg)
 						MACRO_APPEND_BYTE(i,false)
@@ -1619,6 +1640,10 @@ vector<uint8_t> ConvertStringToVararg(wxString varstr, wxString& errmsg, ScriptL
 							return vector<uint8_t>();
 						}
 						tmp32 = wxAtoi(tmpstr);
+						if (tmp32>0xFF) {
+							errmsg.Printf(wxT(HADES_STRING_SCRIPT_VARARG_TOO_HIGH), tmpstr, 0xFF);
+							return vector<uint8_t>();
+						}
 						tmpstr = GetNextVarThing(varstr);
 						if (!tmpstr.IsSameAs(L",")) {
 							errmsg = _(HADES_STRING_SCRIPT_VARARG_MISS_COMMA);
@@ -1629,7 +1654,12 @@ vector<uint8_t> ConvertStringToVararg(wxString varstr, wxString& errmsg, ScriptL
 							errmsg = _(HADES_STRING_SCRIPT_VARARG_GETENTRY);
 							return vector<uint8_t>();
 						}
-						MACRO_APPEND_BYTE(wxAtoi(tmpstr),true)
+						tmpnum = wxAtoi(tmpstr);
+						if (tmpnum>0xFF) {
+							errmsg.Printf(wxT(HADES_STRING_SCRIPT_VARARG_TOO_HIGH), tmpstr, 0xFF);
+							return vector<uint8_t>();
+						}
+						MACRO_APPEND_BYTE(tmpnum,true)
 						MACRO_APPEND_BYTE(tmp32,true)
 						tmpstr = GetNextVarThing(varstr);
 						if (!tmpstr.IsSameAs(L")")) {
@@ -1658,7 +1688,12 @@ vector<uint8_t> ConvertStringToVararg(wxString varstr, wxString& errmsg, ScriptL
 							errmsg = _(HADES_STRING_SCRIPT_VARARG_GETENTRY);
 							return vector<uint8_t>();
 						}
-						MACRO_APPEND_BYTE(wxAtoi(tmpstr),true)
+						tmpnum = wxAtoi(tmpstr);
+						if (tmpnum>0xFF) {
+							errmsg.Printf(wxT(HADES_STRING_SCRIPT_VARARG_TOO_HIGH), tmpstr, 0xFF);
+							return vector<uint8_t>();
+						}
+						MACRO_APPEND_BYTE(tmpnum, true)
 						tmpstr = GetNextVarThing(varstr);
 						if (!tmpstr.IsSameAs(L")")) {
 							errmsg = _(HADES_STRING_SCRIPT_VARARG_MISS_PAR);
@@ -3296,10 +3331,11 @@ void ScriptEditDialog::UpdateLineHelp(long x, long y) {
 		abspos += relpos;
 	}
 	tmp = line.Mid(numbegin,relpos);
-	long selectedint = selnum ? wxAtoi(tmp) : 0;
-	m_intvaluesignedint->ChangeValue(wxString::Format(wxT("%hd"),selectedint));
+	uint32_t selectedint = 0;
+	if (selnum) tmp.ToULong((unsigned long*)&selectedint);
+	m_intvaluesignedint->ChangeValue(wxString::Format(wxT("%hd"),selectedint & 0xFFFF));
 	m_intvaluesignedlong->ChangeValue(wxString::Format(wxT("%d"),selectedint));
-	m_intvaluebase16->ChangeValue(wxString::Format(wxT("%#.4x"),selectedint));
+	m_intvaluebase16->ChangeValue(wxString::Format(wxT("0x%.4x"),selectedint));
 	wxString base64str = _(L"[ ");
 	for (i=0;i<=3;i++) {
 		base64str << (unsigned int)((selectedint >> (6*i)) & 0x3F);
@@ -3746,9 +3782,8 @@ void ScriptEditDialog::OnIntValueText(wxCommandEvent& event) {
 		uint32_t val = wxAtoi(txtvalue);
 		intvalue = wxString::Format(wxT("%uL"),wxAtoi(txtvalue));
 	} else if (id==wxID_HEXA) {
-		long val;
-		txtvalue.ToLong(&val,16);
-		val = abs(val);
+		uint32_t val;
+		txtvalue.ToULong((unsigned long*)&val,16);
 		if (val>0x7FFF)
 			intvalue = wxString::Format(wxT("%uL"),val);
 		else

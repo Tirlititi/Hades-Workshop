@@ -33,6 +33,8 @@ public:
 	static bool LoadToolUnityConfig(UnityViewerWindow* configwindow);
 	static bool SaveToolBackgroundConfig(BackgroundEditorWindow* configwindow);
 	static bool LoadToolBackgroundConfig(BackgroundEditorWindow* configwindow);
+	static bool SaveToolRandomizerConfig(RandomizerWindow* configwindow);
+	static bool LoadToolRandomizerConfig(RandomizerWindow* configwindow);
 
 private:
 	bool ReadCharmaps();

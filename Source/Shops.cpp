@@ -1,6 +1,7 @@
 #include "Shops.h"
 
 #include "DllEditor.h"
+#include "Database_Item.h"
 
 #define SHOP_HWS_VERSION 2
 
@@ -58,7 +59,6 @@ void ShopDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 				shop[i].item_amount = j;
 				if (j<SHOP_ITEM_AMOUNT)
 					j++;
-				steam_method_base_length_shop[i] = j+GetAlignOffset(j);
 			}
 			while (j<SHOP_ITEM_AMOUNT)
 				shop[i].item_list[j++] = 0;
@@ -121,6 +121,30 @@ DllMetaDataModification* ShopDataSet::ComputeSteamMod(ConfigurationSet& config, 
 	delete[] argvalue;
 	*modifamount = fieldedshop+1;
 	return res;
+}
+
+void ShopDataSet::GenerateCSharp(vector<string>& buffer) {
+	unsigned int i, j;
+	stringstream shopdb;
+	shopdb << "// Method: FF9.ff9buy::.cctor\n\n";
+	shopdb << "\tff9buy._FF9Buy_Data = new byte[][] {\n";
+	for (i = 0; i < SHOP_AMOUNT; i++) {
+		shopdb << "\t\tnew byte[] { ";
+		for (j = 0; j < SHOP_ITEM_AMOUNT && shop[i].item_list[j]!=0xFF; j++)
+			shopdb << (int)shop[i].item_list[j] << (j+1==SHOP_ITEM_AMOUNT ? " " : ", ");
+		if (j < SHOP_ITEM_AMOUNT)
+			shopdb << "byte.MaxValue ";
+		shopdb << (i+1==SHOP_AMOUNT ? "}" : "},") << " // " << HADES_STRING_SHOP_NAME[i].label.ToStdString() << "\n";
+	}
+	shopdb << "\t};\n";
+	buffer.push_back(shopdb.str());
+	stringstream synthdb;
+	synthdb << "// Method: FF9.ff9mix::.cctor\n\n";
+	synthdb << "\tff9mix._FF9MIX_DATA = new FF9MIX_DATA[] {\n";
+	for (i = 0; i < SYNTHESIS_AMOUNT; i++)
+		synthdb << "\t\tnew FF9MIX_DATA(" << (int)synthesis[i].price << ", new byte[]{ " << (int)synthesis[i].recipe1 << ", " << (int)synthesis[i].recipe2 << " }, " << (int)synthesis[i].synthesized << ", " << StreamAsHex(synthesis[i].shops) << (i+1==SYNTHESIS_AMOUNT ? ")\n" : "),\n");
+	synthdb << "\t};\n";
+	buffer.push_back(synthdb.str());
 }
 
 void ShopDataSet::Write(fstream& ffbin, ConfigurationSet& config) {

@@ -1039,6 +1039,20 @@ int FindConfiguration(string filepath, ConfigurationSet& dest) {
 //                 STEAM VERSION                    //
 //==================================================//
 
+string ConfigurationSet::GetSteamAssetPath(UnityArchiveFile arch, int32_t fileid) {
+	if (arch == UNITY_ARCHIVE_DATA2)
+		return "p0data2\\" + meta_battle.GetFileFullName(fileid, &bundle_battle, &indexlist_res);
+	if (arch == UNITY_ARCHIVE_DATA3)
+		return "p0data3\\" + meta_world.GetFileFullName(fileid, &bundle_world, &indexlist_res);
+	if (arch == UNITY_ARCHIVE_DATA7)
+		return "p0data7\\" + meta_script.GetFileFullName(fileid, &bundle_script, &indexlist_res);
+	if (arch >= UNITY_ARCHIVE_DATA11 && arch <= UNITY_ARCHIVE_DATA19)
+		return "p0data1" + to_string(arch-UNITY_ARCHIVE_DATA11+1) + "\\" + meta_field[arch-UNITY_ARCHIVE_DATA11].GetFileFullName(fileid, &bundle_field[arch-UNITY_ARCHIVE_DATA11], &indexlist_res);
+	if (arch == UNITY_ARCHIVE_RESOURCES)
+		return "resources\\" + meta_res.GetFileFullName(fileid, NULL, &indexlist_res);
+	return "unexpected_export\\unexpected_export.bin";
+}
+
 int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	static string langdir[STEAM_LANGUAGE_AMOUNT] = { "us", "uk", "jp", "gr", "fr", "it", "es" };
 	unsigned int i,j;
@@ -1051,23 +1065,24 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	// Loading meta datas
 	unityarchivename = dest.steam_dir_data+"resources.assets";
 	unityarchive.open(unityarchivename.c_str(),ios::in | ios::binary);
+	if (!unityarchive.is_open()) return -3;
 	dest.meta_res.Load(unityarchive);
 	unityarchive.close();
 	string subfilepath;
-	UnityArchiveIndexListData mesindexlist;
 	unityarchivename = dest.steam_dir_data+"mainData";
 	unityarchive.open(unityarchivename.c_str(),ios::in | ios::binary);
+	if (!unityarchive.is_open()) return -3;
 	dest.meta_main.Load(unityarchive);
 	uint32_t mesindexfileid = dest.meta_main.GetFileIndex("",147);
 	unityarchive.seekg(dest.meta_main.GetFileOffsetByIndex(mesindexfileid));
-	mesindexlist.Load(unityarchive,dest.meta_main.GetFileSizeByIndex(mesindexfileid));
+	dest.indexlist_res.Load(unityarchive,dest.meta_main.GetFileSizeByIndex(mesindexfileid));
 	unityarchive.close();
-	UnityArchiveAssetBundle ebindexlist;
 	unityarchivename = dest.steam_dir_assets+"p0data7.bin";
 	unityarchive.open(unityarchivename.c_str(),ios::in | ios::binary);
+	if (!unityarchive.is_open()) return -3;
 	dest.meta_script.Load(unityarchive);
 	unityarchive.seekg(dest.meta_script.GetFileOffset("",142));
-	ebindexlist.Load(unityarchive);
+	dest.bundle_script.Load(unityarchive);
 	unityarchive.close();
 	dest.enmy_amount = G_N_ELEMENTS(SteamBattleScript);
 	dest.enmy_stat_file = new int32_t[dest.enmy_amount];
@@ -1084,32 +1099,32 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	dest.field_id = new uint16_t[dest.field_amount];
 	dest.world_amount = WORLD_BLOCK_VALID_AMOUNT; // Both EVT_WORLD_WORLDTS and EVT_WORLD_WORLDSV are japanese-only and are leftovers
 	dest.world_id = new uint16_t[dest.world_amount];
-	UnityArchiveAssetBundle enmyindexlist;
 	unityarchivename = dest.steam_dir_assets+"p0data2.bin";
 	unityarchive.open(unityarchivename.c_str(),ios::in | ios::binary);
+	if (!unityarchive.is_open()) return -3;
 	dest.meta_battle.Load(unityarchive);
 	unityarchive.seekg(dest.meta_battle.GetFileOffset("",142));
-	enmyindexlist.Load(unityarchive);
+	dest.bundle_battle.Load(unityarchive);
 	unityarchive.close();
-//	UnityArchiveAssetBundle worldindexlist;
 	unityarchivename = dest.steam_dir_assets+"p0data3.bin";
 	unityarchive.open(unityarchivename.c_str(),ios::in | ios::binary);
+	if (!unityarchive.is_open()) return -3;
 	dest.meta_world.Load(unityarchive);
-//	unityarchive.seekg(dest.meta_world.GetFileOffset("",142));
-//	worldindexlist.Load(unityarchive);
+	unityarchive.seekg(dest.meta_world.GetFileOffset("",142));
+	dest.bundle_world.Load(unityarchive);
 	unityarchive.close();
-	UnityArchiveAssetBundle fieldindexlist[9];
 	for (i=0;i<9;i++) {
 		stringstream fieldunityarchivename;
 		fieldunityarchivename << dest.steam_dir_assets << "p0data1" << i+1 << ".bin";
 		unityarchive.open(fieldunityarchivename.str().c_str(),ios::in | ios::binary);
+		if (!unityarchive.is_open()) return -3;
 		dest.meta_field[i].Load(unityarchive);
 		unityarchive.seekg(dest.meta_field[i].GetFileOffset("",142));
-		fieldindexlist[i].Load(unityarchive);
+		dest.bundle_field[i].Load(unityarchive);
 		unityarchive.close();
 	}
 	unityarchivename = dest.steam_dir_managed+"Assembly-CSharp.dll";
-	dest.meta_dll.Load(unityarchivename.c_str());
+	if (dest.meta_dll.Load(unityarchivename.c_str())) return -3;
 	
 	// Battles
 	string battlenamelower[G_N_ELEMENTS(SteamBattleScript)];
@@ -1122,7 +1137,7 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 		
 		#define MACRO_CONFIG_SEARCHOFFBATTLE_STEAM(NAME,FILE,VARIABLE) \
 			subfilepath = "assets/resources/battlemap/battlescene/"+NAME+"/"+FILE+".bytes"; \
-			dest.VARIABLE = dest.meta_battle.GetFileIndexByInfo(enmyindexlist.GetFileInfo(subfilepath),49);
+			dest.VARIABLE = dest.meta_battle.GetFileIndexByInfo(dest.bundle_battle.GetFileInfo(subfilepath),49);
 		
 		stringstream bnamestr;
 		bnamestr << (unsigned int)SteamBattleScript[i].battle_id << ".raw17";
@@ -1134,7 +1149,7 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 		
 		#define MACRO_CONFIG_SEARCHOFFSCRIPT_STEAM(MODULE,NAME,VARIABLE) \
 			subfilepath = string("assets/resources/commonasset/eventengine/eventbinary/")+MODULE+langdir[i]+"/"+NAME+".eb.bytes"; \
-			dest.VARIABLE = dest.meta_script.GetFileIndexByInfo(ebindexlist.GetFileInfo(subfilepath),49);
+			dest.VARIABLE = dest.meta_script.GetFileIndexByInfo(dest.bundle_script.GetFileInfo(subfilepath),49);
 		
 		for (j=0;j<dest.enmy_amount;j++) {
 			MACRO_CONFIG_SEARCHOFFSCRIPT_STEAM("battle/",battlenamelower[j],enmy_script_file[i][j])
@@ -1156,9 +1171,9 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 		dest.field_file_id[i] = SteamFieldScript[i].file_id;
 		dest.field_tiles_localized[i] = SteamFieldScript[i].has_localization;
 		subfilepath = "assets/resources/commonasset/eventengine/eventanimation/"+fieldnamelower[i]+".txt.bytes";
-		dest.field_preload_file[i] = dest.meta_script.GetFileIndexByInfo(ebindexlist.GetFileInfo(subfilepath),49);
+		dest.field_preload_file[i] = dest.meta_script.GetFileIndexByInfo(dest.bundle_script.GetFileInfo(subfilepath),49);
 		subfilepath = "assets/resources/commonasset/mapconfigdata/"+fieldnamelower[i]+".bytes";
-		dest.field_role_file[i] = dest.meta_script.GetFileIndexByInfo(ebindexlist.GetFileInfo(subfilepath),49);
+		dest.field_role_file[i] = dest.meta_script.GetFileIndexByInfo(dest.bundle_script.GetFileInfo(subfilepath),49);
 		if (dest.field_file_id[i]==0) {
 			dest.field_walkmesh_file[i] = 0;
 			dest.field_image_file[i] = 0;
@@ -1167,18 +1182,18 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 			continue;
 		}
 		subfilepath = "assets/resources/fieldmaps/"+fieldbacknamelower[i]+"/"+fieldbacknamelower[i]+".bgi.bytes";
-		dest.field_walkmesh_file[i] = dest.meta_field[dest.field_file_id[i]-1].GetFileIndexByInfo(fieldindexlist[dest.field_file_id[i]-1].GetFileInfo(subfilepath),49);
+		dest.field_walkmesh_file[i] = dest.meta_field[dest.field_file_id[i]-1].GetFileIndexByInfo(dest.bundle_field[dest.field_file_id[i]-1].GetFileInfo(subfilepath),49);
 		subfilepath = "assets/resources/fieldmaps/"+fieldbacknamelower[i]+"/atlas.png";
-		dest.field_image_file[i] = dest.meta_field[dest.field_file_id[i]-1].GetFileIndexByInfo(fieldindexlist[dest.field_file_id[i]-1].GetFileInfo(subfilepath),28);
+		dest.field_image_file[i] = dest.meta_field[dest.field_file_id[i]-1].GetFileIndexByInfo(dest.bundle_field[dest.field_file_id[i]-1].GetFileInfo(subfilepath),28);
 		int64_t finfo;
 		int32_t fsharedbgs;
 		subfilepath = "assets/resources/fieldmaps/"+fieldbacknamelower[i]+"/"+fieldbacknamelower[i]+".bgs.bytes";
-		fsharedbgs = dest.meta_field[dest.field_file_id[i]-1].GetFileIndexByInfo(fieldindexlist[dest.field_file_id[i]-1].GetFileInfo(subfilepath),49);
+		fsharedbgs = dest.meta_field[dest.field_file_id[i]-1].GetFileIndexByInfo(dest.bundle_field[dest.field_file_id[i]-1].GetFileInfo(subfilepath),49);
 		if (dest.field_tiles_localized[i]) {
 			dest.field_tiles_file[i] = new int32_t[STEAM_LANGUAGE_AMOUNT];
 			for (j=0;j<STEAM_LANGUAGE_AMOUNT;j++) {
 				subfilepath = "assets/resources/fieldmaps/"+fieldbacknamelower[i]+"/"+fieldbacknamelower[i]+"_"+langdir[j]+".bgs.bytes";
-				finfo = fieldindexlist[dest.field_file_id[i]-1].GetFileInfo(subfilepath);
+				finfo = dest.bundle_field[dest.field_file_id[i]-1].GetFileInfo(subfilepath);
 				if (finfo==0)
 					dest.field_tiles_file[i][j] = fsharedbgs;
 				else
@@ -1219,11 +1234,11 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	// Text Blocks
 	dest.text_amount = 0;
 	static uint16_t textidtmp[CLUSTER_MAX_AMOUNT];
-	for (i=0;i<mesindexlist.amount;i++) {
-		if (mesindexlist.path[i].length()>30) {
-			token = mesindexlist.path[i].substr(19,9);
+	for (i=0;i<dest.indexlist_res.amount;i++) {
+		if (dest.indexlist_res.path[i].length()>30) {
+			token = dest.indexlist_res.path[i].substr(19,9);
 			if (token.compare("us/field/")==0) {
-				token = mesindexlist.path[i].substr(28,mesindexlist.path[i].find('.',28));
+				token = dest.indexlist_res.path[i].substr(28, dest.indexlist_res.path[i].find('.',28));
 				fid = strtol(token.c_str(),NULL,10);
 				if (fid!=STEAM_WORLD_MAP_TEXT_ID) {
 					textidtmp[dest.text_amount++] = fid;
@@ -1243,7 +1258,7 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 		
 		#define MACRO_CONFIG_SEARCHOFFTXT_STEAM(NAME,VARIABLE) \
 			subfilepath = "embeddedasset/text/"+langdir[i]+NAME; \
-			dest.VARIABLE = mesindexlist.GetFileIndex(subfilepath)-1;
+			dest.VARIABLE = dest.indexlist_res.GetFileIndex(subfilepath)-1;
 		
 		MACRO_CONFIG_SEARCHOFFTXT_STEAM("/ability/aa_name.mes",spell_name_file[i])
 		MACRO_CONFIG_SEARCHOFFTXT_STEAM("/ability/aa_help.mes",spell_help_file[i])
@@ -1402,6 +1417,7 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 
 	unityarchivename = dest.steam_dir_data+"sharedassets2.assets";
 	unityarchive.open(unityarchivename.c_str(),ios::in | ios::binary);
+	if (!unityarchive.is_open()) return -3;
 	dest.meta_atlas.Load(unityarchive);
 	for (i=0;;i++) {
 		dest.atlas_iconsprite_file = dest.meta_atlas.GetFileIndex("",-1,i);
@@ -1435,47 +1451,57 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	return 0;
 }
 
-int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, SaveSet& saveset, bool deleteold) {
+int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, SaveSet& saveset, int dllformat, int assetformat, bool deleteold) {
 	// For chunks, we use the functions WriteHWS as the writing process is the same
 	// A WriteSteam function is needed only when texts are involved
 	SteamLanguage lang;
-	unsigned int i,j;
-	string dirassets = destfolder+"\\StreamingAssets\\";
-	string dirdata = destfolder+"\\x64\\FF9_Data\\";
-	string dirmanaged = destfolder+"\\x64\\FF9_Data\\Managed\\";
+	unsigned int i, j;
+	if (destfolder.back() != '\\') destfolder += "\\";
+	string dirassets = destfolder + "StreamingAssets\\";
+	string dirdata = destfolder + "x64\\FF9_Data\\";
+	string dirmanaged = destfolder + "x64\\FF9_Data\\Managed\\";
 	string fname;
-	if (config.steam_dir_assets.compare(dirassets)==0)
+	if (config.steam_dir_assets.compare(dirassets) == 0)
 		return 1;
 	if (deleteold) {
 		// Delete previous mod files
-		fname = dirassets+"p0data2.bin";
-		remove(fname.c_str());
-		fname = dirassets+"p0data3.bin";
-		remove(fname.c_str());
-		fname = dirassets+"p0data7.bin";
-		remove(fname.c_str());
-		for (i=0;i<9;i++) {
-			stringstream ffieldname;
-			remove(ffieldname.str().c_str());
+		if (assetformat == 0) {
+			fname = dirassets + "p0data2.bin";
+			remove(fname.c_str());
+			fname = dirassets + "p0data3.bin";
+			remove(fname.c_str());
+			fname = dirassets + "p0data7.bin";
+			remove(fname.c_str());
+			/*for (i = 0; i < 9; i++) {
+				stringstream ffieldname;
+				ffieldname << dirassets << "p0data1" << (i+1) << ".bin";
+				remove(ffieldname.str().c_str());
+			}*/
+			fname = dirdata + "resources.assets";
+			remove(fname.c_str());
 		}
-		fname = dirdata+"resources.assets";
-		remove(fname.c_str());
-		fname = dirmanaged+"Assembly-CSharp.dll";
-		remove(fname.c_str());
+		if (dllformat==0) {
+			fname = dirmanaged + "Assembly-CSharp.dll";
+			remove(fname.c_str());
+		} else if (dllformat==1) {
+		} else if (dllformat==2) {
+			fname = destfolder + "Assembly-CSharp_Additions.cs";
+			remove(fname.c_str());
+		}
 	}
-	
+
 	// Update the offsets/sizes
 	if (section[DATA_SECTION_TEXT])
-		for (i=0;i<saveset.textset->amount;i++)
+		for (i = 0; i < saveset.textset->amount; i++)
 			saveset.textset->text_data[i]->parent_cluster->UpdateOffset();
 	if (section[DATA_SECTION_ENMY])
-		for (i=0;i<saveset.enemyset->battle_amount;i++)
+		for (i = 0; i < saveset.enemyset->battle_amount; i++)
 			saveset.enemyset->battle_data[i]->parent_cluster->UpdateOffset();
 	if (section[DATA_SECTION_WORLD_MAP])
-		for (i=0;i<saveset.worldset->amount;i++)
+		for (i = 0; i < saveset.worldset->amount; i++)
 			saveset.worldset->script[i]->parent_cluster->UpdateOffset();
 	if (section[DATA_SECTION_FIELD])
-		for (i=0;i<saveset.fieldset->amount;i++)
+		for (i = 0; i < saveset.fieldset->amount; i++)
 			saveset.fieldset->script_data[i]->parent_cluster->UpdateOffset();
 	if (section[DATA_SECTION_SPELL])
 		saveset.spellset->UpdateOffset();
@@ -1490,259 +1516,328 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 	if (section[DATA_SECTION_CARD])
 		saveset.cardset->UpdateOffset();
 	if (section[DATA_SECTION_MENU_UI])
-		for (i=0;i<saveset.ffuiset->special_text->amount;i++)
+		for (i = 0; i < saveset.ffuiset->special_text->amount; i++)
 			saveset.ffuiset->special_text->text_block[i].UpdateOffset();
-	
+
+	fstream filebase, filedest;
 	// p0data2 : battle files
-	if (section[DATA_SECTION_ENMY]) {
-		fname = config.steam_dir_assets+"p0data2.bin";
-		fstream filebase(fname.c_str(),ios::in | ios::binary);
-		fname = dirassets+"p0data2.bin";
-		fstream filedest(fname.c_str(),ios::out | ios::binary);
-		if (!filebase.is_open())
-			return 2;
-		if (!filedest.is_open())
-			return 3;
-		bool* copylist = new bool[config.meta_battle.header_file_amount];
-		uint32_t* filenewsize = new uint32_t[config.meta_battle.header_file_amount];
-		for (i=0;i<config.meta_battle.header_file_amount;i++) {
-			for (j=0;j<config.enmy_amount;j++)
-				if (saveset.enemyset->battle_data[j]->modified && i==config.enmy_battle_file[j]) {
-					copylist[i] = false;
-					filenewsize[i] = saveset.enemyset->battle_data[j]->size;
-					break;
-				} else if (saveset.enemyset->battle[j]->modified && i==config.enmy_stat_file[j]) {
-					copylist[i] = false;
-					filenewsize[i] = saveset.enemyset->battle[j]->size;
-					break;
-				}
-			if (j==config.enmy_amount) {
-				copylist[i] = true;
-				filenewsize[i] = config.meta_battle.file_size[i];
+	if (assetformat == 0) {
+		if (section[DATA_SECTION_ENMY]) {
+			fname = config.steam_dir_assets + "p0data2.bin";
+			filebase.open(fname.c_str(), ios::in | ios::binary);
+			fname = dirassets + "p0data2.bin";
+			filedest.open(fname.c_str(), ios::out | ios::binary);
+			if (!filebase.is_open())
+				return 2;
+			if (!filedest.is_open())
+				return 3;
+			bool* copylist = new bool[config.meta_battle.header_file_amount];
+			uint32_t* filenewsize = new uint32_t[config.meta_battle.header_file_amount];
+			for (i = 0; i < config.meta_battle.header_file_amount; i++) {
+				for (j = 0; j < config.enmy_amount; j++)
+					if (saveset.enemyset->battle_data[j]->modified && i == config.enmy_battle_file[j]) {
+						copylist[i] = false;
+						filenewsize[i] = saveset.enemyset->battle_data[j]->size;
+						break;
+					} else if (saveset.enemyset->battle[j]->modified && i == config.enmy_stat_file[j]) {
+						copylist[i] = false;
+						filenewsize[i] = saveset.enemyset->battle[j]->size;
+						break;
+					}
+					if (j == config.enmy_amount) {
+						copylist[i] = true;
+						filenewsize[i] = config.meta_battle.file_size[i];
+					}
+			}
+			uint32_t* unitydataoff = config.meta_battle.Duplicate(filebase, filedest, copylist, filenewsize);
+			for (i = 0; i < config.meta_battle.header_file_amount; i++) {
+				for (j = 0; j < config.enmy_amount; j++)
+					if (saveset.enemyset->battle_data[j]->modified && i == config.enmy_battle_file[j]) {
+						filedest.seekg(unitydataoff[i]);
+						saveset.enemyset->battle_data[j]->WriteHWS(filedest);
+						break;
+					} else if (saveset.enemyset->battle[j]->modified && i == config.enmy_stat_file[j]) {
+						filedest.seekg(unitydataoff[i]);
+						saveset.enemyset->battle[j]->WriteHWS(filedest);
+						break;
+					}
+			}
+			filebase.close();
+			filedest.close();
+			delete[] copylist;
+			delete[] filenewsize;
+			delete[] unitydataoff;
+		}
+	} else if (assetformat == 1) {
+		for (i = 0; i < config.enmy_amount; i++) {
+			fname = destfolder + config.GetSteamAssetPath(UNITY_ARCHIVE_DATA2, config.enmy_battle_file[i]);
+			if (deleteold) remove(fname.c_str());
+			if (section[DATA_SECTION_ENMY] && saveset.enemyset->battle_data[i]->modified) {
+				MainFrame::MakeDirForFile(fname);
+				filedest.open(fname.c_str(), ios::out | ios::binary);
+				if (!filedest.is_open())
+					return 3;
+				saveset.enemyset->battle_data[i]->WriteHWS(filedest);
+				filedest.close();
+			}
+			fname = destfolder + config.GetSteamAssetPath(UNITY_ARCHIVE_DATA2, config.enmy_stat_file[i]);
+			if (deleteold) remove(fname.c_str());
+			if (section[DATA_SECTION_ENMY] && saveset.enemyset->battle[i]->modified) {
+				MainFrame::MakeDirForFile(fname);
+				filedest.open(fname.c_str(), ios::out | ios::binary);
+				if (!filedest.is_open())
+					return 3;
+				saveset.enemyset->battle[i]->WriteHWS(filedest);
+				filedest.close();
 			}
 		}
-		uint32_t* unitydataoff = config.meta_battle.Duplicate(filebase,filedest,copylist,filenewsize);
-		for (i=0;i<config.meta_battle.header_file_amount;i++) {
-			for (j=0;j<config.enmy_amount;j++)
-				if (saveset.enemyset->battle_data[j]->modified && i==config.enmy_battle_file[j]) {
-					filedest.seekg(unitydataoff[i]);
-					saveset.enemyset->battle_data[j]->WriteHWS(filedest);
-					break;
-				} else if (saveset.enemyset->battle[j]->modified && i==config.enmy_stat_file[j]) {
-					filedest.seekg(unitydataoff[i]);
-					saveset.enemyset->battle[j]->WriteHWS(filedest);
-					break;
-				}
-		}
-		filebase.close();
-		filedest.close();
-		delete[] copylist;
-		delete[] filenewsize;
-		delete[] unitydataoff;
 	}
-	
+
 	// p0data3 : world map files
-	if (section[DATA_SECTION_WORLD_MAP] && saveset.worldset->world_data->modified) {
-		fname = config.steam_dir_assets+"p0data3.bin";
-		fstream filebase(fname.c_str(),ios::in | ios::binary);
-		fname = dirassets+"p0data3.bin";
-		fstream filedest(fname.c_str(),ios::out | ios::binary);
-		if (!filebase.is_open())
-			return 2;
-		if (!filedest.is_open())
-			return 3;
-		bool* copylist = new bool[config.meta_world.header_file_amount];
-		uint32_t* filenewsize = new uint32_t[config.meta_world.header_file_amount];
-		for (i=0;i<config.meta_world.header_file_amount;i++)
-			if (i==config.world_fx_file[0] || i==config.world_fx_file[1]) {
-				copylist[i] = false;
-				filenewsize[i] = saveset.worldset->world_data->size;
-			} else if (i==config.world_disc_file[0] || i==config.world_disc_file[1] || i==config.world_discmr_file[0] || i==config.world_discmr_file[1]) {
-				copylist[i] = true; // DEBUG: those files are not replaced but only overwritten for now (no size change)
-				filenewsize[i] = config.meta_world.file_size[i];
-			} else {
-				copylist[i] = true;
-				filenewsize[i] = config.meta_world.file_size[i];
+	if (assetformat == 0) {
+		if (section[DATA_SECTION_WORLD_MAP] && saveset.worldset->world_data->modified) {
+			fname = config.steam_dir_assets + "p0data3.bin";
+			filebase.open(fname.c_str(), ios::in | ios::binary);
+			fname = dirassets + "p0data3.bin";
+			filedest.open(fname.c_str(), ios::out | ios::binary);
+			if (!filebase.is_open())
+				return 2;
+			if (!filedest.is_open())
+				return 3;
+			bool* copylist = new bool[config.meta_world.header_file_amount];
+			uint32_t* filenewsize = new uint32_t[config.meta_world.header_file_amount];
+			for (i = 0; i < config.meta_world.header_file_amount; i++) {
+				if (i == config.world_fx_file[0] || i == config.world_fx_file[1]) {
+					copylist[i] = false;
+					filenewsize[i] = saveset.worldset->world_data->size;
+				} else if (i == config.world_disc_file[0] || i == config.world_disc_file[1] || i == config.world_discmr_file[0] || i == config.world_discmr_file[1]) {
+					copylist[i] = true; // DEBUG: those files are not replaced but only overwritten for now (no size change)
+					filenewsize[i] = config.meta_world.file_size[i];
+				} else {
+					copylist[i] = true;
+					filenewsize[i] = config.meta_world.file_size[i];
+				}
 			}
-		uint32_t* unitydataoff = config.meta_world.Duplicate(filebase,filedest,copylist,filenewsize);
-		filedest.seekp(unitydataoff[config.world_fx_file[0]]);
-		saveset.worldset->world_data->WriteHWS(filedest);
-		filedest.seekp(unitydataoff[config.world_fx_file[1]]);
-		saveset.worldset->world_data->WriteHWS(filedest);
-		filedest.seekp(unitydataoff[config.world_disc_file[0]]);
-		saveset.worldset->world_data->WriteHWS(filedest,0);
-		filedest.seekp(unitydataoff[config.world_disc_file[1]]);
-		saveset.worldset->world_data->WriteHWS(filedest,1);
-		filedest.seekp(unitydataoff[config.world_discmr_file[0]]);
-		saveset.worldset->world_data->WriteHWS(filedest,2);
-		filedest.seekp(unitydataoff[config.world_discmr_file[1]]);
-		saveset.worldset->world_data->WriteHWS(filedest,3);
-		filebase.close();
-		filedest.close();
-		delete[] copylist;
-		delete[] filenewsize;
-		delete[] unitydataoff;
+			uint32_t* unitydataoff = config.meta_world.Duplicate(filebase, filedest, copylist, filenewsize);
+			filedest.seekp(unitydataoff[config.world_fx_file[0]]);
+			saveset.worldset->world_data->WriteHWS(filedest);
+			filedest.seekp(unitydataoff[config.world_fx_file[1]]);
+			saveset.worldset->world_data->WriteHWS(filedest);
+			filedest.seekp(unitydataoff[config.world_disc_file[0]]);
+			saveset.worldset->world_data->WriteHWS(filedest, 0);
+			filedest.seekp(unitydataoff[config.world_disc_file[1]]);
+			saveset.worldset->world_data->WriteHWS(filedest, 1);
+			filedest.seekp(unitydataoff[config.world_discmr_file[0]]);
+			saveset.worldset->world_data->WriteHWS(filedest, 2);
+			filedest.seekp(unitydataoff[config.world_discmr_file[1]]);
+			saveset.worldset->world_data->WriteHWS(filedest, 3);
+			filebase.close();
+			filedest.close();
+			delete[] copylist;
+			delete[] filenewsize;
+			delete[] unitydataoff;
+		}
+	} else if (assetformat == 1) {
+
+		#define MACRO_SAVE_ASSET_WORLD(FILEID, DISCMR) \
+			fname = destfolder + config.GetSteamAssetPath(UNITY_ARCHIVE_DATA3, config.FILEID); \
+			if (deleteold) remove(fname.c_str()); \
+			if (section[DATA_SECTION_WORLD_MAP] && saveset.worldset->world_data->modified) { \
+				MainFrame::MakeDirForFile(fname); \
+				filedest.open(fname.c_str(), ios::out | ios::binary); \
+				if (!filedest.is_open()) return 3; \
+				saveset.worldset->world_data->WriteHWS(filedest, DISCMR); \
+				filedest.close(); \
+			}
+
+		MACRO_SAVE_ASSET_WORLD(world_fx_file[0], -1)
+		MACRO_SAVE_ASSET_WORLD(world_fx_file[1], -1)
+		MACRO_SAVE_ASSET_WORLD(world_disc_file[0], 0)
+		MACRO_SAVE_ASSET_WORLD(world_disc_file[1], 1)
+		MACRO_SAVE_ASSET_WORLD(world_discmr_file[0], 2)
+		MACRO_SAVE_ASSET_WORLD(world_discmr_file[1], 3)
 	}
-	
+
 	// p0data7 : script files
-	if (section[DATA_SECTION_ENMY] || section[DATA_SECTION_FIELD] || section[DATA_SECTION_WORLD_MAP]) {
-		fname = config.steam_dir_assets+"p0data7.bin";
-		fstream filebase(fname.c_str(),ios::in | ios::binary);
-		fname = dirassets+"p0data7.bin";
-		fstream filedest(fname.c_str(),ios::out | ios::binary);
-		if (!filebase.is_open())
-			return 2;
-		if (!filedest.is_open())
-			return 3;
-		bool* copylist = new bool[config.meta_script.header_file_amount];
-		uint32_t* filenewsize = new uint32_t[config.meta_script.header_file_amount];
-		for (i=0;i<config.meta_script.header_file_amount;i++) {
-			copylist[i] = true;
-			filenewsize[i] = config.meta_script.file_size[i];
-			if (section[DATA_SECTION_ENMY])
-				for (j=0;j<config.enmy_amount;j++)
-					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-						if (i==config.enmy_script_file[lang][j]) {
-							if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && saveset.enemyset->script[j]->IsDataModified(lang)) {
-								copylist[i] = false;
-								filenewsize[i] = saveset.enemyset->script[j]->GetDataSize(lang);
+	if (assetformat == 0) {
+		if (section[DATA_SECTION_ENMY] || section[DATA_SECTION_FIELD] || section[DATA_SECTION_WORLD_MAP]) {
+			fname = config.steam_dir_assets + "p0data7.bin";
+			filebase.open(fname.c_str(), ios::in | ios::binary);
+			fname = dirassets + "p0data7.bin";
+			filedest.open(fname.c_str(), ios::out | ios::binary);
+			if (!filebase.is_open())
+				return 2;
+			if (!filedest.is_open())
+				return 3;
+			bool* copylist = new bool[config.meta_script.header_file_amount];
+			uint32_t* filenewsize = new uint32_t[config.meta_script.header_file_amount];
+			for (i = 0; i < config.meta_script.header_file_amount; i++) {
+				copylist[i] = true;
+				filenewsize[i] = config.meta_script.file_size[i];
+				if (section[DATA_SECTION_ENMY])
+					for (j = 0; j < config.enmy_amount; j++)
+						for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+							if (i == config.enmy_script_file[lang][j]) {
+								if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && saveset.enemyset->script[j]->IsDataModified(lang)) {
+									copylist[i] = false;
+									filenewsize[i] = saveset.enemyset->script[j]->GetDataSize(lang);
+								}
+								j = config.enmy_amount;
+								break;
 							}
-							j = config.enmy_amount;
-							break;
-						}
-			if (copylist[i] && section[DATA_SECTION_FIELD])
-				for (j=0;j<config.field_amount;j++)
-					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-						if (i==config.field_script_file[lang][j]) {
-							if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && saveset.fieldset->script_data[j]->IsDataModified(lang)) {
-								copylist[i] = false;
-								filenewsize[i] = saveset.fieldset->script_data[j]->GetDataSize(lang);
+				if (copylist[i] && section[DATA_SECTION_FIELD])
+					for (j = 0; j < config.field_amount; j++)
+						for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+							if (i == config.field_script_file[lang][j]) {
+								if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && saveset.fieldset->script_data[j]->IsDataModified(lang)) {
+									copylist[i] = false;
+									filenewsize[i] = saveset.fieldset->script_data[j]->GetDataSize(lang);
+								}
+								j = config.field_amount;
+								break;
 							}
-							j = config.field_amount;
-							break;
-						}
-			if (copylist[i] && section[DATA_SECTION_WORLD_MAP])
-				for (j=0;j<config.world_amount;j++)
-					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-						if (i==config.world_script_file[lang][j]) {
-							if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && saveset.worldset->script[j]->IsDataModified(lang)) {
-								copylist[i] = false;
-								filenewsize[i] = saveset.worldset->script[j]->GetDataSize(lang);
+				if (copylist[i] && section[DATA_SECTION_WORLD_MAP])
+					for (j = 0; j < config.world_amount; j++)
+						for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+							if (i == config.world_script_file[lang][j]) {
+								if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && saveset.worldset->script[j]->IsDataModified(lang)) {
+									copylist[i] = false;
+									filenewsize[i] = saveset.worldset->script[j]->GetDataSize(lang);
+								}
+								j = config.world_amount;
+								break;
 							}
-							j = config.world_amount;
-							break;
-						}
+			}
+			uint32_t* unitydataoff = config.meta_script.Duplicate(filebase, filedest, copylist, filenewsize);
+			for (i = 0; i < config.meta_script.header_file_amount; i++) {
+				if (section[DATA_SECTION_ENMY])
+					for (j = 0; j < config.enmy_amount; j++)
+						for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+							if (i == config.enmy_script_file[lang][j]) {
+								if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && saveset.enemyset->script[j]->IsDataModified(lang)) {
+									filedest.seekg(unitydataoff[i]);
+									saveset.enemyset->script[j]->WriteHWS(filedest, lang);
+								}
+								j = config.enmy_amount;
+								break;
+							}
+				if (section[DATA_SECTION_FIELD])
+					for (j = 0; j < config.field_amount; j++)
+						for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+							if (i == config.field_script_file[lang][j]) {
+								if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && saveset.fieldset->script_data[j]->IsDataModified(lang)) {
+									filedest.seekg(unitydataoff[i]);
+									saveset.fieldset->script_data[j]->WriteHWS(filedest, lang);
+								}
+								j = config.field_amount;
+								break;
+							}
+				if (section[DATA_SECTION_WORLD_MAP])
+					for (j = 0; j < config.world_amount; j++)
+						for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+							if (i == config.world_script_file[lang][j]) {
+								if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && saveset.worldset->script[j]->IsDataModified(lang)) {
+									filedest.seekg(unitydataoff[i]);
+									saveset.worldset->script[j]->WriteHWS(filedest, lang);
+								}
+								j = config.world_amount;
+								break;
+							}
+			}
+			filebase.close();
+			filedest.close();
+			delete[] copylist;
+			delete[] filenewsize;
+			delete[] unitydataoff;
 		}
-		uint32_t* unitydataoff = config.meta_script.Duplicate(filebase,filedest,copylist,filenewsize);
-		for (i=0;i<config.meta_script.header_file_amount;i++) {
-			if (section[DATA_SECTION_ENMY])
-				for (j=0;j<config.enmy_amount;j++)
-					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-						if (i==config.enmy_script_file[lang][j]) {
-							if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && saveset.enemyset->script[j]->IsDataModified(lang)) {
-								filedest.seekg(unitydataoff[i]);
-								saveset.enemyset->script[j]->WriteHWS(filedest,lang);
-							}
-							j = config.enmy_amount;
-							break;
-						}
-			if (section[DATA_SECTION_FIELD])
-				for (j=0;j<config.field_amount;j++)
-					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-						if (i==config.field_script_file[lang][j]) {
-							if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && saveset.fieldset->script_data[j]->IsDataModified(lang)) {
-								filedest.seekg(unitydataoff[i]);
-								saveset.fieldset->script_data[j]->WriteHWS(filedest,lang);
-							}
-							j = config.field_amount;
-							break;
-						}
-			if (section[DATA_SECTION_WORLD_MAP])
-				for (j=0;j<config.world_amount;j++)
-					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-						if (i==config.world_script_file[lang][j]) {
-							if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && saveset.worldset->script[j]->IsDataModified(lang)) {
-								filedest.seekg(unitydataoff[i]);
-								saveset.worldset->script[j]->WriteHWS(filedest,lang);
-							}
-							j = config.world_amount;
-							break;
-						}
-		}
-		filebase.close();
-		filedest.close();
-		delete[] copylist;
-		delete[] filenewsize;
-		delete[] unitydataoff;
+	} else if (assetformat == 1) {
+
+		#define MACRO_SAVE_ASSET_SCRIPT(SEC, AMOUNT, DATA, FILEID) \
+			for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) \
+				for (i = 0; i < config.AMOUNT; i++) { \
+					fname = destfolder + config.GetSteamAssetPath(UNITY_ARCHIVE_DATA7, config.FILEID[lang][i]); \
+					if (deleteold) remove(fname.c_str()); \
+					if (section[SEC] && hades::STEAM_LANGUAGE_SAVE_LIST[lang] && saveset.DATA[i]->IsDataModified(lang)) { \
+						MainFrame::MakeDirForFile(fname); \
+						filedest.open(fname.c_str(), ios::out | ios::binary); \
+						if (!filedest.is_open()) return 3; \
+						saveset.DATA[i]->WriteHWS(filedest, lang); \
+						filedest.close(); \
+					} \
+				}
+
+		MACRO_SAVE_ASSET_SCRIPT(DATA_SECTION_ENMY, enmy_amount, enemyset->script, enmy_script_file)
+		MACRO_SAVE_ASSET_SCRIPT(DATA_SECTION_FIELD, field_amount, fieldset->script_data, field_script_file)
+		MACRO_SAVE_ASSET_SCRIPT(DATA_SECTION_WORLD_MAP, world_amount, worldset->script, world_script_file)
 	}
 	
 	// ToDo : p0data11 to 19
 	
 	// resources.assets : text and card files
-	{
-		fname = config.steam_dir_data+"resources.assets";
-		fstream filebase(fname.c_str(),ios::in | ios::binary);
-		fname = dirdata+"resources.assets";
-		fstream filedest(fname.c_str(),ios::out | ios::binary);
+	if (assetformat == 0) {
+		fname = config.steam_dir_data + "resources.assets";
+		filebase.open(fname.c_str(), ios::in | ios::binary);
+		fname = dirdata + "resources.assets";
+		filedest.open(fname.c_str(), ios::out | ios::binary);
 		if (!filebase.is_open())
 			return 2;
 		if (!filedest.is_open())
 			return 3;
 		bool* copylist = new bool[config.meta_res.header_file_amount];
 		uint32_t* filenewsize = new uint32_t[config.meta_res.header_file_amount];
-		for (i=0;i<config.meta_res.header_file_amount;i++) {
+		for (i = 0; i < config.meta_res.header_file_amount; i++) {
 			copylist[i] = true;
 			filenewsize[i] = config.meta_res.file_size[i];
-			
+
 			#define MACRO_STEAM_CHECKFILEUPDATE(FILEID,CONDITION,SIZE) \
 				if (CONDITION && i==config.FILEID) { \
 					copylist[i] = false; \
 					filenewsize[i] = SIZE; \
 				}
-			
-			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+
+			for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
 				if (!hades::STEAM_LANGUAGE_SAVE_LIST[lang])
 					continue;
-				MACRO_STEAM_CHECKFILEUPDATE(spell_name_file[lang],section[DATA_SECTION_SPELL],saveset.spellset->GetSteamTextSize(0,lang))
-				MACRO_STEAM_CHECKFILEUPDATE(spell_help_file[lang],section[DATA_SECTION_SPELL],saveset.spellset->GetSteamTextSize(1,lang))
-				MACRO_STEAM_CHECKFILEUPDATE(cmd_name_file[lang],section[DATA_SECTION_CMD],saveset.cmdset->GetSteamTextSize(0,lang))
-				MACRO_STEAM_CHECKFILEUPDATE(cmd_help_file[lang],section[DATA_SECTION_CMD],saveset.cmdset->GetSteamTextSize(1,lang))
-				MACRO_STEAM_CHECKFILEUPDATE(support_name_file[lang],section[DATA_SECTION_SUPPORT],saveset.supportset->GetSteamTextSize(0,lang))
-				MACRO_STEAM_CHECKFILEUPDATE(support_help_file[lang],section[DATA_SECTION_SUPPORT],saveset.supportset->GetSteamTextSize(1,lang))
-				MACRO_STEAM_CHECKFILEUPDATE(item_name_file[lang],section[DATA_SECTION_ITEM],saveset.itemset->GetSteamTextSize(0,lang))
-				MACRO_STEAM_CHECKFILEUPDATE(item_help_file[lang],section[DATA_SECTION_ITEM],saveset.itemset->GetSteamTextSize(1,lang))
-				MACRO_STEAM_CHECKFILEUPDATE(item_help2_file[lang],section[DATA_SECTION_ITEM],saveset.itemset->GetSteamTextSize(2,lang))
-				MACRO_STEAM_CHECKFILEUPDATE(itemkey_name_file[lang],section[DATA_SECTION_ITEM],saveset.itemset->GetSteamTextSize(3,lang))
-				MACRO_STEAM_CHECKFILEUPDATE(itemkey_help_file[lang],section[DATA_SECTION_ITEM],saveset.itemset->GetSteamTextSize(4,lang))
-				MACRO_STEAM_CHECKFILEUPDATE(itemkey_desc_file[lang],section[DATA_SECTION_ITEM],saveset.itemset->GetSteamTextSize(5,lang))
-				MACRO_STEAM_CHECKFILEUPDATE(field_text_file[lang],section[DATA_SECTION_FIELD],saveset.fieldset->GetSteamTextSize(lang))
-				MACRO_STEAM_CHECKFILEUPDATE(world_text_file[lang],section[DATA_SECTION_WORLD_MAP],saveset.worldset->GetSteamTextSize(0,lang))
-				MACRO_STEAM_CHECKFILEUPDATE(world_worldplace_name_file[lang],section[DATA_SECTION_WORLD_MAP],saveset.worldset->GetSteamTextSize(1,lang))
-				MACRO_STEAM_CHECKFILEUPDATE(card_name_file[lang],section[DATA_SECTION_CARD],saveset.cardset->GetSteamTextSize(lang))
-				MACRO_STEAM_CHECKFILEUPDATE(spetext_battleinfo_file[lang],section[DATA_SECTION_MENU_UI],saveset.ffuiset->special_text->text_block[0].GetDataSize(lang))
-				MACRO_STEAM_CHECKFILEUPDATE(spetext_battlescan_file[lang],section[DATA_SECTION_MENU_UI],saveset.ffuiset->special_text->text_block[1].GetDataSize(lang))
-				MACRO_STEAM_CHECKFILEUPDATE(spetext_spellnaming_file[lang],section[DATA_SECTION_MENU_UI],saveset.ffuiset->special_text->text_block[2].GetDataSize(lang))
-				MACRO_STEAM_CHECKFILEUPDATE(spetext_chocomenu_file[lang],section[DATA_SECTION_MENU_UI],saveset.ffuiset->special_text->text_block[3].GetDataSize(lang))
-				MACRO_STEAM_CHECKFILEUPDATE(spetext_cardrank_file[lang],section[DATA_SECTION_MENU_UI],saveset.ffuiset->special_text->text_block[4].GetDataSize(lang))
-				MACRO_STEAM_CHECKFILEUPDATE(spetext_tetramaster_file[lang],section[DATA_SECTION_MENU_UI],saveset.ffuiset->special_text->text_block[5].GetDataSize(lang))
-				for (j=0;j<config.enmy_amount;j++) {
-					MACRO_STEAM_CHECKFILEUPDATE(enmy_text_file[lang][j],section[DATA_SECTION_ENMY] && saveset.enemyset->text[j]->modified,saveset.enemyset->text[j]->GetDataSize(lang))
+				MACRO_STEAM_CHECKFILEUPDATE(spell_name_file[lang], section[DATA_SECTION_SPELL], saveset.spellset->GetSteamTextSize(0, lang))
+				MACRO_STEAM_CHECKFILEUPDATE(spell_help_file[lang], section[DATA_SECTION_SPELL], saveset.spellset->GetSteamTextSize(1, lang))
+				MACRO_STEAM_CHECKFILEUPDATE(cmd_name_file[lang], section[DATA_SECTION_CMD], saveset.cmdset->GetSteamTextSize(0, lang))
+				MACRO_STEAM_CHECKFILEUPDATE(cmd_help_file[lang], section[DATA_SECTION_CMD], saveset.cmdset->GetSteamTextSize(1, lang))
+				MACRO_STEAM_CHECKFILEUPDATE(support_name_file[lang], section[DATA_SECTION_SUPPORT], saveset.supportset->GetSteamTextSize(0, lang))
+				MACRO_STEAM_CHECKFILEUPDATE(support_help_file[lang], section[DATA_SECTION_SUPPORT], saveset.supportset->GetSteamTextSize(1, lang))
+				MACRO_STEAM_CHECKFILEUPDATE(item_name_file[lang], section[DATA_SECTION_ITEM], saveset.itemset->GetSteamTextSize(0, lang))
+				MACRO_STEAM_CHECKFILEUPDATE(item_help_file[lang], section[DATA_SECTION_ITEM], saveset.itemset->GetSteamTextSize(1, lang))
+				MACRO_STEAM_CHECKFILEUPDATE(item_help2_file[lang], section[DATA_SECTION_ITEM], saveset.itemset->GetSteamTextSize(2, lang))
+				MACRO_STEAM_CHECKFILEUPDATE(itemkey_name_file[lang], section[DATA_SECTION_ITEM], saveset.itemset->GetSteamTextSize(3, lang))
+				MACRO_STEAM_CHECKFILEUPDATE(itemkey_help_file[lang], section[DATA_SECTION_ITEM], saveset.itemset->GetSteamTextSize(4, lang))
+				MACRO_STEAM_CHECKFILEUPDATE(itemkey_desc_file[lang], section[DATA_SECTION_ITEM], saveset.itemset->GetSteamTextSize(5, lang))
+				MACRO_STEAM_CHECKFILEUPDATE(field_text_file[lang], section[DATA_SECTION_FIELD], saveset.fieldset->GetSteamTextSize(lang))
+				MACRO_STEAM_CHECKFILEUPDATE(world_text_file[lang], section[DATA_SECTION_WORLD_MAP], saveset.worldset->GetSteamTextSize(0, lang))
+				MACRO_STEAM_CHECKFILEUPDATE(world_worldplace_name_file[lang], section[DATA_SECTION_WORLD_MAP], saveset.worldset->GetSteamTextSize(1, lang))
+				MACRO_STEAM_CHECKFILEUPDATE(card_name_file[lang], section[DATA_SECTION_CARD], saveset.cardset->GetSteamTextSize(lang))
+				MACRO_STEAM_CHECKFILEUPDATE(spetext_battleinfo_file[lang], section[DATA_SECTION_MENU_UI], saveset.ffuiset->special_text->text_block[0].GetDataSize(lang))
+				MACRO_STEAM_CHECKFILEUPDATE(spetext_battlescan_file[lang], section[DATA_SECTION_MENU_UI], saveset.ffuiset->special_text->text_block[1].GetDataSize(lang))
+				MACRO_STEAM_CHECKFILEUPDATE(spetext_spellnaming_file[lang], section[DATA_SECTION_MENU_UI], saveset.ffuiset->special_text->text_block[2].GetDataSize(lang))
+				MACRO_STEAM_CHECKFILEUPDATE(spetext_chocomenu_file[lang], section[DATA_SECTION_MENU_UI], saveset.ffuiset->special_text->text_block[3].GetDataSize(lang))
+				MACRO_STEAM_CHECKFILEUPDATE(spetext_cardrank_file[lang], section[DATA_SECTION_MENU_UI], saveset.ffuiset->special_text->text_block[4].GetDataSize(lang))
+				MACRO_STEAM_CHECKFILEUPDATE(spetext_tetramaster_file[lang], section[DATA_SECTION_MENU_UI], saveset.ffuiset->special_text->text_block[5].GetDataSize(lang))
+				for (j = 0; j < config.enmy_amount; j++) {
+					MACRO_STEAM_CHECKFILEUPDATE(enmy_text_file[lang][j], section[DATA_SECTION_ENMY] && saveset.enemyset->text[j]->modified, saveset.enemyset->text[j]->GetDataSize(lang))
 				}
-				for (j=0;j<config.text_amount;j++) {
-					MACRO_STEAM_CHECKFILEUPDATE(text_file[lang][j],section[DATA_SECTION_TEXT] && saveset.textset->text_data[j]->modified,saveset.textset->text_data[j]->GetDataSize(lang))
+				for (j = 0; j < config.text_amount; j++) {
+					MACRO_STEAM_CHECKFILEUPDATE(text_file[lang][j], section[DATA_SECTION_TEXT] && saveset.textset->text_data[j]->modified, saveset.textset->text_data[j]->GetDataSize(lang))
 				}
 			}
-			MACRO_STEAM_CHECKFILEUPDATE(spetext_localization_file,section[DATA_SECTION_MENU_UI],saveset.ffuiset->special_text->text_block[6].GetDataSize())
-			MACRO_STEAM_CHECKFILEUPDATE(card_stat_file,section[DATA_SECTION_CARD],5*CARD_AMOUNT)
-			MACRO_STEAM_CHECKFILEUPDATE(card_deck_file,section[DATA_SECTION_CARD],2*CARD_DECK_AMOUNT)
-			MACRO_STEAM_CHECKFILEUPDATE(card_set_file,section[DATA_SECTION_CARD],CARD_SET_AMOUNT*CARD_SET_CAPACITY)
-			for (j=0;j<SPELL_ANIMATION_AMOUNT;j++) {
-				MACRO_STEAM_CHECKFILEUPDATE(spellanim_steam_file[j],section[DATA_SECTION_SPELL_ANIM],saveset.spellanimset->spell[j].raw_size)
+			MACRO_STEAM_CHECKFILEUPDATE(spetext_localization_file, section[DATA_SECTION_MENU_UI], saveset.ffuiset->special_text->text_block[6].GetDataSize())
+			MACRO_STEAM_CHECKFILEUPDATE(card_stat_file, section[DATA_SECTION_CARD], 5 * CARD_AMOUNT)
+			MACRO_STEAM_CHECKFILEUPDATE(card_deck_file, section[DATA_SECTION_CARD], 2 * CARD_DECK_AMOUNT)
+			MACRO_STEAM_CHECKFILEUPDATE(card_set_file, section[DATA_SECTION_CARD], CARD_SET_AMOUNT*CARD_SET_CAPACITY)
+			for (j = 0; j < SPELL_ANIMATION_AMOUNT; j++) {
+				MACRO_STEAM_CHECKFILEUPDATE(spellanim_steam_file[j], section[DATA_SECTION_SPELL_ANIM], saveset.spellanimset->spell[j].raw_size)
 			}
 		}
-		uint32_t* unitydataoff = config.meta_res.Duplicate(filebase,filedest,copylist,filenewsize);
-		for (i=0;i<config.meta_res.header_file_amount;i++) {
-			
+		uint32_t* unitydataoff = config.meta_res.Duplicate(filebase, filedest, copylist, filenewsize);
+		for (i = 0; i < config.meta_res.header_file_amount; i++) {
+
 			#define MACRO_STEAM_WRITEFILEUPDATE(FILEID,SAVEFUNC,BREAK) \
 				if (i==config.FILEID) { \
 					filedest.seekg(unitydataoff[i]); \
@@ -1750,70 +1845,70 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 					if (BREAK) \
 						break; \
 				}
-			
-			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
+
+			for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
 				if (!hades::STEAM_LANGUAGE_SAVE_LIST[lang])
 					continue;
 				if (section[DATA_SECTION_SPELL]) {
-					MACRO_STEAM_WRITEFILEUPDATE(spell_name_file[lang],spellset->WriteSteamText(filedest,0,lang),false)
-					MACRO_STEAM_WRITEFILEUPDATE(spell_help_file[lang],spellset->WriteSteamText(filedest,1,lang),false)
+					MACRO_STEAM_WRITEFILEUPDATE(spell_name_file[lang], spellset->WriteSteamText(filedest, 0, lang), false)
+					MACRO_STEAM_WRITEFILEUPDATE(spell_help_file[lang], spellset->WriteSteamText(filedest, 1, lang), false)
 				}
 				if (section[DATA_SECTION_CMD]) {
-					MACRO_STEAM_WRITEFILEUPDATE(cmd_name_file[lang],cmdset->WriteSteamText(filedest,0,lang),false)
-					MACRO_STEAM_WRITEFILEUPDATE(cmd_help_file[lang],cmdset->WriteSteamText(filedest,1,lang),false)
+					MACRO_STEAM_WRITEFILEUPDATE(cmd_name_file[lang], cmdset->WriteSteamText(filedest, 0, lang), false)
+					MACRO_STEAM_WRITEFILEUPDATE(cmd_help_file[lang], cmdset->WriteSteamText(filedest, 1, lang), false)
 				}
 				if (section[DATA_SECTION_ENMY])
-					for (j=0;j<config.enmy_amount;j++)
+					for (j = 0; j < config.enmy_amount; j++)
 						if (saveset.enemyset->text[j]->modified) {
-							MACRO_STEAM_WRITEFILEUPDATE(enmy_text_file[lang][j],enemyset->text[j]->WriteSteam(filedest,lang),true)
+							MACRO_STEAM_WRITEFILEUPDATE(enmy_text_file[lang][j], enemyset->text[j]->WriteSteam(filedest, lang), true)
 						}
 				if (section[DATA_SECTION_TEXT])
-					for (j=0;j<config.text_amount;j++)
+					for (j = 0; j < config.text_amount; j++)
 						if (saveset.textset->text_data[j]->modified) {
-							MACRO_STEAM_WRITEFILEUPDATE(text_file[lang][j],textset->text_data[j]->WriteSteam(filedest,lang),true)
+							MACRO_STEAM_WRITEFILEUPDATE(text_file[lang][j], textset->text_data[j]->WriteSteam(filedest, lang), true)
 						}
 				if (section[DATA_SECTION_WORLD_MAP]) {
-					MACRO_STEAM_WRITEFILEUPDATE(world_text_file[lang],worldset->WriteSteamText(filedest,0,lang),false)
-					MACRO_STEAM_WRITEFILEUPDATE(world_worldplace_name_file[lang],worldset->WriteSteamText(filedest,1,lang),false)
+					MACRO_STEAM_WRITEFILEUPDATE(world_text_file[lang], worldset->WriteSteamText(filedest, 0, lang), false)
+					MACRO_STEAM_WRITEFILEUPDATE(world_worldplace_name_file[lang], worldset->WriteSteamText(filedest, 1, lang), false)
 				}
 				if (section[DATA_SECTION_ITEM]) {
-					MACRO_STEAM_WRITEFILEUPDATE(item_name_file[lang],itemset->WriteSteamText(filedest,0,lang),false)
-					MACRO_STEAM_WRITEFILEUPDATE(item_help_file[lang],itemset->WriteSteamText(filedest,1,lang),false)
-					MACRO_STEAM_WRITEFILEUPDATE(item_help2_file[lang],itemset->WriteSteamText(filedest,2,lang),false)
-					MACRO_STEAM_WRITEFILEUPDATE(itemkey_name_file[lang],itemset->WriteSteamText(filedest,3,lang),false)
-					MACRO_STEAM_WRITEFILEUPDATE(itemkey_help_file[lang],itemset->WriteSteamText(filedest,4,lang),false)
-					MACRO_STEAM_WRITEFILEUPDATE(itemkey_desc_file[lang],itemset->WriteSteamText(filedest,5,lang),false)
+					MACRO_STEAM_WRITEFILEUPDATE(item_name_file[lang], itemset->WriteSteamText(filedest, 0, lang), false)
+					MACRO_STEAM_WRITEFILEUPDATE(item_help_file[lang], itemset->WriteSteamText(filedest, 1, lang), false)
+					MACRO_STEAM_WRITEFILEUPDATE(item_help2_file[lang], itemset->WriteSteamText(filedest, 2, lang), false)
+					MACRO_STEAM_WRITEFILEUPDATE(itemkey_name_file[lang], itemset->WriteSteamText(filedest, 3, lang), false)
+					MACRO_STEAM_WRITEFILEUPDATE(itemkey_help_file[lang], itemset->WriteSteamText(filedest, 4, lang), false)
+					MACRO_STEAM_WRITEFILEUPDATE(itemkey_desc_file[lang], itemset->WriteSteamText(filedest, 5, lang), false)
 				}
 				if (section[DATA_SECTION_SUPPORT]) {
-					MACRO_STEAM_WRITEFILEUPDATE(support_name_file[lang],supportset->WriteSteamText(filedest,0,lang),false)
-					MACRO_STEAM_WRITEFILEUPDATE(support_help_file[lang],supportset->WriteSteamText(filedest,1,lang),false)
+					MACRO_STEAM_WRITEFILEUPDATE(support_name_file[lang], supportset->WriteSteamText(filedest, 0, lang), false)
+					MACRO_STEAM_WRITEFILEUPDATE(support_help_file[lang], supportset->WriteSteamText(filedest, 1, lang), false)
 				}
 				if (section[DATA_SECTION_CARD]) {
-					MACRO_STEAM_WRITEFILEUPDATE(card_name_file[lang],cardset->WriteSteamText(filedest,lang),false)
+					MACRO_STEAM_WRITEFILEUPDATE(card_name_file[lang], cardset->WriteSteamText(filedest, lang), false)
 				}
 				if (section[DATA_SECTION_FIELD]) {
-					MACRO_STEAM_WRITEFILEUPDATE(field_text_file[lang],fieldset->WriteSteamText(filedest,lang),false)
+					MACRO_STEAM_WRITEFILEUPDATE(field_text_file[lang], fieldset->WriteSteamText(filedest, lang), false)
 				}
 				if (section[DATA_SECTION_MENU_UI]) {
-					MACRO_STEAM_WRITEFILEUPDATE(spetext_battleinfo_file[lang],ffuiset->special_text->WriteSteam(filedest,0,lang),false)
-					MACRO_STEAM_WRITEFILEUPDATE(spetext_battlescan_file[lang],ffuiset->special_text->WriteSteam(filedest,1,lang),false)
-					MACRO_STEAM_WRITEFILEUPDATE(spetext_spellnaming_file[lang],ffuiset->special_text->WriteSteam(filedest,2,lang),false)
-					MACRO_STEAM_WRITEFILEUPDATE(spetext_chocomenu_file[lang],ffuiset->special_text->WriteSteam(filedest,3,lang),false)
-					MACRO_STEAM_WRITEFILEUPDATE(spetext_cardrank_file[lang],ffuiset->special_text->WriteSteam(filedest,4,lang),false)
-					MACRO_STEAM_WRITEFILEUPDATE(spetext_tetramaster_file[lang],ffuiset->special_text->WriteSteam(filedest,5,lang),false)
+					MACRO_STEAM_WRITEFILEUPDATE(spetext_battleinfo_file[lang], ffuiset->special_text->WriteSteam(filedest, 0, lang), false)
+					MACRO_STEAM_WRITEFILEUPDATE(spetext_battlescan_file[lang], ffuiset->special_text->WriteSteam(filedest, 1, lang), false)
+					MACRO_STEAM_WRITEFILEUPDATE(spetext_spellnaming_file[lang], ffuiset->special_text->WriteSteam(filedest, 2, lang), false)
+					MACRO_STEAM_WRITEFILEUPDATE(spetext_chocomenu_file[lang], ffuiset->special_text->WriteSteam(filedest, 3, lang), false)
+					MACRO_STEAM_WRITEFILEUPDATE(spetext_cardrank_file[lang], ffuiset->special_text->WriteSteam(filedest, 4, lang), false)
+					MACRO_STEAM_WRITEFILEUPDATE(spetext_tetramaster_file[lang], ffuiset->special_text->WriteSteam(filedest, 5, lang), false)
 				}
 			}
 			if (section[DATA_SECTION_MENU_UI]) {
-				MACRO_STEAM_WRITEFILEUPDATE(spetext_localization_file,ffuiset->special_text->WriteSteam(filedest,6),false)
+				MACRO_STEAM_WRITEFILEUPDATE(spetext_localization_file, ffuiset->special_text->WriteSteam(filedest, 6), false)
 			}
 			if (section[DATA_SECTION_CARD]) {
-				MACRO_STEAM_WRITEFILEUPDATE(card_stat_file,cardset->WriteSteamData(filedest,0),false)
-				MACRO_STEAM_WRITEFILEUPDATE(card_deck_file,cardset->WriteSteamData(filedest,1),false)
-				MACRO_STEAM_WRITEFILEUPDATE(card_set_file,cardset->WriteSteamData(filedest,2),false)
+				MACRO_STEAM_WRITEFILEUPDATE(card_stat_file, cardset->WriteSteamData(filedest, 0), false)
+				MACRO_STEAM_WRITEFILEUPDATE(card_deck_file, cardset->WriteSteamData(filedest, 1), false)
+				MACRO_STEAM_WRITEFILEUPDATE(card_set_file, cardset->WriteSteamData(filedest, 2), false)
 			}
 			if (section[DATA_SECTION_SPELL_ANIM])
-				for (j=0;j<SPELL_ANIMATION_AMOUNT;j++) {
-					MACRO_STEAM_WRITEFILEUPDATE(spellanim_steam_file[j],spellanimset->spell[j].Write(filedest),true)
+				for (j = 0; j < SPELL_ANIMATION_AMOUNT; j++) {
+					MACRO_STEAM_WRITEFILEUPDATE(spellanim_steam_file[j], spellanimset->spell[j].Write(filedest), true)
 				}
 		}
 		filebase.close();
@@ -1821,12 +1916,63 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		delete[] copylist;
 		delete[] filenewsize;
 		delete[] unitydataoff;
+	} else if (assetformat == 1) {
+
+		#define MACRO_SAVE_ASSET_RESOURCES(FILEID, CONDITION, SAVEFUNC) \
+			fname = destfolder + config.GetSteamAssetPath(UNITY_ARCHIVE_RESOURCES, config.FILEID); \
+			if (deleteold) remove(fname.c_str()); \
+			if (CONDITION) { \
+				MainFrame::MakeDirForFile(fname); \
+				filedest.open(fname.c_str(), ios::out | ios::binary); \
+				if (!filedest.is_open()) return 3; \
+				saveset.SAVEFUNC; \
+				filedest.close(); \
+			}
+
+		for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+			MACRO_SAVE_ASSET_RESOURCES(spell_name_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_SPELL], spellset->WriteSteamText(filedest, 0, lang))
+			MACRO_SAVE_ASSET_RESOURCES(spell_help_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_SPELL], spellset->WriteSteamText(filedest, 1, lang))
+			MACRO_SAVE_ASSET_RESOURCES(cmd_name_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_CMD], cmdset->WriteSteamText(filedest, 0, lang))
+			MACRO_SAVE_ASSET_RESOURCES(cmd_help_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_CMD], cmdset->WriteSteamText(filedest, 1, lang))
+			for (i = 0; i < config.enmy_amount; i++) {
+				MACRO_SAVE_ASSET_RESOURCES(enmy_text_file[lang][i], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_ENMY] && saveset.enemyset->text[i]->modified, enemyset->text[i]->WriteSteam(filedest, lang))
+			}
+			for (i = 0; i < config.text_amount; i++) {
+				MACRO_SAVE_ASSET_RESOURCES(text_file[lang][i], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_TEXT] && saveset.textset->text_data[i]->modified, textset->text_data[i]->WriteSteam(filedest, lang))
+			}
+			MACRO_SAVE_ASSET_RESOURCES(world_text_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_WORLD_MAP], worldset->WriteSteamText(filedest, 0, lang))
+			MACRO_SAVE_ASSET_RESOURCES(world_worldplace_name_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_WORLD_MAP], worldset->WriteSteamText(filedest, 1, lang))
+			MACRO_SAVE_ASSET_RESOURCES(item_name_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_ITEM], itemset->WriteSteamText(filedest, 0, lang))
+			MACRO_SAVE_ASSET_RESOURCES(item_help_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_ITEM], itemset->WriteSteamText(filedest, 1, lang))
+			MACRO_SAVE_ASSET_RESOURCES(item_help2_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_ITEM], itemset->WriteSteamText(filedest, 2, lang))
+			MACRO_SAVE_ASSET_RESOURCES(itemkey_name_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_ITEM], itemset->WriteSteamText(filedest, 3, lang))
+			MACRO_SAVE_ASSET_RESOURCES(itemkey_help_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_ITEM], itemset->WriteSteamText(filedest, 4, lang))
+			MACRO_SAVE_ASSET_RESOURCES(itemkey_desc_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_ITEM], itemset->WriteSteamText(filedest, 5, lang))
+			MACRO_SAVE_ASSET_RESOURCES(support_name_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_SUPPORT], supportset->WriteSteamText(filedest, 0, lang))
+			MACRO_SAVE_ASSET_RESOURCES(support_help_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_SUPPORT], supportset->WriteSteamText(filedest, 1, lang))
+			MACRO_SAVE_ASSET_RESOURCES(card_name_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_CARD], cardset->WriteSteamText(filedest, lang))
+			MACRO_SAVE_ASSET_RESOURCES(field_text_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_FIELD], fieldset->WriteSteamText(filedest, lang))
+			MACRO_SAVE_ASSET_RESOURCES(spetext_battleinfo_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteam(filedest, 0, lang))
+			MACRO_SAVE_ASSET_RESOURCES(spetext_battlescan_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteam(filedest, 1, lang))
+			MACRO_SAVE_ASSET_RESOURCES(spetext_spellnaming_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteam(filedest, 2, lang))
+			MACRO_SAVE_ASSET_RESOURCES(spetext_chocomenu_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteam(filedest, 3, lang))
+			MACRO_SAVE_ASSET_RESOURCES(spetext_cardrank_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteam(filedest, 4, lang))
+			MACRO_SAVE_ASSET_RESOURCES(spetext_tetramaster_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteam(filedest, 5, lang))
+		}
+		MACRO_SAVE_ASSET_RESOURCES(spetext_localization_file, section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteam(filedest, 6))
+		MACRO_SAVE_ASSET_RESOURCES(card_stat_file, section[DATA_SECTION_CARD], cardset->WriteSteamData(filedest, 0))
+		MACRO_SAVE_ASSET_RESOURCES(card_deck_file, section[DATA_SECTION_CARD], cardset->WriteSteamData(filedest, 1))
+		MACRO_SAVE_ASSET_RESOURCES(card_set_file, section[DATA_SECTION_CARD], cardset->WriteSteamData(filedest, 2))
+		for (i = 0; i < SPELL_ANIMATION_AMOUNT; i++)
+			if (config.spellanim_steam_file[i]>=0) {
+				MACRO_SAVE_ASSET_RESOURCES(spellanim_steam_file[i], section[DATA_SECTION_SPELL_ANIM], spellanimset->spell[i].Write(filedest))
+			}
 	}
 	
 	// Assembly-CSharp.dll : everything else...
-	{
+	if (dllformat == 0) {
 		unsigned int dllmodifcount, dllmodifmax, sectionmodifcount;
-		dllmodifmax = 100;
+		dllmodifmax = 100; // DEBUG: arbitrary number higher than number of modifications (except CIL Code modifs); consider using vector<>
 		if (section[DATA_SECTION_CIL]) {
 			dllmodifmax += saveset.cilset->rawmodifamount;
 			for (i=0;i<saveset.cilset->macromodifamount;i++)
@@ -1866,7 +2012,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		MACRO_DLL_ADD_MODIF(DATA_SECTION_ENMY,enemyset)
 		if (dllmodifcount>0) {
 			fname = dirmanaged+"Assembly-CSharp.dll";
-			fstream filedest(fname.c_str(),ios::out | ios::binary);
+			filedest.open(fname.c_str(),ios::out | ios::binary);
 			if (!filedest.is_open()) {
 				delete[] dllmodif;
 				return 3;
@@ -1875,7 +2021,51 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			filedest.close();
 		}
 		delete[] dllmodif;
+	} else if (dllformat == 1) {
+		// ToDo
+	} else if (dllformat == 2) {
+		vector<string> csharpmodifications;
+		if (section[DATA_SECTION_CIL]) saveset.cilset->GenerateCSharp(csharpmodifications);
+		if (section[DATA_SECTION_SPELL]) saveset.spellset->GenerateCSharp(csharpmodifications);
+		if (section[DATA_SECTION_CMD]) saveset.cmdset->GenerateCSharp(csharpmodifications);
+		if (section[DATA_SECTION_SHOP]) saveset.shopset->GenerateCSharp(csharpmodifications);
+		if (section[DATA_SECTION_ITEM]) saveset.itemset->GenerateCSharp(csharpmodifications);
+		if (section[DATA_SECTION_SUPPORT]) saveset.supportset->GenerateCSharp(csharpmodifications);
+		if (section[DATA_SECTION_STAT]) saveset.statset->GenerateCSharp(csharpmodifications);
+		if (section[DATA_SECTION_PARTY_SPECIAL]) saveset.partyspecialset->GenerateCSharp(csharpmodifications);
+		if (section[DATA_SECTION_ENMY]) saveset.enemyset->GenerateCSharp(csharpmodifications);
+		if (csharpmodifications.size()>0) {
+			fname = destfolder + "Assembly-CSharp_Additions.cs";
+			filedest.open(fname.c_str(),ios::out);
+			if (!filedest.is_open())
+				return 3;
+			filedest << HADES_STRING_STEAM_SAVE_CSHARP_PIECES_HEADER;
+			for (i = 0; i < csharpmodifications.size(); i++) {
+				filedest << "\n" << std::endl;
+				filedest << csharpmodifications[i];
+			}
+			filedest << "\n\n\n";
+			filedest.close();
+		}
 	}
+/*	if (deleteold) {
+		// Clear empty directories
+		MainFrame::DeleteFullDir(dirassets);
+		MainFrame::DeleteFullDir(dirdata);
+		MainFrame::DeleteFullDir(dirmanaged);
+		MainFrame::DeleteFullDir(destfolder + "p0data11\\");
+		MainFrame::DeleteFullDir(destfolder + "p0data12\\");
+		MainFrame::DeleteFullDir(destfolder + "p0data13\\");
+		MainFrame::DeleteFullDir(destfolder + "p0data14\\");
+		MainFrame::DeleteFullDir(destfolder + "p0data15\\");
+		MainFrame::DeleteFullDir(destfolder + "p0data16\\");
+		MainFrame::DeleteFullDir(destfolder + "p0data17\\");
+		MainFrame::DeleteFullDir(destfolder + "p0data18\\");
+		MainFrame::DeleteFullDir(destfolder + "p0data19\\");
+		MainFrame::DeleteFullDir(destfolder + "p0data2\\");
+		MainFrame::DeleteFullDir(destfolder + "p0data3\\");
+		MainFrame::DeleteFullDir(destfolder + "p0data7\\");
+	}*/
 	return 0;
 }
 

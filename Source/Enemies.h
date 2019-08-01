@@ -262,9 +262,10 @@ public:
 	uint32_t steam_method_position;
 	uint32_t steam_method_base_length;
 	
+	static void GetSpellSequenceModelRef(vector<EnemySequenceCodeLine>& sequence, int* code, int* arg);
 	// Return temporary array not to be destroyed (as for battleids)
 	EnemyStatDataStruct** GetSimilarEnemyStats(EnemyStatDataStruct& stat, unsigned int* amountfound, unsigned int** battleid);
-	EnemySpellDataStruct** GetSimilarEnemySpells(EnemySpellDataStruct& stat, unsigned int* amountfound, unsigned int** battleid);
+	EnemySpellDataStruct** GetSimilarEnemySpells(EnemySpellDataStruct& spell, unsigned int* amountfound, unsigned int** battleid);
 	// Change "battle_name[battleid]" according to battle's monster names
 	void UpdateBattleName(unsigned int battleid);
 	// For PSX: Make the modifications inside field and world map image maps only... Mark the updated image maps as modified
@@ -282,6 +283,7 @@ public:
 	void WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsigned int localflag);
 	// Return a modifamount-long pointer, to be deleted[]
 	DllMetaDataModification* ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount);
+	void GenerateCSharp(vector<string>& buffer);
 	
 private:
 	unsigned int modified_battle_scene_amount;

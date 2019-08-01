@@ -1,6 +1,6 @@
 #include "File_IOCommon.h"
 
-#include <sstream>
+#include <codecvt>
 
 uint64_t ReadLongLong(fstream& f) {
 	uint64_t res = (uint64_t)ReadLong(f);
@@ -232,4 +232,16 @@ string ConvertToString(int val) {
 	std::ostringstream stm;
 	stm << val;
 	return stm.str();
+}
+
+string ConvertWStrToStr(const wstring& wstr) {
+    using convert_typeX = codecvt_utf8<wchar_t>;
+    wstring_convert<convert_typeX, wchar_t> converterX;
+    return converterX.to_bytes(wstr);
+}
+
+wstring ConvertStrToWStr(const string& str) {
+    using convert_typeX = codecvt_utf8<wchar_t>;
+    wstring_convert<convert_typeX, wchar_t> converterX;
+    return converterX.from_bytes(str);
 }

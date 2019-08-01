@@ -190,7 +190,7 @@ void SpellAnimationDataStruct::Read(fstream& f) {
 	uint8_t padbyte = 0xFF;
 	unsigned int i,j,x,y;
 	unsigned int chunki, chunkj;
-fstream fout("aaaa.txt",ios::app|ios::out); fout << "NEW " << debugimgspellcounter << endl;
+//fstream fout("aaaa.txt",ios::app|ios::out); fout << "NEW " << debugimgspellcounter << endl;
 	if (GetGameType()==GAME_TYPE_PSX) {
 		MACRO_SPELL_ANIM_IOFUNCTION_HEADER(FFIXRead,FFIXSeek,true,false)
 		FFIXSeek(f,headerpos,0x400);
@@ -206,7 +206,7 @@ fstream fout("aaaa.txt",ios::app|ios::out); fout << "NEW " << debugimgspellcount
 		for (chunki=0;chunki<chunk_amount;chunki++)
 			for (chunkj=0;chunkj<chunk_entry_amount[chunki];chunkj++) {
 				SteamSeek(f,headerpos,chunk_entry_pos[chunki][chunkj]);
-fout << "CHUNK " << chunkj << " (" << (int)chunk_entry_id[chunki][chunkj] << ") " << (long)f.tellg() << endl;
+//fout << "CHUNK " << chunkj << " (" << (int)chunk_entry_id[chunki][chunkj] << ") " << (long)f.tellg() << endl;
 				if (chunk_entry_id[chunki][chunkj]==0) {
 					SpellAnimImage img;
 					img.tim_chunk_size = 0x4000*chunk_entry_info[chunki][chunkj];
@@ -308,7 +308,7 @@ SteamWriteLong(foutbin,debugbuf);
 foutbin.close();*/
 				}
 			}
-fout.close();
+//fout.close();
 	}
 	modified_data = 0;
 }
@@ -318,7 +318,7 @@ void SpellAnimationDataStruct::Write(fstream& f) {
 	uint32_t headerpos = f.tellg();
 	uint8_t padbyte = 0xFF;
 	unsigned int i,j,x,y;
-fstream fout("aaaa.txt",ios::app|ios::out);
+//fstream fout("aaaa.txt",ios::app|ios::out);
 	if (GetGameType()==GAME_TYPE_PSX) {
 		MACRO_SPELL_ANIM_IOFUNCTION_HEADER(FFIXWrite,FFIXSeek,false,false)
 		MACRO_SPELL_ANIM_IOFUNCTION_FFFILL(FFIXWrite,FFIXSeek,headerpos,0x400)
@@ -340,7 +340,7 @@ void SpellAnimationDataStruct::WritePPF(fstream& f) {
 	uint32_t headerpos = f.tellg();
 	uint8_t padbyte = 0xFF;
 	unsigned int i,j,x,y;
-fstream fout("aaaa.txt",ios::app|ios::out);
+//fstream fout("aaaa.txt",ios::app|ios::out);
 	MACRO_SPELL_ANIM_IOFUNCTION_HEADER(PPFStepAdd,FFIXSeek,false,true)
 	MACRO_SPELL_ANIM_IOFUNCTION_FFFILL(PPFStepAdd,FFIXSeek,headerpos,0x400)
 	MACRO_SPELL_ANIM_IOFUNCTION_SEQWRITE(PPFStepAdd,FFIXSeek,true)
@@ -353,7 +353,7 @@ void SpellAnimationDataStruct::ReadHWS(fstream& f) {
 	uint32_t headerpos = f.tellg();
 	uint8_t padbyte = 0xFF;
 	unsigned int i,j,x,y;
-fstream fout("aaaa.txt",ios::app|ios::out);
+//fstream fout("aaaa.txt",ios::app|ios::out);
 	HWSReadLong(f,hwsmodif);
 	if (hwsmodif & SPELL_ANIMATION_DATA_TYPE_HEADER) {
 		MACRO_SPELL_ANIM_IOFUNCTION_HEADER(HWSRead,HWSSeek,true,false)
@@ -369,7 +369,7 @@ void SpellAnimationDataStruct::WriteHWS(fstream& f) {
 	uint32_t headerpos = f.tellg();
 	uint8_t padbyte = 0xFF;
 	unsigned int i,j,x,y;
-fstream fout("aaaa.txt",ios::app|ios::out);
+//fstream fout("aaaa.txt",ios::app|ios::out);
 	HWSWriteLong(f,modified_data);
 	if (modified_data & SPELL_ANIMATION_DATA_TYPE_HEADER) {
 		MACRO_SPELL_ANIM_IOFUNCTION_HEADER(HWSWrite,HWSSeek,false,false)
@@ -434,7 +434,7 @@ void SpellAnimationDataSet::Load(fstream& ffbin, ConfigurationSet& config, Globa
 			spell[i].id = i;
 			spell[i].parent = this;
 			if (config.spellanim_steam_file[i]>=0) {
-debugimgspellcounter = i;
+debugimgspellcounter = i; // DEBUG
 				spell[i].is_empty = false;
 				ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.spellanim_steam_file[i]));
 				spell[i].raw_size = config.meta_res.GetFileSizeByIndex(config.spellanim_steam_file[i]);

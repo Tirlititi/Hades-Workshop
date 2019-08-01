@@ -132,6 +132,35 @@ struct CILMacroCustomBackgrounds : public CILMacroBaseStruct {
 		}
 		return "";
 	}
+	void GenerateCSharp(vector<string>& buffer) {
+		string newmethod = "// Method: BGSCENE_DEF::ExtractSpriteData\n\n";
+		newmethod += "\tthis.spriteCount = 0;\n\tfor (int i = 0; i < (int)this.overlayCount; i++) {\n\t\tBGOVERLAY_DEF bGOVERLAY_DEF = this.overlayList[i];\n\t\tthis.spriteCount += (int)bGOVERLAY_DEF.spriteCount;\n\t}\n\tif (this.useUpscaleFM) {\n\t\tthis.ATLAS_H = (uint)this.atlas.height;\n\t\tthis.ATLAS_W = (uint)this.atlas.width;\n\t}\n\tint AtlasWidth = this.atlas.width / ";
+		newmethod += to_string(resolution+4) + "; // resolution + 4\n";
+		newmethod += "\tint PosX = 0;\n\tfor (int j = 0; j < (int)this.overlayCount; j++) {\n\t\tBGOVERLAY_DEF bGOVERLAY_DEF2 = this.overlayList[j];\n\t\treader.BaseStream.Seek((long)((ulong)bGOVERLAY_DEF2.prmOffset), SeekOrigin.Begin);\n\t\tfor (int k = 0; k < (int)bGOVERLAY_DEF2.spriteCount; k++) {\n\t\t\tBGSPRITE_LOC_DEF bGSPRITE_LOC_DEF = new BGSPRITE_LOC_DEF();\n\t\t\tbGSPRITE_LOC_DEF.ReadData_BGSPRITE_DEF(reader);\n\t\t\tbGOVERLAY_DEF2.spriteList.Add(bGSPRITE_LOC_DEF);\n\t\t}\n\t\treader.BaseStream.Seek((long)((ulong)bGOVERLAY_DEF2.locOffset), SeekOrigin.Begin);\n\t\tfor (int l = 0; l < (int)bGOVERLAY_DEF2.spriteCount; l++) {\n\t\t\tBGSPRITE_LOC_DEF bGSPRITE_LOC_DEF2 = bGOVERLAY_DEF2.spriteList[l];\n\t\t\tbGSPRITE_LOC_DEF2.ReadData_BGSPRITELOC_DEF(reader);\n\t\t\tif (this.useUpscaleFM) {\n\t\t\t\tbGSPRITE_LOC_DEF2.atlasX = (ushort)(2 + PosX % AtlasWidth * ";
+		newmethod += to_string(resolution+4) + "); // resolution + 4\n";
+		newmethod += "\t\t\t\tbGSPRITE_LOC_DEF2.atlasY = (ushort)(2 + PosX / AtlasWidth * ";
+		newmethod += to_string(resolution+4) + "); // resolution + 4\n";
+		newmethod += "\t\t\t\tbGSPRITE_LOC_DEF2.w = " + to_string(resolution) + "; // resolution\n";
+		newmethod += "\t\t\t\tbGSPRITE_LOC_DEF2.h = " + to_string(resolution) + "; // resolution\n";
+		newmethod += "\t\t\t\tPosX++;\n\t\t\t}\n\t\t}\n\t}\n";
+		buffer.push_back(newmethod);
+		newmethod = "// Method: BGSCENE_DEF::LoadEBG\n\n";
+		newmethod += "\t//...\n";
+		newmethod += "\tthis.SPRITE_W = " + to_string(resolution) + "u; // resolution\n";
+		newmethod += "\tthis.SPRITE_H = " + to_string(resolution) + "u; // resolution\n";
+		newmethod += "\t//...\n";
+		buffer.push_back(newmethod);
+		newmethod = "// Method: BGSCENE_DEF::_LoadDummyEBG\n\n";
+		newmethod += "\tthis.name = name;\n\tTextAsset textAsset = AssetManager.Load<TextAsset>(string.Concat(new string[]{ path, name, \"_\", localizeSymbol, \".bgs\" }), false);\n\tif (textAsset == null) {\n\t\treturn;\n\t}\n\tthis.ebgBin = textAsset.bytes;\n\tusing (BinaryReader binaryReader = new BinaryReader(new MemoryStream(this.ebgBin))) {\n\t\tthis.ExtractHeaderData(binaryReader);\n\t\tthis.ExtractOverlayData(binaryReader);\n\t\tint width = sceneUS.atlas.width; // Do not use info.atlasWidth anymore\n\t\tint height = sceneUS.atlas.height; // Do not use info.atlasHeight anymore\n\t\tint startOvrIdx = info.startOvrIdx;\n\t\tint endOvrIdx = info.endOvrIdx;\n\t\tbool hasUK = info.hasUK;\n\t\tint spriteStartIndex = info.GetSpriteStartIndex(localizeSymbol);\n\t\tint num = width / ";
+		newmethod += to_string(resolution+4) + "; // resolution + 4\n";
+		newmethod += "\t\tint num2 = spriteStartIndex;\n\t\tfor (int i = startOvrIdx; i <= endOvrIdx; i++) {\n\t\t\tBGOVERLAY_DEF bgoverlay_DEF = this.overlayList[i];\n\t\t\tbinaryReader.BaseStream.Seek((long)((ulong)bgoverlay_DEF.prmOffset), SeekOrigin.Begin);\n\t\t\tfor (int j = 0; j < (int)bgoverlay_DEF.spriteCount; j++) {\n\t\t\t\tBGSPRITE_LOC_DEF bgsprite_LOC_DEF = new BGSPRITE_LOC_DEF();\n\t\t\t\tbgsprite_LOC_DEF.ReadData_BGSPRITE_DEF(binaryReader);\n\t\t\t\tbgoverlay_DEF.spriteList.Add(bgsprite_LOC_DEF);\n\t\t\t}\n\t\t\tbinaryReader.BaseStream.Seek((long)((ulong)bgoverlay_DEF.locOffset), SeekOrigin.Begin);\n\t\t\tfor (int k = 0; k < (int)bgoverlay_DEF.spriteCount; k++) {\n\t\t\t\tBGSPRITE_LOC_DEF bgsprite_LOC_DEF2 = bgoverlay_DEF.spriteList[k];\n\t\t\t\tbgsprite_LOC_DEF2.ReadData_BGSPRITELOC_DEF(binaryReader);\n\t\t\t\tif (this.useUpscaleFM) {\n";
+		newmethod += "\t\t\t\t\tbgsprite_LOC_DEF2.atlasX = (ushort)(2 + num2 % num * " + to_string(resolution+4) + "); // resolution + 4\n";
+		newmethod += "\t\t\t\t\tbgsprite_LOC_DEF2.atlasY = (ushort)(2 + num2 % num * " + to_string(resolution+4) + "); // resolution + 4\n";
+		newmethod += "\t\t\t\t\tbgsprite_LOC_DEF2.w = " + to_string(resolution) + "; // resolution\n";
+		newmethod += "\t\t\t\t\tbgsprite_LOC_DEF2.h = " + to_string(resolution) + "; // resolution\n";
+		newmethod += "\t\t\t\t\tnum2++;\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\tfor (int l = startOvrIdx; l <= endOvrIdx; l++) {\n\t\t\tsceneUS.overlayList[l] = this.overlayList[l];\n\t\t}\n\t}\n";
+		buffer.push_back(newmethod);
+	}
 	DllMetaDataModification* ComputeModifications(unsigned int* modifamount) {
 		MACRO_CILMACRO_COMPUTEBEG()
 		ILInstruction srchbeginstlde[] = {
@@ -355,6 +384,24 @@ struct CILMacroDisableCheat : public CILMacroBaseStruct {
 		}
 		return "";
 	}
+	void GenerateCSharp(vector<string>& buffer) {
+		string newmethod = "// Method: SettingsState::CallBoosterButtonFuntion\n\n";
+		newmethod += "\t// Delete several cases and only keep these:\n";
+		newmethod += "\tswitch (buttonType) {\n\tcase BoosterType.HighSpeedMode:\n\t\tthis.SetFastForward(setActive);\n\t\tbreak;\n\tcase BoosterType.Rotation:\n\t\tFF9StateSystem.Settings.IsBoosterButtonActive[(int)buttonType] = setActive;\n\t\tUIManager.Input.SendKeyCode(Control.LeftTrigger, true);\n\t\tbreak;\n\tcase BoosterType.Perspective:\n\t\tFF9StateSystem.Settings.IsBoosterButtonActive[(int)buttonType] = setActive;\n\t\tUIManager.Input.SendKeyCode(Control.RightTrigger, true);\n\t\tbreak;\n\t}";
+		buffer.push_back(newmethod);
+		newmethod = "// Method: ConfigUI::OnKeyConfirm\n\n";
+		newmethod += "\t// Remove the content of the \"go.GetParent() == this.BoosterPanel\" block\n\tif (go.GetParent() == this.BoosterPanel) {\n\t\treturn true;\n\t} else {\n\t// ...\n";
+		buffer.push_back(newmethod);
+		newmethod = "// Method: TimerUI::Update\n\n";
+		newmethod += "\t// ...\n";
+		newmethod += "\tfloat num = (float)((FF9StateSystem.Settings.time - TimerUI.lastTime) * (double)FF9StateSystem.Settings.FastForwardFactor); // Multiply the elapsed time by \"FastForwardFactor\"\n";
+		newmethod += "\t// ...\n";
+		buffer.push_back(newmethod);
+		newmethod = "// Method: UIKeyTrigger::HandleBoosterButton\n\n";
+		newmethod += "\t// Remove everything after the HighSpeedMode button and only keep this:\n";
+		newmethod += "\tbool flag = !MBG.IsNull && !MBG.Instance.IsFinishedForDisableBooster();\n\tif (PersistenSingleton<UIManager>.Instance.State == UIManager.UIState.Title || PersistenSingleton<UIManager>.Instance.State == UIManager.UIState.PreEnding || PersistenSingleton<UIManager>.Instance.State == UIManager.UIState.Ending || flag) {\n\t\treturn;\n\t}\n\tif (UnityXInput.Input.GetKeyDown(KeyCode.F1) || triggerType == BoosterType.HighSpeedMode) {\n\t\tbool flag2 = !FF9StateSystem.Settings.IsBoosterButtonActive[1];\n\t\tFF9StateSystem.Settings.CallBoosterButtonFuntion(BoosterType.HighSpeedMode, flag2);\n\t\tPersistenSingleton<UIManager>.Instance.Booster.SetBoosterHudIcon(BoosterType.HighSpeedMode, flag2);\n\t\tPersistenSingleton<UIManager>.Instance.Booster.SetBoosterButton(BoosterType.HighSpeedMode, flag2);\n\t}\n";
+		buffer.push_back(newmethod);
+	}
 	DllMetaDataModification* ComputeModifications(unsigned int* modifamount) {
 		MACRO_CILMACRO_COMPUTEBEG()
 		ILInstruction modinstcbbf[] = {
@@ -468,6 +515,11 @@ struct CILMacroUnlockAbilityAccess : public CILMacroBaseStruct {
 		}
 		return "";
 	}
+	void GenerateCSharp(vector<string>& buffer) {
+		string newmethod = "// Method: FF9.ff9abil::FF9Abil_HasAp\n\n";
+		newmethod += "\treturn play.info.menu_type < 16 && ff9abil._FF9Abil_PaData[(int)play.info.menu_type][0].id != 0 && ff9abil._FF9Abil_PaData[(int)play.info.menu_type][0].max_ap != 0;\n";
+		buffer.push_back(newmethod);
+	}
 	DllMetaDataModification* ComputeModifications(unsigned int* modifamount) {
 		MACRO_CILMACRO_COMPUTEBEG()
 		ILInstruction modinst[] = {
@@ -533,6 +585,17 @@ struct CILMacroDamageLimit : public CILMacroBaseStruct {
 			case 5:	return "CalcSub_208";
 		}
 		return "";
+	}
+	void GenerateCSharp(vector<string>& buffer) {
+		string newmethod = "// CILMacroDamageLimit:\n";
+		newmethod += "// In the following methods, replace all the instances of 9999 by 32767:\n";
+		newmethod += "// btl_calc::CalcMain\n";
+		newmethod += "// btl_calc::CalcResult\n";
+		newmethod += "// btl_calc::CalcSub_200\n";
+		newmethod += "// btl_calc::CalcSub_202\n";
+		newmethod += "// btl_calc::CalcSub_203\n";
+		newmethod += "// btl_calc::CalcSub_208\n";
+		buffer.push_back(newmethod);
 	}
 	DllMetaDataModification* ComputeModifications(unsigned int* modifamount) {
 		MACRO_CILMACRO_COMPUTEBEG()

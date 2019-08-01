@@ -1,6 +1,7 @@
 #include "Stats.h"
 
 #include "Hades_Strings.h"
+#include "Database_Steam.h"
 #include "DllEditor.h"
 
 #define STAT_HWS_VERSION 2
@@ -35,20 +36,24 @@ uint8_t character_equip_set[EQUIP_SET_AMOUNT];
 uint8_t* StatDataSet::GetCharacterEquipmentsId(int charid, unsigned int* amount) {
 	character_equip_set[0] = charid;
 	if (charid<9) {
+		character_equip_set[1] = EQUIP_SET_AMOUNT-1;
 		if (amount)
-			*amount = 1;
+			*amount = 2;
 	} else if (charid==9) {
 		character_equip_set[1] = 12;
+		character_equip_set[2] = EQUIP_SET_AMOUNT-1;
 		if (amount)
-			*amount = 2;
+			*amount = 3;
 	} else if (charid==10) {
 		character_equip_set[1] = 14;
+		character_equip_set[2] = EQUIP_SET_AMOUNT-1;
 		if (amount)
-			*amount = 2;
+			*amount = 3;
 	} else if (charid==11) {
 		character_equip_set[1] = 13;
+		character_equip_set[2] = EQUIP_SET_AMOUNT-1;
 		if (amount)
-			*amount = 2;
+			*amount = 3;
 	}
 	return character_equip_set;
 }
@@ -320,7 +325,7 @@ DllMetaDataModification* StatDataSet::ComputeSteamMod(ConfigurationSet& config, 
 	uint32_t** argvalue;
 	for (i=0;i<EQUIP_SET_AMOUNT;i++) {
 		res[modcounter].position = config.meta_dll.GetStaticFieldOffset(config.dll_equipset_field_id[i]);
-		res[modcounter].base_length = 5;
+		res[modcounter].base_length = 5; // config.meta_dll.GetStaticFieldRange(config.dll_equipset_field_id[i]);
 		res[modcounter].new_length = 5;
 		res[modcounter].value = new uint8_t[res[modcounter].new_length];
 		res[modcounter].value[0] = initial_equip[i].weapon;
@@ -345,7 +350,7 @@ DllMetaDataModification* StatDataSet::ComputeSteamMod(ConfigurationSet& config, 
 		delete[] argvalue[j];
 	delete[] argvalue;
 	res[modcounter].position = config.meta_dll.GetStaticFieldOffset(config.dll_statcmdtrance_field_id);
-	res[modcounter].base_length = 3*COMMAND_SET_AMOUNT;
+	res[modcounter].base_length = 3*COMMAND_SET_AMOUNT; // config.meta_dll.GetStaticFieldRange(config.dll_statcmdtrance_field_id);
 	res[modcounter].new_length = 3*COMMAND_SET_AMOUNT;
 	res[modcounter].value = new uint8_t[res[modcounter].new_length];
 	for (i=0;i<COMMAND_SET_AMOUNT;i++) {
@@ -355,7 +360,7 @@ DllMetaDataModification* StatDataSet::ComputeSteamMod(ConfigurationSet& config, 
 	}
 	modcounter++;
 	res[modcounter].position = config.meta_dll.GetStaticFieldOffset(config.dll_statexp_field_id);
-	res[modcounter].base_length = 8*MAX_LEVEL;
+	res[modcounter].base_length = 8*MAX_LEVEL; // config.meta_dll.GetStaticFieldRange(config.dll_statexp_field_id);
 	res[modcounter].new_length = 8*MAX_LEVEL;
 	res[modcounter].value = new uint8_t[res[modcounter].new_length];
 	BufferInitPosition();
@@ -400,6 +405,67 @@ DllMetaDataModification* StatDataSet::ComputeSteamMod(ConfigurationSet& config, 
 	modcounter++;
 	*modifamount = EQUIP_SET_AMOUNT+ABILITY_SET_AMOUNT+5;
 	return res;
+}
+
+void StatDataSet::GenerateCSharp(vector<string>& buffer) {
+	unsigned int i, j;
+	stringstream equipsetdb;
+	equipsetdb << "// Method: ff9play::FF9Play_SetDefEquips\n\n";
+	equipsetdb << "\tbyte[][] array = new byte[][] {\n";
+	for (i = 0; i < EQUIP_SET_AMOUNT; i++)
+		equipsetdb << "\t\tnew byte[] { " << (int)initial_equip[i].weapon << ", " << (int)initial_equip[i].head << ", " << (int)initial_equip[i].wrist << ", " << (int)initial_equip[i].armor << ", " << (int)initial_equip[i].accessory << (i+1==EQUIP_SET_AMOUNT ? "}" : "},") << " // " << HADES_STRING_EQUIPSET_NAME[i] << "\n";
+	equipsetdb << "\t};\n";
+	equipsetdb << "\tfor (int i = 0; i < 5; i++) {\n";
+	equipsetdb << "\t\tequip[i] = array[eqp_id][i];\n";
+	equipsetdb << "\t};\n";
+	buffer.push_back(equipsetdb.str());
+	stringstream learndb;
+	learndb << "// Method: FF9.ff9abil::.cctor\n\n";
+	learndb << "\tff9abil._FF9Abil_PaData = new PA_DATA[][] {\n";
+	for (i = 0; i < ABILITY_SET_AMOUNT; i++) {
+		learndb << "\t\tnew PA_DATA[] { // " << HADES_STRING_ABILITYSET_NAME[i] << "\n";
+		for (j = 0; j < ABILITY_SET_CAPACITY; j++)
+			learndb << "\t\t\tnew PA_DATA(" << (int)ability_list[i].ability[j] << ", " << (int)ability_list[i].ap_cost[j] << (j+1==ABILITY_SET_CAPACITY ? ")\n" : "),\n");
+		learndb << (i+1==ABILITY_SET_AMOUNT ? "\t\t}\n" : "\t\t},\n");
+	}
+	learndb << "\t};\n";
+	buffer.push_back(learndb.str());
+	stringstream rdatadb;
+	rdatadb << "// Method: rdata::.cctor\n\n";
+	rdatadb << "\trdata._FF9BMenu_MenuNormal = new command_tags[,] {\n";
+	for (i = 0; i < COMMAND_SET_AMOUNT; i++) {
+		rdatadb	<< "\t\t{ command_tags." << SteamCommandTagName[command_list[i].first_command] << ", command_tags."
+				<< SteamCommandTagName[command_list[i].second_command] << (i+1==COMMAND_SET_AMOUNT ? " }" : " },") << " // " << HADES_STRING_ABILITYSET_NAME[i] << "\n";
+	}
+	rdatadb << "\t};\n";
+	rdatadb << "\trdata._FF9BMenu_MenuTrance = new byte[,] {\n";
+	for (i = 0; i < COMMAND_SET_AMOUNT; i++) {
+		rdatadb	<< "\t\t{ (byte)command_tags." << SteamCommandTagName[command_list[i].first_command_trance] << ", (byte)command_tags." << SteamCommandTagName[command_list[i].second_command_trance]
+				<< ", " << (int)command_list[i].trance_attack << (i+1==COMMAND_SET_AMOUNT ? " }" : " },") << " // " << HADES_STRING_ABILITYSET_NAME[i] << "\n";
+	}
+	rdatadb << "\t};\n";
+	buffer.push_back(rdatadb.str());
+	stringstream leveldb;
+	leveldb << "// Method: ff9level::.cctor\n\n";
+	leveldb << "\tff9level._FF9Level_Base = new FF9LEVEL_BASE[] {\n";
+	for (i = 0; i < PLAYABLE_CHAR_AMOUNT; i++)
+		leveldb << "\t\tnew FF9LEVEL_BASE(" << (int)initial_stat[i].speed << ", " << (int)initial_stat[i].strength << ", " << (int)initial_stat[i].magic << ", " << (int)initial_stat[i].spirit << ", " << (int)initial_stat[i].magic_stone << (i+1==PLAYABLE_CHAR_AMOUNT ? ")" : "),") << " // " << ConvertWStrToStr(initial_stat[i].default_name.str_nice) << "\n";
+	leveldb << "\t};\n";
+	leveldb << "\tff9level._FF9Level_HpMp = new FF9LEVEL_HPMP[] {\n";
+	for (i = 0; i < MAX_LEVEL; i++) {
+		leveldb << "\t\tnew FF9LEVEL_HPMP(" << (int)level[i].hp_table << ", " << (int)level[i].mp_table << (i+1==MAX_LEVEL ? ")" : "),");
+		if ((i%10)==9) leveldb << " // Level " << i+1 << "\n";
+		else leveldb << "\n";
+	}
+	leveldb << "\t};\n";
+	leveldb << "\tff9level._FF9Level_Exp = new ulong[] {\n";
+	for (i = 0; i < MAX_LEVEL; i++) {
+		leveldb << "\t\t" << (unsigned long)level[i].exp_table << (i+1==MAX_LEVEL ? "UL" : "UL,");
+		if ((i%10)==9) leveldb << " // Level " << i+1 << "\n";
+		else leveldb << "\n";
+	}
+	leveldb << "\t};\n";
+	buffer.push_back(leveldb.str());
 }
 
 void StatDataSet::Write(fstream& ffbin, ConfigurationSet& config) {

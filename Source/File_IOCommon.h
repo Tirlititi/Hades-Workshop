@@ -4,6 +4,7 @@
 #include <inttypes.h>
 #include <fstream>
 #include <string>
+#include <sstream>
 using namespace std;
 
 uint64_t ReadLongLong(fstream& f);
@@ -48,5 +49,9 @@ float Raw_UIntToFloat(uint32_t v);
 double Raw_UIntToDouble(uint64_t v);
 
 string ConvertToString(int val);
+string ConvertWStrToStr(const wstring& wstr);
+wstring ConvertStrToWStr(const string& str);
+
+#define StreamAsHex(VALUE) hex << showbase << (unsigned long)VALUE << dec << noshowbase
 
 #endif

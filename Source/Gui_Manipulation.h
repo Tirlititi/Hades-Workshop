@@ -175,6 +175,7 @@ public:
 	void CardDisplayNames(bool create=false);
 	void TextDisplayNames(bool create=false);
 	void WorldMapDisplayNames(bool create=false);
+	wxString GetFieldName(int fieldid);
 	void FieldDisplayNames(bool create=false);
 	void BattleSceneDisplayNames(bool create=false);
 	void SpellAnimationDisplayNames(bool create=false);

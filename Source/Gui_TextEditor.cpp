@@ -13,6 +13,7 @@
 #define PAGE_BREAK_WAIT 2000
 #define PIXEL_TO_SIZE 1.15
 #define LINE_HEIGHT 19
+#define TOKENIZE_SHOW_SEPARATOR L"\x2022"
 
 wxBitmap InitButton(wxBitmap bmp, bool steam = false) {
 	float scale = steam ? 0.25 : 0.4;
@@ -90,7 +91,7 @@ void ButtonOp(TextEditDialogBase* dialog, uint8_t* args) {
 	static wxBitmap GTE_NEW = InitButton(wxBITMAP(indicatornew_image));
 	if (args[0]==0x2F)			dialog->preview_ctrl->WriteImage(GTE_BUTTONS[0x10]);
 	else if (args[0]==0x70)		dialog->preview_ctrl->WriteImage(GTE_NEW);
-	else						dialog->preview_ctrl->WriteImage(GTE_BUTTONS[args[0] % 0x30]);
+	else						dialog->preview_ctrl->WriteImage(GTE_BUTTONS[args[0] & 0x2F]);
 }
 
 void (*TextOp[128])(TextEditDialogBase* dialog, uint8_t* args) = {
@@ -359,10 +360,11 @@ TextOpcodeDialog::~TextOpcodeDialog() {
 
 int TextOpcodeDialog::ShowModal(int codeindex) {
 	bool init0x48 = true;
+	code_index = codeindex;
 	text = parent_dialog->text;
 	str = _(text.str);
 	token_str = _(text.str);
-	token_str.Replace(_(L"\n"),_(L"•"));
+	token_str.Replace(_(L"\n"), _(TOKENIZE_SHOW_SEPARATOR));
 	token_str.Replace(_(text.opcode_wchar),_(L""));
 	if (codeindex==0) {
 		code[0] = 0;
@@ -462,10 +464,14 @@ void TextOpcodeDialog::DisplayTokens(wxDC& dc) {
 	for (unsigned int i=0;i<code[1];i++) {
 		unsigned int strp = 0, codep = 0;
 		int stri = 0;
-		while (strp<code[2*i+2]+0x100*code[2*i+3]+2) {
-			if (parent_dialog->text.raw[strp]==OPCODE_CHAR)
-				strp += parent_dialog->text.code_arg_length[codep++];
-			else if (parent_dialog->text.raw[strp]==CHARMAP_A_CODECHAR || parent_dialog->text.raw[strp]==CHARMAP_B_CODECHAR || parent_dialog->text.raw[strp]==CHARMAP_EXT_CODECHAR) {
+		while (strp<code[2*i+2]+0x100*code[2*i+3]) {
+			if (parent_dialog->text.raw[strp] == OPCODE_CHAR) {
+				if (code_index > 0 && codep + 1 == code_index)
+					strp += 2 * code[1];
+				else
+					strp += parent_dialog->text.code_arg_length[codep];
+				codep++;
+			} else if (parent_dialog->text.raw[strp] == CHARMAP_A_CODECHAR || parent_dialog->text.raw[strp] == CHARMAP_B_CODECHAR || parent_dialog->text.raw[strp] == CHARMAP_EXT_CODECHAR) {
 				strp += 2;
 				stri++;
 			} else {
@@ -475,7 +481,7 @@ void TextOpcodeDialog::DisplayTokens(wxDC& dc) {
 		}
 		int x = 6+dc.GetTextExtent(token_str.Mid(0,stri)).GetWidth();
 		if (i==token_sel) {
-			int selw = dc.GetTextExtent(token_str.Mid(stri,token_str.find(_(L"•"),stri)-stri)).GetWidth();
+			int selw = dc.GetTextExtent(token_str.Mid(stri,token_str.find(_(TOKENIZE_SHOW_SEPARATOR),stri)-stri)).GetWidth();
 			dc.SetBrush(wxBrush(wxColour(255,0,0)));
 			dc.SetPen(wxPen(wxColour(255,0,0),0));
 			dc.DrawRectangle(x+4,7,selw,13);
@@ -539,16 +545,20 @@ void TextOpcodeDialog::OnArgumentChange(wxSpinEvent& event) {
 	} else if (id==wxID_DEFAULTARG3) {
 		code[3] = value;
 	} else if (id==wxID_TOKENIZE) {
+		uint16_t newpos;
 		int i;
-		for (i=0;i<value;i++) {
-			int newpos = max(0,code[2*i+2]+0x100*code[2*i+3]+2*(value-code[1]));
-			code[2*i+2] = newpos % 0x100;
-			code[2*i+3] = (newpos >> 8) % 0x100;
+		for (i = 0; i<code[1]; i++) {
+			newpos = code[2 * i + 2] + 0x100 * code[2 * i + 3] + 2 * (value - code[1]);
+			code[2 * i + 2] = newpos & 0xFF;
+			code[2 * i + 3] = (newpos >> 8) & 0xFF;
 		}
+		if (code[1] > 0)
+			newpos = code[2 * code[1]] + 0x100 * code[2 * code[1] + 1];
+		else
+			newpos = 2 * value;
 		for (i=code[1];i<value;i++) {
-			int newpos = 2*value;
-			code[2*i+2] = newpos % 0x100;
-			code[2*i+3] = (newpos >> 8) % 0x100;
+			code[2*i+2] = newpos & 0xFF;
+			code[2*i+3] = (newpos >> 8) & 0xFF;
 		}
 		if (value>code[1] || token_sel>=value)
 			token_sel = value-1;
@@ -589,14 +599,18 @@ void TextOpcodeDialog::OnButtonClick(wxCommandEvent& event) {
 			j = i;
 			strpprev = code[2*j]+0x100*code[2*j+1];
 			while (j>0 && strpmain<strpprev) {
-				code[2*j+2] = strpprev%0x100;
-				code[2*j+3] = strpprev/0x100;
+				code[2*j+2] = strpprev & 0xFF;
+				code[2*j+3] = (strpprev >> 8) & 0xFF;
 				j--;
 				strpprev = code[2*j]+0x100*code[2*j+1];
 			}
-			code[2*j+2] = strpmain%0x100;
-			code[2*j+3] = strpmain/0x100;
+			code[2*j+2] = strpmain & 0xFF;
+			code[2*j+3] = (strpmain >> 8) & 0xFF;
 		}
+	} else if (code[0] == 0x48) {
+		for (unsigned int j = 1; j + 1<length; j++)
+			code[j] = var_spin[j - 1]->GetValue();
+		code[length - 1] = 0xFF;
 	}
 	EndModal(event.GetId());
 }
@@ -611,10 +625,14 @@ void TextOpcodeDialog::OnTokenMouse(wxMouseEvent& event) {
 			for (unsigned int i=0;i<code[1];i++) {
 				unsigned int strp = 0, codep = 0;
 				int stri = 0;
-				while (strp<code[2*i+2]+0x100*code[2*i+3]+2) {
-					if (parent_dialog->text.raw[strp]==OPCODE_CHAR)
-						strp += parent_dialog->text.code_arg_length[codep++];
-					else if (parent_dialog->text.raw[strp]==CHARMAP_A_CODECHAR || parent_dialog->text.raw[strp]==CHARMAP_B_CODECHAR || parent_dialog->text.raw[strp]==CHARMAP_EXT_CODECHAR) {
+				while (strp<code[2*i+2]+0x100*code[2*i+3]) {
+					if (parent_dialog->text.raw[strp] == OPCODE_CHAR) {
+						if (code_index > 0 && codep + 1 == code_index)
+							strp += 2 * code[1];
+						else
+							strp += parent_dialog->text.code_arg_length[codep];
+						codep++;
+					} else if (parent_dialog->text.raw[strp] == CHARMAP_A_CODECHAR || parent_dialog->text.raw[strp] == CHARMAP_B_CODECHAR || parent_dialog->text.raw[strp] == CHARMAP_EXT_CODECHAR) {
 						strp += 2;
 						stri++;
 					} else {
@@ -637,8 +655,13 @@ void TextOpcodeDialog::OnTokenMouse(wxMouseEvent& event) {
 			int minerr = abs(mpos.x-caretx);
 			int minerrtmp;
 			for (newpos=0;newpos+1<token_str.length();newpos++) {
-				if (parent_dialog->text.raw[strp]==OPCODE_CHAR)
-					strp += parent_dialog->text.code_arg_length[codep++];
+				if (parent_dialog->text.raw[strp] == OPCODE_CHAR) {
+					if (code_index > 0 && codep + 1 == code_index)
+						strp += 2 * code[1];
+					else
+						strp += parent_dialog->text.code_arg_length[codep];
+					codep++;
+				}
 				caretx += dc.GetTextExtent(token_str.Mid(newpos,1)).GetWidth();
 				minerrtmp = abs(mpos.x-caretx);
 				if (minerrtmp<minerr)
@@ -650,9 +673,9 @@ void TextOpcodeDialog::OnTokenMouse(wxMouseEvent& event) {
 				else
 					strp++;
 			}
-			newpos = max(2,(int)strp-2);// += 2*code[1];
-			code[2*token_sel+2] = newpos % 0x100;
-			code[2*token_sel+3] = (newpos >> 8) % 0x100;
+			newpos = max(2 * code[1], (int)strp);
+			code[2*token_sel+2] = newpos & 0xFF;
+			code[2*token_sel+3] = (newpos >> 8) & 0xFF;
 		}
 		wxClientDC dcp(m_tokenizetextpanel);
 		DisplayTokens(dcp);

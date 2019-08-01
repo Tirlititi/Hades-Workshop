@@ -264,6 +264,15 @@ void CDDataStruct::WorldMapDisplayNames(bool create) {
 	}
 }
 
+wxString CDDataStruct::GetFieldName(int fieldid) {
+	wxString fieldname;
+	if (GetTopWindow()->m_fieldshowid->IsChecked())
+		fieldname.Printf(wxT("%04u : %s"),fieldset.script_data[fieldid]->object_id,fieldset.script_data[fieldid]->name.GetStr(hades::TEXT_PREVIEW_TYPE));
+	else
+		fieldname = _(fieldset.script_data[fieldid]->name.GetStr(hades::TEXT_PREVIEW_TYPE));
+	return fieldname;
+}
+
 void CDDataStruct::FieldDisplayNames(bool create) {
 	unsigned int i,prev = fieldsorted[m_fieldlist->GetSelection()];
 	if (!create)
@@ -279,7 +288,7 @@ void CDDataStruct::FieldDisplayNames(bool create) {
 	else
 		fieldsorted = OrderedIndex;
 	for (i=0;i<fieldset.amount;i++) {
-		m_fieldlist->Append(fieldset.script_data[fieldsorted[i]]->name.GetStr(hades::TEXT_PREVIEW_TYPE),(void*)&fieldsorted[i]);
+		m_fieldlist->Append(GetFieldName(fieldsorted[i]),(void*)&fieldsorted[i]);
 		if (!create && fieldsorted[i]==prev)
 			m_fieldlist->SetSelection(i);
 	}
@@ -1583,25 +1592,24 @@ public:
 int SpellModelWindow::ShowModal(Spell_Target_Type tt, Spell_Target_Amount ta, uint16_t currentmodel, uint16_t currentmodelalt, bool alt) {
 	int mainsel = -1, allsel = -1;
 	unsigned int i,j = 0;
-	if (ta==SPELL_TARGET_AMOUNT_VARIABLE) {
+	if (ta == SPELL_TARGET_AMOUNT_VARIABLE) {
 		if (alt)
 			ta = SPELL_TARGET_AMOUNT_ONE;
 		else
 			ta = SPELL_TARGET_AMOUNT_GROUP;
 	}
+	if (ta == SPELL_TARGET_AMOUNT_RANDOM)
+		ta = SPELL_TARGET_AMOUNT_GROUP;
+	if (tt == SPELL_TARGET_TYPE_IRRELEVANT)
+		tt = SPELL_TARGET_TYPE_ANY;
 	uint16_t model = alt ? currentmodelalt : currentmodel;
 	m_modelmain->Clear();
 	for (i=0;i<G_N_ELEMENTS(HADES_STRING_SPELL_MODEL);i++) {
 		if (model==HADES_STRING_SPELL_MODEL[i].id)
 			allsel = i;
 		if (HADES_STRING_SPELL_MODEL[i].bug_rate==0) {
-			if (HADES_STRING_SPELL_MODEL[i].target_type==SPELL_TARGET_TYPE_ANY || tt==HADES_STRING_SPELL_MODEL[i].target_type) {
-				if (tt==SPELL_TARGET_TYPE_EVERYONE || tt==SPELL_TARGET_TYPE_SELF) {
-					m_modelmain->Append(HADES_STRING_SPELL_MODEL[i].label,(void*)&HADES_STRING_SPELL_MODEL[i]);
-					if (model==HADES_STRING_SPELL_MODEL[i].id)
-						mainsel = j;
-					j++;
-				} else if (ta==HADES_STRING_SPELL_MODEL[i].target_amount) {
+			if (HADES_STRING_SPELL_MODEL[i].target_type == SPELL_TARGET_TYPE_ANY || tt == HADES_STRING_SPELL_MODEL[i].target_type) {
+				if (tt == SPELL_TARGET_TYPE_EVERYONE || tt == SPELL_TARGET_TYPE_SELF || ta == HADES_STRING_SPELL_MODEL[i].target_amount) {
 					m_modelmain->Append(HADES_STRING_SPELL_MODEL[i].label,(void*)&HADES_STRING_SPELL_MODEL[i]);
 					if (model==HADES_STRING_SPELL_MODEL[i].id)
 						mainsel = j;
@@ -1758,8 +1766,8 @@ void CDDataStruct::DisplaySpell(int spellid) {
 	m_spelltargettype->SetSelection(tt);
 	m_spelltargetamount->SetSelection(sp.GetTargetAmount());
 	m_spelltargetpriority->SetSelection(sp.GetTargetPriority());
-	m_spelltargetamount->Enable(tt!=SPELL_TARGET_TYPE_EVERYONE && tt!=SPELL_TARGET_TYPE_SELF);
-	m_spelltargetpriority->Enable(tt==SPELL_TARGET_TYPE_ANY);
+	m_spelltargetamount->Enable(tt != SPELL_TARGET_TYPE_EVERYONE && tt != SPELL_TARGET_TYPE_SELF && tt != SPELL_TARGET_TYPE_IRRELEVANT);
+	m_spelltargetpriority->Enable(tt == SPELL_TARGET_TYPE_ANY);
 	m_spelltargetflagdead->SetValue(sp.target_flag & TARGET_FLAG_CAN_TARGET_DEAD);
 	m_spelltargetflagcamera->SetValue(sp.target_flag & TARGET_FLAG_CAMERA);
 	m_spelltargetflagdeadfirst->SetValue(sp.target_flag & TARGET_FLAG_TARGET_DEAD_FIRST);
@@ -1903,8 +1911,8 @@ void CDDataStruct::OnSpellChangeChoice(wxCommandEvent& event) {
 		sp.SetTargetType(tt);
 		m_spelltargetamount->SetSelection(sp.GetTargetAmount());
 		m_spelltargetpriority->SetSelection(sp.GetTargetPriority());
-		m_spelltargetamount->Enable(tt!=SPELL_TARGET_TYPE_EVERYONE && tt!=SPELL_TARGET_TYPE_SELF);
-		m_spelltargetpriority->Enable(tt==SPELL_TARGET_TYPE_ANY);
+		m_spelltargetamount->Enable(tt != SPELL_TARGET_TYPE_EVERYONE && tt != SPELL_TARGET_TYPE_SELF && tt != SPELL_TARGET_TYPE_IRRELEVANT);
+		m_spelltargetpriority->Enable(tt == SPELL_TARGET_TYPE_ANY);
 	} else if (id==wxID_TARGETAMOUNT) {
 		sp.SetTargetAmount(event.GetSelection());
 	} else if (id==wxID_TARGETPRIORITY) {
@@ -2030,6 +2038,8 @@ void CDDataStruct::UpdateSupportName(unsigned int supportid) {
 		m_itemskill2->SetString(SPELL_AMOUNT+supportid,_(supportset.support[supportid].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 	if (!m_itemskill3->IsEmpty())
 		m_itemskill3->SetString(SPELL_AMOUNT+supportid,_(supportset.support[supportid].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+	if (!m_enemystatbluemagic->IsEmpty())
+		m_enemystatbluemagic->SetString(SPELL_AMOUNT+supportid,_(supportset.support[supportid].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 }
 
 void CDDataStruct::OnSupportChangeName(wxCommandEvent& event) {
@@ -2425,11 +2435,12 @@ void CDDataStruct::DisplayStat(int statid) {
 	DisplayStatAbilityList(cmdset[0]);
 	uint8_t* equipset = statset.GetCharacterEquipmentsId(statid,&equipamount);
 	m_statcharequipset->Clear();
-	for (i=0;i<equipamount;i++) {
+	for (i=0;i+1<equipamount;i++) {
 		stringstream equiplabel;
 		equiplabel << "Equipment Set " << i+1 << ends;
 		m_statcharequipset->Append(_(equiplabel.str()));
 	}
+	m_statcharequipset->Append(_("Equipment Set Empty"));
 	m_statcharequipset->SetSelection(0);
 	InitialEquipDataStruct& equip = statset.initial_equip[equipset[0]];
 	m_statcharweapon->SetSelection(equip.weapon);
@@ -2867,8 +2878,8 @@ void CDDataStruct::DisplayItem(int itemid) {
 		m_itemusabletargettype->SetSelection(tt);
 		m_itemusabletargetamount->SetSelection(ic.GetTargetAmount());
 		m_itemusabletargetpriority->SetSelection(ic.GetTargetPriority());
-		m_itemusabletargetamount->Enable(tt!=SPELL_TARGET_TYPE_EVERYONE && tt!=SPELL_TARGET_TYPE_SELF);
-		m_itemusabletargetpriority->Enable(tt==SPELL_TARGET_TYPE_ANY);
+		m_itemusabletargetamount->Enable(tt != SPELL_TARGET_TYPE_EVERYONE && tt != SPELL_TARGET_TYPE_SELF && tt != SPELL_TARGET_TYPE_IRRELEVANT);
+		m_itemusabletargetpriority->Enable(tt == SPELL_TARGET_TYPE_ANY);
 		m_itemusabletargetflagdead->SetValue(ic.target_flag & TARGET_FLAG_CAN_TARGET_DEAD);
 		m_itemusabletargetflagcamera->SetValue(ic.target_flag & TARGET_FLAG_CAMERA);
 		m_itemusabletargetflagdeadfirst->SetValue(ic.target_flag & TARGET_FLAG_TARGET_DEAD_FIRST);
@@ -3136,8 +3147,8 @@ void CDDataStruct::OnItemChangeChoice(wxCommandEvent& event) {
 		ic.SetTargetType(tt);
 		m_itemusabletargetamount->SetSelection(ic.GetTargetAmount());
 		m_itemusabletargetpriority->SetSelection(ic.GetTargetPriority());
-		m_itemusabletargetamount->Enable(tt!=SPELL_TARGET_TYPE_EVERYONE && tt!=SPELL_TARGET_TYPE_SELF);
-		m_itemusabletargetpriority->Enable(tt==SPELL_TARGET_TYPE_ANY);
+		m_itemusabletargetamount->Enable(tt != SPELL_TARGET_TYPE_EVERYONE && tt != SPELL_TARGET_TYPE_SELF && tt != SPELL_TARGET_TYPE_IRRELEVANT);
+		m_itemusabletargetpriority->Enable(tt == SPELL_TARGET_TYPE_ANY);
 	} else if (id==wxID_TARGETAMOUNT) {
 		itemset.usable[it.usable_id].SetTargetAmount(event.GetSelection());
 	} else if (id==wxID_TARGETPRIORITY) {
@@ -5553,7 +5564,7 @@ void CDDataStruct::OnFieldChangeName(wxCommandEvent& event) {
 		m_fieldname->SetInsertionPoint(ip);
 		TextReachLimit();
 	} else {
-		m_fieldlist->SetString(sel,_(sc->name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+		m_fieldlist->SetString(sel,GetFieldName(*sortid));
 		MarkDataFieldModified(*sortid,CHUNK_TYPE_SCRIPT);
 	}
 }

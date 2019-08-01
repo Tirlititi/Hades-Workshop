@@ -163,6 +163,17 @@ DllMetaDataModification* SupportDataSet::ComputeSteamMod(ConfigurationSet& confi
 	return res;
 }
 
+void SupportDataSet::GenerateCSharp(vector<string>& buffer) {
+	unsigned int i;
+	stringstream supportdb;
+	supportdb << "// Method: FF9.ff9abil::.cctor\n\n";
+	supportdb << "\tff9abil._FF9Abil_SaData = new SA_DATA[] {\n";
+	for (i = 0; i < SUPPORT_AMOUNT; i++)
+		supportdb << "\t\tnew SA_DATA(" << (int)support[i].category << ", " << (int)support[i].cost << ", " << (int)support[i].name_offset << ", " << (int)support[i].help_offset << ", " << (int)support[i].help_size_x << (i+1==SUPPORT_AMOUNT ? ")" : "),") << " // " << ConvertWStrToStr(support[i].name.str_nice) << "\n";
+	supportdb << "\t};\n";
+	buffer.push_back(supportdb.str());
+}
+
 int SupportDataSet::GetSteamTextSize(unsigned int texttype, SteamLanguage lang) {
 	unsigned int i;
 	int res = 0;

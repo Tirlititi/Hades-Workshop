@@ -3,6 +3,7 @@
 
 #define SPELL_AMOUNT		192
 #define SPELL_EFFECT_AMOUNT	110
+#define STATUS_AMOUNT		32
 #define STATUS_SET_AMOUNT	64
 struct SpellDataStruct;
 struct SpellDataSet;
@@ -27,17 +28,19 @@ typedef uint8_t Spell_Target_Priority;
 #define SPELL_TARGET_PRIORITY_ALLIES	1
 
 typedef uint8_t Spell_Target_Type;
-#define SPELL_TARGET_TYPE_ANY		0
-#define SPELL_TARGET_TYPE_ALLY		1
-#define SPELL_TARGET_TYPE_ENEMY		2
-#define SPELL_TARGET_TYPE_EVERYONE	3
-#define SPELL_TARGET_TYPE_SELF		4
+#define SPELL_TARGET_TYPE_ANY			0
+#define SPELL_TARGET_TYPE_ALLY			1
+#define SPELL_TARGET_TYPE_ENEMY			2
+#define SPELL_TARGET_TYPE_EVERYONE		3
+#define SPELL_TARGET_TYPE_SELF			4
+#define SPELL_TARGET_TYPE_IRRELEVANT	5
 
 typedef uint8_t Spell_Target_Amount;
 #define SPELL_TARGET_AMOUNT_ONE			0
 #define SPELL_TARGET_AMOUNT_GROUP		1
 #define SPELL_TARGET_AMOUNT_VARIABLE	2
-#define SPELL_TARGET_AMOUNT_ZERO		3
+#define SPELL_TARGET_AMOUNT_RANDOM		3
+#define SPELL_TARGET_AMOUNT_ZERO		4
 
 #define MENU_FLAG_CAN_USE_IN_MENU		0x01
 #define MENU_FLAG_HIDE_AP_PROGRESSION	0x02
@@ -102,6 +105,7 @@ struct SpellDataStruct {
 public:
 	FF9String name; // readonly
 	FF9String help; // readonly
+	uint8_t target_type;
 	uint16_t model;
 	uint8_t target_flag;
 	uint8_t effect;
@@ -137,7 +141,6 @@ public:
 private:
 	uint16_t name_offset;
 	uint16_t help_offset;
-	uint8_t target_type;
 	SpellDataSet* parent;
 	friend SpellDataSet;
 };
@@ -163,6 +166,7 @@ public:
 	void WriteHWS(fstream& ffhws);
 	// Return a modifamount-long pointer, to be deleted[]
 	DllMetaDataModification* ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount);
+	void GenerateCSharp(vector<string>& buffer);
 	// texttype: 0 for name, 1 for help
 	void WriteSteamText(fstream& ffbin, unsigned int texttype, SteamLanguage lang = GetSteamLanguage());
 	int GetSteamTextSize(unsigned int texttype, SteamLanguage lang = GetSteamLanguage());

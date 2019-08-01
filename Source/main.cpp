@@ -11,6 +11,7 @@
 #include "Gui_LoadingDialog.h"
 #include "Gui_Preferences.h"
 #include "Tool_ModManager.h"
+#include "Tool_Randomizer.h"
 #include "Tool_BackgroundEditor.h"
 #include "Tool_UnityViewer.h"
 #include "File_Batching.h"
@@ -55,6 +56,25 @@ bool MainApp::OnInit() {
 ////////////////////////////////////////////////////////////////////////////////
 // main application frame implementation 
 ////////////////////////////////////////////////////////////////////////////////
+
+void MainFrame::MakeDirForFile(string filename) {
+	wxFileName fname(filename);
+	fname.Mkdir(wxS_DIR_DEFAULT,wxPATH_MKDIR_FULL);
+}
+
+void MainFrame::DeleteFullDir(string dirname) {
+	wxFileName dname(dirname);
+	wxArrayString dirs = dname.GetDirs();
+/*	Note: safe mode, delete only empty directories
+	bool allowdeletion = false;
+	for (unsigned int i = 0; i<dirs.Count(); i++)
+		if (dirs[i].IsSameAs(L"HadesWorkshopMod") || dirs[i].IsSameAs(L"HadesWorkshopAssets")) {
+			allowdeletion = true;
+			break;
+		}
+	if (allowdeletion)*/
+		dname.Rmdir(wxPATH_RMDIR_FULL);
+}
 
 MainFrame::MainFrame(wxWindow *parent) :
 	MainFrameBase(parent),
@@ -160,6 +180,10 @@ void MainFrame::OnOpenClick(wxCommandEvent& event) {
 		}
 		break;
 	}
+	case -3: {
+		wxLogError(HADES_STRING_OPEN_ERROR_FAIL_STEAM_MISS);
+		break;
+	}
 	case 1: {
 		wxMessageDialog popup(this,HADES_STRING_OPEN_WARNING_VERSION,HADES_STRING_WARNING,wxOK|wxCANCEL|wxSTAY_ON_TOP|wxCENTRE);
 		if (popup.ShowModal()==wxID_OK) {
@@ -239,6 +263,8 @@ void MainFrame::OnOpenHWSClick(wxCommandEvent& event) {
 
 void MainFrame::OnCloseClick(wxCommandEvent& event) {
 	unsigned int currentpanel = m_cdbook->GetSelection();
+	if (CDPanel[currentpanel]->gametype != GAME_TYPE_PSX && CDPanel[currentpanel]->config.meta_dll.dll_file.is_open())
+		CDPanel[currentpanel]->config.meta_dll.dll_file.close();
 	if (CDPanelAmount>1) {
 		for (unsigned int i=currentpanel;i+1<CDPanelAmount;i++) {
 			CDName[i] = CDName[i+1];
@@ -259,8 +285,11 @@ void MainFrame::OnCloseClick(wxCommandEvent& event) {
 }
 
 void MainFrame::OnCloseAllClick(wxCommandEvent& event) {
-	for (unsigned int i=0;i<CDPanelAmount;i++)
+	for (unsigned int i = 0; i < CDPanelAmount; i++) {
 		m_cdbook->DeletePage(0);
+		if (CDPanel[i]->gametype != GAME_TYPE_PSX && CDPanel[i]->config.meta_dll.dll_file.is_open())
+			CDPanel[i]->config.meta_dll.dll_file.close();
+	}
 	CDPanelAmount = 0;
 	UpdateMenuAvailability(wxNOT_FOUND);
 	m_cdbook->Show(false);
@@ -343,10 +372,35 @@ void MainFrame::OnSaveHWSClick(wxCommandEvent& event) {
 	}
 }
 
+class SaveSteamDialog : public SaveSteamWindow {
+public:
+	SaveSteamDialog(wxWindow* parent) : SaveSteamWindow(parent) {}
+	int ShowModal() {
+		m_infotext->Hide();
+		m_showinfobtn->SetBitmap(wxBitmap(wxBITMAP(bulletright_image).ConvertToImage()));
+		return SaveSteamWindow::ShowModal();
+	}
+
+private:
+	void OnShowHideInfo(wxMouseEvent& event) {
+		if (m_infotext->IsShown()) {
+			m_infotext->Hide();
+			m_showinfobtn->SetBitmap(wxBitmap(wxBITMAP(bulletright_image).ConvertToImage()));
+		} else {
+			m_infotext->Show();
+			m_showinfobtn->SetBitmap(wxBITMAP(bulletdown_image).ConvertToImage());
+		}
+		Layout();
+		Fit();
+		Refresh();
+		event.Skip();
+	}
+};
+
 void MainFrame::OnSaveSteamClick(wxCommandEvent& event) {
 	unsigned int currentpanel = m_cdbook->GetSelection();
 	unsigned int i;
-	SaveSteamWindow dial(this);
+	SaveSteamDialog dial(this);
 	dial.m_dirpicker->SetDirName(SteamSaveDir);
 	if (dial.ShowModal()==wxID_OK) {
 		bool* modifiedsection = new bool[DATA_SECTION_AMOUNT];
@@ -369,11 +423,17 @@ void MainFrame::OnSaveSteamClick(wxCommandEvent& event) {
 									i==DATA_SECTION_CIL ? CDPanel[currentpanel]->cilmodified : false;
 		}
 		SteamSaveDir = dial.m_dirpicker->GetDirName();
-		wxFileName::Mkdir(SteamSaveDir.GetPath()+_(L"\\StreamingAssets\\"),wxS_DIR_DEFAULT,wxPATH_MKDIR_FULL);
-		wxFileName::Mkdir(SteamSaveDir.GetPath()+_(L"\\x64\\FF9_Data\\"),wxS_DIR_DEFAULT,wxPATH_MKDIR_FULL);
-		wxFileName::Mkdir(SteamSaveDir.GetPath()+_(L"\\x64\\FF9_Data\\Managed\\"),wxS_DIR_DEFAULT,wxPATH_MKDIR_FULL);
 		wxArrayString dirname = SteamSaveDir.GetDirs();
-		int res = CreateSteamMod(SteamSaveDir.GetPath().ToStdString(),modifiedsection,CDPanel[currentpanel]->config,CDPanel[currentpanel]->saveset,dirname.Last().compare(L"FINAL FANTASY IX")!=0);
+		int dllformat = dial.m_dllformat->GetSelection();
+		int assetformat = dial.m_assetformat->GetSelection();
+		bool deleteold = dirname.Last().compare(L"FINAL FANTASY IX")!=0;
+		if (dllformat==0)
+			wxFileName::Mkdir(SteamSaveDir.GetPath()+_(L"\\x64\\FF9_Data\\Managed\\"),wxS_DIR_DEFAULT,wxPATH_MKDIR_FULL);
+		if (assetformat==0) {
+			wxFileName::Mkdir(SteamSaveDir.GetPath()+_(L"\\StreamingAssets\\"),wxS_DIR_DEFAULT,wxPATH_MKDIR_FULL);
+			wxFileName::Mkdir(SteamSaveDir.GetPath()+_(L"\\x64\\FF9_Data\\"),wxS_DIR_DEFAULT,wxPATH_MKDIR_FULL);
+		}
+		int res = CreateSteamMod(SteamSaveDir.GetPath().ToStdString(),modifiedsection,CDPanel[currentpanel]->config,CDPanel[currentpanel]->saveset,dllformat,assetformat,deleteold);
 		if (res==0) {
 			wxMessageDialog popupsuccess(this,HADES_STRING_STEAM_SAVE_SUCCESS,HADES_STRING_SUCCESS,wxOK|wxCENTRE);
 			popupsuccess.ShowModal();
@@ -675,9 +735,12 @@ void MainFrame::OnToolClick( wxCommandEvent& event ) {
 		ToolModManager dial(this);
 		dial.ShowModal(CDPanel[currentpanel]);
 		MarkDataModified();
+	} else if (id==wxID_RANDOMIZER) {
+		ToolRandomizer dial(this);
+		dial.ShowModal(CDPanel[currentpanel]);
 	} else if (id==wxID_BACKEDIT) {
 		ToolBackgroundEditor dial(this);
-		dial.ShowModal(currentpanel!=wxNOT_FOUND ? CDPanel[currentpanel] : NULL);
+		dial.ShowModal(CDPanel[currentpanel]);
 	} else if (id==wxID_ASSETS) {
 		ToolUnityViewer* unityviewer = new ToolUnityViewer(this);
 		unityviewer->Show();
@@ -759,6 +822,7 @@ void MainFrame::UpdateMenuAvailability(int panel) {
 	m_close->Enable(true);
 	m_closeall->Enable(true);
 	m_modmanager->Enable(true);
+	m_randomizer->Enable(CDPanel[panel]->spellloaded);
 	m_backgroundeditor->Enable(CDPanel[panel]->fieldloaded);
 	m_savehws->Enable(CDModifiedState[panel]);
 	m_savesteam->Enable(CDModifiedState[panel] && GetGameType()!=GAME_TYPE_PSX);

@@ -4,6 +4,7 @@
 #include <sstream>
 #include <cstring>
 #include "Configuration.h"
+#include "Hades_Strings.h"
 
 #define CIL_HWS_VERSION 1
 
@@ -521,13 +522,11 @@ uint32_t DllMetaData::GetMethodOffset(unsigned int methid) {
 uint32_t DllMetaData::GetMethodRange(unsigned int methid) {
 	if (cil_method_virtual_address[methid]==0)
 		return 0;
+	uint32_t methend = meta_data_directory.virtual_address;
 	unsigned int i;
-	uint32_t methend = 0;
-	for (i=1;methend==0;i++)
-		if (methid+i>=table[TableType_Method].length)
-			methend = meta_data_directory.virtual_address;
-		else if (cil_method_virtual_address[methid+i]!=0)
-			methend = cil_method_virtual_address[methid+i];
+	for (i=0;i<table[TableType_Method].length;i++)
+		if (cil_method_virtual_address[i]>cil_method_virtual_address[methid] && cil_method_virtual_address[i]<methend)
+			methend = cil_method_virtual_address[i];
 	return methend-cil_method_virtual_address[methid];
 }
 
@@ -544,6 +543,21 @@ int DllMetaData::GetStaticFieldIdFromToken(uint32_t fieldtoken) {
 
 uint32_t DllMetaData::GetStaticFieldOffset(unsigned int staticfieldid) {
 	return GetVirtualAddressOffset(cil_fieldrva_virtual_address[staticfieldid]);
+}
+
+uint32_t DllMetaData::GetStaticFieldRange(unsigned int staticfieldid) {
+	uint32_t fieldend = meta_data_directory.virtual_address;
+	unsigned int i;
+	for (i = 0; i<table[TableType_FieldRVA].length; i++)
+		if (cil_fieldrva_virtual_address[i]>cil_fieldrva_virtual_address[staticfieldid] && cil_fieldrva_virtual_address[i]<fieldend)
+			fieldend = cil_fieldrva_virtual_address[i];
+	if (fieldend == meta_data_directory.virtual_address) {
+		// DEBUG : Last field... try with method RVA
+		for (i = 0; i<table[TableType_Method].length; i++)
+			if (cil_method_virtual_address[i]>cil_fieldrva_virtual_address[staticfieldid] && cil_method_virtual_address[i]<fieldend)
+				fieldend = cil_method_virtual_address[i];
+	}
+	return fieldend - cil_fieldrva_virtual_address[staticfieldid];
 }
 
 uint32_t DllMetaData::GetTypeTokenIdentifier(const char* tname, const char* namesp) {
@@ -1291,18 +1305,19 @@ int DllMetaData::GetTableIndexSize(unsigned int tableindex) {
 }
 
 int DllMetaData::GetMethodAtOffset(uint32_t offset) {
-	int i,foundmethod = -1;
-	uint32_t methbeg;
+	int i, foundmethod = -1;
 	size_t dllfpos = dll_file.tellg();
+	DllMethodInfo methinfo;
+	uint32_t methbeg;
 	for (i=table[TableType_Method].length-1;i>=0;i--) {
 		methbeg = GetMethodOffset(i);
 		if (methbeg>0 && methbeg<=offset) {
-			DllMethodInfo methinfo;
 			dll_file.seekg(methbeg);
 			methinfo.ReadMethodInfo(dll_file);
-			if (methinfo.code_abs_offset+methinfo.code_size>offset)
+			if (methinfo.code_abs_offset + methinfo.code_size > offset) {
 				foundmethod = i;
-			break;
+				break;
+			}
 		}
 	}
 	dll_file.seekg(dllfpos);
@@ -1320,20 +1335,23 @@ bool DllMetaData::IsNameMatching(uint32_t stroff, const char* match) {
 }
 
 // Write
-int32_t DllMetaDataModification::GetSizeModification(unsigned int modifamount, DllMetaDataModification* modif, DllMethodInfo& methinfo) {
-	int64_t basefulllen = base_length, newfulllen = new_length;
-	int32_t res = newfulllen-basefulllen;
+int32_t DllMetaDataModification::GetSizeModification(unsigned int modifid, unsigned int modifamount, DllMetaDataModification* modif, DllMethodInfo** methinfolist) {
+	DllMethodInfo& methinfo = *methinfolist[modifid];
+	int64_t baseendpos, newfulllen;
+	int32_t res = new_length - base_length;
 	int32_t tinyfatmodif = 0;
 	unsigned int i;
 	if (method_id<0) // field modification
 		return res+GetAlignOffset(res);
 	// If the modif is the last one for this method, return also the size change from padding and tiny to fat
 	// Otherwise, return only the size change from the modification itself
-	basefulllen = methinfo.code_size;
-	newfulllen = basefulllen+res;
+	baseendpos = methinfo.code_abs_offset+methinfo.code_size;
+	newfulllen = methinfo.code_size + res;
 	if (tiny_fat_change==1 || tiny_fat_change==2) {
-		tinyfatmodif = 11;
-		basefulllen +=1; // code is right after the size in tiny methods
+		tinyfatmodif = (int32_t)GetAlignOffset(DllMetaData::ApplyOffsetModification(methinfo.code_abs_offset - 1, modifid, modif, methinfolist)); // alignment of the start
+		tinyfatmodif += 11; // added header size
+	} else if (methinfo.is_tiny) {
+		newfulllen += 1; // Count header for alignment
 	}
 	for (i=0;i<modifamount;i++)
 		if (method_id==modif[i].method_id) {
@@ -1345,39 +1363,35 @@ int32_t DllMetaDataModification::GetSizeModification(unsigned int modifamount, D
 				return res;
 			break;
 		}
-	return res+tinyfatmodif+(int32_t)GetAlignOffset(newfulllen)-(int32_t)GetAlignOffset(basefulllen);
+	if (base_end_padding==0) // Next method was aligned
+		return res + tinyfatmodif + (int32_t)GetAlignOffset(newfulllen) - (int32_t)GetAlignOffset(baseendpos);
+	// Next method was not 4-bytes aligned: keep the same shift to avoid scrambling everything
+	return res + tinyfatmodif + (int32_t)GetAlignOffset(newfulllen+4-base_end_padding);
 }
 
 void SortDllDataModifications(unsigned int modifamount, DllMetaDataModification*& modif) {
-	DllMetaDataModification* sorted = new DllMetaDataModification[modifamount];
-	unsigned int i,j,next;
-	uint32_t nextpos,curpos = 0;
-	for (i=0;i<modifamount;i++) {
-		nextpos = 0xFFFFFFFF;
-		next = 0;
-		for (j=0;j<modifamount;j++)
-			if (modif[j].position<nextpos && modif[j].position>curpos) {
-				next = j;
-				nextpos = modif[j].position;
-			}
-		sorted[i] = modif[next];
-		curpos = sorted[i].position;
+	DllMetaDataModification curmodif;
+	unsigned int i,j;
+	for (i=1;i<modifamount;i++) {
+		curmodif = modif[i];
+		for (j=i; j>0 && modif[j-1].position>curmodif.position; j--)
+			modif[j] = modif[j-1];
+		modif[j] = curmodif;
 	}
-	for (i=0;i<modifamount;i++)
-		modif[i] = sorted[i];
-	delete[] sorted;
 }
 
 DllMethodInfo** DllMetaData::ComputeTinyFatAndMethodInfo(unsigned int modifamount, DllMetaDataModification* modif) {
 	DllMethodInfo** res = new DllMethodInfo*[modifamount];
 	unsigned int i,j;
 	for (i=0;i<modifamount;i++) {
+		modif[i].base_end_padding = 0; // Unused for field modifications
 		if (modif[i].method_id>=0) {
 			if (i>0 && modif[i].method_id==modif[i-1].method_id) {
 				res[i] = res[i-1];
 				if (modif[i-1].tiny_fat_change==1 || modif[i-1].tiny_fat_change==2)
 					modif[i].tiny_fat_change = 2; // turning tiny to fat
 			} else {
+				uint32_t endofmethods = GetVirtualAddressOffset(meta_data_directory.virtual_address);
 				res[i] = new DllMethodInfo;
 				dll_file.seekg(GetMethodOffset(modif[i].method_id));
 				res[i]->ReadMethodInfo(dll_file);
@@ -1389,11 +1403,29 @@ DllMethodInfo** DllMetaData::ComputeTinyFatAndMethodInfo(unsigned int modifamoun
 					if (!modifinfo.is_tiny)
 						modif[i].tiny_fat_change = 1; // 1st modif of a method turning tiny to fat
 				}
+				dll_file.seekg(res[i]->code_size, ios::cur);
+				modif[i].base_end_padding = dll_file.tellg() % 4;
+				while ((modif[i].base_end_padding%4)>0 && dll_file.tellg()<endofmethods && dll_file.get()==0)
+					modif[i].base_end_padding++;
+				if (modif[i].base_end_padding == 4)
+					modif[i].base_end_padding = 0;
 			}
 		} else
 			res[i] = NULL;
 	}
 	return res;
+}
+
+uint32_t DllMetaData::ApplyVirtualOffsetModification(uint32_t baserva, uint32_t newsecoff, unsigned int modifamount, DllMetaDataModification* modif, DllMethodInfo** modifmethinfo) {
+	if (baserva == 0)
+		return 0;
+	uint32_t baseoff = GetVirtualAddressOffset(baserva);
+	uint32_t res = baseoff;
+	unsigned int i;
+	for (i = 0; i<modifamount; i++)
+		if (baseoff>modif[i].position)
+			res += modif[i].GetSizeModification(i, modifamount, modif, modifmethinfo);
+	return res + newsecoff;
 }
 
 uint32_t DllMetaData::ApplyOffsetModification(uint32_t offset, unsigned int modifamount, DllMetaDataModification* modif, DllMethodInfo** modifmethinfo, int32_t baseoffset) {
@@ -1403,27 +1435,15 @@ uint32_t DllMetaData::ApplyOffsetModification(uint32_t offset, unsigned int modi
 	unsigned int i;
 	for (i=0;i<modifamount;i++)
 		if (baseoffset+offset>(int32_t)modif[i].position && baseoffset<(int32_t)modif[i].position)
-			res += modif[i].GetSizeModification(modifamount,modif,*modifmethinfo[i]);
+			res += modif[i].GetSizeModification(i,modifamount,modif,modifmethinfo);
 	return res;
-}
-
-uint32_t DllMetaData::ApplyVirtualOffsetModification(uint32_t baserva, uint32_t newsecoff, unsigned int modifamount, DllMetaDataModification* modif, DllMethodInfo** modifmethinfo) {
-	if (baserva==0)
-		return 0;
-	uint32_t baseoff = GetVirtualAddressOffset(baserva);
-	uint32_t res = baseoff;
-	unsigned int i;
-	for (i=0;i<modifamount;i++)
-		if (baseoff>modif[i].position)
-			res += modif[i].GetSizeModification(modifamount,modif,*modifmethinfo[i]);
-	return res+newsecoff;
 }
 
 uint32_t DllMetaData::ApplySizeModification(uint32_t size, unsigned int modifamount, DllMetaDataModification* modif, DllMethodInfo** modifmethinfo) {
 	uint32_t res = size;
 	unsigned int i;
 	for (i=0;i<modifamount;i++)
-		res += modif[i].GetSizeModification(modifamount,modif,*modifmethinfo[i]);
+		res += modif[i].GetSizeModification(i,modifamount,modif,modifmethinfo);
 	return res;
 }
 
@@ -1454,6 +1474,8 @@ int DllMetaData::Duplicate(fstream& fdest, unsigned int modifamount, DllMetaData
 		modif[i].tiny_fat_change = 0;
 		if (modif[i].code_block_pos==0)
 			modif[i].code_block_pos = modif[i].position;
+		if (i > 0 && modif[i].method_id < 0 && modif[i].position == modif[i - 1].position)
+			modif[i].base_length = 0; // Duplicated field
 	}
 	modifmethinfo = ComputeTinyFatAndMethodInfo(modifamount,modif);
 	newsecvpos = new uint32_t[section_amount];
@@ -1477,7 +1499,7 @@ int DllMetaData::Duplicate(fstream& fdest, unsigned int modifamount, DllMetaData
 	dll_file.read(buffer,copysize);
 	fdest.write(buffer,copysize);
 	delete[] buffer;
-	
+
 	ReadLong(dll_file);
 	WriteLong(fdest,newsecvsize[meta_data_section]+GetAlignOffset(newsecvsize[meta_data_section],0x200)); // code size
 //	WriteLong(fdest,ReadLong(dll_file));
@@ -1600,8 +1622,14 @@ int DllMetaData::Duplicate(fstream& fdest, unsigned int modifamount, DllMetaData
 				dll_file.read(buffer,copysize);
 				fdest.write(buffer,copysize);
 				delete[] buffer;
+				if (modif[modifindex].tiny_fat_change == 1 || modif[modifindex].tiny_fat_change == 2)
+					while (fdest.tellp() % 4 != 0)
+						fdest.put(0);
 				WriteMethodSizeModification(fdest,modif[modifindex].method_id,modifamount,modif);
 			} else if (copysize==dll_file.tellg()) {
+				if (modif[modifindex].tiny_fat_change == 1 || modif[modifindex].tiny_fat_change == 2)
+					while (fdest.tellp() % 4 != 0)
+						fdest.put(0);
 				WriteMethodSizeModification(fdest,modif[modifindex].method_id,modifamount,modif);
 			}
 		}
@@ -1612,7 +1640,7 @@ int DllMetaData::Duplicate(fstream& fdest, unsigned int modifamount, DllMetaData
 			dll_file.read(buffer,copysize);
 			fdest.write(buffer,copysize);
 			delete[] buffer;
-		}
+		} // Note: for duplicate fields, copysize<dll_file.tellg()
 		dll_file.seekg(modif[modifindex].base_length,ios::cur);
 		fdest.write((const char*)modif[modifindex].value,modif[modifindex].new_length);
 		if (modif[modifindex].method_id>=0 && (modifindex+1>=modifamount || modif[modifindex+1].method_id!=modif[modifindex].method_id)) {
@@ -1625,7 +1653,7 @@ int DllMetaData::Duplicate(fstream& fdest, unsigned int modifamount, DllMetaData
 				delete[] buffer;
 			}
 			dll_file.seekg(GetAlignOffset(dll_file.tellg()),ios::cur);
-			while (fdest.tellp()%4!=0)
+			while (fdest.tellp()%4 != modif[modifindex].base_end_padding)
 				fdest.put(0);
 			if (modifmethinfo[modifindex]->flags & 0x8) { // ToDo: can't add/remove exception handlers for now, nor change their count
 				DllExceptionHandler* excepthand = new DllExceptionHandler;
@@ -1710,6 +1738,13 @@ int DllMetaData::Duplicate(fstream& fdest, unsigned int modifamount, DllMetaData
 		buffer = new char[copysize];
 		for (i=0;i<table[TableType_Method].length;i++) {
 			tmp32 = ApplyVirtualOffsetModification(ReadLong(dll_file),metasectionvirtoff-metasectionoff,modifamount,modif,modifmethinfo);
+			for (j = 0; j<modifamount; j++)
+				if (modif[j].method_id >= 0 && modif[j].method_id == i) {
+					if (modif[j].tiny_fat_change == 1 || modif[j].tiny_fat_change == 2) {
+						tmp32 += GetAlignOffset(tmp32);
+						break;
+					}
+				}
 			WriteLong(fdest,tmp32); // method.virtual_address
 			dll_file.read(buffer,copysize);
 			fdest.write(buffer,copysize);
@@ -1856,7 +1891,7 @@ uint32_t DllMethodInfo::JumpToInstructions(fstream& f, unsigned int amount, ILIn
 
 void DllMethodInfo::UpdateInformation() {
 	if (is_tiny) {
-		is_tiny = code_size<=0x3F && max_stack_size==8 && local_var_token==0 && flags==2;
+		is_tiny = code_size<=0x3F && max_stack_size<=8 && local_var_token==0 && flags==2;
 		if (!is_tiny) {
 			code_abs_offset += 11;
 			flags = (flags & 0xCFFC) | 0x3003;
@@ -1926,6 +1961,8 @@ int64_t DllMetaData::ScriptGetNextIntegerValue(bool includestr, uint32_t* intege
 			return 8;
 		} else if (code==0x1F) {
 			argvalue = dll_file.get();
+			if (argvalue>=0x80) // negative (ToDo: handle negative for ldc.i4 (0x20) as well? Only important when reading long long)
+				argvalue |= 0xFFFFFFFFFFFFFF00LL;
 			return argvalue;
 		} else if (code==0x20) {
 			argvalue = dll_file.get();
@@ -2572,4 +2609,17 @@ void CILDataSet::WriteHWS(fstream &ffhws) {
 		if (flag & 0x1)
 			macromodif[i].info->WriteHWS(ffhws);
 	}
+}
+
+void CILDataSet::GenerateCSharp(vector<string>& buffer) {
+	unsigned int i;
+	if (rawmodifamount>0) {
+		stringstream warnmod;
+		warnmod << HADES_STRING_STEAM_SAVE_CSHARP_CIL_RAW;
+		for (i=0;i<rawmodifamount;i++)
+			warnmod << "// " << data->GetMethodNameById(rawmodif[i].method_id) << "\n";
+		buffer.push_back(warnmod.str());
+	}
+	for (i=0;i<macromodifamount;i++)
+		macromodif[i].info->GenerateCSharp(buffer);
 }

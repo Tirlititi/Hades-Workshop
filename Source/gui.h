@@ -1,12 +1,11 @@
 ///////////////////////////////////////////////////////////////////////////
-// C++ code generated with wxFormBuilder (version Apr 24 2017)
+// C++ code generated with wxFormBuilder (version Oct 26 2018)
 // http://www.wxformbuilder.org/
 //
-// PLEASE DO "NOT" EDIT THIS FILE!
+// PLEASE DO *NOT* EDIT THIS FILE!
 ///////////////////////////////////////////////////////////////////////////
 
-#ifndef __GUI_H__
-#define __GUI_H__
+#pragma once
 
 #include <wx/artprov.h>
 #include <wx/xrc/xmlres.h>
@@ -68,592 +67,602 @@ class PreviewTextCtrl;
 #define wxID_IMPFIELDSCRIPT 1009
 #define wxID_BACKGROUND 1010
 #define wxID_TOOLMOD 1011
-#define wxID_BACKEDIT 1012
-#define wxID_ASSETS 1013
-#define wxID_NAME 1014
-#define wxID_PERFNAME 1015
-#define wxID_EFFECT 1016
-#define wxID_POWER 1017
-#define wxID_SE1 1018
-#define wxID_SE2 1019
-#define wxID_SE3 1020
-#define wxID_SE4 1021
-#define wxID_SE5 1022
-#define wxID_SE6 1023
-#define wxID_SE7 1024
-#define wxID_SE8 1025
-#define wxID_STATUS 1026
-#define wxID_ACCURACY 1027
-#define wxID_MP 1028
-#define wxID_MF1 1029
-#define wxID_MF2 1030
-#define wxID_MF3 1031
-#define wxID_MF4 1032
-#define wxID_MF5 1033
-#define wxID_MF6 1034
-#define wxID_MF7 1035
-#define wxID_MF8 1036
-#define wxID_TARGETTYPE 1037
-#define wxID_TARGETAMOUNT 1038
-#define wxID_TARGETPRIORITY 1039
-#define wxID_CAN_TARGET_DEAD 1040
-#define wxID_TARGET_DEAD_FIRST 1041
-#define wxID_TARGET_CAMERA 1042
-#define wxID_TARGETPANEL 1043
-#define wxID_SF1 1044
-#define wxID_SF2 1045
-#define wxID_SF3 1046
-#define wxID_SF4 1047
-#define wxID_SF5 1048
-#define wxID_SF6 1049
-#define wxID_SF7 1050
-#define wxID_SF8 1051
-#define wxID_MAGICSTONE 1052
-#define wxID_PANEL 1053
-#define wxID_LINK 1054
-#define wxID_OBJECTFIRST 1055
-#define wxID_OBJECTLAST 1056
-#define wxID_SPEED 1057
-#define wxID_STRENGTH 1058
-#define wxID_MAGIC 1059
-#define wxID_SPIRIT 1060
-#define wxID_ABILITYSET 1061
-#define wxID_ABILITY 1062
-#define wxID_ABILITYCOST 1063
-#define wxID_COMMAND1 1064
-#define wxID_COMMAND2 1065
-#define wxID_TRANCE_COMMAND1 1066
-#define wxID_TRANCE_COMMAND2 1067
-#define wxID_TRANCE_ATTACK 1068
-#define wxID_EQUIPSET 1069
-#define wxID_WEAPON 1070
-#define wxID_HEAD 1071
-#define wxID_WRIST 1072
-#define wxID_ARMOR 1073
-#define wxID_ACCESSORY 1074
-#define wxID_EXP 1075
-#define wxID_HP 1076
-#define wxID_MAGICSWD 1077
-#define wxID_BATTLEHELP 1078
-#define wxID_IT1 1079
-#define wxID_IT2 1080
-#define wxID_IT3 1081
-#define wxID_IT4 1082
-#define wxID_IT5 1083
-#define wxID_IT6 1084
-#define wxID_IT7 1085
-#define wxID_IT8 1086
-#define wxID_PRICE 1087
-#define wxID_IA16 1088
-#define wxID_IA15 1089
-#define wxID_IA14 1090
-#define wxID_IA13 1091
-#define wxID_IA12 1092
-#define wxID_IA11 1093
-#define wxID_IA10 1094
-#define wxID_IA9 1095
-#define wxID_IA8 1096
-#define wxID_IA7 1097
-#define wxID_IA6 1098
-#define wxID_IA5 1099
-#define wxID_IA4 1100
-#define wxID_IA3 1101
-#define wxID_IA2 1102
-#define wxID_IA1 1103
-#define wxID_STAT 1104
-#define wxID_SKILL1 1105
-#define wxID_SKILL2 1106
-#define wxID_SKILL3 1107
-#define wxID_MENUPOSUP 1108
-#define wxID_MENUPOSDOWN 1109
-#define wxID_EQUIPPOSUP 1110
-#define wxID_EQUIPPOSDOWN 1111
-#define wxID_ICON 1112
-#define wxID_ICONCOLOR 1113
-#define wxID_ZERO 1114
-#define wxID_IS1 1115
-#define wxID_IS2 1116
-#define wxID_IS3 1117
-#define wxID_IS4 1118
-#define wxID_IS5 1119
-#define wxID_IS6 1120
-#define wxID_IS7 1121
-#define wxID_IS8 1122
-#define wxID_IS9 1123
-#define wxID_IS10 1124
-#define wxID_IS11 1125
-#define wxID_IS12 1126
-#define wxID_IS13 1127
-#define wxID_IS14 1128
-#define wxID_IS15 1129
-#define wxID_IS16 1130
-#define wxID_IS17 1131
-#define wxID_IS18 1132
-#define wxID_IS19 1133
-#define wxID_IS20 1134
-#define wxID_IS21 1135
-#define wxID_IS22 1136
-#define wxID_IS23 1137
-#define wxID_IS24 1138
-#define wxID_IS25 1139
-#define wxID_IS26 1140
-#define wxID_IS27 1141
-#define wxID_IS28 1142
-#define wxID_IS29 1143
-#define wxID_IS30 1144
-#define wxID_IS31 1145
-#define wxID_IS32 1146
-#define wxID_WEAPONFORMULA 1147
-#define wxID_WEAPONPOWER 1148
-#define wxID_WE1 1149
-#define wxID_WE2 1150
-#define wxID_WE3 1151
-#define wxID_WE4 1152
-#define wxID_WE5 1153
-#define wxID_WE6 1154
-#define wxID_WE7 1155
-#define wxID_WE8 1156
-#define wxID_WEAPONSTATUS 1157
-#define wxID_WEAPONACC 1158
-#define wxID_WF1 1159
-#define wxID_WF2 1160
-#define wxID_WF3 1161
-#define wxID_WF4 1162
-#define wxID_WF5 1163
-#define wxID_WF6 1164
-#define wxID_WF7 1165
-#define wxID_WF8 1166
-#define wxID_WEAPONUNK1 1167
-#define wxID_WEAPONUNK2 1168
-#define wxID_WEAPONMODEL 1169
-#define wxID_DEFENCE 1170
-#define wxID_EVADE 1171
-#define wxID_MDEFENCE 1172
-#define wxID_MEVADE 1173
-#define wxID_KEYNAME 1174
-#define wxID_KEYHELP 1175
-#define wxID_KEYDESCRIPTION 1176
-#define wxID_SYNTH 1177
-#define wxID_RECIPE1 1178
-#define wxID_RECIPE2 1179
-#define wxID_SS1 1180
-#define wxID_SS2 1181
-#define wxID_SS3 1182
-#define wxID_SS4 1183
-#define wxID_SS5 1184
-#define wxID_SS6 1185
-#define wxID_SS7 1186
-#define wxID_SS8 1187
-#define wxID_SCRIPT 1188
-#define wxID_ENTRY 1189
-#define wxID_SCRIPTLINK 1190
-#define wxID_SCENE 1191
-#define wxID_BF1 1192
-#define wxID_BF2 1193
-#define wxID_BF3 1194
-#define wxID_BF4 1195
-#define wxID_BF5 1196
-#define wxID_BF6 1197
-#define wxID_BF7 1198
-#define wxID_BF8 1199
-#define wxID_BF9 1200
-#define wxID_BF10 1201
-#define wxID_BF11 1202
-#define wxID_BF12 1203
-#define wxID_BF13 1204
-#define wxID_BF14 1205
-#define wxID_BF15 1206
-#define wxID_BF16 1207
-#define wxID_STATNAME 1208
-#define wxID_LVL 1209
-#define wxID_ATTACK 1210
-#define wxID_STEAL1 1211
-#define wxID_STEAL2 1212
-#define wxID_STEAL3 1213
-#define wxID_STEAL4 1214
-#define wxID_DROP1 1215
-#define wxID_DROP2 1216
-#define wxID_DROP3 1217
-#define wxID_DROP4 1218
-#define wxID_CARD 1219
-#define wxID_GILS 1220
-#define wxID_DEFATTACK 1221
-#define wxID_ED1 1222
-#define wxID_ED2 1223
-#define wxID_ED3 1224
-#define wxID_ED4 1225
-#define wxID_ED5 1226
-#define wxID_ED6 1227
-#define wxID_ED7 1228
-#define wxID_ED8 1229
-#define wxID_MODEL 1230
-#define wxID_RESOURCES 1231
-#define wxID_ZERO0 1232
-#define wxID_ZERO1 1233
-#define wxID_ZERO2 1234
-#define wxID_ZERO3 1235
-#define wxID_EA1 1236
-#define wxID_EA2 1237
-#define wxID_EA3 1238
-#define wxID_EA4 1239
-#define wxID_EA5 1240
-#define wxID_EA6 1241
-#define wxID_EA7 1242
-#define wxID_EA8 1243
-#define wxID_EI1 1244
-#define wxID_EI2 1245
-#define wxID_EI3 1246
-#define wxID_EI4 1247
-#define wxID_EI5 1248
-#define wxID_EI6 1249
-#define wxID_EI7 1250
-#define wxID_EI8 1251
-#define wxID_EH1 1252
-#define wxID_EH2 1253
-#define wxID_EH3 1254
-#define wxID_EH4 1255
-#define wxID_EH5 1256
-#define wxID_EH6 1257
-#define wxID_EH7 1258
-#define wxID_EH8 1259
-#define wxID_EW1 1260
-#define wxID_EW2 1261
-#define wxID_EW3 1262
-#define wxID_EW4 1263
-#define wxID_EW5 1264
-#define wxID_EW6 1265
-#define wxID_EW7 1266
-#define wxID_EW8 1267
-#define wxID_EC1 1268
-#define wxID_EC2 1269
-#define wxID_EC3 1270
-#define wxID_EC4 1271
-#define wxID_EC5 1272
-#define wxID_EC6 1273
-#define wxID_EC7 1274
-#define wxID_EC8 1275
-#define wxID_SI1 1276
-#define wxID_SI2 1277
-#define wxID_SI3 1278
-#define wxID_SI4 1279
-#define wxID_SI5 1280
-#define wxID_SI6 1281
-#define wxID_SI7 1282
-#define wxID_SI8 1283
-#define wxID_SI9 1284
-#define wxID_SI10 1285
-#define wxID_SI11 1286
-#define wxID_SI12 1287
-#define wxID_SI13 1288
-#define wxID_SI14 1289
-#define wxID_SI15 1290
-#define wxID_SI16 1291
-#define wxID_SI17 1292
-#define wxID_SI18 1293
-#define wxID_SI19 1294
-#define wxID_SI20 1295
-#define wxID_SI21 1296
-#define wxID_SI22 1297
-#define wxID_SI23 1298
-#define wxID_SI24 1299
-#define wxID_SI25 1300
-#define wxID_SI26 1301
-#define wxID_SI27 1302
-#define wxID_SI28 1303
-#define wxID_SI29 1304
-#define wxID_SI30 1305
-#define wxID_SI31 1306
-#define wxID_SI32 1307
-#define wxID_SA1 1308
-#define wxID_SA2 1309
-#define wxID_SA3 1310
-#define wxID_SA4 1311
-#define wxID_SA5 1312
-#define wxID_SA6 1313
-#define wxID_SA7 1314
-#define wxID_SA8 1315
-#define wxID_SA9 1316
-#define wxID_SA10 1317
-#define wxID_SA11 1318
-#define wxID_SA12 1319
-#define wxID_SA13 1320
-#define wxID_SA14 1321
-#define wxID_SA15 1322
-#define wxID_SA16 1323
-#define wxID_SA17 1324
-#define wxID_SA18 1325
-#define wxID_SA19 1326
-#define wxID_SA20 1327
-#define wxID_SA21 1328
-#define wxID_SA22 1329
-#define wxID_SA23 1330
-#define wxID_SA24 1331
-#define wxID_SA25 1332
-#define wxID_SA26 1333
-#define wxID_SA27 1334
-#define wxID_SA28 1335
-#define wxID_SA29 1336
-#define wxID_SA30 1337
-#define wxID_SA31 1338
-#define wxID_SA32 1339
-#define wxID_ST1 1340
-#define wxID_ST2 1341
-#define wxID_ST3 1342
-#define wxID_ST4 1343
-#define wxID_ST5 1344
-#define wxID_ST6 1345
-#define wxID_ST7 1346
-#define wxID_ST8 1347
-#define wxID_ST9 1348
-#define wxID_ST10 1349
-#define wxID_ST11 1350
-#define wxID_ST12 1351
-#define wxID_ST13 1352
-#define wxID_ST14 1353
-#define wxID_ST15 1354
-#define wxID_ST16 1355
-#define wxID_ST17 1356
-#define wxID_ST18 1357
-#define wxID_ST19 1358
-#define wxID_ST20 1359
-#define wxID_ST21 1360
-#define wxID_ST22 1361
-#define wxID_ST23 1362
-#define wxID_ST24 1363
-#define wxID_ST25 1364
-#define wxID_ST26 1365
-#define wxID_ST27 1366
-#define wxID_ST28 1367
-#define wxID_ST29 1368
-#define wxID_ST30 1369
-#define wxID_ST31 1370
-#define wxID_ST32 1371
-#define wxID_BLUEMAGIC 1372
-#define wxID_SPELLNAME 1373
-#define wxID_SPELLMP 1374
-#define wxID_ANIM 1375
-#define wxID_SEQANIM 1376
-#define wxID_FREQUENCE 1377
-#define wxID_AMOUNT 1378
-#define wxID_AP 1379
-#define wxID_CAMERA 1380
-#define wxID_ENEMY1 1381
-#define wxID_TARGETABLE1 1382
-#define wxID_LINK1 1383
-#define wxID_POSX1 1384
-#define wxID_POSY1 1385
-#define wxID_POSZ1 1386
-#define wxID_ANGLE1 1387
-#define wxID_ENEMY2 1388
-#define wxID_TARGETABLE2 1389
-#define wxID_LINK2 1390
-#define wxID_POSX2 1391
-#define wxID_POSY2 1392
-#define wxID_POSZ2 1393
-#define wxID_ANGLE2 1394
-#define wxID_ENEMY3 1395
-#define wxID_TARGETABLE3 1396
-#define wxID_LINK3 1397
-#define wxID_POSX3 1398
-#define wxID_POSY3 1399
-#define wxID_POSZ3 1400
-#define wxID_ANGLE3 1401
-#define wxID_ENEMY4 1402
-#define wxID_TARGETABLE4 1403
-#define wxID_LINK4 1404
-#define wxID_POSX4 1405
-#define wxID_POSY4 1406
-#define wxID_POSZ4 1407
-#define wxID_ANGLE4 1408
-#define wxID_POINTS 1409
-#define wxID_TYPEPLY 1410
-#define wxID_ATTPLY 1411
-#define wxID_DEFPLY 1412
-#define wxID_MDEFPLY 1413
-#define wxID_TYPENPC 1414
-#define wxID_ATTNPC 1415
-#define wxID_DEFNPC 1416
-#define wxID_MDEFNPC 1417
-#define wxID_DIFFICULTY 1418
-#define wxID_DECKSET 1419
-#define wxID_PRELOAD 1420
-#define wxID_WORLD 1421
-#define wxID_BATTLE11 1422
-#define wxID_BATTLE12 1423
-#define wxID_BATTLE13 1424
-#define wxID_BATTLE14 1425
-#define wxID_BATTLE21 1426
-#define wxID_BATTLE22 1427
-#define wxID_BATTLE23 1428
-#define wxID_BATTLE24 1429
-#define wxID_BATTLE31 1430
-#define wxID_BATTLE32 1431
-#define wxID_BATTLE33 1432
-#define wxID_BATTLE34 1433
-#define wxID_BATTLE41 1434
-#define wxID_BATTLE42 1435
-#define wxID_BATTLE43 1436
-#define wxID_BATTLE44 1437
-#define wxID_TEXTURE 1438
-#define wxID_SEQUENCE 1439
-#define wxID_DISCARD 1440
-#define wxID_EB1 1441
-#define wxID_EB2 1442
-#define wxID_EB3 1443
-#define wxID_EB4 1444
-#define wxID_EB5 1445
-#define wxID_EB6 1446
-#define wxID_EB7 1447
-#define wxID_EB8 1448
-#define wxID_IDLE 1449
-#define wxID_HIT 1450
-#define wxID_DEATH 1451
-#define wxID_IDLEALT 1452
-#define wxID_HITALT 1453
-#define wxID_DEATHALT 1454
-#define wxID_WINCOLOR 1455
-#define wxID_TEXTPREVIEW 1456
-#define wxID_STEAMLANG 1457
-#define wxID_RESOLUTION 1458
-#define wxID_ALPHABET 1459
-#define wxID_SPELL 1460
-#define wxID_SUPPORT 1461
-#define wxID_CMD 1462
-#define wxID_PARTY_SPECIAL 1463
-#define wxID_ITEM 1464
-#define wxID_SHOP 1465
-#define wxID_ENMY 1466
-#define wxID_FIELD 1467
-#define wxID_SPELL_ANIM 1468
-#define wxID_MENU_UI 1469
-#define wxID_ASSEMBLY 1470
-#define wxID_SET 1471
-#define wxID_BUBBLE 1472
-#define wxID_TRANSLATE 1473
-#define wxID_OPCODE 1474
-#define wxID_DEFAULTARG1 1475
-#define wxID_DEFAULTARG2 1476
-#define wxID_DEFAULTARG3 1477
-#define wxID_TOKENIZE 1478
-#define wxID_48 1479
-#define wxID_FUNCTION 1480
-#define wxID_PALETTE 1481
-#define wxID_PALSEL 1482
-#define wxID_MODIFY 1483
-#define wxID_IMPORT 1484
-#define wxID_POSX 1485
-#define wxID_POSY 1486
-#define wxID_SIZEX 1487
-#define wxID_SIZEY 1488
-#define wxID_TILE 1489
-#define wxID_EXPORT 1490
-#define wxID_INT 1491
-#define wxID_LONG 1492
-#define wxID_HEXA 1493
-#define wxID_BUTTON 1494
-#define wxID_LIST 1495
-#define wxID_SPLIST 1496
-#define wxID_STATUSA 1497
-#define wxID_STATUSB 1498
-#define wxID_FBACK 1499
-#define wxID_FWALK 1500
-#define wxID_PARSE 1501
-#define wxID_VARIABLE 1502
-#define wxID_VARCODE 1503
-#define wxID_TYPE 1504
-#define wxID_FULLLIST 1505
-#define wxID_MAPLIST 1506
-#define wxID_SORTLAYER 1507
-#define wxID_REVERTLAYER 1508
-#define wxID_FORMAT 1509
-#define wxID_MASSFORMAT 1510
-#define wxID_REOPEN 1511
-#define wxID_PDATA11 1512
-#define wxID_PDATA12 1513
-#define wxID_PDATA13 1514
-#define wxID_PDATA14 1515
-#define wxID_PDATA15 1516
-#define wxID_PDATA16 1517
-#define wxID_PDATA17 1518
-#define wxID_PDATA18 1519
-#define wxID_PDATA19 1520
-#define wxID_PDATA2 1521
-#define wxID_PDATA3 1522
-#define wxID_PDATA4 1523
-#define wxID_PDATA5 1524
-#define wxID_PDATA61 1525
-#define wxID_PDATA62 1526
-#define wxID_PDATA63 1527
-#define wxID_PDATA7 1528
-#define wxID_LEVEL0 1529
-#define wxID_LEVEL1 1530
-#define wxID_LEVEL2 1531
-#define wxID_LEVEL3 1532
-#define wxID_LEVEL4 1533
-#define wxID_LEVEL5 1534
-#define wxID_LEVEL6 1535
-#define wxID_LEVEL7 1536
-#define wxID_LEVEL8 1537
-#define wxID_LEVEL9 1538
-#define wxID_LEVEL10 1539
-#define wxID_LEVEL11 1540
-#define wxID_LEVEL12 1541
-#define wxID_LEVEL13 1542
-#define wxID_LEVEL14 1543
-#define wxID_LEVEL15 1544
-#define wxID_LEVEL16 1545
-#define wxID_LEVEL17 1546
-#define wxID_LEVEL18 1547
-#define wxID_LEVEL19 1548
-#define wxID_LEVEL20 1549
-#define wxID_LEVEL21 1550
-#define wxID_LEVEL22 1551
-#define wxID_LEVEL23 1552
-#define wxID_LEVEL24 1553
-#define wxID_LEVEL25 1554
-#define wxID_LEVEL26 1555
-#define wxID_LEVEL27 1556
-#define wxID_MAINDATA 1557
-#define wxID_SHARED0 1558
-#define wxID_SHARED1 1559
-#define wxID_SHARED2 1560
-#define wxID_SHARED3 1561
-#define wxID_SHARED4 1562
-#define wxID_SHARED5 1563
-#define wxID_SHARED6 1564
-#define wxID_SHARED7 1565
-#define wxID_SHARED8 1566
-#define wxID_SHARED9 1567
-#define wxID_SHARED10 1568
-#define wxID_SHARED11 1569
-#define wxID_SHARED12 1570
-#define wxID_SHARED13 1571
-#define wxID_SHARED14 1572
-#define wxID_SHARED15 1573
-#define wxID_SHARED16 1574
-#define wxID_SHARED17 1575
-#define wxID_SHARED18 1576
-#define wxID_SHARED19 1577
-#define wxID_SHARED20 1578
-#define wxID_SHARED21 1579
-#define wxID_SHARED22 1580
-#define wxID_SHARED23 1581
-#define wxID_SHARED24 1582
-#define wxID_SHARED25 1583
-#define wxID_SHARED26 1584
-#define wxID_SHARED27 1585
-#define wxID_SHARED28 1586
-#define wxID_PATH 1587
-#define wxID_FOLDER64 1588
-#define wxID_FOLDER86 1589
+#define wxID_RANDOMIZER 1012
+#define wxID_BACKEDIT 1013
+#define wxID_ASSETS 1014
+#define wxID_NAME 1015
+#define wxID_PERFNAME 1016
+#define wxID_EFFECT 1017
+#define wxID_POWER 1018
+#define wxID_SE1 1019
+#define wxID_SE2 1020
+#define wxID_SE3 1021
+#define wxID_SE4 1022
+#define wxID_SE5 1023
+#define wxID_SE6 1024
+#define wxID_SE7 1025
+#define wxID_SE8 1026
+#define wxID_STATUS 1027
+#define wxID_ACCURACY 1028
+#define wxID_MP 1029
+#define wxID_MF1 1030
+#define wxID_MF2 1031
+#define wxID_MF3 1032
+#define wxID_MF4 1033
+#define wxID_MF5 1034
+#define wxID_MF6 1035
+#define wxID_MF7 1036
+#define wxID_MF8 1037
+#define wxID_TARGETTYPE 1038
+#define wxID_TARGETAMOUNT 1039
+#define wxID_TARGETPRIORITY 1040
+#define wxID_CAN_TARGET_DEAD 1041
+#define wxID_TARGET_DEAD_FIRST 1042
+#define wxID_TARGET_CAMERA 1043
+#define wxID_TARGETPANEL 1044
+#define wxID_SF1 1045
+#define wxID_SF2 1046
+#define wxID_SF3 1047
+#define wxID_SF4 1048
+#define wxID_SF5 1049
+#define wxID_SF6 1050
+#define wxID_SF7 1051
+#define wxID_SF8 1052
+#define wxID_MAGICSTONE 1053
+#define wxID_PANEL 1054
+#define wxID_LINK 1055
+#define wxID_OBJECTFIRST 1056
+#define wxID_OBJECTLAST 1057
+#define wxID_SPEED 1058
+#define wxID_STRENGTH 1059
+#define wxID_MAGIC 1060
+#define wxID_SPIRIT 1061
+#define wxID_ABILITYSET 1062
+#define wxID_ABILITY 1063
+#define wxID_ABILITYCOST 1064
+#define wxID_COMMAND1 1065
+#define wxID_COMMAND2 1066
+#define wxID_TRANCE_COMMAND1 1067
+#define wxID_TRANCE_COMMAND2 1068
+#define wxID_TRANCE_ATTACK 1069
+#define wxID_EQUIPSET 1070
+#define wxID_WEAPON 1071
+#define wxID_HEAD 1072
+#define wxID_WRIST 1073
+#define wxID_ARMOR 1074
+#define wxID_ACCESSORY 1075
+#define wxID_EXP 1076
+#define wxID_HP 1077
+#define wxID_MAGICSWD 1078
+#define wxID_BATTLEHELP 1079
+#define wxID_IT1 1080
+#define wxID_IT2 1081
+#define wxID_IT3 1082
+#define wxID_IT4 1083
+#define wxID_IT5 1084
+#define wxID_IT6 1085
+#define wxID_IT7 1086
+#define wxID_IT8 1087
+#define wxID_PRICE 1088
+#define wxID_IA16 1089
+#define wxID_IA15 1090
+#define wxID_IA14 1091
+#define wxID_IA13 1092
+#define wxID_IA12 1093
+#define wxID_IA11 1094
+#define wxID_IA10 1095
+#define wxID_IA9 1096
+#define wxID_IA8 1097
+#define wxID_IA7 1098
+#define wxID_IA6 1099
+#define wxID_IA5 1100
+#define wxID_IA4 1101
+#define wxID_IA3 1102
+#define wxID_IA2 1103
+#define wxID_IA1 1104
+#define wxID_STAT 1105
+#define wxID_SKILL1 1106
+#define wxID_SKILL2 1107
+#define wxID_SKILL3 1108
+#define wxID_MENUPOSUP 1109
+#define wxID_MENUPOSDOWN 1110
+#define wxID_EQUIPPOSUP 1111
+#define wxID_EQUIPPOSDOWN 1112
+#define wxID_ICON 1113
+#define wxID_ICONCOLOR 1114
+#define wxID_ZERO 1115
+#define wxID_IS1 1116
+#define wxID_IS2 1117
+#define wxID_IS3 1118
+#define wxID_IS4 1119
+#define wxID_IS5 1120
+#define wxID_IS6 1121
+#define wxID_IS7 1122
+#define wxID_IS8 1123
+#define wxID_IS9 1124
+#define wxID_IS10 1125
+#define wxID_IS11 1126
+#define wxID_IS12 1127
+#define wxID_IS13 1128
+#define wxID_IS14 1129
+#define wxID_IS15 1130
+#define wxID_IS16 1131
+#define wxID_IS17 1132
+#define wxID_IS18 1133
+#define wxID_IS19 1134
+#define wxID_IS20 1135
+#define wxID_IS21 1136
+#define wxID_IS22 1137
+#define wxID_IS23 1138
+#define wxID_IS24 1139
+#define wxID_IS25 1140
+#define wxID_IS26 1141
+#define wxID_IS27 1142
+#define wxID_IS28 1143
+#define wxID_IS29 1144
+#define wxID_IS30 1145
+#define wxID_IS31 1146
+#define wxID_IS32 1147
+#define wxID_WEAPONFORMULA 1148
+#define wxID_WEAPONPOWER 1149
+#define wxID_WE1 1150
+#define wxID_WE2 1151
+#define wxID_WE3 1152
+#define wxID_WE4 1153
+#define wxID_WE5 1154
+#define wxID_WE6 1155
+#define wxID_WE7 1156
+#define wxID_WE8 1157
+#define wxID_WEAPONSTATUS 1158
+#define wxID_WEAPONACC 1159
+#define wxID_WF1 1160
+#define wxID_WF2 1161
+#define wxID_WF3 1162
+#define wxID_WF4 1163
+#define wxID_WF5 1164
+#define wxID_WF6 1165
+#define wxID_WF7 1166
+#define wxID_WF8 1167
+#define wxID_WEAPONUNK1 1168
+#define wxID_WEAPONUNK2 1169
+#define wxID_WEAPONMODEL 1170
+#define wxID_DEFENCE 1171
+#define wxID_EVADE 1172
+#define wxID_MDEFENCE 1173
+#define wxID_MEVADE 1174
+#define wxID_KEYNAME 1175
+#define wxID_KEYHELP 1176
+#define wxID_KEYDESCRIPTION 1177
+#define wxID_SYNTH 1178
+#define wxID_RECIPE1 1179
+#define wxID_RECIPE2 1180
+#define wxID_SS1 1181
+#define wxID_SS2 1182
+#define wxID_SS3 1183
+#define wxID_SS4 1184
+#define wxID_SS5 1185
+#define wxID_SS6 1186
+#define wxID_SS7 1187
+#define wxID_SS8 1188
+#define wxID_SCRIPT 1189
+#define wxID_ENTRY 1190
+#define wxID_SCRIPTLINK 1191
+#define wxID_SCENE 1192
+#define wxID_BF1 1193
+#define wxID_BF2 1194
+#define wxID_BF3 1195
+#define wxID_BF4 1196
+#define wxID_BF5 1197
+#define wxID_BF6 1198
+#define wxID_BF7 1199
+#define wxID_BF8 1200
+#define wxID_BF9 1201
+#define wxID_BF10 1202
+#define wxID_BF11 1203
+#define wxID_BF12 1204
+#define wxID_BF13 1205
+#define wxID_BF14 1206
+#define wxID_BF15 1207
+#define wxID_BF16 1208
+#define wxID_STATNAME 1209
+#define wxID_LVL 1210
+#define wxID_ATTACK 1211
+#define wxID_STEAL1 1212
+#define wxID_STEAL2 1213
+#define wxID_STEAL3 1214
+#define wxID_STEAL4 1215
+#define wxID_DROP1 1216
+#define wxID_DROP2 1217
+#define wxID_DROP3 1218
+#define wxID_DROP4 1219
+#define wxID_CARD 1220
+#define wxID_GILS 1221
+#define wxID_DEFATTACK 1222
+#define wxID_ED1 1223
+#define wxID_ED2 1224
+#define wxID_ED3 1225
+#define wxID_ED4 1226
+#define wxID_ED5 1227
+#define wxID_ED6 1228
+#define wxID_ED7 1229
+#define wxID_ED8 1230
+#define wxID_MODEL 1231
+#define wxID_RESOURCES 1232
+#define wxID_ZERO0 1233
+#define wxID_ZERO1 1234
+#define wxID_ZERO2 1235
+#define wxID_ZERO3 1236
+#define wxID_EA1 1237
+#define wxID_EA2 1238
+#define wxID_EA3 1239
+#define wxID_EA4 1240
+#define wxID_EA5 1241
+#define wxID_EA6 1242
+#define wxID_EA7 1243
+#define wxID_EA8 1244
+#define wxID_EI1 1245
+#define wxID_EI2 1246
+#define wxID_EI3 1247
+#define wxID_EI4 1248
+#define wxID_EI5 1249
+#define wxID_EI6 1250
+#define wxID_EI7 1251
+#define wxID_EI8 1252
+#define wxID_EH1 1253
+#define wxID_EH2 1254
+#define wxID_EH3 1255
+#define wxID_EH4 1256
+#define wxID_EH5 1257
+#define wxID_EH6 1258
+#define wxID_EH7 1259
+#define wxID_EH8 1260
+#define wxID_EW1 1261
+#define wxID_EW2 1262
+#define wxID_EW3 1263
+#define wxID_EW4 1264
+#define wxID_EW5 1265
+#define wxID_EW6 1266
+#define wxID_EW7 1267
+#define wxID_EW8 1268
+#define wxID_EC1 1269
+#define wxID_EC2 1270
+#define wxID_EC3 1271
+#define wxID_EC4 1272
+#define wxID_EC5 1273
+#define wxID_EC6 1274
+#define wxID_EC7 1275
+#define wxID_EC8 1276
+#define wxID_SI1 1277
+#define wxID_SI2 1278
+#define wxID_SI3 1279
+#define wxID_SI4 1280
+#define wxID_SI5 1281
+#define wxID_SI6 1282
+#define wxID_SI7 1283
+#define wxID_SI8 1284
+#define wxID_SI9 1285
+#define wxID_SI10 1286
+#define wxID_SI11 1287
+#define wxID_SI12 1288
+#define wxID_SI13 1289
+#define wxID_SI14 1290
+#define wxID_SI15 1291
+#define wxID_SI16 1292
+#define wxID_SI17 1293
+#define wxID_SI18 1294
+#define wxID_SI19 1295
+#define wxID_SI20 1296
+#define wxID_SI21 1297
+#define wxID_SI22 1298
+#define wxID_SI23 1299
+#define wxID_SI24 1300
+#define wxID_SI25 1301
+#define wxID_SI26 1302
+#define wxID_SI27 1303
+#define wxID_SI28 1304
+#define wxID_SI29 1305
+#define wxID_SI30 1306
+#define wxID_SI31 1307
+#define wxID_SI32 1308
+#define wxID_SA1 1309
+#define wxID_SA2 1310
+#define wxID_SA3 1311
+#define wxID_SA4 1312
+#define wxID_SA5 1313
+#define wxID_SA6 1314
+#define wxID_SA7 1315
+#define wxID_SA8 1316
+#define wxID_SA9 1317
+#define wxID_SA10 1318
+#define wxID_SA11 1319
+#define wxID_SA12 1320
+#define wxID_SA13 1321
+#define wxID_SA14 1322
+#define wxID_SA15 1323
+#define wxID_SA16 1324
+#define wxID_SA17 1325
+#define wxID_SA18 1326
+#define wxID_SA19 1327
+#define wxID_SA20 1328
+#define wxID_SA21 1329
+#define wxID_SA22 1330
+#define wxID_SA23 1331
+#define wxID_SA24 1332
+#define wxID_SA25 1333
+#define wxID_SA26 1334
+#define wxID_SA27 1335
+#define wxID_SA28 1336
+#define wxID_SA29 1337
+#define wxID_SA30 1338
+#define wxID_SA31 1339
+#define wxID_SA32 1340
+#define wxID_ST1 1341
+#define wxID_ST2 1342
+#define wxID_ST3 1343
+#define wxID_ST4 1344
+#define wxID_ST5 1345
+#define wxID_ST6 1346
+#define wxID_ST7 1347
+#define wxID_ST8 1348
+#define wxID_ST9 1349
+#define wxID_ST10 1350
+#define wxID_ST11 1351
+#define wxID_ST12 1352
+#define wxID_ST13 1353
+#define wxID_ST14 1354
+#define wxID_ST15 1355
+#define wxID_ST16 1356
+#define wxID_ST17 1357
+#define wxID_ST18 1358
+#define wxID_ST19 1359
+#define wxID_ST20 1360
+#define wxID_ST21 1361
+#define wxID_ST22 1362
+#define wxID_ST23 1363
+#define wxID_ST24 1364
+#define wxID_ST25 1365
+#define wxID_ST26 1366
+#define wxID_ST27 1367
+#define wxID_ST28 1368
+#define wxID_ST29 1369
+#define wxID_ST30 1370
+#define wxID_ST31 1371
+#define wxID_ST32 1372
+#define wxID_BLUEMAGIC 1373
+#define wxID_SPELLNAME 1374
+#define wxID_SPELLMP 1375
+#define wxID_ANIM 1376
+#define wxID_SEQANIM 1377
+#define wxID_FREQUENCE 1378
+#define wxID_AMOUNT 1379
+#define wxID_AP 1380
+#define wxID_CAMERA 1381
+#define wxID_ENEMY1 1382
+#define wxID_TARGETABLE1 1383
+#define wxID_LINK1 1384
+#define wxID_POSX1 1385
+#define wxID_POSY1 1386
+#define wxID_POSZ1 1387
+#define wxID_ANGLE1 1388
+#define wxID_ENEMY2 1389
+#define wxID_TARGETABLE2 1390
+#define wxID_LINK2 1391
+#define wxID_POSX2 1392
+#define wxID_POSY2 1393
+#define wxID_POSZ2 1394
+#define wxID_ANGLE2 1395
+#define wxID_ENEMY3 1396
+#define wxID_TARGETABLE3 1397
+#define wxID_LINK3 1398
+#define wxID_POSX3 1399
+#define wxID_POSY3 1400
+#define wxID_POSZ3 1401
+#define wxID_ANGLE3 1402
+#define wxID_ENEMY4 1403
+#define wxID_TARGETABLE4 1404
+#define wxID_LINK4 1405
+#define wxID_POSX4 1406
+#define wxID_POSY4 1407
+#define wxID_POSZ4 1408
+#define wxID_ANGLE4 1409
+#define wxID_POINTS 1410
+#define wxID_TYPEPLY 1411
+#define wxID_ATTPLY 1412
+#define wxID_DEFPLY 1413
+#define wxID_MDEFPLY 1414
+#define wxID_TYPENPC 1415
+#define wxID_ATTNPC 1416
+#define wxID_DEFNPC 1417
+#define wxID_MDEFNPC 1418
+#define wxID_DIFFICULTY 1419
+#define wxID_DECKSET 1420
+#define wxID_PRELOAD 1421
+#define wxID_WORLD 1422
+#define wxID_BATTLE11 1423
+#define wxID_BATTLE12 1424
+#define wxID_BATTLE13 1425
+#define wxID_BATTLE14 1426
+#define wxID_BATTLE21 1427
+#define wxID_BATTLE22 1428
+#define wxID_BATTLE23 1429
+#define wxID_BATTLE24 1430
+#define wxID_BATTLE31 1431
+#define wxID_BATTLE32 1432
+#define wxID_BATTLE33 1433
+#define wxID_BATTLE34 1434
+#define wxID_BATTLE41 1435
+#define wxID_BATTLE42 1436
+#define wxID_BATTLE43 1437
+#define wxID_BATTLE44 1438
+#define wxID_TEXTURE 1439
+#define wxID_SEQUENCE 1440
+#define wxID_DISCARD 1441
+#define wxID_EB1 1442
+#define wxID_EB2 1443
+#define wxID_EB3 1444
+#define wxID_EB4 1445
+#define wxID_EB5 1446
+#define wxID_EB6 1447
+#define wxID_EB7 1448
+#define wxID_EB8 1449
+#define wxID_IDLE 1450
+#define wxID_HIT 1451
+#define wxID_DEATH 1452
+#define wxID_IDLEALT 1453
+#define wxID_HITALT 1454
+#define wxID_DEATHALT 1455
+#define wxID_WINCOLOR 1456
+#define wxID_TEXTPREVIEW 1457
+#define wxID_STEAMLANG 1458
+#define wxID_RESOLUTION 1459
+#define wxID_ALPHABET 1460
+#define wxID_SPELL 1461
+#define wxID_SUPPORT 1462
+#define wxID_CMD 1463
+#define wxID_PARTY_SPECIAL 1464
+#define wxID_ITEM 1465
+#define wxID_SHOP 1466
+#define wxID_ENMY 1467
+#define wxID_FIELD 1468
+#define wxID_SPELL_ANIM 1469
+#define wxID_MENU_UI 1470
+#define wxID_ASSEMBLY 1471
+#define wxID_SET 1472
+#define wxID_BUBBLE 1473
+#define wxID_TRANSLATE 1474
+#define wxID_OPCODE 1475
+#define wxID_DEFAULTARG1 1476
+#define wxID_DEFAULTARG2 1477
+#define wxID_DEFAULTARG3 1478
+#define wxID_TOKENIZE 1479
+#define wxID_48 1480
+#define wxID_FUNCTION 1481
+#define wxID_PALETTE 1482
+#define wxID_PALSEL 1483
+#define wxID_MODIFY 1484
+#define wxID_IMPORT 1485
+#define wxID_POSX 1486
+#define wxID_POSY 1487
+#define wxID_SIZEX 1488
+#define wxID_SIZEY 1489
+#define wxID_TILE 1490
+#define wxID_EXPORT 1491
+#define wxID_INT 1492
+#define wxID_LONG 1493
+#define wxID_HEXA 1494
+#define wxID_BUTTON 1495
+#define wxID_LIST 1496
+#define wxID_SPLIST 1497
+#define wxID_STATUSA 1498
+#define wxID_STATUSB 1499
+#define wxID_FBACK 1500
+#define wxID_FWALK 1501
+#define wxID_PARSE 1502
+#define wxID_VARIABLE 1503
+#define wxID_VARCODE 1504
+#define wxID_TYPE 1505
+#define wxID_FULLLIST 1506
+#define wxID_MAPLIST 1507
+#define wxID_SAFESET 1508
+#define wxID_LOADALL 1509
+#define wxID_CHARSPELL 1510
+#define wxID_CHARSUPP 1511
+#define wxID_WEAPABIL 1512
+#define wxID_ARMORABIL 1513
+#define wxID_BATTLESPELL 1514
+#define wxID_USERLIST 1515
+#define wxID_SPELLSTAT 1516
+#define wxID_SORTLAYER 1517
+#define wxID_REVERTLAYER 1518
+#define wxID_FORMAT 1519
+#define wxID_MASSFORMAT 1520
+#define wxID_REOPEN 1521
+#define wxID_PDATA11 1522
+#define wxID_PDATA12 1523
+#define wxID_PDATA13 1524
+#define wxID_PDATA14 1525
+#define wxID_PDATA15 1526
+#define wxID_PDATA16 1527
+#define wxID_PDATA17 1528
+#define wxID_PDATA18 1529
+#define wxID_PDATA19 1530
+#define wxID_PDATA2 1531
+#define wxID_PDATA3 1532
+#define wxID_PDATA4 1533
+#define wxID_PDATA5 1534
+#define wxID_PDATA61 1535
+#define wxID_PDATA62 1536
+#define wxID_PDATA63 1537
+#define wxID_PDATA7 1538
+#define wxID_LEVEL0 1539
+#define wxID_LEVEL1 1540
+#define wxID_LEVEL2 1541
+#define wxID_LEVEL3 1542
+#define wxID_LEVEL4 1543
+#define wxID_LEVEL5 1544
+#define wxID_LEVEL6 1545
+#define wxID_LEVEL7 1546
+#define wxID_LEVEL8 1547
+#define wxID_LEVEL9 1548
+#define wxID_LEVEL10 1549
+#define wxID_LEVEL11 1550
+#define wxID_LEVEL12 1551
+#define wxID_LEVEL13 1552
+#define wxID_LEVEL14 1553
+#define wxID_LEVEL15 1554
+#define wxID_LEVEL16 1555
+#define wxID_LEVEL17 1556
+#define wxID_LEVEL18 1557
+#define wxID_LEVEL19 1558
+#define wxID_LEVEL20 1559
+#define wxID_LEVEL21 1560
+#define wxID_LEVEL22 1561
+#define wxID_LEVEL23 1562
+#define wxID_LEVEL24 1563
+#define wxID_LEVEL25 1564
+#define wxID_LEVEL26 1565
+#define wxID_LEVEL27 1566
+#define wxID_MAINDATA 1567
+#define wxID_SHARED0 1568
+#define wxID_SHARED1 1569
+#define wxID_SHARED2 1570
+#define wxID_SHARED3 1571
+#define wxID_SHARED4 1572
+#define wxID_SHARED5 1573
+#define wxID_SHARED6 1574
+#define wxID_SHARED7 1575
+#define wxID_SHARED8 1576
+#define wxID_SHARED9 1577
+#define wxID_SHARED10 1578
+#define wxID_SHARED11 1579
+#define wxID_SHARED12 1580
+#define wxID_SHARED13 1581
+#define wxID_SHARED14 1582
+#define wxID_SHARED15 1583
+#define wxID_SHARED16 1584
+#define wxID_SHARED17 1585
+#define wxID_SHARED18 1586
+#define wxID_SHARED19 1587
+#define wxID_SHARED20 1588
+#define wxID_SHARED21 1589
+#define wxID_SHARED22 1590
+#define wxID_SHARED23 1591
+#define wxID_SHARED24 1592
+#define wxID_SHARED25 1593
+#define wxID_SHARED26 1594
+#define wxID_SHARED27 1595
+#define wxID_SHARED28 1596
+#define wxID_PATH 1597
+#define wxID_FOLDER64 1598
+#define wxID_FOLDER86 1599
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class MainFrameBase
 ///////////////////////////////////////////////////////////////////////////////
-class MainFrameBase : public wxFrame 
+class MainFrameBase : public wxFrame
 {
 	private:
-	
+
 	protected:
 		wxMenuBar* m_menuBar;
 		wxMenu* m_menuFile;
@@ -663,7 +672,7 @@ class MainFrameBase : public wxFrame
 		wxMenu* m_menuHelp;
 		wxPanel* m_background;
 		wxStatusBar* m_statusBar;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnCloseFrame( wxCloseEvent& event ) { event.Skip(); }
 		virtual void OnFramePaint( wxPaintEvent& event ) { event.Skip(); }
@@ -695,8 +704,8 @@ class MainFrameBase : public wxFrame
 		virtual void OnAboutClick( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnHelpClick( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnPanelChanged( wxAuiNotebookEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
 		wxMenuItem* m_open;
 		wxMenuItem* m_openhws;
@@ -720,6 +729,7 @@ class MainFrameBase : public wxFrame
 		wxMenuItem* m_sorttext;
 		wxMenuItem* m_sortworld;
 		wxMenuItem* m_sortfield;
+		wxMenuItem* m_fieldshowid;
 		wxMenuItem* m_sortbattlescene;
 		wxMenuItem* m_sortspellanim;
 		wxMenuItem* m_exporttext;
@@ -734,23 +744,24 @@ class MainFrameBase : public wxFrame
 		wxMenuItem* m_importfieldscript;
 		wxMenuItem* m_exportfieldbackground;
 		wxMenuItem* m_modmanager;
+		wxMenuItem* m_randomizer;
 		wxMenuItem* m_backgroundeditor;
 		wxMenuItem* m_unityviewer;
 		wxAuiNotebook* m_cdbook;
-		
+
 		MainFrameBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Hades Workshop"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 700,500 ), long style = wxCLOSE_BOX|wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
-		
+
 		~MainFrameBase();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class CDPanel
 ///////////////////////////////////////////////////////////////////////////////
-class CDPanel : public wxPanel 
+class CDPanel : public wxPanel
 {
 	private:
-	
+
 	protected:
 		wxNotebook* m_notebookmain;
 		wxPanel* m_panelparty;
@@ -1690,7 +1701,7 @@ class CDPanel : public wxPanel
 		wxListBox* m_cilmacromethods;
 		wxStaticText* m_staticText327;
 		wxBoxSizer* m_cilmacroparametersizer;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnNotebookMain( wxNotebookEvent& event ) { event.Skip(); }
 		virtual void OnNotebookParty( wxNotebookEvent& event ) { event.Skip(); }
@@ -1812,8 +1823,8 @@ class CDPanel : public wxPanel
 		virtual void OnCilMethodButton( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnListBoxCilMacro( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnCilMacroButton( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
 		wxListBox* m_spelllist;
 		wxTextCtrl* m_spellname;
@@ -1857,118 +1868,118 @@ class CDPanel : public wxPanel
 		wxListBox* m_spellanimlist;
 		wxListBox* m_specialtextlist;
 		wxListBox* m_mipsbattlelist;
-		
-		CDPanel( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 600,400 ), long style = wxTAB_TRAVERSAL ); 
+
+		CDPanel( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 600,400 ), long style = wxTAB_TRAVERSAL, const wxString& name = wxEmptyString );
 		~CDPanel();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class DiscardableMessage
 ///////////////////////////////////////////////////////////////////////////////
-class DiscardableMessage : public wxDialog 
+class DiscardableMessage : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxStaticText* m_label;
 		wxButton* m_buttondiscard;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnButtonClickDiscard( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnButtonClickOk( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
-		
-		DiscardableMessage( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Warning"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 220,130 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		DiscardableMessage( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Warning"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 220,130 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~DiscardableMessage();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class SteamLanguageMessage
 ///////////////////////////////////////////////////////////////////////////////
-class SteamLanguageMessage : public wxDialog 
+class SteamLanguageMessage : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxStaticText* m_label;
 		wxButton* m_buttonok;
-	
+
 	public:
 		wxChoice* m_choice;
-		
-		SteamLanguageMessage( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Language"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 150,130 ), long style = wxCAPTION ); 
+
+		SteamLanguageMessage( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Language"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 150,130 ), long style = wxCAPTION );
 		~SteamLanguageMessage();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class SpellAnimationWindow
 ///////////////////////////////////////////////////////////////////////////////
-class SpellAnimationWindow : public wxDialog 
+class SpellAnimationWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxPanel* m_panelmain;
 		wxPanel* m_panelall;
 		wxStaticText* m_targetinfo;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnCheckBox( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
 		wxChoice* m_modelmain;
 		wxChoice* m_modelall;
 		wxCheckBox* m_enableall;
-		
-		SpellAnimationWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Choose Animation"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 400,140 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		SpellAnimationWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Choose Animation"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 400,140 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~SpellAnimationWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class CurveEditorWindow
 ///////////////////////////////////////////////////////////////////////////////
-class CurveEditorWindow : public wxDialog 
+class CurveEditorWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxScrolledWindow* m_curvescrolled;
 		wxCheckBox* m_linkup;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnMouse( wxMouseEvent& event ) { event.Skip(); }
 		virtual void OnMouseWheel( wxMouseEvent& event ) { event.Skip(); }
 		virtual void OnPaint( wxPaintEvent& event ) { event.Skip(); }
 		virtual void OnCheckBox( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
-		
-		CurveEditorWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Edit Stat Curve"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		CurveEditorWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Edit Stat Curve"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE );
 		~CurveEditorWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class SpellStatusWindow
 ///////////////////////////////////////////////////////////////////////////////
-class SpellStatusWindow : public wxDialog 
+class SpellStatusWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxCheckBox* m_statusbox1;
 		wxCheckBox* m_statusbox2;
@@ -2004,25 +2015,25 @@ class SpellStatusWindow : public wxDialog
 		wxCheckBox* m_statusbox32;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
-		
-		SpellStatusWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Edit Status Set"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		SpellStatusWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Edit Status Set"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE );
 		~SpellStatusWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class ItemStatWindow
 ///////////////////////////////////////////////////////////////////////////////
-class ItemStatWindow : public wxDialog 
+class ItemStatWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxStaticText* m_staticText1671;
 		wxStaticText* m_staticText1681;
@@ -2035,11 +2046,11 @@ class ItemStatWindow : public wxDialog
 		wxStaticText* m_staticText1751;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
 		wxSpinCtrl* m_strength;
 		wxSpinCtrl* m_speed;
@@ -2085,27 +2096,27 @@ class ItemStatWindow : public wxDialog
 		wxCheckBox* m_elementboost6;
 		wxCheckBox* m_elementboost7;
 		wxCheckBox* m_elementboost8;
-		
-		ItemStatWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Edit Stat Set"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		ItemStatWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Edit Stat Set"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE );
 		~ItemStatWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class CardSetWindow
 ///////////////////////////////////////////////////////////////////////////////
-class CardSetWindow : public wxDialog 
+class CardSetWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
 		wxChoice* m_choicecard1;
 		wxChoice* m_choicecard2;
@@ -2123,19 +2134,19 @@ class CardSetWindow : public wxDialog
 		wxChoice* m_choicecard14;
 		wxChoice* m_choicecard15;
 		wxChoice* m_choicecard16;
-		
-		CardSetWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Edit Card Set"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		CardSetWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Edit Card Set"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE );
 		~CardSetWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class EnemyResourceWindow
 ///////////////////////////////////////////////////////////////////////////////
-class EnemyResourceWindow : public wxDialog 
+class EnemyResourceWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxStaticText* m_staticText3591;
 		wxSpinCtrl* m_textamount;
@@ -2196,27 +2207,27 @@ class EnemyResourceWindow : public wxDialog
 		wxButton* m_attackanimadd;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnAnimChoice( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
 		wxFlexGridSizer* m_animsizer;
-		
-		EnemyResourceWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Edit Enemy Resources"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER ); 
+
+		EnemyResourceWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Edit Enemy Resources"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER );
 		~EnemyResourceWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class PreferencesWindow
 ///////////////////////////////////////////////////////////////////////////////
-class PreferencesWindow : public wxDialog 
+class PreferencesWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxAuiNotebook* m_auinotebook2;
 		wxPanel* m_panel17;
@@ -2245,28 +2256,28 @@ class PreferencesWindow : public wxDialog
 		wxTextCtrl* m_opcodechar;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnSteamLanguageChange( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnSingleLanguageMode( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
 		wxChoice* m_gamealphabet;
-		
-		PreferencesWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Preferences"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 350,300 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		PreferencesWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Preferences"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 350,300 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~PreferencesWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class IOHWSWindow
 ///////////////////////////////////////////////////////////////////////////////
-class IOHWSWindow : public wxDialog 
+class IOHWSWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxCheckBox* m_spelltext;
 		wxCheckBox* m_supporttext;
@@ -2294,12 +2305,12 @@ class IOHWSWindow : public wxDialog
 		wxStaticText* m_staticText281;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnChangeFile( wxFileDirPickerEvent& event ) { event.Skip(); }
 		virtual void OnCheckSection( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
 		wxFilePickerCtrl* m_hwspicker;
 		wxCheckBox* m_spell;
@@ -2321,80 +2332,89 @@ class IOHWSWindow : public wxDialog
 		wxCheckBox* m_enemylocal;
 		wxCheckBox* m_worldlocal;
 		wxCheckBox* m_fieldlocal;
-		
-		IOHWSWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		IOHWSWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE );
 		~IOHWSWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class ExportPPFWindow
 ///////////////////////////////////////////////////////////////////////////////
-class ExportPPFWindow : public wxDialog 
+class ExportPPFWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-	
+
 	public:
 		wxFilePickerCtrl* m_ppfpicker;
 		wxCheckBox* m_undo;
 		wxCheckBox* m_blockcheck;
 		wxTextCtrl* m_description;
-		
-		ExportPPFWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Export as ppf..."), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 350,205 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		ExportPPFWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Export as ppf..."), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 350,205 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~ExportPPFWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class SaveSteamWindow
 ///////////////////////////////////////////////////////////////////////////////
-class SaveSteamWindow : public wxDialog 
+class SaveSteamWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
-		wxStaticText* m_staticText309;
+		wxStaticText* m_staticText399;
+		wxStaticBitmap* m_showinfobtn;
+		wxStaticText* m_staticText398;
+		wxStaticText* m_infotext;
 		wxStaticText* m_staticText3051;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-	
+
+		// Virtual event handlers, overide them in your derived class
+		virtual void OnShowHideInfo( wxMouseEvent& event ) { event.Skip(); }
+
+
 	public:
 		wxDirPickerCtrl* m_dirpicker;
-		
-		SaveSteamWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Create Steam Mod..."), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+		wxChoice* m_dllformat;
+		wxChoice* m_assetformat;
+
+		SaveSteamWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Create Steam Mod..."), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~SaveSteamWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class AboutWindow
 ///////////////////////////////////////////////////////////////////////////////
-class AboutWindow : public wxDialog 
+class AboutWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxTextCtrl* m_textCtrl13;
 		wxButton* m_button18;
-	
+
 	public:
-		
-		AboutWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("About..."), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 300,390 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		AboutWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("About..."), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 300,390 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~AboutWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class HelpWindow
 ///////////////////////////////////////////////////////////////////////////////
-class HelpWindow : public wxDialog 
+class HelpWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxPanel* m_panel171;
 		wxTextCtrl* m_textCtrl174;
@@ -2412,43 +2432,43 @@ class HelpWindow : public wxDialog
 		wxTextCtrl* m_textCtrl173;
 		wxPanel* m_panel202;
 		wxTextCtrl* m_textCtrl1732;
-	
+
 	public:
 		wxListbook* m_helpbook;
-		
-		HelpWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Help"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 450,300 ), long style = wxDEFAULT_DIALOG_STYLE|wxDIALOG_NO_PARENT|wxRESIZE_BORDER ); 
+
+		HelpWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Help"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 450,300 ), long style = wxDEFAULT_DIALOG_STYLE|wxDIALOG_NO_PARENT|wxRESIZE_BORDER );
 		~HelpWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class LogWindow
 ///////////////////////////////////////////////////////////////////////////////
-class LogWindow : public wxDialog 
+class LogWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxTextCtrl* m_errornum;
 		wxTextCtrl* m_errorctrl;
 		wxTextCtrl* m_warningnum;
 		wxTextCtrl* m_warningctrl;
 		wxButton* m_buttonok;
-	
+
 	public:
-		
-		LogWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Log"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER ); 
+
+		LogWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Log"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER );
 		~LogWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class TextEditWindow
 ///////////////////////////////////////////////////////////////////////////////
-class TextEditWindow : public wxDialog 
+class TextEditWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxPanel* m_panel14;
 		wxButton* m_opcodeadd;
@@ -2462,31 +2482,31 @@ class TextEditWindow : public wxDialog
 		wxTextCtrl* m_textcharmap;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnTextEdit( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnOpcodeEdit( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
 		wxTextCtrl* m_textctrl;
 		wxSpinCtrl* m_sizex;
 		wxSpinCtrl* m_sizey;
 		PreviewTextCtrl* m_richtextctrl;
-		
-		TextEditWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Edit Text"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,460 ), long style = wxDEFAULT_DIALOG_STYLE|wxMAXIMIZE_BOX|wxRESIZE_BORDER ); 
+
+		TextEditWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Edit Text"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,460 ), long style = wxDEFAULT_DIALOG_STYLE|wxMAXIMIZE_BOX|wxRESIZE_BORDER );
 		~TextEditWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class TextSteamEditWindow
 ///////////////////////////////////////////////////////////////////////////////
-class TextSteamEditWindow : public wxDialog 
+class TextSteamEditWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxStaticBitmap* m_multilangshowimg;
 		wxStaticText* m_multilangtitle;
@@ -2509,13 +2529,13 @@ class TextSteamEditWindow : public wxDialog
 		PreviewTextCtrl* m_richtextctrl;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnTextEdit( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnShowHideMultiLang( wxMouseEvent& event ) { event.Skip(); }
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
 		wxTextCtrl* m_textctrl;
 		wxTextCtrl* m_langtext1;
@@ -2524,19 +2544,19 @@ class TextSteamEditWindow : public wxDialog
 		wxTextCtrl* m_langtext4;
 		wxTextCtrl* m_langtext5;
 		wxTextCtrl* m_langtext6;
-		
-		TextSteamEditWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Edit Text"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE|wxMAXIMIZE_BOX|wxRESIZE_BORDER ); 
+
+		TextSteamEditWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Edit Text"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE|wxMAXIMIZE_BOX|wxRESIZE_BORDER );
 		~TextSteamEditWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class TextOpcodeWindow
 ///////////////////////////////////////////////////////////////////////////////
-class TextOpcodeWindow : public wxDialog 
+class TextOpcodeWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxChoice* m_opcode;
 		wxStaticText* m_opcodehelp;
@@ -2565,78 +2585,78 @@ class TextOpcodeWindow : public wxDialog
 		wxGridSizer* m_0x48sizer;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnOpcodeChange( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnArgumentChange( wxSpinEvent& event ) { event.Skip(); }
 		virtual void OnTokenMouse( wxMouseEvent& event ) { event.Skip(); }
 		virtual void OnTokenPaint( wxPaintEvent& event ) { event.Skip(); }
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
-		
-		TextOpcodeWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Text Opcode"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER ); 
+
+		TextOpcodeWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Text Opcode"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER );
 		~TextOpcodeWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class TextSteamHelpWindow
 ///////////////////////////////////////////////////////////////////////////////
-class TextSteamHelpWindow : public wxDialog 
+class TextSteamHelpWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxListBox* m_listfunction;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnListClick( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnListDoubleClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
 		wxTextCtrl* m_helptextctrl;
-		
-		TextSteamHelpWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Opcode List"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 550,400 ), long style = wxDEFAULT_DIALOG_STYLE|wxDIALOG_NO_PARENT|wxRESIZE_BORDER ); 
+
+		TextSteamHelpWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Opcode List"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 550,400 ), long style = wxDEFAULT_DIALOG_STYLE|wxDIALOG_NO_PARENT|wxRESIZE_BORDER );
 		~TextSteamHelpWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class TextExportWindow
 ///////////////////////////////////////////////////////////////////////////////
-class TextExportWindow : public wxDialog 
+class TextExportWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
 		wxFilePickerCtrl* m_filepicker;
 		wxChoice* m_strtype;
 		wxTextCtrl* m_textheader;
 		wxTextCtrl* m_textseparator;
-		
-		TextExportWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Export Text"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 275,340 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		TextExportWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Export Text"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 275,340 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~TextExportWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class BatchExportWindow
 ///////////////////////////////////////////////////////////////////////////////
-class BatchExportWindow : public wxDialog 
+class BatchExportWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxPanel* m_splitfilepanel;
 		wxCheckBox* m_splitfile;
@@ -2649,30 +2669,30 @@ class BatchExportWindow : public wxDialog
 		wxCheckListBox* m_exportlist;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnFilePick( wxFileDirPickerEvent& event ) { event.Skip(); }
 		virtual void OnSplitFileCheck( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnListRightClick( wxMouseEvent& event ) { event.Skip(); }
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
 		wxFilePickerCtrl* m_filepicker;
 		wxCheckBox* m_exportorder;
-		
-		BatchExportWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Export Data"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 275,355 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		BatchExportWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Export Data"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 275,355 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~BatchExportWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class BatchImportWindow
 ///////////////////////////////////////////////////////////////////////////////
-class BatchImportWindow : public wxDialog 
+class BatchImportWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxCheckBox* m_fatalwarning;
 		wxPanel* m_adjustsizepanel;
@@ -2680,135 +2700,135 @@ class BatchImportWindow : public wxDialog
 		wxCheckListBox* m_importlist;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnFilePick( wxFileDirPickerEvent& event ) { event.Skip(); }
 		virtual void OnListRightClick( wxMouseEvent& event ) { event.Skip(); }
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
 		wxFilePickerCtrl* m_filepicker;
-		
-		BatchImportWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Import Data"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		BatchImportWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Import Data"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~BatchImportWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class CharmapTextureExportWindow
 ///////////////////////////////////////////////////////////////////////////////
-class CharmapTextureExportWindow : public wxDialog 
+class CharmapTextureExportWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-	
+
 	public:
 		wxFilePickerCtrl* m_filepicker;
-		
-		CharmapTextureExportWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Export Texture"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 275,110 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		CharmapTextureExportWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Export Texture"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 275,110 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~CharmapTextureExportWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class FieldTextureExportWindow
 ///////////////////////////////////////////////////////////////////////////////
-class FieldTextureExportWindow : public wxDialog 
+class FieldTextureExportWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxStaticText* m_staticText328;
 		wxStaticText* m_staticText326;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-	
+
 	public:
 		wxFilePickerCtrl* m_filepicker;
 		wxCheckBox* m_mergetiles;
 		wxCheckBox* m_exportorder;
 		wxCheckBox* m_onlyselected;
 		wxChoice* m_languagetitle;
-		
-		FieldTextureExportWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Export Background"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 300,185 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		FieldTextureExportWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Export Background"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 300,185 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~FieldTextureExportWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class BattleSceneExportWindow
 ///////////////////////////////////////////////////////////////////////////////
-class BattleSceneExportWindow : public wxDialog 
+class BattleSceneExportWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-	
+
 	public:
 		wxFilePickerCtrl* m_filepicker;
 		wxCheckBox* m_usequads;
-		
-		BattleSceneExportWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Export Model"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 275,120 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		BattleSceneExportWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Export Model"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 275,120 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~BattleSceneExportWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class BattleSceneImportWindow
 ///////////////////////////////////////////////////////////////////////////////
-class BattleSceneImportWindow : public wxDialog 
+class BattleSceneImportWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-	
+
 	public:
 		wxFilePickerCtrl* m_filepicker;
-		
-		BattleSceneImportWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Import Model"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 275,105 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		BattleSceneImportWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Import Model"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 275,105 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~BattleSceneImportWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class BattleSceneImportLinkTextureWindow
 ///////////////////////////////////////////////////////////////////////////////
-class BattleSceneImportLinkTextureWindow : public wxDialog 
+class BattleSceneImportLinkTextureWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxStaticText* m_staticText96;
 		wxStaticText* m_staticText97;
 		wxStaticText* m_staticText98;
 		wxButton* m_buttonok;
-	
+
 	public:
 		wxBoxSizer* m_sizerroot;
 		wxScrolledWindow* m_linkscrolled;
 		wxFlexGridSizer* m_linksizer;
 		wxScrolledWindow* m_texturepanel;
-		
-		BattleSceneImportLinkTextureWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Set Textures"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 600,-1 ), long style = wxCAPTION|wxRESIZE_BORDER ); 
+
+		BattleSceneImportLinkTextureWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Set Textures"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 600,-1 ), long style = wxCAPTION|wxRESIZE_BORDER );
 		~BattleSceneImportLinkTextureWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class ManageTextureWindow
 ///////////////////////////////////////////////////////////////////////////////
-class ManageTextureWindow : public wxDialog 
+class ManageTextureWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxListBox* m_texturelist;
 		wxListBox* m_palettelist;
@@ -2831,7 +2851,7 @@ class ManageTextureWindow : public wxDialog
 		wxSpinCtrl* m_textureheight;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnListBoxSelect( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnListBoxRightClick( wxMouseEvent& event ) { event.Skip(); }
@@ -2844,22 +2864,22 @@ class ManageTextureWindow : public wxDialog
 		virtual void OnPaintPalette( wxPaintEvent& event ) { event.Skip(); }
 		virtual void OnChooseFileImage( wxFileDirPickerEvent& event ) { event.Skip(); }
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
-		
-		ManageTextureWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Texture"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE|wxMAXIMIZE_BOX|wxRESIZE_BORDER ); 
+
+		ManageTextureWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Texture"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE|wxMAXIMIZE_BOX|wxRESIZE_BORDER );
 		~ManageTextureWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class ManageFieldTextureWindow
 ///////////////////////////////////////////////////////////////////////////////
-class ManageFieldTextureWindow : public wxDialog 
+class ManageFieldTextureWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxCheckListBox* m_tilechecklist;
 		wxListCtrl* m_animlist;
@@ -2879,7 +2899,7 @@ class ManageFieldTextureWindow : public wxDialog
 		wxButton* m_buttonexport;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnTileSelection( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnTileButton( wxCommandEvent& event ) { event.Skip(); }
@@ -2893,22 +2913,22 @@ class ManageFieldTextureWindow : public wxDialog
 		virtual void OnPaintPalette( wxPaintEvent& event ) { event.Skip(); }
 		virtual void OnChooseFileImage( wxFileDirPickerEvent& event ) { event.Skip(); }
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
-		
-		ManageFieldTextureWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Field Background"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE|wxMAXIMIZE_BOX|wxRESIZE_BORDER ); 
+
+		ManageFieldTextureWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Field Background"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE|wxMAXIMIZE_BOX|wxRESIZE_BORDER );
 		~ManageFieldTextureWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class ScriptEditWindow
 ///////////////////////////////////////////////////////////////////////////////
-class ScriptEditWindow : public wxDialog 
+class ScriptEditWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxGridBagSizer* topsizer;
 		wxListCtrl* m_functionlist;
@@ -2956,7 +2976,7 @@ class ScriptEditWindow : public wxDialog
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonparse;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnFunctionRightClick( wxListEvent& event ) { event.Skip(); }
 		virtual void OnFunctionChoose( wxListEvent& event ) { event.Skip(); }
@@ -2968,48 +2988,48 @@ class ScriptEditWindow : public wxDialog
 		virtual void OnFunctionUpdate( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnFunctionNewLine( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
 		wxPanel* m_panelfield;
 		wxTextCtrl* m_helptextctrl;
-		
-		ScriptEditWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Edit Script"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 900,650 ), long style = wxDEFAULT_DIALOG_STYLE|wxMAXIMIZE_BOX|wxRESIZE_BORDER ); 
+
+		ScriptEditWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Edit Script"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 900,650 ), long style = wxDEFAULT_DIALOG_STYLE|wxMAXIMIZE_BOX|wxRESIZE_BORDER );
 		~ScriptEditWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class ScriptEditPropertiesWindow
 ///////////////////////////////////////////////////////////////////////////////
-class ScriptEditPropertiesWindow : public wxDialog 
+class ScriptEditPropertiesWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxStaticText* m_staticText3071;
 		wxStaticText* m_staticText2461;
 		wxStaticText* m_staticText2451;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-	
+
 	public:
 		wxChoice* m_entryctrl;
 		wxSpinCtrl* m_entrytypectrl;
 		wxSpinCtrl* m_typectrl;
-		
-		ScriptEditPropertiesWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Properties"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 230,155 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		ScriptEditPropertiesWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Properties"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 230,155 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~ScriptEditPropertiesWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class ScriptEditEntryWindow
 ///////////////////////////////////////////////////////////////////////////////
-class ScriptEditEntryWindow : public wxDialog 
+class ScriptEditEntryWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxButton* m_buttonadd;
 		wxButton* m_buttonremove;
@@ -3018,27 +3038,27 @@ class ScriptEditEntryWindow : public wxDialog
 		wxSpinCtrl* m_entrytype;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnEntrySelect( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnSpinCtrl( wxSpinEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
-		
-		ScriptEditEntryWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Entries"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		ScriptEditEntryWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Entries"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~ScriptEditEntryWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class ScriptEditLinkWindow
 ///////////////////////////////////////////////////////////////////////////////
-class ScriptEditLinkWindow : public wxDialog 
+class ScriptEditLinkWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxStaticText* m_staticText367;
 		wxChoice* m_langlink1;
@@ -3063,26 +3083,26 @@ class ScriptEditLinkWindow : public wxDialog
 		wxButton* m_langtext7;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnChangeLink( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
-		
-		ScriptEditLinkWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Language Links"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		ScriptEditLinkWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Language Links"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~ScriptEditLinkWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class ScriptEditTextLinkWindow
 ///////////////////////////////////////////////////////////////////////////////
-class ScriptEditTextLinkWindow : public wxDialog 
+class ScriptEditTextLinkWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxStaticText* m_staticText367;
 		wxChoice* m_baselangdialog;
@@ -3090,26 +3110,26 @@ class ScriptEditTextLinkWindow : public wxDialog
 		wxBoxSizer* m_translationsizer;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnChooseDialog( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
-		
-		ScriptEditTextLinkWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Dialog Correspondances"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		ScriptEditTextLinkWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Dialog Correspondances"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~ScriptEditTextLinkWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class ScriptHelpWindow
 ///////////////////////////////////////////////////////////////////////////////
-class ScriptHelpWindow : public wxDialog 
+class ScriptHelpWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxTextCtrl* m_searchtextctrl;
 		wxStaticBitmap* m_searchbtn;
@@ -3120,54 +3140,54 @@ class ScriptHelpWindow : public wxDialog
 		wxListBox* m_listvariable;
 		wxPanel* m_panel951;
 		wxListBox* m_listvarcode;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnSearch( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnSearchButton( wxMouseEvent& event ) { event.Skip(); }
 		virtual void OnListClick( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnListDoubleClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
 		wxTextCtrl* m_helptextctrl;
-		
-		ScriptHelpWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Function List"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 550,400 ), long style = wxDEFAULT_DIALOG_STYLE|wxDIALOG_NO_PARENT|wxRESIZE_BORDER ); 
+
+		ScriptHelpWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Function List"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 550,400 ), long style = wxDEFAULT_DIALOG_STYLE|wxDIALOG_NO_PARENT|wxRESIZE_BORDER );
 		~ScriptHelpWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class AnimSequenceEditWindow
 ///////////////////////////////////////////////////////////////////////////////
-class AnimSequenceEditWindow : public wxDialog 
+class AnimSequenceEditWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxGridBagSizer* topsizer;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
 		wxScrolledWindow* m_sequencewindow;
 		wxTextCtrl* m_helptextctrl;
-		
-		AnimSequenceEditWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Edit Animation Sequence"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 800,500 ), long style = wxDEFAULT_DIALOG_STYLE|wxMAXIMIZE_BOX|wxRESIZE_BORDER ); 
+
+		AnimSequenceEditWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Edit Animation Sequence"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 800,500 ), long style = wxDEFAULT_DIALOG_STYLE|wxMAXIMIZE_BOX|wxRESIZE_BORDER );
 		~AnimSequenceEditWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class MipsScriptEditWindow
 ///////////////////////////////////////////////////////////////////////////////
-class MipsScriptEditWindow : public wxDialog 
+class MipsScriptEditWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxGridBagSizer* topsizer;
 		wxScrollBar* m_mipsscroll;
@@ -3175,76 +3195,76 @@ class MipsScriptEditWindow : public wxDialog
 		wxCheckBox* m_displaypos;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnMipsScroll( wxScrollEvent& event ) { event.Skip(); }
 		virtual void OnHelpClick( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnAddressCheck( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
 		wxPanel* m_mipswindow;
 		wxTextCtrl* m_codetextctrl;
-		
-		MipsScriptEditWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Edit MIPS Script"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 750,550 ), long style = wxCAPTION|wxCLOSE_BOX ); 
+
+		MipsScriptEditWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Edit MIPS Script"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 750,550 ), long style = wxCAPTION|wxCLOSE_BOX );
 		~MipsScriptEditWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class MipsScriptHelpWindow
 ///////////////////////////////////////////////////////////////////////////////
-class MipsScriptHelpWindow : public wxDialog 
+class MipsScriptHelpWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxListBox* m_listfunction;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnListClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
 		wxTextCtrl* m_helptextctrl;
-		
-		MipsScriptHelpWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("MIPS Help"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 550,400 ), long style = wxDEFAULT_DIALOG_STYLE|wxDIALOG_NO_PARENT|wxRESIZE_BORDER ); 
+
+		MipsScriptHelpWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("MIPS Help"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 550,400 ), long style = wxDEFAULT_DIALOG_STYLE|wxDIALOG_NO_PARENT|wxRESIZE_BORDER );
 		~MipsScriptHelpWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class CilScriptEditWindow
 ///////////////////////////////////////////////////////////////////////////////
-class CilScriptEditWindow : public wxDialog 
+class CilScriptEditWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxTextCtrl* m_scriptposctrl;
 		wxTextCtrl* m_scriptctrl;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
-		
-		CilScriptEditWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("CIL Script"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 450,500 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER ); 
+
+		CilScriptEditWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("CIL Script"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 450,500 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER );
 		~CilScriptEditWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class ImageMapEditWindow
 ///////////////////////////////////////////////////////////////////////////////
-class ImageMapEditWindow : public wxDialog 
+class ImageMapEditWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxChoice* m_objecttypechoice;
 		wxButton* m_buttonadd;
@@ -3254,94 +3274,209 @@ class ImageMapEditWindow : public wxDialog
 		wxListBox* m_maplist;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnChoice( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnList( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
-		
-		ImageMapEditWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("File Associations"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		ImageMapEditWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("File Associations"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE );
 		~ImageMapEditWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class ImageMapAddModelWindow
 ///////////////////////////////////////////////////////////////////////////////
-class ImageMapAddModelWindow : public wxDialog 
+class ImageMapAddModelWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxStaticText* m_staticText295;
 		wxButton* m_buttonok;
-	
+
 	public:
 		wxSpinCtrl* m_entryvalue;
-		
-		ImageMapAddModelWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Add Model"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxCAPTION ); 
+
+		ImageMapAddModelWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Add Model"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxCAPTION );
 		~ImageMapAddModelWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class SteamImageMapEditWindow
 ///////////////////////////////////////////////////////////////////////////////
-class SteamImageMapEditWindow : public wxDialog 
+class SteamImageMapEditWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxChoice* m_objecttypechoice;
 		wxTextCtrl* m_objectlist;
 		wxButton* m_buttoncancel;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnChoice( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
-		
-		SteamImageMapEditWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("File Associations"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 210,300 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER ); 
+
+		SteamImageMapEditWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("File Associations"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 210,300 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER );
 		~SteamImageMapEditWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class ModManagerWindow
 ///////////////////////////////////////////////////////////////////////////////
-class ModManagerWindow : public wxDialog 
+class ModManagerWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxTextCtrl* m_textCtrl55;
 		wxTreeListCtrl* m_listtree;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
-		
-		ModManagerWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Mod Manager"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE|wxMAXIMIZE_BOX|wxRESIZE_BORDER ); 
+
+		ModManagerWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Mod Manager"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE|wxMAXIMIZE_BOX|wxRESIZE_BORDER );
 		~ModManagerWindow();
-	
+
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class RandomizerWindow
+///////////////////////////////////////////////////////////////////////////////
+class RandomizerWindow : public wxDialog
+{
+	private:
+
+	protected:
+		wxStaticText* m_staticText403;
+		wxStaticText* m_staticText405;
+		wxStaticText* m_staticText406;
+		wxStaticText* m_staticText397;
+		wxCheckBox* m_enablechar;
+		wxCheckBox* m_enableweap;
+		wxCheckBox* m_enablearmor;
+		wxCheckBox* m_enablebattle;
+		wxCheckBox* m_enablecard;
+		wxAuiNotebook* m_auinotebook5;
+		wxScrolledWindow* m_panelchar;
+		wxStaticLine* m_staticline5;
+		wxStaticText* m_charquinaaplabel;
+		wxStaticLine* m_staticline51;
+		wxScrolledWindow* m_panelweap;
+		wxStaticText* m_weapslotlabel;
+		wxStaticText* m_weapsupportlabel;
+		wxScrolledWindow* m_panelarmor;
+		wxStaticText* m_armorslotlabel;
+		wxStaticText* m_armorsupportlabel;
+		wxScrolledWindow* m_panelbattle;
+		wxScrolledWindow* m_panelcard;
+		wxStaticLine* m_staticline9;
+		wxButton* m_buttonapply;
+		wxButton* m_buttoncancel;
+		wxButton* m_buttonok;
+
+		// Virtual event handlers, overide them in your derived class
+		virtual void OnCheckBox( wxCommandEvent& event ) { event.Skip(); }
+		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
+		virtual void OnChoice( wxCommandEvent& event ) { event.Skip(); }
+
+
+	public:
+		wxCheckBox* m_enableseed;
+		wxSpinCtrl* m_seedctrl;
+		wxButton* m_safeabilbtn;
+		wxButton* m_loadallbtn;
+		wxChoice* m_charspellpower;
+		wxChoice* m_charspellstatus;
+		wxCheckBox* m_charspellstatsafe;
+		wxCheckBox* m_charspell;
+		wxChoice* m_charmpboost;
+		wxCheckBox* m_charsummon;
+		wxSpinCtrl* m_charquinaap;
+		wxCheckBox* m_charelan;
+		wxCheckBox* m_charspellsafe;
+		wxCheckBox* m_charsupport;
+		wxCheckBox* m_charsupportsafe;
+		wxChoice* m_weapabil;
+		wxCheckBox* m_weapall;
+		wxCheckBox* m_weapsafe;
+		wxSpinCtrl* m_weapslot;
+		wxSpinCtrl* m_weapsupport;
+		wxChoice* m_armorabil;
+		wxCheckBox* m_armorall;
+		wxCheckBox* m_armorsafe;
+		wxSpinCtrl* m_armorslot;
+		wxSpinCtrl* m_armorsupport;
+		wxCheckBox* m_battlespell;
+		wxCheckBox* m_battleprop;
+		wxCheckBox* m_battlemp;
+		wxSpinCtrl* m_battlempfactor;
+		wxCheckBox* m_carddrop;
+		wxChoice* m_carddeck;
+
+		RandomizerWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Randomizer"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 700,425 ), long style = wxDEFAULT_DIALOG_STYLE|wxMAXIMIZE_BOX|wxRESIZE_BORDER );
+		~RandomizerWindow();
+
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class RandomizerListWindow
+///////////////////////////////////////////////////////////////////////////////
+class RandomizerListWindow : public wxDialog
+{
+	private:
+
+	protected:
+		wxButton* m_buttonadd;
+		wxStaticLine* m_staticline;
+		wxButton* m_buttonremove;
+		wxStaticText* m_staticText408;
+		wxCheckBox* m_scramble;
+		wxCheckBox* m_spell;
+		wxCheckBox* m_support;
+		wxCheckBox* m_weap;
+		wxCheckBox* m_armor;
+		wxButton* m_buttoncancel;
+		wxButton* m_buttonok;
+
+		// Virtual event handlers, overide them in your derived class
+		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
+		virtual void OnList( wxCommandEvent& event ) { event.Skip(); }
+		virtual void OnListDClick( wxCommandEvent& event ) { event.Skip(); }
+		virtual void OnCheckBox( wxCommandEvent& event ) { event.Skip(); }
+
+
+	public:
+		wxListBox* m_fulllist;
+		wxListBox* m_safelist;
+
+		RandomizerListWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Change Safe Lists"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE );
+		~RandomizerListWindow();
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class BackgroundEditorWindow
 ///////////////////////////////////////////////////////////////////////////////
-class BackgroundEditorWindow : public wxDialog 
+class BackgroundEditorWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxAuiNotebook* m_auinotebook;
 		wxPanel* m_panelconverter;
@@ -3362,7 +3497,7 @@ class BackgroundEditorWindow : public wxDialog
 		wxStaticText* m_staticText319;
 		wxButton* m_buttonapply;
 		wxButton* m_buttonclose;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnFilePick( wxFileDirPickerEvent& event ) { event.Skip(); }
 		virtual void OnDirPick( wxFileDirPickerEvent& event ) { event.Skip(); }
@@ -3374,8 +3509,8 @@ class BackgroundEditorWindow : public wxDialog
 		virtual void OnSpinChange( wxSpinEvent& event ) { event.Skip(); }
 		virtual void OnChoice( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
 		wxFilePickerCtrl* m_imagepicker;
 		wxDirPickerCtrl* m_exportdir;
@@ -3398,19 +3533,19 @@ class BackgroundEditorWindow : public wxDialog
 		wxChoice* m_massdxtflagchoice;
 		wxFilePickerCtrl* m_importlauncher;
 		wxDirPickerCtrl* m_importdir;
-		
-		BackgroundEditorWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Background Editor"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 650,650 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER ); 
+
+		BackgroundEditorWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Background Editor"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 650,650 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER );
 		~BackgroundEditorWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class UnityViewerWindow
 ///////////////////////////////////////////////////////////////////////////////
-class UnityViewerWindow : public wxFrame 
+class UnityViewerWindow : public wxFrame
 {
 	private:
-	
+
 	protected:
 		wxMenuBar* m_menubar;
 		wxMenu* m_menufile;
@@ -3428,13 +3563,13 @@ class UnityViewerWindow : public wxFrame
 		wxMenu* m_menuconvertmodel;
 		wxGauge* m_loadgauge;
 		wxListCtrl* m_assetlist;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnMenuSelection( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnSortColumn( wxListEvent& event ) { event.Skip(); }
 		virtual void OnAssetRightClick( wxListEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
 		wxMenuItem* m_menuexportpath;
 		wxMenuItem* m_menuconvertimgnone;
@@ -3469,86 +3604,86 @@ class UnityViewerWindow : public wxFrame
 		wxMenuItem* m_menuimportmodelanims;
 		wxMenuItem* m_menufolderx64;
 		wxMenuItem* m_menufolderx86;
-		
+
 		UnityViewerWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Unity Assets Viewer"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 700,700 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
-		
+
 		~UnityViewerWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class UnityLinkFileWindow
 ///////////////////////////////////////////////////////////////////////////////
-class UnityLinkFileWindow : public wxDialog 
+class UnityLinkFileWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxStaticText* m_staticText329;
 		wxButton* m_buttonok;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnFileSelect( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnFileInfoEdit( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
 		wxTextCtrl* m_message;
 		wxChoice* m_existinglist;
 		wxTextCtrl* m_fileinfo;
-		
-		UnityLinkFileWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Select Associated File"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 550,230 ), long style = wxCAPTION|wxSYSTEM_MENU ); 
+
+		UnityLinkFileWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Select Associated File"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 550,230 ), long style = wxCAPTION|wxSYSTEM_MENU );
 		~UnityLinkFileWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class UnityAddFileWindow
 ///////////////////////////////////////////////////////////////////////////////
-class UnityAddFileWindow : public wxDialog 
+class UnityAddFileWindow : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxButton* m_buttoncancel;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
 		wxNotebook* m_filebook;
 		wxButton* m_buttonadd;
 		wxButton* m_buttonok;
-		
-		UnityAddFileWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Insert New Asset"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,340 ), long style = wxCAPTION|wxRESIZE_BORDER ); 
+
+		UnityAddFileWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Insert New Asset"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,340 ), long style = wxCAPTION|wxRESIZE_BORDER );
 		~UnityAddFileWindow();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class UnityAddFilePanel
 ///////////////////////////////////////////////////////////////////////////////
-class UnityAddFilePanel : public wxPanel 
+class UnityAddFilePanel : public wxPanel
 {
 	private:
-	
+
 	protected:
 		wxStaticText* m_staticText333;
 		wxStaticText* m_staticText332;
 		wxStaticText* m_staticText334;
 		wxButton* m_generateinfo;
 		wxPanel* m_panel90;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnFilePick( wxFileDirPickerEvent& event ) { event.Skip(); }
 		virtual void OnTypeChoice( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnFileInfoEdit( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnButtonClick( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnCheckBox( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
 		wxFilePickerCtrl* m_filepicker;
 		wxChoice* m_filetype;
@@ -3557,31 +3692,30 @@ class UnityAddFilePanel : public wxPanel
 		wxCheckBox* m_addbundleinfo;
 		wxStaticText* m_filenamelabel;
 		wxTextCtrl* m_filename;
-		
-		UnityAddFilePanel( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxTAB_TRAVERSAL ); 
+
+		UnityAddFilePanel( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxTAB_TRAVERSAL, const wxString& name = wxEmptyString );
 		~UnityAddFilePanel();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class MenuDEBUG
 ///////////////////////////////////////////////////////////////////////////////
-class MenuDEBUG : public wxMenuBar 
+class MenuDEBUG : public wxMenuBar
 {
 	private:
-	
+
 	protected:
 		wxMenu* m_menu6;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnDebugClick( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
-		
+
 		MenuDEBUG( long style = 0 );
 		~MenuDEBUG();
-	
+
 };
 
-#endif //__GUI_H__

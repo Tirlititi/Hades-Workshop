@@ -350,12 +350,12 @@ void EnemyAnimSequenceCodeSizer::CreateArgumentControls() {
 		if (IsEAATChoice(seqcode.arg_type[i])) {
 			m_arg[i] = new wxChoice(parent->m_sequencewindow,ENEMY_SEQUENCE_CODE_MAX_ARG*line_nb+i,wxDefaultPosition,wxSize(seqcode.arg_type[i]==EAAT_SOUND ? 220 : 150,-1));
 			if (seqcode.arg_type[i]==EAAT_ANIMATION) {
-			((wxChoice*)m_arg[i])->Append(parent->arg_animation,(void**)parent->arg_animation_id);
-			for (j=0;j<parent->arg_animation.GetCount();j++)
-				if (*parent->arg_animation_id[j]==codeline->arg[i]) {
-					((wxChoice*)m_arg[i])->SetSelection(j);
-					break;
-				}
+				((wxChoice*)m_arg[i])->Append(parent->arg_animation,(void**)parent->arg_animation_id);
+				for (j=0;j<parent->arg_animation.GetCount();j++)
+					if (*parent->arg_animation_id[j]==codeline->arg[i]) {
+						((wxChoice*)m_arg[i])->SetSelection(j);
+						break;
+					}
 			} else if (seqcode.arg_type[i]==EAAT_TEXT) {
 				((wxChoice*)m_arg[i])->Append(parent->arg_battletext,(void**)parent->arg_battletext_id);
 				for (j=0;j<parent->arg_battletext.GetCount();j++)
