@@ -446,6 +446,9 @@ void MainFrame::OnSaveSteamClick(wxCommandEvent& event) {
 		} else if (res==3) {
 			wxMessageDialog popupfail(this,HADES_STRING_STEAM_SAVE_ERROR_FAIL_WRITE,HADES_STRING_ERROR,wxOK|wxCENTRE);
 			popupfail.ShowModal();
+		} else if (res==-1) {
+			wxMessageDialog popupwarning(this,HADES_STRING_STEAM_SAVE_CSHARP_MEMORIA,HADES_STRING_WARNING,wxOK|wxCENTRE);
+			popupwarning.ShowModal();
 		}
 		delete[] modifiedsection;
 	}

@@ -1,8 +1,9 @@
 #include "Items.h"
 
-#include "Database_Item.h"
 #include "DllEditor.h"
 #include "main.h"
+#include "Database_Item.h"
+#include "Database_CSV.h"
 
 #define ITEM_HWS_VERSION 1
 
@@ -717,6 +718,64 @@ void ItemDataSet::GenerateCSharp(vector<string>& buffer) {
 					<< "), " << StreamAsHex(stat[i].element_boost) << (i+1==ITEM_STAT_AMOUNT ? ")\n" : "),\n");
 	itemstatdb << "\t};\n";
 	buffer.push_back(itemstatdb.str());
+}
+
+bool ItemDataSet::GenerateCSV(string basefolder) {
+	unsigned int i, j;
+	string fname = basefolder + HADES_STRING_CSV_ITEM_FILE;
+	wfstream csv(fname.c_str(), ios::out);
+	if (!csv.is_open()) return false;
+	csv << HADES_STRING_CSV_ITEM_HEADER;
+	for (i=0; i<ITEM_AMOUNT; i++) {
+		csv << (int)item[i].price << L";" << (int)item[i].icon << L";" << (int)item[i].icon_color << L";" << (int)item[i].equip_position << L";" << (int)item[i].stat_id << L";";
+		csv << (int)item[i].skill[0] << L", " << (int)item[i].skill[1] << L", " << (int)item[i].skill[2] << L";";
+		for (j=0; j<8; j++)
+			csv << (int)((item[i].type >> (7-j)) & 1) << L";";
+		csv << (int)item[i].menu_position << L";";
+		for (j=0; j<PLAYABLE_CHAR_AMOUNT; j++)
+			csv << (int)((item[i].char_availability >> (PLAYABLE_CHAR_AMOUNT-j-1)) & 1) << L";";
+		csv << L"# " << i << L" - " << ConvertWStrToStr(item[i].name.str_nice).c_str() << L"\n";
+	}
+	csv.close();
+	fname = basefolder + HADES_STRING_CSV_WEAPON_FILE;
+	csv.open(fname.c_str(), ios::out);
+	if (!csv.is_open()) return false;
+	csv << HADES_STRING_CSV_WEAPON_HEADER;
+	for (i=0; i<ITEM_WEAPON_AMOUNT; i++) {
+		wstring modelsteamid = L"<null>";
+		for (j=0; j<G_N_ELEMENTS(SteamWeaponModel); j++)
+			if (weapon[i].model == SteamWeaponModel[j].id) {
+				modelsteamid = SteamWeaponModel[j].name;
+				break;
+			}
+		csv << ConvertWStrToStr(item[i].name.str_nice).c_str() << L";" << i << L";" << (int)weapon[i].flag << L";" << (int)weapon[i].status << L";" << modelsteamid << L";";
+		csv << (int)weapon[i].damage_formula << L";" << (int)weapon[i].power << L";" << (int)weapon[i].element << L";" << (int)weapon[i].status_accuracy << L";" << (int)weapon[i].offset1 << L";" << (int)weapon[i].offset2 << L"\n";
+	}
+	csv.close();
+	fname = basefolder + HADES_STRING_CSV_ARMOR_FILE;
+	csv.open(fname.c_str(), ios::out);
+	if (!csv.is_open()) return false;
+	csv << HADES_STRING_CSV_ARMOR_HEADER;
+	for (i=0; i<ITEM_ARMOR_AMOUNT; i++)
+		csv << ConvertWStrToStr(item[ITEM_WEAPON_AMOUNT+i].name.str_nice).c_str() << L";" << i << L";" << (int)armor[i].defence << L";" << (int)armor[i].evade << L";" << (int)armor[i].magic_defence << L";" << (int)armor[i].magic_evade << L"\n";
+	csv.close();
+	fname = basefolder + HADES_STRING_CSV_USABLE_FILE;
+	csv.open(fname.c_str(), ios::out);
+	if (!csv.is_open()) return false;
+	csv << HADES_STRING_CSV_USABLE_HEADER;
+	for (i=0; i<ITEM_USABLE_AMOUNT; i++) {
+		csv << (int)(usable[i].target_type & 0xF) << L";" << (int)((usable[i].target_type >> 4) & 0x1) << L";" << (int)usable[i].GetPanel() << L";" << (int)usable[i].model << L";";
+		csv << (int)((usable[i].target_flag >> 5) & 0x1) << L";" << (int)((usable[i].target_flag >> 7) & 0x1) << L";" << (int)usable[i].effect << L";" << (int)usable[i].power << L";" << (int)usable[i].accuracy << L";" << (int)usable[i].element << L";" << (unsigned long)usable[i].status << L";# " << ITEM_WEAPON_AMOUNT+ITEM_ARMOR_AMOUNT+i << L" - " << ConvertWStrToStr(item[ITEM_WEAPON_AMOUNT+ITEM_ARMOR_AMOUNT+i].name.str_nice).c_str() << L"\n";
+	}
+	csv.close();
+	fname = basefolder + HADES_STRING_CSV_ITEMSTAT_FILE;
+	csv.open(fname.c_str(), ios::out);
+	if (!csv.is_open()) return false;
+	csv << HADES_STRING_CSV_ITEMSTAT_HEADER;
+	for (i=0; i<ITEM_STAT_AMOUNT; i++)
+		csv << L"Stat Set " << i << L";" << i << L";" << (int)stat[i].speed << L";" << (int)stat[i].strength << L";" << (int)stat[i].magic << L";" << (int)stat[i].spirit << L";" << (int)stat[i].element_boost << L";" << (int)stat[i].element_immune << L";" << (int)stat[i].element_absorb << L";" << (int)stat[i].element_half << L";" << (int)stat[i].element_weak << L"\n";
+	csv.close();
+	return true;
 }
 
 int ItemDataSet::GetSteamTextSize(unsigned int texttype, SteamLanguage lang) {

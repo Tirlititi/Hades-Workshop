@@ -80,6 +80,8 @@
 #define HADES_STRING_STEAM_SAVE_CSHARP_CIL_RAW	"// Error: There was raw CIL Code modifications done in Hades Workshop.\n"\
 												"// They were ignored and not converted into C# code.\n"\
 												"// The involved methods were:\n"
+#define HADES_STRING_STEAM_SAVE_CSHARP_MEMORIA	L"Raw CIL Code modifications and macros were not exported"\
+												L"They are better to be done using Memoria's options or C# modifications"
 #define HADES_STRING_HWS_OPEN_SUCCESS L"Data successfully imported!"
 #define HADES_STRING_HWS_OPEN_FAIL L"Cannot open '%s' as Final Fantasy IX save."
 #define HADES_STRING_HWS_OPEN_WARNING L"Data has been imported with some errors:"

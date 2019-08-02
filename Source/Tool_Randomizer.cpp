@@ -417,7 +417,7 @@ private:
 ToolRandomizer::ToolRandomizer(wxWindow* p) : RandomizerWindow(p),
 	used_seed(-1),
 	safe_abil_scramble({ 173, 174, 175 }),
-	safe_abil_spell({ 50, 52, 54, 56, 57, 59, 61, 63, 65, 75, 76, 189, 191, 82, 101, 109, 110, 111, 112, 113, 114, 115, 116, 148, 173, 174, 175 }),
+	safe_abil_spell({ 82, 101, 109, 110, 111, 112, 113, 114, 115, 116, 148, 173, 174, 175 }),
 	safe_abil_support(),
 	safe_abil_weap({ 101, 148, 233 }),
 	safe_abil_armor({ 101, 148, 233 }) {
@@ -685,7 +685,7 @@ void ToolRandomizer::ApplyRandomizerCharacter() {
 				cddata->statset.ability_list[5].ap_cost[i] = m_charquinaap->GetValue();
 		for (i=0; i<SPELL_AMOUNT; i++)
 			if (!m_charspellsafe->IsChecked() || IsNotSafeAbility(i, safe_abil_spell)) {
-				cddata->spellset.spell[i].menu_flag &= 0xFB;
+				cddata->spellset.spell[i].menu_flag &= 0xF9;
 				cddata->UpdateSpellName(i);
 			}
 		if (m_charmpboost->GetSelection()==1) {

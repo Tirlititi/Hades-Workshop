@@ -2,6 +2,7 @@
 
 #include "DllEditor.h"
 #include "Database_Item.h"
+#include "Database_CSV.h"
 
 #define SHOP_HWS_VERSION 2
 
@@ -145,6 +146,29 @@ void ShopDataSet::GenerateCSharp(vector<string>& buffer) {
 		synthdb << "\t\tnew FF9MIX_DATA(" << (int)synthesis[i].price << ", new byte[]{ " << (int)synthesis[i].recipe1 << ", " << (int)synthesis[i].recipe2 << " }, " << (int)synthesis[i].synthesized << ", " << StreamAsHex(synthesis[i].shops) << (i+1==SYNTHESIS_AMOUNT ? ")\n" : "),\n");
 	synthdb << "\t};\n";
 	buffer.push_back(synthdb.str());
+}
+
+bool ShopDataSet::GenerateCSV(string basefolder) {
+	unsigned int i, j;
+	string fname = basefolder + HADES_STRING_CSV_SHOP_FILE;
+	wfstream csv(fname.c_str(), ios::out);
+	if (!csv.is_open()) return false;
+	csv << HADES_STRING_CSV_SHOP_HEADER;
+	for (i=0; i<SHOP_AMOUNT; i++) {
+		csv << HADES_STRING_SHOP_NAME[i].label.ToStdWstring() << L";" << i << L";";
+		for (j=0; j<shop[i].item_amount; j++)
+			csv << (int)shop[i].item_list[j] << L";";
+		csv << L"-1;# " << HADES_STRING_SHOP_NAME[i].label.ToStdWstring() << L"\n";
+	}
+	csv.close();
+	fname = basefolder + HADES_STRING_CSV_SYNTHESIS_FILE;
+	csv.open(fname.c_str(), ios::out);
+	if (!csv.is_open()) return false;
+	csv << HADES_STRING_CSV_SYNTHESIS_HEADER;
+	for (i=0; i<SYNTHESIS_AMOUNT; i++)
+		csv << L"SynthItem" << i << L";" << i << L";" << (int)synthesis[i].shops << L";" << (int)synthesis[i].price << L";" << (int)synthesis[i].synthesized << L";" << (int)synthesis[i].recipe1 << L";" << (int)synthesis[i].recipe2 << L"\n";
+	csv.close();
+	return true;
 }
 
 void ShopDataSet::Write(fstream& ffbin, ConfigurationSet& config) {

@@ -395,7 +395,13 @@ void GLWindow::Draw() {
 		if (field_showwalk) {
 			for (i=0;i<field_walk_triangle_amount;i++) {
 				if (field_walk->triangle_walkpath[i]==field_walk_path_highlight || i==field_walk_triangle_highlight)
-					glColor4f(1, 0.9, 0, 1);
+					glColor4f(1, 0.9f, 0, 1);
+				else if ((field_walk->triangle_flags1[i] & 1)==0)
+					glColor4f(0.4f, 0.4f, 0.4f, 1);
+				else if (field_walk->triangle_flags2[i] & 0x40)
+					glColor4f(0.85f, 0.15f, 0.15f, 1);
+				else if (field_walk->triangle_flags2[i] & 0x80)
+					glColor4f(0.7f, 0.3f, 0.3f, 1);
 				else
 					glColor4f(1, 0, 0, 1);
 				glBegin(GL_TRIANGLES);
@@ -412,7 +418,7 @@ void GLWindow::Draw() {
 			}
 		}
 		if (field_region_vertex_amount>0) {
-			glColor4f(0, 0, 1, 0.8);
+			glColor4f(0, 0, 1, 0.8f);
 			glBegin(GL_POLYGON);
 			for (i=0;i<field_region_vertex_amount;i++)
 				glVertex3iv(field_region_vertex_pos[i]);
@@ -428,7 +434,7 @@ void GLWindow::Draw() {
 			glPointSize(1);
 		}
 		if (field_showplane>0) {
-			glColor4f(0, 0.3, 1, 0.5);
+			glColor4f(0, 0.3f, 1, 0.5f);
 			glBegin(GL_QUADS);
 			if (field_showplane==1) {
 				glVertex3i(field_plane_coord,-10000,-10000);

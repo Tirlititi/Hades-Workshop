@@ -250,6 +250,7 @@
     <ClCompile Include="Source\Tool_Randomizer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Database_CSV.h" />
     <ClInclude Include="Source\BattleScenes.h" />
     <ClInclude Include="Source\Cards.h" />
     <ClInclude Include="Source\Charmaps.h" />

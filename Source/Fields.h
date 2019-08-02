@@ -232,13 +232,13 @@ public:
 	uint16_t vertex_amount;
 	uint16_t vertex_offset;
 	
-	uint8_t* triangle_unk1;
-	uint8_t* triangle_stepsound;
-	uint16_t* triangle_unk2;
+	uint8_t* triangle_flags1;
+	uint8_t* triangle_flags2;
+	uint16_t* triangle_unk1; // triData
 	uint16_t* triangle_walkpath;
 	uint16_t* triangle_normal;
-	uint16_t* triangle_unk4;
-	uint16_t* triangle_unk5;
+	uint16_t* triangle_unk2; // thetaX
+	uint16_t* triangle_unk3; // thetaZ
 	uint16_t* triangle_vertex1;
 	uint16_t* triangle_vertex2;
 	uint16_t* triangle_vertex3;
@@ -251,8 +251,7 @@ public:
 	int16_t* triangle_centerx;
 	int16_t* triangle_centerz;
 	int16_t* triangle_centery;
-	uint16_t* triangle_unk9;
-	uint16_t* triangle_unk10;
+	int32_t* triangle_unk4; // d
 	
 	uint16_t* edge_flag;
 	int16_t* edge_clone;

@@ -1,6 +1,7 @@
 #include "Spells.h"
 
 #include "main.h"
+#include "Database_CSV.h"
 
 #define SPELL_HWS_VERSION 3
 
@@ -339,6 +340,50 @@ void SpellDataSet::GenerateCSharp(vector<string>& buffer) {
 		spellnaming << (int)spell[i].perform_name << (i+1==SPELL_AMOUNT ? " " : ", ");
 	spellnaming << "};\n";
 	buffer.push_back(spellnaming.str());
+}
+
+bool SpellDataSet::GenerateCSV(string basefolder) {
+	static const wstring CSV_PANEL_NAME[] {
+		L"None", L"HP", L"MP", L"BadStatus", L"GoodStatus", L"Empty", L"Card", L"Bug"
+	};
+	unsigned int i, j;
+	string fname = basefolder + HADES_STRING_CSV_SPELL_FILE;
+	wfstream csv(fname.c_str(), ios::out);
+	if (!csv.is_open()) return false;
+	csv << HADES_STRING_CSV_SPELL_HEADER;
+	for (i=0; i<SPELL_AMOUNT; i++) {
+		csv << ConvertWStrToStr(spell[i].name.str_nice).c_str() << L";" << i << L";";
+		csv << CSV_PANEL_NAME[spell[i].GetPanel()] << L"(" << (int)spell[i].GetPanel() << L");" << (int)(spell[i].target_type & 0xF) << L";" << (int)((spell[i].target_type >> 4) & 0x1) << L";";
+		csv << (int)((spell[i].target_flag >> 5) & 0x1) << L";" << (int)((spell[i].target_flag >> 7) & 0x1) << L";" << (int)((spell[i].target_flag >> 6) & 0x1) << L";" << (int)(spell[i].model & 0x1FF) << L";";
+		csv << (int)spell[i].model_alt << L";" << (int)spell[i].effect << L";" << (int)spell[i].power << L";" << (int)spell[i].element << L";" << (int)spell[i].accuracy << L";";
+		csv << (int)spell[i].flag << L";" << (int)spell[i].status << L";" << (int)spell[i].mp << L";" << (int)spell[i].menu_flag << L";# " << ConvertWStrToStr(spell[i].name.str_nice).c_str() << L"\n";
+	}
+	csv.close();
+	fname = basefolder + HADES_STRING_CSV_STATUS_FILE;
+	csv.open(fname.c_str(), ios::out);
+	if (!csv.is_open()) return false;
+	csv << HADES_STRING_CSV_STATUS_HEADER;
+	for (i=0; i<STATUS_SET_AMOUNT; i++) {
+		csv << L"Set " << i << L";" << i << L";";
+		if (status_set[i]==0)
+			csv << L"0;";
+		else
+			for (j=0; j<STATUS_AMOUNT; j++)
+				if (status_set[i] & (1 << j))
+					csv << j+1 << L";";
+		csv << L"# " << status_set_name[i] << L"\n";
+	}
+	for (i=0; i<STATUS_SET_AMOUNT; i++)
+		csv << L"Set " << STATUS_SET_AMOUNT+i << L";" << STATUS_SET_AMOUNT+i << L";0;# Set " << STATUS_SET_AMOUNT+i << L"\n";
+	csv.close();
+	fname = basefolder + HADES_STRING_CSV_SPELLTITLE_FILE;
+	csv.open(fname.c_str(), ios::out);
+	if (!csv.is_open()) return false;
+	csv << HADES_STRING_CSV_SPELLTITLE_HEADER;
+	for (i=0; i<SPELL_AMOUNT; i++)
+		csv << ConvertWStrToStr(spell[i].name.str_nice).c_str() << L";" << i << L";" << (int)spell[i].perform_name << L"\n";
+	csv.close();
+	return true;
 }
 
 int SpellDataSet::GetSteamTextSize(unsigned int texttype, SteamLanguage lang) {

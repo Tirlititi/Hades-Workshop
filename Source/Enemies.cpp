@@ -6,6 +6,7 @@
 #include "Database_Steam.h"
 #include "Database_Resource.h"
 #include "Database_SpellAnimation.h"
+#include "Database_CSV.h"
 
 #define HWS_BATTLE_SCENE_MOD_ID		0xFFF0
 
@@ -52,7 +53,6 @@ int EnemyDataStruct::AddStat(EnemyStatDataStruct* copystat) {
 	TextDataStruct& td = *parent->text[id];
 	uint32_t sizereqbd = 2*copystat->sequence_anim_amount;
 	uint32_t sizereqes = 0x74;
-	unsigned int i;
 	if (bd.GetExtraSize()<sizereqbd)
 		return 1;
 	bd.SetSize(bd.size+sizereqbd);
@@ -165,7 +165,6 @@ int EnemyDataStruct::AddSpell(EnemySpellDataStruct* copyspell) {
 }
 
 void EnemyDataStruct::RemoveSpell(uint16_t spellid) {
-	unsigned int i,j;
 	BattleDataStruct* bs = parent->battle_data[id];
 	TextDataStruct* td = parent->text[id];
 	spell_amount--;
@@ -977,6 +976,48 @@ void EnemyDataSet::GenerateCSharp(vector<string>& buffer) {
 		bscenedb << "\t\t{ \"BSC_" << SteamBattleScript[bscindex].name.substr(11) << "\", \"BBG_" << HADES_STRING_BATTLE_SCENE_NAME[bbgindex].steamid.ToStdString() << "\" }, // " << ConvertWStrToStr(battle_name[battleindex]) << " (" << (int)modified_battle_id[i] << ")\n";
 	}
 	buffer.push_back(bscenedb.str());
+}
+
+bool EnemyDataSet::GenerateCSV(string basefolder) {
+	if (modified_battle_scene_amount==0)
+		return true;
+	int battleindex, bscindex, bbgindex;
+	unsigned int i, j;
+	string fname = basefolder + HADES_STRING_CSV_BATTLEMAP_FILE;
+	wfstream csv(fname.c_str(), ios::out);
+	if (!csv.is_open()) return false;
+	csv << HADES_STRING_CSV_BATTLEMAP_HEADER;
+	for (i = 0; i < modified_battle_scene_amount; i++) {
+		battleindex = -1;
+		bscindex = -1;
+		bbgindex = -1;
+		for (j = 0; j < battle_amount; j++)
+			if (modified_battle_id[i]==battle_data[j]->object_id) {
+				battleindex = j;
+				break;
+			}
+		for (j = 0; j < G_N_ELEMENTS(SteamBattleScript); j++)
+			if (modified_battle_id[i]==SteamBattleScript[j].battle_id) {
+				bscindex = j;
+				break;
+			}
+		if (battleindex < 0 || bscindex < 0) {
+			csv << L"\t\t// Error: unexpected Battle ID " << (int)modified_battle_id[i] << L"\n";
+			continue;
+		}
+		for (j = 0; j < G_N_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME); j++)
+			if (modified_scene_id[i]==HADES_STRING_BATTLE_SCENE_NAME[j].id) {
+				bbgindex = j;
+				break;
+			}
+		if (bbgindex < 0) {
+			csv << L"\t\t// Error: unexpected Battle Scene ID " << (int)modified_scene_id[i] << L"\n";
+			continue;
+		}
+		csv << L"\t\t{ \"BSC_" << ConvertStrToWStr(SteamBattleScript[bscindex].name.substr(11)) << L"\", \"BBG_" << HADES_STRING_BATTLE_SCENE_NAME[bbgindex].steamid.ToStdWstring() << L"\" }, // " << battle_name[battleindex] << L" (" << (int)modified_battle_id[i] << L")\n";
+	}
+	csv.close();
+	return true;
 }
 
 void EnemyDataSet::Write(fstream& ffbin, ClusterSet& clusset, bool saveworldmap, bool savefieldmap) {

@@ -433,7 +433,7 @@ void ManageFieldTextureDialog::OnTextureMouseMove(wxMouseEvent& event) {
 
 void ManageFieldTextureDialog::OnTextureMouseWheel(wxMouseEvent& event) {
 	if (event.GetWheelRotation()>0)
-		scale_ratio *= 0.95;
+		scale_ratio *= 0.95f;
 	else
 		scale_ratio = min(scale_ratio*1.05,main_img_base.GetHeight()/DEFAULT_HEIGHT);
 	UpdateImage();

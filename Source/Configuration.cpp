@@ -9,6 +9,7 @@
 #include "Hades_Strings.h"
 #include "Database_Steam.h"
 #include "Database_Resource.h"
+#include "Database_CSV.h"
 using namespace std;
 
 SaveSet::SaveSet(SpellDataSet* sp, CommandDataSet* cmd, EnemyDataSet* enmy, ShopDataSet* shop, TextDataSet* text,/*
@@ -1456,6 +1457,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 	// A WriteSteam function is needed only when texts are involved
 	SteamLanguage lang;
 	unsigned int i, j;
+	int result = 0;
 	if (destfolder.back() != '\\') destfolder += "\\";
 	string dirassets = destfolder + "StreamingAssets\\";
 	string dirdata = destfolder + "x64\\FF9_Data\\";
@@ -1484,6 +1486,42 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			fname = dirmanaged + "Assembly-CSharp.dll";
 			remove(fname.c_str());
 		} else if (dllformat==1) {
+			fname = destfolder + HADES_STRING_CSV_SPELL_FILE;
+			remove(fname.c_str());
+			fname = destfolder + HADES_STRING_CSV_STATUS_FILE;
+			remove(fname.c_str());
+			fname = destfolder + HADES_STRING_CSV_STATINIT_FILE;
+			remove(fname.c_str());
+			fname = destfolder + HADES_STRING_CSV_COMMAND_FILE;
+			remove(fname.c_str());
+			fname = destfolder + HADES_STRING_CSV_STATCMD_FILE;
+			remove(fname.c_str());
+			fname = destfolder + HADES_STRING_CSV_SPELLTITLE_FILE;
+			remove(fname.c_str());
+			fname = destfolder + HADES_STRING_CSV_STATEQUIP_FILE;
+			remove(fname.c_str());
+			fname = destfolder + HADES_STRING_CSV_STATLEVEL_FILE;
+			remove(fname.c_str());
+			fname = destfolder + HADES_STRING_CSV_SUPPORT_FILE;
+			remove(fname.c_str());
+			for (i=0; i<G_N_ELEMENTS(HADES_STRING_CSV_STATABIL_FILE); i++) {
+				fname = destfolder + HADES_STRING_CSV_STATABIL_FILE[i];
+				remove(fname.c_str());
+			}
+			fname = destfolder + HADES_STRING_CSV_ARMOR_FILE;
+			remove(fname.c_str());
+			fname = destfolder + HADES_STRING_CSV_USABLE_FILE;
+			remove(fname.c_str());
+			fname = destfolder + HADES_STRING_CSV_ITEM_FILE;
+			remove(fname.c_str());
+			fname = destfolder + HADES_STRING_CSV_SHOP_FILE;
+			remove(fname.c_str());
+			fname = destfolder + HADES_STRING_CSV_ITEMSTAT_FILE;
+			remove(fname.c_str());
+			fname = destfolder + HADES_STRING_CSV_SYNTHESIS_FILE;
+			remove(fname.c_str());
+			fname = destfolder + HADES_STRING_CSV_WEAPON_FILE;
+			remove(fname.c_str());
 		} else if (dllformat==2) {
 			fname = destfolder + "Assembly-CSharp_Additions.cs";
 			remove(fname.c_str());
@@ -2022,7 +2060,71 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		}
 		delete[] dllmodif;
 	} else if (dllformat == 1) {
-		// ToDo
+		if (section[DATA_SECTION_SPELL]) {
+			fname = destfolder + HADES_STRING_CSV_SPELL_FILE;
+			MainFrame::MakeDirForFile(fname);
+			fname = destfolder + HADES_STRING_CSV_STATUS_FILE;
+			MainFrame::MakeDirForFile(fname);
+			fname = destfolder + HADES_STRING_CSV_SPELLTITLE_FILE;
+			MainFrame::MakeDirForFile(fname);
+			if (!saveset.spellset->GenerateCSV(destfolder)) return 3;
+		}
+		if (section[DATA_SECTION_CMD]) {
+			fname = destfolder + HADES_STRING_CSV_COMMAND_FILE;
+			MainFrame::MakeDirForFile(fname);
+			if (!saveset.cmdset->GenerateCSV(destfolder)) return 3;
+		}
+		if (section[DATA_SECTION_SHOP]) {
+			fname = destfolder + HADES_STRING_CSV_SHOP_FILE;
+			MainFrame::MakeDirForFile(fname);
+			fname = destfolder + HADES_STRING_CSV_SYNTHESIS_FILE;
+			MainFrame::MakeDirForFile(fname);
+			if (!saveset.shopset->GenerateCSV(destfolder)) return 3;
+		}
+		if (section[DATA_SECTION_ITEM]) {
+			fname = destfolder + HADES_STRING_CSV_ITEM_FILE;
+			MainFrame::MakeDirForFile(fname);
+			fname = destfolder + HADES_STRING_CSV_WEAPON_FILE;
+			MainFrame::MakeDirForFile(fname);
+			fname = destfolder + HADES_STRING_CSV_ARMOR_FILE;
+			MainFrame::MakeDirForFile(fname);
+			fname = destfolder + HADES_STRING_CSV_USABLE_FILE;
+			MainFrame::MakeDirForFile(fname);
+			fname = destfolder + HADES_STRING_CSV_ITEMSTAT_FILE;
+			MainFrame::MakeDirForFile(fname);
+			if (!saveset.itemset->GenerateCSV(destfolder)) return 3;
+		}
+		if (section[DATA_SECTION_SUPPORT]) {
+			fname = destfolder + HADES_STRING_CSV_SUPPORT_FILE;
+			MainFrame::MakeDirForFile(fname);
+			if (!saveset.supportset->GenerateCSV(destfolder)) return 3;
+		}
+		if (section[DATA_SECTION_STAT]) {
+			fname = destfolder + HADES_STRING_CSV_STATINIT_FILE;
+			MainFrame::MakeDirForFile(fname);
+			fname = destfolder + HADES_STRING_CSV_STATCMD_HEADER;
+			MainFrame::MakeDirForFile(fname);
+			fname = destfolder + HADES_STRING_CSV_STATEQUIP_FILE;
+			MainFrame::MakeDirForFile(fname);
+			fname = destfolder + HADES_STRING_CSV_STATLEVEL_FILE;
+			MainFrame::MakeDirForFile(fname);
+			for (i=0; i<G_N_ELEMENTS(HADES_STRING_CSV_STATABIL_FILE); i++) {
+				fname = destfolder + HADES_STRING_CSV_STATABIL_FILE[i];
+				MainFrame::MakeDirForFile(fname);
+			}
+			if (!saveset.statset->GenerateCSV(destfolder)) return 3;
+		}
+		if (section[DATA_SECTION_PARTY_SPECIAL]) {
+			fname = destfolder + HADES_STRING_CSV_MGCSWORD_FILE;
+			MainFrame::MakeDirForFile(fname);
+			if (!saveset.partyspecialset->GenerateCSV(destfolder)) return 3;
+		}
+		if (section[DATA_SECTION_ENMY] && saveset.enemyset->modified_battle_scene_amount>0) {
+			fname = destfolder + HADES_STRING_CSV_BATTLEMAP_FILE;
+			MainFrame::MakeDirForFile(fname);
+			if (!saveset.enemyset->GenerateCSV(destfolder)) return 3;
+		}
+		if (section[DATA_SECTION_CIL]) result = -1;
 	} else if (dllformat == 2) {
 		vector<string> csharpmodifications;
 		if (section[DATA_SECTION_CIL]) saveset.cilset->GenerateCSharp(csharpmodifications);
@@ -2066,7 +2168,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		MainFrame::DeleteFullDir(destfolder + "p0data3\\");
 		MainFrame::DeleteFullDir(destfolder + "p0data7\\");
 	}*/
-	return 0;
+	return result;
 }
 
 //==================================================//

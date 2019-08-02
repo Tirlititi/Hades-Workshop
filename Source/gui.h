@@ -2403,7 +2403,7 @@ class AboutWindow : public wxDialog
 
 	public:
 
-		AboutWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("About..."), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 300,390 ), long style = wxDEFAULT_DIALOG_STYLE );
+		AboutWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("About..."), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 330,390 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~AboutWindow();
 
 };

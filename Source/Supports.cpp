@@ -2,6 +2,7 @@
 
 #include "main.h"
 #include "DllEditor.h"
+#include "Database_CSV.h"
 
 #define SUPPORT_HWS_VERSION 1
 
@@ -172,6 +173,18 @@ void SupportDataSet::GenerateCSharp(vector<string>& buffer) {
 		supportdb << "\t\tnew SA_DATA(" << (int)support[i].category << ", " << (int)support[i].cost << ", " << (int)support[i].name_offset << ", " << (int)support[i].help_offset << ", " << (int)support[i].help_size_x << (i+1==SUPPORT_AMOUNT ? ")" : "),") << " // " << ConvertWStrToStr(support[i].name.str_nice) << "\n";
 	supportdb << "\t};\n";
 	buffer.push_back(supportdb.str());
+}
+
+bool SupportDataSet::GenerateCSV(string basefolder) {
+	unsigned int i;
+	string fname = basefolder + HADES_STRING_CSV_SUPPORT_FILE;
+	wfstream csv(fname.c_str(), ios::out);
+	if (!csv.is_open()) return false;
+	csv << HADES_STRING_CSV_SUPPORT_HEADER;
+	for (i=0; i<SUPPORT_AMOUNT; i++)
+		csv << ConvertWStrToStr(support[i].name.str_nice).c_str() << L";" << i << L";" << (int)support[i].cost << L"\n";
+	csv.close();
+	return true;
 }
 
 int SupportDataSet::GetSteamTextSize(unsigned int texttype, SteamLanguage lang) {

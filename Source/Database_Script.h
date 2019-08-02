@@ -116,7 +116,7 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0x24, L"WalkTowardObject", L"Make the character walk and follow an object.\n\n1st argument: object to walk toward.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Object" }, new uint8_t[1]{ AT_ENTRY }, 0 },
 	{ 0x25, L"InitWalk", L"Make a further Walk call (or variations of Walk) synchronous.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x26, L"SetWalkSpeed", L"Change the walk speed.\n\n1st argument: speed (surely in unit/frame).", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Speed" }, new uint8_t[1]{ AT_USPIN }, 0 },
-	{ 0x27, L"0x27", L"Seems to do something with the background.\n\n1st argument: flags (unknown).", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Flags" }, new uint8_t[1]{ AT_BOOLLIST }, 0 },
+	{ 0x27, L"SetTriangleFlagMask", L"Set a bitmask for some of the walkmesh triangle flags.\n\n1st argument: flag mask.\n 7: disable restricted triangles\n 8: disable player-restricted triangles", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Flags" }, new uint8_t[1]{ AT_BOOLLIST }, 0 }, // BGIMASK
 	{ 0x28, L"Cinematic", L"Run or setup a cinematic.\n\n1st argument: unknown.\n2nd argument: cinematic ID (may depends on 1st argument's value).\n3rd argument: unknown.\n4th argument: unknown.", true, 4, new uint8_t[4]{ 1, 1, 1, 1 }, new wstring[4]{ L"Unknown", L"Cinematic ID", L"Unknown", L"Unknown" }, new uint8_t[4]{ AT_SPIN, AT_FMV, AT_SPIN, AT_SPIN }, 0 },
 	{ 0x29, L"SetRegion", L"Define the polygonal region linked with the entry script.\n\nArguments are in the format (Vertice X, Vertice Y) and can be of any amount.", true, -1, new uint8_t[1]{ 4 }, new wstring[1]{ L"Polygon" }, new uint8_t[1]{ AT_NONE }, 0 },
 	{ 0x2A, L"Battle", L"Start a battle (using a random enemy group).\n\n1st argument: rush type (unknown).\n2nd argument: gathered battle and Steiner's state (highest bit) informations.", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Rush Type", L"Battle" }, new uint8_t[2]{ AT_SPIN, AT_BATTLE }, 0 },
@@ -138,7 +138,7 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0x3A, L"HideObject", L"Hide an object.\n\n1st argument: object.\n2nd argument: unknown.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Object", L"Unknown" }, new uint8_t[2]{ AT_ENTRY, AT_USPIN }, 0 },
 	{ 0x3B, L"SetObjectIndex", L"Redefine the current object's index.\n\n1st argument: new index.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Index" }, new uint8_t[1]{ AT_USPIN }, 0 },
 	{ 0x3C, L"SetRandomBattles", L"Define random battles.\n\n1st argument: pattern, deciding the encounter chances and the topography (World Map only).\n 0: {0.375, 0.28, 0.22, 0.125}\n 1: {0.25, 0.25, 0.25, 0.25}\n 2: {0.35, 0.3, 0.3, 0.05}\n 3: {0.45, 0.4, 0.1, 0.05}\n2nd to 5th arguments: possible random battles.", true, 5, new uint8_t[5]{ 1, 2, 2, 2, 2 }, new wstring[5]{ L"Pattern", L"Battle 1", L"Battle 2", L"Battle 3", L"Battle 4" }, new uint8_t[5]{ AT_USPIN, AT_BATTLE, AT_BATTLE, AT_BATTLE, AT_BATTLE }, 0 },
-	{ 0x3D, L"0x3D", L"Some animation flags.\n\n1st argument: unknown.\n2nd argument: unknown.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"In-Frame",  L"Out-Frame" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 },
+	{ 0x3D, L"0x3D", L"Some animation flags.\n\n1st argument: unknown.\n2nd argument: unknown.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"In-Frame",  L"Out-Frame" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 }, // AFRAME
 	{ 0x3E, L"SetAnimationSpeed", L"Set the current object's animation speed.\n\n1st argument: speed.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Speed" }, new uint8_t[1]{ AT_USPIN }, 0 },
 	{ 0x3F, L"SetAnimationFlags", L"Set the current object's next animation looping flags.\n\n1st argument: looping flag list.\n 1: freeze at end\n 2: loop\n 3: loop back and forth\n2nd arguments: times to repeat.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Flag", L"Repeat" }, new uint8_t[2]{ AT_ANIMFLAG, AT_USPIN }, 0 },
 	{ 0x40, L"RunAnimation", L"Make the character play an animation.\n\n1st argument: animation ID.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Animation" }, new uint8_t[1]{ AT_ANIMATION }, 0 },
@@ -190,7 +190,7 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0x6E, L"0x6E", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x6F, L"MoveCamera", L"Move camera over time.\n\n1st and 2nd arguments: destination in (X, Y) format.\n3nd argument: movement duration.\n4th argument: unknown.", true, 4, new uint8_t[4]{ 2, 2, 1, 1 }, new wstring[3]{ L"Destination", L"Time", L"Unknown" }, new uint8_t[4]{ AT_POSITION_X, AT_POSITION_Y, AT_SPIN, AT_SPIN }, 0 }, // screen size = 320?
 	{ 0x70, L"ReleaseCamera", L"Unknown Opcode.\n\n1st arguments: unknown.\n2nd argument: unknown.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_SPIN, AT_USPIN }, 0 },
-	{ 0x71, L"0x71", L"A camera movement.", true, 3, new uint8_t[3]{ 1, 1, 1 }, new wstring[3]{ L"Unknown", L"Unknown", L"Unknown" }, new uint8_t[3]{ AT_SPIN, AT_SPIN, AT_SPIN }, 0 },
+	{ 0x71, L"0x71", L"A camera movement.", true, 3, new uint8_t[3]{ 1, 1, 1 }, new wstring[3]{ L"Unknown", L"Unknown", L"Unknown" }, new uint8_t[3]{ AT_SPIN, AT_SPIN, AT_SPIN }, 0 }, // BGCACTIVE
 	{ 0x72, L"SetCameraFollowHeight", L"Define the standard height gap between the player's character position and the camera view.\n\n1st argument: height.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Height" }, new uint8_t[1]{ AT_SPIN }, 0 },
 	{ 0x73, L"EnableCameraFollow", L"Make the camera follow the player's character.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x74, L"DisableCameraFollow", L"Stop making the camera follow the player's character.", false, 0, NULL, NULL, NULL, 0 },
@@ -212,7 +212,7 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0x84, L"UnlockShadowRotation", L"Make the shadow rotate accordingly with its object.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x85, L"SetShadowAmplifier", L"Amplify or reduce the shadow transparancy.\n\n1st argument: amplification factor.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Amplification Factor" }, new uint8_t[1]{ AT_USPIN }, 0 },
 	{ 0x86, L"SetAnimationStandSpeed", L"Change the standing animation speed.\n\n1st argument: unknown.\n2nd argument: unknown.\n3rd argument: unknown.\n4th argument: unknown.", true, 4, new uint8_t[4]{ 1, 1, 1, 1 }, new wstring[4]{ L"Unknown", L"Unknown", L"Unknown", L"Unknown" }, new uint8_t[4]{ AT_USPIN, AT_USPIN, AT_USPIN, AT_USPIN }, 0 },
-	{ 0x87, L"0x87", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Entry", L"Unknown" }, new uint8_t[2]{ AT_ENTRY, AT_SPIN }, 0 },
+	{ 0x87, L"0x87", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Entry", L"Unknown" }, new uint8_t[2]{ AT_ENTRY, AT_SPIN }, 0 }, // DDIR
 	{ 0x88, L"RunModelCode", L"Run a model code.\n\n1st argument: model code.\n2nd to 4th arguments: depends on the model code.\n Texture Blend (blend mode) with blend mode being 1 for screen, 2 for multiply, 4 for Soft and 255 for a solid texture\n Slice (boolean slice/unslice, value)\n Enable Mirror (boolean enable/disable)\n Mirror Position (X, Z, Y)\n Mirror Normal (X, Z, Y)\n Mirror Color (Red, Green, Blue)\n Sound codes (Animation, Frame, Value)\n  For Add (Secondary) Sound, the 3rd argument is the sound ID\n  For Sound Random Pitch, the 3rd argument is a boolean random/not random\n  For Remove Sound, the 3rd argument is unused", true, 4, new uint8_t[4]{ 1, 2, 2, 2 }, new wstring[4]{ L"Model Code", L"Argument 1", L"Argument 2", L"Argument 3" }, new uint8_t[4]{ AT_MODELCODE, AT_SPIN, AT_SPIN, AT_SPIN }, 0 },
 	{ 0x89, L"SetSoundPosition", L"Set the position of a 3D sound.\n\n1st to 3rd arguments: sound position.\n4th argument: sound volume.", true, 4, new uint8_t[4]{ 2, 2, 2, 1 }, new wstring[2]{ L"Position", L"Volume" }, new uint8_t[4]{ AT_POSITION_X, AT_POSITION_Z, AT_POSITION_Y, AT_SPIN }, 0 },
 	{ 0x8A, L"SetSoundObjectPosition", L"Set the position of a 3D sound to the object's position.\n\n1st argument: object.\n2nd argument: sound volume.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Object", L"Volume" }, new uint8_t[2]{ AT_ENTRY, AT_SPIN }, 0 },
@@ -258,10 +258,10 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0xB2, L"Party", L"Allow the player to change the members of its party.\n\n1st argument: party size (if characters occupy slots beyond it, they are locked).\n2nd argument: list of locked characters.", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Party Size", L"Locked Characters" }, new uint8_t[2]{ AT_USPIN, AT_CHARACTER }, 0 },
 	{ 0xB3, L"RunSPSCode", L"Run Sps code, which seems to be special model effects on the field.\n\n1st argument: sps ID.\n2nd argument: sps code.\n3rd to 5th arguments: depend on the sps code.\n Load Sps (sps type)\n Enable Attribute (attribute list, boolean enable/disable)\n Set Position (X, -Z, Y)\n Set Rotation (angle X, angle Z, angle Y)\n Set Scale (scale factor)\n Attach (object's entry to attach, bone number)\n Set Fade (fade)\n Set Animation Rate (rate)\n Set Frame Rate (rate)\n Set Frame (value) where the value is factored by 16 to get the frame\n Set Position Offset (X, -Z, Y)\n Set Depth Offset (depth)", true, 5, new uint8_t[5]{ 1, 1, 2, 2, 2 }, new wstring[5]{ L"Sps", L"Code", L"Parameter 1", L"Parameter 2", L"Parameter 3" }, new uint8_t[5]{ AT_USPIN, AT_SPSCODE, AT_SPIN, AT_SPIN, AT_SPIN }, 0 },
 	{ 0xB4, L"SetPartyReserve", L"Define the party member availability for a future Party call.\n\n1st argument: list of available characters.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Characters available" }, new uint8_t[1]{ AT_CHARACTER }, 0 },
-	{ 0xB5, L"0xB5", L"Seem to somehow make the object appropriate itself another entry's function list.\n\n1st argument: entry to get functions from.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Entry" }, new uint8_t[1]{ AT_ENTRY }, 0 },
+	{ 0xB5, L"0xB5", L"Seem to somehow make the object appropriate itself another entry's function list.\n\n1st argument: entry to get functions from.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Entry" }, new uint8_t[1]{ AT_ENTRY }, 0 }, // PRETEND
 	{ 0xB6, L"WorldMap", L"Change the scene to a world map.\n\n1st argument: world map destination.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"World Map" }, new uint8_t[1]{ AT_WORLDMAP }, 0 },
-	{ 0xB7, L"0xB7", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 },
-	{ 0xB8, L"0xB8", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 },
+	{ 0xB7, L"0xB7", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 }, // EYE
+	{ 0xB8, L"0xB8", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 }, // AIM
 	{ 0xB9, L"AddControllerMask", L"Prevent the input to be processed by the game.\n\n1st argument: pad number (should only be 0 or 1).\n2nd argument: button list.\n1: Select\n4: Start\n5: Up\n6: Right\n7: Down\n8: Left\n9: L2\n10: R2\n11: L1\n12: R1\n13: Triangle\n14: Circle\n15: Cross\n16: Square\n17: Cancel\n18: Confirm\n20: Moogle\n21: L1 Ex\n22: R1 Ex\n23: L2 Ex\n24: R2 Ex\n25: Menu\n26: Select Ex", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Pad", L"Buttons" }, new uint8_t[2]{ AT_USPIN, AT_BUTTONLIST }, 0 },
 	{ 0xBA, L"RemoveControllerMask", L"Enable back the controller's inputs.\n\n1st argument: pad number (should only be 0 or 1).\n2nd argument: button list.\n1: Select\n4: Start\n5: Up\n6: Right\n7: Down\n8: Left\n9: L2\n10: R2\n11: L1\n12: R1\n13: Triangle\n14: Circle\n15: Cross\n16: Square\n17: Cancel\n18: Confirm\n20: Moogle\n21: L1 Ex\n22: R1 Ex\n23: L2 Ex\n24: R2 Ex\n25: Menu\n26: Select Ex", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Pad", L"Buttons" }, new uint8_t[2]{ AT_USPIN, AT_BUTTONLIST }, 0 },
 	{ 0xBB, L"TimedTurnEx", L"Make an object face an angle (animated).\n\n1st argument: object's entry.\n2nd argument: angle.\n0 faces south, 64 faces west, 128 faces north and 192 faces east.\n3rd argument: turn speed (1 is slowest).", true, 3, new uint8_t[3]{ 1, 1, 1 }, new wstring[3]{ L"Object", L"Angle", L"Speed" }, new uint8_t[3]{ AT_ENTRY, AT_USPIN, AT_USPIN }, 0 },
@@ -281,8 +281,8 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0xC9, L"0xC9", L"Unknown Opcode.", true, 5, new uint8_t[5]{ 1, 2, 2, 2, 2 }, new wstring[5]{ L"Unknown", L"Unknown", L"Unknown", L"Unknown", L"Unknown" }, new uint8_t[5]{ AT_USPIN, AT_USPIN, AT_USPIN, AT_USPIN, AT_USPIN }, 0 }, // EBG_overlayDefineViewport
 	{ 0xCA, L"0xCA", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Visible" }, new uint8_t[2]{ AT_SPIN, AT_BOOL }, 0 }, // EBG_animSetVisible
 	{ 0xCB, L"EnablePath", L"Enable a field path.\n\n1st argument: field path ID.\n2nd argument: boolean enable/disable.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Path", L"Enable" }, new uint8_t[2]{ AT_WALKPATH, AT_BOOL }, 0 },
-	{ 0xCC, L"0xCC", L"Maybe make the character transparent.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Flag List" }, new uint8_t[1]{ AT_BOOLLIST }, 0 },
-	{ 0xCD, L"0xCD", L"Unknown Opcode.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Flag List" }, new uint8_t[1]{ AT_BOOLLIST }, 0 },
+	{ 0xCC, L"0xCC", L"Maybe make the character transparent.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Flag List" }, new uint8_t[1]{ AT_BOOLLIST }, 0 }, // CHRSET
+	{ 0xCD, L"0xCD", L"Unknown Opcode.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Flag List" }, new uint8_t[1]{ AT_BOOLLIST }, 0 }, // CHRCLEAR
 	{ 0xCE, L"AddGil", L"Give gil to the player.\n\n1st argument: gil amount.", true, 1, new uint8_t[1]{ 3 }, new wstring[1]{ L"Amount" }, new uint8_t[1]{ AT_SPIN }, 0 },
 	{ 0xCF, L"RemoveGil", L"Remove gil from the player.\n\n1st argument: gil amount.", true, 1, new uint8_t[1]{ 3 }, new wstring[1]{ L"Amount" }, new uint8_t[1]{ AT_SPIN }, 0 },
 	{ 0xD0, L"BattleDialog", L"Display text in battle for 60 frames.\n\n1st argument: text to display.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Text" }, new uint8_t[1]{ AT_TEXT }, 0 },
@@ -300,21 +300,21 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0xDC, L"Jump", L"Perform a jumping animation. Must be used after a SetupJump call.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xDD, L"RemoveParty", L"Remove a character from the player's team.\n\n1st argument: character to remove.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Character" }, new uint8_t[1]{ AT_LCHARACTER }, 0 },
 	{ 0xDE, L"SetName", L"Change the name of a party member. Clear the text opcodes from the chosen text.\n\n1st argument: character to rename.\n2nd argument: new name.", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Character", L"Text" }, new uint8_t[2]{ AT_LCHARACTER, AT_TEXT }, 0 },
-	{ 0xDF, L"0xDF", L"Unknown Opcode.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Unknown" }, new uint8_t[1]{ AT_USPIN }, 0 }, // posObj.ovalRatio
+	{ 0xDF, L"0xDF", L"Unknown Opcode.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Unknown" }, new uint8_t[1]{ AT_USPIN }, 0 }, // OVAL: posObj.ovalRatio
 	{ 0xE0, L"AddFrog", L"Add one frog to the frog counter.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xE1, L"TerminateBattle", L"Return to the field (or world map) when the rewards are disabled.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xE2, L"SetupJump", L"Setup datas for a Jump call.\n\n1st to 3rd arguments: destination in (X, Z, Y) format.\n4th argument: number of steps for the jump.", true, 4, new uint8_t[4]{ 2, 2, 2, 1 }, new wstring[2]{ L"Destination", L"Steps" }, new uint8_t[4]{ AT_POSITION_X, AT_POSITION_Z, AT_POSITION_Y, AT_USPIN }, 0 },
 	{ 0xE3, L"SetDialogProgression", L"Change the dialog progression value.\n\n1st argument: new value.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Progression" }, new uint8_t[1]{ AT_SPIN }, 0 },
-	{ 0xE4, L"0xE4", L"Seem to move field tile while applying a loop effect to it.\n\n1st argument: background tile block.\n2nd argument: unknown.\n3rd and 4th arguments: seems to be the movement in (X/256, Y/256) format.\n5th argument: unknown.", true, 5, new uint8_t[5]{ 1, 1, 2, 2, 1 }, new wstring[5]{ L"Tile Block", L"Unknown", L"Unknown", L"Unknown", L"Unknown" }, new uint8_t[5]{ AT_TILE, AT_USPIN, AT_SPIN, AT_SPIN, AT_USPIN }, 0 },
+	{ 0xE4, L"0xE4", L"Seem to move field tile while applying a loop effect to it.\n\n1st argument: background tile block.\n2nd argument: unknown.\n3rd and 4th arguments: seems to be the movement in (X/256, Y/256) format.\n5th argument: unknown.", true, 5, new uint8_t[5]{ 1, 1, 2, 2, 1 }, new wstring[5]{ L"Tile Block", L"Unknown", L"Unknown", L"Unknown", L"Unknown" }, new uint8_t[5]{ AT_TILE, AT_USPIN, AT_SPIN, AT_SPIN, AT_USPIN }, 0 }, // BGLSCROLLOFFSET
 	{ 0xE5, L"AttackSpecial", L"Make the enemy instantatly use a special move. It doesn't use nor modify the battle state so it should be used when the battle is paused. The target(s) are to be set using the SV_Target variable.\n\n1st argument: attack to perform.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Attack" }, new uint8_t[1]{ AT_ATTACK }, 0 },
 	{ 0xE6, L"0xE6", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 }, // BGLLOOPTYPE
 	{ 0xE7, L"SetTileAnimationFrame", L"Change the frame of a field tile animation.\n\n1st argument: background animation.\n2nd argument: animation frame to display.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Animation", L"Frame ID" }, new uint8_t[2]{ AT_TILEANIM, AT_USPIN }, 0 },
 	{ 0xE8, L"SideWalkXZY", L"Make the character walk to destination without changing his facing angle. Make it synchronous if InitWalk is called before.\n\n1st to 3rd arguments: destination in (X, Z, Y) format.", true, 3, new uint8_t[3]{ 2, 2, 2 }, new wstring[3]{ L"Destination" }, new uint8_t[3]{ AT_POSITION_X, AT_POSITION_Z, AT_POSITION_Y }, 0 },
 	{ 0xE9, L"UpdatePartyUI", L"Update the party's menu icons and such.", false, 0, NULL, NULL, NULL, 0 },
-	{ 0xEA, L"0xEA", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 }, // EBG_sceneGetVRP ; modify sSys Position
+	{ 0xEA, L"0xEA", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 }, // VRP: EBG_sceneGetVRP ; modify sSys Position
 	{ 0xEB, L"CloseAllWindows", L"Close all the dialogs and UI windows.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xEC, L"FadeFilter", L"Apply a fade filter on the screen.\n\n1st argument: filter mode (0 for ADD, 2 for SUBTRACT).\n2nd argument: fading time.\n3rd argument: unknown.\n4th to 6th arguments: color of the filter in (Cyan, Magenta, Yellow) format.", true, 6, new uint8_t[6]{ 1, 1, 1, 1, 1, 1 }, new wstring[4]{ L"Fade In/Out", L"Fading Time", L"Unknown", L"Color" }, new uint8_t[6]{ AT_USPIN, AT_USPIN, AT_SPIN, AT_COLOR_CYAN, AT_COLOR_MAGENTA, AT_COLOR_YELLOW }, 0 },
-	{ 0xED, L"0xED", L"Unknown Opcode.", true, 3, new uint8_t[3]{ 1, 2, 2 }, new wstring[3]{ L"Unknown", L"Unknown", L"Unknown" }, new uint8_t[3]{ AT_USPIN, AT_SPIN, AT_SPIN }, 0 }, // EBG_overlayDefineViewportAlpha
+	{ 0xED, L"0xED", L"Unknown Opcode.", true, 3, new uint8_t[3]{ 1, 2, 2 }, new wstring[3]{ L"Unknown", L"Unknown", L"Unknown" }, new uint8_t[3]{ AT_USPIN, AT_SPIN, AT_SPIN }, 0 }, // BGVALPHA: EBG_overlayDefineViewportAlpha
 	{ 0xEE, L"EnableInactiveAnimation", L"Allow the player's character to play its inactive animation. The inaction time required is:\nFirst Time = 200 + 4 * Random[0, 255]\nFollowing Times = 200 + 2 * Random[0, 255]", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xEF, L"ShowHereIcon", L"Show the Here icon over player's chatacter.\n\n1st argument: display type (0 to hide, 3 to show unconditionally)", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Show" }, new uint8_t[1]{ AT_SPIN }, 0 },
 	{ 0xF0, L"EnableRun", L"Allow the player's character to run.", false, 0, NULL, NULL, NULL, 0 },
@@ -335,15 +335,15 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0xFF, L"EXTENDED_CODE", L"Not an opcode.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x100, L"0x100", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_SPIN, AT_SPIN }, 0 },
 	{ 0x101, L"0x101", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_SPIN, AT_SPIN }, 0 },
-	{ 0x102, L"0x102", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 }, // walkMesh.BGI_simSetActive
-	{ 0x103, L"0x103", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 }, // walkMesh.BGI_simSetFlags
-	{ 0x104, L"0x104", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 }, // walkMesh.BGI_simSetFloor
-	{ 0x105, L"0x105", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 }, // walkMesh.BGI_simSetFrameRate
-	{ 0x106, L"0x106", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 }, // walkMesh.BGI_simSetAlgorithm
-	{ 0x107, L"0x107", L"Unknown Opcode.", true, 3, new uint8_t[3]{ 1, 2, 2 }, new wstring[3]{ L"Unknown", L"Unknown" , L"Unknown" }, new uint8_t[3]{ AT_USPIN, AT_USPIN, AT_USPIN }, 0 }, // walkMesh.BGI_simSetDelta
-	{ 0x108, L"0x108", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 }, // walkMesh.BGI_simSetAxis
+	{ 0x102, L"0x102", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 }, // BSACTIVE: walkMesh.BGI_simSetActive
+	{ 0x103, L"0x103", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 }, // BSFLAG: walkMesh.BGI_simSetFlags
+	{ 0x104, L"0x104", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 }, // BSFLOOR: walkMesh.BGI_simSetFloor
+	{ 0x105, L"0x105", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 }, // BSRATE: walkMesh.BGI_simSetFrameRate
+	{ 0x106, L"0x106", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 }, // BSALGO: walkMesh.BGI_simSetAlgorithm
+	{ 0x107, L"0x107", L"Unknown Opcode.", true, 3, new uint8_t[3]{ 1, 2, 2 }, new wstring[3]{ L"Unknown", L"Unknown" , L"Unknown" }, new uint8_t[3]{ AT_USPIN, AT_USPIN, AT_USPIN }, 0 }, // BSDELTA: walkMesh.BGI_simSetDelta
+	{ 0x108, L"0x108", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 }, // BSAXIS: walkMesh.BGI_simSetAxis
 	{ 0x109, L"0x109", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_SPIN, AT_SPIN }, 0 },
-	{ 0x10A, L"0x10A", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 }, // walkMesh.BGI_animShowFrame
+	{ 0x10A, L"0x10A", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 }, // BAFRAME: walkMesh.BGI_animShowFrame
 	{ 0x10B, L"0x10B", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_SPIN, AT_SPIN }, 0 },
 	{ 0x10C, L"0x10C", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_SPIN, AT_SPIN }, 0 },
 	{ 0x10D, L"0x10D", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_SPIN, AT_SPIN }, 0 },
@@ -352,6 +352,40 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0x110, L"0x110", L"Unknown Opcode.", true, 3, new uint8_t[3]{ 1, 1, 1 }, new wstring[3]{ L"Unknown", L"Unknown", L"Unknown" }, new uint8_t[3]{ AT_SPIN, AT_SPIN, AT_SPIN }, 0 },
 	{ 0x111, L"0x111", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_SPIN, AT_SPIN }, 0 }
 };
+
+/* Opcodes used in scripts and still unnamed:
+0x27 // Fields
+0x3D // Fields + Worlds
+0x71 // Fields
+0x87 // Fields
+0x91 // Fields
+0xA9 // Fields
+0xB5 // Fields + Worlds
+0xB7 // Worlds
+0xB8 // Worlds
+0xC3 // Fields
+0xC9 // Fields
+0xCA // Fields
+0xCC // Fields
+0xCD // Fields
+0xD4 // Fields
+0xD5 // Fields
+0xD6 // Fields
+0xDB // Fields
+0xDF // Worlds
+0xE4 // Fields
+0xE6 // Fields
+0xEA // Fields
+0xED // Fields
+0x102 // Fields
+0x103 // Fields
+0x104 // Fields
+0x105 // Fields
+0x106 // Fields
+0x107 // Fields
+0x108 // Fields
+0x10A // Fields
+*/
 
 struct VariableOperation {
 	// Operation types:

@@ -262,6 +262,8 @@ public:
 	uint32_t steam_method_position;
 	uint32_t steam_method_base_length;
 	
+	unsigned int modified_battle_scene_amount; // readonly
+	
 	static void GetSpellSequenceModelRef(vector<EnemySequenceCodeLine>& sequence, int* code, int* arg);
 	// Return temporary array not to be destroyed (as for battleids)
 	EnemyStatDataStruct** GetSimilarEnemyStats(EnemyStatDataStruct& stat, unsigned int* amountfound, unsigned int** battleid);
@@ -284,9 +286,9 @@ public:
 	// Return a modifamount-long pointer, to be deleted[]
 	DllMetaDataModification* ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount);
 	void GenerateCSharp(vector<string>& buffer);
+	bool GenerateCSV(string basefolder);
 	
 private:
-	unsigned int modified_battle_scene_amount;
 	uint16_t modified_battle_id[0x1000];
 	uint16_t modified_scene_id[0x1000];
 	uint32_t modified_scene_offset[0x1000];

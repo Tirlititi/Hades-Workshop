@@ -2,6 +2,7 @@
 
 #include "DllEditor.h"
 #include "main.h"
+#include "Database_CSV.h"
 
 #define COMMAND_HWS_VERSION 1
 
@@ -286,6 +287,29 @@ void CommandDataSet::GenerateCSharp(vector<string>& buffer) {
 	cmddb << "};\n";
 	cmddb << "\trdata._FF9FAbil_ComAbil = rdata._FF9BMenu_ComAbil;\n";
 	buffer.push_back(cmddb.str());
+}
+
+bool CommandDataSet::GenerateCSV(string basefolder) {
+	unsigned int i, j;
+	string fname = basefolder + HADES_STRING_CSV_COMMAND_FILE;
+	wfstream csv(fname.c_str(), ios::out);
+	if (!csv.is_open()) return false;
+	csv << HADES_STRING_CSV_COMMAND_HEADER;
+	for (i=0; i<COMMAND_AMOUNT; i++) {
+		if (cmd[i].panel==COMMAND_PANEL_SPELL) {
+			csv << (int)cmd[i].panel << L";" << (int)spell_full_list[cmd[i].spell_index] << L";";
+			for (j=0; j<cmd[i].spell_amount; j++)
+				csv << (j==0 ? L"" : L", ") << (int)spell_full_list[cmd[i].spell_index+j];
+		} else {
+			csv << (int)cmd[i].panel << L";" << (int)cmd[i].spell_index << L";";
+			if (cmd[i].panel!=COMMAND_PANEL_NONE)
+				for (j=0; j<cmd[i].spell_amount; j++)
+					csv << (j==0 ? L"" : L", ") << (int)cmd[i].spell_index;
+		}
+		csv << L";# " << ConvertWStrToStr(cmd[i].name.str_nice).c_str() << L"\n";
+	}
+	csv.close();
+	return true;
 }
 
 int CommandDataSet::GetSteamTextSize(unsigned int texttype, SteamLanguage lang) {

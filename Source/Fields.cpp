@@ -676,13 +676,13 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 	IO ## Short(f,vertex_offset); \
 	if (PPF) PPFEndScanStep(); \
 	if (READ) { \
-		triangle_unk1 = new uint8_t[triangle_amount]; \
-		triangle_stepsound = new uint8_t[triangle_amount]; \
-		triangle_unk2 = new uint16_t[triangle_amount]; \
+		triangle_flags1 = new uint8_t[triangle_amount]; \
+		triangle_flags2 = new uint8_t[triangle_amount]; \
+		triangle_unk1 = new uint16_t[triangle_amount]; \
 		triangle_walkpath = new uint16_t[triangle_amount]; \
 		triangle_normal = new uint16_t[triangle_amount]; \
-		triangle_unk4 = new uint16_t[triangle_amount]; \
-		triangle_unk5 = new uint16_t[triangle_amount]; \
+		triangle_unk2 = new uint16_t[triangle_amount]; \
+		triangle_unk3 = new uint16_t[triangle_amount]; \
 		triangle_vertex1 = new uint16_t[triangle_amount]; \
 		triangle_vertex2 = new uint16_t[triangle_amount]; \
 		triangle_vertex3 = new uint16_t[triangle_amount]; \
@@ -695,8 +695,7 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 		triangle_centerx = new int16_t[triangle_amount]; \
 		triangle_centerz = new int16_t[triangle_amount]; \
 		triangle_centery = new int16_t[triangle_amount]; \
-		triangle_unk9 = new uint16_t[triangle_amount]; \
-		triangle_unk10 = new uint16_t[triangle_amount]; \
+		triangle_unk4 = new int32_t[triangle_amount]; \
 		edge_flag = new uint16_t[edge_amount]; \
 		edge_clone = new int16_t[edge_amount]; \
 		animation_flag = new uint16_t[animation_amount]; \
@@ -733,13 +732,13 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 	for (i=0;i<triangle_amount;i++) { \
 		SEEK(f,headerpos,triangle_offset+i*0x28); \
 		if (PPF) PPFInitScanStep(f); \
-		IO ## Char(f,triangle_unk1[i]); \
-		IO ## Char(f,triangle_stepsound[i]); \
-		IO ## Short(f,triangle_unk2[i]); \
+		IO ## Char(f,triangle_flags1[i]); \
+		IO ## Char(f,triangle_flags2[i]); \
+		IO ## Short(f,triangle_unk1[i]); \
 		IO ## Short(f,triangle_walkpath[i]); \
 		IO ## Short(f,triangle_normal[i]); \
-		IO ## Short(f,triangle_unk4[i]); \
-		IO ## Short(f,triangle_unk5[i]); \
+		IO ## Short(f,triangle_unk2[i]); \
+		IO ## Short(f,triangle_unk3[i]); \
 		IO ## Short(f,triangle_vertex1[i]); \
 		IO ## Short(f,triangle_vertex2[i]); \
 		IO ## Short(f,triangle_vertex3[i]); \
@@ -752,8 +751,7 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 		IO ## Short(f,(uint16_t&)triangle_centerx[i]); \
 		IO ## Short(f,(uint16_t&)triangle_centerz[i]); \
 		IO ## Short(f,(uint16_t&)triangle_centery[i]); \
-		IO ## Short(f,triangle_unk9[i]); \
-		IO ## Short(f,triangle_unk10[i]); \
+		IO ## Long(f,(uint32_t&)triangle_unk4[i]); \
 		if (PPF) PPFEndScanStep(); \
 	} \
 	for (i=0;i<edge_amount;i++) { \

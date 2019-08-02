@@ -56,6 +56,7 @@ public:
 	// Return a modifamount-long pointer, to be deleted[]
 	DllMetaDataModification* ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount);
 	void GenerateCSharp(vector<string>& buffer);
+	bool GenerateCSV(string basefolder);
 };
 
 #endif

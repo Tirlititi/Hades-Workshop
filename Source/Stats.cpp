@@ -1,8 +1,9 @@
 #include "Stats.h"
 
+#include "DllEditor.h"
 #include "Hades_Strings.h"
 #include "Database_Steam.h"
-#include "DllEditor.h"
+#include "Database_CSV.h"
 
 #define STAT_HWS_VERSION 2
 
@@ -466,6 +467,50 @@ void StatDataSet::GenerateCSharp(vector<string>& buffer) {
 	}
 	leveldb << "\t};\n";
 	buffer.push_back(leveldb.str());
+}
+
+bool StatDataSet::GenerateCSV(string basefolder) {
+	unsigned int i, j;
+	string fname = basefolder + HADES_STRING_CSV_STATINIT_FILE;
+	wfstream csv(fname.c_str(), ios::out);
+	if (!csv.is_open()) return false;
+	csv << HADES_STRING_CSV_STATINIT_HEADER;
+	for (i=0; i<PLAYABLE_CHAR_AMOUNT; i++)
+		csv << ConvertWStrToStr(initial_stat[i].default_name.str_nice).c_str() << L";" << i << L";" << (int)initial_stat[i].speed << L";" << (int)initial_stat[i].strength << L";" << (int)initial_stat[i].magic << L";" << (int)initial_stat[i].spirit << L";" << (int)initial_stat[i].magic_stone << L"\n";
+	csv.close();
+	fname = basefolder + HADES_STRING_CSV_STATCMD_FILE;
+	csv.open(fname.c_str(), ios::out);
+	if (!csv.is_open()) return false;
+	csv << HADES_STRING_CSV_STATCMD_HEADER;
+	for (i=0; i<COMMAND_SET_AMOUNT; i++)
+		csv << (int)command_list[i].first_command << L";" << (int)command_list[i].second_command << L";" << (int)command_list[i].first_command_trance << L";" << (int)command_list[i].second_command_trance << L";\n";
+	csv.close();
+	fname = basefolder + HADES_STRING_CSV_STATEQUIP_FILE;
+	csv.open(fname.c_str(), ios::out);
+	if (!csv.is_open()) return false;
+	csv << HADES_STRING_CSV_STATEQUIP_HEADER;
+	for (i=0; i<EQUIP_SET_AMOUNT; i++) {
+		csv << (i<PLAYABLE_CHAR_AMOUNT ? ConvertWStrToStr(initial_stat[i].default_name.str_nice).c_str() : "Extra") << L";" << i << L";";
+		csv << (int)initial_equip[i].weapon << L";" << (int)initial_equip[i].head << L";" << (int)initial_equip[i].wrist << L";" << (int)initial_equip[i].armor << L";" << (int)initial_equip[i].accessory << L";\n";
+	}
+	csv.close();
+	fname = basefolder + HADES_STRING_CSV_STATLEVEL_FILE;
+	csv.open(fname.c_str(), ios::out);
+	if (!csv.is_open()) return false;
+	csv << HADES_STRING_CSV_STATLEVEL_HEADER;
+	for (i=0; i<MAX_LEVEL; i++)
+		csv << (unsigned long)level[i].exp_table << L";" << (int)level[i].hp_table << L";" << (int)level[i].mp_table << L";# Level " << i+1 << L"\n";
+	csv.close();
+	for (i=0; i<ABILITY_SET_AMOUNT; i++) {
+		fname = basefolder + HADES_STRING_CSV_STATABIL_FILE[i];
+		csv.open(fname.c_str(), ios::out);
+		if (!csv.is_open()) return false;
+		csv << HADES_STRING_CSV_STATABIL_HEADER[i];
+		for (j=0; j<ABILITY_SET_CAPACITY; j++)
+			csv << (int)ability_list[i].ability[j] << L";" << (int)ability_list[i].ap_cost[j] << L";\n";
+		csv.close();
+	}
+	return true;
 }
 
 void StatDataSet::Write(fstream& ffbin, ConfigurationSet& config) {

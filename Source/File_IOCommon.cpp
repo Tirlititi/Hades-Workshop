@@ -235,13 +235,11 @@ string ConvertToString(int val) {
 }
 
 string ConvertWStrToStr(const wstring& wstr) {
-    using convert_typeX = codecvt_utf8<wchar_t>;
-    wstring_convert<convert_typeX, wchar_t> converterX;
+    wstring_convert<codecvt_utf8<wchar_t>, wchar_t> converterX;
     return converterX.to_bytes(wstr);
 }
 
 wstring ConvertStrToWStr(const string& str) {
-    using convert_typeX = codecvt_utf8<wchar_t>;
-    wstring_convert<convert_typeX, wchar_t> converterX;
+    wstring_convert<codecvt_utf8<wchar_t>, wchar_t> converterX;
     return converterX.from_bytes(str);
 }

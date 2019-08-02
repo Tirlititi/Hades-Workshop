@@ -440,6 +440,9 @@
     <ClInclude Include="Source\Tool_Randomizer.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Database_CSV.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Source\resource.rc">
