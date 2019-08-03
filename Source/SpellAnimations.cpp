@@ -48,6 +48,7 @@
 
 #define MACRO_SPELL_ANIM_IOFUNCTION_SEQREAD(IO,SEEK) \
 	SpellAnimSequenceCodeLine seqtmp; \
+	seq_code.clear(); \
 	do { \
 		IO ## Char(f,seqtmp.code); \
 		for (i=0;i<SPELL_ANIMATION_SEQUENCE_ARG;i++) \
