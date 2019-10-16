@@ -90,7 +90,7 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0x0A, L"0x0A", L"Unused Opcode.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x0B, L"JMP_SWITCH", L"Skip some operations depending on the stack value.\nWARNING: unsafe to use.", false, -1, new uint8_t[3]{ 2, 2, 2 }, new wstring[3]{ L"Starting Value", L"Default Jump", L"Jump" }, new uint8_t[3]{ AT_USPIN, AT_JUMP, AT_JUMP }, 1 },
 	{ 0x0C, L"0x0C", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 },
-	{ 0x0D, L"0x0D", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 }, // Steam seem to handle it like a JMP_SWITCH with a short instead of a char
+	{ 0x0D, L"0x0D", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 }, // Steam seems to handle it like a JMP_SWITCH with a short instead of a char
 	{ 0x0E, L"0x0E", L"Unused Opcode.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x0F, L"0x0F", L"Unused Opcode.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x10, L"RunScriptAsync", L"Run script function and continue executing the current one.\n\nEntry's script level is 0 until its main function returns, then it becomes 7. If the specified script level is higher than the entry's script level, the function is not run. Otherwise, the entry's script level is set to the specified script level until the function returns.\n\n1st argument: script level.\n2nd argument: entry of the function.\n3rd argument: function.", true, 3, new uint8_t[3]{ 1, 1, 1 }, new wstring[3]{ L"Script Level", L"Entry", L"Function" }, new uint8_t[3]{ AT_SCRIPTLVL, AT_ENTRY, AT_FUNCTION }, 0 },
@@ -125,9 +125,9 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0x2D, L"DisableMove", L"Disable the player's movement control.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x2E, L"EnableMove", L"Enable the player's movement control.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x2F, L"SetModel", L"Set the model of the object and its head's height (used to set the dialog box's height).\n\n1st argument: model.\n2nd argument: head's height.", true, 2, new uint8_t[2]{ 2, 1 }, new wstring[2]{ L"Model", L"Height" }, new uint8_t[2]{ AT_MODEL, AT_USPIN }, 0 },
-	{ 0x30, L"0x30", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 }, // Return 0 on Steam
-	{ 0x31, L"0x31", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 }, // Return 0 on Steam
-	{ 0x32, L"0x32", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_SPIN, AT_SPIN }, 0 },
+	{ 0x30, L"0x30", L"Unknown Opcode; ignored in the non-PSX versions.", false, 0, NULL, NULL, NULL, 0 }, // "PRINT1" Return 0 on Steam
+	{ 0x31, L"0x31", L"Unknown Opcode; ignored in the non-PSX versions.", false, 0, NULL, NULL, NULL, 0 }, // "PRINTF" Return 0 on Steam
+	{ 0x32, L"0x32", L"Unused Opcode; bugs if used in the non-PSX versions.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_SPIN, AT_SPIN }, 0 }, // "LOCATE" Ignored on Steam and not even handled properly (no argument read)
 	{ 0x33, L"SetStandAnimation", L"Change the standing animation.\n\n1st argument: animation ID.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Animation" }, new uint8_t[1]{ AT_ANIMATION }, 0 },
 	{ 0x34, L"SetWalkAnimation", L"Change the walking animation.\n\n1st argument: animation ID.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Animation" }, new uint8_t[1]{ AT_ANIMATION }, 0 },
 	{ 0x35, L"SetRunAnimation", L"Change the running animation.\n\n1st argument: animation ID.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Animation" }, new uint8_t[1]{ AT_ANIMATION }, 0 },
@@ -159,7 +159,7 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0x4F, L"0x4F", L"Unknown Opcode.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Unknown" }, new uint8_t[1]{ AT_SPIN }, 0 },
 	{ 0x50, L"WaitTurn", L"Wait until the character has turned.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x51, L"TurnTowardObject", L"Turn the character toward an entry object (animated).\n\n1st argument: object.\n2nd argument: turn speed (1 is slowest).", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Object", L"Speed" }, new uint8_t[2]{ AT_ENTRY, AT_USPIN }, 0 },
-	{ 0x52, L"SetInactiveAnimation", L"Change the animation played when inactive for a long time. The inaction time required is:\nFirst Time = 200 + 4 * Random[0, 255]\nFollowing Times = 200 + 2 * Random[0, 255]\n\n1st argument: animation ID.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Animation" }, new uint8_t[1]{ AT_ANIMATION }, 0 },
+	{ 0x52, L"SetInactiveAnimation", L"Change the animation played when inactive for a long time. The inaction time required is:\nFirst Time = 200 + 4 * Random[0, 255]\nSubsequent Times = 200 + 2 * Random[0, 255]\n\n1st argument: animation ID.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Animation" }, new uint8_t[1]{ AT_ANIMATION }, 0 },
 	{ 0x53, L"0x53", L"Seems to prevent new windows to close older ones.", false, 0, NULL, NULL, NULL, 0 }, // NOINITMES
 	{ 0x54, L"WaitWindow", L"Wait until the window is closed.\n\n1st argument: window ID determined at its creation.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Window ID" }, new uint8_t[1]{ AT_USPIN }, 0 },
 	{ 0x55, L"SetWalkTurnSpeed", L"Change the turn speed of the object when it walks or runs (default is 16).\n\n1st argument: turn speed (with 0, the object doesn't turn while moving).\n\nSpecial treatments:\nVivi's in Iifa Tree/Eidolon Moun (field 1656) is initialized to 48.\nChoco's in Chocobo's Paradise (field 2954) is initialized to 96.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Turn Speed" }, new uint8_t[1]{ AT_USPIN }, 0 },
@@ -169,15 +169,15 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0x59, L"SetTileColor", L"Change the color of a field tile block.\n\n1st argument: background tile block.\n2nd to 4th arguments: color in (Cyan, Magenta, Yellow) format.", true, 4, new uint8_t[4]{ 1, 1, 1, 1 }, new wstring[2]{ L"Tile Block", L"Color" }, new uint8_t[4]{ AT_TILE, AT_COLOR_CYAN, AT_COLOR_MAGENTA, AT_COLOR_YELLOW }, 0 },
 	{ 0x5A, L"SetTilePositionEx", L"Move a field tile block.\n\n1st argument: background tile block.\n2nd and 3rd argument: position in (X, Y) format.\n4th argument: closeness, defining whether 3D models are over or under that background tile.", true, 4, new uint8_t[4]{ 1, 2, 2, 2 }, new wstring[4]{ L"Tile Block", L"Position X", L"Position Y", L"Position Closeness" }, new uint8_t[4]{ AT_TILE, AT_SPIN, AT_SPIN, AT_SPIN }, 0 },
 	{ 0x5B, L"ShowTile", L"Show or hide a field tile block.\n\n1st argument: background tile block.\n2nd argument: boolean show/hide.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Tile Block", L"Show" }, new uint8_t[2]{ AT_TILE, AT_BOOL }, 0 },
-	{ 0x5C, L"MoveTileLoop", L"Make the image of a field tile loop over space.\n\n1st argument: background tile block.\n2nd argument: unknown.\n3rd and 4th arguments: something to do with looping in the X and Y direction.", true, 4, new uint8_t[4]{ 1, 1, 2, 2 }, new wstring[4]{ L"Tile Block", L"Unknown", L"X Loop", L"Y Loop" }, new uint8_t[4]{ AT_TILE, AT_SPIN, AT_SPIN, AT_SPIN }, 0 },
-	{ 0x5D, L"MoveTile", L"Make the field moves depending on the camera position.\n\n1st argument: background tile block.\n2nd argument: unknown.\n3rd and 4th arguments: movement in (X, Y) format.", true, 4, new uint8_t[4]{ 1, 1, 2, 2 }, new wstring[4]{ L"Tile Block", L"Unknown", L"Movement X", L"Movement Y" }, new uint8_t[4]{ AT_TILE, AT_SPIN, AT_SPIN, AT_SPIN }, 0 },
+	{ 0x5C, L"MoveTileLoop", L"Make the image of a field tile loop over space.\n\n1st argument: background tile block.\n2nd argument: boolean on/off.\n3rd and 4th arguments: speed in the X and Y directions.", true, 4, new uint8_t[4]{ 1, 1, 2, 2 }, new wstring[4]{ L"Tile Block", L"Activate", L"X Loop", L"Y Loop" }, new uint8_t[4]{ AT_TILE, AT_BOOL, AT_SPIN, AT_SPIN }, 0 },
+	{ 0x5D, L"MoveTile", L"Make the field moves depending on the camera position.\n\n1st argument: background tile block.\n2nd argument: boolean on/off.\n3rd and 4th arguments: parallax movement in (X, Y) format.", true, 4, new uint8_t[4]{ 1, 1, 2, 2 }, new wstring[4]{ L"Tile Block", L"Activate", L"Movement X", L"Movement Y" }, new uint8_t[4]{ AT_TILE, AT_BOOL, AT_SPIN, AT_SPIN }, 0 },
 	{ 0x5E, L"SetTilePosition", L"Move a field tile block.\n\n1st argument: background tile block.\n2nd and 3rd argument: position in (X, Y) format.", true, 3, new uint8_t[3]{ 1, 2, 2 }, new wstring[3]{ L"Tile Block", L"Position X", L"Position Y" }, new uint8_t[3]{ AT_TILE, AT_SPIN, AT_SPIN }, 0 },
 	{ 0x5F, L"RunTileAnimation", L"Run a field tile animation.\n\n1st argument: background animation.\n2nd argument: starting frame.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Field Animation", L"Frame" }, new uint8_t[2]{ AT_TILEANIM, AT_USPIN }, 0 },
 	{ 0x60, L"ActivateTileAnimation", L"Make a field tile animation active.\n\n1st argument: background animation.\n2nd argument: boolean on/off.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Tile Animation", L"Activate" }, new uint8_t[2]{ AT_TILEANIM, AT_BOOL }, 0 },
-	{ 0x61, L"SetTileAnimationSpeed", L"Change the speed of a field tile animation.\n\n1st argument: background animation.\n2nd argument: speed.", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Tile Animation", L"Speed" }, new uint8_t[2]{ AT_TILEANIM, AT_SPIN }, 0 },
+	{ 0x61, L"SetTileAnimationSpeed", L"Change the speed of a field tile animation.\n\n1st argument: background animation.\n2nd argument: speed (256 = 1 tile/frame).", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Tile Animation", L"Speed" }, new uint8_t[2]{ AT_TILEANIM, AT_SPIN }, 0 },
 	{ 0x62, L"SetRow", L"Change the battle row of a party member.\n\n1st argument: party member.\n2nd argument: boolean front/back.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Character", L"Row" }, new uint8_t[2]{ AT_LCHARACTER, AT_BOOL }, 0 },
-	{ 0x63, L"SetTileAnimationPause", L"Make a field tile animation pause at some frame.\n\n1st argument: background animation.\n2nd argument: frame.\n3rd argument: wait time.", true, 3, new uint8_t[3]{ 1, 1, 1 }, new wstring[3]{ L"Tile Animation", L"Frame ID", L"Time" }, new uint8_t[3]{ AT_TILEANIM, AT_USPIN, AT_USPIN }, 0 },
-	{ 0x64, L"SetTileAnimationFlags", L"Change the flags of a field tile animation.\n\n1st argument: background animation.\n2nd argument: flags (unknown).", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Tile Animation", L"Flags" }, new uint8_t[2]{ AT_TILEANIM, AT_BOOLLIST }, 0 },
+	{ 0x63, L"SetTileAnimationPause", L"Make a field tile animation pause at some frame in addition to its normal animation speed.\n\n1st argument: background animation.\n2nd argument: animation frame.\n3rd argument: wait time.", true, 3, new uint8_t[3]{ 1, 1, 1 }, new wstring[3]{ L"Tile Animation", L"Frame ID", L"Time" }, new uint8_t[3]{ AT_TILEANIM, AT_USPIN, AT_USPIN }, 0 },
+	{ 0x64, L"SetTileAnimationFlags", L"Add flags of a field tile animation.\n\n1st argument: background animation.\n2nd argument: flags (only the flags 5 and 6 can be added).\n 5: unknown\n 6: loop back and forth", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Tile Animation", L"Flags" }, new uint8_t[2]{ AT_TILEANIM, AT_BOOLLIST }, 0 },
 	{ 0x65, L"RunTileAnimationEx", L"Run a field tile animation and choose its frame range.\n\n1st argument: background animation.\n2nd argument: starting frame.\n3rd argument: ending frame.", true, 3, new uint8_t[3]{ 1, 1, 1 }, new wstring[3]{ L"Tile Animation", L"Start", L"End" }, new uint8_t[3]{ AT_TILEANIM, AT_USPIN, AT_USPIN }, 0 },
 	{ 0x66, L"SetTextVariable", L"Set the value of a text number or item variable.\n\n1st argument: text variable's \"Script ID\".\n2nd argument: depends on which text opcode is related to the text variable.\n For [VAR_NUM]: integral value.\n For [VAR_ITEM]: item ID.\n For [VAR_TOKEN]: token number.", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Variable ID", L"Value" }, new uint8_t[2]{ AT_USPIN, AT_ITEM }, 0 },
 	{ 0x67, L"SetControlDirection", L"Set the angles for the player's movement control.\n\n1st argument: angle used for arrow movements.\n2nd argument: angle used for analogic stick movements.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Arrow Angle", L"Analogic Angle" }, new uint8_t[2]{ AT_SPIN, AT_SPIN }, 0 },
@@ -188,9 +188,9 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0x6C, L"0x6C", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x6D, L"0x6D", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x6E, L"0x6E", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 },
-	{ 0x6F, L"MoveCamera", L"Move camera over time.\n\n1st and 2nd arguments: destination in (X, Y) format.\n3nd argument: movement duration.\n4th argument: unknown.", true, 4, new uint8_t[4]{ 2, 2, 1, 1 }, new wstring[3]{ L"Destination", L"Time", L"Unknown" }, new uint8_t[4]{ AT_POSITION_X, AT_POSITION_Y, AT_SPIN, AT_SPIN }, 0 }, // screen size = 320?
-	{ 0x70, L"ReleaseCamera", L"Unknown Opcode.\n\n1st arguments: unknown.\n2nd argument: unknown.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_SPIN, AT_USPIN }, 0 },
-	{ 0x71, L"0x71", L"A camera movement.", true, 3, new uint8_t[3]{ 1, 1, 1 }, new wstring[3]{ L"Unknown", L"Unknown", L"Unknown" }, new uint8_t[3]{ AT_SPIN, AT_SPIN, AT_SPIN }, 0 }, // BGCACTIVE
+	{ 0x6F, L"MoveCamera", L"Move camera over time.\n\n1st and 2nd arguments: destination in (X, Y) format.\n3nd argument: movement duration.\n4th argument: scrolling type (8 for sinusoidal, other values for linear interpolation).", true, 4, new uint8_t[4]{ 2, 2, 1, 1 }, new wstring[3]{ L"Destination", L"Time", L"Smoothness" }, new uint8_t[4]{ AT_POSITION_X, AT_POSITION_Y, AT_USPIN, AT_USPIN }, 0 }, // screen size = 320?
+	{ 0x70, L"ReleaseCamera", L"Release camera movement, getting back to its normal behaviour.\n\n1st arguments: duration of the repositioning.\n2nd argument: scrolling type (8 for sinusoidal, other values for linear interpolation).", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Time", L"Smoothness" }, new uint8_t[2]{ AT_SPIN, AT_USPIN }, 0 },
+	{ 0x71, L"EnableCameraServices", L"Enable or disable camera services. When disabling, the 2nd and 3rd arguments are ignored.\n\n1st arguments: boolean activate/deactivate.\n2nd argument: duration of the repositioning when activating (defaulted to 30 if -1 is given).\n3rd argument: scrolling type of the repositioning when activating (8 for sinusoidal, other values for linear interpolation).", true, 3, new uint8_t[3]{ 1, 1, 1 }, new wstring[3]{ L"Enable", L"Time", L"Smoothness" }, new uint8_t[3]{ AT_BOOL, AT_SPIN, AT_USPIN }, 0 }, // BGCACTIVE
 	{ 0x72, L"SetCameraFollowHeight", L"Define the standard height gap between the player's character position and the camera view.\n\n1st argument: height.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Height" }, new uint8_t[1]{ AT_SPIN }, 0 },
 	{ 0x73, L"EnableCameraFollow", L"Make the camera follow the player's character.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x74, L"DisableCameraFollow", L"Stop making the camera follow the player's character.", false, 0, NULL, NULL, NULL, 0 },
@@ -272,8 +272,8 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0xC0, L"EnableTextureAnimation", L"Run a model texture animation and make it loop.\n\n1st argument: model's entry.\n2nd argument: texture animation ID.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Object", L"Texture Animation" }, new uint8_t[2]{ AT_ENTRY, AT_USPIN }, 0 },
 	{ 0xC1, L"RunTextureAnimation", L"Run once a model texture animation.\n\n1st argument: model's entry.\n2nd argument: texture animation ID.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Object", L"Texture Animation" }, new uint8_t[2]{ AT_ENTRY, AT_USPIN }, 0 },
 	{ 0xC2, L"StopTextureAnimation", L"Stop playing the model texture animation.\n\n1st argument: model's entry.\n2nd argument: texture animation ID.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Object", L"Texture Animation" }, new uint8_t[2]{ AT_ENTRY, AT_USPIN }, 0 },
-	{ 0xC3, L"0xC3", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 }, // EBG_overlaySetViewport
-	{ 0xC4, L"RunWorldCode", L"Run one of the World Map codes, which effects hava a large range. May modify the weather, the music, call the chocobo or enable the auto-pilot.\n\n1st argument: world code.\n2nd argument: depends on the code.", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Code", L"Argument" }, new uint8_t[2]{ AT_WORLDCODE, AT_SPIN }, 0 },
+	{ 0xC3, L"SetTileCamera", L"Link a tile block to a specific field camera (useful for looping movement bounds).\n\n1st argument: background tile block.\n2nd argument: camera ID.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Tile Block", L"Camera ID" }, new uint8_t[2]{ AT_TILE, AT_USPIN }, 0 },
+	{ 0xC4, L"RunWorldCode", L"Run one of the World Map codes, which effects have a large range. May modify the weather, the music, call the chocobo or enable the auto-pilot.\n\n1st argument: world code.\n2nd argument: depends on the code.", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Code", L"Argument" }, new uint8_t[2]{ AT_WORLDCODE, AT_SPIN }, 0 },
 	{ 0xC5, L"RunSoundCode", L"Same as RunSoundCode3( code, music, 0, 0, 0 ).", true, 2, new uint8_t[2]{ 2, 2 }, new wstring[2]{ L"Code", L"Sound" }, new uint8_t[2]{ AT_SOUNDCODE, AT_SOUND }, 0 },
 	{ 0xC6, L"RunSoundCode1", L"Same as RunSoundCode3( code, music, arg1, 0, 0 ).", true, 3, new uint8_t[3]{ 2, 2, 3 }, new wstring[3]{ L"Code", L"Sound", L"Argument" }, new uint8_t[3]{ AT_SOUNDCODE, AT_SOUND, AT_SPIN }, 0 },
 	{ 0xC7, L"RunSoundCode2", L"Same as RunSoundCode3( code, music, arg1, arg2, 0 ).", true, 4, new uint8_t[4]{ 2, 2, 3, 1 }, new wstring[4]{ L"Code", L"Sound", L"Argument", L"Argument" }, new uint8_t[4]{ AT_SOUNDCODE, AT_SOUND, AT_SPIN, AT_SPIN }, 0 },
@@ -286,9 +286,9 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0xCE, L"AddGil", L"Give gil to the player.\n\n1st argument: gil amount.", true, 1, new uint8_t[1]{ 3 }, new wstring[1]{ L"Amount" }, new uint8_t[1]{ AT_SPIN }, 0 },
 	{ 0xCF, L"RemoveGil", L"Remove gil from the player.\n\n1st argument: gil amount.", true, 1, new uint8_t[1]{ 3 }, new wstring[1]{ L"Amount" }, new uint8_t[1]{ AT_SPIN }, 0 },
 	{ 0xD0, L"BattleDialog", L"Display text in battle for 60 frames.\n\n1st argument: text to display.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Text" }, new uint8_t[1]{ AT_TEXT }, 0 },
-	{ 0xD1, L"0xD1", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 }, // Return 0 on Steam
-	{ 0xD2, L"0xD2", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 }, // Return 0 on Steam
-	{ 0xD3, L"0xD3", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 }, // Return 0 on Steam
+	{ 0xD1, L"0xD1", L"Unknown Opcode; ignored in the non-PSX versions.", false, 0, NULL, NULL, NULL, 0 }, // "GLOBALCLEAR" Return 0 on Steam
+	{ 0xD2, L"0xD2", L"Unknown Opcode; ignored in the non-PSX versions.", false, 0, NULL, NULL, NULL, 0 }, // "DEBUGSAVE" Return 0 on Steam
+	{ 0xD3, L"0xD3", L"Unknown Opcode; ignored in the non-PSX versions.", false, 0, NULL, NULL, NULL, 0 }, // "DEBUGLOAD" Return 0 on Steam
 	{ 0xD4, L"0xD4", L"Unknown Opcode.", true, 3, new uint8_t[3]{ 2, 2, 2 }, new wstring[3]{ L"Unknown", L"Unknown", L"Unknown" }, new uint8_t[3]{ AT_SPIN, AT_SPIN, AT_SPIN }, 0 }, // geoAttachOffset
 	{ 0xD5, L"0xD5", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 }, // PUSHHIDE
 	{ 0xD6, L"0xD6", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 }, // POPSHOW
@@ -305,16 +305,16 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0xE1, L"TerminateBattle", L"Return to the field (or world map) when the rewards are disabled.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xE2, L"SetupJump", L"Setup datas for a Jump call.\n\n1st to 3rd arguments: destination in (X, Z, Y) format.\n4th argument: number of steps for the jump.", true, 4, new uint8_t[4]{ 2, 2, 2, 1 }, new wstring[2]{ L"Destination", L"Steps" }, new uint8_t[4]{ AT_POSITION_X, AT_POSITION_Z, AT_POSITION_Y, AT_USPIN }, 0 },
 	{ 0xE3, L"SetDialogProgression", L"Change the dialog progression value.\n\n1st argument: new value.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Progression" }, new uint8_t[1]{ AT_SPIN }, 0 },
-	{ 0xE4, L"0xE4", L"Seem to move field tile while applying a loop effect to it.\n\n1st argument: background tile block.\n2nd argument: unknown.\n3rd and 4th arguments: seems to be the movement in (X/256, Y/256) format.\n5th argument: unknown.", true, 5, new uint8_t[5]{ 1, 1, 2, 2, 1 }, new wstring[5]{ L"Tile Block", L"Unknown", L"Unknown", L"Unknown", L"Unknown" }, new uint8_t[5]{ AT_TILE, AT_USPIN, AT_SPIN, AT_SPIN, AT_USPIN }, 0 }, // BGLSCROLLOFFSET
+	{ 0xE4, L"0xE4", L"Seem to move field tile while applying a loop effect to it.\n\n1st argument: background tile block.\n2nd argument: boolean activate/deactivate.\n3rd and 4th arguments: seems to be the movement in (X/256, Y/256) format.\n5th argument: unknown boolean.", true, 5, new uint8_t[5]{ 1, 1, 2, 2, 1 }, new wstring[5]{ L"Tile Block", L"Enable", L"Delta", L"Offset", L"Is X Offset" }, new uint8_t[5]{ AT_TILE, AT_BOOL, AT_SPIN, AT_SPIN, AT_BOOL }, 0 }, // BGLSCROLLOFFSET: EBG_overlaySetScrollWithOffset
 	{ 0xE5, L"AttackSpecial", L"Make the enemy instantatly use a special move. It doesn't use nor modify the battle state so it should be used when the battle is paused. The target(s) are to be set using the SV_Target variable.\n\n1st argument: attack to perform.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Attack" }, new uint8_t[1]{ AT_ATTACK }, 0 },
-	{ 0xE6, L"0xE6", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 }, // BGLLOOPTYPE
-	{ 0xE7, L"SetTileAnimationFrame", L"Change the frame of a field tile animation.\n\n1st argument: background animation.\n2nd argument: animation frame to display.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Animation", L"Frame ID" }, new uint8_t[2]{ AT_TILEANIM, AT_USPIN }, 0 },
+	{ 0xE6, L"SetTileLoopType", L"Let tile be screen anchored or not.\n\n1st argument: background tile block.\n2nd argument: boolean on/off.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Tile Block", L"Screen Anchored" }, new uint8_t[2]{ AT_TILE, AT_BOOL }, 0 },
+	{ 0xE7, L"SetTileAnimationFrame", L"Change the frame of a field tile animation (can be used to hide them all if the given frame is out of range, eg. 255).\n\n1st argument: background animation.\n2nd argument: animation frame to display.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Animation", L"Frame ID" }, new uint8_t[2]{ AT_TILEANIM, AT_USPIN }, 0 },
 	{ 0xE8, L"SideWalkXZY", L"Make the character walk to destination without changing his facing angle. Make it synchronous if InitWalk is called before.\n\n1st to 3rd arguments: destination in (X, Z, Y) format.", true, 3, new uint8_t[3]{ 2, 2, 2 }, new wstring[3]{ L"Destination" }, new uint8_t[3]{ AT_POSITION_X, AT_POSITION_Z, AT_POSITION_Y }, 0 },
 	{ 0xE9, L"UpdatePartyUI", L"Update the party's menu icons and such.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xEA, L"0xEA", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 }, // VRP: EBG_sceneGetVRP ; modify sSys Position
 	{ 0xEB, L"CloseAllWindows", L"Close all the dialogs and UI windows.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xEC, L"FadeFilter", L"Apply a fade filter on the screen.\n\n1st argument: filter mode (0 for ADD, 2 for SUBTRACT).\n2nd argument: fading time.\n3rd argument: unknown.\n4th to 6th arguments: color of the filter in (Cyan, Magenta, Yellow) format.", true, 6, new uint8_t[6]{ 1, 1, 1, 1, 1, 1 }, new wstring[4]{ L"Fade In/Out", L"Fading Time", L"Unknown", L"Color" }, new uint8_t[6]{ AT_USPIN, AT_USPIN, AT_SPIN, AT_COLOR_CYAN, AT_COLOR_MAGENTA, AT_COLOR_YELLOW }, 0 },
-	{ 0xED, L"0xED", L"Unknown Opcode.", true, 3, new uint8_t[3]{ 1, 2, 2 }, new wstring[3]{ L"Unknown", L"Unknown", L"Unknown" }, new uint8_t[3]{ AT_USPIN, AT_SPIN, AT_SPIN }, 0 }, // BGVALPHA: EBG_overlayDefineViewportAlpha
+	{ 0xED, L"0xED", L"Unknown opcode about tile looping movements.\n\n1st argument: camera ID.\n2nd and 3rd arguments: unknown factors (X, Y).", true, 3, new uint8_t[3]{ 1, 2, 2 }, new wstring[3]{ L"Camera ID", L"Unknown X", L"Unknown Y" }, new uint8_t[3]{ AT_USPIN, AT_SPIN, AT_SPIN }, 0 }, // BGVALPHA: EBG_overlayDefineViewportAlpha
 	{ 0xEE, L"EnableInactiveAnimation", L"Allow the player's character to play its inactive animation. The inaction time required is:\nFirst Time = 200 + 4 * Random[0, 255]\nFollowing Times = 200 + 2 * Random[0, 255]", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xEF, L"ShowHereIcon", L"Show the Here icon over player's chatacter.\n\n1st argument: display type (0 to hide, 3 to show unconditionally)", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Show" }, new uint8_t[1]{ AT_SPIN }, 0 },
 	{ 0xF0, L"EnableRun", L"Allow the player's character to run.", false, 0, NULL, NULL, NULL, 0 },
@@ -330,7 +330,7 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0xFA, L"SetVibrationSpeed", L"Set the vibration frame rate.\n\n1st argument: frame rate.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Frame Rate" }, new uint8_t[1]{ AT_USPIN }, 0 },
 	{ 0xFB, L"SetVibrationFlags", L"Change the vibration flags.\n\n1st argument: flags.\n 8: Loop\n 16: Wrap", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Flags" }, new uint8_t[1]{ AT_BOOLLIST }, 0 },
 	{ 0xFC, L"SetVibrationRange", L"Set the time range of vibration.\n\n1st and 2nd arguments: vibration range in (Start, End) format.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Start", L"End" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 },
-	{ 0xFD, L"PreloadField", L"Surely preload a field.\n\n1st argument: unknown.\n2nd argument: field to preload.", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Unknown", L"Field" }, new uint8_t[2]{ AT_SPIN, AT_FIELD }, 0 },
+	{ 0xFD, L"PreloadField", L"Surely preload a field; ignored in the non-PSX versions.\n\n1st argument: unknown.\n2nd argument: field to preload.", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Unknown", L"Field" }, new uint8_t[2]{ AT_SPIN, AT_FIELD }, 0 },
 	{ 0xFE, L"SetCharacterData", L"Init a party's member battle and menu datas.\n\n1st argument: character.\n2nd argument: boolean update level/don't update level.\n3rd argument: equipement set to use.\n4th argument: character categories ; doesn't change if all are enabled.\n 1: male\n 2: female\n 3: gaian\n 4: terran\n 5: temporary character\n5th argument: ability and command set to use.", true, 5, new uint8_t[5]{ 1, 1, 1, 1, 1 }, new wstring[5]{ L"Character", L"Update Level", L"Equipement Set", L"Category", L"Ability Set" }, new uint8_t[5]{ AT_LCHARACTER, AT_BOOL, AT_EQUIPSET, AT_BOOLLIST, AT_ABILITYSET }, 0 },
 	{ 0xFF, L"EXTENDED_CODE", L"Not an opcode.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x100, L"0x100", L"Unknown Opcode.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_SPIN, AT_SPIN }, 0 },
@@ -354,16 +354,13 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 };
 
 /* Opcodes used in scripts and still unnamed:
-0x27 // Fields
 0x3D // Fields + Worlds
-0x71 // Fields
 0x87 // Fields
 0x91 // Fields
 0xA9 // Fields
 0xB5 // Fields + Worlds
 0xB7 // Worlds
 0xB8 // Worlds
-0xC3 // Fields
 0xC9 // Fields
 0xCA // Fields
 0xCC // Fields
@@ -371,10 +368,8 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 0xD4 // Fields
 0xD5 // Fields
 0xD6 // Fields
-0xDB // Fields
 0xDF // Worlds
 0xE4 // Fields
-0xE6 // Fields
 0xEA // Fields
 0xED // Fields
 0x102 // Fields
@@ -658,6 +653,7 @@ static VariableName VarNameList[] = {
 	{ VARCODE_SHARED,    1,	L"SV_FunctionEnemy",		L"Shared variable with the battle system.\nReturn the enemy's identifying bit." },
 	{ VARCODE_SHARED,    2,	L"SV_PlayerTeam",			L"Shared variable with the battle system.\nReturn bits identifying the fighting party characters." },
 	{ VARCODE_SHARED,    3,	L"SV_EnemyTeam",			L"Shared variable with the battle system.\nReturn bits identifying the fighting enemies." },
+	{ VARCODE_SHARED,    4,	L"SV_Everyone",				L"Shared variable with the battle system.\nSame as (SV_PlayerTeam | SV_EnemyTeam)." },
 	{ VARCODE_ENGINE,    0,	L"GetRandom",				L"Return a random number between 0 and 255." },
 	{ VARCODE_ENGINE,    1,	L"GetFieldCamera",			L"Return the ID of the current field camera." },
 	{ VARCODE_ENGINE,    2,	L"IsMovementEnabled",		L"Check if the player's movement is on." },
@@ -683,11 +679,11 @@ static VariableName VarNameList[] = {
 	{ VARCODE_ENGINE,   22,	L"GetSoundDistance",		L"Seem to return some distance about 3D sounds." },
 	{ VARCODE_ENGINE,   23,	L"GetSoundVolume",			L"Seem to return the volume of some 3D sounds." },
 	{ VARCODE_ENGINE,   24,	L"GetLastBattleId",			L"Return the last battle ID." },
-	{ VARCODE_ENGINE,   25,	L"IsAttacking",				L"Check if the function's enemy is attacking." },
+	{ VARCODE_ENGINE,   25,	L"IsAttacking",				L"Check if an attack sequence is running.\nUnlike other informations about the current attack (like GetAttacker or GetTarget), this is sure to turn to false for at least one frame between each attack." },
 	{ VARCODE_ENGINE,   26,	L"IsBattleInitialized",		L"Check if the current running module is a battle." },
 	{ VARCODE_ENGINE,   27,	L"GetBattleResult",			L"Return the result of the last battle.\n\n0 stands for a defeat.\n1 stands for a win.\n5 stands for an interrupted battle.\n7 stands for an enemy escape." },
 	{ VARCODE_ENGINE,   28,	L"GetAttackCommandId",		L"Return the command ID of the current attack." },
-	{ VARCODE_ENGINE,   29,	L"GetAttackId",				L"Return the attack ID of the current attack." },
+	{ VARCODE_ENGINE,   29,	L"GetAttackId",				L"Return the attack ID of the current attack.\nOnly works in counter functions." },
 	{ VARCODE_ENGINE,   30,	L"GetBattleState",			L"Return the battle's state.\n\n0 stands for system initialization.\n1 stands for frozen battle.\n2 stands for the starting camera movements.\n3 stands for a normal state.\n4 stands for state turning to the normal state.\n5 stands for a normal state.\n6 stands for the victory fanfare.\n7 stands for a game over state.\n8 stands for the closing screen fading." },
 	{ VARCODE_ENGINE,   31,	L"GetBattleGroupId",		L"Return the chosen group ID of the current battle." },
 	{ VARCODE_ENGINE,   32,	L"GetBattleStartType",		L"Return the back attack state of the start of the battle.\n\n0 stands for a back attack.\n1 stands for a preemptive strike.\n2 stands for a normal state." },
@@ -719,7 +715,12 @@ static VariableName VarNameList[] = {
 //	{ VARCODE_ENGINE,  208,	L"",		L"." },		Maybe GetHeight on the floor
 	{ VARCODE_ENGINE,  209,	L"IsWorldInitialized",		L"Check if the World Map event loop is already running." },
 	{ VARCODE_ENGINE,  210,	L"GetWorldTitleDisplay",	L"Return the state of the continent's name display.\n\n0 stands for a title waiting for display.\n1 stands for a fading in title.\n2 stands for a fading out title.\n3 stands for nothing displayed." },
-	{ VARCODE_UINT16,    0,	L"General_ScenarioCounter",	L"Scenario counter, increasing at various point of the game." },
+	{ VARCODE_UINT16,    0,	L"General_ScenarioCounter",	L"Scenario counter, increasing at various point of the game.\n\nSome key values:\n"
+														L"1000: Player gets control of Zidane\n1500: Blank wears Pluto armor\n1600: Blank wears off Pluto armor\n2400: Exited Evil Forest\n2990: South Gate destroyed\n"
+														L"3900: Disc 2\n4990: Clayra destroyed\n5598: Lindblum destroyed\n5990: Reached Exterior Continent\n6200: Black Mage Village entered\n6880: Amarant joined\n6990: South Gate recovered\n"
+														L"7010: Disc 3 (Tantalus ran out of Pub)\n8800: Alexandria destroyed\n9450: Desert Palace accessible through sand pit\n9600: Boarded Hilda Garde I\n9890: Desert Palace done\n"
+														L"10400: Hilda Garde III obtained\n10500: Ipsen Castle entered\n10600: Ipsen Castle done\n10620: Eiko and Dagger gone to Shrine\n10640: Amarant and Freya gone to Shrine\n10660: Steiner and Vivi gone to Shrine\n10700: Shrines done\n10830: Mikoto sighted\n"
+														L"11100: Disc 4\n11760: Crystal World reached\n12000: *spoilers* Kuja dies" },
 	{ VARCODE_INT16,     2,	L"General_FieldEntrance",	L"Variable shared between field transition to know where the player comes from." },
 	{ VARCODE_UINT8,     4,	L"Setting_OptionalQuina",	L"Flag checking if Quina is in the party.\nUsed for the part where s/he is an optional character." },
 	{ VARCODE_UINT8,     8,	L"Field_MusicVolume",		L"Volume of the Field music." },
@@ -748,16 +749,28 @@ static VariableName VarNameList[] = {
 	{ VARCODE_UINT8,   104,	L"World_MusicVolume",		L"Volume of the World Map music." },
 	{ VARCODE_INT16,   107,	L"Chocobo_BeachVisited1",	L"Bit flags for the visited world beaches." }, // Also exist in VARCODE_LBOOL format (16 of them)
 	{ VARCODE_INT16,   109,	L"Chocobo_BeachVisited2",	L"Bit flags for the visited world beaches." }, // Also exist in VARCODE_LBOOL format (5 of them)
+	{ VARCODE_INT24,   112,	L"Chocobo_HotColdPoints",	L"Point score of the player in Hot & Cold." },
 	{ VARCODE_UINT8,   129,	L"Chocobo_GoodTreasureBonus", L"Bonus chance for digging high-valued treasures." },
 	{ VARCODE_UINT8,   131,	L"Chocobo_ChocoPieceAmount",L"Number of chocograph pieces collected." },
-	{ VARCODE_UINT8,   134,	L"Chocobo_CurrentField",	L"Index of the current Hot & Cold field among Forest, Lagoon and Air Garden." },
+	{ VARCODE_UINT8,   134,	L"Chocobo_CurrentField",	L"Index of the current Hot & Cold field among Forest (1), Lagoon (2) and Air Garden (3)." },
 	{ VARCODE_UINT16,  136,	L"Chocobo_BeakExp",			L"Choco's total beak experience." },
 	{ VARCODE_UINT8,   138,	L"Chocobo_BeakLevel64",		L"Choco's current beak level factored by 0.646." },
 	{ VARCODE_UINT8,   139,	L"Chocobo_BeakLevel",		L"Choco's current beak level." },
 	{ VARCODE_INT16,   140,	L"Chocobo_BeakNextLevel",	L"Choco's current beak experience needed to level up." },
+	{ VARCODE_UINT16,  142,	L"Chocobo_LastTreasureTime",L"Time in seconds (as displayed by the timer window) of the last Hot & Cold treasure found." },
+	{ VARCODE_UINT16,  146,	L"Chocobo_GardenGamePlayed",L"Number of Hot & Cold games played in the Air Garden." },
+	{ VARCODE_UINT16,  148,	L"Chocobo_LagoonGamePlayed",L"Number of Hot & Cold games played in the Lagoon." },
+	{ VARCODE_UINT16,  150,	L"Chocobo_ForestGamePlayed",L"Number of Hot & Cold games played in the Forest." },
+	{ VARCODE_UINT16,  152,	L"Chocobo_GardenHighScore",	L"Highest score obtained during a Hot & Cold game in the Air Garden." },
+	{ VARCODE_UINT16,  154,	L"Chocobo_LagoonHighScore",	L"Highest score obtained during a Hot & Cold game in the Lagoon." },
+	{ VARCODE_UINT16,  156,	L"Chocobo_ForestHighScore",	L"Highest score obtained during a Hot & Cold game in the Forest." },
 	{ VARCODE_UINT8,   166,	L"Chocobo_ColorPeckBonus",	L"Bonus added to the beak level that depends on Choco's color evolution." },
+	{ VARCODE_UINT8,   167,	L"Chocobo_ForestChocographCount", L"Number of chocographs found in the Forest (excluding pieces)." },
+	{ VARCODE_UINT8,   168,	L"Chocobo_LagoonChocographCount", L"Number of chocographs found in the Lagoon (excluding pieces)." },
+	{ VARCODE_UINT8,   171,	L"Chocobo_GardenChocographCount", L"Number of chocographs found in the Air Garden (excluding pieces)." },
+	{ VARCODE_INT24,   172,	L"Chocobo_AvailableChocograph",	L"Bit flags of chocographs that are available to be dug." },
 	{ VARCODE_UINT8,   181,	L"Chocobo_EatingGreens",	L"Flag enabled between the moment the player selects a Gysahl Green and the moment Choco arrives." },
-	{ VARCODE_UINT16,  182,	L"Chocobo_PeapperSpotFound",L"Bit flags for dead peapper spots already found." }, // Chocobo_FoundGarden is part of it
+	{ VARCODE_UINT16,  182,	L"Chocobo_PepperSpotFound", L"Bit flags for dead pepper spots already found." }, // Chocobo_FoundGarden is part of it
 	{ VARCODE_INT24,   184,	L"Chocobo_WorldChestFound",	L"Bit flags for chocograph treasures found on the World Map." },
 	{ VARCODE_INT24,   187,	L"Chocobo_ChocographFound",	L"Bit flags for chocographs found in the Hot and Cold minigame." },
 	{ VARCODE_UINT8,   190,	L"World_CurrentTransport",	L"Current transport used by the player on the World Map." },
@@ -774,14 +787,30 @@ static VariableName VarNameList[] = {
 	{ VARCODE_INT16,   222,	L"Treasure_PositionY",		L"Y coordinate of the treasure being picked up." },
 	{ VARCODE_INT16,   224,	L"Treasure_Item",			L"Item ID of the treasure being picked up." },
 	{ VARCODE_UINT8,   226,	L"Treasure_PickupFlag",		L"Flag memorizing if a treasure has been picked up." },
+	{ VARCODE_INT16,   228,	L"Treasure_Gil",			L"Gil amount of the treasure being picked up." },
 //	{ VARCODE_LBOOL,   324,	L"Setting_AllowPartySwitch",L"." },
 	{ VARCODE_LUINT8,  475,	L"Minigame_BlankFightScore",L"Best score (number of acclaiming nobles) obtained for the Blank Sword Fight minigame." },
+	{ VARCODE_LUINT8,  479,	L"General_GizaBellCount",	L"Number of Gizamaluke bells possessed by the player." },
+	{ VARCODE_LUINT8,  483,	L"ATE_CleyraVivi",			L"Progression counter of Cleyra's Active Time Events involving Vivi." },
+	{ VARCODE_LUINT8,  483,	L"ATE_CleyraQuina",			L"Progression counter of Cleyra's Active Time Events involving Quina." },
+	{ VARCODE_LUINT8,  489,	L"ATE_AlexandriaBaku",		L"Progression counter of Alexandria's Active Time Events involving Baku." },
+	{ VARCODE_LUINT8,  490,	L"ATE_AlexandriaTantalus",	L"Progression counter of Alexandria's Active Time Events involving the Nero brothers, Blank and Marcus." },
 	{ VARCODE_LUINT8,  491,	L"Minigame_HippaulLevel",	L"Hippaul level for the Hippaul Race minigame." },
+	{ VARCODE_LUINT8,  492,	L"Minigame_QueenGarnetScore", L"Number of Pluto Knights assigned to a fitting job by the Queen Garnet." },
+	{ VARCODE_LINT24,  496,	L"Minigame_RopeBestScore",	L"Best score done in the Jump Rope minigame." },
+	{ VARCODE_LINT24,  499,	L"Minigame_RopeSecondScore",L"Second best score done in the Jump Rope minigame." },
+	{ VARCODE_LINT24,  502,	L"Minigame_RopeThirdScore",	L"Third best score done in the Jump Rope minigame." },
 	{ VARCODE_LUINT8,  509,	L"Stiltzkin_ItemBought",	L"Bit flags for Stiltzkin items bought." },
 	{ VARCODE_BOOL,    184,	L"General_LoadedGame",		L"Flag checking if the game was just loaded from a save." },
 	{ VARCODE_LBOOL,   808,	L"World_WhiteTransition",	L"Flag stating whether the World Map fading transition is a black or white screen." },
+	{ VARCODE_LBOOL,   888,	L"Chocobo_Lv99",			L"Flag checking if Choco's beak level has reached maximum." },
 	{ VARCODE_LBOOL,   889,	L"Chocobo_NoMoreChocograph",L"Flag checking if all the chocographs (and pieces) are found in the current location." },
 	{ VARCODE_LBOOL,   890,	L"Chocobo_NoFindChocograph",L"Flag checking if all the available chocographs (and pieces) are found in the current location." },
+	{ VARCODE_LBOOL,   891,	L"Chocobo_GardenExhaustChocograph",	L"Flag checking if Mene told the player about all the chocographs being found in the Air Garden." },
+	{ VARCODE_LBOOL,   892,	L"Chocobo_LagoonExhaustChocograph",	L"Flag checking if Mene told the player about all the chocographs being found in the Lagoon." },
+	{ VARCODE_LBOOL,   893,	L"Chocobo_ForestExhaustChocograph",	L"Flag checking if Mene told the player about all the chocographs being found in the Forest." },
+	{ VARCODE_LBOOL,   894,	L"Chocobo_LagoonTempExhaustChocograph",	L"Flag checking if Mene told the player about all the available chocographs being found in the Lagoon." },
+	{ VARCODE_LBOOL,   895,	L"Chocobo_ForestTempExhaustChocograph",	L"Flag checking if Mene told the player about all the available chocographs being found in the Forest." },
 	{ VARCODE_LBOOL,  1042,	L"Chocobo_BeachAvailable",	L"Flag enabling or disabling the quest to visit the world beaches." },
 	{ VARCODE_LBOOL,  1064,	L"Chocobo_PepperKnown",		L"Flag checking if Mene told the player about Dead Peppers." },
 	{ VARCODE_LBOOL,  1065,	L"Chocobo_ChocoPieceKnown",	L"Flag checking if Mene told the player about chocograph pieces." },
@@ -932,8 +961,8 @@ static wstring CommandAddendaName[] = {
 	L"Eidolon Phantom",
 	L"Rebirth Flame",
 	L"Trance Command",
-	L"Dead Command", // ???
-	L"Reraise Command", // ???
+	L"Dead Command",
+	L"Reraise Command",
 	L"Stone Command"
 };
 

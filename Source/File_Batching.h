@@ -59,6 +59,7 @@ public:
 
 	LogStruct ImportText(wxString filetext, bool adjustsize = true, bool isjapan = false, bool fatalwarning = false);
 	LogStruct ImportSpecialText(wxString filetext, bool fatalwarning = false);
+	LogStruct ImportScript(int scripttype, wxString filescript, bool fatalwarning = false);
 
 private:
 	wxMenu* list_popup_menu;

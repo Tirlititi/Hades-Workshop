@@ -297,7 +297,6 @@ void StatDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 			SteamReadChar(dlldata.dll_file,command_list[i].second_command_trance);
 			SteamReadChar(dlldata.dll_file,command_list[i].trance_attack);
 		}
-		// ToDo : Update some "trance_attack" with ff9com.FF9COMMAND_TRANCE_NONE
 		fname = tmpnam(NULL);
 		ffbin.open(fname.c_str(),ios::out | ios::binary);
 		for (i=0;i<ABILITY_SET_AMOUNT;i++)
@@ -320,7 +319,7 @@ void StatDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 }
 
 DllMetaDataModification* StatDataSet::ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount) {
-	DllMetaDataModification* res = new DllMetaDataModification[EQUIP_SET_AMOUNT+ABILITY_SET_AMOUNT+5];
+	DllMetaDataModification* res = new DllMetaDataModification[EQUIP_SET_AMOUNT+ABILITY_SET_AMOUNT+6];
 	DllMetaData& dlldata = config.meta_dll;
 	unsigned int i,j,modcounter = 0;
 	uint32_t** argvalue;
@@ -404,7 +403,15 @@ DllMetaDataModification* StatDataSet::ComputeSteamMod(ConfigurationSet& config, 
 		delete[] argvalue[i];
 	delete[] argvalue;
 	modcounter++;
-	*modifamount = EQUIP_SET_AMOUNT+ABILITY_SET_AMOUNT+5;
+	if (config.dll_cmdtrancenones_size>0) {
+		res[modcounter].position = config.dll_cmdtrancenones_offset;
+		res[modcounter].base_length = config.dll_cmdtrancenones_size;
+		res[modcounter].new_length = 0;
+		res[modcounter].value = new uint8_t[0];
+		*modifamount = EQUIP_SET_AMOUNT+ABILITY_SET_AMOUNT+6;
+	} else {
+		*modifamount = EQUIP_SET_AMOUNT+ABILITY_SET_AMOUNT+5;
+	}
 	return res;
 }
 

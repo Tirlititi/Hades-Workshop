@@ -652,6 +652,14 @@ void LogStruct::AddWarning(wstring str) {
 	warning_amount++;
 }
 
+void LogStruct::AddLog(LogStruct otherlog) {
+	error += otherlog.error;
+	warning += otherlog.warning;
+	error_amount += otherlog.error_amount;
+	warning_amount += otherlog.warning_amount;
+	ok = ok && otherlog.ok;
+}
+
 void ReadCharFuncFFIX(fstream& fs,uint8_t& ch) {
 	ch = fs.get();
 	JumpIfNeeded(fs);

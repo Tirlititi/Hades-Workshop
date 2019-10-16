@@ -106,6 +106,7 @@ struct UnityArchiveFileCreator {
 
 struct UnityArchiveMetaData {
 	uint8_t archive_type; // p0data[n].bin or .assets
+	UnityArchiveFile archive_file;
 	bool loaded;
 	
 	uint32_t header_size;
@@ -117,24 +118,24 @@ struct UnityArchiveMetaData {
 	uint32_t header_unknown2;
 	uint8_t header_unknown3;
 	uint32_t header_file_info_amount;
-	int32_t* file_info_type;
-	uint32_t* file_info_unkstruct_amount;
-	uint32_t* file_info_unkstruct_text_size;
+	vector<int32_t> file_info_type;
+	vector<uint32_t> file_info_unkstruct_amount;
+	vector<uint32_t> file_info_unkstruct_text_size;
 	// 0x10 or 0x20 info data
 	// + unkstruct
 	uint32_t header_file_amount;
-	int64_t* file_info;
-	uint32_t* file_offset_start;
-	uint32_t* file_size;
-	uint32_t* file_type1;
-	uint32_t* file_type2;
-	uint32_t* file_flags; // Often 0 (not always)
-	uint32_t* file_name_len;
-	string* file_name;
+	vector<int64_t> file_info;
+	vector<uint32_t> file_offset_start;
+	vector<uint32_t> file_size;
+	vector<uint32_t> file_type1;
+	vector<uint32_t> file_type2;
+	vector<uint32_t> file_flags; // Often 0 (not always)
+	vector<uint32_t> file_name_len;
+	vector<string> file_name;
 	
-	uint32_t* text_file_size;
+	vector<uint32_t> text_file_size;
 	
-	int Load(fstream& f);
+	int Load(fstream& f, UnityArchiveFile file);
 	void Flush();
 	void Copy(UnityArchiveMetaData* base, bool copyfiles = true);
 	uint32_t GetFileSizeByIndex(unsigned int fileid);
@@ -143,12 +144,12 @@ struct UnityArchiveMetaData {
 	uint32_t GetFileOffsetByIndex(unsigned int fileid, string folder = "");
 	int32_t GetFileIndex(string filename, uint32_t filetype = 0x7FFFFFFF, unsigned int num = 0, string folder = "");
 	int32_t GetFileIndexByInfo(int64_t info, uint32_t filetype = 0x7FFFFFFF, string folder = "");
-	string GetFileFullName(unsigned int fileid, UnityArchiveAssetBundle* bundle = NULL, UnityArchiveIndexListData* indexlist = NULL, bool* found = NULL);
+	string GetFileFullName(unsigned int fileid, UnityArchiveFile archivefile, UnityArchiveAssetBundle* bundle = NULL, UnityArchiveIndexListData* indexlist = NULL, bool* found = NULL);
 
 	// Arrays must be of length header_file_amount
 	// Return the starting offset of the files in the duplicate (must be deleted[] if newmetadata is not given)
 	// If a newmetadata is given, an UnityArchiveMetaData compatible with the duplicate is computed and the offsets returned are file_offset_start instead (use GetFileOffsetByIndex instead)
-	uint32_t* Duplicate(fstream& fbase, fstream& fdest, bool* copylist, uint32_t* filenewsize, UnityArchiveFileCreator* addfile = NULL, UnityArchiveMetaData* newmetadata = NULL);
+	vector<uint32_t> Duplicate(fstream& fbase, fstream& fdest, vector<bool> copylist, vector<uint32_t> filenewsize, UnityArchiveFileCreator* addfile = NULL, UnityArchiveMetaData* newmetadata = NULL);
 	
 	UnityArchiveMetaData() : loaded(false) {}
 	~UnityArchiveMetaData() { Flush(); }
@@ -161,13 +162,13 @@ struct UnityArchiveMetaData {
 struct UnityArchiveIndexListData {
 	bool loaded;
 	uint32_t amount;
-	string* path;
-	uint32_t* unk1;
-	uint32_t* index;
-	uint32_t* unk2;
+	vector<string> path;
+	vector<uint32_t> archive_file;
+	vector<uint32_t> index;
+	vector<uint32_t> unk;
 
 	unsigned int data_part2_amount;
-	uint32_t* data_part2;
+	vector<uint32_t> data_part2;
 	
 	int Load(fstream& f, uint32_t datasize);
 	void Write(fstream& f);
@@ -176,6 +177,9 @@ struct UnityArchiveIndexListData {
 	
 	UnityArchiveIndexListData() : loaded(false) {}
 	~UnityArchiveIndexListData() { Flush(); }
+	
+	static UnityArchiveFile SteamToHWSArchiveFile(uint32_t type);
+	static uint32_t HWSToSteamArchiveFile(UnityArchiveFile type);
 };
 
 struct UnityArchiveAssetBundle {

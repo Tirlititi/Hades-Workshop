@@ -873,8 +873,8 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 			importpdatadir = importpdatadir.Mid(0,importpdatadir.Find(_(L"FF9_Launcher.exe")))+_(L"StreamingAssets\\");
 			wxString importfilename;
 			wxString filename;
-			bool* copylist[9]{NULL};
-			uint32_t* filenewsize[9]{NULL};
+			vector<bool> copylist[9];
+			vector<uint32_t> filenewsize[9];
 			fstream filebase[9];
 			fstream filedest[9];
 			UnityArchiveMetaData metafield[9];
@@ -895,17 +895,15 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 				}
 				if (!isok)
 					break;
-				metafield[i].Load(filebase[i]);
+				metafield[i].Load(filebase[i], (UnityArchiveFile)(UNITY_ARCHIVE_DATA11+i));
 				filebase[i].seekg(metafield[i].GetFileOffset("",142));
 				fieldindexlist[i].Load(filebase[i]);
 				filebase[i].seekg(0);
-				copylist[i] = new bool[metafield[i].header_file_amount];
-				filenewsize[i] = new uint32_t[metafield[i].header_file_amount];
+				copylist[i].resize(metafield[i].header_file_amount);
+				filenewsize[i].resize(metafield[i].header_file_amount);
 			}
 			if (!isok) {
 				for (i=0;i<9;i++) {
-					if (copylist[i]) delete[] copylist[i];
-					if (filenewsize[i]) delete[] filenewsize[i];
 					if (filebase[i].is_open()) filebase[i].close();
 					if (filedest[i].is_open()) filedest[i].close();
 				}
@@ -948,7 +946,7 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 				// ToDo : Walkmesh with .bgi
 			}
 			LoadingDialogUpdate(1);
-			uint32_t* unitydataoff[9];
+			vector<uint32_t> unitydataoff[9];
 			for (i=0;i<9;i++) {
 				unitydataoff[i] = metafield[i].Duplicate(filebase[i],filedest[i],copylist[i],filenewsize[i]);
 				LoadingDialogUpdate(2+i);
@@ -974,9 +972,9 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 			for (i=0;i<9;i++) {
 				filebase[i].close();
 				filedest[i].close();
-				delete[] copylist[i];
-				delete[] filenewsize[i];
-				delete[] unitydataoff[i];
+				copylist[i].clear();
+				filenewsize[i].clear();
+				unitydataoff[i].clear();
 				filename = importpdatadir;
 				filename << _(L"p0data1") << (i+1) << _(L".bin");
 				remove(filename.mb_str());

@@ -59,6 +59,10 @@ inline Spell_Target_Amount GetEnemySpellTargetAmountFromModel(uint16_t modelid) 
 }
 
 inline bool IsEnemySpellRandomizable(EnemySpellDataStruct& spell, vector<EnemySequenceCodeLine>& sequence, uint16_t* modelid = NULL, Spell_Target_Amount* ta = NULL) {
+	if (spell.id==8 && spell.parent->parent->battle_data[spell.parent->id]->object_id==301) // Absorb of "Prison Cage ; Vivi"
+		return false;
+	if (spell.id==13 && spell.parent->parent->battle_data[spell.parent->id]->object_id==302) // Absorb of "Prison Cage ; Garnet"
+		return false;
 	if (spell.effect==0 || spell.effect==64 || spell.effect==10 || spell.effect==12 || spell.effect==13 || spell.effect==30 || spell.effect==37 || spell.effect==41 || spell.effect==43 || spell.effect==44 || spell.effect==45 || spell.effect==47 || spell.effect==52 || (spell.effect>=55 && spell.effect<=58) || spell.effect==96 || spell.effect==103 || spell.effect==106)
 		return false;
 	int seqcode, codearg;
@@ -107,8 +111,9 @@ inline bool ReplaceEnemySpell(EnemySpellDataStruct* base, EnemySpellDataStruct& 
 	base->status = copy.status;
 	base->target_flag = copy.target_flag;
 	base->target_type = copy.target_type;
-	base->unknown3 = copy.unknown3;
-	base->unknown4 = copy.unknown4;
+	base->menu_flag = copy.menu_flag;
+	base->model_alt = copy.model_alt;
+	base->name_offset = copy.name_offset;
 	return ok;
 }
 

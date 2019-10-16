@@ -4091,6 +4091,16 @@ void CDDataStruct::DisplayEnemySpell(int battleid, int spellid) {
 	m_enemyspelltargetflagcamera->SetValue(ep.target_flag & TARGET_FLAG_CAMERA);
 	m_enemyspelltargetflagdeadfirst->SetValue(ep.target_flag & TARGET_FLAG_TARGET_DEAD_FIRST);
 	MACRO_FLAG_DISPLAY8(ep.flag,m_enemyspellflag)
+	MACRO_FLAG_DISPLAY8(ep.menu_flag,m_enemyspellmenuflag)
+	Spell_Target_Type tt = ep.GetTargetType();
+	m_enemyspelltargettype->SetSelection(tt);
+	m_enemyspelltargetamount->SetSelection(ep.GetTargetAmount());
+	m_enemyspelltargetpriority->SetSelection(ep.GetTargetPriority());
+	m_enemyspelltargetamount->Enable(tt != SPELL_TARGET_TYPE_EVERYONE && tt != SPELL_TARGET_TYPE_SELF && tt != SPELL_TARGET_TYPE_IRRELEVANT);
+	m_enemyspelltargetpriority->Enable(tt == SPELL_TARGET_TYPE_ANY);
+	m_enemyspelltargetpanel->SetSelection(ep.GetPanel());
+	m_enemyspellmodelalt->SetValue(ep.model_alt);
+	m_enemyspellnameoffset->SetValue(ep.name_offset);
 	m_enemyspellscrolledwindow->Layout();
 	m_enemyspellscrolledwindow->GetParent()->GetSizer()->Layout();
 	m_enemyspellscrolledwindow->Refresh();
@@ -4420,6 +4430,10 @@ void CDDataStruct::OnEnemyChangeSpin(wxSpinEvent& event) {
 			MACRO_ENEMY_CHANGE_DATA(Spell,accuracy,event.GetPosition())
 		} else if (id==wxID_SPELLMP) {
 			MACRO_ENEMY_CHANGE_DATA(Spell,mp,event.GetPosition())
+		} else if (id==wxID_MODELALT) {
+			MACRO_ENEMY_CHANGE_DATA(Spell,model_alt,event.GetPosition())
+		} else if (id==wxID_SPELLNO) {
+			MACRO_ENEMY_CHANGE_DATA(Spell,name_offset,event.GetPosition())
 		}
 	} else if (m_enemygrouplist->GetSelection()!=wxNOT_FOUND) {
 		EnemyGroupDataStruct& eg = eb.group[m_enemygrouplist->GetSelection()];
@@ -4552,6 +4566,23 @@ void CDDataStruct::OnEnemyChangeChoice(wxCommandEvent& event) {
 					DiscardSimilarEnemyUnaffected = true;
 			}
 			return;
+		} else if (id==wxID_TARGETTYPE) {
+			Spell_Target_Type tt = event.GetSelection();
+			enmydata.SetTargetType(tt);
+			m_enemyspelltargetamount->SetSelection(enmydata.GetTargetAmount());
+			m_enemyspelltargetpriority->SetSelection(enmydata.GetTargetPriority());
+			m_enemyspelltargetamount->Enable(tt != SPELL_TARGET_TYPE_EVERYONE && tt != SPELL_TARGET_TYPE_SELF && tt != SPELL_TARGET_TYPE_IRRELEVANT);
+			m_enemyspelltargetpriority->Enable(tt == SPELL_TARGET_TYPE_ANY);
+			MACRO_ENEMY_CHANGE_DATA(Spell,target_type,enmydata.target_type)
+		} else if (id==wxID_TARGETAMOUNT) {
+			enmydata.SetTargetAmount(event.GetSelection());
+			MACRO_ENEMY_CHANGE_DATA(Spell,target_type,enmydata.target_type)
+		} else if (id==wxID_TARGETPRIORITY) {
+			enmydata.SetTargetPriority(event.GetSelection());
+			MACRO_ENEMY_CHANGE_DATA(Spell,target_type,enmydata.target_type)
+		} else if (id==wxID_TARGETPANEL) {
+			enmydata.SetPanel(event.GetSelection());
+			MACRO_ENEMY_CHANGE_DATA(Spell,target_type,enmydata.target_type)
 		}
 	} else if (m_enemygrouplist->GetSelection()!=wxNOT_FOUND) {
 		EnemyGroupDataStruct& eg = eb.group[m_enemygrouplist->GetSelection()];
@@ -4604,6 +4635,7 @@ void CDDataStruct::OnEnemyChangeFlags(wxCommandEvent& event) {
 		#define MACRO_ENEMY_CHECK_SPELL_FLAG(SPELL) \
 			MACRO_FLAG_SET8(SPELL ## .element,wxID_SE) \
 			MACRO_FLAG_SET8(SPELL ## .flag,wxID_SF) \
+			MACRO_FLAG_SET8(SPELL ## .menu_flag,wxID_SM) \
 			MACRO_FLAG_SET(SPELL ## .target_flag,wxID_CAN_TARGET_DEAD,TARGET_FLAG_CAN_TARGET_DEAD) \
 			MACRO_FLAG_SET(SPELL ## .target_flag,wxID_TARGET_CAMERA,TARGET_FLAG_CAMERA) \
 			MACRO_FLAG_SET(SPELL ## .target_flag,wxID_TARGET_DEAD_FIRST,TARGET_FLAG_TARGET_DEAD_FIRST)
@@ -7040,7 +7072,7 @@ void CDDataStruct::InitEnemy(void) {
 	}
 	m_enemylist->SetSelection(0);
 	GetTopWindow()->m_exportenemyscript->Enable();
-//	GetTopWindow()->m_importenemyscript->Enable();
+	GetTopWindow()->m_importenemyscript->Enable();
 }
 
 void CDDataStruct::InitCard(void) {
@@ -7128,7 +7160,7 @@ void CDDataStruct::InitWorldMap(void) {
 	m_worldplacelist->SetSelection(0);
 	m_worldbattlelist->SetSelection(0);
 	GetTopWindow()->m_exportworldscript->Enable();
-//	GetTopWindow()->m_importworldscript->Enable();
+	GetTopWindow()->m_importworldscript->Enable();
 }
 
 void CDDataStruct::InitField(void) {
@@ -7148,7 +7180,7 @@ void CDDataStruct::InitField(void) {
 	fieldloaded = true;
 	m_fieldlist->SetSelection(0);
 	GetTopWindow()->m_exportfieldscript->Enable();
-//	GetTopWindow()->m_importfieldscript->Enable();
+	GetTopWindow()->m_importfieldscript->Enable();
 	GetTopWindow()->m_exportfieldbackground->Enable();
 	GetTopWindow()->m_backgroundeditor->Enable();
 }

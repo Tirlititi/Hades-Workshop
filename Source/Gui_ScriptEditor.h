@@ -38,6 +38,7 @@ public:
 	vector<wxArrayString> func_str;
 	wxArrayString localvar_str;
 	wxString globalvar_str;
+	wxString currentvar_str;
 	wxArrayString entry_name;
 	wxArrayString functionlist_str;
 	vector<uint16_t*> functionlist_id;
@@ -48,14 +49,25 @@ public:
 	// dataload[] = { statset, enemyset, fieldset, itemset, spellset, supportset, commandset, cardset }
 	ScriptEditHandler(ScriptDataStruct& scpt, int scpttype, SaveSet* sv, EnemyDataStruct* ed, TextDataStruct* td, bool* dataloaded);
 	~ScriptEditHandler();
+	unsigned int GetFunctionAbsolutePos(unsigned int entry, unsigned int function);
 	void GenerateFunctionStrings(bool appendcomment = false);
 	void GenerateFunctionList();
 	void EntryChangeName(unsigned int entry, wxString newname);
 	wxString GetArgumentDescription(int64_t argvalue, uint8_t argtype);
 
+	// Change entry_selection and function_selection
+	LogStruct ParseFunction(wxString str, unsigned int entry, unsigned int function, unsigned int startinglinenumber = 0);
+	ScriptLocalVariableSet* ParseLocal(LogStruct& log, wxString str);
+	unsigned int GetParsedEntryNewSize();
+	void ApplyParsedFunction();
+	
+	void AddFunction(int entryid, int funcidpos, uint16_t functype);
+	void AddEntry(int entrypos, uint8_t entrytype);
+
 private:
 	bool GenerateFunctionStrings_Rec(wxString& str, ScriptFunction& func, unsigned int& funcpos, unsigned int& oppos, int endfuncpos = -1, unsigned int tabpos = 1, int blocktype = 0, int endblockpos = -1, bool appendcomment = false);
 	wxString ConvertVarArgument(ScriptArgument& arg, wxArrayString* argcomment = NULL);
+	void UpdateGlobalLocalStrings(int ignoreentry = -1);
 };
 
 class ScriptEditDialog : public ScriptEditWindow, public ScriptEditHandler {
@@ -117,7 +129,6 @@ public:
 	~ScriptEditDialog();
 	int ShowModal();
 	void DisplayFunctionList(int newfunc = -1, int removedfunc = -1);
-	LogStruct ParseFunction(wxString str, unsigned int entry, unsigned int function);
 	void DisplayFunction(unsigned int entry, unsigned int function);
 	void DisplayOperation(wxString line, bool refreshargcontrol = true, bool refresharg = true);
 	void UpdateLineHelp(long x, long y);
@@ -134,6 +145,7 @@ private:
 	wxMenu* func_popup_menu;
 	GLWindow* gl_window;
 	ScriptHelpDialog* help_dial;
+
 	wxCheckBox* ArgCreateFlag(wxString& arg, unsigned int id);
 	wxTextCtrl* ArgCreateText(wxString& arg, unsigned int id);
 	wxSpinCtrl* ArgCreateSpin(wxString& arg, unsigned int id, int size, bool sign);
@@ -144,8 +156,6 @@ private:
 	wxPanel* ArgCreatePosition(wxArrayString& arg, unsigned int id);
 	wxColourPickerCtrl* ArgCreateColorPicker(wxArrayString& arg, unsigned int id, bool rgb);
 	
-	void UpdateGlobalLocalStrings(int ignoreentry = -1);
-	ScriptLocalVariableSet* ParseLocal(LogStruct& log, wxString str);
 	void ScriptChangeArg(int argi, int64_t value, int argshift = 0);
 	
 	void OnFunctionChoose(wxListEvent& event);

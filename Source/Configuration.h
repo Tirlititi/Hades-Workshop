@@ -120,6 +120,8 @@ public:
 	int32_t dll_magicsword_field_id;
 	int32_t dll_equipset_field_id[EQUIP_SET_AMOUNT];
 	int32_t dll_shop_field_id[SHOP_AMOUNT];
+	int32_t dll_cmdtrancenones_offset;
+	int32_t dll_cmdtrancenones_size;
 	
 	// Spell Config
 	uint32_t spell_data_offset[5];

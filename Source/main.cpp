@@ -711,21 +711,39 @@ void MainFrame::OnBatchImportClick( wxCommandEvent& event ) {
 	int id = event.GetId();
 	if (id==wxID_IMPTEXT) {
 		BatchImportDialog dial(this);
-		if (dial.ShowModal(1,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->config.language & LANGUAGE_VERSION_JAPAN)==wxID_OK)
-			CDPanel[currentpanel]->MarkDataTextModified(0,CHUNK_TYPE_TEXT);
+		dial.ShowModal(1,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->config.language & LANGUAGE_VERSION_JAPAN);
+		if (dial.datamodified) {
+			CDPanel[currentpanel]->textmodified = true;
+			MarkDataModified();
+		}
 	} else if (id==wxID_IMPUITEXT) {
 		BatchImportDialog dial(this);
-		if (dial.ShowModal(2,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->config.language & LANGUAGE_VERSION_JAPAN)==wxID_OK)
-			CDPanel[currentpanel]->MarkDataMenuUIModified();
+		dial.ShowModal(2,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->config.language & LANGUAGE_VERSION_JAPAN);
+		if (dial.datamodified) {
+			CDPanel[currentpanel]->ffuimodified = true;
+			MarkDataModified();
+		}
 	} else if (id==wxID_IMPENMYSCRIPT) {
 		BatchImportDialog dial(this);
 		dial.ShowModal(3,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->config.language & LANGUAGE_VERSION_JAPAN);
+		if (dial.datamodified) {
+			CDPanel[currentpanel]->enemymodified = true;
+			MarkDataModified();
+		}
 	} else if (id==wxID_IMPWORLDSCRIPT) {
 		BatchImportDialog dial(this);
 		dial.ShowModal(4,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->config.language & LANGUAGE_VERSION_JAPAN);
+		if (dial.datamodified) {
+			CDPanel[currentpanel]->worldmodified = true;
+			MarkDataModified();
+		}
 	} else if (id==wxID_IMPFIELDSCRIPT) {
 		BatchImportDialog dial(this);
 		dial.ShowModal(5,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->config.language & LANGUAGE_VERSION_JAPAN);
+		if (dial.datamodified) {
+			CDPanel[currentpanel]->fieldmodified = true;
+			MarkDataModified();
+		}
 	}
 }
 
@@ -817,6 +835,7 @@ void MainFrame::UpdateMenuAvailability(int panel) {
 		m_importfieldscript->Enable(false);
 		m_exportfieldbackground->Enable(false);
 		m_modmanager->Enable(false);
+		m_randomizer->Enable(false);
 		m_backgroundeditor->Enable(false);
 		return;
 	}
@@ -836,11 +855,11 @@ void MainFrame::UpdateMenuAvailability(int panel) {
 	m_exportuitext->Enable(CDPanel[panel]->ffuiloaded);
 	m_importuitext->Enable(CDPanel[panel]->ffuiloaded);
 	m_exportenemyscript->Enable(CDPanel[panel]->enemyloaded);
-//	m_importenemyscript->Enable(CDPanel[panel]->enemyloaded);
+	m_importenemyscript->Enable(CDPanel[panel]->enemyloaded);
 	m_exportworldscript->Enable(CDPanel[panel]->worldloaded);
-//	m_importworldscript->Enable(CDPanel[panel]->worldloaded);
+	m_importworldscript->Enable(CDPanel[panel]->worldloaded);
 	m_exportfieldscript->Enable(CDPanel[panel]->fieldloaded);
-//	m_importfieldscript->Enable(CDPanel[panel]->fieldloaded);
+	m_importfieldscript->Enable(CDPanel[panel]->fieldloaded);
 	m_exportfieldbackground->Enable(CDPanel[panel]->fieldloaded);
 }
 

@@ -141,7 +141,7 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	m_menuBatch->Append( m_exportenemyscript );
 	m_exportenemyscript->Enable( false );
 
-	m_importenemyscript = new wxMenuItem( m_menuBatch, wxID_IMPENMYSCRIPT, wxString( _("Import Enemy Scripts") ) , _("NOT YET IMPLEMENTED"), wxITEM_NORMAL );
+	m_importenemyscript = new wxMenuItem( m_menuBatch, wxID_IMPENMYSCRIPT, wxString( _("Import Enemy Scripts") ) , _("Import a batch of enemy AI scripts"), wxITEM_NORMAL );
 	m_menuBatch->Append( m_importenemyscript );
 	m_importenemyscript->Enable( false );
 
@@ -149,7 +149,7 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	m_menuBatch->Append( m_exportworldscript );
 	m_exportworldscript->Enable( false );
 
-	m_importworldscript = new wxMenuItem( m_menuBatch, wxID_IMPWORLDSCRIPT, wxString( _("Import World Map Scripts") ) , _("NOT YET IMPLEMENTED"), wxITEM_NORMAL );
+	m_importworldscript = new wxMenuItem( m_menuBatch, wxID_IMPWORLDSCRIPT, wxString( _("Import World Map Scripts") ) , _("Import a batch of World Map scripts"), wxITEM_NORMAL );
 	m_menuBatch->Append( m_importworldscript );
 	m_importworldscript->Enable( false );
 
@@ -157,7 +157,7 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	m_menuBatch->Append( m_exportfieldscript );
 	m_exportfieldscript->Enable( false );
 
-	m_importfieldscript = new wxMenuItem( m_menuBatch, wxID_IMPFIELDSCRIPT, wxString( _("Import Field Scripts") ) , _("NOT YET IMPLEMENTED"), wxITEM_NORMAL );
+	m_importfieldscript = new wxMenuItem( m_menuBatch, wxID_IMPFIELDSCRIPT, wxString( _("Import Field Scripts") ) , _("Import a batch of Field scripts"), wxITEM_NORMAL );
 	m_menuBatch->Append( m_importfieldscript );
 	m_importfieldscript->Enable( false );
 
@@ -439,7 +439,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer147->Add( m_spellstatus, 0, wxALL, 2 );
 
 	m_spellstatusset = new wxButton( m_spellscrolledwindow, wxID_STATUS, _("Edit Status Set"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_spellstatusset->SetToolTip( _("Warning\nChanging a status set will modify it\nfor the every spells using the same set") );
+	m_spellstatusset->SetToolTip( _("Warning\nChanging a status set will modify it\nfor all the spells using the same set") );
 
 	bSizer147->Add( m_spellstatusset, 0, wxALL, 2 );
 
@@ -485,8 +485,6 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	gSizer212->Add( m_spellmenuflag3, 0, wxALL, 5 );
 
 	m_spellmenuflag4 = new wxCheckBox( m_spellscrolledwindow, wxID_MF4, _("Unused (4)"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_spellmenuflag4->SetToolTip( _("Boost the MP cost early game") );
-
 	gSizer212->Add( m_spellmenuflag4, 0, wxALL, 5 );
 
 	m_spellmenuflag5 = new wxCheckBox( m_spellscrolledwindow, wxID_MF5, _("Unused (5)"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -1563,7 +1561,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer87->Add( m_itemstatid, 0, wxALL, 2 );
 
 	m_itemstatidbutton = new wxButton( m_itemscrolledwindow, wxID_STAT, _("Edit Stat Set"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_itemstatidbutton->SetToolTip( _("Warning\nChanging a stat set will modify it\nfor the every items using the same set") );
+	m_itemstatidbutton->SetToolTip( _("Warning\nChanging a stat set will modify it\nfor all the items using the same set") );
 
 	bSizer87->Add( m_itemstatidbutton, 0, wxALL, 2 );
 
@@ -2031,10 +2029,14 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	wxGridSizer* m_itemweaponflag;
 	m_itemweaponflag = new wxGridSizer( 2, 4, 0, 0 );
 
-	m_itemweaponflag1 = new wxCheckBox( m_itemweaponpanel, wxID_WF1, _("Unknown"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_itemweaponflag1 = new wxCheckBox( m_itemweaponpanel, wxID_WF1, _("Short Range"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_itemweaponflag1->SetToolTip( _("For out of reach enemies") );
+
 	m_itemweaponflag->Add( m_itemweaponflag1, 0, wxALL, 5 );
 
-	m_itemweaponflag2 = new wxCheckBox( m_itemweaponpanel, wxID_WF2, _("Ignore Row"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_itemweaponflag2 = new wxCheckBox( m_itemweaponpanel, wxID_WF2, _("Long Range"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_itemweaponflag2->SetToolTip( _("Ignore back row damage reduction") );
+
 	m_itemweaponflag->Add( m_itemweaponflag2, 0, wxALL, 5 );
 
 	m_itemweaponflag3 = new wxCheckBox( m_itemweaponpanel, wxID_WF3, _("Can Throw"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -3572,7 +3574,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer148->Add( m_enemyspellstatus, 0, wxALL, 2 );
 
 	m_enemyspellstatusset = new wxButton( m_enemyspellscrolledwindow, wxID_STATUS, _("Edit Status Set"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_enemyspellstatusset->SetToolTip( _("Warning\nChanging a status set will modify it\nfor the every spells using the same set") );
+	m_enemyspellstatusset->SetToolTip( _("Warning\nChanging a status set will modify it\nfor all the spells using the same set") );
 
 	bSizer148->Add( m_enemyspellstatusset, 0, wxALL, 2 );
 
@@ -3687,6 +3689,104 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 
 	fgSizer10->Add( gSizer62, 1, wxEXPAND, 5 );
+
+	m_enemyspellmenuflaglabel = new wxStaticText( m_enemyspellscrolledwindow, wxID_ANY, _("Menu Flags"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_enemyspellmenuflaglabel->Wrap( -1 );
+	fgSizer10->Add( m_enemyspellmenuflaglabel, 0, wxALL, 5 );
+
+	wxGridSizer* gSizer621;
+	gSizer621 = new wxGridSizer( 2, 4, 0, 0 );
+
+	m_enemyspellmenuflag1 = new wxCheckBox( m_enemyspellscrolledwindow, wxID_SM1, _("Hit Alternate"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_enemyspellmenuflag1->SetToolTip( _("Must be used in combination with Enemy Attack") );
+
+	gSizer621->Add( m_enemyspellmenuflag1, 0, wxALL, 5 );
+
+	m_enemyspellmenuflag2 = new wxCheckBox( m_enemyspellscrolledwindow, wxID_SM2, _("Hide AP figures"), wxDefaultPosition, wxDefaultSize, 0 );
+	gSizer621->Add( m_enemyspellmenuflag2, 0, wxALL, 5 );
+
+	m_enemyspellmenuflag3 = new wxCheckBox( m_enemyspellscrolledwindow, wxID_SM3, _("MP x 4"), wxDefaultPosition, wxDefaultSize, 0 );
+	gSizer621->Add( m_enemyspellmenuflag3, 0, wxALL, 5 );
+
+	m_enemyspellmenuflag4 = new wxCheckBox( m_enemyspellscrolledwindow, wxID_SM4, _("Unused (4)"), wxDefaultPosition, wxDefaultSize, 0 );
+	gSizer621->Add( m_enemyspellmenuflag4, 0, wxALL, 5 );
+
+	m_enemyspellmenuflag5 = new wxCheckBox( m_enemyspellscrolledwindow, wxID_SM5, _("Unused (5)"), wxDefaultPosition, wxDefaultSize, 0 );
+	gSizer621->Add( m_enemyspellmenuflag5, 0, wxALL, 5 );
+
+	m_enemyspellmenuflag6 = new wxCheckBox( m_enemyspellscrolledwindow, wxID_SM6, _("Unused (6)"), wxDefaultPosition, wxDefaultSize, 0 );
+	gSizer621->Add( m_enemyspellmenuflag6, 0, wxALL, 5 );
+
+	m_enemyspellmenuflag7 = new wxCheckBox( m_enemyspellscrolledwindow, wxID_SM7, _("Unused (7)"), wxDefaultPosition, wxDefaultSize, 0 );
+	gSizer621->Add( m_enemyspellmenuflag7, 0, wxALL, 5 );
+
+	m_enemyspellmenuflag8 = new wxCheckBox( m_enemyspellscrolledwindow, wxID_SM8, _("Enemy Attack"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_enemyspellmenuflag8->SetToolTip( _("Dummied") );
+
+	gSizer621->Add( m_enemyspellmenuflag8, 0, wxALL, 5 );
+
+
+	fgSizer10->Add( gSizer621, 1, wxEXPAND, 5 );
+
+	m_enemyspelltargettypelabel = new wxStaticText( m_enemyspellscrolledwindow, wxID_ANY, _("Target Type"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_enemyspelltargettypelabel->Wrap( -1 );
+	fgSizer10->Add( m_enemyspelltargettypelabel, 0, wxALL, 5 );
+
+	wxString m_enemyspelltargettypeChoices[] = { _("Any"), _("Ally"), _("Enemy"), _("Everyone"), _("Self"), _("Irrelevant") };
+	int m_enemyspelltargettypeNChoices = sizeof( m_enemyspelltargettypeChoices ) / sizeof( wxString );
+	m_enemyspelltargettype = new wxChoice( m_enemyspellscrolledwindow, wxID_TARGETTYPE, wxDefaultPosition, wxDefaultSize, m_enemyspelltargettypeNChoices, m_enemyspelltargettypeChoices, 0 );
+	m_enemyspelltargettype->SetSelection( 0 );
+	fgSizer10->Add( m_enemyspelltargettype, 0, wxALL, 2 );
+
+	m_enemyspelltargetamountlabel = new wxStaticText( m_enemyspellscrolledwindow, wxID_ANY, _("Target Amount"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_enemyspelltargetamountlabel->Wrap( -1 );
+	fgSizer10->Add( m_enemyspelltargetamountlabel, 0, wxALL, 5 );
+
+	wxString m_enemyspelltargetamountChoices[] = { _("Single"), _("Multiple"), _("Single-Multi"), _("Multiple (Special)") };
+	int m_enemyspelltargetamountNChoices = sizeof( m_enemyspelltargetamountChoices ) / sizeof( wxString );
+	m_enemyspelltargetamount = new wxChoice( m_enemyspellscrolledwindow, wxID_TARGETAMOUNT, wxDefaultPosition, wxDefaultSize, m_enemyspelltargetamountNChoices, m_enemyspelltargetamountChoices, 0 );
+	m_enemyspelltargetamount->SetSelection( 0 );
+	m_enemyspelltargetamount->SetToolTip( _("If wrongly configured on physical attacks,\nit may cause bugs with cover abilities") );
+
+	fgSizer10->Add( m_enemyspelltargetamount, 0, wxALL, 2 );
+
+	m_enemyspelltargetprioritylabel = new wxStaticText( m_enemyspellscrolledwindow, wxID_ANY, _("Target Priority"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_enemyspelltargetprioritylabel->Wrap( -1 );
+	fgSizer10->Add( m_enemyspelltargetprioritylabel, 0, wxALL, 5 );
+
+	wxString m_enemyspelltargetpriorityChoices[] = { _("Enemies"), _("Allies") };
+	int m_enemyspelltargetpriorityNChoices = sizeof( m_enemyspelltargetpriorityChoices ) / sizeof( wxString );
+	m_enemyspelltargetpriority = new wxChoice( m_enemyspellscrolledwindow, wxID_TARGETPRIORITY, wxDefaultPosition, wxDefaultSize, m_enemyspelltargetpriorityNChoices, m_enemyspelltargetpriorityChoices, 0 );
+	m_enemyspelltargetpriority->SetSelection( 0 );
+	fgSizer10->Add( m_enemyspelltargetpriority, 0, wxALL, 2 );
+
+	m_enemyspelltargetpanellabel = new wxStaticText( m_enemyspellscrolledwindow, wxID_ANY, _("Panel"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_enemyspelltargetpanellabel->Wrap( -1 );
+	fgSizer10->Add( m_enemyspelltargetpanellabel, 0, wxALL, 5 );
+
+	wxString m_enemyspelltargetpanelChoices[] = { _("Normal"), _("HP"), _("MP"), _("Bad statuses"), _("Good statuses") };
+	int m_enemyspelltargetpanelNChoices = sizeof( m_enemyspelltargetpanelChoices ) / sizeof( wxString );
+	m_enemyspelltargetpanel = new wxChoice( m_enemyspellscrolledwindow, wxID_TARGETPANEL, wxDefaultPosition, wxDefaultSize, m_enemyspelltargetpanelNChoices, m_enemyspelltargetpanelChoices, 0 );
+	m_enemyspelltargetpanel->SetSelection( 0 );
+	fgSizer10->Add( m_enemyspelltargetpanel, 0, wxALL, 2 );
+
+	m_enemyspellmodelaltlabel = new wxStaticText( m_enemyspellscrolledwindow, wxID_ANY, _("Animation 2"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_enemyspellmodelaltlabel->Wrap( -1 );
+	fgSizer10->Add( m_enemyspellmodelaltlabel, 0, wxALL, 5 );
+
+	m_enemyspellmodelalt = new wxSpinCtrl( m_enemyspellscrolledwindow, wxID_MODELALT, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	m_enemyspellmodelalt->SetToolTip( _("Unused") );
+
+	fgSizer10->Add( m_enemyspellmodelalt, 0, wxALL, 2 );
+
+	m_enemyspellnindexlabel = new wxStaticText( m_enemyspellscrolledwindow, wxID_ANY, _("Unused"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_enemyspellnindexlabel->Wrap( -1 );
+	fgSizer10->Add( m_enemyspellnindexlabel, 0, wxALL, 5 );
+
+	m_enemyspellnameoffset = new wxSpinCtrl( m_enemyspellscrolledwindow, wxID_SPELLNO, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	m_enemyspellnameoffset->SetToolTip( _("\"Name offset\", dummied") );
+
+	fgSizer10->Add( m_enemyspellnameoffset, 0, wxALL, 2 );
 
 
 	m_enemyspellscrolledwindow->SetSizer( fgSizer10 );
@@ -5912,6 +6012,20 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemyspellflag6->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyspellflag7->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyspellflag8->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspellmenuflag1->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspellmenuflag2->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspellmenuflag3->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspellmenuflag4->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspellmenuflag5->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspellmenuflag6->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspellmenuflag7->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspellmenuflag8->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspelltargettype->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemyspelltargetamount->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemyspelltargetpriority->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemyspelltargetpanel->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemyspellmodelalt->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
+	m_enemyspellnameoffset->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemygroupfrequence->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemygroupamount->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemygroupap->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
@@ -6550,6 +6664,20 @@ CDPanel::~CDPanel()
 	m_enemyspellflag6->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyspellflag7->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyspellflag8->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspellmenuflag1->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspellmenuflag2->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspellmenuflag3->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspellmenuflag4->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspellmenuflag5->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspellmenuflag6->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspellmenuflag7->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspellmenuflag8->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspelltargettype->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemyspelltargetamount->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemyspelltargetpriority->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemyspelltargetpanel->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemyspellmodelalt->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
+	m_enemyspellnameoffset->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemygroupfrequence->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemygroupamount->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemygroupap->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
@@ -7511,7 +7639,7 @@ EnemyResourceWindow::EnemyResourceWindow( wxWindow* parent, wxWindowID id, const
 	fgSizer95->Add( m_mesh, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_meshvanish = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
-	m_meshvanish->SetToolTip( _("List of meshes still displayed under the \"Vanish\" ailment") );
+	m_meshvanish->SetToolTip( _("List of meshes hidden under the \"Vanish\" ailment") );
 
 	fgSizer95->Add( m_meshvanish, 0, wxLEFT|wxRIGHT, 5 );
 
@@ -8462,7 +8590,7 @@ AboutWindow::AboutWindow( wxWindow* parent, wxWindowID id, const wxString& title
 	wxBoxSizer* bSizer16;
 	bSizer16 = new wxBoxSizer( wxVERTICAL );
 
-	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.41b\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for PSX model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\ndclem2 ; check out what he does on FFXII modding\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\n - Satoh -\n - Ze_PilOt -\n\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_MULTILINE|wxTE_READONLY|wxTE_CENTER|wxBORDER_SIMPLE );
+	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.41c\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for PSX model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\n - Satoh -\n - Ze_PilOt -\n\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_MULTILINE|wxTE_READONLY|wxTE_CENTER|wxBORDER_SIMPLE );
 	m_textCtrl13->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 	m_textCtrl13->SetMinSize( wxSize( -1,330 ) );
 

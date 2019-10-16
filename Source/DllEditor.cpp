@@ -2296,6 +2296,10 @@ ILCode& ILInstruction::GetCode() {
 	return *ilcode;
 }
 
+bool ILInstruction::IsStackNumberPush() {
+	return opcode>=0x15 && opcode<=0x21;
+}
+
 // CIL Data Set
 void CILDataSet::Init(DllMetaData* d) {
 	data = d;

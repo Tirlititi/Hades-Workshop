@@ -198,13 +198,13 @@ void SpellAnimationDataStruct::Read(fstream& f) {
 		MACRO_SPELL_ANIM_IOFUNCTION_SEQREAD(FFIXRead,FFIXSeek)
 		FFIXSeek(f,headerpos,0x800);
 	} else {
-/*		raw_data = new uint8_t[raw_size];
+		raw_data = new uint8_t[raw_size];
 		f.read((char*)raw_data,raw_size);
-		SteamSeek(f,headerpos,0);*/
+		SteamSeek(f,headerpos,0);
 		MACRO_SPELL_ANIM_IOFUNCTION_HEADER(SteamRead,SteamSeek,true,false)
 		SteamSeek(f,headerpos,0x400);
 		MACRO_SPELL_ANIM_IOFUNCTION_SEQREAD(SteamRead,SteamSeek)
-		for (chunki=0;chunki<chunk_amount;chunki++)
+/*		for (chunki=0;chunki<chunk_amount;chunki++)
 			for (chunkj=0;chunkj<chunk_entry_amount[chunki];chunkj++) {
 				SteamSeek(f,headerpos,chunk_entry_pos[chunki][chunkj]);
 //fout << "CHUNK " << chunkj << " (" << (int)chunk_entry_id[chunki][chunkj] << ") " << (long)f.tellg() << endl;
@@ -219,97 +219,97 @@ void SpellAnimationDataStruct::Read(fstream& f) {
 						}
 					MACRO_SPELL_ANIM_IOFUNCTION_IMAGE(SteamRead,SteamSeek,true,false)
 					image.push_back(img);
-/*					unsigned int minx=1024,maxx=0,miny=512,maxy=0;
-					for (i=0;i<img.tim_amount;i++) {
-						img.tim[i].LoadInVRam(false);
-						if (minx>img.tim[i].pos_x) minx = img.tim[i].pos_x;
-						if (miny>img.tim[i].pos_y) miny = img.tim[i].pos_y;
-						if (maxx<img.tim[i].pos_x+img.tim[i].width) maxx = img.tim[i].pos_x+img.tim[i].width;
-						if (maxy<img.tim[i].pos_y+img.tim[i].height) maxy = img.tim[i].pos_y+img.tim[i].height;
-					}
-					if (img.tim_amount>0) {
-						uint32_t pixelrgba;
-						minx *= 2;
-						maxx *= 2;
-						unsigned int w = maxx-minx;
-						unsigned int h = maxy-miny;
-						debugimgcounter = 0;
-						for (i=0;i<img.palette_amount;i++) {
-							uint32_t* pal = img.GetPaletteFromKey(img.palette_key[i],false);
-							unsigned char* imgrgb = (unsigned char*)malloc(3*w*h*sizeof(unsigned char));
-							unsigned char* imgalpha = (unsigned char*)malloc(w*h*sizeof(unsigned char));
-							x = 0;
-							y = 0;
-							for (j=0;j<w*h;j++) {
-								pixelrgba = TIMImageDataStruct::GetVRamPixel(minx+x,miny+y,pal);
-								imgrgb[3*j] = pixelrgba & 0xFF;
-								imgrgb[3*j+1] = (pixelrgba >> 8) & 0xFF;
-								imgrgb[3*j+2] = (pixelrgba >> 16) & 0xFF;
-								imgalpha[j] = pixelrgba >> 24;
-								x++;
-								if (x>=w) {
-									x = 0;
-									y++;
-								}
-							}
-							wxImage img(w,h,imgrgb,imgalpha);
-							img.SaveFile("ExportSpellImg"+wxString::Format("%u_%u_%u.png",debugimgspellcounter,image.size()-1,debugimgcounter),wxBITMAP_TYPE_PNG);
-							debugimgcounter++;
-						}
-						minx *= 2;
-						maxx *= 2;
-						w = maxx-minx;
-						h = maxy-miny;
-						debugimgcounter = 0;
-						for (i=0;i<img.small_palette_amount;i++) {
-							uint32_t* pal = img.GetPaletteFromKey(img.small_palette_key[i],true);
-							unsigned char* imgrgb = (unsigned char*)malloc(3*w*h*sizeof(unsigned char));
-							unsigned char* imgalpha = (unsigned char*)malloc(w*h*sizeof(unsigned char));
-							x = 0;
-							y = 0;
-							for (j=0;j<w*h;j++) {
-								pixelrgba = TIMImageDataStruct::GetVRamPixel(minx+x,miny+y,pal,true);
-								imgrgb[3*j] = pixelrgba & 0xFF;
-								imgrgb[3*j+1] = (pixelrgba >> 8) & 0xFF;
-								imgrgb[3*j+2] = (pixelrgba >> 16) & 0xFF;
-								imgalpha[j] = pixelrgba >> 24;
-								x++;
-								if (x>=w) {
-									x = 0;
-									y++;
-								}
-							}
-							wxImage img(w,h,imgrgb,imgalpha);
-							img.SaveFile("ExportSpellImg"+wxString::Format("%u_%u_small%u.png",debugimgspellcounter,image.size()-1,debugimgcounter),wxBITMAP_TYPE_PNG);
-							debugimgcounter++;
-						}
-					}*/
+//					unsigned int minx=1024,maxx=0,miny=512,maxy=0;
+//					for (i=0;i<img.tim_amount;i++) {
+//						img.tim[i].LoadInVRam(false);
+//						if (minx>img.tim[i].pos_x) minx = img.tim[i].pos_x;
+//						if (miny>img.tim[i].pos_y) miny = img.tim[i].pos_y;
+//						if (maxx<img.tim[i].pos_x+img.tim[i].width) maxx = img.tim[i].pos_x+img.tim[i].width;
+//						if (maxy<img.tim[i].pos_y+img.tim[i].height) maxy = img.tim[i].pos_y+img.tim[i].height;
+//					}
+//					if (img.tim_amount>0) {
+//						uint32_t pixelrgba;
+//						minx *= 2;
+//						maxx *= 2;
+//						unsigned int w = maxx-minx;
+//						unsigned int h = maxy-miny;
+//						debugimgcounter = 0;
+//						for (i=0;i<img.palette_amount;i++) {
+//							uint32_t* pal = img.GetPaletteFromKey(img.palette_key[i],false);
+//							unsigned char* imgrgb = (unsigned char*)malloc(3*w*h*sizeof(unsigned char));
+//							unsigned char* imgalpha = (unsigned char*)malloc(w*h*sizeof(unsigned char));
+//							x = 0;
+//							y = 0;
+//							for (j=0;j<w*h;j++) {
+//								pixelrgba = TIMImageDataStruct::GetVRamPixel(minx+x,miny+y,pal);
+//								imgrgb[3*j] = pixelrgba & 0xFF;
+//								imgrgb[3*j+1] = (pixelrgba >> 8) & 0xFF;
+//								imgrgb[3*j+2] = (pixelrgba >> 16) & 0xFF;
+//								imgalpha[j] = pixelrgba >> 24;
+//								x++;
+//								if (x>=w) {
+//									x = 0;
+//									y++;
+//								}
+//							}
+//							wxImage img(w,h,imgrgb,imgalpha);
+//							img.SaveFile("ExportSpellImg"+wxString::Format("%u_%u_%u.png",debugimgspellcounter,image.size()-1,debugimgcounter),wxBITMAP_TYPE_PNG);
+//							debugimgcounter++;
+//						}
+//						minx *= 2;
+//						maxx *= 2;
+//						w = maxx-minx;
+//						h = maxy-miny;
+//						debugimgcounter = 0;
+//						for (i=0;i<img.small_palette_amount;i++) {
+//							uint32_t* pal = img.GetPaletteFromKey(img.small_palette_key[i],true);
+//							unsigned char* imgrgb = (unsigned char*)malloc(3*w*h*sizeof(unsigned char));
+//							unsigned char* imgalpha = (unsigned char*)malloc(w*h*sizeof(unsigned char));
+//							x = 0;
+//							y = 0;
+//							for (j=0;j<w*h;j++) {
+//								pixelrgba = TIMImageDataStruct::GetVRamPixel(minx+x,miny+y,pal,true);
+//								imgrgb[3*j] = pixelrgba & 0xFF;
+//								imgrgb[3*j+1] = (pixelrgba >> 8) & 0xFF;
+//								imgrgb[3*j+2] = (pixelrgba >> 16) & 0xFF;
+//								imgalpha[j] = pixelrgba >> 24;
+//								x++;
+//								if (x>=w) {
+//									x = 0;
+//									y++;
+//								}
+//							}
+//							wxImage img(w,h,imgrgb,imgalpha);
+//							img.SaveFile("ExportSpellImg"+wxString::Format("%u_%u_small%u.png",debugimgspellcounter,image.size()-1,debugimgcounter),wxBITMAP_TYPE_PNG);
+//							debugimgcounter++;
+//						}
+//					}
 				} else if (chunk_entry_id[chunki][chunkj]==2) {
 					if (chunk_index[chunki]==0)
 						SteamSeek(f,headerpos,chunk_entry_pos[chunki][chunkj]+0x800*chunk_entry2_additional_size);
 					SpellAnimResourceSet res;
 					MACRO_SPELL_ANIM_IOFUNCTION_RESOURCE(SteamRead,SteamSeek,true,false)
-/*if (debugimgspellcounter==24) {
-for (i=0;i<res.amount;i++) if (res.type[i]==SpellDataResourceType::AKAO) {
-SpellAnimResourceAKAO& akaodata = *static_cast<SpellAnimResourceAKAO*>(res.data[i]);
-fstream foutbin((wxString("ExportSpellRes")+wxString::Format("%u_%u%u_%u",debugimgspellcounter,chunki,chunkj,i)).c_str().AsChar(),ios::out|ios::binary);
-for (j=0;j<akaodata.raw.size();j++) foutbin.put(akaodata.raw[j]);
-foutbin.close();
-}}*/
+//if (debugimgspellcounter==24) {
+//for (i=0;i<res.amount;i++) if (res.type[i]==SpellDataResourceType::AKAO) {
+//SpellAnimResourceAKAO& akaodata = *static_cast<SpellAnimResourceAKAO*>(res.data[i]);
+//fstream foutbin((wxString("ExportSpellRes")+wxString::Format("%u_%u%u_%u",debugimgspellcounter,chunki,chunkj,i)).c_str().AsChar(),ios::out|ios::binary);
+//for (j=0;j<akaodata.raw.size();j++) foutbin.put(akaodata.raw[j]);
+//foutbin.close();
+//}}
 					resource.push_back(res);
 				} else if (chunk_entry_id[chunki][chunkj]==3) {
-/*					uint32_t debugbuf;
-fstream foutbin((wxString("ExportSpellAnim")+wxString::Format("%u_%u_%u",debugimgspellcounter,chunki,chunk_entry_info[chunki][chunkj],i)).c_str().AsChar(),ios::out|ios::binary);
-					for (i=0;i<0x200*chunk_entry_size[chunki][chunkj];i++) {
-						SteamReadLong(f,debugbuf);
-						if (debugbuf==0xFFFFFFFF)
-							break;
-SteamWriteLong(foutbin,debugbuf);
-					}
-foutbin.close();*/
+//					uint32_t debugbuf;
+//fstream foutbin((wxString("ExportSpellAnim")+wxString::Format("%u_%u_%u",debugimgspellcounter,chunki,chunk_entry_info[chunki][chunkj],i)).c_str().AsChar(),ios::out|ios::binary);
+//					for (i=0;i<0x200*chunk_entry_size[chunki][chunkj];i++) {
+//						SteamReadLong(f,debugbuf);
+//						if (debugbuf==0xFFFFFFFF)
+//							break;
+//SteamWriteLong(foutbin,debugbuf);
+//					}
+//foutbin.close();
 				}
 			}
-//fout.close();
+fout.close();*/
 	}
 	modified_data = 0;
 }
@@ -327,8 +327,8 @@ void SpellAnimationDataStruct::Write(fstream& f) {
 		MACRO_SPELL_ANIM_IOFUNCTION_FFFILL(FFIXWrite,FFIXSeek,headerpos,0x800)
 		modified_data = 0;
 	} else {
-/*		f.write((char*)raw_data,raw_size);
-		f.seekg(headerpos);*/
+		f.write((char*)raw_data,raw_size);
+		f.seekg(headerpos);
 		MACRO_SPELL_ANIM_IOFUNCTION_HEADER(SteamWrite,SteamSeek,false,false)
 		MACRO_SPELL_ANIM_IOFUNCTION_FFFILL(SteamWrite,SteamSeek,headerpos,0x400)
 		MACRO_SPELL_ANIM_IOFUNCTION_SEQWRITE(SteamWrite,SteamSeek,false)

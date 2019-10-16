@@ -139,6 +139,7 @@ struct LogStruct {
 	LogStruct();
 	void AddError(wstring str);
 	void AddWarning(wstring str);
+	void AddLog(LogStruct otherlog);
 };
 
 // Final Fantasy IX PSX binary manipulation

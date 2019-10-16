@@ -258,6 +258,7 @@ struct ILInstruction {
 	unsigned int GetLength();
 	ILCode& GetCode();
 	void AppendToBuffer(uint8_t* buffer);
+	bool IsStackNumberPush();
 	
 private:
 	ILCode* ilcode;

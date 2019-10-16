@@ -1042,15 +1042,15 @@ int FindConfiguration(string filepath, ConfigurationSet& dest) {
 
 string ConfigurationSet::GetSteamAssetPath(UnityArchiveFile arch, int32_t fileid) {
 	if (arch == UNITY_ARCHIVE_DATA2)
-		return "p0data2\\" + meta_battle.GetFileFullName(fileid, &bundle_battle, &indexlist_res);
+		return "p0data2\\" + meta_battle.GetFileFullName(fileid, arch, &bundle_battle, &indexlist_res);
 	if (arch == UNITY_ARCHIVE_DATA3)
-		return "p0data3\\" + meta_world.GetFileFullName(fileid, &bundle_world, &indexlist_res);
+		return "p0data3\\" + meta_world.GetFileFullName(fileid, arch, &bundle_world, &indexlist_res);
 	if (arch == UNITY_ARCHIVE_DATA7)
-		return "p0data7\\" + meta_script.GetFileFullName(fileid, &bundle_script, &indexlist_res);
+		return "p0data7\\" + meta_script.GetFileFullName(fileid, arch, &bundle_script, &indexlist_res);
 	if (arch >= UNITY_ARCHIVE_DATA11 && arch <= UNITY_ARCHIVE_DATA19)
-		return "p0data1" + to_string(arch-UNITY_ARCHIVE_DATA11+1) + "\\" + meta_field[arch-UNITY_ARCHIVE_DATA11].GetFileFullName(fileid, &bundle_field[arch-UNITY_ARCHIVE_DATA11], &indexlist_res);
+		return "p0data1" + to_string(arch-UNITY_ARCHIVE_DATA11+1) + "\\" + meta_field[arch-UNITY_ARCHIVE_DATA11].GetFileFullName(fileid, arch, &bundle_field[arch-UNITY_ARCHIVE_DATA11], &indexlist_res);
 	if (arch == UNITY_ARCHIVE_RESOURCES)
-		return "resources\\" + meta_res.GetFileFullName(fileid, NULL, &indexlist_res);
+		return "resources\\" + meta_res.GetFileFullName(fileid, arch, NULL, &indexlist_res);
 	return "unexpected_export\\unexpected_export.bin";
 }
 
@@ -1067,13 +1067,13 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	unityarchivename = dest.steam_dir_data+"resources.assets";
 	unityarchive.open(unityarchivename.c_str(),ios::in | ios::binary);
 	if (!unityarchive.is_open()) return -3;
-	dest.meta_res.Load(unityarchive);
+	dest.meta_res.Load(unityarchive, UNITY_ARCHIVE_RESOURCES);
 	unityarchive.close();
 	string subfilepath;
 	unityarchivename = dest.steam_dir_data+"mainData";
 	unityarchive.open(unityarchivename.c_str(),ios::in | ios::binary);
 	if (!unityarchive.is_open()) return -3;
-	dest.meta_main.Load(unityarchive);
+	dest.meta_main.Load(unityarchive, UNITY_ARCHIVE_MAINDATA);
 	uint32_t mesindexfileid = dest.meta_main.GetFileIndex("",147);
 	unityarchive.seekg(dest.meta_main.GetFileOffsetByIndex(mesindexfileid));
 	dest.indexlist_res.Load(unityarchive,dest.meta_main.GetFileSizeByIndex(mesindexfileid));
@@ -1081,7 +1081,7 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	unityarchivename = dest.steam_dir_assets+"p0data7.bin";
 	unityarchive.open(unityarchivename.c_str(),ios::in | ios::binary);
 	if (!unityarchive.is_open()) return -3;
-	dest.meta_script.Load(unityarchive);
+	dest.meta_script.Load(unityarchive, UNITY_ARCHIVE_DATA7);
 	unityarchive.seekg(dest.meta_script.GetFileOffset("",142));
 	dest.bundle_script.Load(unityarchive);
 	unityarchive.close();
@@ -1103,14 +1103,14 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	unityarchivename = dest.steam_dir_assets+"p0data2.bin";
 	unityarchive.open(unityarchivename.c_str(),ios::in | ios::binary);
 	if (!unityarchive.is_open()) return -3;
-	dest.meta_battle.Load(unityarchive);
+	dest.meta_battle.Load(unityarchive, UNITY_ARCHIVE_DATA2);
 	unityarchive.seekg(dest.meta_battle.GetFileOffset("",142));
 	dest.bundle_battle.Load(unityarchive);
 	unityarchive.close();
 	unityarchivename = dest.steam_dir_assets+"p0data3.bin";
 	unityarchive.open(unityarchivename.c_str(),ios::in | ios::binary);
 	if (!unityarchive.is_open()) return -3;
-	dest.meta_world.Load(unityarchive);
+	dest.meta_world.Load(unityarchive, UNITY_ARCHIVE_DATA3);
 	unityarchive.seekg(dest.meta_world.GetFileOffset("",142));
 	dest.bundle_world.Load(unityarchive);
 	unityarchive.close();
@@ -1119,7 +1119,7 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 		fieldunityarchivename << dest.steam_dir_assets << "p0data1" << i+1 << ".bin";
 		unityarchive.open(fieldunityarchivename.str().c_str(),ios::in | ios::binary);
 		if (!unityarchive.is_open()) return -3;
-		dest.meta_field[i].Load(unityarchive);
+		dest.meta_field[i].Load(unityarchive, (UnityArchiveFile)(UNITY_ARCHIVE_DATA11+i));
 		unityarchive.seekg(dest.meta_field[i].GetFileOffset("",142));
 		dest.bundle_field[i].Load(unityarchive);
 		unityarchive.close();
@@ -1233,26 +1233,32 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	dest.world_discmr_file[1] = dest.meta_world.GetFileIndex("discmr.img",49,1);
 	
 	// Text Blocks
-	dest.text_amount = 0;
-	static uint16_t textidtmp[CLUSTER_MAX_AMOUNT];
+	vector<uint16_t> textidtmp;
+	vector<string> textfilenametmp;
 	for (i=0;i<dest.indexlist_res.amount;i++) {
 		if (dest.indexlist_res.path[i].length()>30) {
-			token = dest.indexlist_res.path[i].substr(19,9);
+			token = dest.indexlist_res.path[i].substr(19, 9);
 			if (token.compare("us/field/")==0) {
-				token = dest.indexlist_res.path[i].substr(28, dest.indexlist_res.path[i].find('.',28));
-				fid = strtol(token.c_str(),NULL,10);
-				if (fid!=STEAM_WORLD_MAP_TEXT_ID) {
-					textidtmp[dest.text_amount++] = fid;
+				token = dest.indexlist_res.path[i].substr(28);
+				token = token.substr(0, token.find('.'));
+				fid = strtol(token.c_str(), NULL, 10);
+				if (token.length()>0 && fid!=STEAM_WORLD_MAP_TEXT_ID) {
+					textfilenametmp.push_back(token);
+					if (token.back()>='0' && token.back()<='9')
+						textidtmp.push_back(fid);
+					else
+						textidtmp.push_back(0x2000+fid); // Only Qu's Marsh has an alternate text block for some reason (71m.mes)
 				}
 			}
 		}
 	}
+	dest.text_amount = textidtmp.size();
 	for (i=0;i<STEAM_LANGUAGE_AMOUNT;i++) {
 		dest.enmy_text_file[i] = new int32_t[dest.enmy_amount];
 		dest.text_file[i] = new int32_t[dest.text_amount];
 	}
 	dest.text_id = new uint16_t[dest.text_amount];
-	memcpy(dest.text_id,textidtmp,dest.text_amount*sizeof(uint16_t));
+	memcpy(dest.text_id,textidtmp.data(),dest.text_amount*sizeof(uint16_t));
 	
 	// Resource file
 	for (i=0;i<STEAM_LANGUAGE_AMOUNT;i++) {
@@ -1290,7 +1296,7 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 		}
 		for (j=0;j<dest.text_amount;j++) {
 			stringstream fnamestr;
-			fnamestr << "/field/" << (unsigned int)dest.text_id[j] << ".mes";
+			fnamestr << "/field/" << textfilenametmp[j] << ".mes";
 			MACRO_CONFIG_SEARCHOFFTXT_STEAM(fnamestr.str(),text_file[i][j])
 		}
 	}
@@ -1370,6 +1376,28 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	fieldmethinfo.JumpToInstructions(dllfile,4,statcmdtranceinst);
 	fieldinst.Read(dllfile);
 	dest.dll_statcmdtrance_field_id = dest.meta_dll.GetStaticFieldIdFromToken(fieldinst.param);
+	fieldinst.Read(dllfile); // Initialize Array
+	dest.dll_cmdtrancenones_offset = dllfile.tellg();
+	size_t trancenonepos = dest.dll_cmdtrancenones_offset;
+	while (dllfile.tellg() < fieldmethinfo.code_abs_offset+fieldmethinfo.code_size) {
+		fieldinst.Read(dllfile);
+		if (fieldinst.opcode != 0x25) // dup
+			break;
+		fieldinst.Read(dllfile);
+		if (!fieldinst.IsStackNumberPush())
+			break;
+		fieldinst.Read(dllfile);
+		if (!fieldinst.IsStackNumberPush())
+			break;
+		fieldinst.Read(dllfile);
+		if (fieldinst.opcode != 0x7E) // ldsfld
+			break;
+		fieldinst.Read(dllfile);
+		if (fieldinst.opcode != 0x28) // call
+			break;
+		trancenonepos = dllfile.tellg();
+	}
+	dest.dll_cmdtrancenones_size = trancenonepos-dest.dll_cmdtrancenones_offset;
 	dllfile.seekg(dest.meta_dll.GetMethodOffset(dest.dll_level_method_id));
 	fieldmethinfo.ReadMethodInfo(dllfile);
 	ILInstruction statexpinst[3] = {
@@ -1419,7 +1447,7 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	unityarchivename = dest.steam_dir_data+"sharedassets2.assets";
 	unityarchive.open(unityarchivename.c_str(),ios::in | ios::binary);
 	if (!unityarchive.is_open()) return -3;
-	dest.meta_atlas.Load(unityarchive);
+	dest.meta_atlas.Load(unityarchive, UNITY_ARCHIVE_SHARED2);
 	for (i=0;;i++) {
 		dest.atlas_iconsprite_file = dest.meta_atlas.GetFileIndex("",-1,i);
 		if (dest.atlas_iconsprite_file<0)
@@ -1428,7 +1456,7 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 		if (ReadLong(unityarchive)==377) // DEBUG: should find it from GameObject hierarchy?
 			break;
 	}
-	dest.atlas_icontexture_file = dest.meta_atlas.GetFileIndex("Icon Atlas",28);
+	dest.atlas_icontexture_file = dest.meta_atlas.GetFileIndex("Icon Atlas", 28);
 	unityarchive.close();
 
 	dest.language = LANGUAGE_VERSION_UNKNOWN;
@@ -1569,8 +1597,8 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 				return 2;
 			if (!filedest.is_open())
 				return 3;
-			bool* copylist = new bool[config.meta_battle.header_file_amount];
-			uint32_t* filenewsize = new uint32_t[config.meta_battle.header_file_amount];
+			vector<bool> copylist(config.meta_battle.header_file_amount);
+			vector<uint32_t> filenewsize(config.meta_battle.header_file_amount);
 			for (i = 0; i < config.meta_battle.header_file_amount; i++) {
 				for (j = 0; j < config.enmy_amount; j++)
 					if (saveset.enemyset->battle_data[j]->modified && i == config.enmy_battle_file[j]) {
@@ -1587,7 +1615,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 						filenewsize[i] = config.meta_battle.file_size[i];
 					}
 			}
-			uint32_t* unitydataoff = config.meta_battle.Duplicate(filebase, filedest, copylist, filenewsize);
+			vector<uint32_t> unitydataoff = config.meta_battle.Duplicate(filebase, filedest, copylist, filenewsize);
 			for (i = 0; i < config.meta_battle.header_file_amount; i++) {
 				for (j = 0; j < config.enmy_amount; j++)
 					if (saveset.enemyset->battle_data[j]->modified && i == config.enmy_battle_file[j]) {
@@ -1602,9 +1630,6 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			}
 			filebase.close();
 			filedest.close();
-			delete[] copylist;
-			delete[] filenewsize;
-			delete[] unitydataoff;
 		}
 	} else if (assetformat == 1) {
 		for (i = 0; i < config.enmy_amount; i++) {
@@ -1642,8 +1667,8 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 				return 2;
 			if (!filedest.is_open())
 				return 3;
-			bool* copylist = new bool[config.meta_world.header_file_amount];
-			uint32_t* filenewsize = new uint32_t[config.meta_world.header_file_amount];
+			vector<bool> copylist(config.meta_world.header_file_amount);
+			vector<uint32_t> filenewsize(config.meta_world.header_file_amount);
 			for (i = 0; i < config.meta_world.header_file_amount; i++) {
 				if (i == config.world_fx_file[0] || i == config.world_fx_file[1]) {
 					copylist[i] = false;
@@ -1656,7 +1681,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 					filenewsize[i] = config.meta_world.file_size[i];
 				}
 			}
-			uint32_t* unitydataoff = config.meta_world.Duplicate(filebase, filedest, copylist, filenewsize);
+			vector<uint32_t> unitydataoff = config.meta_world.Duplicate(filebase, filedest, copylist, filenewsize);
 			filedest.seekp(unitydataoff[config.world_fx_file[0]]);
 			saveset.worldset->world_data->WriteHWS(filedest);
 			filedest.seekp(unitydataoff[config.world_fx_file[1]]);
@@ -1671,9 +1696,6 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			saveset.worldset->world_data->WriteHWS(filedest, 3);
 			filebase.close();
 			filedest.close();
-			delete[] copylist;
-			delete[] filenewsize;
-			delete[] unitydataoff;
 		}
 	} else if (assetformat == 1) {
 
@@ -1707,8 +1729,8 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 				return 2;
 			if (!filedest.is_open())
 				return 3;
-			bool* copylist = new bool[config.meta_script.header_file_amount];
-			uint32_t* filenewsize = new uint32_t[config.meta_script.header_file_amount];
+			vector<bool> copylist(config.meta_script.header_file_amount);
+			vector<uint32_t> filenewsize(config.meta_script.header_file_amount);
 			for (i = 0; i < config.meta_script.header_file_amount; i++) {
 				copylist[i] = true;
 				filenewsize[i] = config.meta_script.file_size[i];
@@ -1746,7 +1768,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 								break;
 							}
 			}
-			uint32_t* unitydataoff = config.meta_script.Duplicate(filebase, filedest, copylist, filenewsize);
+			vector<uint32_t> unitydataoff = config.meta_script.Duplicate(filebase, filedest, copylist, filenewsize);
 			for (i = 0; i < config.meta_script.header_file_amount; i++) {
 				if (section[DATA_SECTION_ENMY])
 					for (j = 0; j < config.enmy_amount; j++)
@@ -1784,9 +1806,6 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			}
 			filebase.close();
 			filedest.close();
-			delete[] copylist;
-			delete[] filenewsize;
-			delete[] unitydataoff;
 		}
 	} else if (assetformat == 1) {
 
@@ -1821,8 +1840,8 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			return 2;
 		if (!filedest.is_open())
 			return 3;
-		bool* copylist = new bool[config.meta_res.header_file_amount];
-		uint32_t* filenewsize = new uint32_t[config.meta_res.header_file_amount];
+		vector<bool> copylist(config.meta_res.header_file_amount);
+		vector<uint32_t> filenewsize(config.meta_res.header_file_amount);
 		for (i = 0; i < config.meta_res.header_file_amount; i++) {
 			copylist[i] = true;
 			filenewsize[i] = config.meta_res.file_size[i];
@@ -1873,7 +1892,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 				MACRO_STEAM_CHECKFILEUPDATE(spellanim_steam_file[j], section[DATA_SECTION_SPELL_ANIM], saveset.spellanimset->spell[j].raw_size)
 			}
 		}
-		uint32_t* unitydataoff = config.meta_res.Duplicate(filebase, filedest, copylist, filenewsize);
+		vector<uint32_t> unitydataoff = config.meta_res.Duplicate(filebase, filedest, copylist, filenewsize);
 		for (i = 0; i < config.meta_res.header_file_amount; i++) {
 
 			#define MACRO_STEAM_WRITEFILEUPDATE(FILEID,SAVEFUNC,BREAK) \
@@ -1951,9 +1970,6 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		}
 		filebase.close();
 		filedest.close();
-		delete[] copylist;
-		delete[] filenewsize;
-		delete[] unitydataoff;
 	} else if (assetformat == 1) {
 
 		#define MACRO_SAVE_ASSET_RESOURCES(FILEID, CONDITION, SAVEFUNC) \

@@ -54,12 +54,22 @@ public:
 	uint16_t model;
 	uint8_t target_type;
 	uint8_t target_flag;
-	uint8_t unknown3;
-	uint32_t unknown4;
+	uint8_t menu_flag;
+	uint16_t model_alt;
+	uint16_t name_offset;
 	
 	// Return 0 if success ; 1 if the value is too long
 	int SetName(wstring newvalue, SteamLanguage lang = GetSteamLanguage());
 	int SetName(FF9String& newvalue);
+
+	Spell_Panel GetPanel();
+	void SetPanel(Spell_Panel newvalue);
+	Spell_Target_Priority GetTargetPriority();
+	void SetTargetPriority(Spell_Target_Priority newvalue);
+	Spell_Target_Amount GetTargetAmount();
+	void SetTargetAmount(Spell_Target_Amount newvalue);
+	Spell_Target_Type GetTargetType();
+	void SetTargetType(Spell_Target_Type newvalue); // Automatically change target_amount and target_priority if needed
 
 	EnemyStatDataStruct* GetAssociatedStat();
 	

@@ -865,7 +865,7 @@ uint8_t* TIMImageDataStruct::CreateSteamTextureFile(uint32_t& datasize, uint32_t
 	BufferWriteLong(raw,filesize-0x3C); // image size
 	BufferWriteLong(raw,textformat); // format
 	BufferWriteLong(raw,1); // mip count
-	BufferWriteLong(raw,0x100); // flags
+	BufferWriteLong(raw,0x100); // flags ; 1 = isReadable (for use of GetPixels)
 	BufferWriteLong(raw,1); // image count
 	BufferWriteLong(raw,2); // dimension
 	BufferWriteLong(raw,1); // filter mode

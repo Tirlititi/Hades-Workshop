@@ -12,14 +12,14 @@
 
 inline wxString FB_GetWxStringLine(wxString& str) {
 	wxString tmpstr;
-	wxString res = str.BeforeFirst(L'\n',&tmpstr);
+	wxString res = str.BeforeFirst(L'\n', &tmpstr);
 	str = tmpstr;
 	return res;
 }
 
 inline wxString FB_GetNextWord(wxString& str) {
 	wxString tmpstr;
-	wxString res = str.BeforeFirst(L' ',&tmpstr);
+	wxString res = str.BeforeFirst(L' ', &tmpstr);
 	str = tmpstr;
 	return res;
 }
@@ -28,7 +28,7 @@ inline unsigned int FB_GetCharCount(wstring& str, wchar_t c) {
 	unsigned int count = 0;
 	size_t pos = str.find(c);
 	while (pos!=std::string::npos) {
-		pos = str.find(c,pos+1);
+		pos = str.find(c, pos+1);
 		count++;
 	}
 	return count;
@@ -72,7 +72,7 @@ int BatchExportDialog::ExportText(wxString path, bool* exportlist, bool splitfil
 			for (j=0;j<data.text_data[i]->amount;j++) {
 				if (singlelang!=STEAM_LANGUAGE_NONE && !data.text_data[i]->text[j].multi_lang_init[singlelang])
 					continue;
-				output.Write(_(L"#HW newtext ")+wxString::Format(wxT("%u"),j+1)+_(L"\n"));
+				output.Write(_(L"#HW newtext ")+wxString::Format(wxT("%u"),j)+_(L"\n"));
 				if (GetGameType()==GAME_TYPE_PSX)
 					output.Write(_(data.text_data[i]->text[j].str)+_(L"\n\n"));
 				else if (singlelang!=STEAM_LANGUAGE_NONE)
@@ -91,11 +91,11 @@ int BatchExportDialog::ExportText(wxString path, bool* exportlist, bool splitfil
 }
 
 unsigned int tmptextstructid[TXTBATCH_MAX_STRUCT];
-uint16_t* tmptextid[TXTBATCH_MAX_STRUCT];
+int* tmptextid[TXTBATCH_MAX_STRUCT];
 FF9String* tmptextstr[TXTBATCH_MAX_STRUCT];
 LogStruct BatchImportDialog::ImportText(wxString filetext, bool adjustsize, bool isjapan, bool fatalwarning) {
 	TextDataSet& data = *dataset->textset;
-	wxString line,linebuf,errstr,token,txtvalue,inputstr = filetext;
+	wxString line,linebuf,errstr,hwword,token,txtvalue,inputstr = filetext;
 	int currenttextstruct = -1, currenttext = -1;
 	SteamLanguage lang = GetSteamLanguage();
 	int nexttextstruct = 0, nexttext;
@@ -109,27 +109,30 @@ LogStruct BatchImportDialog::ImportText(wxString filetext, bool adjustsize, bool
 		end = inputstr.IsEmpty();
 		line = FB_GetWxStringLine(inputstr);
 		linebuf = line;
-		token = FB_GetNextWord(linebuf);
-		if (token.IsSameAs(_(L"#HW")) || end) {
-			if (currenttextstruct>=0 && currenttext>=0) {
+		hwword = FB_GetNextWord(linebuf);
+		if (hwword.IsSameAs(_(L"#HW")))
+			token = FB_GetNextWord(linebuf);
+		if (hwword.IsSameAs(_(L"#HW")) || end) {
+			if (currenttextstruct>=0 && currenttext>=0 && txtvalue.Len()>0) {
 				if (txtvalue.Right(2).IsSameAs(_(L"\n\n")))
-					txtvalue = txtvalue.Mid(0,txtvalue.Len()-2);
+					txtvalue = txtvalue.Mid(0, txtvalue.Len()-2);
 				strvalue = txtvalue.ToStdWstring();
 				if (GetGameType()==GAME_TYPE_PSX || !hades::STEAM_SINGLE_LANGUAGE_MODE || lang==GetSteamLanguage())
 					tmptextstr[currenttextstruct][currenttext].SetValue(strvalue,lang);
-				tmptextid[currenttextstruct][nexttext] = 0;
+				tmptextid[currenttextstruct][nexttext] = -1;
 				if (GetGameType()==GAME_TYPE_PSX) {
 					value = FB_GetCharCount(strvalue,hades::SPECIAL_STRING_OPCODE_WCHAR);
-					if (value!=data.text_data[tmptextstructid[currenttextstruct]]->text[tmptextid[currenttextstruct][currenttext]-1].code_amount) {
-						errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_MISSMATCH_CODE),tmptextstructid[currenttextstruct],tmptextid[currenttextstruct][currenttext],data.text_data[tmptextstructid[currenttextstruct]]->text[tmptextid[currenttextstruct][currenttext]-1].code_amount,value);
+					if (value!=data.text_data[tmptextstructid[currenttextstruct]]->text[tmptextid[currenttextstruct][currenttext]].code_amount) {
+						errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_MISSMATCH_CODE),tmptextstructid[currenttextstruct],tmptextid[currenttextstruct][currenttext],data.text_data[tmptextstructid[currenttextstruct]]->text[tmptextid[currenttextstruct][currenttext]].code_amount,value);
 						res.AddWarning(errstr.ToStdWstring());
 					}
 				}
-				currenttext = -1;
+				txtvalue = _(L"");
+				if (!token.IsSameAs(_(L"language")))
+					currenttext = -1;
 			}
 		}
-		if (token.IsSameAs(_(L"#HW"))) {
-			token = FB_GetNextWord(linebuf);
+		if (hwword.IsSameAs(_(L"#HW"))) {
 			if (token.IsSameAs(_(L"filetype"))) {
 				if (!filetypeok) {
 					token = FB_GetNextWord(linebuf);
@@ -165,9 +168,9 @@ LogStruct BatchImportDialog::ImportText(wxString filetext, bool adjustsize, bool
 							if (data.struct_id[i]==value) {
 								currenttextstruct = nexttextstruct++;
 								tmptextstructid[currenttextstruct] = i;
-								tmptextid[currenttextstruct] = new uint16_t[data.text_data[i]->amount+1];
-								tmptextstr[currenttextstruct] = new FF9String[data.text_data[i]->amount+1];
-								tmptextid[currenttextstruct][0] = 0;
+								tmptextid[currenttextstruct] = new int[data.text_data[i]->amount+1]; // +1 for terminating value
+								tmptextstr[currenttextstruct] = new FF9String[data.text_data[i]->amount];
+								tmptextid[currenttextstruct][0] = -1;
 								currenttext = -1;
 								nexttext = 0;
 								break;
@@ -179,16 +182,15 @@ LogStruct BatchImportDialog::ImportText(wxString filetext, bool adjustsize, bool
 					}
 				} else if (token.IsSameAs(_(L"newtext"))) {
 					token = FB_GetNextWord(linebuf);
+					currenttext = -1;
 					if (!token.ToULong(&value)) {
 						errstr.Printf(wxT(HADES_STRING_BATCH_MISSING_INTEGER),linenum,L"newtext");
 						res.AddError(errstr.ToStdWstring());
-						currenttext = -1;
 					} else if (currenttextstruct>=0) {
-						if (value<=0 || value>data.text_data[tmptextstructid[currenttextstruct]]->amount) {
+						if (value<0 || value>=data.text_data[tmptextstructid[currenttextstruct]]->amount) {
 							errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_WRONG_ID),linenum,tmptextstructid[currenttextstruct],value);
 							res.AddError(errstr.ToStdWstring());
 						} else {
-							currenttext = -1;
 							for (i=0;i<nexttext;i++)
 								if (tmptextid[currenttextstruct][i]==value) {
 									errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_REDEFINITION),linenum,value);
@@ -199,7 +201,8 @@ LogStruct BatchImportDialog::ImportText(wxString filetext, bool adjustsize, bool
 							if (currenttext==-1)
 								currenttext = nexttext++;
 							tmptextid[currenttextstruct][currenttext] = value;
-							tmptextstr[currenttextstruct][currenttext] = FF9String(data.text_data[tmptextstructid[currenttextstruct]]->text[value-1]);
+							tmptextstr[currenttextstruct][currenttext] = FF9String(data.text_data[tmptextstructid[currenttextstruct]]->text[value]);
+							lang = GetSteamLanguage();
 							txtvalue = _(L"");
 						}
 					}
@@ -227,12 +230,12 @@ LogStruct BatchImportDialog::ImportText(wxString filetext, bool adjustsize, bool
 			for (i=0;i<data.text_data[tmptextstructid[currenttextstruct]]->amount;i++) {
 				for (j=0;j<data.text_data[tmptextstructid[currenttextstruct]]->format_amount[i];j++)
 					blocksize += data.text_data[tmptextstructid[currenttextstruct]]->format_data[i][j].length;
-				for (currenttext=0;tmptextid[currenttextstruct][currenttext]>0;currenttext++)
-					if (tmptextid[currenttextstruct][currenttext]==i+1) {
+				for (currenttext=0;tmptextid[currenttextstruct][currenttext]>=0;currenttext++)
+					if (tmptextid[currenttextstruct][currenttext]==i) {
 						blocksize += tmptextstr[currenttextstruct][currenttext].length;
 						break;
 					}
-				if (tmptextid[currenttextstruct][currenttext]==0)
+				if (tmptextid[currenttextstruct][currenttext]<0)
 					blocksize += data.text_data[tmptextstructid[currenttextstruct]]->text[i].length;
 			}
 			if (blocksize>data.text_data[tmptextstructid[currenttextstruct]]->size+data.text_data[tmptextstructid[currenttextstruct]]->GetExtraSize()) {
@@ -249,23 +252,24 @@ LogStruct BatchImportDialog::ImportText(wxString filetext, bool adjustsize, bool
 	CharmapDataStruct* chmapext;
 	uint16_t sizex, sizey;
 	wstring nullstr = L"";
-	if ((!fatalwarning || res.warning_amount==0) && res.error_amount==0) {
+	if (fatalwarning && res.warning_amount>0)
+		res.ok = false;
+	if (res.ok) {
 		for (currenttextstruct=0;currenttextstruct<nexttextstruct;currenttextstruct++) {
 			chmapext = GetGameType()==GAME_TYPE_PSX ? data.charmap[tmptextstructid[currenttextstruct]] : NULL;
-			for (currenttext=0;tmptextid[currenttextstruct][currenttext]>0;currenttext++)
-				data.text_data[tmptextstructid[currenttextstruct]]->SetText(tmptextid[currenttextstruct][currenttext]-1,nullstr);
-			for (currenttext=0;tmptextid[currenttextstruct][currenttext]>0;currenttext++) {
-				data.text_data[tmptextstructid[currenttextstruct]]->SetText(tmptextid[currenttextstruct][currenttext]-1,tmptextstr[currenttextstruct][currenttext]);
+			for (currenttext=0;tmptextid[currenttextstruct][currenttext]>=0;currenttext++)
+				data.text_data[tmptextstructid[currenttextstruct]]->SetText(tmptextid[currenttextstruct][currenttext],nullstr);
+			for (currenttext=0;tmptextid[currenttextstruct][currenttext]>=0;currenttext++) {
+				data.text_data[tmptextstructid[currenttextstruct]]->SetText(tmptextid[currenttextstruct][currenttext],tmptextstr[currenttextstruct][currenttext]);
 				if (adjustsize && GetGameType()==GAME_TYPE_PSX) { // ToDo: implement the feature in Steam
-					chmap->CalculateTextSize(&data.text_data[tmptextstructid[currenttextstruct]]->text[tmptextid[currenttextstruct][currenttext]-1],chmapext,&sizex,&sizey);
-					data.text_data[tmptextstructid[currenttextstruct]]->SetDialogBoxSize(tmptextid[currenttextstruct][currenttext]-1,sizex,sizey,!isjapan);
+					chmap->CalculateTextSize(&data.text_data[tmptextstructid[currenttextstruct]]->text[tmptextid[currenttextstruct][currenttext]],chmapext,&sizex,&sizey);
+					data.text_data[tmptextstructid[currenttextstruct]]->SetDialogBoxSize(tmptextid[currenttextstruct][currenttext],sizex,sizey,!isjapan);
 				}
 			}
 			data.text_data[tmptextstructid[currenttextstruct]]->MarkDataModified();
 		}
-		res.ok = true;
-	} else
-		res.ok = false;
+		datamodified = true;
+	}
 	for (currenttextstruct=0;currenttextstruct<nexttextstruct;currenttextstruct++) {
 		delete[] tmptextid[currenttextstruct];
 		delete[] tmptextstr[currenttextstruct];
@@ -307,7 +311,7 @@ int BatchExportDialog::ExportSpecialText(wxString path, bool* exportlist, bool s
 			for (j=0;j<data.text_block[i].amount;j++) {
 				if (singlelang!=STEAM_LANGUAGE_NONE && !data.text_block[i].text[j].multi_lang_init[singlelang])
 					continue;
-				output.Write(_(L"#HW newtext ")+wxString::Format(wxT("%u"),j+1)+_(L"\n"));
+				output.Write(_(L"#HW newtext ")+wxString::Format(wxT("%u"),j)+_(L"\n"));
 				if (GetGameType()==GAME_TYPE_PSX)
 					output.Write(_(data.text_block[i].text[j].str)+_(L"\n\n"));
 				else if (singlelang!=STEAM_LANGUAGE_NONE)
@@ -327,7 +331,7 @@ int BatchExportDialog::ExportSpecialText(wxString path, bool* exportlist, bool s
 
 LogStruct BatchImportDialog::ImportSpecialText(wxString filetext, bool fatalwarning) {
 	SpecialTextDataSet& data = *dataset->ffuiset->special_text;
-	wxString line,linebuf,errstr,token,txtvalue,inputstr = filetext;
+	wxString line,linebuf,errstr,hwword,token,txtvalue,inputstr = filetext;
 	int currenttextstruct = -1, currenttext = -1;
 	SteamLanguage lang = GetSteamLanguage();
 	int nexttextstruct = 0, nexttext;
@@ -341,25 +345,30 @@ LogStruct BatchImportDialog::ImportSpecialText(wxString filetext, bool fatalwarn
 		end = inputstr.IsEmpty();
 		line = FB_GetWxStringLine(inputstr);
 		linebuf = line;
-		token = FB_GetNextWord(linebuf);
-		if (token.IsSameAs(_(L"#HW")) || end) {
-			if (currenttextstruct>=0 && currenttext>=0) {
+		hwword = FB_GetNextWord(linebuf);
+		if (hwword.IsSameAs(_(L"#HW")))
+			token = FB_GetNextWord(linebuf);
+		if (hwword.IsSameAs(_(L"#HW")) || end) {
+			if (currenttextstruct>=0 && currenttext>=0 && txtvalue.Len()>0) {
 				if (txtvalue.Right(2).IsSameAs(_(L"\n\n")))
-					txtvalue = txtvalue.Mid(0,txtvalue.Len()-2);
+					txtvalue = txtvalue.Mid(0, txtvalue.Len()-2);
 				strvalue = txtvalue.ToStdWstring();
 				if (GetGameType()==GAME_TYPE_PSX || !hades::STEAM_SINGLE_LANGUAGE_MODE || lang==GetSteamLanguage())
 					tmptextstr[currenttextstruct][currenttext].SetValue(strvalue,lang);
-				tmptextid[currenttextstruct][nexttext] = 0;
-				value = FB_GetCharCount(strvalue,hades::SPECIAL_STRING_OPCODE_WCHAR);
-				if (value!=data.text_block[tmptextstructid[currenttextstruct]].text[tmptextid[currenttextstruct][currenttext]-1].code_amount) {
-					errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_MISSMATCH_CODE),tmptextstructid[currenttextstruct],tmptextid[currenttextstruct][currenttext],data.text_block[tmptextstructid[currenttextstruct]].text[tmptextid[currenttextstruct][currenttext]-1].code_amount,value);
-					res.AddWarning(errstr.ToStdWstring());
+				tmptextid[currenttextstruct][nexttext] = -1;
+				if (GetGameType()==GAME_TYPE_PSX) {
+					value = FB_GetCharCount(strvalue,hades::SPECIAL_STRING_OPCODE_WCHAR);
+					if (value!=data.text_block[tmptextstructid[currenttextstruct]].text[tmptextid[currenttextstruct][currenttext]].code_amount) {
+						errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_MISSMATCH_CODE),tmptextstructid[currenttextstruct],tmptextid[currenttextstruct][currenttext],data.text_block[tmptextstructid[currenttextstruct]].text[tmptextid[currenttextstruct][currenttext]].code_amount,value);
+						res.AddWarning(errstr.ToStdWstring());
+					}
 				}
-				currenttext = -1;
+				txtvalue = _(L"");
+				if (!token.IsSameAs(_(L"language")))
+					currenttext = -1;
 			}
 		}
-		if (token.IsSameAs(_(L"#HW"))) {
-			token = FB_GetNextWord(linebuf);
+		if (hwword.IsSameAs(_(L"#HW"))) {
 			if (token.IsSameAs(_(L"filetype"))) {
 				if (!filetypeok) {
 					token = FB_GetNextWord(linebuf);
@@ -394,9 +403,9 @@ LogStruct BatchImportDialog::ImportSpecialText(wxString filetext, bool fatalwarn
 						if (value<data.amount) {
 							currenttextstruct = nexttextstruct++;
 							tmptextstructid[currenttextstruct] = value;
-							tmptextid[currenttextstruct] = new uint16_t[data.text_block[value].amount+1];
-							tmptextstr[currenttextstruct] = new FF9String[data.text_block[value].amount+1];
-							tmptextid[currenttextstruct][0] = 0;
+							tmptextid[currenttextstruct] = new int[data.text_block[value].amount+1];
+							tmptextstr[currenttextstruct] = new FF9String[data.text_block[value].amount];
+							tmptextid[currenttextstruct][0] = -1;
 							currenttext = -1;
 							nexttext = 0;
 						} else {
@@ -406,16 +415,15 @@ LogStruct BatchImportDialog::ImportSpecialText(wxString filetext, bool fatalwarn
 					}
 				} else if (token.IsSameAs(_(L"newtext"))) {
 					token = FB_GetNextWord(linebuf);
+					currenttext = -1;
 					if (!token.ToULong(&value)) {
 						errstr.Printf(wxT(HADES_STRING_BATCH_MISSING_INTEGER),linenum,L"newtext");
 						res.AddError(errstr.ToStdWstring());
-						currenttext = -1;
 					} else if (currenttextstruct>=0) {
-						if (value<=0 || value>data.text_block[tmptextstructid[currenttextstruct]].amount) {
+						if (value<0 || value>=data.text_block[tmptextstructid[currenttextstruct]].amount) {
 							errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_WRONG_ID),linenum,tmptextstructid[currenttextstruct],value);
 							res.AddError(errstr.ToStdWstring());
 						} else {
-							currenttext = -1;
 							for (i=0;i<nexttext;i++)
 								if (tmptextid[currenttextstruct][i]==value) {
 									errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_REDEFINITION),linenum,value);
@@ -426,7 +434,8 @@ LogStruct BatchImportDialog::ImportSpecialText(wxString filetext, bool fatalwarn
 							if (currenttext==-1)
 								currenttext = nexttext++;
 							tmptextid[currenttextstruct][currenttext] = value;
-							tmptextstr[currenttextstruct][currenttext] = FF9String(data.text_block[tmptextstructid[currenttextstruct]].text[value-1]);
+							tmptextstr[currenttextstruct][currenttext] = FF9String(data.text_block[tmptextstructid[currenttextstruct]].text[value]);
+							lang = GetSteamLanguage();
 							txtvalue = _(L"");
 						}
 					}
@@ -451,12 +460,12 @@ LogStruct BatchImportDialog::ImportSpecialText(wxString filetext, bool fatalwarn
 	for (currenttextstruct=0;currenttextstruct<nexttextstruct;currenttextstruct++) {
 		blocksize = 4*data.text_block[tmptextstructid[currenttextstruct]].amount;
 		for (i=0;i<data.text_block[tmptextstructid[currenttextstruct]].amount;i++) {
-			for (currenttext=0;tmptextid[currenttextstruct][currenttext]>0;currenttext++)
-				if (tmptextid[currenttextstruct][currenttext]==i+1) {
+			for (currenttext=0;tmptextid[currenttextstruct][currenttext]>=0;currenttext++)
+				if (tmptextid[currenttextstruct][currenttext]==i) {
 					blocksize += tmptextstr[currenttextstruct][currenttext].length;
 					break;
 				}
-			if (tmptextid[currenttextstruct][currenttext]==0)
+			if (tmptextid[currenttextstruct][currenttext]<0)
 				blocksize += data.text_block[tmptextstructid[currenttextstruct]].text[i].length;
 		}
 		if (blocksize>data.text_block[tmptextstructid[currenttextstruct]].space_total) {
@@ -469,16 +478,18 @@ LogStruct BatchImportDialog::ImportSpecialText(wxString filetext, bool fatalwarn
 		res.AddError(errstr.ToStdWstring());
 	}
 	wstring nullstr = L"";
-	if ((!fatalwarning || res.warning_amount==0) && res.error_amount==0) {
-		for (currenttextstruct=0;currenttextstruct<nexttextstruct;currenttextstruct++) {
-			for (currenttext=0;tmptextid[currenttextstruct][currenttext]>0;currenttext++)
-				data.text_block[tmptextstructid[currenttextstruct]].SetText(tmptextid[currenttextstruct][currenttext]-1,nullstr);
-			for (currenttext=0;tmptextid[currenttextstruct][currenttext]>0;currenttext++)
-				data.text_block[tmptextstructid[currenttextstruct]].SetText(tmptextid[currenttextstruct][currenttext]-1,tmptextstr[currenttextstruct][currenttext]);
-		}
-		res.ok = true;
-	} else
+	if (fatalwarning && res.warning_amount>0)
 		res.ok = false;
+	if (res.ok) {
+		for (currenttextstruct=0;currenttextstruct<nexttextstruct;currenttextstruct++) {
+			for (currenttext=0;tmptextid[currenttextstruct][currenttext]>=0;currenttext++)
+				data.text_block[tmptextstructid[currenttextstruct]].SetText(tmptextid[currenttextstruct][currenttext],nullstr);
+			for (currenttext=0;tmptextid[currenttextstruct][currenttext]>=0;currenttext++) {
+				data.text_block[tmptextstructid[currenttextstruct]].SetText(tmptextid[currenttextstruct][currenttext],tmptextstr[currenttextstruct][currenttext]);
+			}
+		}
+		datamodified = true;
+	}
 	for (currenttextstruct=0;currenttextstruct<nexttextstruct;currenttextstruct++) {
 		delete[] tmptextid[currenttextstruct];
 		delete[] tmptextstr[currenttextstruct];
@@ -787,6 +798,299 @@ int BatchExportDialog::ExportFieldScript(wxString path, bool* exportlist, bool s
 	return 0;
 }
 
+LogStruct BatchImportDialog::ImportScript(int scripttype, wxString filescript, bool fatalwarning) {
+	wxString line, linebuf, errstr, token, codevalue, globalcode, localcode, inputstr = filescript;
+	int currentbattle = -1, currententry = -1, currentfunction = -1;
+	SteamLanguage lang = GetSteamLanguage(), linklang = STEAM_LANGUAGE_NONE;
+	unsigned int i, codelinenum, linenum = 0;
+	bool updatecur = false, langlinkblock = false, localblock = false, globalblock = false;
+	bool end, tokencheck, filetypeok = false, nothingdone = true;
+	vector<uint16_t> langtextid, baselangtextid;
+	uint16_t tmptextid, tmpbasetextid;
+	long entrysizegap;
+	unsigned long value;
+	LogStruct tmplog, res = LogStruct();
+	ScriptEditHandler* current_handler = NULL;
+	ScriptDataStruct* current_script_ptr = NULL;
+	wstring current_script_name;
+	bool dataloaded[] = { false, false, false, false, false, false, false, false };
+	if (scripttype!=SCRIPT_TYPE_FIELD && scripttype!=SCRIPT_TYPE_BATTLE && scripttype!=SCRIPT_TYPE_WORLD)
+		return res;
+	while (!inputstr.IsEmpty() || currentfunction>=0) {
+		linenum++;
+		end = inputstr.IsEmpty();
+		line = FB_GetWxStringLine(inputstr);
+		linebuf = line;
+		token = FB_GetNextWord(linebuf);
+		if (token.IsSameAs(_(L"#HW")) || end) {
+			if (currentfunction>=0 && (lang==GetSteamLanguage() || (current_handler!=NULL && current_handler->script.multi_lang_script!=NULL && current_handler->script.multi_lang_script->is_loaded[lang]))) {
+				current_handler->currentvar_str = globalcode + _(L"\n") + localcode;
+				tmplog = current_handler->ParseFunction(codevalue, currententry, currentfunction, codelinenum);
+				entrysizegap = current_script_ptr->GetExtraSize()+current_handler->script.entry_size[currententry]-current_handler->GetParsedEntryNewSize();
+				if (entrysizegap<0) {
+					errstr.Printf(wxT(HADES_STRING_LOGERROR_SPACE), -entrysizegap);
+					tmplog.AddError(errstr.ToStdWstring());
+				}
+				if (tmplog.error_amount > 0) {
+					errstr.Printf(wxT(HADES_STRING_BATCH_SCRIPT_FUNCTION), current_handler->functionlist_str[current_handler->GetFunctionAbsolutePos(currententry, currentfunction)], current_script_name);
+					res.AddError(errstr.ToStdWstring());
+				}
+				if (tmplog.warning_amount > 0) {
+					errstr.Printf(wxT(HADES_STRING_BATCH_SCRIPT_FUNCTION), current_handler->functionlist_str[current_handler->GetFunctionAbsolutePos(currententry, currentfunction)], current_script_name);
+					res.AddWarning(errstr.ToStdWstring());
+				}
+				res.AddLog(tmplog);
+				updatecur = updatecur && tmplog.error_amount==0 && (!fatalwarning || tmplog.warning_amount==0);
+				current_handler->ApplyParsedFunction();
+				currentfunction = -1;
+			}
+		}
+		if (token.IsSameAs(_(L"#HW"))) {
+			token = FB_GetNextWord(linebuf);
+			if (token.IsSameAs(_(L"filetype"))) {
+				if (!filetypeok) {
+					token = FB_GetNextWord(linebuf);
+					if (scripttype==SCRIPT_TYPE_FIELD && !token.IsSameAs(_(L"FIELDSCRIPT"))) {
+						errstr.Printf(wxT(HADES_STRING_BATCH_WRONG_FILETYPE), linenum, L"FIELDSCRIPT");
+						res.AddError(errstr.ToStdWstring());
+						errstr.Printf(wxT(HADES_STRING_BATCH_NOTHING));
+						res.AddError(errstr.ToStdWstring());
+						return res;
+					} else if (scripttype==SCRIPT_TYPE_BATTLE && !token.IsSameAs(_(L"ENEMYSCRIPT"))) {
+						errstr.Printf(wxT(HADES_STRING_BATCH_WRONG_FILETYPE), linenum, L"ENEMYSCRIPT");
+						res.AddError(errstr.ToStdWstring());
+						errstr.Printf(wxT(HADES_STRING_BATCH_NOTHING));
+						res.AddError(errstr.ToStdWstring());
+						return res;
+					} else if (scripttype==SCRIPT_TYPE_WORLD && !token.IsSameAs(_(L"WORLDSCRIPT"))) {
+						errstr.Printf(wxT(HADES_STRING_BATCH_WRONG_FILETYPE), linenum, L"WORLDSCRIPT");
+						res.AddError(errstr.ToStdWstring());
+						errstr.Printf(wxT(HADES_STRING_BATCH_NOTHING));
+						res.AddError(errstr.ToStdWstring());
+						return res;
+					}
+					filetypeok = true;
+				} else {
+					errstr.Printf(wxT(HADES_STRING_BATCH_FILETYPE_TWICE), linenum);
+					res.AddWarning(errstr.ToStdWstring());
+				}
+			} else {
+				if (!filetypeok) {
+					errstr.Printf(wxT(HADES_STRING_BATCH_FILETYPE_NOTFIRST), linenum);
+					res.AddError(errstr.ToStdWstring());
+					errstr.Printf(wxT(HADES_STRING_BATCH_NOTHING));
+					res.AddError(errstr.ToStdWstring());
+					return res;
+				}
+				if (linklang!=STEAM_LANGUAGE_NONE && !token.IsSameAs(_(L"languagetextlink"))) {
+					if (current_handler != NULL)
+						current_handler->script.LinkLanguageScripts(linklang, lang, langtextid, baselangtextid);
+					linklang = STEAM_LANGUAGE_NONE;
+				}
+				if (token.IsSameAs(_(L"endglobals")) && !globalblock) {
+					errstr.Printf(wxT(HADES_STRING_BATCH_SCRIPT_NOGLOBALS), linenum);
+					res.AddWarning(errstr.ToStdWstring());
+				} else if (token.IsSameAs(_(L"endlocals")) && !localblock) {
+					errstr.Printf(wxT(HADES_STRING_BATCH_SCRIPT_NOLOCALS), linenum);
+					res.AddWarning(errstr.ToStdWstring());
+				}
+				langlinkblock = globalblock = localblock = false;
+				if (token.IsSameAs(_(L"fileid"))) {
+					if (updatecur) {
+						if (current_handler->script.multi_lang_script!=NULL && current_handler->script.current_language!=GetSteamLanguage())
+							current_handler->script.ChangeSteamLanguage(GetSteamLanguage());
+						*current_script_ptr = current_handler->script;
+						current_script_ptr->MarkDataModified();
+						updatecur = false;
+						nothingdone = false;
+					}
+					globalcode = localcode = _(L"");
+					if (current_handler != NULL) {
+						delete current_handler;
+						current_handler = NULL;
+					}
+					token = FB_GetNextWord(linebuf);
+					currentbattle = -1;
+					currententry = -1;
+					currentfunction = -1;
+					if (!token.ToULong(&value)) {
+						errstr.Printf(wxT(HADES_STRING_BATCH_MISSING_INTEGER), linenum, L"fileid");
+						res.AddError(errstr.ToStdWstring());
+					} else {
+						if (scripttype==SCRIPT_TYPE_FIELD) {
+							for (i=0; i<dataset->fieldset->amount; i++)
+								if (dataset->fieldset->script_data[i]->object_id==value) {
+									currentbattle = i;
+									current_script_ptr = dataset->fieldset->script_data[i];
+									current_handler = new ScriptEditHandler(*current_script_ptr, scripttype, dataset, NULL, NULL, dataloaded);
+									current_handler->GenerateFunctionList();
+									current_script_name = dataset->fieldset->script_data[i]->name.GetStr(2);
+									updatecur = true;
+									break;
+								}
+							if (i==dataset->fieldset->amount) {
+								errstr.Printf(wxT(HADES_STRING_BATCH_FIELD_UNUSED), linenum, value);
+								res.AddWarning(errstr.ToStdWstring());
+							}
+						} else if (scripttype==SCRIPT_TYPE_BATTLE) {
+							for (i=0; i<dataset->enemyset->battle_amount; i++)
+								if (dataset->enemyset->battle_data[i]->object_id==value) {
+									currentbattle = i;
+									current_script_ptr = dataset->enemyset->script[i];
+									current_handler = new ScriptEditHandler(*current_script_ptr, scripttype, dataset, NULL, NULL, dataloaded);
+									current_handler->GenerateFunctionList();
+									current_script_name = dataset->enemyset->battle_name[i];
+									updatecur = true;
+									break;
+								}
+							if (i==dataset->enemyset->battle_amount) {
+								errstr.Printf(wxT(HADES_STRING_BATCH_BATTLE_UNUSED), linenum, value);
+								res.AddWarning(errstr.ToStdWstring());
+							}
+						} else {
+							for (i=0; i<dataset->worldset->amount; i++)
+								if (dataset->worldset->script[i]->object_id==value) {
+									currentbattle = i;
+									current_script_ptr = dataset->worldset->script[i];
+									current_handler = new ScriptEditHandler(*current_script_ptr, scripttype, dataset, NULL, NULL, dataloaded);
+									current_handler->GenerateFunctionList();
+									current_script_name = dataset->worldset->name[i];
+									updatecur = true;
+									break;
+								}
+							if (i==dataset->worldset->amount) {
+								errstr.Printf(wxT(HADES_STRING_BATCH_WORLD_UNUSED), linenum, value);
+								res.AddWarning(errstr.ToStdWstring());
+							}
+						}
+					}
+				} else if (token.IsSameAs(_(L"newentry"))) {
+					localcode = _(L"");
+					token = FB_GetNextWord(linebuf);
+					if (!token.ToULong(&value)) {
+						errstr.Printf(wxT(HADES_STRING_BATCH_MISSING_INTEGER), linenum, L"newentry");
+						res.AddError(errstr.ToStdWstring());
+						currententry = -1;
+						currentfunction = -1;
+					} else if (currentbattle>=0) {
+						currententry = value;
+						token = FB_GetNextWord(linebuf);
+						tokencheck = token.ToULong(&value);
+						if (current_handler != NULL) {
+							if (current_handler->script.entry_amount<currententry)
+								current_handler->AddEntry(currententry, tokencheck ? value : 0);
+							else if (tokencheck)
+								current_handler->script.entry_type[currententry] = value;
+						}
+						currentfunction = -1;
+					}
+				} else if (token.IsSameAs(_(L"newfunction"))) {
+					token = FB_GetNextWord(linebuf);
+					if (!token.ToULong(&value)) {
+						errstr.Printf(wxT(HADES_STRING_BATCH_MISSING_INTEGER), linenum, L"newfunction");
+						res.AddError(errstr.ToStdWstring());
+						currentfunction = -1;
+					} else if (currententry>=0) {
+						for (i=0; i<current_handler->script.entry_function_amount[currententry]; i++)
+							if (current_handler->script.function_type[currententry][i]==value) {
+								currentfunction = i;
+								break;
+							}
+						if (i==current_handler->script.entry_function_amount[currententry]) {
+							for (i=0; i<current_handler->script.entry_function_amount[currententry]; i++)
+								if (current_handler->script.function_type[currententry][i]>value) {
+									if (i>0)
+										i--;
+									break;
+								}
+							current_handler->AddFunction(currententry, i, value);
+						}
+						codevalue = _(L"");
+						codelinenum = linenum;
+					}
+				} else if (token.IsSameAs(_(L"globals"))) {
+					globalblock = true;
+				} else if (token.IsSameAs(_(L"locals"))) {
+					localblock = true;
+				} else if (token.IsSameAs(_(L"languagetextlink"))) {
+					langlinkblock = true;
+				} else if (token.IsSameAs(_(L"language"))) {
+					token = FB_GetNextWord(linebuf);
+					for (i=0;i<STEAM_LANGUAGE_AMOUNT;i++)
+						if (HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[i].IsSameAs(token)) {
+							lang = i;
+							if (current_handler!=NULL && current_handler->script.multi_lang_script!=NULL) {
+								current_handler->script.LinkLanguageScripts(lang, lang);
+								current_handler->script.ChangeSteamLanguage(lang);
+								if (current_handler->script.multi_lang_script->is_loaded[lang])
+									current_handler->script.multi_lang_script->is_modified[lang] = true;
+							}
+							break;
+						}
+					if (i>=STEAM_LANGUAGE_AMOUNT) {
+						errstr.Printf(wxT(HADES_STRING_BATCH_INVALID_LANGUAGE), linenum, token);
+						res.AddWarning(errstr.ToStdWstring());
+					}
+				} else if (token.IsSameAs(_(L"languagelink"))) {
+					baselangtextid.clear();
+					langtextid.clear();
+					token = FB_GetNextWord(linebuf);
+					for (i=0;i<STEAM_LANGUAGE_AMOUNT;i++)
+						if (HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[i].IsSameAs(token)) {
+							linklang = i;
+							break;
+						}
+					if (i>=STEAM_LANGUAGE_AMOUNT) {
+						errstr.Printf(wxT(HADES_STRING_BATCH_INVALID_LANGUAGE), linenum, token);
+						res.AddWarning(errstr.ToStdWstring());
+					}
+				}
+			}
+		} else {
+			if (langlinkblock) {
+				tokencheck = true;
+				if (token.ToULong(&value))
+					tmpbasetextid = value;
+				else
+					tokencheck = false;
+				token = FB_GetNextWord(linebuf);
+				if (token.ToULong(&value))
+					tmptextid = value;
+				else
+					tokencheck = false;
+				if (tokencheck) {
+					baselangtextid.push_back(tmpbasetextid);
+					langtextid.push_back(tmptextid);
+				}
+			} else if (globalblock)
+				globalcode += line+_(L"\n");
+			else if (localblock)
+				localcode += line+_(L"\n");
+			else if (currentfunction>=0)
+				codevalue += line+_(L"\n");
+		}
+	}
+	if (updatecur) {
+		if (current_handler->script.multi_lang_script!=NULL && current_handler->script.current_language!=GetSteamLanguage())
+			current_handler->script.ChangeSteamLanguage(GetSteamLanguage());
+		*current_script_ptr = current_handler->script;
+		current_script_ptr->MarkDataModified();
+		updatecur = false;
+		nothingdone = false;
+	}
+	if (current_handler != NULL)
+		delete current_handler;
+	if (nothingdone) {
+		errstr.Printf(wxT(HADES_STRING_BATCH_NOTHING));
+		res.AddError(errstr.ToStdWstring());
+	} else {
+		datamodified = true;
+	}
+	if (fatalwarning && res.warning_amount>0)
+		res.ok = false;
+	return res;
+}
+
 //=============================//
 //           Images            //
 //=============================//
@@ -1002,9 +1306,12 @@ void BatchImportDialog::OnButtonClick(wxCommandEvent& event) {
 	int id = event.GetId();
 	unsigned int i;
 	bool ret = true;
+	bool shownlog = false;
+	bool haschecked = false;
 	if (id==wxID_OK) {
 		for (i=0;i<m_importlist->GetCount();i++) {
 			if (m_importlist->IsChecked(i)) {
+				haschecked = true;
 				wxString fname = m_filepicker->GetPath();
 				if (!wxFileName(fname).IsFileReadable())
 					fname = fname+wxString::Format(wxT("_%u.txt"),i+1);
@@ -1014,39 +1321,75 @@ void BatchImportDialog::OnButtonClick(wxCommandEvent& event) {
 					input.ReadAll(&filestr);
 				switch (datatype) {
 				case 1: {
-					LogStruct log = ImportText(filestr,m_adjustsize->IsChecked(),japanversion,m_fatalwarning->IsChecked());
-					LogDialog dial(this,log);
-					dial.SetTitle(dial.GetTitle()+_(L" : ")+wxFileName(fname).GetName());
-					dial.ShowModal();
-					datamodified = datamodified || log.ok;
-					if (log.ok)
-						m_importlist->Check(i,false);
-					else
-						ret = false;
+					LogStruct log = ImportText(filestr, m_adjustsize->IsChecked(), japanversion, m_fatalwarning->IsChecked());
+					if (log.ok)	m_importlist->Check(i, false);
+					else		ret = false;
+					if (log.warning_amount>0 || log.error_amount>0) {
+						shownlog = true;
+						LogDialog dial(this, log);
+						dial.SetTitle(dial.GetTitle()+_(L" : ")+wxFileName(fname).GetName());
+						dial.ShowModal();
+					}
 					break;
 				}
 				case 2: {
-					LogStruct log = ImportSpecialText(filestr,m_fatalwarning->IsChecked());
-					LogDialog dial(this,log);
-					dial.SetTitle(dial.GetTitle()+_(L" : ")+wxFileName(fname).GetName());
-					dial.ShowModal();
-					datamodified = datamodified || log.ok;
-					if (log.ok)
-						m_importlist->Check(i,false);
-					else
-						ret = false;
+					LogStruct log = ImportSpecialText(filestr, m_fatalwarning->IsChecked());
+					if (log.ok)	m_importlist->Check(i, false);
+					else		ret = false;
+					if (log.warning_amount>0 || log.error_amount>0) {
+						shownlog = true;
+						LogDialog dial(this, log);
+						dial.SetTitle(dial.GetTitle()+_(L" : ")+wxFileName(fname).GetName());
+						dial.ShowModal();
+					}
 					break;
 				}
-				case 3:
-					// ToDo
+				case 3: {
+					LogStruct log = ImportScript(SCRIPT_TYPE_BATTLE, filestr, m_fatalwarning->IsChecked());
+					if (log.ok)	m_importlist->Check(i, false);
+					else		ret = false;
+					if (log.warning_amount>0 || log.error_amount>0) {
+						shownlog = true;
+						LogDialog dial(this, log);
+						dial.SetTitle(dial.GetTitle()+_(L" : ")+wxFileName(fname).GetName());
+						dial.ShowModal();
+					}
 					break;
-				case 4:
+				}
+				case 4: {
+					LogStruct log = ImportScript(SCRIPT_TYPE_WORLD, filestr, m_fatalwarning->IsChecked());
+					if (log.ok)	m_importlist->Check(i, false);
+					else		ret = false;
+					if (log.warning_amount>0 || log.error_amount>0) {
+						shownlog = true;
+						LogDialog dial(this, log);
+						dial.SetTitle(dial.GetTitle()+_(L" : ")+wxFileName(fname).GetName());
+						dial.ShowModal();
+					}
 					break;
-				case 5:
+				}
+				case 5: {
+					LogStruct log = ImportScript(SCRIPT_TYPE_FIELD, filestr, m_fatalwarning->IsChecked());
+					if (log.ok)	m_importlist->Check(i, false);
+					else		ret = false;
+					if (log.warning_amount>0 || log.error_amount>0) {
+						shownlog = true;
+						LogDialog dial(this, log);
+						dial.SetTitle(dial.GetTitle()+_(L" : ")+wxFileName(fname).GetName());
+						dial.ShowModal();
+					}
 					break;
+				}
 				}
 			}
 		}
+	}
+	if (!shownlog) {
+		LogStruct log;
+		if (!haschecked)
+			log.AddError(_(HADES_STRING_BATCH_NOTHING).ToStdWstring());
+		LogDialog dial(this, log);
+		dial.ShowModal();
 	}
 	if (ret)
 		EndModal(id);

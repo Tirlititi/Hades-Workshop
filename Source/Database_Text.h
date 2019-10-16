@@ -87,7 +87,8 @@ static SortedChoiceItem HADES_STRING_TEXT_BLOCK_NAME[] = {
 	{ 0x3B1, L"Chocobo Places" },
 	{ 0x3B2, L"Alexandria (Ruin)" },
 	{ 0x431, L"Black Mage Village (2)" },
-	{ 0x1000, L"Charmap" }
+	{ 0x1000, L"Charmap" },
+	{ 0x2047, L"Qu's Marsh (mobile)" }
 };
 
 // Should always be sorted by id

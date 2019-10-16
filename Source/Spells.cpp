@@ -357,6 +357,7 @@ bool SpellDataSet::GenerateCSV(string basefolder) {
 		csv << (int)((spell[i].target_flag >> 5) & 0x1) << L";" << (int)((spell[i].target_flag >> 7) & 0x1) << L";" << (int)((spell[i].target_flag >> 6) & 0x1) << L";" << (int)(spell[i].model & 0x1FF) << L";";
 		csv << (int)spell[i].model_alt << L";" << (int)spell[i].effect << L";" << (int)spell[i].power << L";" << (int)spell[i].element << L";" << (int)spell[i].accuracy << L";";
 		csv << (int)spell[i].flag << L";" << (int)spell[i].status << L";" << (int)spell[i].mp << L";" << (int)spell[i].menu_flag << L";# " << ConvertWStrToStr(spell[i].name.str_nice).c_str() << L"\n";
+		// Note that the Sound is removed from Memoria's AA_DATA class
 	}
 	csv.close();
 	fname = basefolder + HADES_STRING_CSV_STATUS_FILE;

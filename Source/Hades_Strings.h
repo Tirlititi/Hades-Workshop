@@ -80,7 +80,7 @@
 #define HADES_STRING_STEAM_SAVE_CSHARP_CIL_RAW	"// Error: There was raw CIL Code modifications done in Hades Workshop.\n"\
 												"// They were ignored and not converted into C# code.\n"\
 												"// The involved methods were:\n"
-#define HADES_STRING_STEAM_SAVE_CSHARP_MEMORIA	L"Raw CIL Code modifications and macros were not exported"\
+#define HADES_STRING_STEAM_SAVE_CSHARP_MEMORIA	L"Raw CIL Code modifications and macros were not exported\n"\
 												L"They are better to be done using Memoria's options or C# modifications"
 #define HADES_STRING_HWS_OPEN_SUCCESS L"Data successfully imported!"
 #define HADES_STRING_HWS_OPEN_FAIL L"Cannot open '%s' as Final Fantasy IX save."
@@ -270,6 +270,7 @@ static wxString HADES_STRING_SYNTH_NAME[8] = {
 #define HADES_STRING_SCRIPT_EXPECT				" - Line %u: Expected '%s'\n"
 #define HADES_STRING_SCRIPT_UNEXPECT			" - Line %u: Unexpected '%s'\n"
 #define HADES_STRING_SCRIPT_NUMBER				" - Line %u: Expected a number\n"
+#define HADES_STRING_SCRIPT_EMPTY				" - Line %u: Empty argument\n"
 #define HADES_STRING_SCRIPT_ARGAMOUNT			" - Line %u: Opcode '%s' takes %u arguments; got %u\n"
 #define HADES_STRING_SCRIPT_NOVARARG			" - Line %u: Opcode '%s' accepts numerical arguments only\n"
 #define HADES_STRING_SCRIPT_UNKNOWN				" - Line %u: Unknown word '%s'\n"
@@ -307,18 +308,24 @@ static wxString HADES_STRING_SYNTH_NAME[8] = {
 #define HADES_STRING_CILSCRIPT_RANGEILPOS		" - IL_%.4X: '%s' is out of range for this instruction's short form\n"
 
 //-- File Batching
-#define HADES_STRING_BATCH_NOTHING				" - Nothing done\n"
-#define HADES_STRING_BATCH_WRONG_FILETYPE		" - Line %u: Expected a %s filetype\n"
-#define HADES_STRING_BATCH_FILETYPE_TWICE		" - Line %u: Can't define typefile twice\n"
-#define HADES_STRING_BATCH_FILETYPE_NOTFIRST	" - Line %u: First command must be the filetype\n"
-#define HADES_STRING_BATCH_MISSING_INTEGER		" - Line %u: '%s' takes an integral argument\n"
-#define HADES_STRING_BATCH_TOO_MANY				" - Line %u: Too many %s declarations\n"
-#define HADES_STRING_BATCH_TEXT_WRONG_ID		" - Line %u: Text Block %u doesn't have a text n°%u\n"
-#define HADES_STRING_BATCH_TEXT_REDEFINITION	" - Line %u: Redefinition of text n°%u\n"
-#define HADES_STRING_BATCH_INVALID_LANGUAGE		" - Line %u: '%s' is not recognized as a language\n"
-#define HADES_STRING_BATCH_TEXT_UNUSED			" - Text Block %u unused in this disc\n"
-#define HADES_STRING_BATCH_TEXT_SIZE			" - Text Block %u capacity is %u bytes too short\n"
-#define HADES_STRING_BATCH_TEXT_MISSMATCH_CODE	" - Text Block %u, Text %u: Expected %u opcode characters, got %u\n"
+#define HADES_STRING_BATCH_NOTHING					" - Nothing done\n"
+#define HADES_STRING_BATCH_WRONG_FILETYPE			" - Line %u: Expected a %s filetype\n"
+#define HADES_STRING_BATCH_FILETYPE_TWICE			" - Line %u: Can't define typefile twice\n"
+#define HADES_STRING_BATCH_FILETYPE_NOTFIRST		" - Line %u: First command must be the filetype\n"
+#define HADES_STRING_BATCH_MISSING_INTEGER			" - Line %u: '%s' takes an integral argument\n"
+#define HADES_STRING_BATCH_TOO_MANY					" - Line %u: Too many %s declarations\n"
+#define HADES_STRING_BATCH_TEXT_WRONG_ID			" - Line %u: Text Block %u doesn't have a text n°%u\n"
+#define HADES_STRING_BATCH_TEXT_REDEFINITION		" - Line %u: Redefinition of text n°%u\n"
+#define HADES_STRING_BATCH_INVALID_LANGUAGE			" - Line %u: '%s' is not recognized as a language\n"
+#define HADES_STRING_BATCH_TEXT_UNUSED				" - Text Block %u unused in this disc\n"
+#define HADES_STRING_BATCH_TEXT_SIZE				" - Text Block %u capacity is %u bytes too short\n"
+#define HADES_STRING_BATCH_TEXT_MISSMATCH_CODE		" - Text Block %u, Text %u: Expected %u opcode characters, got %u\n"
+#define HADES_STRING_BATCH_FIELD_UNUSED				" - Line %u: Field %u is unknown\n"
+#define HADES_STRING_BATCH_BATTLE_UNUSED			" - Line %u: Battle %u is unknown\n"
+#define HADES_STRING_BATCH_WORLD_UNUSED				" - Line %u: World Map %u is unknown\n"
+#define HADES_STRING_BATCH_SCRIPT_FUNCTION			"In %s of %s:\n"
+#define HADES_STRING_BATCH_SCRIPT_NOGLOBALS			" - Line %u: Unexpected 'endglobals' out of a global variable block\n"
+#define HADES_STRING_BATCH_SCRIPT_NOLOCALS			" - Line %u: Unexpected 'endlocals' out of a local variable block\n"
 
 //-- World Maps
 #define HADES_STRING_WORLD_BATTLE_NAME	"Battle Spot %d"
