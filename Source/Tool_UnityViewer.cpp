@@ -966,6 +966,8 @@ bool ToolUnityViewer::PerformImportOfAsset(bool isnewfile, fstream& filebase, fs
 //		BufferWriteLong((uint8_t*)buffer,samplecount);
 		BufferInitPosition(0xF0);	BufferWriteLong((uint8_t*)buffer,loopstart);
 		BufferWriteLong((uint8_t*)buffer,loopend);
+//		BufferInitPosition(0xFC);	BufferWriteLong((uint8_t*)buffer,secondaryloopstart); // For the music "Final Battle"
+//		BufferWriteLong((uint8_t*)buffer,secondaryloopend);
 //		BufferInitPosition(0x124);	BufferWriteLong((uint8_t*)buffer,???);
 		filedest.write(buffer,filenewsize);
 		fileasset.close();
