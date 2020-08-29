@@ -3,6 +3,8 @@
 
 #include "Database_Common.h"
 
+#define HADES_STRING_DICTIONARY_PATCH_FILE	"DictionaryPatch.txt"
+
 #define HADES_STRING_CSV_SPELL_FILE		"Data\\Battle\\Actions.csv"
 #define HADES_STRING_CSV_SPELL_HEADER	L"# This file contains character actions.;;;;;;;;;;;;;;;;;;\n"\
 										L"# You must set 192 different items.;;;;;;;;;;;;;;;;;;\n"\
@@ -269,6 +271,7 @@ static wstring HADES_STRING_CSV_STATABIL_HEADER[] = {
 											L"// The following script needs to be injected in the Assemble-CSharp.dll in order for this feature to work.\n"\
 											L"// It should replace the method \"SetAbilityMagic\" of the class \"BattleHUD\"\n\n"
 
+// Unused anymore; BattleMap change is now written to HADES_STRING_DICTIONARY_PATCH_FILE
 #define HADES_STRING_CSV_BATTLEMAP_FILE		"Script\\Sources\\Incomplete\\BattleMap.cs"
 #define HADES_STRING_CSV_BATTLEMAP_HEADER	L"// Memoria does not allow to change the battle battlegrounds yet.\n"\
 											L"// The following script needs to be injected in the Assemble-CSharp.dll in order for this feature to work.\n"\

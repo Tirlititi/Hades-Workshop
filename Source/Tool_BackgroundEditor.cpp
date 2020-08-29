@@ -101,7 +101,7 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 	atlassize = atlasw*atlash*4;
 	// Load the image files
 	wxImage* tblockimgarray = new wxImage[tilesamountplustitle];
-	unsigned int tiledefaultsize = GetGameType()==GAME_TYPE_PSX ? FIELD_TILE_BASE_SIZE : FIELD_TILE_BASE_SIZE*2;
+	unsigned int tiledefaultsize = GetGameType()==GAME_TYPE_PSX ? FIELD_TILE_BASE_SIZE : hades::FIELD_BACKGROUND_RESOLUTION;
 	unsigned int expectmemoryusage = 0;
 	bool loadallimage = false; // If the images are too big, we don't load them all in the RAM simultaneously ; DEBUG: always deactivated
 	for (i=0;i<tilesamountplustitle;i++) {
@@ -109,16 +109,16 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 			tblockimgarray[i].LoadFile(imgfilename[i],type);
 			tilei = i<tiledata.tiles_amount ? i : i+tiledata.title_tile_amount;
 			FieldTilesCameraDataStruct& camera = tiledata.camera[tiledata.tiles[tilei].camera_id];
-			if (camera.width/tiledefaultsize*tilesize>tblockimgarray[i].GetWidth() || camera.height/tiledefaultsize*tilesize>tblockimgarray[i].GetHeight()) {
+			if (camera.width*tilesize/tiledefaultsize>tblockimgarray[i].GetWidth() || camera.height*tilesize/tiledefaultsize>tblockimgarray[i].GetHeight()) {
 				delete[] tblockimgarray;
 				remove((outputname+_(L".tmp")).c_str());
 				return 2;
 			}
-			if (!tblockimgarray[i].HasAlpha()) {
+/*			if (!tblockimgarray[i].HasAlpha()) {
 				delete[] tblockimgarray;
 				remove((outputname+_(L".tmp")).c_str());
 				return 3;
-			}
+			}*/
 			expectmemoryusage += (tblockimgarray[i].GetWidth()*tblockimgarray[i].GetHeight())*4;
 			if (expectmemoryusage>=CONVERTER_MEMORY_LIMIT && loadallimage) {
 				loadallimage = false;
@@ -183,10 +183,16 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 		wxImage& tblockimg = tblockimgarray[i];
 		if (!tblockimg.IsOk())
 			continue;
-		uint8_t* imgdata = tblockimg.GetData();
-		uint8_t* imgalpha = tblockimg.GetAlpha();
 		imgwidth = tblockimg.GetWidth();
 		imgheight = tblockimg.GetHeight();
+		if (!tblockimg.HasAlpha()) {
+			tblockimg.SetAlpha();
+			uint8_t* imgalphainit = tblockimg.GetAlpha();
+			for (j=0; j<imgwidth*imgheight; j++)
+				imgalphainit[j] = 0xFF;
+		}
+		uint8_t* imgdata = tblockimg.GetData();
+		uint8_t* imgalpha = tblockimg.GetAlpha();
 		for (j=0;j<tile.tile_amount;j++) {
 			/* Old Blend Modes
 			switch (tile.tile_alpha[j]) {

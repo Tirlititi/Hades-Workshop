@@ -7,6 +7,7 @@
 //#include "Gui_LoadingDialog.h"
 //#include "Hades_Strings.h"
 //#include "Steam_Strings.h"
+#include "Database_SpellAnimation.h"
 
 struct ModManagerClientData : public wxClientData {
 	unsigned int type;
@@ -32,7 +33,7 @@ ToolModManager::~ToolModManager() {
 }
 
 int ToolModManager::ShowModal(CDDataStruct* data) {
-	unsigned int i;
+	unsigned int i, j;
 	cddata = data;
 	wxTreeListItem topitem,curitem,lowitem;
 	SaveSet* dataset = &cddata->saveset;
@@ -81,7 +82,20 @@ int ToolModManager::ShowModal(CDDataStruct* data) {
 	if (cddata->spellanimloaded) {
 		curitem = m_listtree->AppendItem(topitem,_(L"Spell Animations"));
 		m_listtree->SetItemData(curitem,new ModManagerClientData(1,DATA_SECTION_SPELL_ANIM));
-		if (cddata->spellanimmodified) m_listtree->CheckItem(curitem);
+		for (i=0;i<cddata->spellanimset.amount;i++)
+			if (!cddata->spellanimset.spell[i].is_empty) {
+				for (j=0;j<G_N_ELEMENTS(HADES_STRING_SPELL_MODEL);j++)
+					if (HADES_STRING_SPELL_MODEL[j].id==i) {
+						lowitem = m_listtree->AppendItem(curitem,_(HADES_STRING_SPELL_MODEL[j].label));
+						break;
+					}
+				if (j==G_N_ELEMENTS(HADES_STRING_SPELL_MODEL))
+					lowitem = m_listtree->AppendItem(curitem,wxString::Format(wxT("Spell Animation %u"),i));
+				m_listtree->SetItemData(lowitem,new ModManagerClientData(2,DATA_SECTION_SPELL_ANIM,i));
+				if (cddata->spellanimset.spell[i].modified_data != 0) m_listtree->CheckItem(lowitem);
+			}
+		if (!m_listtree->AreAllChildrenInState(curitem,wxCHK_UNCHECKED))
+			m_listtree->CheckItem(curitem);
 	}
 	if (!m_listtree->AreAllChildrenInState(topitem,wxCHK_UNCHECKED))
 		m_listtree->CheckItem(topitem);
@@ -289,10 +303,6 @@ void ToolModMarkModification(CDDataStruct* data, ModManagerClientData* info, boo
 			data->cardmodified = check;
 		} else if (info->section==DATA_SECTION_SPELL_ANIM) {
 			data->spellanimmodified = check;
-			for (i=0;i<data->spellanimset.amount;i++) {
-				if (!data->spellanimset.spell[i].is_empty)
-					data->spellanimset.spell[i].modified_data = SPELL_ANIMATION_DATA_TYPE_WHOLE;
-			}
 		} else if (info->section==DATA_SECTION_WORLD_MAP) {
 			if (check) {
 				data->worldset.world_data->MarkDataModified();
@@ -325,6 +335,12 @@ void ToolModMarkModification(CDDataStruct* data, ModManagerClientData* info, boo
 				data->fieldset.script_data[info->index]->parent_cluster->modified = false;
 			} else if (info->section==DATA_SECTION_BATTLE_SCENE) {
 				data->sceneset.scene[info->index]->parent_cluster->modified = false;
+			} else if (info->section==DATA_SECTION_SPELL_ANIM) {
+				data->spellanimset.spell[info->index].modified_data = 0;
+			}
+		} else {
+			if (info->section==DATA_SECTION_SPELL_ANIM) {
+				data->spellanimset.spell[info->index].modified_data = SPELL_ANIMATION_DATA_TYPE_WHOLE;
 			}
 		}
 	} else if (info->type==3) {

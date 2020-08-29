@@ -1042,15 +1042,15 @@ int FindConfiguration(string filepath, ConfigurationSet& dest) {
 
 string ConfigurationSet::GetSteamAssetPath(UnityArchiveFile arch, int32_t fileid) {
 	if (arch == UNITY_ARCHIVE_DATA2)
-		return "p0data2\\" + meta_battle.GetFileFullName(fileid, arch, &bundle_battle, &indexlist_res);
+		return "StreamingAssets\\" + meta_battle.GetFileFullName(fileid, arch, &bundle_battle, &indexlist_res);
 	if (arch == UNITY_ARCHIVE_DATA3)
-		return "p0data3\\" + meta_world.GetFileFullName(fileid, arch, &bundle_world, &indexlist_res);
+		return "StreamingAssets\\" + meta_world.GetFileFullName(fileid, arch, &bundle_world, &indexlist_res);
 	if (arch == UNITY_ARCHIVE_DATA7)
-		return "p0data7\\" + meta_script.GetFileFullName(fileid, arch, &bundle_script, &indexlist_res);
+		return "StreamingAssets\\" + meta_script.GetFileFullName(fileid, arch, &bundle_script, &indexlist_res);
 	if (arch >= UNITY_ARCHIVE_DATA11 && arch <= UNITY_ARCHIVE_DATA19)
-		return "p0data1" + to_string(arch-UNITY_ARCHIVE_DATA11+1) + "\\" + meta_field[arch-UNITY_ARCHIVE_DATA11].GetFileFullName(fileid, arch, &bundle_field[arch-UNITY_ARCHIVE_DATA11], &indexlist_res);
+		return "StreamingAssets\\" + meta_field[arch-UNITY_ARCHIVE_DATA11].GetFileFullName(fileid, arch, &bundle_field[arch-UNITY_ARCHIVE_DATA11], &indexlist_res);
 	if (arch == UNITY_ARCHIVE_RESOURCES)
-		return "resources\\" + meta_res.GetFileFullName(fileid, arch, NULL, &indexlist_res);
+		return "FF9_Data\\" + meta_res.GetFileFullName(fileid, arch, NULL, &indexlist_res);
 	return "unexpected_export\\unexpected_export.bin";
 }
 
@@ -1488,7 +1488,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 	int result = 0;
 	if (destfolder.back() != '\\') destfolder += "\\";
 	string dirassets = destfolder + "StreamingAssets\\";
-	string dirdata = destfolder + "x64\\FF9_Data\\";
+	string dirdata = destfolder + "FF9_Data\\";
 	string dirmanaged = destfolder + "x64\\FF9_Data\\Managed\\";
 	string fname;
 	if (config.steam_dir_assets.compare(dirassets) == 0)
@@ -1514,42 +1514,45 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			fname = dirmanaged + "Assembly-CSharp.dll";
 			remove(fname.c_str());
 		} else if (dllformat==1) {
-			fname = destfolder + HADES_STRING_CSV_SPELL_FILE;
+			fname = dirassets + HADES_STRING_CSV_SPELL_FILE;
 			remove(fname.c_str());
-			fname = destfolder + HADES_STRING_CSV_STATUS_FILE;
+			fname = dirassets + HADES_STRING_CSV_STATUS_FILE;
 			remove(fname.c_str());
-			fname = destfolder + HADES_STRING_CSV_STATINIT_FILE;
+			fname = dirassets + HADES_STRING_CSV_STATINIT_FILE;
 			remove(fname.c_str());
-			fname = destfolder + HADES_STRING_CSV_COMMAND_FILE;
+			fname = dirassets + HADES_STRING_CSV_COMMAND_FILE;
 			remove(fname.c_str());
-			fname = destfolder + HADES_STRING_CSV_STATCMD_FILE;
+			fname = dirassets + HADES_STRING_CSV_STATCMD_FILE;
 			remove(fname.c_str());
-			fname = destfolder + HADES_STRING_CSV_SPELLTITLE_FILE;
+			fname = dirassets + HADES_STRING_CSV_SPELLTITLE_FILE;
 			remove(fname.c_str());
-			fname = destfolder + HADES_STRING_CSV_STATEQUIP_FILE;
+			fname = dirassets + HADES_STRING_CSV_STATEQUIP_FILE;
 			remove(fname.c_str());
-			fname = destfolder + HADES_STRING_CSV_STATLEVEL_FILE;
+			fname = dirassets + HADES_STRING_CSV_STATLEVEL_FILE;
 			remove(fname.c_str());
-			fname = destfolder + HADES_STRING_CSV_SUPPORT_FILE;
+			fname = dirassets + HADES_STRING_CSV_SUPPORT_FILE;
 			remove(fname.c_str());
 			for (i=0; i<G_N_ELEMENTS(HADES_STRING_CSV_STATABIL_FILE); i++) {
-				fname = destfolder + HADES_STRING_CSV_STATABIL_FILE[i];
+				fname = dirassets + HADES_STRING_CSV_STATABIL_FILE[i];
 				remove(fname.c_str());
 			}
-			fname = destfolder + HADES_STRING_CSV_ARMOR_FILE;
+			fname = dirassets + HADES_STRING_CSV_ARMOR_FILE;
 			remove(fname.c_str());
-			fname = destfolder + HADES_STRING_CSV_USABLE_FILE;
+			fname = dirassets + HADES_STRING_CSV_USABLE_FILE;
 			remove(fname.c_str());
-			fname = destfolder + HADES_STRING_CSV_ITEM_FILE;
+			fname = dirassets + HADES_STRING_CSV_ITEM_FILE;
 			remove(fname.c_str());
-			fname = destfolder + HADES_STRING_CSV_SHOP_FILE;
+			fname = dirassets + HADES_STRING_CSV_SHOP_FILE;
 			remove(fname.c_str());
-			fname = destfolder + HADES_STRING_CSV_ITEMSTAT_FILE;
+			fname = dirassets + HADES_STRING_CSV_ITEMSTAT_FILE;
 			remove(fname.c_str());
-			fname = destfolder + HADES_STRING_CSV_SYNTHESIS_FILE;
+			fname = dirassets + HADES_STRING_CSV_SYNTHESIS_FILE;
 			remove(fname.c_str());
-			fname = destfolder + HADES_STRING_CSV_WEAPON_FILE;
+			fname = dirassets + HADES_STRING_CSV_WEAPON_FILE;
 			remove(fname.c_str());
+			// Keep the old file and let EnemyDataSet::GenerateCSV patch its content by modifying the "BattleMapModel" lines only
+//			fname = destfolder + HADES_STRING_DICTIONARY_PATCH_FILE;
+//			remove(fname.c_str());
 		} else if (dllformat==2) {
 			fname = destfolder + "Assembly-CSharp_Additions.cs";
 			remove(fname.c_str());
@@ -1889,7 +1892,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			MACRO_STEAM_CHECKFILEUPDATE(card_deck_file, section[DATA_SECTION_CARD], 2 * CARD_DECK_AMOUNT)
 			MACRO_STEAM_CHECKFILEUPDATE(card_set_file, section[DATA_SECTION_CARD], CARD_SET_AMOUNT*CARD_SET_CAPACITY)
 			for (j = 0; j < SPELL_ANIMATION_AMOUNT; j++) {
-				MACRO_STEAM_CHECKFILEUPDATE(spellanim_steam_file[j], section[DATA_SECTION_SPELL_ANIM], saveset.spellanimset->spell[j].raw_size)
+				MACRO_STEAM_CHECKFILEUPDATE(spellanim_steam_file[j], section[DATA_SECTION_SPELL_ANIM] && saveset.spellanimset->spell[j].modified_data != 0, saveset.spellanimset->spell[j].raw_size)
 			}
 		}
 		vector<uint32_t> unitydataoff = config.meta_res.Duplicate(filebase, filedest, copylist, filenewsize);
@@ -1964,9 +1967,10 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 				MACRO_STEAM_WRITEFILEUPDATE(card_set_file, cardset->WriteSteamData(filedest, 2), false)
 			}
 			if (section[DATA_SECTION_SPELL_ANIM])
-				for (j = 0; j < SPELL_ANIMATION_AMOUNT; j++) {
-					MACRO_STEAM_WRITEFILEUPDATE(spellanim_steam_file[j], spellanimset->spell[j].Write(filedest), true)
-				}
+				for (j = 0; j < SPELL_ANIMATION_AMOUNT; j++)
+					if (saveset.spellanimset->spell[j].modified_data != 0) {
+						MACRO_STEAM_WRITEFILEUPDATE(spellanim_steam_file[j], spellanimset->spell[j].Write(filedest), true)
+					}
 		}
 		filebase.close();
 		filedest.close();
@@ -2019,7 +2023,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		MACRO_SAVE_ASSET_RESOURCES(card_set_file, section[DATA_SECTION_CARD], cardset->WriteSteamData(filedest, 2))
 		for (i = 0; i < SPELL_ANIMATION_AMOUNT; i++)
 			if (config.spellanim_steam_file[i]>=0) {
-				MACRO_SAVE_ASSET_RESOURCES(spellanim_steam_file[i], section[DATA_SECTION_SPELL_ANIM], spellanimset->spell[i].Write(filedest))
+				MACRO_SAVE_ASSET_RESOURCES(spellanim_steam_file[i], section[DATA_SECTION_SPELL_ANIM] && saveset.spellanimset->spell[i].modified_data != 0, spellanimset->spell[i].Write(filedest))
 			}
 	}
 	
@@ -2136,8 +2140,8 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			if (!saveset.partyspecialset->GenerateCSV(destfolder)) return 3;
 		}
 		if (section[DATA_SECTION_ENMY] && saveset.enemyset->modified_battle_scene_amount>0) {
-			fname = destfolder + HADES_STRING_CSV_BATTLEMAP_FILE;
-			MainFrame::MakeDirForFile(fname);
+//			fname = destfolder + HADES_STRING_DICTIONARY_PATCH_FILE;
+//			MainFrame::MakeDirForFile(fname);
 			if (!saveset.enemyset->GenerateCSV(destfolder)) return 3;
 		}
 		if (section[DATA_SECTION_CIL]) result = -1;

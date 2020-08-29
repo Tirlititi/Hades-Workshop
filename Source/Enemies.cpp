@@ -1067,10 +1067,34 @@ bool EnemyDataSet::GenerateCSV(string basefolder) {
 		return true;
 	int battleindex, bscindex, bbgindex;
 	unsigned int i, j;
-	string fname = basefolder + HADES_STRING_CSV_BATTLEMAP_FILE;
-	wfstream csv(fname.c_str(), ios::out);
-	if (!csv.is_open()) return false;
-	csv << HADES_STRING_CSV_BATTLEMAP_HEADER;
+	string fname = basefolder + HADES_STRING_DICTIONARY_PATCH_FILE;
+	string previouspatch = "";
+	fstream inpatchfile(fname.c_str(), ios::in);
+	if (inpatchfile.is_open()) {
+		stringstream inpatchstream;
+		inpatchstream << inpatchfile.rdbuf();
+		string wholepreviouspatch = inpatchstream.str();
+		size_t prevpos = 0, battlemapentrypos = wholepreviouspatch.find("BattleMapModel ");
+		while (battlemapentrypos != string::npos) {
+			if (battlemapentrypos > 0 && wholepreviouspatch[battlemapentrypos-1] != '\n') {
+				battlemapentrypos = wholepreviouspatch.find("BattleMapModel ", battlemapentrypos+1);
+				continue;
+			}
+			if (battlemapentrypos > 0)
+				previouspatch += wholepreviouspatch.substr(prevpos, battlemapentrypos-prevpos);
+			prevpos = wholepreviouspatch.find("\n", battlemapentrypos+1);
+			if (prevpos == string::npos)
+				break;
+			prevpos++;
+			battlemapentrypos = wholepreviouspatch.find("BattleMapModel ", prevpos);
+		}
+		previouspatch += wholepreviouspatch.substr(prevpos);
+		if (previouspatch.length() > 0 && previouspatch.back() != '\n')
+			previouspatch += "\n";
+	}
+	fstream patchfile(fname.c_str(), ios::out);
+	if (!patchfile.is_open()) return false;
+	patchfile << previouspatch;
 	for (i = 0; i < modified_battle_scene_amount; i++) {
 		battleindex = -1;
 		bscindex = -1;
@@ -1086,7 +1110,7 @@ bool EnemyDataSet::GenerateCSV(string basefolder) {
 				break;
 			}
 		if (battleindex < 0 || bscindex < 0) {
-			csv << L"\t\t// Error: unexpected Battle ID " << (int)modified_battle_id[i] << L"\n";
+			patchfile << "// [Hades Workshop] Error: unexpected Battle ID " << (int)modified_battle_id[i] << "\n";
 			continue;
 		}
 		for (j = 0; j < G_N_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME); j++)
@@ -1095,12 +1119,12 @@ bool EnemyDataSet::GenerateCSV(string basefolder) {
 				break;
 			}
 		if (bbgindex < 0) {
-			csv << L"\t\t// Error: unexpected Battle Scene ID " << (int)modified_scene_id[i] << L"\n";
+			patchfile << "// [Hades Workshop] Error: unexpected Battle Scene ID " << (int)modified_scene_id[i] << "\n";
 			continue;
 		}
-		csv << L"\t\t{ \"BSC_" << ConvertStrToWStr(SteamBattleScript[bscindex].name.substr(11)) << L"\", \"BBG_" << HADES_STRING_BATTLE_SCENE_NAME[bbgindex].steamid.ToStdWstring() << L"\" }, // " << battle_name[battleindex] << L" (" << (int)modified_battle_id[i] << L")\n";
+		patchfile << "BattleMapModel BSC_" << SteamBattleScript[bscindex].name.substr(11) << " BBG_" << HADES_STRING_BATTLE_SCENE_NAME[bbgindex].steamid.ToStdString() << "\n";
 	}
-	csv.close();
+	patchfile.close();
 	return true;
 }
 
