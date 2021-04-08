@@ -38,13 +38,23 @@
 #define HADES_STRING_OPEN_ERROR_FAIL_NF L"Cannot open the specified file."
 #define HADES_STRING_OPEN_ERROR_FAIL_FORMAT L"Unsupported format for '%s'."
 #define HADES_STRING_OPEN_ERROR_FAIL_STEAM_MISS L"A key file is missing!"
+#define HADES_STRING_OPEN_ERROR_BIN_ARCHIVE L"Select FF9_Launcher.exe for the Steam version, not an archive p0dataX.bin"
 #define HADES_STRING_OPEN_ERROR_CREATE L"Cannot create file '%s'."
+#define HADES_STRING_OPEN_ERROR_MEMORIA_WITHOUT_BACKUP	L"Hades Workshop cannot open an Assembly-CSharp.dll modded by the Memoria or Moguri mod. Moreover, the backup DLL is also unusable.\n"\
+														L"Potential solutions:\n"\
+														L"- Have a copy of the non-modded game,\n"\
+														L"- Have a copy of the non-modded Assembly-CSharp.dll and put it in the game's folder \"x64/FF9_Data\Managed\" under the name \"Assembly-CSharp_Vanilla.dll\",\n"\
+														L"- Same as above with the proper non-modded DLL named \"Assembly-CSharp.bak\" instead,\n"\
+														L"- Same as above with the proper non-modded DLL named \"Assembly-CSharp_Vanilla.dll\" and placed in Hades Workshop's folder instead.\n\n"\
+														L"In order to uninstall properly the Memoria mod and thus retrieve a non-modded DLL, use Steam -> Library -> Final Fantasy IX -> right-click -> Properties -> Local files -> Verify inegrity of game files.\n\n"\
+														L"Hades Workshop can generate mods compatible with Moguri/Memoria by selecting the options \"Spreadsheets (Memoria)\" and \"Raw assets\" when using \"Save Steam Mod\"."
 #define HADES_STRING_OPEN_WARNING_UNKNOWN	L"Configuration file not found for this binary file.\n"\
 											L"The program will perform a scan in order to open it.\n"\
 											L"It should take about 1 minute.\n\n"\
 											L"Do you want to scan the file?"
 #define HADES_STRING_OPEN_WARNING_VERSION	L"The file's configuration is outdated.\n"\
 											L"Click OK to update it."
+#define HADES_STRING_OPEN_WARNING_DLL_USAGE	"Using the non-modded backup DLL '%s'."
 #define HADES_STRING_CONFIG_FIND_FAIL L"Can't scan '%s' as a Final Fantasy IX binary file."
 #define HADES_STRING_CONFIG_FIND_FAIL_RNC L"'%s' has been compressed by a rnc patch and can't be read."
 #define HADES_STRING_CONFIG_FIND_SUCCESS L"Successfully scanned!"

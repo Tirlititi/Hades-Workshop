@@ -1124,8 +1124,33 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 		dest.bundle_field[i].Load(unityarchive);
 		unityarchive.close();
 	}
+	dest.dll_usage = 0;
 	unityarchivename = dest.steam_dir_managed+"Assembly-CSharp.dll";
 	if (dest.meta_dll.Load(unityarchivename.c_str())) return -3;
+	if (dest.meta_dll.GetMethodIdByName("Configuration", ".cctor", "Memoria") != -1) {
+		// Identified a Memoria-modded DLL
+		dest.dll_usage = 1;
+		dest.meta_dll.dll_file.close();
+		unityarchivename = dest.steam_dir_managed + "Assembly-CSharp_Vanilla.dll";
+		if (dest.meta_dll.Load(unityarchivename.c_str()) || dest.meta_dll.GetMethodIdByName("Configuration", ".cctor", "Memoria") != -1) {
+			dest.dll_usage = 2;
+			if (dest.meta_dll.dll_file.is_open())
+				dest.meta_dll.dll_file.close();
+			unityarchivename = dest.steam_dir_managed + "Assembly-CSharp.bak";
+			if (dest.meta_dll.Load(unityarchivename.c_str()) || dest.meta_dll.GetMethodIdByName("Configuration", ".cctor", "Memoria") != -1) {
+				dest.dll_usage = 3;
+				if (dest.meta_dll.dll_file.is_open())
+					dest.meta_dll.dll_file.close();
+				unityarchivename = "Assembly-CSharp_Vanilla.dll";
+				if (dest.meta_dll.Load(unityarchivename.c_str()) || dest.meta_dll.GetMethodIdByName("Configuration", ".cctor", "Memoria") != -1) {
+					dest.dll_usage = 0;
+					if (dest.meta_dll.dll_file.is_open())
+						dest.meta_dll.dll_file.close();
+					return -4;
+				}
+			}
+		}
+	}
 	
 	// Battles
 	string battlenamelower[G_N_ELEMENTS(SteamBattleScript)];
@@ -1488,7 +1513,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 	int result = 0;
 	if (destfolder.back() != '\\') destfolder += "\\";
 	string dirassets = destfolder + "StreamingAssets\\";
-	string dirdata = destfolder + "FF9_Data\\";
+	string dirdata = destfolder + "x64\\FF9_Data\\";
 	string dirmanaged = destfolder + "x64\\FF9_Data\\Managed\\";
 	string fname;
 	if (config.steam_dir_assets.compare(dirassets) == 0)
@@ -2081,63 +2106,63 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		delete[] dllmodif;
 	} else if (dllformat == 1) {
 		if (section[DATA_SECTION_SPELL]) {
-			fname = destfolder + HADES_STRING_CSV_SPELL_FILE;
+			fname = dirassets + HADES_STRING_CSV_SPELL_FILE;
 			MainFrame::MakeDirForFile(fname);
-			fname = destfolder + HADES_STRING_CSV_STATUS_FILE;
+			fname = dirassets + HADES_STRING_CSV_STATUS_FILE;
 			MainFrame::MakeDirForFile(fname);
-			fname = destfolder + HADES_STRING_CSV_SPELLTITLE_FILE;
+			fname = dirassets + HADES_STRING_CSV_SPELLTITLE_FILE;
 			MainFrame::MakeDirForFile(fname);
-			if (!saveset.spellset->GenerateCSV(destfolder)) return 3;
+			if (!saveset.spellset->GenerateCSV(dirassets)) return 3;
 		}
 		if (section[DATA_SECTION_CMD]) {
-			fname = destfolder + HADES_STRING_CSV_COMMAND_FILE;
+			fname = dirassets + HADES_STRING_CSV_COMMAND_FILE;
 			MainFrame::MakeDirForFile(fname);
-			if (!saveset.cmdset->GenerateCSV(destfolder)) return 3;
+			if (!saveset.cmdset->GenerateCSV(dirassets)) return 3;
 		}
 		if (section[DATA_SECTION_SHOP]) {
-			fname = destfolder + HADES_STRING_CSV_SHOP_FILE;
+			fname = dirassets + HADES_STRING_CSV_SHOP_FILE;
 			MainFrame::MakeDirForFile(fname);
-			fname = destfolder + HADES_STRING_CSV_SYNTHESIS_FILE;
+			fname = dirassets + HADES_STRING_CSV_SYNTHESIS_FILE;
 			MainFrame::MakeDirForFile(fname);
-			if (!saveset.shopset->GenerateCSV(destfolder)) return 3;
+			if (!saveset.shopset->GenerateCSV(dirassets)) return 3;
 		}
 		if (section[DATA_SECTION_ITEM]) {
-			fname = destfolder + HADES_STRING_CSV_ITEM_FILE;
+			fname = dirassets + HADES_STRING_CSV_ITEM_FILE;
 			MainFrame::MakeDirForFile(fname);
-			fname = destfolder + HADES_STRING_CSV_WEAPON_FILE;
+			fname = dirassets + HADES_STRING_CSV_WEAPON_FILE;
 			MainFrame::MakeDirForFile(fname);
-			fname = destfolder + HADES_STRING_CSV_ARMOR_FILE;
+			fname = dirassets + HADES_STRING_CSV_ARMOR_FILE;
 			MainFrame::MakeDirForFile(fname);
-			fname = destfolder + HADES_STRING_CSV_USABLE_FILE;
+			fname = dirassets + HADES_STRING_CSV_USABLE_FILE;
 			MainFrame::MakeDirForFile(fname);
-			fname = destfolder + HADES_STRING_CSV_ITEMSTAT_FILE;
+			fname = dirassets + HADES_STRING_CSV_ITEMSTAT_FILE;
 			MainFrame::MakeDirForFile(fname);
-			if (!saveset.itemset->GenerateCSV(destfolder)) return 3;
+			if (!saveset.itemset->GenerateCSV(dirassets)) return 3;
 		}
 		if (section[DATA_SECTION_SUPPORT]) {
-			fname = destfolder + HADES_STRING_CSV_SUPPORT_FILE;
+			fname = dirassets + HADES_STRING_CSV_SUPPORT_FILE;
 			MainFrame::MakeDirForFile(fname);
-			if (!saveset.supportset->GenerateCSV(destfolder)) return 3;
+			if (!saveset.supportset->GenerateCSV(dirassets)) return 3;
 		}
 		if (section[DATA_SECTION_STAT]) {
-			fname = destfolder + HADES_STRING_CSV_STATINIT_FILE;
+			fname = dirassets + HADES_STRING_CSV_STATINIT_FILE;
 			MainFrame::MakeDirForFile(fname);
-			fname = destfolder + HADES_STRING_CSV_STATCMD_HEADER;
+			fname = dirassets + HADES_STRING_CSV_STATCMD_HEADER;
 			MainFrame::MakeDirForFile(fname);
-			fname = destfolder + HADES_STRING_CSV_STATEQUIP_FILE;
+			fname = dirassets + HADES_STRING_CSV_STATEQUIP_FILE;
 			MainFrame::MakeDirForFile(fname);
-			fname = destfolder + HADES_STRING_CSV_STATLEVEL_FILE;
+			fname = dirassets + HADES_STRING_CSV_STATLEVEL_FILE;
 			MainFrame::MakeDirForFile(fname);
 			for (i=0; i<G_N_ELEMENTS(HADES_STRING_CSV_STATABIL_FILE); i++) {
-				fname = destfolder + HADES_STRING_CSV_STATABIL_FILE[i];
+				fname = dirassets + HADES_STRING_CSV_STATABIL_FILE[i];
 				MainFrame::MakeDirForFile(fname);
 			}
-			if (!saveset.statset->GenerateCSV(destfolder)) return 3;
+			if (!saveset.statset->GenerateCSV(dirassets)) return 3;
 		}
 		if (section[DATA_SECTION_PARTY_SPECIAL]) {
-			fname = destfolder + HADES_STRING_CSV_MGCSWORD_FILE;
+			fname = dirassets + HADES_STRING_CSV_MGCSWORD_FILE;
 			MainFrame::MakeDirForFile(fname);
-			if (!saveset.partyspecialset->GenerateCSV(destfolder)) return 3;
+			if (!saveset.partyspecialset->GenerateCSV(dirassets)) return 3;
 		}
 		if (section[DATA_SECTION_ENMY] && saveset.enemyset->modified_battle_scene_amount>0) {
 //			fname = destfolder + HADES_STRING_DICTIONARY_PATCH_FILE;

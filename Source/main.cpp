@@ -131,8 +131,13 @@ void MainFrame::OnOpenClick(wxCommandEvent& event) {
 	string filename = openFileDialog->GetPath().ToStdString();
 	size_t dirsep = filename.find_last_of("/\\")+1;
 	GameType gt = GAME_TYPE_PSX;
-	if (filename.substr(filename.length()-4).compare(".exe")==0)
+	if (filename.substr(filename.length() - 4).compare(".exe") == 0)
 		gt = GAME_TYPE_STEAM;
+	if (filename.substr(filename.length() - 4).compare(".bin") == 0 && filename.substr(dirsep+2, 4).compare("data") == 0) {
+		wxLogError(HADES_STRING_OPEN_ERROR_BIN_ARCHIVE);
+		openFileDialog->Destroy();
+		return;
+	}
 	if (gt==GAME_TYPE_PSX)
 		for (i=0;i<CDPanelAmount;i++)
 			if (CDName[i]==filename) {
@@ -184,6 +189,10 @@ void MainFrame::OnOpenClick(wxCommandEvent& event) {
 		wxLogError(HADES_STRING_OPEN_ERROR_FAIL_STEAM_MISS);
 		break;
 	}
+	case -4: {
+		wxLogError(HADES_STRING_OPEN_ERROR_MEMORIA_WITHOUT_BACKUP);
+		break;
+	}
 	case 1: {
 		wxMessageDialog popup(this,HADES_STRING_OPEN_WARNING_VERSION,HADES_STRING_WARNING,wxOK|wxCANCEL|wxSTAY_ON_TOP|wxCENTRE);
 		if (popup.ShowModal()==wxID_OK) {
@@ -213,6 +222,16 @@ void MainFrame::OnOpenClick(wxCommandEvent& event) {
 			CDPanel[CDPanelAmount] = new CDDataStruct(m_cdbook,filename,config);
 			CDName[CDPanelAmount] = filename.substr(dirsep);
 		} else {
+			if (config.dll_usage == 1) {
+				wxMessageDialog popup(this, wxString::Format(wxT(HADES_STRING_OPEN_WARNING_DLL_USAGE), "x64/FF9_Data/Managed/Assembly-CSharp_Vanilla.dll"), HADES_STRING_WARNING, wxOK | wxSTAY_ON_TOP | wxCENTRE);
+				popup.ShowModal();
+			} else if (config.dll_usage == 2) {
+				wxMessageDialog popup(this, wxString::Format(wxT(HADES_STRING_OPEN_WARNING_DLL_USAGE), "x64/FF9_Data/Managed/Assembly-CSharp.bak"), HADES_STRING_WARNING, wxOK | wxSTAY_ON_TOP | wxCENTRE);
+				popup.ShowModal();
+			} else if (config.dll_usage == 3) {
+				wxMessageDialog popup(this, wxString::Format(wxT(HADES_STRING_OPEN_WARNING_DLL_USAGE), "Assembly-CSharp_Vanilla.dll"), HADES_STRING_WARNING, wxOK | wxSTAY_ON_TOP | wxCENTRE);
+				popup.ShowModal();
+			}
 			CDPanel[CDPanelAmount] = new CDDataStruct(m_cdbook,filename.substr(0,dirsep),config);
 			CDName[CDPanelAmount] = HADES_STRING_OPEN_STEAM_DEFAULT;
 			SteamSaveDir = CDPanel[CDPanelAmount]->filename+_(HADES_STRING_STEAM_SAVE_DEFAULT);
@@ -402,6 +421,10 @@ void MainFrame::OnSaveSteamClick(wxCommandEvent& event) {
 	unsigned int i;
 	SaveSteamDialog dial(this);
 	dial.m_dirpicker->SetDirName(SteamSaveDir);
+	if (CDPanel[currentpanel]->config.dll_usage != 0) {
+		dial.m_dllformat->SetSelection(1);
+		dial.m_assetformat->SetSelection(1);
+	}
 	if (dial.ShowModal()==wxID_OK) {
 		bool* modifiedsection = new bool[DATA_SECTION_AMOUNT];
 		for (i=0;i<DATA_SECTION_AMOUNT;i++) {

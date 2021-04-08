@@ -312,7 +312,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_spellname = new wxTextCtrl( m_spellscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
 	bSizer22->Add( m_spellname, 0, wxALL, 2 );
 
-	m_spellnamebutton = new wxButton( m_spellscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_spellnamebutton = new wxButton( m_spellscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT );
 	m_spellnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer22->Add( m_spellnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -343,7 +343,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	bSizer23->Add( m_spellhelp, 1, wxALL|wxEXPAND, 2 );
 
-	m_spellhelpbutton = new wxButton( m_spellscrolledwindow, wxID_HELP, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_spellhelpbutton = new wxButton( m_spellscrolledwindow, wxID_HELP, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
 	m_spellhelpbutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer23->Add( m_spellhelpbutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -692,7 +692,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_supportname = new wxTextCtrl( m_supportscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
 	bSizer221->Add( m_supportname, 0, wxALL, 2 );
 
-	m_supportnamebutton = new wxButton( m_supportscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_supportnamebutton = new wxButton( m_supportscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
 	m_supportnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer221->Add( m_supportnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -713,7 +713,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	bSizer231->Add( m_supporthelp, 1, wxALL|wxEXPAND, 2 );
 
-	m_supporthelpbutton = new wxButton( m_supportscrolledwindow, wxID_HELP, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_supporthelpbutton = new wxButton( m_supportscrolledwindow, wxID_HELP, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
 	m_supporthelpbutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer231->Add( m_supporthelpbutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -763,7 +763,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_cmdname = new wxTextCtrl( m_cmdscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), wxTE_PROCESS_ENTER );
 	bSizer24->Add( m_cmdname, 0, wxALL, 2 );
 
-	m_cmdnamebutton = new wxButton( m_cmdscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_cmdnamebutton = new wxButton( m_cmdscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
 	m_cmdnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer24->Add( m_cmdnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -783,7 +783,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	bSizer25->Add( m_cmdhelp, 1, wxALL|wxEXPAND, 2 );
 
-	m_cmdhelpbutton = new wxButton( m_cmdscrolledwindow, wxID_HELP, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_cmdhelpbutton = new wxButton( m_cmdscrolledwindow, wxID_HELP, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
 	m_cmdhelpbutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer25->Add( m_cmdhelpbutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -951,7 +951,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	bSizer2211->Add( m_statchardefaultname, 0, wxALL, 2 );
 
-	m_statchardefaultnamebutton = new wxButton( m_statcharscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_statchardefaultnamebutton = new wxButton( m_statcharscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
 	m_statchardefaultnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer2211->Add( m_statchardefaultnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -1383,7 +1383,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_itemname = new wxTextCtrl( m_itemscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
 	bSizer2212->Add( m_itemname, 0, wxALL, 2 );
 
-	m_itemnamebutton = new wxButton( m_itemscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_itemnamebutton = new wxButton( m_itemscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT );
 	m_itemnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer2212->Add( m_itemnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -1403,7 +1403,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	bSizer2311->Add( m_itemhelp, 1, wxALL|wxEXPAND, 2 );
 
-	m_itemhelpbutton = new wxButton( m_itemscrolledwindow, wxID_HELP, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_itemhelpbutton = new wxButton( m_itemscrolledwindow, wxID_HELP, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
 	m_itemhelpbutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer2311->Add( m_itemhelpbutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -1423,7 +1423,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	bSizer2312->Add( m_itemhelp2, 1, wxALL|wxEXPAND, 2 );
 
-	m_itemhelp2button = new wxButton( m_itemscrolledwindow, wxID_BATTLEHELP, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_itemhelp2button = new wxButton( m_itemscrolledwindow, wxID_BATTLEHELP, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
 	m_itemhelp2button->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer2312->Add( m_itemhelp2button, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -2168,7 +2168,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_keyitemname = new wxTextCtrl( m_keyitemscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
 	bSizer22121->Add( m_keyitemname, 0, wxALL, 2 );
 
-	m_keyitemnamebutton = new wxButton( m_keyitemscrolledwindow, wxID_KEYNAME, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_keyitemnamebutton = new wxButton( m_keyitemscrolledwindow, wxID_KEYNAME, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
 	m_keyitemnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer22121->Add( m_keyitemnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -2189,7 +2189,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	bSizer23111->Add( m_keyitemhelp, 1, wxALL|wxEXPAND, 2 );
 
-	m_keyitemhelpbutton = new wxButton( m_keyitemscrolledwindow, wxID_KEYHELP, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_keyitemhelpbutton = new wxButton( m_keyitemscrolledwindow, wxID_KEYHELP, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
 	m_keyitemhelpbutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer23111->Add( m_keyitemhelpbutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -2210,7 +2210,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	bSizer23121->Add( m_keyitemdescription, 1, wxALL|wxEXPAND, 2 );
 
-	m_keyitemdescriptionbutton = new wxButton( m_keyitemscrolledwindow, wxID_KEYDESCRIPTION, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_keyitemdescriptionbutton = new wxButton( m_keyitemscrolledwindow, wxID_KEYDESCRIPTION, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
 	m_keyitemdescriptionbutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer23121->Add( m_keyitemdescriptionbutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -2622,7 +2622,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemystatname = new wxTextCtrl( m_enemystatpanel1, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer26->Add( m_enemystatname, 0, wxALL, 2 );
 
-	m_enemystatnamebutton = new wxButton( m_enemystatpanel1, wxID_STATNAME, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_enemystatnamebutton = new wxButton( m_enemystatpanel1, wxID_STATNAME, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
 	m_enemystatnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer26->Add( m_enemystatnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -3473,7 +3473,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemyspellname = new wxTextCtrl( m_enemyspellscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
 	bSizer27->Add( m_enemyspellname, 0, wxALL, 2 );
 
-	m_enemyspellnamebutton = new wxButton( m_enemyspellscrolledwindow, wxID_SPELLNAME, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_enemyspellnamebutton = new wxButton( m_enemyspellscrolledwindow, wxID_SPELLNAME, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
 	m_enemyspellnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer27->Add( m_enemyspellnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -4099,7 +4099,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_cardname = new wxTextCtrl( m_cardscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
 	bSizer222->Add( m_cardname, 0, wxALL, 2 );
 
-	m_cardnamebutton = new wxButton( m_cardscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_cardnamebutton = new wxButton( m_cardscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
 	m_cardnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer222->Add( m_cardnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -4630,7 +4630,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_worldplacename = new wxTextCtrl( m_worldplacescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
 	bSizer221221->Add( m_worldplacename, 0, wxALL, 2 );
 
-	m_worldplacenamebutton = new wxButton( m_worldplacescrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_worldplacenamebutton = new wxButton( m_worldplacescrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
 	m_worldplacenamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer221221->Add( m_worldplacenamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -5067,7 +5067,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_fieldname = new wxTextCtrl( m_fieldscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
 	bSizer22122->Add( m_fieldname, 0, wxALL, 2 );
 
-	m_fieldnamebutton = new wxButton( m_fieldscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_fieldnamebutton = new wxButton( m_fieldscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
 	m_fieldnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer22122->Add( m_fieldnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -8590,7 +8590,7 @@ AboutWindow::AboutWindow( wxWindow* parent, wxWindowID id, const wxString& title
 	wxBoxSizer* bSizer16;
 	bSizer16 = new wxBoxSizer( wxVERTICAL );
 
-	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.41d\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for PSX model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\n - Satoh -\n - Ze_PilOt -\n\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_MULTILINE|wxTE_READONLY|wxTE_CENTER|wxBORDER_SIMPLE );
+	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.41e\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for PSX model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\n - Satoh -\n - Ze_PilOt -\n\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_MULTILINE|wxTE_READONLY|wxTE_CENTER|wxBORDER_SIMPLE );
 	m_textCtrl13->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 	m_textCtrl13->SetMinSize( wxSize( -1,330 ) );
 
@@ -10952,7 +10952,7 @@ ScriptEditLinkWindow::ScriptEditLinkWindow( wxWindow* parent, wxWindowID id, con
 	m_langlink1->SetSelection( 0 );
 	gbSizer2->Add( m_langlink1, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
 
-	m_langtext1 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_langtext1 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
 	gbSizer2->Add( m_langtext1, wxGBPosition( 0, 2 ), wxGBSpan( 1, 1 ), wxALL, 0 );
 
 	m_staticText368 = new wxStaticText( this, wxID_ANY, _("English (UK)"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -10965,7 +10965,7 @@ ScriptEditLinkWindow::ScriptEditLinkWindow( wxWindow* parent, wxWindowID id, con
 	m_langlink2->SetSelection( 0 );
 	gbSizer2->Add( m_langlink2, wxGBPosition( 1, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
 
-	m_langtext2 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_langtext2 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
 	gbSizer2->Add( m_langtext2, wxGBPosition( 1, 2 ), wxGBSpan( 1, 1 ), wxALL, 0 );
 
 	m_staticText369 = new wxStaticText( this, wxID_ANY, _("Japanese"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -10978,7 +10978,7 @@ ScriptEditLinkWindow::ScriptEditLinkWindow( wxWindow* parent, wxWindowID id, con
 	m_langlink3->SetSelection( 0 );
 	gbSizer2->Add( m_langlink3, wxGBPosition( 2, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
 
-	m_langtext3 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_langtext3 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
 	gbSizer2->Add( m_langtext3, wxGBPosition( 2, 2 ), wxGBSpan( 1, 1 ), wxALL, 0 );
 
 	m_staticText370 = new wxStaticText( this, wxID_ANY, _("German"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -10991,7 +10991,7 @@ ScriptEditLinkWindow::ScriptEditLinkWindow( wxWindow* parent, wxWindowID id, con
 	m_langlink4->SetSelection( 0 );
 	gbSizer2->Add( m_langlink4, wxGBPosition( 3, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
 
-	m_langtext4 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_langtext4 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
 	gbSizer2->Add( m_langtext4, wxGBPosition( 3, 2 ), wxGBSpan( 1, 1 ), wxALL, 0 );
 
 	m_staticText371 = new wxStaticText( this, wxID_ANY, _("French"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -11004,7 +11004,7 @@ ScriptEditLinkWindow::ScriptEditLinkWindow( wxWindow* parent, wxWindowID id, con
 	m_langlink5->SetSelection( 0 );
 	gbSizer2->Add( m_langlink5, wxGBPosition( 4, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
 
-	m_langtext5 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_langtext5 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
 	gbSizer2->Add( m_langtext5, wxGBPosition( 4, 2 ), wxGBSpan( 1, 1 ), wxALL, 0 );
 
 	m_staticText372 = new wxStaticText( this, wxID_ANY, _("Italian"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -11017,7 +11017,7 @@ ScriptEditLinkWindow::ScriptEditLinkWindow( wxWindow* parent, wxWindowID id, con
 	m_langlink6->SetSelection( 0 );
 	gbSizer2->Add( m_langlink6, wxGBPosition( 5, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
 
-	m_langtext6 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_langtext6 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
 	gbSizer2->Add( m_langtext6, wxGBPosition( 5, 2 ), wxGBSpan( 1, 1 ), wxALL, 0 );
 
 	m_staticText373 = new wxStaticText( this, wxID_ANY, _("Spanish"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -11030,7 +11030,7 @@ ScriptEditLinkWindow::ScriptEditLinkWindow( wxWindow* parent, wxWindowID id, con
 	m_langlink7->SetSelection( 0 );
 	gbSizer2->Add( m_langlink7, wxGBPosition( 6, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
 
-	m_langtext7 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	m_langtext7 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
 	gbSizer2->Add( m_langtext7, wxGBPosition( 6, 2 ), wxGBSpan( 1, 1 ), wxALL, 0 );
 
 	wxBoxSizer* bSizer20;
@@ -12707,7 +12707,7 @@ UnityViewerWindow::UnityViewerWindow( wxWindow* parent, wxWindowID id, const wxS
 
 	m_menureopen = new wxMenuItem( m_menufile, wxID_REOPEN, wxString( _("Reload") ) + wxT('\t') + wxT("F5"), wxEmptyString, wxITEM_NORMAL );
 	m_menufile->Append( m_menureopen );
-
+	
 	m_menufile->AppendSeparator();
 
 	wxMenuItem* m_menuclose;

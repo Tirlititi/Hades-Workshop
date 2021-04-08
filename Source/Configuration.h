@@ -103,6 +103,7 @@ public:
 	DllMetaData meta_dll;
 	
 	// Assembly-CSharp sections
+	int dll_usage;
 	int32_t dll_battledb_method_id;
 	int32_t dll_ability_method_id;
 	int32_t dll_rdata_method_id;
@@ -323,6 +324,8 @@ int FileCheckConfig(string filename, ConfigurationSet& config);
 int LoadConfiguration(string filepath, ConfigurationSet& dest);
 int WriteConfiguration(string filepath, ConfigurationSet& conf);
 int FindConfiguration(string filepath, ConfigurationSet& dest);
+// Return -3 if the game can't be opened, -4 if the Memoria mod is installed and no proper vanilla DLL has been found,
+// Return 0 on success (in which cases, config is loaded).
 int InitSteamConfiguration(string filepath, ConfigurationSet& dest);
 
 int PreloadHWS(string filepath, bool* section);
