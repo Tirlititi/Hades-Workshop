@@ -564,9 +564,11 @@ void ModelAnimationData::Read(fstream& f, GameObjectHierarchy* gohier) {
 	MACRO_READTRANSFORM_END(locals)
 	num_unk4 = ReadLong(f);
 	num_unk5 = ReadLong(f);
-	float_unk = ReadFloat(f);
+	frame_rate = ReadFloat(f);
 	num_unk6 = ReadLong(f);
 	// ToDo: read the end
+	num_unk7 = 0x9B;
+	unk7.assign(num_unk7, -1);
 }
 
 void ModelAnimationData::Write(fstream& f) {
@@ -617,7 +619,7 @@ void ModelAnimationData::Write(fstream& f) {
 	MACRO_WRITETRANSFORM_END(locals)
 	WriteLong(f,num_unk4);
 	WriteLong(f,num_unk5);
-	WriteFloat(f,float_unk);
+	WriteFloat(f, frame_rate);
 	WriteLong(f,num_unk6);
 
 	#define MACRO_ANIM_END_WRITE(TYPE) \
@@ -650,6 +652,107 @@ void ModelAnimationData::Write(fstream& f) {
 	WriteLong(f,0);	WriteLong(f,0);	WriteLong(f,0);	WriteLong(f,0);
 }
 
+void ModelAnimationData::WriteAsJSON(fstream& f) {
+	unsigned int i, j, localindex;
+	vector<string> bonelist = GetBoneHierarchyList();
+	string space = "";
+	f << space << "{\n";
+	space += "    ";
+	f << space << "\"name\": \"" + name + "\",\n";
+	f << space << "\"frameRate\": " + to_string(frame_rate) + ",\n";
+	f << space << "\"transform\": [\n";
+	space += "    ";
+	for (i = 0; i < bonelist.size(); i++) {
+		bool addcomma = false;
+		f << space << "{\n";
+		space += "    ";
+		f << space << "\"bone\": \"" + bonelist[i] + "\",\n";
+		for (localindex = 0; localindex < localw_amount; localindex++)
+			if (localw[localindex].object_name.compare(bonelist[i]) == 0)
+				break;
+		if (localindex < localw_amount) {
+			f << space << "\"localRotation\": [\n";
+			space += "    ";
+			for (j = 0; j < localw[localindex].transform_amount; j++) {
+				f << space << "{ \"time\": " + to_string(localw[localindex].transform[j].time)
+					+ ", \"x\": " + to_string(localw[localindex].transform[j].rot.x)
+					+ ", \"y\": " + to_string(localw[localindex].transform[j].rot.y)
+					+ ", \"z\": " + to_string(localw[localindex].transform[j].rot.z)
+					+ ", \"w\": " + to_string(localw[localindex].transform[j].rot.w)
+					+ ", \"xInnerTangent\": " + to_string(localw[localindex].transform[j].rot1.x)
+					+ ", \"yInnerTangent\": " + to_string(localw[localindex].transform[j].rot1.y)
+					+ ", \"zInnerTangent\": " + to_string(localw[localindex].transform[j].rot1.z)
+					+ ", \"wInnerTangent\": " + to_string(localw[localindex].transform[j].rot1.w)
+					+ ", \"xOuterTangent\": " + to_string(localw[localindex].transform[j].rot2.x)
+					+ ", \"yOuterTangent\": " + to_string(localw[localindex].transform[j].rot2.y)
+					+ ", \"zOuterTangent\": " + to_string(localw[localindex].transform[j].rot2.z)
+					+ ", \"wOuterTangent\": " + to_string(localw[localindex].transform[j].rot2.w)
+					+ (j + 1 < localw[localindex].transform_amount ? " },\n" : " }\n");
+			}
+			space = space.substr(4);
+			f << space << "]";
+			addcomma = true;
+		}
+		for (localindex = 0; localindex < localt_amount; localindex++)
+			if (localt[localindex].object_name.compare(bonelist[i]) == 0)
+				break;
+		if (localindex < localt_amount) {
+			if (addcomma)
+				f << ",\n";
+			f << space << "\"localPosition\": [\n";
+			space += "    ";
+			for (j = 0; j < localt[localindex].transform_amount; j++) {
+				f << space << "{ \"time\": " + to_string(localt[localindex].transform[j].time)
+					+ ", \"x\": " + to_string(-localt[localindex].transform[j].transx)
+					+ ", \"y\": " + to_string(-localt[localindex].transform[j].transy)
+					+ ", \"z\": " + to_string(-localt[localindex].transform[j].transz)
+					+ ", \"xInnerTangent\": " + to_string(-localt[localindex].transform[j].trans1x)
+					+ ", \"yInnerTangent\": " + to_string(-localt[localindex].transform[j].trans1y)
+					+ ", \"zInnerTangent\": " + to_string(-localt[localindex].transform[j].trans1z)
+					+ ", \"xOuterTangent\": " + to_string(-localt[localindex].transform[j].trans2x)
+					+ ", \"yOuterTangent\": " + to_string(-localt[localindex].transform[j].trans2y)
+					+ ", \"zOuterTangent\": " + to_string(-localt[localindex].transform[j].trans2z)
+					+ (j + 1 < localt[localindex].transform_amount ? " },\n" : " }\n");
+			}
+			space = space.substr(4);
+			f << space << "]";
+			addcomma = true;
+		}
+		for (localindex = 0; localindex < locals_amount; localindex++)
+			if (locals[localindex].object_name.compare(bonelist[i]) == 0)
+				break;
+		if (localindex < locals_amount) {
+			if (addcomma)
+				f << ",\n";
+			f << space << "\"localScale\": [\n";
+			space += "    ";
+			for (j = 0; j < locals[localindex].transform_amount; j++) {
+				f << space << "{ \"time\": " + to_string(locals[localindex].transform[j].time)
+					+ ", \"x\": " + to_string(locals[localindex].transform[j].scalex)
+					+ ", \"y\": " + to_string(locals[localindex].transform[j].scaley)
+					+ ", \"z\": " + to_string(locals[localindex].transform[j].scalez)
+					+ ", \"xInnerTangent\": " + to_string(locals[localindex].transform[j].scale1x)
+					+ ", \"yInnerTangent\": " + to_string(locals[localindex].transform[j].scale1y)
+					+ ", \"zInnerTangent\": " + to_string(locals[localindex].transform[j].scale1z)
+					+ ", \"xOuterTangent\": " + to_string(locals[localindex].transform[j].scale2x)
+					+ ", \"yOuterTangent\": " + to_string(locals[localindex].transform[j].scale2y)
+					+ ", \"zOuterTangent\": " + to_string(locals[localindex].transform[j].scale2z)
+					+ (j + 1 < locals[localindex].transform_amount ? " },\n" : " }\n");
+			}
+			space = space.substr(4);
+			f << space << "]";
+			addcomma = true;
+		}
+		f << "\n";
+		space = space.substr(4);
+		f << space << (i + 1 < bonelist.size() ? "},\n" : "}\n");
+	}
+	space = space.substr(4);
+	f << space << "]\n";
+	space = space.substr(4);
+	f << space << "}\n";
+}
+
 int ModelAnimationData::GetDataSize() {
 	unsigned int i;
 	int res = 1332+name_len+GetAlignOffset(name_len)+16*(localw_amount+localt_amount+locals_amount)+4*num_unk7;
@@ -658,6 +761,134 @@ int ModelAnimationData::GetDataSize() {
 	for (i=0;i<localw_amount;i++)	res += localw[i].object_name_len+GetAlignOffset(localw[i].object_name_len)+52*localw[i].transform_amount;
 	for (i=0;i<localt_amount;i++)	res += localt[i].object_name_len+GetAlignOffset(localt[i].object_name_len)+40*localt[i].transform_amount;
 	for (i=0;i<locals_amount;i++)	res += locals[i].object_name_len+GetAlignOffset(locals[i].object_name_len)+40*locals[i].transform_amount;
+	return res;
+}
+
+vector<string> ModelAnimationData::GetBoneHierarchyList() {
+	vector<string> bonehierarchylist;
+	int i, j;
+	for (i = 0; i < localt_amount; i++) {
+		for (j = 0; j < bonehierarchylist.size(); j++)
+			if (bonehierarchylist[j].compare(localt[i].object_name) == 0)
+				break;
+		if (j >= bonehierarchylist.size())
+			bonehierarchylist.push_back(localt[i].object_name);
+	}
+	for (i = 0; i < locals_amount; i++) {
+		for (j = 0; j < bonehierarchylist.size(); j++)
+			if (bonehierarchylist[j].compare(locals[i].object_name) == 0)
+				break;
+		if (j >= bonehierarchylist.size())
+			bonehierarchylist.push_back(locals[i].object_name);
+	}
+	for (i = 0; i < localw_amount; i++) {
+		for (j = 0; j < bonehierarchylist.size(); j++)
+			if (bonehierarchylist[j].compare(localw[i].object_name) == 0)
+				break;
+		if (j >= bonehierarchylist.size())
+			bonehierarchylist.push_back(localw[i].object_name);
+	}
+	return bonehierarchylist;
+}
+
+bool ModelAnimationData::HasSameBoneHierarchy(vector<string>& bonelist, vector<string>& otherbonelist) {
+	if (bonelist.size() != otherbonelist.size())
+		return false;
+	int i, j;
+	for (i = 0; i < bonelist.size(); i++) {
+		for (j = 0; j < otherbonelist.size(); j++)
+			if (bonelist[i].compare(otherbonelist[j]) == 0)
+				break;
+		if (j >= otherbonelist.size())
+			return false;
+	}
+	return true;
+}
+
+ModelAnimationData ModelAnimationData::GenerateFromTwoStances(ModelAnimationData& start, ModelAnimationData& end, float duration) {
+	ModelAnimationData res = start;
+	unsigned int bonecount = 0;
+	vector<string> startbone = start.GetBoneHierarchyList();
+	vector<string> endbone = end.GetBoneHierarchyList();
+	vector<string> bone;
+	int i, j;
+	for (i = 0; i < startbone.size(); i++) {
+		for (j = 0; j < bone.size(); j++)
+			if (bone[j].compare(startbone[i]) == 0)
+				break;
+		if (j >= bone.size())
+			bone.push_back(startbone[i]);
+	}
+	for (i = 0; i < endbone.size(); i++) {
+		for (j = 0; j < bone.size(); j++)
+			if (bone[j].compare(endbone[i]) == 0)
+				break;
+		if (j >= bone.size())
+			bone.push_back(endbone[i]);
+	}
+	res.localw_amount = bone.size();
+	res.localt_amount = bone.size();
+	res.locals_amount = bone.size();
+	res.localw.resize(res.localw_amount);
+	res.localt.resize(res.localw_amount);
+	res.locals.resize(res.localw_amount);
+	for (i = 0; i < bone.size(); i++) {
+		ModelAnimationTransformW transformw;
+		ModelAnimationTransformT transformt;
+		ModelAnimationTransformS transforms;
+
+		#define MACRO_SETUP_DEFAULT_TRANSFORM() \
+			transformw.rot.SetValue(0.0, 0.0, 0.0, 1.0); \
+			transformw.rot1.SetValue(0.0, 0.0, 0.0, 1.0); \
+			transformw.rot2.SetValue(0.0, 0.0, 0.0, 1.0); \
+			transformt.transx = transformt.transy = transformt.transz = 0.0f; \
+			transformt.trans1x = transformt.trans1y = transformt.trans1z = 0.0f; \
+			transformt.trans2x = transformt.trans2y = transformt.trans2z = 0.0f; \
+			transforms.scalex = transforms.scaley = transforms.scalez = 1.0f; \
+			transforms.scale1x = transforms.scale1y = transforms.scale1z = 1.0f; \
+			transforms.scale2x = transforms.scale2y = transforms.scale2z = 1.0f;
+
+		#define MACRO_SETUP_START_TRANSFORM(TYPE, LETTER) \
+			res.local ## LETTER[i].transform_amount = 2; \
+			res.local ## LETTER[i].unkint1 = 2; \
+			res.local ## LETTER[i].unkint2 = 2; \
+			res.local ## LETTER[i].object_name_len = bone[i].length(); \
+			res.local ## LETTER[i].object_name = bone[i]; \
+			res.local ## LETTER[i].transform.resize(2); \
+			for (j = 0; j < start.local ## LETTER ## _amount; j++) \
+				if (bone[i].compare(start.local ## LETTER[j].object_name) == 0) { \
+					if (start.local ## LETTER[j].transform_amount > 0 && start.local ## LETTER[j].transform.front().time == 0.0) \
+						transform ## LETTER = start.local ## LETTER[j].transform.front(); \
+					break; \
+				} \
+			transform ## LETTER.time = 0.0f; \
+			res.local ## LETTER[i].transform[0] = transform ## LETTER;
+
+		#define MACRO_SETUP_END_TRANSFORM(TYPE, LETTER) \
+			res.local ## LETTER[i].transform_amount = 2; \
+			res.local ## LETTER[i].unkint1 = 2; \
+			res.local ## LETTER[i].unkint2 = 2; \
+			res.local ## LETTER[i].object_name_len = bone[i].length(); \
+			res.local ## LETTER[i].object_name = bone[i]; \
+			res.local ## LETTER[i].transform.resize(2); \
+			for (j = 0; j < end.local ## LETTER ## _amount; j++) \
+				if (bone[i].compare(end.local ## LETTER[j].object_name) == 0) { \
+					if (end.local ## LETTER[j].transform_amount > 0) \
+						transform ## LETTER = end.local ## LETTER[j].transform.back(); \
+					break; \
+				} \
+			transform ## LETTER.time = duration; \
+			res.local ## LETTER[i].transform[1] = transform ## LETTER;
+
+		MACRO_SETUP_DEFAULT_TRANSFORM()
+		MACRO_SETUP_START_TRANSFORM(ModelAnimationTransformW, w)
+		MACRO_SETUP_START_TRANSFORM(ModelAnimationTransformT, t)
+		MACRO_SETUP_START_TRANSFORM(ModelAnimationTransformS, s)
+		MACRO_SETUP_DEFAULT_TRANSFORM()
+		MACRO_SETUP_END_TRANSFORM(ModelAnimationTransformW, w)
+		MACRO_SETUP_END_TRANSFORM(ModelAnimationTransformT, t)
+		MACRO_SETUP_END_TRANSFORM(ModelAnimationTransformS, s)
+	}
 	return res;
 }
 
@@ -2067,7 +2298,7 @@ bool ConvertFBXToModel(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 		model.animation[i].num_unk3 = 0;
 		model.animation[i].num_unk4 = 0;
 		model.animation[i].num_unk5 = 0;
-		model.animation[i].float_unk = 30.0;
+		model.animation[i].frame_rate = 30.0;
 		model.animation[i].num_unk6 = 0;
 		model.animation[i].num_unk7 = 0x9B;
 		model.animation[i].unk7.assign(model.animation[i].num_unk7,-1);

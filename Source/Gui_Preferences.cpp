@@ -21,6 +21,9 @@ inline wxString GetWxStringLine(wxString& str) {
 	return res;
 }
 
+#include "Database_Resource.h" // DEBUG
+#include "Database_Animation.h" // DEBUG
+
 PreferencesDialog::PreferencesDialog(wxWindow* parent) :
 	PreferencesWindow(parent),
 	charmap_opchar(OPCODE_WCHAR),
@@ -359,6 +362,9 @@ bool PreferencesDialog::SaveToolUnityConfig(UnityViewerWindow* configwindow) {
 	configfileout.Write(_(L"\nModelImportType="));
 	if (configwindow->m_menuimportmodelmesh->IsChecked())		{ configfileout.Write(comma+_(L"meshmat")); comma = _(L","); }
 	if (configwindow->m_menuimportmodelanims->IsChecked())		{ configfileout.Write(comma+_(L"anim")); comma = _(L","); }
+	token = configwindow->m_menuconvertanimnone->IsChecked() ? _(L"none") :
+		configwindow->m_menuconvertanimjson->IsChecked() ? _(L"json") : _(L"json");
+	configfileout.Write(_(L"\nAnimFormat=") + token);
 	token = configwindow->m_menufolderx86->IsChecked() ? _(L"x86") :
 		configwindow->m_menufolderx64->IsChecked() ? _(L"x64") : _(L"x86");
 	configfileout.Write(_(L"\nArchFolder=") + token);
@@ -440,6 +446,11 @@ bool PreferencesDialog::LoadToolUnityConfig(UnityViewerWindow* configwindow) {
 				if (sorttoken.IsSameAs(_(L"meshmat")))				configwindow->m_menuimportmodelmesh->Check();
 				else if (sorttoken.IsSameAs(_(L"anim")))			configwindow->m_menuimportmodelanims->Check();
 			}
+		}
+		cfgfield = cfgstr;
+		if (SearchField(cfgfield, _(L"AnimFormat"), TmpArgs, argcount)) {
+			if (TmpArgs[argcount].IsSameAs(_(L"none")))			configwindow->m_menuconvertanimnone->Check();
+			else if (TmpArgs[argcount].IsSameAs(_(L"json")))	configwindow->m_menuconvertanimjson->Check();
 		}
 		cfgfield = cfgstr;
 		if (SearchField(cfgfield, _(L"ArchFolder"), TmpArgs, argcount)) {

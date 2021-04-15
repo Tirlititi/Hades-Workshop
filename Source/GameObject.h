@@ -192,7 +192,7 @@ struct GameObjectHierarchy {
 
 	UnityArchiveMetaData* meta_data;
 
-	void DEBUGDisplayHierarchy();
+	string PrintHierarchy(UnityArchiveFile archivetype, UnityArchiveAssetBundle* bundle = NULL, UnityArchiveIndexListData* list = NULL);
 
 	void BuildHierarchy(fstream& archivefile, UnityArchiveMetaData& metadata, unsigned int rootfileindex);
 	void OverwriteHierarchy(fstream& archivefile);

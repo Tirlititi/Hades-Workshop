@@ -3592,6 +3592,7 @@ class UnityViewerWindow : public wxFrame
 		wxMenu* m_menuconvertimgquality;
 		wxMenu* m_menuconvertaudio;
 		wxMenu* m_menuconvertmodel;
+		wxMenu* m_menuconvertanim;
 		wxGauge* m_loadgauge;
 		wxListCtrl* m_assetlist;
 
@@ -3626,6 +3627,8 @@ class UnityViewerWindow : public wxFrame
 		wxMenuItem* m_menuconvertmodelautocad;
 		wxMenuItem* m_menuconvertmodelcollada;
 		wxMenuItem* m_menuconvertmodelwave;
+		wxMenuItem* m_menuconvertanimnone;
+		wxMenuItem* m_menuconvertanimjson;
 		wxMenuItem* m_menuimportmodelexistingfiles;
 		wxMenuItem* m_menuimportmodelmerge;
 		wxMenuItem* m_menuimportmodelimportall;

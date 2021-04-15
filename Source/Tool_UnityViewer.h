@@ -40,6 +40,10 @@ private:
 	wxMenuItem* assetmenuexport;
 	wxMenuItem* assetmenuimport;
 	wxMenuItem* assetmenuadd;
+	wxMenuItem* assetmenuinvsel;
+	wxMenuItem* assetmenuinfo;
+	wxMenuItem* assetmenugenanim;
+	wxMenuItem* assetmenuremove;
 	
 	void UpdateMenuAvailability();
 	bool PrepareAssetForImport(bool isnewfile, fstream& filebase, wxString path, uint32_t ftype, vector<ModelDataStruct>& importmodel, vector<int64_t>& infotoavoid, UnityArchiveFileCreator& filestoadd, UnityLinkFileDialog& linkfiledialog, bool linkfiledialoginit, vector<bool>& copylist, /*	Common Arguments

@@ -40,10 +40,11 @@
 #define HADES_STRING_OPEN_ERROR_FAIL_STEAM_MISS L"A key file is missing!"
 #define HADES_STRING_OPEN_ERROR_BIN_ARCHIVE L"Select FF9_Launcher.exe for the Steam version, not an archive p0dataX.bin"
 #define HADES_STRING_OPEN_ERROR_CREATE L"Cannot create file '%s'."
+#define HADES_STRING_OPEN_ERROR_OVERWRITE L"Cannot overwrite file '%s'."
 #define HADES_STRING_OPEN_ERROR_MEMORIA_WITHOUT_BACKUP	L"Hades Workshop cannot open an Assembly-CSharp.dll modded by the Memoria or Moguri mod. Moreover, the backup DLL is also unusable.\n"\
 														L"Potential solutions:\n"\
 														L"- Have a copy of the non-modded game,\n"\
-														L"- Have a copy of the non-modded Assembly-CSharp.dll and put it in the game's folder \"x64/FF9_Data\Managed\" under the name \"Assembly-CSharp_Vanilla.dll\",\n"\
+														L"- Have a copy of the non-modded Assembly-CSharp.dll and put it in the game's folder \"x64/FF9_Data/Managed/\" under the name \"Assembly-CSharp_Vanilla.dll\",\n"\
 														L"- Same as above with the proper non-modded DLL named \"Assembly-CSharp.bak\" instead,\n"\
 														L"- Same as above with the proper non-modded DLL named \"Assembly-CSharp_Vanilla.dll\" and placed in Hades Workshop's folder instead.\n\n"\
 														L"In order to uninstall properly the Memoria mod and thus retrieve a non-modded DLL, use Steam -> Library -> Final Fantasy IX -> right-click -> Properties -> Local files -> Verify inegrity of game files.\n\n"\
@@ -442,6 +443,15 @@ static wxString HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM[] = {
 #define HADES_STRING_UNITYVIEWER_LOW_FILE_INFO	"Low Internal ID: the file will be inserted as #%d"
 #define HADES_STRING_UNITYVIEWER_WARNING_FILE_INFO	L"Unpredicted behaviour will happen if two files use the same internal ID\n"\
 													L"Confirm nonetheless?"
+#define HADES_STRING_UNITYVIEWER_INVERT_SELECTION L"Invert selection"
+#define HADES_STRING_UNITYVIEWER_EXPORT_HIERARCHY L"Export model hierarchy of selection"
+#define HADES_STRING_UNITYVIEWER_HIERARCHY_HEADER "// Hierarchy dependancy of file #"
+#define HADES_STRING_UNITYVIEWER_GENERATE_ANIMATION L"Generate animation transition from 2 animations"
+#define HADES_STRING_UNITYVIEWER_GENERATE_TITLE L"Animation transition"
+#define HADES_STRING_UNITYVIEWER_GENERATE_CHOICE L"Pick animation transition and duration"
+#define HADES_STRING_UNITYVIEWER_REMOVE_ASSETS L"Delete assets"
+#define HADES_STRING_UNITYVIEWER_WARNING_REMOVE	L"This will delete the selected assets from the archive.\n\n"\
+												L"Do you want to generate the resulting archive as a duplicate (otherwise, the archive with fewer assets will replace the existing one)?"
 
 
 

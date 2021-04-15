@@ -207,73 +207,70 @@ GameObjectNode* BuildHierarchy_Rec(GameObjectNode* parent, GameObjectHierarchy& 
 	return res;
 }
 
-string DEBUGSpace = "";
-vector<GameObjectNode*> DEBUGDisplayedNode;
-void DEBUGDisplayHierarchy_Rec(fstream& fout, GameObjectNode* node) {
+void PrintHierarchy_Rec(stringstream& stringout, UnityArchiveMetaData* meta_data, GameObjectNode* node, UnityArchiveFile archivetype, vector<GameObjectNode*>& displayed, UnityArchiveAssetBundle* bundle = NULL, UnityArchiveIndexListData* list = NULL, string space = "") {
 	if (!node) {
-		fout << DEBUGSpace << "-> Invalid Node" << endl;
+//		stringout << space << "-> Invalid Node" << endl;
 		return;
 	}
 	unsigned int i;
-	fout << DEBUGSpace << "-> " << UnityArchiveMetaData::GetTypeName(node->node_type) << " " << (unsigned int)node->file_index+1;
-	if (node->node_type==1) {
-		GameObjectStruct* nodeobj = static_cast<GameObjectStruct*>(node);
-		fout << " (" << nodeobj->name << ")";
-	}
-	for (i=0;i<DEBUGDisplayedNode.size();i++)
-		if (DEBUGDisplayedNode[i]==node) {
-			fout << " - ALREADY DISPLAYED: " << (unsigned int)i;
-			GameObjectStruct* nodeobj = NULL;
-			if (node->node_type==4)
-				fout << " (" << static_cast<GameObjectStruct*>(static_cast<TransformStruct*>(node)->child_object)->name << ")";
-			fout << endl;
+	for (i = 0; i < displayed.size(); i++)
+		if (displayed[i] == node) {
+//			stringout << " - ALREADY DISPLAYED";
+//			if (node->node_type==4)
+//				stringout << " (" << static_cast<GameObjectStruct*>(static_cast<TransformStruct*>(node)->child_object)->name << ")";
+//			stringout << endl;
 			return;
 		}
-	fout << " - " << (unsigned int)DEBUGDisplayedNode.size() << endl;
-	DEBUGDisplayedNode.push_back(node);
-	DEBUGSpace += "  ";
+	string fullname = meta_data->GetFileFullName(node->file_index, archivetype, bundle, list);
+	stringout << space << "-> " << UnityArchiveMetaData::GetTypeName(node->node_type) << " " << fullname << " #" << (unsigned int)node->file_index+1;
+	if (node->node_type==1) {
+		GameObjectStruct* nodeobj = static_cast<GameObjectStruct*>(node);
+		stringout << " (" << nodeobj->GetScopedName() << ")";
+	}
+	stringout << endl;
+	displayed.push_back(node);
+	space += "  ";
 	if (node->node_type==1) {
 		GameObjectStruct* nodespec = static_cast<GameObjectStruct*>(node);
-		for (i=0;i<nodespec->child_amount;i++)
-			DEBUGDisplayHierarchy_Rec(fout,nodespec->child[i]);
+		for (i = 1; i < nodespec->child_amount; i++)
+			PrintHierarchy_Rec(stringout, meta_data, nodespec->child[i], archivetype, displayed, bundle, list, space);
 	} else if (node->node_type==4) {
 		TransformStruct* nodespec = static_cast<TransformStruct*>(node);
-		DEBUGDisplayHierarchy_Rec(fout,nodespec->child_object);
-		for (i=0;i<nodespec->child_transform_amount;i++)
-			DEBUGDisplayHierarchy_Rec(fout,nodespec->child_transform[i]);
-		DEBUGDisplayHierarchy_Rec(fout,nodespec->parent_transform);
+		PrintHierarchy_Rec(stringout, meta_data, nodespec->child_object, archivetype, displayed, bundle, list, space);
+		for (i = 0; i < nodespec->child_transform_amount; i++)
+			PrintHierarchy_Rec(stringout, meta_data, nodespec->child_transform[i], archivetype, displayed, bundle, list, space);
+		PrintHierarchy_Rec(stringout, meta_data, nodespec->parent_transform, archivetype, displayed, bundle, list, space);
 	} else if (node->node_type==23) {
 		MeshRendererStruct* nodespec = static_cast<MeshRendererStruct*>(node);
-		DEBUGDisplayHierarchy_Rec(fout,nodespec->parent_object);
-		for (i=0;i<nodespec->child_material_amount;i++)
-			DEBUGDisplayHierarchy_Rec(fout,nodespec->child_material[i]);
+//		PrintHierarchy_Rec(stringout, meta_data, nodespec->parent_object, archivetype, displayed, bundle, list, space);
+		for (i = 0; i < nodespec->child_material_amount; i++)
+			PrintHierarchy_Rec(stringout, meta_data, nodespec->child_material[i], archivetype, displayed, bundle, list, space);
 	} else if (node->node_type==33) {
 		MeshFilterStruct* nodespec = static_cast<MeshFilterStruct*>(node);
-		DEBUGDisplayHierarchy_Rec(fout,nodespec->parent_object);
-		DEBUGDisplayHierarchy_Rec(fout,nodespec->child_mesh);
+//		PrintHierarchy_Rec(stringout, meta_data, nodespec->parent_object, archivetype, displayed, bundle, list, space);
+		PrintHierarchy_Rec(stringout, meta_data, nodespec->child_mesh, archivetype, displayed, bundle, list, space);
 	} else if (node->node_type==111) {
 		AnimationStruct* nodespec = static_cast<AnimationStruct*>(node);
-		DEBUGDisplayHierarchy_Rec(fout,nodespec->parent_object);
-		DEBUGDisplayHierarchy_Rec(fout,nodespec->child_clip1);
-		DEBUGDisplayHierarchy_Rec(fout,nodespec->child_clip2);
+//		PrintHierarchy_Rec(stringout, meta_data, nodespec->parent_object, archivetype, displayed, bundle, list, space);
+		PrintHierarchy_Rec(stringout, meta_data, nodespec->child_clip1, archivetype, displayed, bundle, list, space);
+		PrintHierarchy_Rec(stringout, meta_data, nodespec->child_clip2, archivetype, displayed, bundle, list, space);
 	} else if (node->node_type==137) {
 		SkinnedMeshRendererStruct* nodespec = static_cast<SkinnedMeshRendererStruct*>(node);
-		DEBUGDisplayHierarchy_Rec(fout,nodespec->parent_object);
-		for (i=0;i<nodespec->child_material_amount;i++)
-			DEBUGDisplayHierarchy_Rec(fout,nodespec->child_material[i]);
-		DEBUGDisplayHierarchy_Rec(fout,nodespec->child_mesh);
-		for (i=0;i<nodespec->child_bone_amount;i++)
-			DEBUGDisplayHierarchy_Rec(fout,nodespec->child_bone[i]);
-		DEBUGDisplayHierarchy_Rec(fout,nodespec->child_bone_sample);
+//		PrintHierarchy_Rec(stringout, meta_data, nodespec->parent_object, archivetype, displayed, bundle, list, space);
+		for (i = 0; i < nodespec->child_material_amount; i++)
+			PrintHierarchy_Rec(stringout, meta_data, nodespec->child_material[i], archivetype, displayed, bundle, list, space);
+		PrintHierarchy_Rec(stringout, meta_data, nodespec->child_mesh, archivetype, displayed, bundle, list, space);
+		for (i = 0; i < nodespec->child_bone_amount; i++)
+			PrintHierarchy_Rec(stringout, meta_data, nodespec->child_bone[i], archivetype, displayed, bundle, list, space);
+//		PrintHierarchy_Rec(stringout, meta_data, nodespec->child_bone_sample, archivetype, displayed, bundle, list, space);
 	}
-	DEBUGSpace = DEBUGSpace.substr(2);
 }
 
-void GameObjectHierarchy::DEBUGDisplayHierarchy() {
-	fstream fout("aaab.txt",ios::app|ios::out); fout << "DISPLAYING" << endl;
-	DEBUGDisplayedNode.clear();
-	DEBUGDisplayHierarchy_Rec(fout,root_node);
-	fout << endl; fout.close();
+string GameObjectHierarchy::PrintHierarchy(UnityArchiveFile archivetype, UnityArchiveAssetBundle* bundle, UnityArchiveIndexListData* list) {
+	stringstream stringout;
+	vector<GameObjectNode*> displayed;
+	PrintHierarchy_Rec(stringout, meta_data, root_node, archivetype, displayed, bundle, list);
+	return stringout.str();
 }
 
 void GameObjectHierarchy::BuildHierarchy(fstream& archivefile, UnityArchiveMetaData& metadata, unsigned int rootfileindex) {
@@ -539,7 +536,7 @@ void GameObjectHierarchy::MergeHierarchy(UnityArchiveMetaData archivelist[UNITY_
 	delete[] node_found;
 }
 
-int64_t GameObjectHierarchy::GetRootInfoFromObject(uint8_t * objbuffer) {
+int64_t GameObjectHierarchy::GetRootInfoFromObject(uint8_t* objbuffer) {
 	uint32_t childamount;
 	uint32_t childtype;
 	int64_t rootinfo = 0;

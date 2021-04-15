@@ -95,6 +95,63 @@ int wxCALLBACK SortItemCompare(wxIntPtr item1, wxIntPtr item2, wxIntPtr infoptr)
 	return -result;
 }
 
+class AnimationTransitionWindow : public wxDialog {
+public:
+	wxButton* m_buttonok;
+	wxButton* m_buttoncancel;
+	wxButton* m_buttonswap;
+	wxStaticText* m_swapslot1;
+	wxStaticText* m_swapslot2;
+	wxSpinCtrlDouble* m_spinduration;
+
+	wxString swap_str1;
+	wxString swap_str2;
+	bool is_swap;
+
+private:
+	void OnButtonClickOk(wxCommandEvent& event) { EndModal(wxID_OK); }
+	void OnButtonClickCancel(wxCommandEvent& event) { EndModal(wxID_CANCEL); }
+	void OnButtonClickSwap(wxCommandEvent& event) {
+		is_swap = !is_swap;
+		m_swapslot1->SetLabelText(is_swap ? swap_str2 : swap_str1);
+		m_swapslot2->SetLabelText(is_swap ? swap_str1 : swap_str2);
+	}
+
+public:
+	AnimationTransitionWindow(wxWindow* parent, wxString str1, wxString str2, float duration) : wxDialog(parent, wxID_ANY, HADES_STRING_UNITYVIEWER_GENERATE_TITLE, wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxSTAY_ON_TOP) {
+		wxBoxSizer* mainsizer = new wxBoxSizer(wxVERTICAL);
+		wxBoxSizer* modalsizer = new wxBoxSizer(wxHORIZONTAL);
+		wxBoxSizer* durationsizer = new wxBoxSizer(wxHORIZONTAL);
+		wxBoxSizer* ordersizer = new wxBoxSizer(wxHORIZONTAL);
+		m_buttonok = new wxButton(this, wxID_OK, _("OK"));
+		m_buttoncancel = new wxButton(this, wxID_CANCEL, _("Cancel"));
+		m_buttonswap = new wxButton(this, wxID_REPLACE, _("<- Swap ->"));
+		m_swapslot1 = new wxStaticText(this, wxID_ANY, str1);
+		m_swapslot2 = new wxStaticText(this, wxID_ANY, str2);
+		m_spinduration = new wxSpinCtrlDouble(this, wxID_FREQUENCE, _(L"Transition duration"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0.1, 100.0, duration, 1.0);
+		modalsizer->Add(m_buttoncancel, 0, wxALL, 5);
+		modalsizer->Add(m_buttonok, 0, wxALL, 5);
+		durationsizer->Add(new wxStaticText(this, wxID_ANY, _(L"Transition duration")), 0, wxALL, 5);
+		durationsizer->Add(m_spinduration, 0, wxALL, 5);
+		ordersizer->Add(m_swapslot1, 0, wxALL, 5);
+		ordersizer->Add(m_buttonswap, 0, wxALL, 5);
+		ordersizer->Add(m_swapslot2, 0, wxALL, 5);
+		mainsizer->Add(ordersizer);
+		mainsizer->Add(durationsizer);
+		mainsizer->Add(modalsizer);
+		SetSizer(mainsizer);
+		Layout();
+		Fit();
+		m_buttonok->SetFocus();
+		is_swap = false;
+		swap_str1 = str1;
+		swap_str2 = str2;
+		m_buttonok->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(AnimationTransitionWindow::OnButtonClickOk), NULL, this);
+		m_buttoncancel->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(AnimationTransitionWindow::OnButtonClickCancel), NULL, this);
+		m_buttonswap->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(AnimationTransitionWindow::OnButtonClickSwap), NULL, this);
+	}
+};
+
 ToolUnityViewer::ToolUnityViewer(wxWindow* parent) :
 	UnityViewerWindow(parent) {
 	PreferencesDialog::LoadToolUnityConfig(this);
@@ -113,12 +170,22 @@ ToolUnityViewer::ToolUnityViewer(wxWindow* parent) :
 	column_sort_ascending = true;
 	use_x86 = m_menufolderx86->IsChecked();
 	assetmenu = new wxMenu();
-	assetmenuexport = new wxMenuItem(assetmenu,wxID_EXPORT,HADES_STRING_GENERIC_EXPORT_SEL);
-	assetmenuimport = new wxMenuItem(assetmenu,wxID_IMPORT,HADES_STRING_GENERIC_IMPORT_SEL);
-	assetmenuadd = new wxMenuItem(assetmenu,wxID_ADD,HADES_STRING_GENERIC_ADD);
+	assetmenuexport = new wxMenuItem(assetmenu, wxID_EXPORT, HADES_STRING_GENERIC_EXPORT_SEL);
+	assetmenuimport = new wxMenuItem(assetmenu, wxID_IMPORT, HADES_STRING_GENERIC_IMPORT_SEL);
+	assetmenuadd = new wxMenuItem(assetmenu, wxID_ADD, HADES_STRING_GENERIC_ADD);
+	assetmenuinvsel = new wxMenuItem(assetmenu, wxID_SELECTALL, HADES_STRING_UNITYVIEWER_INVERT_SELECTION);
+	assetmenuinfo = new wxMenuItem(assetmenu, wxID_INFO, HADES_STRING_UNITYVIEWER_EXPORT_HIERARCHY);
+	assetmenugenanim = new wxMenuItem(assetmenu, wxID_DUPLICATE, HADES_STRING_UNITYVIEWER_GENERATE_ANIMATION);
+	assetmenuremove = new wxMenuItem(assetmenu, wxID_REMOVE, HADES_STRING_UNITYVIEWER_REMOVE_ASSETS);
 	assetmenu->Append(assetmenuexport);
 	assetmenu->Append(assetmenuimport);
 	assetmenu->Append(assetmenuadd);
+	assetmenu->Append(assetmenuinvsel);
+	assetmenu->Append(assetmenuinfo);
+	// Better let people use .json text editing than providing this feature which is too simple and may be confusing
+//	assetmenu->Append(assetmenugenanim);
+	assetmenu->AppendSeparator();
+	assetmenu->Append(assetmenuremove);
 	assetmenu->Connect(wxEVT_COMMAND_MENU_SELECTED,wxCommandEventHandler(ToolUnityViewer::OnAssetRightClickMenu),NULL,this);
 	UpdateMenuAvailability();
 }
@@ -1210,75 +1277,75 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 				}
 				filedest.close();
 				delete[] buffer;
-			} else if (meta_data[current_archive].file_type1[expfileid]==1 && (path.AfterLast(L'.').IsSameAs(L"fbx",false) || path.AfterLast(L'.').IsSameAs(L"prefab",false)) && !m_menuconvertmodelnone->IsChecked()) {
+			} else if (meta_data[current_archive].file_type1[expfileid] == 1 && (path.AfterLast(L'.').IsSameAs(L"fbx", false) || path.AfterLast(L'.').IsSameAs(L"prefab", false)) && !m_menuconvertmodelnone->IsChecked()) {
 				// TODO: .prefab files are (mostly) tiles for the World Map model ; export them all as one model?
 				int64_t rootinfo = GameObjectHierarchy::GetRootInfoFromObject((uint8_t*)buffer);
-/*int fbundle = bundle_data[current_archive-UNITY_ARCHIVE_DATA11].GetFileBundle(rootinfo);
-fstream fout("aaab.txt",ios::app|ios::out); fout << "EXPORTING " << path << endl;
-fout << "Root bundle: " << fbundle << endl;
-if (fbundle>=0) {
-	fout << "Contain Files: " << endl;
-	for (i=bundle_data[current_archive-UNITY_ARCHIVE_DATA11].bundle_index_start[fbundle]+1;i<bundle_data[current_archive-UNITY_ARCHIVE_DATA11].bundle_index_end[fbundle];i++) {
-		fout << (int)meta_data[current_archive].GetFileIndexByInfo(bundle_data[current_archive-UNITY_ARCHIVE_DATA11].bundle_info[i]) << " with info " << (unsigned long long)bundle_data[current_archive-UNITY_ARCHIVE_DATA11].bundle_info[i] << endl;
-	}
-}
-fout.close();*/
+				/*int fbundle = bundle_data[current_archive-UNITY_ARCHIVE_DATA11].GetFileBundle(rootinfo);
+				fstream fout("aaab.txt",ios::app|ios::out); fout << "EXPORTING " << path << endl;
+				fout << "Root bundle: " << fbundle << endl;
+				if (fbundle>=0) {
+					fout << "Contain Files: " << endl;
+					for (i=bundle_data[current_archive-UNITY_ARCHIVE_DATA11].bundle_index_start[fbundle]+1;i<bundle_data[current_archive-UNITY_ARCHIVE_DATA11].bundle_index_end[fbundle];i++) {
+						fout << (int)meta_data[current_archive].GetFileIndexByInfo(bundle_data[current_archive-UNITY_ARCHIVE_DATA11].bundle_info[i]) << " with info " << (unsigned long long)bundle_data[current_archive-UNITY_ARCHIVE_DATA11].bundle_info[i] << endl;
+					}
+				}
+				fout.close();*/
 				int32_t modelrootid = meta_data[current_archive].GetFileIndexByInfo(rootinfo);
 				delete[] buffer;
-				if (modelrootid<0) {
+				if (modelrootid < 0) {
 					wxLogError(HADES_STRING_UNITYVIEWER_MODEL_BAD_HIERARCHY);
 					continue;
 				}
 				GameObjectHierarchy modelhierarchy;
-				modelhierarchy.BuildHierarchy(filebase,meta_data[current_archive],modelrootid);
-				wxString filepathbase = m_assetlist->GetItemText(it,1).BeforeLast(L'.');
+				modelhierarchy.BuildHierarchy(filebase, meta_data[current_archive], modelrootid);
+				wxString filepathbase = m_assetlist->GetItemText(it, 1).BeforeLast(L'.');
 				wxString descriptionstr = m_assetlist->GetItemText(it, 5);
 				ModelDataStruct model;
-				if (filepathbase.Len()==0)
-					filepathbase = m_assetlist->GetItemText(it,1);
+				if (filepathbase.Len() == 0)
+					filepathbase = m_assetlist->GetItemText(it, 1);
 				descriptionstr.Replace(_(UnityArchiveMetaData::GetTypeName(meta_data[current_archive].file_type1[expfileid])), _(L"Full Model"));
 				model.description = descriptionstr.ToStdString();
 				model.steam_name = filepathbase.AfterLast(L'/').AfterLast(L'\\').ToStdString();
-				if (!model.Read(filebase,&modelhierarchy)) {
+				if (!model.Read(filebase, &modelhierarchy)) {
 					wxLogError(HADES_STRING_UNITYVIEWER_MODEL_BAD_HIERARCHY);
 					continue;
 				}
 				long itclip = -1;
-				wxString fileobjectid,gameobjectid = GetFullName(current_archive,expfileid);
+				wxString fileobjectid, gameobjectid = GetFullName(current_archive, expfileid);
 				for (;;) {
-					itclip = m_assetlist->GetNextItem(itclip,wxLIST_NEXT_ALL,wxLIST_STATE_DONTCARE);
-					if (itclip==-1) break;
-					if (meta_data[current_archive].file_type1[wxAtoi(m_assetlist->GetItemText(itclip,0))-1]==74) {
-						fileobjectid = GetFullName(current_archive,wxAtoi(m_assetlist->GetItemText(itclip,0))-1);
+					itclip = m_assetlist->GetNextItem(itclip, wxLIST_NEXT_ALL, wxLIST_STATE_DONTCARE);
+					if (itclip == -1) break;
+					if (meta_data[current_archive].file_type1[wxAtoi(m_assetlist->GetItemText(itclip, 0)) - 1] == 74) {
+						fileobjectid = GetFullName(current_archive, wxAtoi(m_assetlist->GetItemText(itclip, 0)) - 1);
 						if (gameobjectid.IsSameAs(fileobjectid)) {
 							ModelAnimationData animation;
-							filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(wxAtoi(m_assetlist->GetItemText(itclip,0))-1));
-							animation.Read(filebase,&modelhierarchy);
+							filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(wxAtoi(m_assetlist->GetItemText(itclip, 0)) - 1));
+							animation.Read(filebase, &modelhierarchy);
 							animation.anim_id = 0xFFFFFFFF;
 							model.animation.push_back(animation);
 						}
 					}
 				}
-				if (current_archive!=UNITY_ARCHIVE_DATA5) {
+				if (current_archive != UNITY_ARCHIVE_DATA5) {
 					wxString animarchivefilename, animsearchpath;
-					wxString fileanimname = _(UnityArchiveMetaData::GetArchiveName(UNITY_ARCHIVE_DATA5,use_x86));
+					wxString fileanimname = _(UnityArchiveMetaData::GetArchiveName(UNITY_ARCHIVE_DATA5, use_x86));
 					bool foundanimarchivefilename;
-					fstream fileanimbase((const char*)(root_path+fileanimname).c_str(),ios::in|ios::binary);
+					fstream fileanimbase((const char*)(root_path + fileanimname).c_str(), ios::in | ios::binary);
 					if (!fileanimbase.is_open()) {
-						wxLogError(HADES_STRING_OPEN_ERROR_FAIL,root_path+fileanimname);
+						wxLogError(HADES_STRING_OPEN_ERROR_FAIL, root_path + fileanimname);
 						continue;
 					}
-					animsearchpath = _(L"assets/resources/animations/")+_(model.steam_name)+_(L"/");
-					for (i=0;i<meta_data[UNITY_ARCHIVE_DATA5].header_file_amount;i++) {
-						animarchivefilename = GetFullName(UNITY_ARCHIVE_DATA5,i,&foundanimarchivefilename);
-						if (foundanimarchivefilename && animsearchpath.IsSameAs(animarchivefilename.Mid(0,animsearchpath.Len()))) {
+					animsearchpath = _(L"assets/resources/animations/") + _(model.steam_name) + _(L"/");
+					for (i = 0; i < meta_data[UNITY_ARCHIVE_DATA5].header_file_amount; i++) {
+						animarchivefilename = GetFullName(UNITY_ARCHIVE_DATA5, i, &foundanimarchivefilename);
+						if (foundanimarchivefilename && animsearchpath.IsSameAs(animarchivefilename.Mid(0, animsearchpath.Len()))) {
 							ModelAnimationData animation;
 							fileanimbase.seekg(meta_data[UNITY_ARCHIVE_DATA5].GetFileOffsetByIndex(i));
 							animation.Read(fileanimbase);
 							animation.anim_id = wxAtoi(animarchivefilename.Mid(animsearchpath.Len()));
 							if (_(animation.name).IsNumber()) { // If possible, name the animation with its Steam ID, not numerical ID
 								int32_t animdbindex = AnimationDatabase::GetIndex(animation.anim_id);
-								if (animdbindex>=0) {
+								if (animdbindex >= 0) {
 									animation.name = AnimationDatabase::GetSteamId(animdbindex);
 									animation.name_len = animation.name.length();
 								}
@@ -1294,7 +1361,7 @@ fout.close();*/
 				else if (m_menuconvertmodelwave->IsChecked())		model.Export(path.BeforeLast(L'.').c_str(), MODEL_FILE_FORMAT_WAVEFRONT);
 //				else if (m_menuconvertmodel3ds->IsChecked())		model.Export(path.BeforeLast(L'.').c_str(), MODEL_FILE_FORMAT_3DS_MAX);
 				else												model.Export(path.BeforeLast(L'.').c_str(), MODEL_FILE_FORMAT_FBX_BINARY);
-                /* Old version: OBJ Exporter
+				/* Old version: OBJ Exporter
 				fstream fobj((path.BeforeLast(L'.')+_(L".obj")).c_str(),ios::out);
 				if (!fobj.is_open())
 					continue;
@@ -1322,7 +1389,19 @@ fout.close();*/
 				}
 				fobj.close();
 				fmtl.close();
-                */
+				*/
+			} else if (meta_data[current_archive].file_type1[expfileid] == 74 && !m_menuconvertanimnone->IsChecked()) {
+				delete[] buffer;
+				filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(expfileid));
+				fstream filedest((const char*)(path + _(L".json")).c_str(), ios::out);
+				if (!filedest.is_open()) {
+					wxLogError(HADES_STRING_OPEN_ERROR_CREATE, path);
+					continue;
+				}
+				ModelAnimationData anim;
+				anim.Read(filebase);
+				anim.WriteAsJSON(filedest);
+				filedest.close();
 			} else {
 				fstream filedest((const char*)path.c_str(), ios::out | ios::binary);
 				if (!filedest.is_open()) {
@@ -1440,10 +1519,10 @@ fout.close();*/
 			}
 			if (current_archive==UNITY_ARCHIVE_MAINDATA) {
 				list_data.Flush();
-				int32_t listindex = meta_data[i].GetFileIndex("",147);
+				int32_t listindex = meta_data[current_archive].GetFileIndex("",147);
 				if (listindex>=0) {
 					unityarchive.seekg(meta_data[current_archive].GetFileOffsetByIndex(listindex));
-					list_data.Load(unityarchive,meta_data[i].GetFileSizeByIndex(listindex));
+					list_data.Load(unityarchive,meta_data[current_archive].GetFileSizeByIndex(listindex));
 				}
 			}
 			unityarchive.close();
@@ -1601,10 +1680,10 @@ fout.close();*/
 				}
 				if (current_archive==UNITY_ARCHIVE_MAINDATA) {
 					list_data.Flush();
-					int32_t listindex = meta_data[i].GetFileIndex("",147);
+					int32_t listindex = meta_data[current_archive].GetFileIndex("",147);
 					if (listindex>=0) {
 						unityarchive.seekg(meta_data[current_archive].GetFileOffsetByIndex(listindex));
-						list_data.Load(unityarchive,meta_data[i].GetFileSizeByIndex(listindex));
+						list_data.Load(unityarchive,meta_data[current_archive].GetFileSizeByIndex(listindex));
 					}
 				}
 				unityarchive.close();
@@ -1637,6 +1716,178 @@ fout.close();*/
 			wxMessageDialog popupdialog(this,popupmessage+animresultstring,popuptitle,wxOK|wxCENTRE);
 			popupdialog.ShowModal();
 		}
+	} else if (id == wxID_SELECTALL) {
+		long it = -1;
+		for (;;) {
+			it = m_assetlist->GetNextItem(it);
+			if (it == -1) break;
+			m_assetlist->SetItemState(it, m_assetlist->GetItemState(it, wxLIST_STATE_SELECTED) != 0 ? 0 : wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
+		}
+	} else if (id == wxID_INFO) {
+		wxString basepath = root_path + _(L"HadesWorkshopAssets\\") + archive_name.AfterLast(L'\\').BeforeFirst(L'.') + _(L"\\");
+		wxString path;
+		fstream filebase((const char*)(root_path + archive_name).c_str(), ios::in | ios::binary);
+		if (!filebase.is_open()) {
+			wxLogError(HADES_STRING_OPEN_ERROR_FAIL, root_path + archive_name);
+			return;
+		}
+		long it = -1;
+		int i, j;
+		vector<unsigned int> itemtoselect;
+		for (;;) {
+			it = m_assetlist->GetNextItem(it, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+			if (it == -1) break;
+			unsigned int fileid = wxAtoi(m_assetlist->GetItemText(it, 0)) - 1;
+			path = m_assetlist->GetItemText(it, 1);
+			if (meta_data[current_archive].file_type1[fileid] != 1)
+				continue;
+			int32_t rootid = fileid;
+			if (path.AfterLast(L'.').IsSameAs(L"fbx", false) || path.AfterLast(L'.').IsSameAs(L"prefab", false)) {
+				filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(fileid));
+				char* buffer = new char[meta_data[current_archive].GetFileSizeByIndex(fileid)];
+				filebase.read(buffer, meta_data[current_archive].GetFileSizeByIndex(fileid));
+				int64_t rootinfo = GameObjectHierarchy::GetRootInfoFromObject((uint8_t*)buffer);
+				rootid = meta_data[current_archive].GetFileIndexByInfo(rootinfo);
+				delete[] buffer;
+				if (rootid < 0) {
+					wxLogError(HADES_STRING_UNITYVIEWER_MODEL_BAD_HIERARCHY);
+					continue;
+				}
+			}
+			path.Replace(_(L"/"), _(L"\\"));
+			if (!m_menuexportpath->IsChecked()) path = path.AfterLast(L'\\');
+			path = basepath + path + _(L".hierarchy.txt");
+			wxFileName::Mkdir(path.BeforeLast(L'\\'), wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+			fstream filedest((const char*)path.c_str(), ios::out);
+			if (!filedest.is_open()) {
+				wxLogError(HADES_STRING_OPEN_ERROR_CREATE, path);
+				continue;
+			}
+			GameObjectHierarchy modelhierarchy;
+			modelhierarchy.BuildHierarchy(filebase, meta_data[current_archive], rootid);
+			filedest << HADES_STRING_UNITYVIEWER_HIERARCHY_HEADER << (rootid + 1) << endl;
+			if (current_archive >= UNITY_ARCHIVE_DATA11 && current_archive <= UNITY_ARCHIVE_DATA7)
+				filedest << modelhierarchy.PrintHierarchy(current_archive, &bundle_data[current_archive - UNITY_ARCHIVE_DATA11], &list_data);
+			else
+				filedest << modelhierarchy.PrintHierarchy(current_archive, NULL, &list_data);
+			filedest.close();
+			for (i = 0; i < modelhierarchy.node_list.size(); i++)
+				if (modelhierarchy.node_list[i] != NULL)
+					itemtoselect.push_back(modelhierarchy.node_list[i]->file_index);
+		}
+		filebase.close();
+		it = -1;
+		for (;;) {
+			it = m_assetlist->GetNextItem(it);
+			if (it == -1) break;
+			for (j = 0; j < itemtoselect.size(); j++)
+				if (itemtoselect[j] == wxAtoi(m_assetlist->GetItemText(it, 0)) - 1) {
+					m_assetlist->SetItemState(it, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
+					break;
+				}
+		}
+	} else if (id == wxID_REMOVE) {
+		wxMessageDialog popupwarning(this, _(HADES_STRING_UNITYVIEWER_WARNING_REMOVE), HADES_STRING_WARNING, wxCANCEL | wxYES_NO | wxCENTRE);
+		int modalresult = popupwarning.ShowModal();
+		if (modalresult != wxID_YES && modalresult != wxID_NO)
+			return;
+		fstream filebase((const char*)(root_path + archive_name).c_str(), ios::in | ios::binary);
+		fstream filedest((const char*)(root_path + archive_name + _(L".tmp")).c_str(), ios::out | ios::binary);
+		if (!filebase.is_open()) {
+			wxLogError(HADES_STRING_OPEN_ERROR_FAIL, root_path + archive_name);
+			return;
+		}
+		if (!filedest.is_open()) {
+			wxLogError(HADES_STRING_OPEN_ERROR_CREATE, root_path + archive_name + _(L".tmp"));
+			return;
+		}
+		long it = -1;
+		vector<bool> filetokeep(meta_data[current_archive].header_file_amount, true);
+		for (;;) {
+			it = m_assetlist->GetNextItem(it, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+			if (it == -1) break;
+			unsigned int fileid = wxAtoi(m_assetlist->GetItemText(it, 0)) - 1;
+			filetokeep[fileid] = false;
+		}
+		meta_data[current_archive].DuplicateWithDeletion(filebase, filedest, filetokeep);
+		filebase.close();
+		filedest.close();
+		if (modalresult == wxID_YES) {
+			wxString extension = archive_name.AfterFirst(L'.');
+			wxRenameFile(root_path + archive_name + _(L".tmp"), root_path + archive_name.BeforeFirst('.') + _(L" - Copy with deletions") + (extension.IsEmpty() ? _(L"") : _(L".") + extension), true);
+			return;
+		}
+		if (!wxRenameFile(root_path + archive_name + _(L".tmp"), root_path + archive_name, true)) {
+			wxLogError(HADES_STRING_OPEN_ERROR_OVERWRITE, root_path + archive_name);
+			return;
+		}
+		meta_data[current_archive].Flush();
+		fstream unityarchive((const char*)(root_path + archive_name).c_str(), ios::in | ios::binary);
+		meta_data[current_archive].Load(unityarchive,(UnityArchiveFile)current_archive);
+		if (current_archive >= UNITY_ARCHIVE_DATA11 && current_archive <= UNITY_ARCHIVE_DATA7) {
+			uint32_t offset = meta_data[current_archive].GetFileOffset("", 142);
+			if (offset > 0) {
+				unityarchive.seekg(offset);
+				bundle_data[current_archive - UNITY_ARCHIVE_DATA11].Load(unityarchive);
+			}
+		}
+		if (current_archive == UNITY_ARCHIVE_MAINDATA) {
+			list_data.Flush();
+			int32_t listindex = meta_data[current_archive].GetFileIndex("", 147);
+			if (listindex >= 0) {
+				unityarchive.seekg(meta_data[current_archive].GetFileOffsetByIndex(listindex));
+				list_data.Load(unityarchive, meta_data[current_archive].GetFileSizeByIndex(listindex));
+			}
+		}
+		unityarchive.close();
+		DisplayArchive(current_archive);
+	} else if (id == wxID_DUPLICATE) {
+		fstream filebase((const char*)(root_path + archive_name).c_str(), ios::in | ios::binary);
+		if (!filebase.is_open()) {
+			wxLogError(HADES_STRING_OPEN_ERROR_FAIL, root_path + archive_name);
+			return;
+		}
+		long it = -1;
+		vector<unsigned int> animid;
+		vector<wxString> transitionname;
+		for (;;) {
+			it = m_assetlist->GetNextItem(it, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+			if (it == -1) break;
+			animid.push_back(wxAtoi(m_assetlist->GetItemText(it, 0)) - 1);
+			transitionname.push_back(m_assetlist->GetItemText(it, 1).AfterLast(L'\\').AfterLast(L'/').BeforeFirst(L'.'));
+		}
+		if (animid.size() != 2 || meta_data[current_archive].file_type1[animid[0]] != 74 || meta_data[current_archive].file_type1[animid[1]] != 74)
+			return;
+		float transduration = 1.0f;
+		AnimationTransitionWindow popupdialog(this, transitionname[0], transitionname[1], transduration);
+		if (popupdialog.ShowModal() != wxID_OK)
+			return;
+		transduration = popupdialog.m_spinduration->GetValue();
+		if (popupdialog.is_swap) {
+			animid.insert(animid.begin(), animid.back());
+			animid.pop_back();
+			transitionname.insert(transitionname.begin(), transitionname.back());
+			transitionname.pop_back();
+		}
+		wxString filedestname = root_path + _(L"HadesWorkshopAssets\\") + archive_name.AfterLast(L'\\').BeforeFirst(L'.') + _(L"\\") + transitionname[0] + _(L"_") + transitionname[1] + _(L".anim");
+		wxFileName::Mkdir(filedestname.BeforeLast(L'\\'), wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+		fstream filedest;
+		if (m_menuconvertanimjson->IsChecked())	filedest.open((const char*)(filedestname + _(L".json")).c_str(), ios::out);
+		else									filedest.open((const char*)filedestname.c_str(), ios::out | ios::binary);
+		if (!filedest.is_open()) {
+			wxLogError(HADES_STRING_OPEN_ERROR_CREATE, filedestname);
+			return;
+		}
+		ModelAnimationData anim1, anim2, transition;
+		filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(animid[0]));
+		anim1.Read(filebase);
+		filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(animid[1]));
+		anim2.Read(filebase);
+		transition = ModelAnimationData::GenerateFromTwoStances(anim1, anim2, transduration);
+		if (m_menuconvertanimjson->IsChecked())	transition.WriteAsJSON(filedest);
+		else									transition.Write(filedest);
+		filebase.close();
+		filedest.close();
 	}
 }
 
@@ -1648,8 +1899,20 @@ void ToolUnityViewer::OnAssetRightClick(wxListEvent& event) {
 			enableimport = false;
 			break;
 		}
+	bool enablegenanim = false;
+	if (m_assetlist->GetSelectedItemCount() == 2) {
+		long it = -1;
+		enablegenanim = true;
+		for (;;) {
+			it = m_assetlist->GetNextItem(it, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+			if (it == -1) break;
+			if (meta_data[current_archive].file_type1[wxAtoi(m_assetlist->GetItemText(it, 0)) - 1] != 74) enablegenanim = false;
+		}
+	}
 	assetmenuimport->Enable(enableimport);
 	assetmenuadd->Enable(enableimport);
+	assetmenugenanim->Enable(enablegenanim);
+	assetmenuremove->Enable(enableimport);
 	m_assetlist->PopupMenu(assetmenu);
 }
 

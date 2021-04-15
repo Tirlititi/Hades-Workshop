@@ -737,6 +737,111 @@ vector<uint32_t> UnityArchiveMetaData::Duplicate(fstream& fbase, fstream& fdest,
 	return res;
 }
 
+void UnityArchiveMetaData::DuplicateWithDeletion(fstream& fbase, fstream& fdest, vector<bool> filetokeep) {
+	uint32_t archivestart = archive_type == 1 ? 0x70 : 0;
+	uint32_t copysize, offstart, offtmp, baseoffheadend;
+	unsigned int i, j;
+	char* buffer;
+	copysize = archivestart + 0x25; // up to file_info data
+	for (i = 0; i < header_file_info_amount; i++) {
+		if (file_info_type[i] >= 0)
+			copysize += 0x14;
+		else
+			copysize += 0x24;
+		if (header_unknown3 == 1)
+			copysize += 0x18 * file_info_unkstruct_amount[i] + file_info_unkstruct_text_size[i] + 8;
+	}
+	buffer = new char[copysize];
+	fbase.read(buffer, copysize);
+	fdest.write(buffer, copysize);
+	delete[] buffer;
+	uint32_t copyfileamount = 0;
+	bool lastkeptistext = false;
+	for (i = 0; i < header_file_amount; i++)
+		if (filetokeep[i]) {
+			copyfileamount++;
+			lastkeptistext = file_type1[i] == 49;
+		}
+	uint32_t copyfileoffset = header_file_offset - (header_file_amount - copyfileamount) * 0x1C;
+	uint32_t copyfileheadersize = header_size - (header_file_amount - copyfileamount) * 0x1C;
+	WriteLong(fdest, copyfileamount);
+	while (fdest.tellp() % 4)
+		fdest.put(0);
+	baseoffheadend = (uint32_t)fbase.tellg() + 4 + GetAlignOffset(fbase.tellg()) + 0x1C * header_file_amount;
+	offstart = 0;
+	for (i = 0; i < header_file_amount; i++) {
+		if (!filetokeep[i])
+			continue;
+		WriteLongLong(fdest, file_info[i]);
+		WriteLong(fdest, offstart);
+		WriteLong(fdest, file_size[i]);
+		WriteLong(fdest, file_type1[i]);
+		WriteLong(fdest, file_type2[i]);
+		WriteLong(fdest, file_flags[i]);
+		offtmp = fdest.tellp();
+		fdest.seekp(archivestart + copyfileoffset + offstart);
+		if (HasFileTypeName(file_type1[i])) {
+			WriteLong(fdest, file_name_len[i]);
+			for (j = 0; j < file_name_len[i]; j++)
+				fdest.put(file_name[i].at(j));
+			fdest.seekp(GetAlignOffset(fdest.tellp()), ios::cur);
+			if (file_type1[i] == 49)
+				WriteLong(fdest, text_file_size[i]);
+		}
+		fbase.seekg(GetFileOffsetByIndex(i));
+		copysize = GetFileSizeByIndex(i);
+		buffer = new char[copysize];
+		fbase.read(buffer, copysize);
+		fdest.write(buffer, copysize);
+		delete[] buffer;
+		fdest.seekp(offtmp);
+		offstart += file_size[i];
+		offstart += GetAlignOffset(offstart, 8);
+	}
+	fbase.seekg(baseoffheadend);
+	if (fbase.tellg() < archivestart + header_file_offset) {
+		copysize = archivestart + header_file_offset - fbase.tellg();
+		buffer = new char[copysize];
+		fbase.read(buffer, copysize);
+		fdest.write(buffer, copysize);
+		delete[] buffer;
+	}
+	fdest.seekp(0, ios::end);
+	if (lastkeptistext)
+		fdest.put(0);
+	while (fdest.tellp() % 8 != 0)
+		fdest.put(0);
+	uint32_t fdestarchsize = (uint32_t)fdest.tellp() - archivestart;
+	if (archive_type != 0) {
+		uint32_t fdestfullsize = fdest.tellp();
+		uint32_t size;
+		fdest.seekp(0x1B);
+		WriteLongBE(fdest, fdestfullsize);
+		fdest.seekp(0x2B);
+		size = fdestfullsize - 0x3C;
+		WriteLongBE(fdest, size);
+		WriteLongBE(fdest, size);
+		WriteLongBE(fdest, fdestfullsize);
+		fdest.seekp(0x69);
+		WriteLongBE(fdest, fdestarchsize);
+	}
+	fdest.seekp(archivestart);
+	WriteLongBE(fdest, copyfileheadersize);
+	WriteLongBE(fdest, fdestarchsize);
+	fdest.seekp(4, ios::cur);
+	WriteLongBE(fdest, copyfileoffset);
+	if (archive_type == 1) {
+		// CAB- identifier
+		// UnityEngine.AssetBundle.CreateFromFile fails if the same program tries to load two asset bundles with the same CAB- ID
+		// Randomizing that ID allows to load several versions of the same archive
+		fdest.seekp(0x44);
+		for (i = 0; i < 0x20; i++) {
+			int randhexa = rand() % 16;
+			fdest.put(randhexa < 10 ? '0' + randhexa : 'a' + randhexa - 10);
+		}
+	}
+}
+
 int UnityArchiveIndexListData::Load(fstream& f, uint32_t datasize) {
 	uint32_t fstart = f.tellg();
 	uint32_t fnamelen;

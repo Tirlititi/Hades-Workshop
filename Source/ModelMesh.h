@@ -344,7 +344,7 @@ struct ModelAnimationData {
 	vector< ModelAnimationLocal<ModelAnimationTransformS> > locals;
 	uint32_t num_unk4; // mostly 0
 	uint32_t num_unk5; // mostly 0
-	float float_unk; // mostly 30.0
+	float frame_rate; // mostly 30.0
 	uint32_t num_unk6; // mostly 0
 	// From now, it's mostly always the same except for the first 6*float? (coords?)
 	// 8 structs of 0x38+5*float + extraifnonzero = 0x4C + extraifnonzero ?
@@ -363,7 +363,12 @@ struct ModelAnimationData {
 
 	void Read(fstream& f, GameObjectHierarchy* gohier = NULL);
 	void Write(fstream& f);
+	void WriteAsJSON(fstream& f);
 	int GetDataSize();
+
+	vector<string> GetBoneHierarchyList();
+	static bool HasSameBoneHierarchy(vector<string>& bonelist, vector<string>& otherbonelist);
+	static ModelAnimationData GenerateFromTwoStances(ModelAnimationData& start, ModelAnimationData& end, float duration);
 };
 
 struct ModelDataStruct {
