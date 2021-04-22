@@ -222,7 +222,7 @@ static SortedChoiceSteamItem HADES_STRING_WORLD_BLOCK_NAME[] = {
 	{ 9006, L"EVT_WORLD_WORLD06", L"World Map/Event: Track Kuja" },
 	{ 9007, L"EVT_WORLD_WORLD07", L"World Map: Hilda Garde 3" },
 	{ 9008, L"EVT_WORLD_WORLD08", L"World Map: Invincible" },
-	{ 9009, L"EVT_WORLD_WORLD09", L"World Map: ???" },
+	{ 9009, L"EVT_WORLD_WORLD09", L"World Map: Invincible 1st time" },
 	{ 9010, L"EVT_WORLD_WORLD10", L"World Map: Flying Airships" },
 	{ 9011, L"EVT_WORLD_WORLD11", L"World Map: Around Dali" },
 	{ 9012, L"EVT_WORLD_WORLD12", L"World Map/Event: Chocobo Treasure" },
