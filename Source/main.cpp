@@ -12,6 +12,7 @@
 #include "Gui_Preferences.h"
 #include "Tool_ModManager.h"
 #include "Tool_Randomizer.h"
+#include "Tool_DamageCalculator.h"
 #include "Tool_BackgroundEditor.h"
 #include "Tool_UnityViewer.h"
 #include "File_Batching.h"
@@ -242,7 +243,8 @@ void MainFrame::OnOpenClick(wxCommandEvent& event) {
 		m_close->Enable();
 		m_closeall->Enable();
 		m_modmanager->Enable();
-		m_backgroundeditor->Enable(CDPanel[CDPanelAmount]->fieldloaded);
+		m_damagecalculator->Enable(true);
+		m_backgroundeditor->Enable(true);
 		m_background->Show(false);
 		m_cdbook->Show(true);
 		m_cdbook->Layout();
@@ -780,11 +782,44 @@ void MainFrame::OnToolClick( wxCommandEvent& event ) {
 		dial.ShowModal(CDPanel[currentpanel]);
 		MarkDataModified();
 	} else if (id==wxID_RANDOMIZER) {
+		if (currentpanel == wxNOT_FOUND)
+			return;
 		ToolRandomizer dial(this);
 		dial.ShowModal(CDPanel[currentpanel]);
+	} else if (id == wxID_CALCULATOR) {
+		if (currentpanel == wxNOT_FOUND)
+			return;
+		bool ok = true;
+		if (!CDPanel[currentpanel]->spellloaded || !CDPanel[currentpanel]->statloaded || !CDPanel[currentpanel]->itemloaded || !CDPanel[currentpanel]->enemyloaded) {
+			wxMessageDialog popup(this, HADES_STRING_CALCULATOR_LOAD_SECTIONS, HADES_STRING_WARNING, wxOK | wxCANCEL | wxSTAY_ON_TOP | wxCENTRE);
+			if (popup.ShowModal() == wxID_OK) {
+				CDPanel[currentpanel]->InitSpell();
+				CDPanel[currentpanel]->InitStat();
+				CDPanel[currentpanel]->InitItem();
+				CDPanel[currentpanel]->InitEnemy();
+			} else {
+				ok = false;
+			}
+		}
+		if (ok) {
+			ToolDamageCalculator dial(this);
+			dial.ShowModal(CDPanel[currentpanel]);
+		}
 	} else if (id==wxID_BACKEDIT) {
-		ToolBackgroundEditor dial(this);
-		dial.ShowModal(CDPanel[currentpanel]);
+		if (currentpanel == wxNOT_FOUND)
+			return;
+		bool ok = true;
+		if (!CDPanel[currentpanel]->fieldloaded) {
+			wxMessageDialog popup(this, HADES_STRING_BACKGROUND_LOAD_SECTIONS, HADES_STRING_WARNING, wxOK | wxCANCEL | wxSTAY_ON_TOP | wxCENTRE);
+			if (popup.ShowModal() == wxID_OK)
+				CDPanel[currentpanel]->InitField();
+			else
+				ok = false;
+		}
+		if (ok) {
+			ToolBackgroundEditor dial(this);
+			dial.ShowModal(CDPanel[currentpanel]);
+		}
 	} else if (id==wxID_ASSETS) {
 		ToolUnityViewer* unityviewer = new ToolUnityViewer(this);
 		unityviewer->Show();
@@ -859,6 +894,7 @@ void MainFrame::UpdateMenuAvailability(int panel) {
 		m_exportfieldbackground->Enable(false);
 		m_modmanager->Enable(false);
 		m_randomizer->Enable(false);
+		m_damagecalculator->Enable(false);
 		m_backgroundeditor->Enable(false);
 		return;
 	}
@@ -867,8 +903,9 @@ void MainFrame::UpdateMenuAvailability(int panel) {
 	m_close->Enable(true);
 	m_closeall->Enable(true);
 	m_modmanager->Enable(true);
-	m_randomizer->Enable(CDPanel[panel]->spellloaded);
-	m_backgroundeditor->Enable(CDPanel[panel]->fieldloaded);
+	m_randomizer->Enable(true);
+	m_damagecalculator->Enable(true);
+	m_backgroundeditor->Enable(true);
 	m_savehws->Enable(CDModifiedState[panel]);
 	m_savesteam->Enable(CDModifiedState[panel] && GetGameType()!=GAME_TYPE_PSX);
 	m_exportppf->Enable(CDModifiedState[panel] && GetGameType()==GAME_TYPE_PSX);

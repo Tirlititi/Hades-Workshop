@@ -5,6 +5,8 @@
 #define WORLD_MAP_BATTLE_SPOT_AMOUNT	127 // Number of Battle Spots
 #define WORLD_MAP_BATTLE_GROUND_AMOUNT	354 // 50 Battle Spots with 4 grounds + 77 with 2 grounds
 #define WORLD_MAP_BATTLE_SET_AMOUNT		4
+#define WORLD_MAP_FRIENDLY_AMOUNT		9
+#define WORLD_MAP_FRIENDLY_AREA_AMOUNT	12
 
 struct WorldMapInfoStruct;
 struct WorldMapDataStruct;
@@ -34,18 +36,24 @@ struct WorldMapDataStruct : public ChunkChild {
 	uint32_t place_name_size; // Steam version only
 	
 	uint16_t battle_id[WORLD_MAP_BATTLE_GROUND_AMOUNT][WORLD_MAP_BATTLE_SET_AMOUNT];
-	uint16_t battle_unknown[WORLD_MAP_BATTLE_GROUND_AMOUNT];
+	uint16_t battle_flags[WORLD_MAP_BATTLE_GROUND_AMOUNT]; // 1: hasFog
+	
+	uint16_t friendly_area[WORLD_MAP_FRIENDLY_AMOUNT][WORLD_MAP_FRIENDLY_AREA_AMOUNT];
 	
 	// Return 0 if success ; 1 if the value is too long
 	int SetName(unsigned int placeid, wstring newvalue);
 	int SetName(unsigned int placeid, FF9String& newvalue);
+
+	int ChangeBattle(unsigned int groundid, unsigned int setid, uint16_t newid);
 	
 	void Read(fstream& f);
 	void Write(fstream& f);
 	void WritePPF(fstream& f);
 	void ReadHWS(fstream& f, bool usetext = true);
-	void WriteHWS(fstream& f, int steamdiscordiscmr = -1); // 0-1: disc.img, 2-3: dicmr.img
+	void WriteHWS(fstream& f, bool saveversion = true, int steamdiscordiscmr = -1); // 0-1: disc.img, 2-3: dicmr.img
 	void UpdateOffset();
+
+	static const vector<uint16_t> friendly_battle_id[WORLD_MAP_FRIENDLY_AMOUNT];
 };
 
 struct WorldMapDataSet {

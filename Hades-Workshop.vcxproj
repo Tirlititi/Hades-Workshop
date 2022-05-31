@@ -251,6 +251,7 @@
     <ClCompile Include="Source\WorldMaps.cpp" />
     <ClCompile Include="Source\YandexTranslation.cpp" />
     <ClCompile Include="Source\Tool_Randomizer.cpp" />
+    <ClCompile Include="Source\Tool_DamageCalculator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Database_CSV.h" />
@@ -331,6 +332,7 @@
     <ClInclude Include="Source\WorldMaps.h" />
     <ClInclude Include="Source\YandexTranslation.h" />
     <ClInclude Include="Source\Tool_Randomizer.h" />
+    <ClInclude Include="Source\Tool_DamageCalculator.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Source\resource.rc" />

@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////
-// C++ code generated with wxFormBuilder (version Oct 26 2018)
+// C++ code generated with wxFormBuilder (version 3.10.1-0-g8feb16b3)
 // http://www.wxformbuilder.org/
 //
 // PLEASE DO *NOT* EDIT THIS FILE!
@@ -178,6 +178,10 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	m_menuTools->Append( m_randomizer );
 	m_randomizer->Enable( false );
 
+	m_damagecalculator = new wxMenuItem( m_menuTools, wxID_CALCULATOR, wxString( _("Damage Calculator") ) , _("Show the damage range of attacks and other related informations"), wxITEM_NORMAL );
+	m_menuTools->Append( m_damagecalculator );
+	m_damagecalculator->Enable( false );
+
 	m_backgroundeditor = new wxMenuItem( m_menuTools, wxID_BACKEDIT, wxString( _("Background Editor") ) , _("Convert images into field backgrounds for Steam"), wxITEM_NORMAL );
 	m_menuTools->Append( m_backgroundeditor );
 	m_backgroundeditor->Enable( false );
@@ -260,6 +264,7 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	m_menuBatch->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchExportClick ), this, m_exportfieldbackground->GetId());
 	m_menuTools->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnToolClick ), this, m_modmanager->GetId());
 	m_menuTools->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnToolClick ), this, m_randomizer->GetId());
+	m_menuTools->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnToolClick ), this, m_damagecalculator->GetId());
 	m_menuTools->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnToolClick ), this, m_backgroundeditor->GetId());
 	m_menuTools->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnToolClick ), this, m_unityviewer->GetId());
 	m_menuHelp->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnAboutClick ), this, m_about->GetId());
@@ -312,7 +317,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_spellname = new wxTextCtrl( m_spellscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
 	bSizer22->Add( m_spellname, 0, wxALL, 2 );
 
-	m_spellnamebutton = new wxButton( m_spellscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT );
+	m_spellnamebutton = new wxButton( m_spellscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
 	m_spellnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer22->Add( m_spellnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -343,7 +348,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	bSizer23->Add( m_spellhelp, 1, wxALL|wxEXPAND, 2 );
 
-	m_spellhelpbutton = new wxButton( m_spellscrolledwindow, wxID_HELP, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
+	m_spellhelpbutton = new wxButton( m_spellscrolledwindow, wxID_HELP, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
 	m_spellhelpbutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer23->Add( m_spellhelpbutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -692,7 +697,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_supportname = new wxTextCtrl( m_supportscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
 	bSizer221->Add( m_supportname, 0, wxALL, 2 );
 
-	m_supportnamebutton = new wxButton( m_supportscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
+	m_supportnamebutton = new wxButton( m_supportscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
 	m_supportnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer221->Add( m_supportnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -713,7 +718,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	bSizer231->Add( m_supporthelp, 1, wxALL|wxEXPAND, 2 );
 
-	m_supporthelpbutton = new wxButton( m_supportscrolledwindow, wxID_HELP, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
+	m_supporthelpbutton = new wxButton( m_supportscrolledwindow, wxID_HELP, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
 	m_supporthelpbutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer231->Add( m_supporthelpbutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -763,7 +768,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_cmdname = new wxTextCtrl( m_cmdscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), wxTE_PROCESS_ENTER );
 	bSizer24->Add( m_cmdname, 0, wxALL, 2 );
 
-	m_cmdnamebutton = new wxButton( m_cmdscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
+	m_cmdnamebutton = new wxButton( m_cmdscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
 	m_cmdnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer24->Add( m_cmdnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -783,7 +788,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	bSizer25->Add( m_cmdhelp, 1, wxALL|wxEXPAND, 2 );
 
-	m_cmdhelpbutton = new wxButton( m_cmdscrolledwindow, wxID_HELP, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
+	m_cmdhelpbutton = new wxButton( m_cmdscrolledwindow, wxID_HELP, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
 	m_cmdhelpbutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer25->Add( m_cmdhelpbutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -951,7 +956,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	bSizer2211->Add( m_statchardefaultname, 0, wxALL, 2 );
 
-	m_statchardefaultnamebutton = new wxButton( m_statcharscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
+	m_statchardefaultnamebutton = new wxButton( m_statcharscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
 	m_statchardefaultnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer2211->Add( m_statchardefaultnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -1036,7 +1041,25 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer102->Add( m_statcharabilitycost, 0, wxALL, 5 );
 
 
-	bSizer881->Add( bSizer102, 1, wxEXPAND, 5 );
+	bSizer881->Add( bSizer102, 0, wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer892;
+	bSizer892 = new wxBoxSizer( wxVERTICAL );
+
+	m_statcharabilitybuttonup = new wxBitmapButton( m_statcharscrolledwindow, wxID_MENUPOSUP, wxNullBitmap, wxDefaultPosition, wxDefaultSize, wxBU_AUTODRAW|0 );
+
+	m_statcharabilitybuttonup->SetBitmap( wxICON( moveup_icon ) );
+	m_statcharabilitybuttonup->SetBitmapDisabled( wxICON( moveup_disicon ) );
+	bSizer892->Add( m_statcharabilitybuttonup, 0, wxALL, 5 );
+
+	m_statcharabilitybuttondown = new wxBitmapButton( m_statcharscrolledwindow, wxID_MENUPOSDOWN, wxNullBitmap, wxDefaultPosition, wxDefaultSize, wxBU_AUTODRAW|0 );
+
+	m_statcharabilitybuttondown->SetBitmap( wxICON( movedown_icon ) );
+	m_statcharabilitybuttondown->SetBitmapDisabled( wxICON( movedown_disicon ) );
+	bSizer892->Add( m_statcharabilitybuttondown, 0, wxALL, 5 );
+
+
+	bSizer881->Add( bSizer892, 0, wxEXPAND, 5 );
 
 
 	bSizer75->Add( bSizer881, 1, wxEXPAND, 5 );
@@ -1383,7 +1406,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_itemname = new wxTextCtrl( m_itemscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
 	bSizer2212->Add( m_itemname, 0, wxALL, 2 );
 
-	m_itemnamebutton = new wxButton( m_itemscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT );
+	m_itemnamebutton = new wxButton( m_itemscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
 	m_itemnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer2212->Add( m_itemnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -1403,7 +1426,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	bSizer2311->Add( m_itemhelp, 1, wxALL|wxEXPAND, 2 );
 
-	m_itemhelpbutton = new wxButton( m_itemscrolledwindow, wxID_HELP, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
+	m_itemhelpbutton = new wxButton( m_itemscrolledwindow, wxID_HELP, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
 	m_itemhelpbutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer2311->Add( m_itemhelpbutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -1423,7 +1446,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	bSizer2312->Add( m_itemhelp2, 1, wxALL|wxEXPAND, 2 );
 
-	m_itemhelp2button = new wxButton( m_itemscrolledwindow, wxID_BATTLEHELP, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
+	m_itemhelp2button = new wxButton( m_itemscrolledwindow, wxID_BATTLEHELP, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
 	m_itemhelp2button->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer2312->Add( m_itemhelp2button, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -2168,7 +2191,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_keyitemname = new wxTextCtrl( m_keyitemscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
 	bSizer22121->Add( m_keyitemname, 0, wxALL, 2 );
 
-	m_keyitemnamebutton = new wxButton( m_keyitemscrolledwindow, wxID_KEYNAME, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
+	m_keyitemnamebutton = new wxButton( m_keyitemscrolledwindow, wxID_KEYNAME, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
 	m_keyitemnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer22121->Add( m_keyitemnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -2189,7 +2212,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	bSizer23111->Add( m_keyitemhelp, 1, wxALL|wxEXPAND, 2 );
 
-	m_keyitemhelpbutton = new wxButton( m_keyitemscrolledwindow, wxID_KEYHELP, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
+	m_keyitemhelpbutton = new wxButton( m_keyitemscrolledwindow, wxID_KEYHELP, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
 	m_keyitemhelpbutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer23111->Add( m_keyitemhelpbutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -2210,7 +2233,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	bSizer23121->Add( m_keyitemdescription, 1, wxALL|wxEXPAND, 2 );
 
-	m_keyitemdescriptionbutton = new wxButton( m_keyitemscrolledwindow, wxID_KEYDESCRIPTION, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
+	m_keyitemdescriptionbutton = new wxButton( m_keyitemscrolledwindow, wxID_KEYDESCRIPTION, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
 	m_keyitemdescriptionbutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer23121->Add( m_keyitemdescriptionbutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -2622,7 +2645,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemystatname = new wxTextCtrl( m_enemystatpanel1, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer26->Add( m_enemystatname, 0, wxALL, 2 );
 
-	m_enemystatnamebutton = new wxButton( m_enemystatpanel1, wxID_STATNAME, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
+	m_enemystatnamebutton = new wxButton( m_enemystatpanel1, wxID_STATNAME, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
 	m_enemystatnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer26->Add( m_enemystatnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -3473,7 +3496,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemyspellname = new wxTextCtrl( m_enemyspellscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
 	bSizer27->Add( m_enemyspellname, 0, wxALL, 2 );
 
-	m_enemyspellnamebutton = new wxButton( m_enemyspellscrolledwindow, wxID_SPELLNAME, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
+	m_enemyspellnamebutton = new wxButton( m_enemyspellscrolledwindow, wxID_SPELLNAME, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
 	m_enemyspellnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer27->Add( m_enemyspellnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -4099,7 +4122,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_cardname = new wxTextCtrl( m_cardscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
 	bSizer222->Add( m_cardname, 0, wxALL, 2 );
 
-	m_cardnamebutton = new wxButton( m_cardscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
+	m_cardnamebutton = new wxButton( m_cardscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
 	m_cardnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer222->Add( m_cardnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -4630,7 +4653,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_worldplacename = new wxTextCtrl( m_worldplacescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
 	bSizer221221->Add( m_worldplacename, 0, wxALL, 2 );
 
-	m_worldplacenamebutton = new wxButton( m_worldplacescrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
+	m_worldplacenamebutton = new wxButton( m_worldplacescrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
 	m_worldplacenamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer221221->Add( m_worldplacenamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -5067,7 +5090,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_fieldname = new wxTextCtrl( m_fieldscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
 	bSizer22122->Add( m_fieldname, 0, wxALL, 2 );
 
-	m_fieldnamebutton = new wxButton( m_fieldscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
+	m_fieldnamebutton = new wxButton( m_fieldscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
 	m_fieldnamebutton->SetFont( wxFont( 6, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
 	bSizer22122->Add( m_fieldnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
@@ -5120,6 +5143,24 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 
 	fgSizer39->Add( bSizer124, 1, wxEXPAND, 5 );
+
+	m_staticText456 = new wxStaticText( m_fieldscrolledwindow, wxID_ANY, _("Walkmesh"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText456->Wrap( -1 );
+	fgSizer39->Add( m_staticText456, 0, wxALL, 5 );
+
+	wxBoxSizer* bSizer257;
+	bSizer257 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_fieldexportwalk = new wxButton( m_fieldscrolledwindow, wxID_EXPORT, _("Export"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer257->Add( m_fieldexportwalk, 0, wxALL, 3 );
+
+	m_fieldimportwalk = new wxButton( m_fieldscrolledwindow, wxID_IMPORT, _("Import"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_fieldimportwalk->Hide();
+
+	bSizer257->Add( m_fieldimportwalk, 0, wxALL, 3 );
+
+
+	fgSizer39->Add( bSizer257, 1, wxEXPAND, 5 );
 
 	m_staticText210 = new wxStaticText( m_fieldscrolledwindow, wxID_ANY, _("Preview"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText210->Wrap( -1 );
@@ -5607,6 +5648,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_statcharabilitylist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeList ), NULL, this );
 	m_statcharabilitychoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharabilitycost->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnStatChangeSpin ), NULL, this );
+	m_statcharabilitybuttonup->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
+	m_statcharabilitybuttondown->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
 	m_statcharcommand1->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharcommand2->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharcommandtrance1->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
@@ -6148,6 +6191,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_fieldpreload->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldtexturechoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnFieldChangeChoice ), NULL, this );
 	m_fieldtexturemanage->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
+	m_fieldexportwalk->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
+	m_fieldimportwalk->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldtexturepreview->Connect( wxEVT_PAINT, wxPaintEventHandler( CDPanel::OnFieldTexturePaint ), NULL, this );
 	m_battlescenelist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxBattleScene ), NULL, this );
 	m_battlesceneexport->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnBattleSceneExportButton ), NULL, this );
@@ -6259,6 +6304,8 @@ CDPanel::~CDPanel()
 	m_statcharabilitylist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeList ), NULL, this );
 	m_statcharabilitychoice->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharabilitycost->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnStatChangeSpin ), NULL, this );
+	m_statcharabilitybuttonup->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
+	m_statcharabilitybuttondown->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
 	m_statcharcommand1->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharcommand2->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharcommandtrance1->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
@@ -6800,6 +6847,8 @@ CDPanel::~CDPanel()
 	m_fieldpreload->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldtexturechoice->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnFieldChangeChoice ), NULL, this );
 	m_fieldtexturemanage->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
+	m_fieldexportwalk->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
+	m_fieldimportwalk->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldtexturepreview->Disconnect( wxEVT_PAINT, wxPaintEventHandler( CDPanel::OnFieldTexturePaint ), NULL, this );
 	m_battlescenelist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxBattleScene ), NULL, this );
 	m_battlesceneexport->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnBattleSceneExportButton ), NULL, this );
@@ -8590,7 +8639,7 @@ AboutWindow::AboutWindow( wxWindow* parent, wxWindowID id, const wxString& title
 	wxBoxSizer* bSizer16;
 	bSizer16 = new wxBoxSizer( wxVERTICAL );
 
-	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.41f\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for PSX model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\n - Satoh -\n - Ze_PilOt -\n\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_MULTILINE|wxTE_READONLY|wxTE_CENTER|wxBORDER_SIMPLE );
+	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.42alpha\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for PSX model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\n - Satoh -\n - Ze_PilOt -\n\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_MULTILINE|wxTE_READONLY|wxTE_CENTER|wxBORDER_SIMPLE );
 	m_textCtrl13->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 	m_textCtrl13->SetMinSize( wxSize( -1,330 ) );
 
@@ -10062,6 +10111,94 @@ BattleSceneImportLinkTextureWindow::~BattleSceneImportLinkTextureWindow()
 {
 }
 
+WalkmeshExportWindow::WalkmeshExportWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+
+	wxBoxSizer* bSizer18;
+	bSizer18 = new wxBoxSizer( wxVERTICAL );
+
+	wxGridBagSizer* gbSizer2;
+	gbSizer2 = new wxGridBagSizer( 0, 0 );
+	gbSizer2->SetFlexibleDirection( wxBOTH );
+	gbSizer2->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_NONE );
+
+	m_filepickerexport = new wxFilePickerCtrl( this, wxID_ANY, wxEmptyString, _("Save..."), _("Wavefront mesh (*.obj)|*.obj"), wxDefaultPosition, wxDefaultSize, wxFLP_OVERWRITE_PROMPT|wxFLP_SAVE|wxFLP_USE_TEXTCTRL );
+	gbSizer2->Add( m_filepickerexport, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer20;
+	bSizer20 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_buttoncancel = new wxButton( this, wxID_CANCEL, _("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer20->Add( m_buttoncancel, 0, wxALL, 5 );
+
+	m_buttonok = new wxButton( this, wxID_OK, _("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer20->Add( m_buttonok, 0, wxALL, 5 );
+
+
+	gbSizer2->Add( bSizer20, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALIGN_RIGHT, 5 );
+
+
+	gbSizer2->AddGrowableCol( 0 );
+	gbSizer2->AddGrowableRow( 1 );
+
+	bSizer18->Add( gbSizer2, 1, wxEXPAND, 5 );
+
+
+	this->SetSizer( bSizer18 );
+	this->Layout();
+
+	this->Centre( wxBOTH );
+}
+
+WalkmeshExportWindow::~WalkmeshExportWindow()
+{
+}
+
+WalkmeshImportWindow::WalkmeshImportWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+
+	wxBoxSizer* bSizer18;
+	bSizer18 = new wxBoxSizer( wxVERTICAL );
+
+	wxGridBagSizer* gbSizer2;
+	gbSizer2 = new wxGridBagSizer( 0, 0 );
+	gbSizer2->SetFlexibleDirection( wxBOTH );
+	gbSizer2->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_NONE );
+
+	m_filepickerimport = new wxFilePickerCtrl( this, wxID_ANY, wxEmptyString, _("Import..."), _("Wavefront mesh (*.obj)|*.obj"), wxDefaultPosition, wxDefaultSize, wxFLP_DEFAULT_STYLE|wxFLP_USE_TEXTCTRL );
+	gbSizer2->Add( m_filepickerimport, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer20;
+	bSizer20 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_buttoncancel = new wxButton( this, wxID_CANCEL, _("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer20->Add( m_buttoncancel, 0, wxALL, 5 );
+
+	m_buttonok = new wxButton( this, wxID_OK, _("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer20->Add( m_buttonok, 0, wxALL, 5 );
+
+
+	gbSizer2->Add( bSizer20, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALIGN_RIGHT, 5 );
+
+
+	gbSizer2->AddGrowableCol( 0 );
+	gbSizer2->AddGrowableRow( 1 );
+
+	bSizer18->Add( gbSizer2, 1, wxEXPAND, 5 );
+
+
+	this->SetSizer( bSizer18 );
+	this->Layout();
+
+	this->Centre( wxBOTH );
+}
+
+WalkmeshImportWindow::~WalkmeshImportWindow()
+{
+}
+
 ManageTextureWindow::ManageTextureWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
 {
 	this->SetSizeHints( wxSize( 520,420 ), wxDefaultSize );
@@ -10250,7 +10387,7 @@ ManageTextureWindow::~ManageTextureWindow()
 
 ManageFieldTextureWindow::ManageFieldTextureWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
 {
-	this->SetSizeHints( wxSize( 520,560 ), wxDefaultSize );
+	this->SetSizeHints( wxSize( 540,560 ), wxDefaultSize );
 
 	wxBoxSizer* bSizer55;
 	bSizer55 = new wxBoxSizer( wxVERTICAL );
@@ -10267,18 +10404,31 @@ ManageFieldTextureWindow::ManageFieldTextureWindow( wxWindow* parent, wxWindowID
 	m_animlist = new wxListCtrl( this, wxID_ANY, wxDefaultPosition, wxSize( 135,160 ), wxLC_SINGLE_SEL|wxLC_SMALL_ICON );
 	gbSizer10->Add( m_animlist, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxALL, 5 );
 
+	wxBoxSizer* bSizer258;
+	bSizer258 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_staticText458 = new wxStaticText( this, wxID_ANY, _("Depth"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText458->Wrap( -1 );
+	bSizer258->Add( m_staticText458, 0, wxALL, 5 );
+
+	m_texturetiledepth = new wxSpinCtrl( this, wxID_DEPTH, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 4095, 0 );
+	bSizer258->Add( m_texturetiledepth, 0, wxALL, 3 );
+
+
+	gbSizer10->Add( bSizer258, wxGBPosition( 1, 0 ), wxGBSpan( 1, 2 ), wxEXPAND, 5 );
+
 	m_staticText1021 = new wxStaticText( this, wxID_ANY, _("Palette Selection :"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText1021->Wrap( -1 );
-	gbSizer10->Add( m_staticText1021, wxGBPosition( 1, 0 ), wxGBSpan( 1, 2 ), wxALIGN_BOTTOM|wxLEFT, 5 );
+	gbSizer10->Add( m_staticText1021, wxGBPosition( 2, 0 ), wxGBSpan( 1, 2 ), wxALIGN_BOTTOM|wxLEFT, 5 );
 
 	m_texturepaletteselection = new wxSpinCtrl( this, wxID_PALSEL, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 1, 0 );
 	m_texturepaletteselection->Enable( false );
 
-	gbSizer10->Add( m_texturepaletteselection, wxGBPosition( 2, 0 ), wxGBSpan( 1, 2 ), wxALL, 3 );
+	gbSizer10->Add( m_texturepaletteselection, wxGBPosition( 3, 0 ), wxGBSpan( 1, 2 ), wxALL, 3 );
 
 	m_texturewindow = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxSize( 280,120 ), wxHSCROLL|wxVSCROLL );
 	m_texturewindow->SetScrollRate( 5, 5 );
-	gbSizer10->Add( m_texturewindow, wxGBPosition( 0, 2 ), wxGBSpan( 2, 2 ), wxEXPAND | wxALL, 5 );
+	gbSizer10->Add( m_texturewindow, wxGBPosition( 0, 2 ), wxGBSpan( 3, 2 ), wxEXPAND | wxALL, 5 );
 
 	wxString m_modifytyperadioChoices[] = { _("Draw"), _("Import") };
 	int m_modifytyperadioNChoices = sizeof( m_modifytyperadioChoices ) / sizeof( wxString );
@@ -10286,7 +10436,7 @@ ManageFieldTextureWindow::ManageFieldTextureWindow( wxWindow* parent, wxWindowID
 	m_modifytyperadio->SetSelection( 0 );
 	m_modifytyperadio->Enable( false );
 
-	gbSizer10->Add( m_modifytyperadio, wxGBPosition( 3, 0 ), wxGBSpan( 1, 2 ), wxALL|wxEXPAND, 2 );
+	gbSizer10->Add( m_modifytyperadio, wxGBPosition( 4, 0 ), wxGBSpan( 1, 2 ), wxALL|wxEXPAND, 2 );
 
 	wxBoxSizer* bSizer112;
 	bSizer112 = new wxBoxSizer( wxVERTICAL );
@@ -10325,7 +10475,7 @@ ManageFieldTextureWindow::ManageFieldTextureWindow( wxWindow* parent, wxWindowID
 	bSizer112->Add( m_modifypanelimport, 1, wxEXPAND | wxALL, 2 );
 
 
-	gbSizer10->Add( bSizer112, wxGBPosition( 4, 0 ), wxGBSpan( 2, 2 ), wxEXPAND, 5 );
+	gbSizer10->Add( bSizer112, wxGBPosition( 5, 0 ), wxGBSpan( 2, 2 ), wxEXPAND, 5 );
 
 	wxFlexGridSizer* fgSizer45;
 	fgSizer45 = new wxFlexGridSizer( 0, 2, 0, 0 );
@@ -10347,7 +10497,7 @@ ManageFieldTextureWindow::ManageFieldTextureWindow( wxWindow* parent, wxWindowID
 	fgSizer45->Add( m_textureposy, 0, wxALL, 5 );
 
 
-	gbSizer10->Add( fgSizer45, wxGBPosition( 2, 2 ), wxGBSpan( 4, 2 ), wxEXPAND, 5 );
+	gbSizer10->Add( fgSizer45, wxGBPosition( 3, 2 ), wxGBSpan( 4, 2 ), wxEXPAND, 5 );
 
 	wxBoxSizer* bSizer56;
 	bSizer56 = new wxBoxSizer( wxHORIZONTAL );
@@ -10359,12 +10509,10 @@ ManageFieldTextureWindow::ManageFieldTextureWindow( wxWindow* parent, wxWindowID
 	bSizer56->Add( m_buttoncancel, 0, wxALL, 5 );
 
 	m_buttonok = new wxButton( this, wxID_OK, _("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_buttonok->Enable( false );
-
 	bSizer56->Add( m_buttonok, 0, wxALL, 5 );
 
 
-	gbSizer10->Add( bSizer56, wxGBPosition( 6, 3 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
+	gbSizer10->Add( bSizer56, wxGBPosition( 7, 3 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
 
 
 	gbSizer10->AddGrowableCol( 2 );
@@ -10384,6 +10532,7 @@ ManageFieldTextureWindow::ManageFieldTextureWindow( wxWindow* parent, wxWindowID
 	m_tilechecklist->Connect( wxEVT_COMMAND_CHECKLISTBOX_TOGGLED, wxCommandEventHandler( ManageFieldTextureWindow::OnTileButton ), NULL, this );
 	m_animlist->Connect( wxEVT_LEFT_DCLICK, wxMouseEventHandler( ManageFieldTextureWindow::OnAnimClick ), NULL, this );
 	m_animlist->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( ManageFieldTextureWindow::OnAnimClick ), NULL, this );
+	m_texturetiledepth->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
 	m_texturepaletteselection->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
 	m_texturewindow->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( ManageFieldTextureWindow::OnTextureMouseMove ), NULL, this );
 	m_texturewindow->Connect( wxEVT_MOTION, wxMouseEventHandler( ManageFieldTextureWindow::OnTextureMouseMove ), NULL, this );
@@ -10409,6 +10558,7 @@ ManageFieldTextureWindow::~ManageFieldTextureWindow()
 	m_tilechecklist->Disconnect( wxEVT_COMMAND_CHECKLISTBOX_TOGGLED, wxCommandEventHandler( ManageFieldTextureWindow::OnTileButton ), NULL, this );
 	m_animlist->Disconnect( wxEVT_LEFT_DCLICK, wxMouseEventHandler( ManageFieldTextureWindow::OnAnimClick ), NULL, this );
 	m_animlist->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( ManageFieldTextureWindow::OnAnimClick ), NULL, this );
+	m_texturetiledepth->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
 	m_texturepaletteselection->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
 	m_texturewindow->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( ManageFieldTextureWindow::OnTextureMouseMove ), NULL, this );
 	m_texturewindow->Disconnect( wxEVT_MOTION, wxMouseEventHandler( ManageFieldTextureWindow::OnTextureMouseMove ), NULL, this );
@@ -10952,7 +11102,7 @@ ScriptEditLinkWindow::ScriptEditLinkWindow( wxWindow* parent, wxWindowID id, con
 	m_langlink1->SetSelection( 0 );
 	gbSizer2->Add( m_langlink1, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
 
-	m_langtext1 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
+	m_langtext1 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
 	gbSizer2->Add( m_langtext1, wxGBPosition( 0, 2 ), wxGBSpan( 1, 1 ), wxALL, 0 );
 
 	m_staticText368 = new wxStaticText( this, wxID_ANY, _("English (UK)"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -10965,7 +11115,7 @@ ScriptEditLinkWindow::ScriptEditLinkWindow( wxWindow* parent, wxWindowID id, con
 	m_langlink2->SetSelection( 0 );
 	gbSizer2->Add( m_langlink2, wxGBPosition( 1, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
 
-	m_langtext2 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
+	m_langtext2 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
 	gbSizer2->Add( m_langtext2, wxGBPosition( 1, 2 ), wxGBSpan( 1, 1 ), wxALL, 0 );
 
 	m_staticText369 = new wxStaticText( this, wxID_ANY, _("Japanese"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -10978,7 +11128,7 @@ ScriptEditLinkWindow::ScriptEditLinkWindow( wxWindow* parent, wxWindowID id, con
 	m_langlink3->SetSelection( 0 );
 	gbSizer2->Add( m_langlink3, wxGBPosition( 2, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
 
-	m_langtext3 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
+	m_langtext3 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
 	gbSizer2->Add( m_langtext3, wxGBPosition( 2, 2 ), wxGBSpan( 1, 1 ), wxALL, 0 );
 
 	m_staticText370 = new wxStaticText( this, wxID_ANY, _("German"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -10991,7 +11141,7 @@ ScriptEditLinkWindow::ScriptEditLinkWindow( wxWindow* parent, wxWindowID id, con
 	m_langlink4->SetSelection( 0 );
 	gbSizer2->Add( m_langlink4, wxGBPosition( 3, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
 
-	m_langtext4 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
+	m_langtext4 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
 	gbSizer2->Add( m_langtext4, wxGBPosition( 3, 2 ), wxGBSpan( 1, 1 ), wxALL, 0 );
 
 	m_staticText371 = new wxStaticText( this, wxID_ANY, _("French"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -11004,7 +11154,7 @@ ScriptEditLinkWindow::ScriptEditLinkWindow( wxWindow* parent, wxWindowID id, con
 	m_langlink5->SetSelection( 0 );
 	gbSizer2->Add( m_langlink5, wxGBPosition( 4, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
 
-	m_langtext5 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
+	m_langtext5 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
 	gbSizer2->Add( m_langtext5, wxGBPosition( 4, 2 ), wxGBSpan( 1, 1 ), wxALL, 0 );
 
 	m_staticText372 = new wxStaticText( this, wxID_ANY, _("Italian"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -11017,7 +11167,7 @@ ScriptEditLinkWindow::ScriptEditLinkWindow( wxWindow* parent, wxWindowID id, con
 	m_langlink6->SetSelection( 0 );
 	gbSizer2->Add( m_langlink6, wxGBPosition( 5, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
 
-	m_langtext6 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
+	m_langtext6 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
 	gbSizer2->Add( m_langtext6, wxGBPosition( 5, 2 ), wxGBSpan( 1, 1 ), wxALL, 0 );
 
 	m_staticText373 = new wxStaticText( this, wxID_ANY, _("Spanish"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -11030,7 +11180,7 @@ ScriptEditLinkWindow::ScriptEditLinkWindow( wxWindow* parent, wxWindowID id, con
 	m_langlink7->SetSelection( 0 );
 	gbSizer2->Add( m_langlink7, wxGBPosition( 6, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
 
-	m_langtext7 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxSize(25, 25), wxBU_EXACTFIT);
+	m_langtext7 = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
 	gbSizer2->Add( m_langtext7, wxGBPosition( 6, 2 ), wxGBSpan( 1, 1 ), wxALL, 0 );
 
 	wxBoxSizer* bSizer20;
@@ -12707,7 +12857,7 @@ UnityViewerWindow::UnityViewerWindow( wxWindow* parent, wxWindowID id, const wxS
 
 	m_menureopen = new wxMenuItem( m_menufile, wxID_REOPEN, wxString( _("Reload") ) + wxT('\t') + wxT("F5"), wxEmptyString, wxITEM_NORMAL );
 	m_menufile->Append( m_menureopen );
-	
+
 	m_menufile->AppendSeparator();
 
 	wxMenuItem* m_menuclose;
@@ -13179,15 +13329,15 @@ UnityViewerWindow::UnityViewerWindow( wxWindow* parent, wxWindowID id, const wxS
 	m_menuoptions->Append( m_menuconvertmodelItem );
 
 	m_menuconvertanim = new wxMenu();
-	wxMenuItem* m_menuconvertanimItem = new wxMenuItem(m_menuoptions, wxID_ANY, _("Automatically Convert Animations"), wxEmptyString, wxITEM_NORMAL, m_menuconvertanim);
-	m_menuconvertanimnone = new wxMenuItem(m_menuconvertanim, wxID_ANY, wxString(_("Don't Convert")), wxEmptyString, wxITEM_RADIO);
-	m_menuconvertanim->Append(m_menuconvertanimnone);
+	wxMenuItem* m_menuconvertanimItem = new wxMenuItem( m_menuoptions, wxID_ANY, _("Automatically Convert Animations"), wxEmptyString, wxITEM_NORMAL, m_menuconvertanim );
+	m_menuconvertanimnone = new wxMenuItem( m_menuconvertanim, wxID_ANY, wxString( _("Don't Convert") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertanim->Append( m_menuconvertanimnone );
 
-	m_menuconvertanimjson = new wxMenuItem(m_menuconvertanim, wxID_ANY, wxString(_("As JSON")), wxEmptyString, wxITEM_RADIO);
-	m_menuconvertanim->Append(m_menuconvertanimjson);
-	m_menuconvertanimjson->Check(true);
+	m_menuconvertanimjson = new wxMenuItem( m_menuconvertanim, wxID_ANY, wxString( _("As JSON") ) , wxEmptyString, wxITEM_RADIO );
+	m_menuconvertanim->Append( m_menuconvertanimjson );
+	m_menuconvertanimjson->Check( true );
 
-	m_menuoptions->Append(m_menuconvertanimItem);
+	m_menuoptions->Append( m_menuconvertanimItem );
 
 	m_menuoptions->AppendSeparator();
 
@@ -13539,6 +13689,1669 @@ UnityAddFilePanel::~UnityAddFilePanel()
 	m_generateinfo->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( UnityAddFilePanel::OnButtonClick ), NULL, this );
 	m_addbundleinfo->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( UnityAddFilePanel::OnCheckBox ), NULL, this );
 
+}
+
+DamageCalculatorWindow::DamageCalculatorWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxSize( 950,450 ), wxDefaultSize );
+
+	wxFlexGridSizer* fgSizer117;
+	fgSizer117 = new wxFlexGridSizer( 0, 3, 0, 0 );
+	fgSizer117->AddGrowableCol( 1 );
+	fgSizer117->AddGrowableRow( 0 );
+	fgSizer117->SetFlexibleDirection( wxBOTH );
+	fgSizer117->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_panelleft = new wxChoicebook( this, wxID_LEFT, wxDefaultPosition, wxSize( 340,-1 ), wxCHB_TOP );
+	fgSizer117->Add( m_panelleft, 0, wxALIGN_LEFT|wxEXPAND, 5 );
+
+	m_panelstat = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxFlexGridSizer* fgSizer124;
+	fgSizer124 = new wxFlexGridSizer( 0, 1, 0, 0 );
+	fgSizer124->AddGrowableCol( 0 );
+	fgSizer124->AddGrowableRow( 2 );
+	fgSizer124->SetFlexibleDirection( wxBOTH );
+	fgSizer124->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	wxBoxSizer* bSizer285;
+	bSizer285 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_saveprofile = new wxButton( m_panelstat, wxID_ANY, _("Save Profile"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer285->Add( m_saveprofile, 0, wxALL, 5 );
+
+	m_loadprofile = new wxButton( m_panelstat, wxID_ANY, _("Load Profile"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer285->Add( m_loadprofile, 0, wxALL, 5 );
+
+
+	fgSizer124->Add( bSizer285, 1, wxALIGN_CENTER_HORIZONTAL|wxEXPAND, 5 );
+
+	m_swapbutton = new wxButton( m_panelstat, wxID_ANY, _("<- Swap ->"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer124->Add( m_swapbutton, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
+
+	m_description = new wxTextCtrl( m_panelstat, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), wxTE_BESTWRAP|wxTE_MULTILINE|wxTE_READONLY|wxBORDER_SIMPLE );
+	m_description->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
+
+	fgSizer124->Add( m_description, 0, wxALL|wxEXPAND, 5 );
+
+
+	m_panelstat->SetSizer( fgSizer124 );
+	m_panelstat->Layout();
+	fgSizer124->Fit( m_panelstat );
+	fgSizer117->Add( m_panelstat, 1, wxEXPAND | wxALL, 5 );
+
+	m_panelright = new wxChoicebook( this, wxID_RIGHT, wxDefaultPosition, wxSize( 340,-1 ), wxCHB_TOP );
+	fgSizer117->Add( m_panelright, 0, wxALIGN_RIGHT|wxEXPAND, 5 );
+
+
+	this->SetSizer( fgSizer117 );
+	this->Layout();
+
+	this->Centre( wxBOTH );
+
+	// Connect Events
+	m_panelleft->Connect( wxEVT_COMMAND_CHOICEBOOK_PAGE_CHANGED, wxChoicebookEventHandler( DamageCalculatorWindow::OnCharacterTypeChange ), NULL, this );
+	m_saveprofile->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DamageCalculatorWindow::OnSaveProfile ), NULL, this );
+	m_loadprofile->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DamageCalculatorWindow::OnLoadProfile ), NULL, this );
+	m_swapbutton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DamageCalculatorWindow::OnButtonSwap ), NULL, this );
+	m_panelright->Connect( wxEVT_COMMAND_CHOICEBOOK_PAGE_CHANGED, wxChoicebookEventHandler( DamageCalculatorWindow::OnCharacterTypeChange ), NULL, this );
+}
+
+DamageCalculatorWindow::~DamageCalculatorWindow()
+{
+	// Disconnect Events
+	m_panelleft->Disconnect( wxEVT_COMMAND_CHOICEBOOK_PAGE_CHANGED, wxChoicebookEventHandler( DamageCalculatorWindow::OnCharacterTypeChange ), NULL, this );
+	m_saveprofile->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DamageCalculatorWindow::OnSaveProfile ), NULL, this );
+	m_loadprofile->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DamageCalculatorWindow::OnLoadProfile ), NULL, this );
+	m_swapbutton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DamageCalculatorWindow::OnButtonSwap ), NULL, this );
+	m_panelright->Disconnect( wxEVT_COMMAND_CHOICEBOOK_PAGE_CHANGED, wxChoicebookEventHandler( DamageCalculatorWindow::OnCharacterTypeChange ), NULL, this );
+
+}
+
+DamageCalculatorPlayerPanel::DamageCalculatorPlayerPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style, const wxString& name ) : wxPanel( parent, id, pos, size, style, name )
+{
+	wxGridBagSizer* gbSizer55;
+	gbSizer55 = new wxGridBagSizer( 0, 0 );
+	gbSizer55->SetFlexibleDirection( wxBOTH );
+	gbSizer55->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_NONE );
+
+	wxString m_basecharChoices[] = { _("Zidane"), _("Vivi"), _("Dagger"), _("Steiner"), _("Freya"), _("Quina"), _("Eiko"), _("Amarant"), _("Cinna"), _("Marcus"), _("Blank"), _("Beatrix") };
+	int m_basecharNChoices = sizeof( m_basecharChoices ) / sizeof( wxString );
+	m_basechar = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_basecharNChoices, m_basecharChoices, 0 );
+	m_basechar->SetSelection( 0 );
+	gbSizer55->Add( m_basechar, wxGBPosition( 0, 0 ), wxGBSpan( 1, 6 ), wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
+
+	wxBoxSizer* bSizer241;
+	bSizer241 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText420 = new wxStaticText( this, wxID_ANY, _("Level"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText420->Wrap( -1 );
+	bSizer241->Add( m_staticText420, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_level = new wxSpinCtrl( this, wxID_ANY, wxT("1"), wxDefaultPosition, wxSize( 60,-1 ), wxSP_ARROW_KEYS, 1, 99, 0 );
+	bSizer241->Add( m_level, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	gbSizer55->Add( bSizer241, wxGBPosition( 1, 0 ), wxGBSpan( 1, 6 ), wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer242;
+	bSizer242 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText422 = new wxStaticText( this, wxID_ANY, _("Weapon"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText422->Wrap( -1 );
+	bSizer242->Add( m_staticText422, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	wxArrayString m_weaponChoices;
+	m_weapon = new wxChoice( this, wxID_WEAPON, wxDefaultPosition, wxSize( 110,-1 ), m_weaponChoices, 0 );
+	m_weapon->SetSelection( 0 );
+	bSizer242->Add( m_weapon, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	gbSizer55->Add( bSizer242, wxGBPosition( 2, 0 ), wxGBSpan( 1, 2 ), wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer2421;
+	bSizer2421 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4221 = new wxStaticText( this, wxID_ANY, _("Head"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4221->Wrap( -1 );
+	bSizer2421->Add( m_staticText4221, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	wxArrayString m_headChoices;
+	m_head = new wxChoice( this, wxID_HEAD, wxDefaultPosition, wxSize( 110,-1 ), m_headChoices, 0 );
+	m_head->SetSelection( 0 );
+	bSizer2421->Add( m_head, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	gbSizer55->Add( bSizer2421, wxGBPosition( 2, 2 ), wxGBSpan( 1, 2 ), wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer2422;
+	bSizer2422 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4222 = new wxStaticText( this, wxID_ANY, _("Wrist"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4222->Wrap( -1 );
+	bSizer2422->Add( m_staticText4222, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	wxArrayString m_wristChoices;
+	m_wrist = new wxChoice( this, wxID_WRIST, wxDefaultPosition, wxSize( 110,-1 ), m_wristChoices, 0 );
+	m_wrist->SetSelection( 0 );
+	bSizer2422->Add( m_wrist, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	gbSizer55->Add( bSizer2422, wxGBPosition( 2, 4 ), wxGBSpan( 1, 2 ), wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer2423;
+	bSizer2423 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4223 = new wxStaticText( this, wxID_ANY, _("Armor"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4223->Wrap( -1 );
+	bSizer2423->Add( m_staticText4223, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	wxArrayString m_armorChoices;
+	m_armor = new wxChoice( this, wxID_ARMOR, wxDefaultPosition, wxSize( 110,-1 ), m_armorChoices, 0 );
+	m_armor->SetSelection( 0 );
+	bSizer2423->Add( m_armor, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	gbSizer55->Add( bSizer2423, wxGBPosition( 3, 1 ), wxGBSpan( 1, 2 ), wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer2424;
+	bSizer2424 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4224 = new wxStaticText( this, wxID_ANY, _("Accessory"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4224->Wrap( -1 );
+	bSizer2424->Add( m_staticText4224, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	wxArrayString m_accessoryChoices;
+	m_accessory = new wxChoice( this, wxID_ACCESSORY, wxDefaultPosition, wxSize( 110,-1 ), m_accessoryChoices, 0 );
+	m_accessory->SetSelection( 0 );
+	bSizer2424->Add( m_accessory, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	gbSizer55->Add( bSizer2424, wxGBPosition( 3, 3 ), wxGBSpan( 1, 2 ), wxEXPAND, 5 );
+
+	m_charstat = new wxButton( this, wxID_ANY, _("Change Stats"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer55->Add( m_charstat, wxGBPosition( 4, 0 ), wxGBSpan( 1, 2 ), wxALIGN_CENTER|wxALL, 5 );
+
+	m_supportingabilities = new wxButton( this, wxID_ANY, _("Supporting\nAbilities"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer55->Add( m_supportingabilities, wxGBPosition( 4, 2 ), wxGBSpan( 1, 2 ), wxALIGN_CENTER|wxALL, 5 );
+
+	m_charbuff = new wxButton( this, wxID_ANY, _("Buffs"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer55->Add( m_charbuff, wxGBPosition( 4, 4 ), wxGBSpan( 1, 2 ), wxALIGN_CENTER|wxALL, 5 );
+
+	m_staticline9 = new wxStaticLine( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL );
+	gbSizer55->Add( m_staticline9, wxGBPosition( 5, 0 ), wxGBSpan( 1, 6 ), wxEXPAND | wxALL, 5 );
+
+	wxArrayString m_basespellChoices;
+	m_basespell = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxSize( 110,-1 ), m_basespellChoices, 0 );
+	m_basespell->SetSelection( 0 );
+	gbSizer55->Add( m_basespell, wxGBPosition( 6, 0 ), wxGBSpan( 1, 6 ), wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
+
+	wxBoxSizer* bSizer2425;
+	bSizer2425 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4225 = new wxStaticText( this, wxID_ANY, _("Effect"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4225->Wrap( -1 );
+	bSizer2425->Add( m_staticText4225, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	wxArrayString m_effectChoices;
+	m_effect = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxSize( 110,-1 ), m_effectChoices, 0 );
+	m_effect->SetSelection( 0 );
+	bSizer2425->Add( m_effect, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	gbSizer55->Add( bSizer2425, wxGBPosition( 7, 0 ), wxGBSpan( 1, 2 ), wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer24251;
+	bSizer24251 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText42251 = new wxStaticText( this, wxID_ANY, _("Power"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText42251->Wrap( -1 );
+	bSizer24251->Add( m_staticText42251, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_power = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 110,-1 ), wxSP_ARROW_KEYS, 0, 255, 0 );
+	bSizer24251->Add( m_power, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM|wxEXPAND, 5 );
+
+
+	gbSizer55->Add( bSizer24251, wxGBPosition( 7, 2 ), wxGBSpan( 1, 2 ), wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer24252;
+	bSizer24252 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText42252 = new wxStaticText( this, wxID_ANY, _("Accuracy"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText42252->Wrap( -1 );
+	bSizer24252->Add( m_staticText42252, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_accuracy = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 110,-1 ), wxSP_ARROW_KEYS, 0, 255, 0 );
+	bSizer24252->Add( m_accuracy, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM|wxEXPAND, 5 );
+
+
+	gbSizer55->Add( bSizer24252, wxGBPosition( 7, 4 ), wxGBSpan( 1, 2 ), wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer242521;
+	bSizer242521 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText422521 = new wxStaticText( this, wxID_ANY, _("Status"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText422521->Wrap( -1 );
+	bSizer242521->Add( m_staticText422521, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	wxArrayString m_statusChoices;
+	m_status = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxSize( 110,-1 ), m_statusChoices, 0 );
+	m_status->SetSelection( 0 );
+	bSizer242521->Add( m_status, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	gbSizer55->Add( bSizer242521, wxGBPosition( 8, 1 ), wxGBSpan( 1, 2 ), wxALIGN_CENTER_HORIZONTAL|wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer242522;
+	bSizer242522 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText422522 = new wxStaticText( this, wxID_ANY, _("Element"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText422522->Wrap( -1 );
+	bSizer242522->Add( m_staticText422522, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	wxFlexGridSizer* fgSizer119;
+	fgSizer119 = new wxFlexGridSizer( 0, 4, 0, 0 );
+	fgSizer119->SetFlexibleDirection( wxBOTH );
+	fgSizer119->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_fire = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_fire->SetToolTip( _("Fire") );
+
+	fgSizer119->Add( m_fire, 0, 0, 5 );
+
+	m_ice = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_ice->SetToolTip( _("Ice") );
+
+	fgSizer119->Add( m_ice, 0, 0, 5 );
+
+	m_thunder = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_thunder->SetToolTip( _("Thunder") );
+
+	fgSizer119->Add( m_thunder, 0, 0, 5 );
+
+	m_earth = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_earth->SetToolTip( _("Earth") );
+
+	fgSizer119->Add( m_earth, 0, 0, 5 );
+
+	m_water = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_water->SetToolTip( _("Water") );
+
+	fgSizer119->Add( m_water, 0, 0, 5 );
+
+	m_wind = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_wind->SetToolTip( _("Wind") );
+
+	fgSizer119->Add( m_wind, 0, 0, 5 );
+
+	m_holy = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_holy->SetToolTip( _("Holy") );
+
+	fgSizer119->Add( m_holy, 0, 0, 5 );
+
+	m_shadow = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_shadow->SetToolTip( _("Shadow") );
+
+	fgSizer119->Add( m_shadow, 0, 0, 5 );
+
+
+	bSizer242522->Add( fgSizer119, 1, wxALIGN_CENTER_HORIZONTAL, 5 );
+
+
+	gbSizer55->Add( bSizer242522, wxGBPosition( 8, 3 ), wxGBSpan( 1, 2 ), wxALIGN_CENTER_HORIZONTAL|wxEXPAND, 5 );
+
+
+	this->SetSizer( gbSizer55 );
+	this->Layout();
+
+	// Connect Events
+	m_basechar->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnCharacterChange ), NULL, this );
+	m_level->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorPlayerPanel::OnLevelChange ), NULL, this );
+	m_weapon->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnEquipChange ), NULL, this );
+	m_head->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnEquipChange ), NULL, this );
+	m_wrist->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnEquipChange ), NULL, this );
+	m_armor->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnEquipChange ), NULL, this );
+	m_accessory->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnEquipChange ), NULL, this );
+	m_charstat->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnStatButton ), NULL, this );
+	m_supportingabilities->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnSupportingButton ), NULL, this );
+	m_charbuff->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnBuffButton ), NULL, this );
+	m_basespell->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnSpellChange ), NULL, this );
+	m_effect->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnUpdate ), NULL, this );
+	m_power->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorPlayerPanel::OnUpdateSpin ), NULL, this );
+	m_accuracy->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorPlayerPanel::OnUpdateSpin ), NULL, this );
+	m_status->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnUpdate ), NULL, this );
+	m_fire->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnUpdate ), NULL, this );
+	m_ice->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnUpdate ), NULL, this );
+	m_thunder->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnUpdate ), NULL, this );
+	m_earth->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnUpdate ), NULL, this );
+	m_water->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnUpdate ), NULL, this );
+	m_wind->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnUpdate ), NULL, this );
+	m_holy->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnUpdate ), NULL, this );
+	m_shadow->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnUpdate ), NULL, this );
+}
+
+DamageCalculatorPlayerPanel::~DamageCalculatorPlayerPanel()
+{
+	// Disconnect Events
+	m_basechar->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnCharacterChange ), NULL, this );
+	m_level->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorPlayerPanel::OnLevelChange ), NULL, this );
+	m_weapon->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnEquipChange ), NULL, this );
+	m_head->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnEquipChange ), NULL, this );
+	m_wrist->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnEquipChange ), NULL, this );
+	m_armor->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnEquipChange ), NULL, this );
+	m_accessory->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnEquipChange ), NULL, this );
+	m_charstat->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnStatButton ), NULL, this );
+	m_supportingabilities->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnSupportingButton ), NULL, this );
+	m_charbuff->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnBuffButton ), NULL, this );
+	m_basespell->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnSpellChange ), NULL, this );
+	m_effect->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnUpdate ), NULL, this );
+	m_power->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorPlayerPanel::OnUpdateSpin ), NULL, this );
+	m_accuracy->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorPlayerPanel::OnUpdateSpin ), NULL, this );
+	m_status->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnUpdate ), NULL, this );
+	m_fire->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnUpdate ), NULL, this );
+	m_ice->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnUpdate ), NULL, this );
+	m_thunder->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnUpdate ), NULL, this );
+	m_earth->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnUpdate ), NULL, this );
+	m_water->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnUpdate ), NULL, this );
+	m_wind->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnUpdate ), NULL, this );
+	m_holy->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnUpdate ), NULL, this );
+	m_shadow->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorPlayerPanel::OnUpdate ), NULL, this );
+
+}
+
+DamageCalculatorEnemyPanel::DamageCalculatorEnemyPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style, const wxString& name ) : wxPanel( parent, id, pos, size, style, name )
+{
+	wxGridBagSizer* gbSizer55;
+	gbSizer55 = new wxGridBagSizer( 0, 0 );
+	gbSizer55->SetFlexibleDirection( wxBOTH );
+	gbSizer55->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_NONE );
+
+	wxArrayString m_baseenemyChoices;
+	m_baseenemy = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_baseenemyChoices, 0 );
+	m_baseenemy->SetSelection( 0 );
+	gbSizer55->Add( m_baseenemy, wxGBPosition( 0, 0 ), wxGBSpan( 1, 12 ), wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
+
+	wxBoxSizer* bSizer2412;
+	bSizer2412 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4202 = new wxStaticText( this, wxID_ANY, _("Level"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4202->Wrap( -1 );
+	bSizer2412->Add( m_staticText4202, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_level = new wxSpinCtrl( this, wxID_ANY, wxT("1"), wxDefaultPosition, wxSize( 110,-1 ), wxSP_ARROW_KEYS, 1, 99, 0 );
+	bSizer2412->Add( m_level, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	gbSizer55->Add( bSizer2412, wxGBPosition( 1, 0 ), wxGBSpan( 1, 3 ), wxALIGN_CENTER_HORIZONTAL|wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer2411;
+	bSizer2411 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4201 = new wxStaticText( this, wxID_ANY, _("Max HP"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4201->Wrap( -1 );
+	bSizer2411->Add( m_staticText4201, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_maxhp = new wxSpinCtrl( this, wxID_ANY, wxT("1"), wxDefaultPosition, wxSize( 110,-1 ), wxSP_ARROW_KEYS, 0, 65535, 0 );
+	bSizer2411->Add( m_maxhp, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	gbSizer55->Add( bSizer2411, wxGBPosition( 1, 3 ), wxGBSpan( 1, 3 ), wxALIGN_CENTER_HORIZONTAL|wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer241;
+	bSizer241 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText420 = new wxStaticText( this, wxID_ANY, _("Class"), wxDefaultPosition, wxSize( 110,-1 ), wxALIGN_CENTER_HORIZONTAL );
+	m_staticText420->Wrap( -1 );
+	bSizer241->Add( m_staticText420, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	wxFlexGridSizer* fgSizer123;
+	fgSizer123 = new wxFlexGridSizer( 0, 4, 0, 0 );
+	fgSizer123->SetFlexibleDirection( wxBOTH );
+	fgSizer123->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_human = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_human->SetToolTip( _("Human") );
+
+	fgSizer123->Add( m_human, 0, 0, 5 );
+
+	m_beast = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_beast->SetToolTip( _("Beast") );
+
+	fgSizer123->Add( m_beast, 0, 0, 5 );
+
+	m_demon = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_demon->SetToolTip( _("Demon") );
+
+	fgSizer123->Add( m_demon, 0, 0, 5 );
+
+	m_dragon = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_dragon->SetToolTip( _("Dragon") );
+
+	fgSizer123->Add( m_dragon, 0, 0, 5 );
+
+	m_undead = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_undead->SetToolTip( _("Undead") );
+
+	fgSizer123->Add( m_undead, 0, 0, 5 );
+
+	m_stone = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_stone->SetToolTip( _("Stone") );
+
+	fgSizer123->Add( m_stone, 0, 0, 5 );
+
+	m_bug = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_bug->SetToolTip( _("Bug") );
+
+	fgSizer123->Add( m_bug, 0, 0, 5 );
+
+	m_flying = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_flying->SetToolTip( _("Flying") );
+
+	fgSizer123->Add( m_flying, 0, 0, 5 );
+
+
+	bSizer241->Add( fgSizer123, 1, wxALIGN_CENTER_HORIZONTAL, 5 );
+
+
+	gbSizer55->Add( bSizer241, wxGBPosition( 1, 6 ), wxGBSpan( 1, 6 ), wxALIGN_CENTER_HORIZONTAL|wxEXPAND, 5 );
+
+	wxFlexGridSizer* fgSizer128;
+	fgSizer128 = new wxFlexGridSizer( 0, 4, 0, 0 );
+	fgSizer128->SetFlexibleDirection( wxBOTH );
+	fgSizer128->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	wxBoxSizer* bSizer242;
+	bSizer242 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText422 = new wxStaticText( this, wxID_ANY, _("Speed"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText422->Wrap( -1 );
+	bSizer242->Add( m_staticText422, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_speed = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 60,-1 ), wxSP_ARROW_KEYS, 0, 255, 0 );
+	bSizer242->Add( m_speed, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	fgSizer128->Add( bSizer242, 1, wxEXPAND|wxLEFT|wxRIGHT, 10 );
+
+	wxBoxSizer* bSizer2429;
+	bSizer2429 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4229 = new wxStaticText( this, wxID_ANY, _("Strength"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4229->Wrap( -1 );
+	bSizer2429->Add( m_staticText4229, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_strength = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 60,-1 ), wxSP_ARROW_KEYS, 0, 255, 0 );
+	bSizer2429->Add( m_strength, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	fgSizer128->Add( bSizer2429, 1, wxEXPAND|wxLEFT|wxRIGHT, 10 );
+
+	wxBoxSizer* bSizer2428;
+	bSizer2428 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4228 = new wxStaticText( this, wxID_ANY, _("Magic"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4228->Wrap( -1 );
+	bSizer2428->Add( m_staticText4228, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_magic = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 60,-1 ), wxSP_ARROW_KEYS, 0, 255, 0 );
+	bSizer2428->Add( m_magic, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	fgSizer128->Add( bSizer2428, 1, wxEXPAND|wxLEFT|wxRIGHT, 10 );
+
+	wxBoxSizer* bSizer2427;
+	bSizer2427 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4227 = new wxStaticText( this, wxID_ANY, _("Spirit"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4227->Wrap( -1 );
+	bSizer2427->Add( m_staticText4227, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_spirit = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 60,-1 ), wxSP_ARROW_KEYS, 0, 255, 0 );
+	bSizer2427->Add( m_spirit, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	fgSizer128->Add( bSizer2427, 1, wxEXPAND|wxLEFT|wxRIGHT, 10 );
+
+	wxBoxSizer* bSizer2426;
+	bSizer2426 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4226 = new wxStaticText( this, wxID_ANY, _("Defence"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4226->Wrap( -1 );
+	bSizer2426->Add( m_staticText4226, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_defence = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 60,-1 ), wxSP_ARROW_KEYS, 0, 255, 0 );
+	bSizer2426->Add( m_defence, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	fgSizer128->Add( bSizer2426, 1, wxEXPAND|wxLEFT|wxRIGHT, 10 );
+
+	wxBoxSizer* bSizer2424;
+	bSizer2424 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4224 = new wxStaticText( this, wxID_ANY, _("Evade"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4224->Wrap( -1 );
+	bSizer2424->Add( m_staticText4224, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_evade = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 60,-1 ), wxSP_ARROW_KEYS, 0, 255, 0 );
+	bSizer2424->Add( m_evade, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	fgSizer128->Add( bSizer2424, 1, wxEXPAND|wxLEFT|wxRIGHT, 10 );
+
+	wxBoxSizer* bSizer2423;
+	bSizer2423 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4223 = new wxStaticText( this, wxID_ANY, _("MDef"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4223->Wrap( -1 );
+	bSizer2423->Add( m_staticText4223, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_magicdefence = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 60,-1 ), wxSP_ARROW_KEYS, 0, 255, 0 );
+	bSizer2423->Add( m_magicdefence, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	fgSizer128->Add( bSizer2423, 1, wxEXPAND|wxLEFT|wxRIGHT, 10 );
+
+	wxBoxSizer* bSizer2422;
+	bSizer2422 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4222 = new wxStaticText( this, wxID_ANY, _("MEv"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4222->Wrap( -1 );
+	bSizer2422->Add( m_staticText4222, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_magicevade = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 60,-1 ), wxSP_ARROW_KEYS, 0, 255, 0 );
+	bSizer2422->Add( m_magicevade, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	fgSizer128->Add( bSizer2422, 1, wxEXPAND|wxLEFT|wxRIGHT, 10 );
+
+
+	gbSizer55->Add( fgSizer128, wxGBPosition( 2, 0 ), wxGBSpan( 2, 12 ), wxEXPAND, 5 );
+
+	m_charbuff = new wxButton( this, wxID_ANY, _("Buffs"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer55->Add( m_charbuff, wxGBPosition( 4, 0 ), wxGBSpan( 1, 12 ), wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
+
+	m_staticline9 = new wxStaticLine( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL );
+	gbSizer55->Add( m_staticline9, wxGBPosition( 5, 0 ), wxGBSpan( 1, 12 ), wxEXPAND | wxALL, 5 );
+
+	wxGridBagSizer* gbSizer60;
+	gbSizer60 = new wxGridBagSizer( 0, 0 );
+	gbSizer60->SetFlexibleDirection( wxBOTH );
+	gbSizer60->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	wxArrayString m_basespellChoices;
+	m_basespell = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxSize( 110,-1 ), m_basespellChoices, 0 );
+	m_basespell->SetSelection( 0 );
+	gbSizer60->Add( m_basespell, wxGBPosition( 0, 0 ), wxGBSpan( 1, 7 ), wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
+
+	wxBoxSizer* bSizer2425;
+	bSizer2425 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4225 = new wxStaticText( this, wxID_ANY, _("Effect"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4225->Wrap( -1 );
+	bSizer2425->Add( m_staticText4225, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	wxArrayString m_effectChoices;
+	m_effect = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxSize( 110,-1 ), m_effectChoices, 0 );
+	m_effect->SetSelection( 0 );
+	bSizer2425->Add( m_effect, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	gbSizer60->Add( bSizer2425, wxGBPosition( 1, 0 ), wxGBSpan( 1, 3 ), wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer24251;
+	bSizer24251 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText42251 = new wxStaticText( this, wxID_ANY, _("Power"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText42251->Wrap( -1 );
+	bSizer24251->Add( m_staticText42251, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_power = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 60,-1 ), wxSP_ARROW_KEYS, 0, 255, 0 );
+	bSizer24251->Add( m_power, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM|wxEXPAND, 5 );
+
+
+	gbSizer60->Add( bSizer24251, wxGBPosition( 1, 3 ), wxGBSpan( 1, 2 ), wxEXPAND|wxLEFT|wxRIGHT, 10 );
+
+	wxBoxSizer* bSizer24252;
+	bSizer24252 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText42252 = new wxStaticText( this, wxID_ANY, _("Accuracy"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText42252->Wrap( -1 );
+	bSizer24252->Add( m_staticText42252, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_accuracy = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 60,-1 ), wxSP_ARROW_KEYS, 0, 255, 0 );
+	bSizer24252->Add( m_accuracy, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM|wxEXPAND, 5 );
+
+
+	gbSizer60->Add( bSizer24252, wxGBPosition( 1, 5 ), wxGBSpan( 1, 2 ), wxEXPAND|wxLEFT|wxRIGHT, 10 );
+
+	wxBoxSizer* bSizer242521;
+	bSizer242521 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText422521 = new wxStaticText( this, wxID_ANY, _("Status"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText422521->Wrap( -1 );
+	bSizer242521->Add( m_staticText422521, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	wxArrayString m_statusChoices;
+	m_status = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxSize( 110,-1 ), m_statusChoices, 0 );
+	m_status->SetSelection( 0 );
+	bSizer242521->Add( m_status, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	gbSizer60->Add( bSizer242521, wxGBPosition( 2, 1 ), wxGBSpan( 1, 3 ), wxALIGN_CENTER_HORIZONTAL|wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer242522;
+	bSizer242522 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText422522 = new wxStaticText( this, wxID_ANY, _("Element"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText422522->Wrap( -1 );
+	bSizer242522->Add( m_staticText422522, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	wxFlexGridSizer* fgSizer119;
+	fgSizer119 = new wxFlexGridSizer( 0, 4, 0, 0 );
+	fgSizer119->SetFlexibleDirection( wxBOTH );
+	fgSizer119->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_fire = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_fire->SetToolTip( _("Fire") );
+
+	fgSizer119->Add( m_fire, 0, 0, 5 );
+
+	m_ice = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_ice->SetToolTip( _("Ice") );
+
+	fgSizer119->Add( m_ice, 0, 0, 5 );
+
+	m_thunder = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_thunder->SetToolTip( _("Thunder") );
+
+	fgSizer119->Add( m_thunder, 0, 0, 5 );
+
+	m_earth = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_earth->SetToolTip( _("Earth") );
+
+	fgSizer119->Add( m_earth, 0, 0, 5 );
+
+	m_water = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_water->SetToolTip( _("Water") );
+
+	fgSizer119->Add( m_water, 0, 0, 5 );
+
+	m_wind = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_wind->SetToolTip( _("Wind") );
+
+	fgSizer119->Add( m_wind, 0, 0, 5 );
+
+	m_holy = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_holy->SetToolTip( _("Holy") );
+
+	fgSizer119->Add( m_holy, 0, 0, 5 );
+
+	m_shadow = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_shadow->SetToolTip( _("Shadow") );
+
+	fgSizer119->Add( m_shadow, 0, 0, 5 );
+
+
+	bSizer242522->Add( fgSizer119, 1, wxALIGN_CENTER_HORIZONTAL, 5 );
+
+
+	gbSizer60->Add( bSizer242522, wxGBPosition( 2, 4 ), wxGBSpan( 1, 3 ), wxALIGN_CENTER_HORIZONTAL|wxEXPAND, 5 );
+
+
+	gbSizer55->Add( gbSizer60, wxGBPosition( 6, 0 ), wxGBSpan( 1, 12 ), wxEXPAND|wxLEFT, 30 );
+
+
+	this->SetSizer( gbSizer55 );
+	this->Layout();
+
+	// Connect Events
+	m_baseenemy->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnEnemyChange ), NULL, this );
+	m_level->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorEnemyPanel::OnUpdateSpin ), NULL, this );
+	m_maxhp->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorEnemyPanel::OnUpdateSpin ), NULL, this );
+	m_human->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_beast->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_demon->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_dragon->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_undead->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_stone->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_bug->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_flying->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_speed->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorEnemyPanel::OnUpdateSpin ), NULL, this );
+	m_strength->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorEnemyPanel::OnUpdateSpin ), NULL, this );
+	m_magic->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorEnemyPanel::OnUpdateSpin ), NULL, this );
+	m_spirit->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorEnemyPanel::OnUpdateSpin ), NULL, this );
+	m_defence->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorEnemyPanel::OnUpdateSpin ), NULL, this );
+	m_evade->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorEnemyPanel::OnUpdateSpin ), NULL, this );
+	m_magicdefence->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorEnemyPanel::OnUpdateSpin ), NULL, this );
+	m_magicevade->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorEnemyPanel::OnUpdateSpin ), NULL, this );
+	m_charbuff->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnBuffButton ), NULL, this );
+	m_basespell->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnSpellChange ), NULL, this );
+	m_effect->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_power->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorEnemyPanel::OnUpdateSpin ), NULL, this );
+	m_accuracy->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorEnemyPanel::OnUpdateSpin ), NULL, this );
+	m_status->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_fire->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_ice->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_thunder->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_earth->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_water->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_wind->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_holy->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_shadow->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+}
+
+DamageCalculatorEnemyPanel::~DamageCalculatorEnemyPanel()
+{
+	// Disconnect Events
+	m_baseenemy->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnEnemyChange ), NULL, this );
+	m_level->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorEnemyPanel::OnUpdateSpin ), NULL, this );
+	m_maxhp->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorEnemyPanel::OnUpdateSpin ), NULL, this );
+	m_human->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_beast->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_demon->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_dragon->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_undead->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_stone->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_bug->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_flying->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_speed->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorEnemyPanel::OnUpdateSpin ), NULL, this );
+	m_strength->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorEnemyPanel::OnUpdateSpin ), NULL, this );
+	m_magic->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorEnemyPanel::OnUpdateSpin ), NULL, this );
+	m_spirit->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorEnemyPanel::OnUpdateSpin ), NULL, this );
+	m_defence->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorEnemyPanel::OnUpdateSpin ), NULL, this );
+	m_evade->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorEnemyPanel::OnUpdateSpin ), NULL, this );
+	m_magicdefence->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorEnemyPanel::OnUpdateSpin ), NULL, this );
+	m_magicevade->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorEnemyPanel::OnUpdateSpin ), NULL, this );
+	m_charbuff->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnBuffButton ), NULL, this );
+	m_basespell->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnSpellChange ), NULL, this );
+	m_effect->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_power->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorEnemyPanel::OnUpdateSpin ), NULL, this );
+	m_accuracy->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DamageCalculatorEnemyPanel::OnUpdateSpin ), NULL, this );
+	m_status->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_fire->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_ice->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_thunder->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_earth->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_water->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_wind->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_holy->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+	m_shadow->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorEnemyPanel::OnUpdate ), NULL, this );
+
+}
+
+DamageCalculatorStats::DamageCalculatorStats( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+
+	wxGridBagSizer* gbSizer58;
+	gbSizer58 = new wxGridBagSizer( 0, 0 );
+	gbSizer58->SetFlexibleDirection( wxBOTH );
+	gbSizer58->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	wxBoxSizer* bSizer2678;
+	bSizer2678 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4468 = new wxStaticText( this, wxID_ANY, _("+Max HP"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4468->Wrap( -1 );
+	bSizer2678->Add( m_staticText4468, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_maxhp = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -9999, 9999, 0 );
+	bSizer2678->Add( m_maxhp, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	gbSizer58->Add( bSizer2678, wxGBPosition( 0, 0 ), wxGBSpan( 1, 2 ), wxALIGN_CENTER_HORIZONTAL|wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer2679;
+	bSizer2679 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4469 = new wxStaticText( this, wxID_ANY, _("+Attack"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4469->Wrap( -1 );
+	bSizer2679->Add( m_staticText4469, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_attack = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -255, 255, 0 );
+	bSizer2679->Add( m_attack, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	gbSizer58->Add( bSizer2679, wxGBPosition( 0, 2 ), wxGBSpan( 1, 2 ), wxALIGN_CENTER_HORIZONTAL|wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer267;
+	bSizer267 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText446 = new wxStaticText( this, wxID_ANY, _("+Speed"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText446->Wrap( -1 );
+	bSizer267->Add( m_staticText446, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_speed = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -50, 50, 0 );
+	bSizer267->Add( m_speed, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	gbSizer58->Add( bSizer267, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer2671;
+	bSizer2671 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4461 = new wxStaticText( this, wxID_ANY, _("+Strength"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4461->Wrap( -1 );
+	bSizer2671->Add( m_staticText4461, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_strength = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -99, 99, 0 );
+	bSizer2671->Add( m_strength, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	gbSizer58->Add( bSizer2671, wxGBPosition( 1, 1 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer2672;
+	bSizer2672 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4462 = new wxStaticText( this, wxID_ANY, _("+Magic"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4462->Wrap( -1 );
+	bSizer2672->Add( m_staticText4462, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_magic = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -99, 99, 0 );
+	bSizer2672->Add( m_magic, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	gbSizer58->Add( bSizer2672, wxGBPosition( 1, 2 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer2673;
+	bSizer2673 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4463 = new wxStaticText( this, wxID_ANY, _("+Spirit"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4463->Wrap( -1 );
+	bSizer2673->Add( m_staticText4463, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_spirit = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -50, 50, 0 );
+	bSizer2673->Add( m_spirit, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	gbSizer58->Add( bSizer2673, wxGBPosition( 1, 3 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer2674;
+	bSizer2674 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4464 = new wxStaticText( this, wxID_ANY, _("+Defence"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4464->Wrap( -1 );
+	bSizer2674->Add( m_staticText4464, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_defence = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -255, 255, 0 );
+	bSizer2674->Add( m_defence, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	gbSizer58->Add( bSizer2674, wxGBPosition( 2, 0 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer2675;
+	bSizer2675 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4465 = new wxStaticText( this, wxID_ANY, _("+Evade"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4465->Wrap( -1 );
+	bSizer2675->Add( m_staticText4465, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_evade = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -255, 255, 0 );
+	bSizer2675->Add( m_evade, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	gbSizer58->Add( bSizer2675, wxGBPosition( 2, 1 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer2676;
+	bSizer2676 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4466 = new wxStaticText( this, wxID_ANY, _("+MDef"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4466->Wrap( -1 );
+	bSizer2676->Add( m_staticText4466, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_magicdefence = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -255, 255, 0 );
+	bSizer2676->Add( m_magicdefence, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	gbSizer58->Add( bSizer2676, wxGBPosition( 2, 2 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer2677;
+	bSizer2677 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4467 = new wxStaticText( this, wxID_ANY, _("+MEva"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4467->Wrap( -1 );
+	bSizer2677->Add( m_staticText4467, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_magicevade = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -255, 255, 0 );
+	bSizer2677->Add( m_magicevade, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	gbSizer58->Add( bSizer2677, wxGBPosition( 2, 3 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer26771;
+	bSizer26771 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText44671 = new wxStaticText( this, wxID_ANY, _("Number of jewels"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText44671->Wrap( -1 );
+	bSizer26771->Add( m_staticText44671, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	m_jewelcount = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 99, 0 );
+	m_jewelcount->SetToolTip( _("The number of jewels related to summons when a type of jewel is concerned") );
+
+	bSizer26771->Add( m_jewelcount, 0, wxALIGN_CENTER_HORIZONTAL|wxBOTTOM, 5 );
+
+
+	gbSizer58->Add( bSizer26771, wxGBPosition( 3, 0 ), wxGBSpan( 1, 4 ), wxEXPAND, 5 );
+
+	m_buttonok = new wxButton( this, wxID_OK, _("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer58->Add( m_buttonok, wxGBPosition( 4, 0 ), wxGBSpan( 1, 4 ), wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
+
+
+	this->SetSizer( gbSizer58 );
+	this->Layout();
+	gbSizer58->Fit( this );
+
+	this->Centre( wxBOTH );
+}
+
+DamageCalculatorStats::~DamageCalculatorStats()
+{
+}
+
+DamageCalculatorSupporting::DamageCalculatorSupporting( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+
+	wxBoxSizer* bSizer319;
+	bSizer319 = new wxBoxSizer( wxVERTICAL );
+
+	wxFlexGridSizer* fgSizer124;
+	fgSizer124 = new wxFlexGridSizer( 0, 3, 0, 0 );
+	fgSizer124->SetFlexibleDirection( wxBOTH );
+	fgSizer124->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_hp10 = new wxCheckBox( this, wxID_ANY, _("HP+10%"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer124->Add( m_hp10, 0, wxALL, 5 );
+
+	m_hp20 = new wxCheckBox( this, wxID_ANY, _("HP+20%"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer124->Add( m_hp20, 0, wxALL, 5 );
+
+	m_longreach = new wxCheckBox( this, wxID_ANY, _("Long Reach"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer124->Add( m_longreach, 0, wxALL, 5 );
+
+	m_accuracyplus = new wxCheckBox( this, wxID_ANY, _("Accuracy+"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer124->Add( m_accuracyplus, 0, wxALL, 5 );
+
+	m_distract = new wxCheckBox( this, wxID_ANY, _("Distract"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer124->Add( m_distract, 0, wxALL, 5 );
+
+	m_mpattack = new wxCheckBox( this, wxID_ANY, _("MP Attack"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer124->Add( m_mpattack, 0, wxALL, 5 );
+
+	m_birdkiller = new wxCheckBox( this, wxID_ANY, _("Bird Killer"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer124->Add( m_birdkiller, 0, wxALL, 5 );
+
+	m_bugkiller = new wxCheckBox( this, wxID_ANY, _("Bug Killer"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer124->Add( m_bugkiller, 0, wxALL, 5 );
+
+	m_stonekiller = new wxCheckBox( this, wxID_ANY, _("Stone Killer"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer124->Add( m_stonekiller, 0, wxALL, 5 );
+
+	m_undeadkiller = new wxCheckBox( this, wxID_ANY, _("Undead Killer"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer124->Add( m_undeadkiller, 0, wxALL, 5 );
+
+	m_dragonkiller = new wxCheckBox( this, wxID_ANY, _("Dragon Killer"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer124->Add( m_dragonkiller, 0, wxALL, 5 );
+
+	m_devilkiller = new wxCheckBox( this, wxID_ANY, _("Devil Killer"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer124->Add( m_devilkiller, 0, wxALL, 5 );
+
+	m_beastkiller = new wxCheckBox( this, wxID_ANY, _("Beast Killer"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer124->Add( m_beastkiller, 0, wxALL, 5 );
+
+	m_maneater = new wxCheckBox( this, wxID_ANY, _("Man Eater"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer124->Add( m_maneater, 0, wxALL, 5 );
+
+	m_healer = new wxCheckBox( this, wxID_ANY, _("Healer"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer124->Add( m_healer, 0, wxALL, 5 );
+
+	m_reflectx2 = new wxCheckBox( this, wxID_ANY, _("Reflectx2"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer124->Add( m_reflectx2, 0, wxALL, 5 );
+
+	m_magelemnull = new wxCheckBox( this, wxID_ANY, _("Mag Elem Null"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer124->Add( m_magelemnull, 0, wxALL, 5 );
+
+	m_concentrate = new wxCheckBox( this, wxID_ANY, _("Concentrate"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer124->Add( m_concentrate, 0, wxALL, 5 );
+
+	m_gambledefence = new wxCheckBox( this, wxID_ANY, _("Gamble Defence"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer124->Add( m_gambledefence, 0, wxALL, 5 );
+
+	m_bandit = new wxCheckBox( this, wxID_ANY, _("Bandit"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer124->Add( m_bandit, 0, wxALL, 5 );
+
+	m_masterthief = new wxCheckBox( this, wxID_ANY, _("Master Thief"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer124->Add( m_masterthief, 0, wxALL, 5 );
+
+
+	bSizer319->Add( fgSizer124, 1, wxEXPAND, 5 );
+
+	m_buttonok = new wxButton( this, wxID_OK, _("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer319->Add( m_buttonok, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
+
+
+	this->SetSizer( bSizer319 );
+	this->Layout();
+	bSizer319->Fit( this );
+
+	this->Centre( wxBOTH );
+}
+
+DamageCalculatorSupporting::~DamageCalculatorSupporting()
+{
+}
+
+DamageCalculatorBuff::DamageCalculatorBuff( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+
+	wxGridBagSizer* gbSizer62;
+	gbSizer62 = new wxGridBagSizer( 0, 0 );
+	gbSizer62->SetFlexibleDirection( wxBOTH );
+	gbSizer62->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_staticText491 = new wxStaticText( this, wxID_ANY, _("Elements:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText491->Wrap( -1 );
+	gbSizer62->Add( m_staticText491, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALIGN_CENTER_VERTICAL|wxLEFT, 5 );
+
+	wxBoxSizer* bSizer340;
+	bSizer340 = new wxBoxSizer( wxHORIZONTAL );
+
+	wxBoxSizer* bSizer242522;
+	bSizer242522 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText422522 = new wxStaticText( this, wxID_ANY, _("Absorb"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText422522->Wrap( -1 );
+	bSizer242522->Add( m_staticText422522, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	wxFlexGridSizer* fgSizer119;
+	fgSizer119 = new wxFlexGridSizer( 0, 4, 0, 0 );
+	fgSizer119->SetFlexibleDirection( wxBOTH );
+	fgSizer119->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_fire0 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_fire0->SetToolTip( _("Fire") );
+
+	fgSizer119->Add( m_fire0, 0, 0, 5 );
+
+	m_ice0 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_ice0->SetToolTip( _("Ice") );
+
+	fgSizer119->Add( m_ice0, 0, 0, 5 );
+
+	m_thunder0 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_thunder0->SetToolTip( _("Thunder") );
+
+	fgSizer119->Add( m_thunder0, 0, 0, 5 );
+
+	m_earth0 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_earth0->SetToolTip( _("Earth") );
+
+	fgSizer119->Add( m_earth0, 0, 0, 5 );
+
+	m_water0 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_water0->SetToolTip( _("Water") );
+
+	fgSizer119->Add( m_water0, 0, 0, 5 );
+
+	m_wind0 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_wind0->SetToolTip( _("Wind") );
+
+	fgSizer119->Add( m_wind0, 0, 0, 5 );
+
+	m_holy0 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_holy0->SetToolTip( _("Holy") );
+
+	fgSizer119->Add( m_holy0, 0, 0, 5 );
+
+	m_shadow0 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_shadow0->SetToolTip( _("Shadow") );
+
+	fgSizer119->Add( m_shadow0, 0, 0, 5 );
+
+
+	bSizer242522->Add( fgSizer119, 1, wxALIGN_CENTER_HORIZONTAL, 5 );
+
+
+	bSizer340->Add( bSizer242522, 1, wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer2425221;
+	bSizer2425221 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4225221 = new wxStaticText( this, wxID_ANY, _("Immune"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4225221->Wrap( -1 );
+	bSizer2425221->Add( m_staticText4225221, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	wxFlexGridSizer* fgSizer1191;
+	fgSizer1191 = new wxFlexGridSizer( 0, 4, 0, 0 );
+	fgSizer1191->SetFlexibleDirection( wxBOTH );
+	fgSizer1191->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_fire1 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_fire1->SetToolTip( _("Fire") );
+
+	fgSizer1191->Add( m_fire1, 0, 0, 5 );
+
+	m_ice1 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_ice1->SetToolTip( _("Ice") );
+
+	fgSizer1191->Add( m_ice1, 0, 0, 5 );
+
+	m_thunder1 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_thunder1->SetToolTip( _("Thunder") );
+
+	fgSizer1191->Add( m_thunder1, 0, 0, 5 );
+
+	m_earth1 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_earth1->SetToolTip( _("Earth") );
+
+	fgSizer1191->Add( m_earth1, 0, 0, 5 );
+
+	m_water1 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_water1->SetToolTip( _("Water") );
+
+	fgSizer1191->Add( m_water1, 0, 0, 5 );
+
+	m_wind1 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_wind1->SetToolTip( _("Wind") );
+
+	fgSizer1191->Add( m_wind1, 0, 0, 5 );
+
+	m_holy1 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_holy1->SetToolTip( _("Holy") );
+
+	fgSizer1191->Add( m_holy1, 0, 0, 5 );
+
+	m_shadow1 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_shadow1->SetToolTip( _("Shadow") );
+
+	fgSizer1191->Add( m_shadow1, 0, 0, 5 );
+
+
+	bSizer2425221->Add( fgSizer1191, 1, wxALIGN_CENTER_HORIZONTAL, 5 );
+
+
+	bSizer340->Add( bSizer2425221, 1, wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer2425222;
+	bSizer2425222 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4225222 = new wxStaticText( this, wxID_ANY, _("Half"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4225222->Wrap( -1 );
+	bSizer2425222->Add( m_staticText4225222, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	wxFlexGridSizer* fgSizer1192;
+	fgSizer1192 = new wxFlexGridSizer( 0, 4, 0, 0 );
+	fgSizer1192->SetFlexibleDirection( wxBOTH );
+	fgSizer1192->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_fire2 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_fire2->SetToolTip( _("Fire") );
+
+	fgSizer1192->Add( m_fire2, 0, 0, 5 );
+
+	m_ice2 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_ice2->SetToolTip( _("Ice") );
+
+	fgSizer1192->Add( m_ice2, 0, 0, 5 );
+
+	m_thunder2 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_thunder2->SetToolTip( _("Thunder") );
+
+	fgSizer1192->Add( m_thunder2, 0, 0, 5 );
+
+	m_earth2 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_earth2->SetToolTip( _("Earth") );
+
+	fgSizer1192->Add( m_earth2, 0, 0, 5 );
+
+	m_water2 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_water2->SetToolTip( _("Water") );
+
+	fgSizer1192->Add( m_water2, 0, 0, 5 );
+
+	m_wind2 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_wind2->SetToolTip( _("Wind") );
+
+	fgSizer1192->Add( m_wind2, 0, 0, 5 );
+
+	m_holy2 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_holy2->SetToolTip( _("Holy") );
+
+	fgSizer1192->Add( m_holy2, 0, 0, 5 );
+
+	m_shadow2 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_shadow2->SetToolTip( _("Shadow") );
+
+	fgSizer1192->Add( m_shadow2, 0, 0, 5 );
+
+
+	bSizer2425222->Add( fgSizer1192, 1, wxALIGN_CENTER_HORIZONTAL, 5 );
+
+
+	bSizer340->Add( bSizer2425222, 1, wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer2425223;
+	bSizer2425223 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4225223 = new wxStaticText( this, wxID_ANY, _("Weak"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4225223->Wrap( -1 );
+	bSizer2425223->Add( m_staticText4225223, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	wxFlexGridSizer* fgSizer1193;
+	fgSizer1193 = new wxFlexGridSizer( 0, 4, 0, 0 );
+	fgSizer1193->SetFlexibleDirection( wxBOTH );
+	fgSizer1193->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_fire3 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_fire3->SetToolTip( _("Fire") );
+
+	fgSizer1193->Add( m_fire3, 0, 0, 5 );
+
+	m_ice3 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_ice3->SetToolTip( _("Ice") );
+
+	fgSizer1193->Add( m_ice3, 0, 0, 5 );
+
+	m_thunder3 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_thunder3->SetToolTip( _("Thunder") );
+
+	fgSizer1193->Add( m_thunder3, 0, 0, 5 );
+
+	m_earth3 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_earth3->SetToolTip( _("Earth") );
+
+	fgSizer1193->Add( m_earth3, 0, 0, 5 );
+
+	m_water3 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_water3->SetToolTip( _("Water") );
+
+	fgSizer1193->Add( m_water3, 0, 0, 5 );
+
+	m_wind3 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_wind3->SetToolTip( _("Wind") );
+
+	fgSizer1193->Add( m_wind3, 0, 0, 5 );
+
+	m_holy3 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_holy3->SetToolTip( _("Holy") );
+
+	fgSizer1193->Add( m_holy3, 0, 0, 5 );
+
+	m_shadow3 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_shadow3->SetToolTip( _("Shadow") );
+
+	fgSizer1193->Add( m_shadow3, 0, 0, 5 );
+
+
+	bSizer2425223->Add( fgSizer1193, 1, wxALIGN_CENTER_HORIZONTAL, 5 );
+
+
+	bSizer340->Add( bSizer2425223, 1, wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer2425225;
+	bSizer2425225 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4225225 = new wxStaticText( this, wxID_ANY, _("Boost"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4225225->Wrap( -1 );
+	bSizer2425225->Add( m_staticText4225225, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	wxFlexGridSizer* fgSizer1195;
+	fgSizer1195 = new wxFlexGridSizer( 0, 4, 0, 0 );
+	fgSizer1195->SetFlexibleDirection( wxBOTH );
+	fgSizer1195->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_fire4 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_fire4->SetToolTip( _("Fire") );
+
+	fgSizer1195->Add( m_fire4, 0, 0, 5 );
+
+	m_ice4 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_ice4->SetToolTip( _("Ice") );
+
+	fgSizer1195->Add( m_ice4, 0, 0, 5 );
+
+	m_thunder4 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_thunder4->SetToolTip( _("Thunder") );
+
+	fgSizer1195->Add( m_thunder4, 0, 0, 5 );
+
+	m_earth4 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_earth4->SetToolTip( _("Earth") );
+
+	fgSizer1195->Add( m_earth4, 0, 0, 5 );
+
+	m_water4 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_water4->SetToolTip( _("Water") );
+
+	fgSizer1195->Add( m_water4, 0, 0, 5 );
+
+	m_wind4 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_wind4->SetToolTip( _("Wind") );
+
+	fgSizer1195->Add( m_wind4, 0, 0, 5 );
+
+	m_holy4 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_holy4->SetToolTip( _("Holy") );
+
+	fgSizer1195->Add( m_holy4, 0, 0, 5 );
+
+	m_shadow4 = new wxCheckBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_shadow4->SetToolTip( _("Shadow") );
+
+	fgSizer1195->Add( m_shadow4, 0, 0, 5 );
+
+
+	bSizer2425225->Add( fgSizer1195, 1, wxALIGN_CENTER_HORIZONTAL, 5 );
+
+
+	bSizer340->Add( bSizer2425225, 1, wxEXPAND, 5 );
+
+
+	gbSizer62->Add( bSizer340, wxGBPosition( 0, 1 ), wxGBSpan( 1, 5 ), wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer2425224;
+	bSizer2425224 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText4225224 = new wxStaticText( this, wxID_ANY, _("Statuses"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4225224->Wrap( -1 );
+	bSizer2425224->Add( m_staticText4225224, 0, wxALIGN_CENTER_HORIZONTAL|wxTOP, 5 );
+
+	wxGridBagSizer* gbSizer60;
+	gbSizer60 = new wxGridBagSizer( 0, 0 );
+	gbSizer60->SetFlexibleDirection( wxBOTH );
+	gbSizer60->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_evastatus = new wxCheckBox( this, wxID_ANY, _("No Evasion"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_evastatus->SetToolTip( _("The statuses Petrify, Venom, Virus, Blind, Confuse, Stop, Sleep and Freeze remove evasion") );
+
+	gbSizer60->Add( m_evastatus, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALL, 2 );
+
+	m_petrify = new wxCheckBox( this, wxID_ANY, _("Petrify"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer60->Add( m_petrify, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
+
+	m_blind = new wxCheckBox( this, wxID_ANY, _("Blind"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer60->Add( m_blind, wxGBPosition( 0, 2 ), wxGBSpan( 1, 1 ), wxALL, 2 );
+
+	m_zombie = new wxCheckBox( this, wxID_ANY, _("Zombie"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer60->Add( m_zombie, wxGBPosition( 0, 3 ), wxGBSpan( 1, 1 ), wxALL, 2 );
+
+	m_confuse = new wxCheckBox( this, wxID_ANY, _("Confuse"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer60->Add( m_confuse, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALL, 2 );
+
+	m_berserk = new wxCheckBox( this, wxID_ANY, _("Berserk"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer60->Add( m_berserk, wxGBPosition( 1, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
+
+	m_trance = new wxCheckBox( this, wxID_ANY, _("Trance"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer60->Add( m_trance, wxGBPosition( 1, 2 ), wxGBSpan( 1, 1 ), wxALL, 2 );
+
+	m_defend = new wxCheckBox( this, wxID_ANY, _("Defend"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer60->Add( m_defend, wxGBPosition( 1, 3 ), wxGBSpan( 1, 1 ), wxALL, 2 );
+
+	m_sleep = new wxCheckBox( this, wxID_ANY, _("Sleep"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer60->Add( m_sleep, wxGBPosition( 2, 0 ), wxGBSpan( 1, 1 ), wxALL, 2 );
+
+	m_mini = new wxCheckBox( this, wxID_ANY, _("Mini"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer60->Add( m_mini, wxGBPosition( 2, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
+
+	m_protect = new wxCheckBox( this, wxID_ANY, _("Protect"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer60->Add( m_protect, wxGBPosition( 2, 2 ), wxGBSpan( 1, 1 ), wxALL, 2 );
+
+	m_shell = new wxCheckBox( this, wxID_ANY, _("Shell"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer60->Add( m_shell, wxGBPosition( 2, 3 ), wxGBSpan( 1, 1 ), wxALL, 2 );
+
+	m_float = new wxCheckBox( this, wxID_ANY, _("Float"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer60->Add( m_float, wxGBPosition( 3, 0 ), wxGBSpan( 1, 1 ), wxALL, 2 );
+
+	m_vanish = new wxCheckBox( this, wxID_ANY, _("Vanish"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer60->Add( m_vanish, wxGBPosition( 3, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
+
+	m_easykill = new wxCheckBox( this, wxID_ANY, _("Easy Kill Proof"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer60->Add( m_easykill, wxGBPosition( 3, 2 ), wxGBSpan( 1, 2 ), wxALL, 2 );
+
+
+	bSizer2425224->Add( gbSizer60, 1, wxEXPAND, 5 );
+
+
+	gbSizer62->Add( bSizer2425224, wxGBPosition( 1, 0 ), wxGBSpan( 4, 4 ), wxEXPAND, 5 );
+
+	m_backrow = new wxCheckBox( this, wxID_ANY, _("Back row"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_backrow->SetToolTip( _("Although it is a dummied feature, enemies have a front/back row") );
+
+	gbSizer62->Add( m_backrow, wxGBPosition( 2, 4 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	m_backattack = new wxCheckBox( this, wxID_ANY, _("Back attacking"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer62->Add( m_backattack, wxGBPosition( 2, 5 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	m_ipsen = new wxCheckBox( this, wxID_ANY, _("Ipsen Curse"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer62->Add( m_ipsen, wxGBPosition( 3, 4 ), wxGBSpan( 1, 2 ), wxALL, 5 );
+
+	wxBoxSizer* bSizer339;
+	bSizer339 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_staticText490 = new wxStaticText( this, wxID_ANY, _("Reflect spell on # targets:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText490->Wrap( -1 );
+	bSizer339->Add( m_staticText490, 0, wxALL, 5 );
+
+	m_reflecting = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 4, 0 );
+	bSizer339->Add( m_reflecting, 0, wxALL, 2 );
+
+
+	gbSizer62->Add( bSizer339, wxGBPosition( 4, 4 ), wxGBSpan( 1, 2 ), wxEXPAND, 5 );
+
+	m_buttonok = new wxButton( this, wxID_OK, _("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer62->Add( m_buttonok, wxGBPosition( 5, 0 ), wxGBSpan( 1, 6 ), wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
+
+
+	this->SetSizer( gbSizer62 );
+	this->Layout();
+	gbSizer62->Fit( this );
+
+	this->Centre( wxBOTH );
+
+	// Connect Events
+	m_fire0->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_ice0->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_thunder0->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_earth0->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_water0->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_wind0->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_holy0->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_shadow0->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_fire1->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_ice1->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_thunder1->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_earth1->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_water1->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_wind1->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_holy1->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_shadow1->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_fire2->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_ice2->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_thunder2->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_earth2->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_water2->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_wind2->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_holy2->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_shadow2->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_fire3->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_ice3->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_thunder3->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_earth3->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_water3->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_wind3->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_holy3->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_shadow3->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_fire4->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_ice4->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_thunder4->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_earth4->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_water4->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_wind4->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_holy4->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_shadow4->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_evastatus->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_petrify->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_blind->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_zombie->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_confuse->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_berserk->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_trance->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_defend->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_sleep->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_mini->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_protect->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_shell->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_float->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_vanish->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_easykill->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+}
+
+DamageCalculatorBuff::~DamageCalculatorBuff()
+{
+	// Disconnect Events
+	m_fire0->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_ice0->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_thunder0->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_earth0->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_water0->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_wind0->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_holy0->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_shadow0->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_fire1->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_ice1->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_thunder1->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_earth1->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_water1->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_wind1->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_holy1->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_shadow1->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_fire2->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_ice2->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_thunder2->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_earth2->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_water2->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_wind2->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_holy2->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_shadow2->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_fire3->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_ice3->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_thunder3->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_earth3->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_water3->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_wind3->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_holy3->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_shadow3->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_fire4->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_ice4->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_thunder4->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_earth4->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_water4->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_wind4->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_holy4->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_shadow4->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_evastatus->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_petrify->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_blind->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_zombie->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_confuse->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_berserk->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_trance->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_defend->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_sleep->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_mini->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_protect->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_shell->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_float->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_vanish->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+	m_easykill->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DamageCalculatorBuff::OnUpdate ), NULL, this );
+
+}
+
+DamageCalculatorSaveProfile::DamageCalculatorSaveProfile( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+
+	wxGridBagSizer* gbSizer61;
+	gbSizer61 = new wxGridBagSizer( 0, 0 );
+	gbSizer61->SetFlexibleDirection( wxBOTH );
+	gbSizer61->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_radionew = new wxRadioButton( this, wxID_ANY, _("Save new profile"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	m_radionew->SetValue( true );
+	gbSizer61->Add( m_radionew, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	m_radioold = new wxRadioButton( this, wxID_ANY, _("Overwrite existing profile"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer61->Add( m_radioold, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	m_description = new wxTextCtrl( this, wxID_ANY, _("This allows you to save the player characters' levels and stats in order to re-use them easier in the calculator later."), wxDefaultPosition, wxSize( -1,-1 ), wxTE_BESTWRAP|wxTE_MULTILINE|wxTE_NO_VSCROLL|wxTE_READONLY|wxBORDER_SIMPLE );
+	m_description->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
+
+	gbSizer61->Add( m_description, wxGBPosition( 2, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
+
+	m_profilename = new wxTextCtrl( this, wxID_ANY, _("Character Profile 1"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer61->Add( m_profilename, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
+
+	m_listprofile = new wxListBox( this, wxID_ANY, wxDefaultPosition, wxSize( 150,-1 ), 0, NULL, 0 );
+	gbSizer61->Add( m_listprofile, wxGBPosition( 1, 1 ), wxGBSpan( 2, 1 ), wxALL|wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer286;
+	bSizer286 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_buttoncancel = new wxButton( this, wxID_CANCEL, _("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer286->Add( m_buttoncancel, 0, wxALL, 5 );
+
+	m_buttonok = new wxButton( this, wxID_OK, _("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer286->Add( m_buttonok, 0, wxALL, 5 );
+
+
+	gbSizer61->Add( bSizer286, wxGBPosition( 3, 0 ), wxGBSpan( 1, 2 ), wxALIGN_RIGHT|wxEXPAND, 5 );
+
+
+	this->SetSizer( gbSizer61 );
+	this->Layout();
+	gbSizer61->Fit( this );
+
+	this->Centre( wxBOTH );
+}
+
+DamageCalculatorSaveProfile::~DamageCalculatorSaveProfile()
+{
+}
+
+DamageCalculatorLoadProfile::DamageCalculatorLoadProfile( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+
+	wxGridBagSizer* gbSizer61;
+	gbSizer61 = new wxGridBagSizer( 0, 0 );
+	gbSizer61->SetFlexibleDirection( wxBOTH );
+	gbSizer61->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_listprofile = new wxListBox( this, wxID_ANY, wxDefaultPosition, wxSize( -1,120 ), 0, NULL, 0 );
+	gbSizer61->Add( m_listprofile, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer286;
+	bSizer286 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_buttoncancel = new wxButton( this, wxID_CANCEL, _("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer286->Add( m_buttoncancel, 0, wxALL, 5 );
+
+	m_buttonok = new wxButton( this, wxID_OK, _("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer286->Add( m_buttonok, 0, wxALL, 5 );
+
+
+	gbSizer61->Add( bSizer286, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALIGN_RIGHT|wxEXPAND, 5 );
+
+
+	this->SetSizer( gbSizer61 );
+	this->Layout();
+	gbSizer61->Fit( this );
+
+	this->Centre( wxBOTH );
+}
+
+DamageCalculatorLoadProfile::~DamageCalculatorLoadProfile()
+{
 }
 
 MenuDEBUG::MenuDEBUG( long style ) : wxMenuBar( style )

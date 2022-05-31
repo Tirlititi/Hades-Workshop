@@ -396,11 +396,11 @@ void GLWindow::Draw() {
 			for (i=0;i<field_walk_triangle_amount;i++) {
 				if (field_walk->triangle_walkpath[i]==field_walk_path_highlight || i==field_walk_triangle_highlight)
 					glColor4f(1, 0.9f, 0, 1);
-				else if ((field_walk->triangle_flags1[i] & 1)==0)
+				else if ((field_walk->triangle_flag[i] & 1)==0)
 					glColor4f(0.4f, 0.4f, 0.4f, 1);
-				else if (field_walk->triangle_flags2[i] & 0x40)
+				else if (field_walk->triangle_flag[i] & 0x4000)
 					glColor4f(0.85f, 0.15f, 0.15f, 1);
-				else if (field_walk->triangle_flags2[i] & 0x80)
+				else if (field_walk->triangle_flag[i] & 0x8000)
 					glColor4f(0.7f, 0.3f, 0.3f, 1);
 				else
 					glColor4f(1, 0, 0, 1);

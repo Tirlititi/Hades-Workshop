@@ -67,8 +67,8 @@ public:
 	bool has_parallax;
 	bool is_static;
 	bool is_scroll_with_offset;
-	uint32_t distance;
-	uint32_t default_distance;
+	uint32_t depth;
+	uint32_t default_depth;
 	bool is_x_offset;
 	uint8_t viewport_id;
 	
@@ -200,22 +200,22 @@ private:
 struct FieldWalkmeshDataStruct : public ChunkChild {
 public:
 	uint32_t magic_walkmesh;
-	int16_t unknown1;
-	int16_t offset_x2;
-	int16_t offset_z2;
-	int16_t offset_y2;
+	int16_t datasize;
+	int16_t offset_orgx;
+	int16_t offset_orgz;
+	int16_t offset_orgy;
 	int16_t offset_x;
 	int16_t offset_z;
 	int16_t offset_y;
-	int16_t offset_x3;
-	int16_t offset_z3;
-	int16_t offset_y3;
-	int16_t unknown4;
-	int16_t unknown5;
-	int16_t unknown6;
-	int16_t unknown7;
-	int16_t unknown8;
-	int16_t unknown9;
+	int16_t offset_minx;
+	int16_t offset_minz;
+	int16_t offset_miny;
+	int16_t offset_maxx;
+	int16_t offset_maxz;
+	int16_t offset_maxy;
+	int16_t offset_charx;
+	int16_t offset_charz;
+	int16_t offset_chary;
 	int16_t active_walkpath;
 	int16_t active_triangle;
 	
@@ -232,63 +232,67 @@ public:
 	uint16_t vertex_amount;
 	uint16_t vertex_offset;
 	
-	uint8_t* triangle_flags1;
-	uint8_t* triangle_flags2;
-	uint16_t* triangle_unk1; // triData
-	uint16_t* triangle_walkpath;
-	uint16_t* triangle_normal;
-	uint16_t* triangle_unk2; // thetaX
-	uint16_t* triangle_unk3; // thetaZ
-	uint16_t* triangle_vertex1;
-	uint16_t* triangle_vertex2;
-	uint16_t* triangle_vertex3;
-	uint16_t* triangle_edge1;
-	uint16_t* triangle_edge2;
-	uint16_t* triangle_edge3;
-	uint16_t* triangle_adjacenttriangle1;
-	uint16_t* triangle_adjacenttriangle2;
-	uint16_t* triangle_adjacenttriangle3;
-	int16_t* triangle_centerx;
-	int16_t* triangle_centerz;
-	int16_t* triangle_centery;
-	int32_t* triangle_unk4; // d
+	vector<uint16_t> triangle_flag;
+	vector<uint16_t> triangle_data;
+	vector<uint16_t> triangle_walkpath;
+	vector<uint16_t> triangle_normal;
+	vector<uint16_t> triangle_thetax;
+	vector<uint16_t> triangle_thetaz;
+	vector<uint16_t> triangle_vertex1;
+	vector<uint16_t> triangle_vertex2;
+	vector<uint16_t> triangle_vertex3;
+	vector<uint16_t> triangle_edge1;
+	vector<uint16_t> triangle_edge2;
+	vector<uint16_t> triangle_edge3;
+	vector<uint16_t> triangle_adjacenttriangle1;
+	vector<uint16_t> triangle_adjacenttriangle2;
+	vector<uint16_t> triangle_adjacenttriangle3;
+	vector<int16_t> triangle_centerx;
+	vector<int16_t> triangle_centerz;
+	vector<int16_t> triangle_centery;
+	vector<int32_t> triangle_d;
 	
-	uint16_t* edge_flag;
-	int16_t* edge_clone;
+	vector<uint16_t> edge_flag;
+	vector<int16_t> edge_clone;
 	
-	uint16_t* animation_flag;
-	uint16_t* animation_frameamount;
-	int16_t* animation_framerate;
-	uint16_t* animation_counter;
-	int32_t* animation_currentframe;
-	uint32_t* animation_frameoffset;
+	vector<uint16_t> animation_flag;
+	vector<uint16_t> animation_frameamount;
+	vector<int16_t> animation_framerate;
+	vector<uint16_t> animation_counter;
+	vector<int32_t> animation_currentframe;
+	vector<uint32_t> animation_frameoffset;
+	vector<vector<uint16_t>> animation_frameflag;
+	vector<vector<int16_t>> animation_framevalue;
+	vector<vector<uint16_t>> animation_frametriangleamount;
+	vector<vector<uint16_t>> animation_frametriangleoffset;
+	vector<vector<vector<uint32_t>>> animation_frametriangle;
 	
-	uint16_t* walkpath_unk1;
-	uint16_t* walkpath_unk2;
-	int16_t* walkpath_minx;
-	int16_t* walkpath_minz;
-	int16_t* walkpath_miny;
-	int16_t* walkpath_offsetx;
-	int16_t* walkpath_offsetz;
-	int16_t* walkpath_offsety;
-	int16_t* walkpath_unkx3;
-	int16_t* walkpath_unkz3;
-	int16_t* walkpath_unky3;
-	int16_t* walkpath_unkx4;
-	int16_t* walkpath_unkz4;
-	int16_t* walkpath_unky4;
-	uint16_t* walkpath_triangleamount;
-	uint16_t* walkpath_trianglelistoffset;
-	uint32_t** walkpath_trianglelist;
+	vector<uint16_t> walkpath_flag;
+	vector<uint16_t> walkpath_id;
+	vector<int16_t> walkpath_orgx;
+	vector<int16_t> walkpath_orgz;
+	vector<int16_t> walkpath_orgy;
+	vector<int16_t> walkpath_offsetx;
+	vector<int16_t> walkpath_offsetz;
+	vector<int16_t> walkpath_offsety;
+	vector<int16_t> walkpath_minx;
+	vector<int16_t> walkpath_minz;
+	vector<int16_t> walkpath_miny;
+	vector<int16_t> walkpath_maxx;
+	vector<int16_t> walkpath_maxz;
+	vector<int16_t> walkpath_maxy;
+	vector<uint16_t> walkpath_triangleamount;
+	vector<uint16_t> walkpath_trianglelistoffset;
+	vector<vector<uint32_t>> walkpath_trianglelist;
 	
-	int32_t* normal_x;
-	int32_t* normal_z;
-	int32_t* normal_y;
-	int32_t* normal_overz;
+	vector<int32_t> normal_x;
+	vector<int32_t> normal_z;
+	vector<int32_t> normal_y;
+	vector<int32_t> normal_overz;
 	
-	int16_t* vertex_x;
-	int16_t* vertex_z;
-	int16_t* vertex_y;
+	vector<int16_t> vertex_x;
+	vector<int16_t> vertex_z;
+	vector<int16_t> vertex_y;
 	
 	void Read(fstream& f);
 	void Write(fstream& f);
@@ -296,7 +300,7 @@ public:
 	void ReadHWS(fstream& f);
 	void WriteHWS(fstream& f);
 
-	int ExportAsObj(const char* outputbase);
+	int ExportAsObj(string outputbase);
 };
 
 struct FieldRoleDataStruct : public ChunkChild {

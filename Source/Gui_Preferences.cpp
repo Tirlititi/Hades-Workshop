@@ -4,15 +4,17 @@
 #include "Hades_Strings.h"
 #include "Database_Text.h"
 #include "Tool_Randomizer.h"
+#include "Tool_DamageCalculator.h"
 
 #define PREFERENCE_FILE_NAME "HadesWorkshop.conf"
 #define UNKNOWN_CHAR L'?'
 
-wxString TmpArgs[100];
+wxArrayString TmpArgs;
 
 void PreprocessLine(wxString& str);
 bool GoToSection(wxString& configfile, wxString secname);
-bool SearchField(wxString& configfile, wxString fieldname, wxString* args, unsigned int& argcount);
+bool SearchField(wxString& configfile, wxString fieldname, wxArrayString& args, unsigned int& argcount);
+wxArrayString EnumerateFields(wxString cfgstr);
 
 inline wxString GetWxStringLine(wxString& str) {
 	wxString tmpstr;
@@ -20,9 +22,6 @@ inline wxString GetWxStringLine(wxString& str) {
 	str = tmpstr;
 	return res;
 }
-
-#include "Database_Resource.h" // DEBUG
-#include "Database_Animation.h" // DEBUG
 
 PreferencesDialog::PreferencesDialog(wxWindow* parent) :
 	PreferencesWindow(parent),
@@ -96,6 +95,56 @@ bool PreferencesDialog::GetBeforeAndAfterSection(wxString section, wxString& bef
 		line = procline;
 		if (procline.length() != 0)
 			PreprocessLine(procline);
+	}
+	after += line;
+	while (!configstring.IsEmpty()) {
+		line = GetWxStringLine(configstring);
+		after += _(L"\n") + line;
+	}
+	return true;
+}
+
+bool GetBeforeAndAfterSectionField(wxString section, wxString field, wxString& before, wxString& after) {
+	wxFile configfilein(_(PREFERENCE_FILE_NAME), wxFile::read);
+	if (!configfilein.IsOpened())
+		return false;
+	wxString configstring;
+	if (!configfilein.ReadAll(&configstring))
+		return false;
+	configfilein.Close();
+	wxString line, procline;
+	before = _(L"");
+	after = _(L"");
+	procline = GetWxStringLine(configstring);
+	line = procline;
+	if (procline.length() != 0)
+		PreprocessLine(procline);
+	while (procline != section && !configstring.IsEmpty()) {
+		before += line + _(L"\n");
+		procline = GetWxStringLine(configstring);
+		line = procline;
+		if (procline.length() != 0)
+			PreprocessLine(procline);
+	}
+	if (procline == section) {
+		before += line + _(L"\n");
+		procline = GetWxStringLine(configstring);
+		line = procline;
+		if (procline.length() != 0)
+			PreprocessLine(procline);
+		while (procline[0] != L'[' && !procline.StartsWith(field) && !configstring.IsEmpty()) {
+			before += line + _(L"\n");
+			procline = GetWxStringLine(configstring);
+			line = procline;
+			if (procline.length() != 0)
+				PreprocessLine(procline);
+		}
+		while (before.Right(2).IsSameAs(L"\n\n")) {
+			before.RemoveLast();
+			after += _(L"\n");
+		}
+		if (procline.StartsWith(field))
+			line = GetWxStringLine(configstring);
 	}
 	after += line;
 	while (!configstring.IsEmpty()) {
@@ -825,6 +874,180 @@ bool PreferencesDialog::LoadToolRandomizerConfig(RandomizerWindow* configwindowu
 	return true;
 }
 
+bool PreferencesDialog::SaveToolCalculatorProfile(DamageCalculatorWindow* configwindowuncast, wxString profileid, wxString profilename) {
+	ToolDamageCalculator* configwindow = static_cast<ToolDamageCalculator*>(configwindowuncast);
+	wxString before, after;
+	wxFile configfile(_(PREFERENCE_FILE_NAME), wxFile::read);
+	if (!configfile.IsOpened())
+		return false;
+	wxString cfgstr, cfgfile;
+	if (!configfile.ReadAll(&cfgstr))
+		return false;
+	configfile.Close();
+	cfgfile = cfgstr;
+	if (GoToSection(cfgstr, _(L"Calculator"))) {
+		if (!GetBeforeAndAfterSectionField(_(L"[Calculator]"), profileid, before, after))
+			return false;
+	} else {
+		before = cfgfile + _(L"\n\n[Calculator]\n");
+		after = _(L"\n");
+	}
+	wxFile configfileout(_(PREFERENCE_FILE_NAME), wxFile::write);
+	unsigned int pchar, i;
+	wxString line;
+	configfileout.Write(before);
+	line = profileid + _(L"[") + profilename + _(L"]=1,");
+	for (pchar = 0; pchar < PLAYABLE_CHAR_AMOUNT; pchar++) {
+		CalculatorPlayerStat& ps = configwindow->player_profile[pchar];
+		line += wxString::Format(wxT("%i,"), pchar);
+		line += wxString::Format(wxT("%i,"), ps.level);
+		line += wxString::Format(wxT("%i,"), ps.weapon_id);
+		line += wxString::Format(wxT("%i,"), ps.head_id);
+		line += wxString::Format(wxT("%i,"), ps.wrist_id);
+		line += wxString::Format(wxT("%i,"), ps.armor_id);
+		line += wxString::Format(wxT("%i,"), ps.accessory_id);
+		line += wxString::Format(wxT("%i,"), ps.max_hp);
+		line += wxString::Format(wxT("%i,"), ps.attack);
+		line += wxString::Format(wxT("%i,"), ps.speed);
+		line += wxString::Format(wxT("%i,"), ps.strength);
+		line += wxString::Format(wxT("%i,"), ps.magic);
+		line += wxString::Format(wxT("%i,"), ps.spirit);
+		line += wxString::Format(wxT("%i,"), ps.defence);
+		line += wxString::Format(wxT("%i,"), ps.evade);
+		line += wxString::Format(wxT("%i,"), ps.magic_defence);
+		line += wxString::Format(wxT("%i,"), ps.magic_evade);
+		line += wxString::Format(wxT("%i,"), ps.jewel_count);
+		line += wxString::Format(wxT("%ull,"), ps.supporting_ability_on);
+		line += wxString::Format(wxT("%i,"), ps.buff.element_absorb);
+		line += wxString::Format(wxT("%i,"), ps.buff.element_immune);
+		line += wxString::Format(wxT("%i,"), ps.buff.element_half);
+		line += wxString::Format(wxT("%i,"), ps.buff.element_weak);
+		line += wxString::Format(wxT("%i,"), ps.buff.element_boost);
+		line += wxString::Format(wxT("%i,"), ps.buff.status);
+		line += wxString::Format(wxT("%i,"), ps.buff.back_row ? 1 : 0);
+		line += wxString::Format(wxT("%i,"), ps.buff.back_attack ? 1 : 0);
+		line += wxString::Format(wxT("%i,"), ps.buff.ipsen_curse ? 1 : 0);
+		line += wxString::Format(wxT("%i,"), ps.buff.reflect_count);
+		for (i = 0; i < ps.level; i++) {
+			line += wxString::Format(wxT("%i,"), ps.equip_speed[i]);
+			line += wxString::Format(wxT("%i,"), ps.equip_strength[i]);
+			line += wxString::Format(wxT("%i,"), ps.equip_magic[i]);
+			line += wxString::Format(wxT("%i,"), ps.equip_spirit[i]);
+		}
+	}
+	if (line.Right(1).IsSameAs(L",")) line.RemoveLast();
+	configfileout.Write(line + _(L"\n"));
+	configfileout.Write(after);
+	configfileout.Close();
+	return true;
+}
+
+bool PreferencesDialog::LoadToolCalculatorProfile(DamageCalculatorWindow* configwindowuncast, wxString profileid) {
+	ToolDamageCalculator* configwindow = static_cast<ToolDamageCalculator*>(configwindowuncast);
+	wxFile configfile(_(PREFERENCE_FILE_NAME), wxFile::read);
+	if (!configfile.IsOpened())
+		return false;
+	wxString cfgstr, cfgfield;
+	if (!configfile.ReadAll(&cfgstr))
+		return false;
+	configfile.Close();
+	unsigned int argcount;
+	if (!GoToSection(cfgstr, _(L"Calculator")))
+		return false;
+	cfgfield = cfgstr;
+	if (!SearchField(cfgfield, profileid, TmpArgs, argcount))
+		return false;
+	wxStringTokenizer tokenizer(TmpArgs[argcount], L",");
+	wxArrayString valuelist;
+	wxString valuetoken;
+	while (tokenizer.HasMoreTokens())
+		valuelist.Add(tokenizer.GetNextToken());
+	if (valuelist.GetCount() == 0 || valuelist[0] != "1")
+		return false;
+	int basecountperchar = 27;
+	int pchar, lvl, index = 1;
+	unsigned int i;
+	while (valuelist.GetCount() > index) {
+		pchar = wxAtoi(valuelist[index++]);
+		if (pchar < 0 || pchar >= PLAYABLE_CHAR_AMOUNT)
+			return false;
+		if (valuelist.GetCount() < index + 1)
+			return false;
+		lvl = wxAtoi(valuelist[index++]);
+		if (lvl < 1 || lvl > 99 || valuelist.GetCount() < index + basecountperchar + 4 * lvl)
+			return false;
+		CalculatorPlayerStat& ps = configwindow->player_profile[pchar];
+		ps.level = lvl;
+		ps.weapon_id = wxAtoi(valuelist[index++]);
+		ps.head_id = wxAtoi(valuelist[index++]);
+		ps.wrist_id = wxAtoi(valuelist[index++]);
+		ps.armor_id = wxAtoi(valuelist[index++]);
+		ps.accessory_id = wxAtoi(valuelist[index++]);
+		ps.max_hp = wxAtoi(valuelist[index++]);
+		ps.attack = wxAtoi(valuelist[index++]);
+		ps.speed = wxAtoi(valuelist[index++]);
+		ps.strength = wxAtoi(valuelist[index++]);
+		ps.magic = wxAtoi(valuelist[index++]);
+		ps.spirit = wxAtoi(valuelist[index++]);
+		ps.defence = wxAtoi(valuelist[index++]);
+		ps.evade = wxAtoi(valuelist[index++]);
+		ps.magic_defence = wxAtoi(valuelist[index++]);
+		ps.magic_evade = wxAtoi(valuelist[index++]);
+		ps.jewel_count = wxAtoi(valuelist[index++]);
+		valuelist[index++].ToULongLong(&ps.supporting_ability_on);
+		ps.buff.element_absorb = wxAtoi(valuelist[index++]);
+		ps.buff.element_immune = wxAtoi(valuelist[index++]);
+		ps.buff.element_half = wxAtoi(valuelist[index++]);
+		ps.buff.element_weak = wxAtoi(valuelist[index++]);
+		ps.buff.element_boost = wxAtoi(valuelist[index++]);
+		ps.buff.status = wxAtoi(valuelist[index++]);
+		ps.buff.back_row = valuelist[index++].IsSameAs("1");
+		ps.buff.back_attack = valuelist[index++].IsSameAs("1");
+		ps.buff.ipsen_curse = valuelist[index++].IsSameAs("1");
+		ps.buff.reflect_count = wxAtoi(valuelist[index++]);
+		for (i = 0; i < lvl; i++) {
+			ps.equip_speed[i] = wxAtoi(valuelist[index++]);
+			ps.equip_strength[i] = wxAtoi(valuelist[index++]);
+			ps.equip_magic[i] = wxAtoi(valuelist[index++]);
+			ps.equip_spirit[i] = wxAtoi(valuelist[index++]);
+		}
+		for (i = lvl; i < MAX_LEVEL; i++) {
+			ps.equip_speed[i] = 0;
+			ps.equip_strength[i] = 0;
+			ps.equip_magic[i] = 0;
+			ps.equip_spirit[i] = 0;
+		}
+	}
+	return true;
+}
+
+bool PreferencesDialog::GetToolCalculatorProfileList(wxArrayString* id, wxArrayString* name) {
+	wxFile configfile(_(PREFERENCE_FILE_NAME), wxFile::read);
+	if (!configfile.IsOpened())
+		return false;
+	wxString cfgstr, cfgfield;
+	if (!configfile.ReadAll(&cfgstr))
+		return false;
+	configfile.Close();
+	unsigned int argcount;
+	if (!GoToSection(cfgstr, _(L"Calculator")))
+		return false;
+	cfgfield = cfgstr;
+	wxArrayString fieldlist = EnumerateFields(cfgfield);
+	for (int i = 0; i < fieldlist.GetCount(); i++) {
+		cfgfield = cfgstr;
+		if (!SearchField(cfgfield, fieldlist[i], TmpArgs, argcount))
+			continue;
+		if (argcount == 0)
+			continue;
+		if (id != NULL)
+			id->Add(fieldlist[i]);
+		if (name != NULL)
+			name->Add(TmpArgs[0]);
+	}
+	return true;
+}
+
 bool PreferencesDialog::ReadCharmaps() {
 	if (m_gamealphabet->GetSelection()>0) {
 		wxString chmapselectedstr = m_gamealphabet->GetStringSelection();
@@ -991,9 +1214,10 @@ bool GoToSection(wxString& cfgstr, wxString secname) {
 	return false;
 }
 
-bool SearchField(wxString& cfgstr, wxString fieldname, wxString* args, unsigned int& argcount) {
+bool SearchField(wxString& cfgstr, wxString fieldname, wxArrayString& args, unsigned int& argcount) {
 	wxString line, field;
 	argcount = 0;
+	args.Clear();
 	while (!cfgstr.IsEmpty()) {
 		line = GetWxStringLine(cfgstr);
 		if (line.length()==0)
@@ -1005,12 +1229,28 @@ bool SearchField(wxString& cfgstr, wxString fieldname, wxString* args, unsigned 
 		if (field==fieldname) {
 			line = line.substr(field.length());
 			while (line[0]==L'[') {
-				args[argcount++] = line.substr(1,line.find_first_of(L"]")-1);
+				args.Add(line.substr(1,line.find_first_of(L"]")-1));
 				line = line.substr(line.find_first_of(L"]")+1);
+				argcount++;
 			}
-			args[argcount] = line.substr(line.find_first_of(L"=")+1);
+			args.Add(line.substr(line.find_first_of(L"=")+1));
 			return true;
 		}
 	}
 	return false;
+}
+
+wxArrayString EnumerateFields(wxString cfgstr) {
+	wxArrayString fields;
+	wxString line;
+	while (!cfgstr.IsEmpty()) {
+		line = GetWxStringLine(cfgstr);
+		if (line.length() == 0)
+			continue;
+		PreprocessLine(line);
+		if (line[0] == L'[')
+			break;
+		fields.Add(line.substr(0, line.find_first_of(L"=[ ")));
+	}
+	return fields;
 }

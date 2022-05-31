@@ -1177,6 +1177,8 @@ void CDDataStruct::MarkDataFieldModified(unsigned int fieldid, Chunk_Type chunkt
 		fieldset.script_data[fieldid]->MarkDataModified();
 	} else if (chunktype==CHUNK_TYPE_FIELD_ROLE) {
 		fieldset.role[fieldid]->MarkDataModified();
+	} else if (chunktype == CHUNK_TYPE_FIELD_TILES) {
+		fieldset.background_data[fieldid]->MarkDataModified();
 	} else if (chunktype==CHUNK_TYPE_IMAGE_MAP) {
 		fieldset.preload[fieldid]->MarkDataModified();
 		if (gametype==GAME_TYPE_PSX)
@@ -2606,6 +2608,40 @@ void CDDataStruct::OnStatChangeButton(wxCommandEvent& event) {
 				m_statchardefaultname->SetValue(is.default_name.str);
 			}
 		}
+	} else if (id == wxID_MENUPOSUP) {
+		int abilsel = m_statcharabilitylist->GetSelection();
+		if (abilsel != wxNOT_FOUND && abilsel > 0) {
+			uint8_t* cmdset = statset.GetCharacterCommandsId(sel, NULL);
+			AbilitySetDataStruct& ab = statset.ability_list[cmdset[m_statcharabilityset->GetSelection()]];
+			wxString tmplabel = m_statcharabilitylist->GetString(abilsel);
+			uint8_t tmpabil = ab.ability[abilsel];
+			uint8_t tmpcost = ab.ap_cost[abilsel];
+			ab.ability[abilsel] = ab.ability[abilsel - 1];
+			ab.ap_cost[abilsel] = ab.ap_cost[abilsel - 1];
+			ab.ability[abilsel - 1] = tmpabil;
+			ab.ap_cost[abilsel - 1] = tmpcost;
+			m_statcharabilitylist->SetString(abilsel, m_statcharabilitylist->GetString(abilsel - 1));
+			m_statcharabilitylist->SetString(abilsel - 1, tmplabel);
+			m_statcharabilitylist->SetSelection(abilsel - 1);
+			MarkDataStatModified();
+		}
+	} else if (id == wxID_MENUPOSDOWN) {
+		int abilsel = m_statcharabilitylist->GetSelection();
+		if (abilsel != wxNOT_FOUND && abilsel + 1 < ABILITY_SET_CAPACITY) {
+			uint8_t* cmdset = statset.GetCharacterCommandsId(sel, NULL);
+			AbilitySetDataStruct& ab = statset.ability_list[cmdset[m_statcharabilityset->GetSelection()]];
+			wxString tmplabel = m_statcharabilitylist->GetString(abilsel);
+			uint8_t tmpabil = ab.ability[abilsel];
+			uint8_t tmpcost = ab.ap_cost[abilsel];
+			ab.ability[abilsel] = ab.ability[abilsel + 1];
+			ab.ap_cost[abilsel] = ab.ap_cost[abilsel + 1];
+			ab.ability[abilsel + 1] = tmpabil;
+			ab.ap_cost[abilsel + 1] = tmpcost;
+			m_statcharabilitylist->SetString(abilsel, m_statcharabilitylist->GetString(abilsel + 1));
+			m_statcharabilitylist->SetString(abilsel + 1, tmplabel);
+			m_statcharabilitylist->SetSelection(abilsel + 1);
+			MarkDataStatModified();
+		}
 	} else if (id==wxID_EXP) {
 		CurveEditorDialog statdial(this);
 		uint32_t lvl[MAX_LEVEL];
@@ -3711,7 +3747,7 @@ void CDDataStruct::OnCardChangeName(wxCommandEvent& event) {
 		TextReachLimit();
 	} else {
 		m_cardlist->SetString(sel,_(cd.name.str));
-		UpdateCardName(sel);
+		UpdateCardName(*sortid);
 		MarkDataCardModified();
 	}
 }
@@ -5349,7 +5385,7 @@ void CDDataStruct::OnTextExportCharmap(wxCommandEvent& event) {
 		TIMImageDataStruct& im = timlist[*sortid][texsel];
 		int res = im.Export(TheCharmapTextureExportDialog->m_filepicker->GetPath().mb_str(),true,0,NULL,palchoice->GetSelection(),false);
 		if (res==1)
-			wxLogError(HADES_STRING_OPEN_ERROR_CREATE);
+			wxLogError(HADES_STRING_OPEN_ERROR_CREATE, TheCharmapTextureExportDialog->m_filepicker->GetPath().c_str());
 		else if (res==2)
 			wxLogError(HADES_STRING_ERROR_UNKNOWN);
 		else {
@@ -5558,24 +5594,27 @@ void CDDataStruct::DisplayField(int fieldid) {
 	unsigned int* sortid = (unsigned int*)m_fieldlist->GetClientData(fieldid);
 	fieldselection = *sortid;
 	unsigned int i;
-	if (gametype!=GAME_TYPE_PSX && fieldset.tim_data[fieldselection]!=NULL) {
+	if (gametype != GAME_TYPE_PSX && fieldset.tim_data[fieldselection] != NULL) {
 		fstream ftmp;
 		fieldset.tim_data[*sortid]->Read(ftmp);
 	}
 	m_fieldname->ChangeValue(_(fieldset.script_data[fieldselection]->name.str));
-	m_fieldpreload->Enable(fieldset.preload[fieldselection]!=NULL);
-	m_fieldscriptlink->Enable(fieldset.script_data[fieldselection]->multi_lang_script!=NULL);
-	m_fieldtexturemanage->Enable(fieldset.background_data[fieldselection]!=NULL);
+	m_fieldpreload->Enable(fieldset.preload[fieldselection] != NULL);
+	m_fieldscriptlink->Enable(fieldset.script_data[fieldselection]->multi_lang_script != NULL);
+	m_fieldtexturechoice->Enable(fieldset.background_data[fieldselection] != NULL);
+	m_fieldtexturemanage->Enable(fieldset.background_data[fieldselection] != NULL);
 	m_fieldtexturechoice->Clear();
-	if (fieldset.background_data[fieldselection]!=NULL) {
-		for (i=0;i<fieldset.background_data[fieldselection]->camera_amount;i++) {
+	if (fieldset.background_data[fieldselection] != NULL) {
+		for (i = 0; i < fieldset.background_data[fieldselection]->camera_amount; i++) {
 			wstringstream buffer;
-			buffer << "Background " << i+1 << ends;
+			buffer << "Background " << i + 1 << ends;
 			m_fieldtexturechoice->Append(_(buffer.str()));
 		}
 		m_fieldtexturechoice->SetSelection(0);
-		MACRO_FIELD_DISPLAY_BACKGROUND(fieldselection,0)
+		MACRO_FIELD_DISPLAY_BACKGROUND(fieldselection, 0)
 	}
+	m_fieldexportwalk->Enable(fieldset.walkmesh[fieldselection] != NULL);
+	m_fieldimportwalk->Enable(fieldset.walkmesh[fieldselection] != NULL);
 	m_fieldscrolledwindow->Layout();
 	m_fieldscrolledwindow->Refresh();
 }
@@ -5612,6 +5651,8 @@ void CDDataStruct::OnFieldChangeChoice(wxCommandEvent& event) {
 	}
 }
 
+WalkmeshExportWindow* TheWalkmeshExportWindow;
+WalkmeshImportWindow* TheWalkmeshImportWindow;
 void CDDataStruct::OnFieldChangeButton(wxCommandEvent& event) {
 	unsigned int sel = m_fieldlist->GetSelection();
 	unsigned int* sortid = (unsigned int*)m_fieldlist->GetClientData(sel);
@@ -5726,9 +5767,33 @@ walkbmp.SaveFile(_(L"aaaa.bmp"),wxBITMAP_TYPE_BMP);*/
 		}
 	} else if (id==wxID_TEXTURE) {
 		ManageFieldTextureDialog dial(this,*fieldset.background_data[*sortid]);
-		if (dial.ShowModal(m_fieldtexturechoice->GetSelection())==wxID_OK) {
-			// ToDo
+		if (dial.ShowModal(m_fieldtexturechoice->GetSelection())==wxID_OK && dial.field.modified) {
+			fieldset.background_data[*sortid]->Copy(dial.field);
 			MarkDataFieldModified(*sortid,CHUNK_TYPE_FIELD_TILES);
+		}
+	} else if (id == wxID_EXPORT) {
+		if (!TheWalkmeshExportWindow)
+			TheWalkmeshExportWindow = new WalkmeshExportWindow(GetTopWindow());
+		if (TheWalkmeshExportWindow->ShowModal() == wxID_OK) {
+			int res = fieldset.walkmesh[*sortid]->ExportAsObj(TheWalkmeshExportWindow->m_filepickerexport->GetPath().ToStdString());
+			if (res == 1)
+				wxLogError(HADES_STRING_OPEN_ERROR_CREATE, TheWalkmeshExportWindow->m_filepickerexport->GetPath().c_str());
+			else {
+				wxMessageDialog popupsuccess(this, HADES_STRING_WALKMESH_SAVE_SUCCESS, HADES_STRING_SUCCESS, wxOK | wxCENTRE);
+				popupsuccess.ShowModal();
+			}
+		}
+	} else if (id == wxID_IMPORT) {
+		if (!TheWalkmeshImportWindow)
+			TheWalkmeshImportWindow = new WalkmeshImportWindow(GetTopWindow());
+		if (TheWalkmeshImportWindow->ShowModal() == wxID_OK) {
+			//int res = fieldset.walkmesh[*sortid]->ImportFromObj(TheWalkmeshImportWindow->m_filepickerimport->GetPath().ToStdString());
+			//if (res == 1)
+			//	wxLogError(HADES_STRING_OPEN_ERROR_FAIL, TheWalkmeshImportWindow->m_filepickerimport->GetPath().c_str());
+			//else {
+			//	wxMessageDialog popupsuccess(this, HADES_STRING_WALKMESH_LOAD_SUCCESS, HADES_STRING_SUCCESS, wxOK | wxCENTRE);
+			//	popupsuccess.ShowModal();
+			//}
 		}
 	}
 }
@@ -5759,7 +5824,7 @@ int CDDataStruct::GetWorldBattleSetFromSpot(int spot, int spotversion) {
 void CDDataStruct::DisplayWorldBattleHelp(int spotversion, int whichbattle) {
 	if (!enemyloaded)
 		return;
-	unsigned int i;
+	unsigned int i, j;
 	if (spotversion==-1) {
 		for (i=0;i<4;i++)
 			DisplayWorldBattleHelp(i,whichbattle);
@@ -5801,6 +5866,7 @@ void CDDataStruct::DisplayWorldBattleHelp(int spotversion, int whichbattle) {
 		return;
 	}
 	uint16_t bsceneid = enemyset.battle[choicectrl->GetSelection()]->scene_id;
+	uint16_t bid = enemyset.battle_data[choicectrl->GetSelection()]->object_id;
 	wxString label = _(L"");
 	for (i=0;i<G_N_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME);i++)
 		if (HADES_STRING_BATTLE_SCENE_NAME[i].id==bsceneid) {
@@ -5809,7 +5875,16 @@ void CDDataStruct::DisplayWorldBattleHelp(int spotversion, int whichbattle) {
 				label = label.Mid(11);
 			break;
 		}
-	txtctrl->SetLabelText(label);
+	bool isfriendly = false;
+	for (i = 0; i < WORLD_MAP_FRIENDLY_AMOUNT; i++)
+		for (j = 0; j < WorldMapDataStruct::friendly_battle_id[i].size(); j++)
+			if (bid == WorldMapDataStruct::friendly_battle_id[i][j]) {
+				isfriendly = true;
+				break;
+			}
+	if (isfriendly && whichbattle == 3)
+		label = _("<i>") + _(HADES_STRING_WORLD_FRIENDLY) + label + _("</i>");
+	txtctrl->SetLabelMarkup(label);
 }
 
 // Others
@@ -6036,7 +6111,10 @@ void CDDataStruct::OnWorldChangeChoice(wxCommandEvent& event) {
 	#define MACRO_WORLD_CHANGE_CHOICE(VER,BTL) \
 		if (id==wxID_BATTLE ## VER ## BTL) { \
 			int bset = GetWorldBattleSetFromSpot(sel,VER-1); \
-			wm.battle_id[bset][BTL-1] = bd.object_id; \
+			if (wm.ChangeBattle(bset, BTL-1, bd.object_id) != 0) { \
+				wxMessageDialog popup(NULL, HADES_STRING_WORLD_FRIENDLY_HELP, HADES_STRING_WARNING, wxOK | wxCENTRE); \
+				popup.ShowModal(); \
+			} \
 			DisplayWorldBattleHelp(VER-1,BTL-1); \
 		} else 
 
@@ -6067,7 +6145,10 @@ void CDDataStruct::OnWorldChangeSpin(wxSpinEvent& event) {
 	#define MACRO_WORLD_CHANGE_SPIN(VER,BTL) \
 		if (id==wxID_BATTLE ## VER ## BTL) { \
 			int bset = GetWorldBattleSetFromSpot(sel,VER-1); \
-			wm.battle_id[bset][BTL-1] = event.GetPosition(); \
+			if (wm.ChangeBattle(bset, BTL-1, event.GetPosition()) != 0) { \
+				wxMessageDialog popup(NULL, HADES_STRING_WORLD_FRIENDLY_HELP, HADES_STRING_WARNING, wxOK | wxCENTRE); \
+				popup.ShowModal(); \
+			} \
 			DisplayWorldBattleHelp(VER-1,BTL-1); \
 		} else 
 
@@ -7124,7 +7205,7 @@ void CDDataStruct::InitWorldMap(void) {
 	for (i=0;i<WORLD_MAP_PLACE_AMOUNT;i++)
 		m_worldplacelist->Append(_(worldset.world_data->place_name[i].GetStr(hades::TEXT_PREVIEW_TYPE)));
 	for (i=0;i<WORLD_MAP_BATTLE_SPOT_AMOUNT;i++)
-		m_worldbattlelist->Append(wxString::Format(wxT(HADES_STRING_WORLD_BATTLE_NAME),i+1));
+		m_worldbattlelist->Append(wxString::Format(wxT(HADES_STRING_WORLD_BATTLE_NAME),i+1)); 
 	if (enemyloaded) {
 		wxArrayString battlenames;
 		battlenames.Alloc(enemyset.battle_amount);
@@ -7182,7 +7263,6 @@ void CDDataStruct::InitField(void) {
 	GetTopWindow()->m_exportfieldscript->Enable();
 	GetTopWindow()->m_importfieldscript->Enable();
 	GetTopWindow()->m_exportfieldbackground->Enable();
-	GetTopWindow()->m_backgroundeditor->Enable();
 }
 
 void CDDataStruct::InitBattleScene(void) {

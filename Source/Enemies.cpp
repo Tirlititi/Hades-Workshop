@@ -762,7 +762,7 @@ void EnemyDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 	unsigned int i,j,k,l;
 	modified_battle_scene_amount = 0;
 	image_map_amount = clusset.image_map_amount;
-	battle_amount = clusset.enemy_amount;
+	battle_amount = 40;// clusset.enemy_amount;
 	battle_name = new wstring[battle_amount];
 	battle_data = new BattleDataStruct*[battle_amount];
 	battle = new EnemyDataStruct*[battle_amount];
@@ -852,7 +852,7 @@ void EnemyDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 					SteamReadFF9String(ffbin,text[i]->text[j],lang);
 			}
 //			text[i]->size = config.meta_res.GetFileSizeByIndex(config.enmy_text_file[lang][i]);
-			LoadingDialogUpdate(i);
+			LoadingDialogUpdate(i, wxString::Format(wxT("%u / %u (1/3)"), i, battle_amount));
 		}
 		ffbin.close();
 		fname = config.steam_dir_assets + "p0data2.bin";
@@ -873,7 +873,7 @@ void EnemyDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 			battle[i]->size = config.meta_battle.GetFileSizeByIndex(config.enmy_stat_file[i]);
 			battle[i]->Read(ffbin);
 			battle[i]->scene_id = 0;
-			LoadingDialogUpdate(i);
+			LoadingDialogUpdate(i, wxString::Format(wxT("%u / %u (2/3)"), i, battle_amount));
 		}
 		ffbin.close();
 		fname = config.steam_dir_assets + "p0data7.bin";
@@ -907,7 +907,7 @@ fout << L")";
 }
 fout << endl;
 fout.close();*/
-			LoadingDialogUpdate(i);
+			LoadingDialogUpdate(i, wxString::Format(wxT("%u / %u (3/3)"), i, battle_amount));
 		}
 		delete[] dummyclus;
 		ffbin.close();

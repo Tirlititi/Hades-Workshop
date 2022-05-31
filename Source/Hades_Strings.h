@@ -149,6 +149,8 @@
 #define HADES_STRING_TEXTURE_SAVE_SUCCESS L"Texture successfully exported!"
 #define HADES_STRING_FIELDTEXTURE_SAVE_SUCCESS L"Background successfully exported!"
 #define HADES_STRING_SCENE_SAVE_SUCCESS L"Battle Scene model successfully exported!"
+#define HADES_STRING_WALKMESH_SAVE_SUCCESS L"Walkmesh successfully exported!"
+#define HADES_STRING_WALKMESH_LOAD_SUCCESS L"Walkmesh successfully imported!"
 #define HADES_STRING_TEXT_TRANSLATE L"Auto-Translate"
 
 static wxString HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[] = {
@@ -201,6 +203,52 @@ static wxArrayString HADES_STRING_PRINTABLE_CHARTABLE(G_N_ELEMENTS(HADES_STRING_
 										L"Maybe you can try to remove unused text\n"\
 										L"to increase the limit here."
 #define HADES_STRING_DATA_REACH_LIMIT	L"The data size has reached his limit."
+
+static wxString HADES_STRING_ELEMENT_NAME[8] = {
+	L"Fire",
+	L"Ice",
+	L"Thunder",
+	L"Earth",
+	L"Water",
+	L"Wind",
+	L"Holy",
+	L"Shadow"
+};
+
+static wxString HADES_STRING_STATUS_NAME[32] = {
+	L"Petrify",
+	L"Venom",
+	L"Virus",
+	L"Silence",
+	L"Darkness",
+	L"Trouble",
+	L"Zombie",
+	L"Easy Kill Proof",
+	L"KO",
+	L"Low HP",
+	L"Confuse",
+	L"Berserk",
+	L"Stop",
+	L"Auto-Life",
+	L"Trance",
+	L"Defend",
+	L"Poison",
+	L"Sleep",
+	L"Regen",
+	L"Haste",
+	L"Slow",
+	L"Float",
+	L"Shell",
+	L"Protect",
+	L"Heat",
+	L"Freeze",
+	L"Vanish",
+	L"Doom",
+	L"Mini",
+	L"Reflect",
+	L"Jump",
+	L"Gradual Petrify"
+};
 
 //-- Spell Panel
 #define HADES_STRING_SPELL_TARGET_INFO_BASE L" Recommanded compatibility\nwith: "
@@ -339,7 +387,11 @@ static wxString HADES_STRING_SYNTH_NAME[8] = {
 #define HADES_STRING_BATCH_SCRIPT_NOLOCALS			" - Line %u: Unexpected 'endlocals' out of a local variable block\n"
 
 //-- World Maps
-#define HADES_STRING_WORLD_BATTLE_NAME	"Battle Spot %d"
+#define HADES_STRING_WORLD_BATTLE_NAME		"Battle Spot %d"
+#define HADES_STRING_WORLD_FRIENDLY			"[Friendly] "
+#define HADES_STRING_WORLD_FRIENDLY_HELP	L"Friendly monster battles should follow these rules:\n"\
+											L"1) They should only be the 4th battle of a battle spot\n"\
+											L"2) They cannot appear in more than 12 spots (including the different versions of these spots)"\
 
 //-- Card Panel
 #define HADES_STRING_CARD_SHARED	L"Common Datas"
@@ -415,12 +467,19 @@ static wxString HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM[] = {
 #define HADES_STRING_UNKNOWN_FIELD L"UNKNOWN_FIELD"
 #define HADES_STRING_INVALID_FF9LAUNCHER L"Select a valid FF9_Launcher.exe"
 #define HADES_STRING_INVALID_IMAGE_NAME_FORMAT L"The file name format must contain three '%%'"
+#define HADES_STRING_CALCULATOR_LOAD_SECTIONS L"The tool needs to load the sections Spells, Stats, Items and Enemies"
+#define HADES_STRING_CALCULATOR_PROFILE_DEFAULT "Character Profile "
+#define HADES_STRING_CALCULATOR_LOAD_NONE L"There is no profile saved yet"
+#define HADES_STRING_CALCULATOR_SAVE_ERROR L"Something went wrong!"
+#define HADES_STRING_CALCULATOR_LOAD_ERROR L"Something went wrong!"
+#define HADES_STRING_BACKGROUND_LOAD_SECTIONS L"The tool needs to load the Fields section"
 #define HADES_STRING_IMPORT_BACKGROUND_RESULT	"%d background importations succeeded\n"\
 												"%d background importations failed"
 #define HADES_STRING_BACKGROUNDIMPORT_MISSING_LAYERS	" - Missing %d layers for the field %d (%s)\n"
-#define HADES_STRING_BACKGROUNDIMPORT_ERROR_CREATE		" - Failed to convert the field %d (%s)\n"
+#define HADES_STRING_BACKGROUNDIMPORT_ERROR_CREATE	" - Failed to convert the field %d (%s)\n"
 #define HADES_STRING_BACKGROUNDIMPORT_ERROR_DIMENSIONS	" - The dimensions of the layers don't match for the field %d (%s)\n"
 #define HADES_STRING_BACKGROUNDIMPORT_ERROR_ALPHA	" - One or several layer(s) have no alpha channel for the field %d (%s)\n"
+#define HADES_STRING_BACKGROUNDIMPORT_ERROR_NO_BACKGROUND	"Pick a valid field!"
 #define HADES_STRING_UNITYVIEWER_GAME_OPEN	L"This game folder is already opened in Hades Workshop's main module. Updating the assets is not possible in this situation."
 #define HADES_STRING_UNITYVIEWER_IMPORT_ERROR_FORMAT	"Default format could not be retrieved for '%s'"
 #define HADES_STRING_UNITYVIEWER_IMPORT_DEFAULT_FORMAT	"No compression format specified for '%s'.\n"\

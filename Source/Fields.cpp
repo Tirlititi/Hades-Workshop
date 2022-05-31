@@ -384,8 +384,8 @@ void FieldTilesTileDataStruct::SetupDataInfos(bool readway) {
 	has_parallax = (data1 >> 3) & 0x1;
 	is_static = (data1 >> 4) & 0x1;
 	is_scroll_with_offset = (data1 >> 7) & 0x1;
-	distance = (data1 >> 8) & 0xFFF;
-	default_distance = (data1 >> 20) & 0xFFF;
+	depth = (data1 >> 8) & 0xFFF;
+	default_depth = (data1 >> 20) & 0xFFF;
 	is_x_offset = data2 & 0x1;
 	viewport_id = data2 >> 1;
 	for (i=0;i<tile_amount;i++) {
@@ -417,7 +417,7 @@ void FieldTilesDataStruct::SetupDataInfos(bool readway) {
 			tiles_sorted[i] = &tiles[i];
 		for (i=0;i<tiles_amount;i++)
 			for (j=i+1;j<tiles_amount;j++)
-				if ((tiles_sorted[j]->distance)>=(tiles_sorted[i]->distance)) {
+				if ((tiles_sorted[j]->depth)>=(tiles_sorted[i]->depth)) {
 					tmp = tiles_sorted[j];
 					tiles_sorted[j] = tiles_sorted[i];
 					tiles_sorted[i] = tmp;
@@ -639,27 +639,27 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 }
 
 #define MACRO_WALKMESH_IOFUNCTION(IO,SEEK,READ,PPF) \
-	unsigned int i,j; \
+	unsigned int i,j,k; \
 	uint32_t headerpos; \
 	if (PPF) PPFInitScanStep(f); \
 	IO ## Long(f,magic_walkmesh); \
 	headerpos = f.tellg(); \
-	IO ## Short(f,(uint16_t&)unknown1); \
-	IO ## Short(f,(uint16_t&)offset_x2); \
-	IO ## Short(f,(uint16_t&)offset_z2); \
-	IO ## Short(f,(uint16_t&)offset_y2); \
+	IO ## Short(f,(uint16_t&)datasize); \
+	IO ## Short(f,(uint16_t&)offset_orgx); \
+	IO ## Short(f,(uint16_t&)offset_orgz); \
+	IO ## Short(f,(uint16_t&)offset_orgy); \
 	IO ## Short(f,(uint16_t&)offset_x); \
 	IO ## Short(f,(uint16_t&)offset_z); \
 	IO ## Short(f,(uint16_t&)offset_y); \
-	IO ## Short(f,(uint16_t&)offset_x3); \
-	IO ## Short(f,(uint16_t&)offset_z3); \
-	IO ## Short(f,(uint16_t&)offset_y3); \
-	IO ## Short(f,(uint16_t&)unknown4); \
-	IO ## Short(f,(uint16_t&)unknown5); \
-	IO ## Short(f,(uint16_t&)unknown6); \
-	IO ## Short(f,(uint16_t&)unknown7); \
-	IO ## Short(f,(uint16_t&)unknown8); \
-	IO ## Short(f,(uint16_t&)unknown9); \
+	IO ## Short(f,(uint16_t&)offset_minx); \
+	IO ## Short(f,(uint16_t&)offset_minz); \
+	IO ## Short(f,(uint16_t&)offset_miny); \
+	IO ## Short(f,(uint16_t&)offset_maxx); \
+	IO ## Short(f,(uint16_t&)offset_maxz); \
+	IO ## Short(f,(uint16_t&)offset_maxy); \
+	IO ## Short(f,(uint16_t&)offset_charx); \
+	IO ## Short(f,(uint16_t&)offset_charz); \
+	IO ## Short(f,(uint16_t&)offset_chary); \
 	IO ## Short(f,(uint16_t&)active_walkpath); \
 	IO ## Short(f,(uint16_t&)active_triangle); \
 	IO ## Short(f,triangle_amount); \
@@ -676,69 +676,72 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 	IO ## Short(f,vertex_offset); \
 	if (PPF) PPFEndScanStep(); \
 	if (READ) { \
-		triangle_flags1 = new uint8_t[triangle_amount]; \
-		triangle_flags2 = new uint8_t[triangle_amount]; \
-		triangle_unk1 = new uint16_t[triangle_amount]; \
-		triangle_walkpath = new uint16_t[triangle_amount]; \
-		triangle_normal = new uint16_t[triangle_amount]; \
-		triangle_unk2 = new uint16_t[triangle_amount]; \
-		triangle_unk3 = new uint16_t[triangle_amount]; \
-		triangle_vertex1 = new uint16_t[triangle_amount]; \
-		triangle_vertex2 = new uint16_t[triangle_amount]; \
-		triangle_vertex3 = new uint16_t[triangle_amount]; \
-		triangle_edge1 = new uint16_t[triangle_amount]; \
-		triangle_edge2 = new uint16_t[triangle_amount]; \
-		triangle_edge3 = new uint16_t[triangle_amount]; \
-		triangle_adjacenttriangle1 = new uint16_t[triangle_amount]; \
-		triangle_adjacenttriangle2 = new uint16_t[triangle_amount]; \
-		triangle_adjacenttriangle3 = new uint16_t[triangle_amount]; \
-		triangle_centerx = new int16_t[triangle_amount]; \
-		triangle_centerz = new int16_t[triangle_amount]; \
-		triangle_centery = new int16_t[triangle_amount]; \
-		triangle_unk4 = new int32_t[triangle_amount]; \
-		edge_flag = new uint16_t[edge_amount]; \
-		edge_clone = new int16_t[edge_amount]; \
-		animation_flag = new uint16_t[animation_amount]; \
-		animation_frameamount = new uint16_t[animation_amount]; \
-		animation_framerate = new int16_t[animation_amount]; \
-		animation_counter = new uint16_t[animation_amount]; \
-		animation_currentframe = new int32_t[animation_amount]; \
-		animation_frameoffset = new uint32_t[animation_amount]; \
-		walkpath_unk1 = new uint16_t[walkpath_amount]; \
-		walkpath_unk2 = new uint16_t[walkpath_amount]; \
-		walkpath_minx = new int16_t[walkpath_amount]; \
-		walkpath_minz = new int16_t[walkpath_amount]; \
-		walkpath_miny = new int16_t[walkpath_amount]; \
-		walkpath_offsetx = new int16_t[walkpath_amount]; \
-		walkpath_offsetz = new int16_t[walkpath_amount]; \
-		walkpath_offsety = new int16_t[walkpath_amount]; \
-		walkpath_unkx3 = new int16_t[walkpath_amount]; \
-		walkpath_unkz3 = new int16_t[walkpath_amount]; \
-		walkpath_unky3 = new int16_t[walkpath_amount]; \
-		walkpath_unkx4 = new int16_t[walkpath_amount]; \
-		walkpath_unkz4 = new int16_t[walkpath_amount]; \
-		walkpath_unky4 = new int16_t[walkpath_amount]; \
-		walkpath_triangleamount = new uint16_t[walkpath_amount]; \
-		walkpath_trianglelistoffset = new uint16_t[walkpath_amount]; \
-		walkpath_trianglelist = new uint32_t*[walkpath_amount]; \
-		normal_x = new int32_t[normal_amount]; \
-		normal_z = new int32_t[normal_amount]; \
-		normal_y = new int32_t[normal_amount]; \
-		normal_overz = new int32_t[normal_amount]; \
-		vertex_x = new int16_t[vertex_amount]; \
-		vertex_z = new int16_t[vertex_amount]; \
-		vertex_y = new int16_t[vertex_amount]; \
+		triangle_flag.resize(triangle_amount); \
+		triangle_data.resize(triangle_amount); \
+		triangle_walkpath.resize(triangle_amount); \
+		triangle_normal.resize(triangle_amount); \
+		triangle_thetax.resize(triangle_amount); \
+		triangle_thetaz.resize(triangle_amount); \
+		triangle_vertex1.resize(triangle_amount); \
+		triangle_vertex2.resize(triangle_amount); \
+		triangle_vertex3.resize(triangle_amount); \
+		triangle_edge1.resize(triangle_amount); \
+		triangle_edge2.resize(triangle_amount); \
+		triangle_edge3.resize(triangle_amount); \
+		triangle_adjacenttriangle1.resize(triangle_amount); \
+		triangle_adjacenttriangle2.resize(triangle_amount); \
+		triangle_adjacenttriangle3.resize(triangle_amount); \
+		triangle_centerx.resize(triangle_amount); \
+		triangle_centerz.resize(triangle_amount); \
+		triangle_centery.resize(triangle_amount); \
+		triangle_d.resize(triangle_amount); \
+		edge_flag.resize(edge_amount); \
+		edge_clone.resize(edge_amount); \
+		animation_flag.resize(animation_amount); \
+		animation_frameamount.resize(animation_amount); \
+		animation_framerate.resize(animation_amount); \
+		animation_counter.resize(animation_amount); \
+		animation_currentframe.resize(animation_amount); \
+		animation_frameoffset.resize(animation_amount); \
+		animation_frameflag.resize(animation_amount); \
+		animation_framevalue.resize(animation_amount); \
+		animation_frametriangleamount.resize(animation_amount); \
+		animation_frametriangleoffset.resize(animation_amount); \
+		animation_frametriangle.resize(animation_amount); \
+		walkpath_flag.resize(walkpath_amount); \
+		walkpath_id.resize(walkpath_amount); \
+		walkpath_orgx.resize(walkpath_amount); \
+		walkpath_orgz.resize(walkpath_amount); \
+		walkpath_orgy.resize(walkpath_amount); \
+		walkpath_offsetx.resize(walkpath_amount); \
+		walkpath_offsetz.resize(walkpath_amount); \
+		walkpath_offsety.resize(walkpath_amount); \
+		walkpath_minx.resize(walkpath_amount); \
+		walkpath_minz.resize(walkpath_amount); \
+		walkpath_miny.resize(walkpath_amount); \
+		walkpath_maxx.resize(walkpath_amount); \
+		walkpath_maxz.resize(walkpath_amount); \
+		walkpath_maxy.resize(walkpath_amount); \
+		walkpath_triangleamount.resize(walkpath_amount); \
+		walkpath_trianglelistoffset.resize(walkpath_amount); \
+		walkpath_trianglelist.resize(walkpath_amount); \
+		normal_x.resize(normal_amount); \
+		normal_z.resize(normal_amount); \
+		normal_y.resize(normal_amount); \
+		normal_overz.resize(normal_amount); \
+		vertex_x.resize(vertex_amount); \
+		vertex_z.resize(vertex_amount); \
+		vertex_y.resize(vertex_amount); \
 	} \
 	for (i=0;i<triangle_amount;i++) { \
 		SEEK(f,headerpos,triangle_offset+i*0x28); \
 		if (PPF) PPFInitScanStep(f); \
-		IO ## Char(f,triangle_flags1[i]); \
-		IO ## Char(f,triangle_flags2[i]); \
-		IO ## Short(f,triangle_unk1[i]); \
+		IO ## Short(f,triangle_flag[i]); \
+		IO ## Short(f,triangle_data[i]); \
 		IO ## Short(f,triangle_walkpath[i]); \
 		IO ## Short(f,triangle_normal[i]); \
-		IO ## Short(f,triangle_unk2[i]); \
-		IO ## Short(f,triangle_unk3[i]); \
+		IO ## Short(f,triangle_thetax[i]); \
+		IO ## Short(f,triangle_thetaz[i]); \
 		IO ## Short(f,triangle_vertex1[i]); \
 		IO ## Short(f,triangle_vertex2[i]); \
 		IO ## Short(f,triangle_vertex3[i]); \
@@ -751,7 +754,7 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 		IO ## Short(f,(uint16_t&)triangle_centerx[i]); \
 		IO ## Short(f,(uint16_t&)triangle_centerz[i]); \
 		IO ## Short(f,(uint16_t&)triangle_centery[i]); \
-		IO ## Long(f,(uint32_t&)triangle_unk4[i]); \
+		IO ## Long(f,(uint32_t&)triangle_d[i]); \
 		if (PPF) PPFEndScanStep(); \
 	} \
 	for (i=0;i<edge_amount;i++) { \
@@ -771,28 +774,53 @@ FieldTilesDataStruct::~FieldTilesDataStruct() {
 		IO ## Long(f,(uint32_t&)animation_currentframe[i]); \
 		IO ## Long(f,animation_frameoffset[i]); \
 		if (PPF) PPFEndScanStep(); \
+		if (READ) { \
+			animation_frameflag[i].resize(triangle_amount); \
+			animation_framevalue[i].resize(triangle_amount); \
+			animation_frametriangleamount[i].resize(triangle_amount); \
+			animation_frametriangleoffset[i].resize(triangle_amount); \
+			animation_frametriangle[i].resize(triangle_amount); \
+		} \
+		SEEK(f,headerpos,animation_frameoffset[i]); \
+		if (PPF) PPFInitScanStep(f); \
+		for (j=0;j<animation_frameamount[i];j++) { \
+			IO ## Short(f,animation_frameflag[i][j]); \
+			IO ## Short(f,(uint16_t&)animation_framevalue[i][j]); \
+			IO ## Short(f,animation_frametriangleamount[i][j]); \
+			IO ## Short(f,animation_frametriangleoffset[i][j]); \
+		} \
+		if (PPF) PPFEndScanStep(); \
+		for (j=0;j<animation_frameamount[i];j++) { \
+			if (READ) animation_frametriangle[i][j].resize(animation_frametriangleamount[i][j]); \
+			SEEK(f,headerpos,animation_frametriangleoffset[i][j]); \
+			if (PPF) PPFInitScanStep(f); \
+			for (k=0;k<animation_frametriangleamount[i][j];k++) { \
+				IO ## Long(f,animation_frametriangle[i][j][k]); \
+			} \
+			if (PPF) PPFEndScanStep(); \
+		} \
 	} \
 	for (i=0;i<walkpath_amount;i++) { \
 		SEEK(f,headerpos,walkpath_offset+i*0x20); \
 		if (PPF) PPFInitScanStep(f); \
-		IO ## Short(f,walkpath_unk1[i]); \
-		IO ## Short(f,walkpath_unk2[i]); \
-		IO ## Short(f,(uint16_t&)walkpath_minx[i]); \
-		IO ## Short(f,(uint16_t&)walkpath_minz[i]); \
-		IO ## Short(f,(uint16_t&)walkpath_miny[i]); \
+		IO ## Short(f,walkpath_flag[i]); \
+		IO ## Short(f,walkpath_id[i]); \
+		IO ## Short(f,(uint16_t&)walkpath_orgx[i]); \
+		IO ## Short(f,(uint16_t&)walkpath_orgz[i]); \
+		IO ## Short(f,(uint16_t&)walkpath_orgy[i]); \
 		IO ## Short(f,(uint16_t&)walkpath_offsetx[i]); \
 		IO ## Short(f,(uint16_t&)walkpath_offsetz[i]); \
 		IO ## Short(f,(uint16_t&)walkpath_offsety[i]); \
-		IO ## Short(f,(uint16_t&)walkpath_unkx3[i]); \
-		IO ## Short(f,(uint16_t&)walkpath_unkz3[i]); \
-		IO ## Short(f,(uint16_t&)walkpath_unky3[i]); \
-		IO ## Short(f,(uint16_t&)walkpath_unkx4[i]); \
-		IO ## Short(f,(uint16_t&)walkpath_unkz4[i]); \
-		IO ## Short(f,(uint16_t&)walkpath_unky4[i]); \
+		IO ## Short(f,(uint16_t&)walkpath_minx[i]); \
+		IO ## Short(f,(uint16_t&)walkpath_minz[i]); \
+		IO ## Short(f,(uint16_t&)walkpath_miny[i]); \
+		IO ## Short(f,(uint16_t&)walkpath_maxx[i]); \
+		IO ## Short(f,(uint16_t&)walkpath_maxz[i]); \
+		IO ## Short(f,(uint16_t&)walkpath_maxy[i]); \
 		IO ## Short(f,walkpath_triangleamount[i]); \
 		IO ## Short(f,walkpath_trianglelistoffset[i]); \
 		if (PPF) PPFEndScanStep(); \
-		if (READ) walkpath_trianglelist[i] = new uint32_t[walkpath_triangleamount[i]]; \
+		if (READ) walkpath_trianglelist[i].resize(walkpath_triangleamount[i]); \
 		SEEK(f,headerpos,walkpath_trianglelistoffset[i]); \
 		if (PPF) PPFInitScanStep(f); \
 		for (j=0;j<walkpath_triangleamount[i];j++) { \
@@ -848,80 +876,77 @@ void FieldWalkmeshDataStruct::WriteHWS(fstream& f) {
 	MACRO_WALKMESH_IOFUNCTION(HWSWrite,HWSSeek,false,false)
 }
 
-int FieldWalkmeshDataStruct::ExportAsObj(const char* outputbase) {
-	unsigned int i,j,k;
-	char buffer[256];
-	const char* filename = outputbase;
-	for (i=strlen(outputbase)-1;i>0;i--)
-		if (outputbase[i] == '/' || outputbase[i]=='\\') {
-			filename = outputbase+i+1;
+int FieldWalkmeshDataStruct::ExportAsObj(string outputbase) {
+	unsigned int i, j, k;
+	string filename = outputbase;
+	for (i = outputbase.length() - 1; i > 0; i--)
+		if (outputbase[i] == '/' || outputbase[i] == '\\') {
+			filename = outputbase.substr(i + 1);
 			break;
 		}
-	sprintf(buffer,"%s.obj",outputbase);
-	fstream fobj(buffer,ios::out);
+	fstream fobj(outputbase.c_str(), ios::out);
 	if (!fobj.is_open())
 		return 1;
 	fobj << std::showpoint;
 	uint16_t vertcount = 1;
-//	uint16_t vertncount = 1;
+	uint16_t vertncount = 1;
 	vector<uint16_t> vertlistbypath;
-	vector<uint16_t> vertlistpathindexbypath(vertex_amount,0);
-	for (i=0;i<walkpath_amount;i++) {
+	vector<uint16_t> vertlistpathindexbypath(vertex_amount, 0);
+	for (i = 0; i < walkpath_amount; i++) {
 		fobj << "o Walhpath_" << i << endl;
 		vertlistbypath.clear();
-		for (j=0;j<walkpath_triangleamount[i];j++) {
-			for (k=0;k<vertlistbypath.size();k++)
-				if (vertlistbypath[k]==triangle_vertex1[walkpath_trianglelist[i][j]]) {
+		for (j = 0; j < walkpath_triangleamount[i]; j++) {
+			for (k = 0; k < vertlistbypath.size(); k++)
+				if (vertlistbypath[k] == triangle_vertex1[walkpath_trianglelist[i][j]]) {
 					vertlistpathindexbypath[triangle_vertex1[walkpath_trianglelist[i][j]]] = k;
 					break;
 				}
-			if (k>=vertlistbypath.size()) {
+			if (k >= vertlistbypath.size()) {
 				vertlistpathindexbypath[triangle_vertex1[walkpath_trianglelist[i][j]]] = vertlistbypath.size();
 				vertlistbypath.push_back(triangle_vertex1[walkpath_trianglelist[i][j]]);
 			}
-			for (k=0;k<vertlistbypath.size();k++)
-				if (vertlistbypath[k]==triangle_vertex2[walkpath_trianglelist[i][j]]) {
+			for (k = 0; k < vertlistbypath.size(); k++)
+				if (vertlistbypath[k] == triangle_vertex2[walkpath_trianglelist[i][j]]) {
 					vertlistpathindexbypath[triangle_vertex2[walkpath_trianglelist[i][j]]] = k;
 					break;
 				}
-			if (k>=vertlistbypath.size()) {
+			if (k >= vertlistbypath.size()) {
 				vertlistpathindexbypath[triangle_vertex2[walkpath_trianglelist[i][j]]] = vertlistbypath.size();
 				vertlistbypath.push_back(triangle_vertex2[walkpath_trianglelist[i][j]]);
 			}
-			for (k=0;k<vertlistbypath.size();k++)
-				if (vertlistbypath[k]==triangle_vertex3[walkpath_trianglelist[i][j]]) {
+			for (k = 0; k < vertlistbypath.size(); k++)
+				if (vertlistbypath[k] == triangle_vertex3[walkpath_trianglelist[i][j]]) {
 					vertlistpathindexbypath[triangle_vertex3[walkpath_trianglelist[i][j]]] = k;
 					break;
 				}
-			if (k>=vertlistbypath.size()) {
+			if (k >= vertlistbypath.size()) {
 				vertlistpathindexbypath[triangle_vertex3[walkpath_trianglelist[i][j]]] = vertlistbypath.size();
 				vertlistbypath.push_back(triangle_vertex3[walkpath_trianglelist[i][j]]);
 			}
 		}
-		for (j=0;j<vertlistbypath.size();j++) {
-			double xx = walkpath_offsetx[i]+vertex_x[vertlistbypath[j]];
-			double yy = walkpath_offsety[i]+vertex_y[vertlistbypath[j]];
-			double zz = walkpath_offsetz[i]+vertex_z[vertlistbypath[j]];
+		for (j = 0; j < vertlistbypath.size(); j++) {
+			double xx = walkpath_offsetx[i] + vertex_x[vertlistbypath[j]];
+			double yy = walkpath_offsety[i] + vertex_y[vertlistbypath[j]];
+			double zz = walkpath_offsetz[i] + vertex_z[vertlistbypath[j]];
 			fobj << "v " << xx << " " << -zz << " " << -yy << endl;
 		}
-/*		for (j=0;j<walkpath_triangleamount[i];j++) {
-			double nxx = normal_x[triangle_normal[walkpath_trianglelist[i][j]]];
-			double nyy = normal_y[triangle_normal[walkpath_trianglelist[i][j]]];
-			double nzz = normal_z[triangle_normal[walkpath_trianglelist[i][j]]];
+		for (j = 0; j < walkpath_triangleamount[i]; j++) {
+			double nxx = normal_x[triangle_normal[walkpath_trianglelist[i][j]]] / 65535.0;
+			double nyy = normal_y[triangle_normal[walkpath_trianglelist[i][j]]] / 65535.0;
+			double nzz = normal_z[triangle_normal[walkpath_trianglelist[i][j]]] / 65535.0;
 			fobj << "vn " << nxx << " " << nyy << " " << nzz << endl;
-		}*/
-		for (j=0;j<walkpath_triangleamount[i];j++) {
-			int vertindex = vertlistpathindexbypath[triangle_vertex1[walkpath_trianglelist[i][j]]]+vertcount; fobj << "f " << vertindex;
-//			fobj << "f " << vertindex << "//" << j+vertncount;
-			vertindex = vertlistpathindexbypath[triangle_vertex2[walkpath_trianglelist[i][j]]]+vertcount; fobj << " " << vertindex;
-			vertindex = vertlistpathindexbypath[triangle_vertex3[walkpath_trianglelist[i][j]]]+vertcount; fobj << " " << vertindex << endl;
+		}
+		for (j = 0; j < walkpath_triangleamount[i]; j++) {
+			int vertindex = vertlistpathindexbypath[triangle_vertex1[walkpath_trianglelist[i][j]]] + vertcount; fobj << "f " << vertindex << "//" << j + vertncount;
+			vertindex = vertlistpathindexbypath[triangle_vertex2[walkpath_trianglelist[i][j]]] + vertcount; fobj << " " << vertindex << "//" << j + vertncount;
+			vertindex = vertlistpathindexbypath[triangle_vertex3[walkpath_trianglelist[i][j]]] + vertcount; fobj << " " << vertindex << "//" << j + vertncount << endl;
 			// Double-side
-			vertindex = vertlistpathindexbypath[triangle_vertex1[walkpath_trianglelist[i][j]]]+vertcount; fobj << "f " << vertindex;
-			vertindex = vertlistpathindexbypath[triangle_vertex3[walkpath_trianglelist[i][j]]]+vertcount; fobj << " " << vertindex;
-			vertindex = vertlistpathindexbypath[triangle_vertex2[walkpath_trianglelist[i][j]]]+vertcount; fobj << " " << vertindex << endl;
+			//vertindex = vertlistpathindexbypath[triangle_vertex1[walkpath_trianglelist[i][j]]] + vertcount; fobj << "f " << vertindex;
+			//vertindex = vertlistpathindexbypath[triangle_vertex3[walkpath_trianglelist[i][j]]] + vertcount; fobj << " " << vertindex;
+			//vertindex = vertlistpathindexbypath[triangle_vertex2[walkpath_trianglelist[i][j]]] + vertcount; fobj << " " << vertindex << endl;
 		}
 		vertcount += vertlistbypath.size();
-//		vertncount += walkpath_triangleamount[i];
+		vertncount += walkpath_triangleamount[i];
 	}
 	fobj.close();
 	return 0;
@@ -1281,7 +1306,7 @@ int FieldDataSet::SetFieldName(unsigned int fieldid, FF9String& newvalue) {
 void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textset) {
 	unsigned int i,j,k,l;
 	int relatedtxtid;
-	amount = clusset.field_amount;
+	amount = 80;// clusset.field_amount;
 	struct_id = new uint16_t[amount];
 	script_data = new ScriptDataStruct*[amount];
 	preload = new ImageMapDataStruct*[amount];
@@ -1467,7 +1492,7 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 				preload[i]->Read(ffbin);
 			} else
 				preload[i] = NULL;
-			LoadingDialogUpdate(i);
+			LoadingDialogUpdate(i, wxString::Format(wxT("%u / %u (1/2)"), i, amount));
 		}
 		ffbin.close();
 		delete[] fieldname;
@@ -1512,7 +1537,7 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 			ffbin.close();
 			if (config.field_tiles_localized[i])
 				title_info->ReadTitleTileId(background_data[i],config);
-			LoadingDialogUpdate(i);
+			LoadingDialogUpdate(i, wxString::Format(wxT("%u / %u (2/2)"), i, amount));
 		}
 		delete[] dummyclus;
 	}
@@ -1586,17 +1611,17 @@ int* FieldDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 								script_data[j]->ReadHWS(ffhws,usetext);
 								script_data[j]->SetSize(chunksize);
 							}
-						} else if (chunktype==CHUNK_TYPE_FIELD_TILES) {
+						} else if (chunktype==CHUNK_TYPE_FIELD_TILES && background_data[j]) {
 							if (loadmain) {
 								background_data[j]->ReadHWS(ffhws);
 								background_data[j]->SetSize(chunksize);
 							}
-						} else if (chunktype==CHUNK_TYPE_FIELD_WALK) {
+						} else if (chunktype==CHUNK_TYPE_FIELD_WALK && walkmesh[j]) {
 							if (loadmain) {
 								walkmesh[j]->ReadHWS(ffhws);
 								walkmesh[j]->SetSize(chunksize);
 							}
-						} else if (chunktype==CHUNK_TYPE_TIM) {
+						} else if (chunktype==CHUNK_TYPE_TIM && tim_data[j]) {
 							if (loadmain) {
 								uint16_t timid;
 								HWSReadShort(ffhws,timid);
@@ -1783,14 +1808,14 @@ void FieldDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsign
 			clus->UpdateOffset();
 			HWSWriteShort(ffhws,script_data[i]->object_id);
 			HWSWriteLong(ffhws,clus->size);
-			if (background_data[i]->modified && savemain) {
+			if (background_data[i] && background_data[i]->modified && savemain) {
 				HWSWriteChar(ffhws,CHUNK_TYPE_FIELD_TILES);
 				HWSWriteLong(ffhws,background_data[i]->size);
 				chunkpos = ffhws.tellg();
 				background_data[i]->WriteHWS(ffhws);
 				ffhws.seekg(chunkpos+background_data[i]->size);
 			}
-			if (walkmesh[i]->modified && savemain) {
+			if (walkmesh[i] && walkmesh[i]->modified && savemain) {
 				HWSWriteChar(ffhws,CHUNK_TYPE_FIELD_WALK);
 				HWSWriteLong(ffhws,walkmesh[i]->size);
 				chunkpos = ffhws.tellg();

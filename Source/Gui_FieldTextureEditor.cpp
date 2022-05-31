@@ -50,6 +50,7 @@ ManageFieldTextureDialog::ManageFieldTextureDialog(wxWindow* parent, FieldTilesD
 	for (i=0;i<field.anim_amount;i++)
 		m_animlist->InsertItem(i,_(L"Anim ")+wxString::Format(wxT("%u"),i),anim_play_flag[i]);
 	m_animlist->SetColumnWidth(0,200);
+	m_texturetiledepth->Enable(false);
 	m_textureposx->Enable(false);
 	m_textureposy->Enable(false);
 	m_texturepaletteselection->Enable(false);
@@ -148,6 +149,10 @@ void ManageFieldTextureDialog::OnTileButton(wxCommandEvent& event) {
 }
 
 void ManageFieldTextureDialog::OnTileSelection(wxCommandEvent& event) {
+	int texid = event.GetSelection();
+	if (texid != wxNOT_FOUND)
+		m_texturetiledepth->SetValue(field.tiles[texid].depth);
+	m_texturetiledepth->Enable(texid != wxNOT_FOUND);
 }
 
 void ManageFieldTextureDialog::OnAnimClick(wxMouseEvent& event) {
@@ -261,6 +266,12 @@ void ManageFieldTextureDialog::OnModifyRadio(wxCommandEvent& event) {
 }
 
 void ManageFieldTextureDialog::OnSpinPosition(wxSpinEvent& event) {
+	int id = event.GetId();
+	int texid = m_tilechecklist->GetSelection();
+	if (id == wxID_DEPTH && texid != wxNOT_FOUND) {
+		field.tiles[texid].depth = event.GetPosition();
+		field.modified = true;
+	}
 /*	if (prevent_event)
 		return;
 	prevent_event = true;

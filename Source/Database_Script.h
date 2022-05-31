@@ -90,7 +90,7 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0x0A, L"0x0A", L"Unused Opcode.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x0B, L"JMP_SWITCH", L"Skip some operations depending on the stack value.\nWARNING: unsafe to use.", false, -1, new uint8_t[3]{ 2, 2, 2 }, new wstring[3]{ L"Starting Value", L"Default Jump", L"Jump" }, new uint8_t[3]{ AT_USPIN, AT_JUMP, AT_JUMP }, 1 },
 	{ 0x0C, L"0x0C", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 },
-	{ 0x0D, L"0x0D", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 }, // Steam seems to handle it like a JMP_SWITCH with a short instead of a char
+	{ 0x0D, L"0x0D", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 }, // Steam seems to handle it like a JMP_SWITCH with a short instead of a char (number of cases)
 	{ 0x0E, L"0x0E", L"Unused Opcode.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x0F, L"0x0F", L"Unused Opcode.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x10, L"RunScriptAsync", L"Run script function and continue executing the current one.\n\nEntry's script level is 0 until its main function returns, then it becomes 7. If the specified script level is higher than the entry's script level, the function is not run. Otherwise, the entry's script level is set to the specified script level until the function returns.\n\n1st argument: script level.\n2nd argument: entry of the function.\n3rd argument: function.", true, 3, new uint8_t[3]{ 1, 1, 1 }, new wstring[3]{ L"Script Level", L"Entry", L"Function" }, new uint8_t[3]{ AT_SCRIPTLVL, AT_ENTRY, AT_FUNCTION }, 0 },
@@ -127,18 +127,18 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0x2F, L"SetModel", L"Set the model of the object and its head's height (used to set the dialog box's height).\n\n1st argument: model.\n2nd argument: head's height.", true, 2, new uint8_t[2]{ 2, 1 }, new wstring[2]{ L"Model", L"Height" }, new uint8_t[2]{ AT_MODEL, AT_USPIN }, 0 },
 	{ 0x30, L"0x30", L"Unknown Opcode (PRINT1); ignored in the non-PSX versions.", false, 0, NULL, NULL, NULL, 0 }, // Return 0 on Steam
 	{ 0x31, L"0x31", L"Unknown Opcode (PRINTF); ignored in the non-PSX versions.", false, 0, NULL, NULL, NULL, 0 }, // Return 0 on Steam
-	{ 0x32, L"0x32", L"Unused Opcode (LOCATE); bugs if used in the non-PSX versions.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_SPIN, AT_SPIN }, 0 }, // Ignored on Steam and not even handled properly (no argument read)
+	{ 0x32, L"0x32", L"Unused Opcode (LOCATE).", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_SPIN, AT_SPIN }, 0 },
 	{ 0x33, L"SetStandAnimation", L"Change the standing animation.\n\n1st argument: animation ID.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Animation" }, new uint8_t[1]{ AT_ANIMATION }, 0 },
 	{ 0x34, L"SetWalkAnimation", L"Change the walking animation.\n\n1st argument: animation ID.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Animation" }, new uint8_t[1]{ AT_ANIMATION }, 0 },
 	{ 0x35, L"SetRunAnimation", L"Change the running animation.\n\n1st argument: animation ID.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Animation" }, new uint8_t[1]{ AT_ANIMATION }, 0 },
 	{ 0x36, L"TurnInstant", L"Make the character face an angle.\n\n1st argument: angle.\n0 faces south, 64 faces west, 128 faces north and 192 faces east.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Angle" }, new uint8_t[1]{ AT_USPIN }, 0 },
 	{ 0x37, L"SetPitchAngle", L"Turn the model in the up/down direction.\n\n1st argument: angle (pitch axis).\n2nd argument: angle (XZ axis).", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Pitch", L"XZ Angle" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 },
 	{ 0x38, L"Attack", L"Make the enemy attack. The target(s) are to be set using the SV_Target variable.\nInside an ATB function, the attack is added to the queue.\nInside a counter function, the attack occurs directly.\n\n1st argument: attack to perform.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Attack" }, new uint8_t[1]{ AT_ATTACK }, 0 },
-	{ 0x39, L"ShowObject", L"Show an object.\n\n1st argument: object.\n2nd argument: unknown.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Object", L"Unknown" }, new uint8_t[2]{ AT_ENTRY, AT_USPIN }, 0 },
-	{ 0x3A, L"HideObject", L"Hide an object.\n\n1st argument: object.\n2nd argument: unknown.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Object", L"Unknown" }, new uint8_t[2]{ AT_ENTRY, AT_USPIN }, 0 },
+	{ 0x39, L"ShowObject", L"Show specific meshes of an object.\n\n1st argument: object.\n2nd argument: mesh list to show.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Object", L"Mesh list" }, new uint8_t[2]{ AT_ENTRY, AT_BOOLLIST }, 0 },
+	{ 0x3A, L"HideObject", L"Hide specific meshes of an object.\n\n1st argument: object.\n2nd argument: mesh list to hide.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Object", L"Mesh list" }, new uint8_t[2]{ AT_ENTRY, AT_BOOLLIST }, 0 },
 	{ 0x3B, L"SetObjectIndex", L"Redefine the current object's index.\n\n1st argument: new index.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Index" }, new uint8_t[1]{ AT_USPIN }, 0 },
 	{ 0x3C, L"SetRandomBattles", L"Define random battles.\n\n1st argument: pattern, deciding the encounter chances and the topography (World Map only).\n 0: {0.375, 0.28, 0.22, 0.125}\n 1: {0.25, 0.25, 0.25, 0.25}\n 2: {0.35, 0.3, 0.3, 0.05}\n 3: {0.45, 0.4, 0.1, 0.05}\n2nd to 5th arguments: possible random battles.", true, 5, new uint8_t[5]{ 1, 2, 2, 2, 2 }, new wstring[5]{ L"Pattern", L"Battle 1", L"Battle 2", L"Battle 3", L"Battle 4" }, new uint8_t[5]{ AT_USPIN, AT_BATTLE, AT_BATTLE, AT_BATTLE, AT_BATTLE }, 0 },
-	{ 0x3D, L"0x3D", L"Some animation flags (AFRAME).\n\n1st argument: unknown.\n2nd argument: unknown.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"In-Frame",  L"Out-Frame" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 },
+	{ 0x3D, L"SetAnimationInOut", L"Specify the starting and ending animation frames of the character.\n\n1st argument: starting frame.\n2nd argument: ending frame (capped to the animation's duration).", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"In-Frame",  L"Out-Frame" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 },
 	{ 0x3E, L"SetAnimationSpeed", L"Set the current object's animation speed.\n\n1st argument: speed.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Speed" }, new uint8_t[1]{ AT_USPIN }, 0 },
 	{ 0x3F, L"SetAnimationFlags", L"Set the current object's next animation looping flags.\n\n1st argument: looping flag list.\n 1: freeze at end\n 2: loop\n 3: loop back and forth\n2nd arguments: times to repeat.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Flag", L"Repeat" }, new uint8_t[2]{ AT_ANIMFLAG, AT_USPIN }, 0 },
 	{ 0x40, L"RunAnimation", L"Make the character play an animation.\n\n1st argument: animation ID.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Animation" }, new uint8_t[1]{ AT_ANIMATION }, 0 },
@@ -147,8 +147,8 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0x43, L"RunSharedScript", L"Run script passing the current object to it and continue executing the current function. If another shared script is already running for this object, it will be terminated.\n\n1st argument: entry (should be a one-function entry).", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Entry" }, new uint8_t[1]{ AT_ENTRY }, 0 },
 	{ 0x44, L"WaitSharedScript", L"Wait until the ran shared script has ended.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x45, L"StopSharedScript", L"Terminate the execution of the ran shared script.", false, 0, NULL, NULL, NULL, 0 },
-	{ 0x46, L"0x46", L"No use.", false, 0, NULL, NULL, NULL, 0 },
-	{ 0x47, L"EnableHeadFocus", L"Enable or disable the character turning his head toward an active object.\n\n1st argument: flags.\n 1: unknown\n 2: unknown\n 3: turn toward talkers", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Flags" }, new uint8_t[1]{ AT_BOOLLIST }, 0 },
+	{ 0x46, L"0x46", L"No use (DEBUGCC).", false, 0, NULL, NULL, NULL, 0 },
+	{ 0x47, L"EnableHeadFocus", L"Enable or disable the character turning his head toward an active object.\n\n1st argument: flags.\n 1: enable\n 2: turn toward close characters\n 3: turn toward talkers", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Flags" }, new uint8_t[1]{ AT_BOOLLIST }, 0 },
 	{ 0x48, L"AddItem", L"Add item to the player's inventory. Only one copy of key items can be in the player's inventory.\n\n1st argument: item to add.\n2nd argument: amount to add.", true, 2, new uint8_t[2]{ 2, 1 }, new wstring[2]{ L"Item", L"Amount" }, new uint8_t[2]{ AT_ITEM, AT_USPIN }, 0 },
 	{ 0x49, L"RemoveItem", L"Remove item from the player's inventory.\n\n1st argument: item to remove.\n2nd argument: amount to remove.", true, 2, new uint8_t[2]{ 2, 1 }, new wstring[2]{ L"Item", L"Amount" }, new uint8_t[2]{ AT_ITEM, AT_USPIN }, 0 },
 	{ 0x4A, L"RunBattleCode", L"Run a battle code.\n\n1st argument: battle code.\n2nd argument: depends on the battle code.\n End Battle: 0 for a defeat (deprecated), 1 for a victory, 2 for a victory without victory pose, 3 for a defeat, 4 for an escape, 5 for an interrupted battle, 6 for a game over, 7 for an enemy escape.\n Run Camera: Camera ID.\n Change Field: ID of the destination field after the battle.\n Add Gil: amount to add.", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Code", L"Argument" }, new uint8_t[2]{ AT_BATTLECODE, AT_SPIN }, 0 },
@@ -185,9 +185,9 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0x69, L"ChangeTimerTime", L"Change the remaining time of the timer window.\n\n1st argument: time in seconds.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Time" }, new uint8_t[1]{ AT_USPIN }, 0 },
 	{ 0x6A, L"DisableRun", L"Make the player's character always walk.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x6B, L"SetBackgroundColor", L"Change the default color, seen behind the field's tiles.\n\n1st to 3rd arguments: color in (Red, Green, Blue) format.", true, 3, new uint8_t[3]{ 1, 1, 1 }, new wstring[1]{ L"Color" }, new uint8_t[3]{ AT_COLOR_RED, AT_COLOR_GREEN, AT_COLOR_BLUE }, 0 },
-	{ 0x6C, L"0x6C", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 },
-	{ 0x6D, L"0x6D", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 },
-	{ 0x6E, L"0x6E", L"Unknown Opcode.", false, 0, NULL, NULL, NULL, 0 },
+	{ 0x6C, L"0x6C", L"Unknown Opcode (PPRINT).", false, 0, NULL, NULL, NULL, 0 },
+	{ 0x6D, L"0x6D", L"Unknown Opcode (PPRINTF).", false, 0, NULL, NULL, NULL, 0 },
+	{ 0x6E, L"0x6E", L"Unknown Opcode (MAPID).", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x6F, L"MoveCamera", L"Move camera over time.\n\n1st and 2nd arguments: destination in (X, Y) format.\n3nd argument: movement duration.\n4th argument: scrolling type (8 for sinusoidal, other values for linear interpolation).", true, 4, new uint8_t[4]{ 2, 2, 1, 1 }, new wstring[3]{ L"Destination", L"Time", L"Smoothness" }, new uint8_t[4]{ AT_POSITION_X, AT_POSITION_Y, AT_USPIN, AT_USPIN }, 0 }, // screen size = 320?
 	{ 0x70, L"ReleaseCamera", L"Release camera movement, getting back to its normal behaviour.\n\n1st arguments: duration of the repositioning.\n2nd argument: scrolling type (8 for sinusoidal, other values for linear interpolation).", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Time", L"Smoothness" }, new uint8_t[2]{ AT_SPIN, AT_USPIN }, 0 },
 	{ 0x71, L"EnableCameraServices", L"Enable or disable camera services. When disabling, the 2nd and 3rd arguments are ignored.\n\n1st arguments: boolean activate/deactivate.\n2nd argument: duration of the repositioning when activating (defaulted to 30 if -1 is given).\n3rd argument: scrolling type of the repositioning when activating (8 for sinusoidal, other values for linear interpolation).", true, 3, new uint8_t[3]{ 1, 1, 1 }, new wstring[3]{ L"Enable", L"Time", L"Smoothness" }, new uint8_t[3]{ AT_BOOL, AT_SPIN, AT_USPIN }, 0 },
@@ -211,20 +211,20 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0x83, L"LockShadowRotation", L"Stop updating the shadow rotation by the object's rotation.\n\n1st argument: locked rotation.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Locked Rotation" }, new uint8_t[1]{ AT_SPIN }, 0 },
 	{ 0x84, L"UnlockShadowRotation", L"Make the shadow rotate accordingly with its object.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x85, L"SetShadowAmplifier", L"Amplify or reduce the shadow transparancy.\n\n1st argument: amplification factor.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Amplification Factor" }, new uint8_t[1]{ AT_USPIN }, 0 },
-	{ 0x86, L"SetAnimationStandSpeed", L"Change the standing animation speed.\n\n1st argument: unknown.\n2nd argument: unknown.\n3rd argument: unknown.\n4th argument: unknown.", true, 4, new uint8_t[4]{ 1, 1, 1, 1 }, new wstring[4]{ L"Unknown", L"Unknown", L"Unknown", L"Unknown" }, new uint8_t[4]{ AT_USPIN, AT_USPIN, AT_USPIN, AT_USPIN }, 0 },
-	{ 0x87, L"0x87", L"Unknown Opcode (DDIR).", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Entry", L"Unknown" }, new uint8_t[2]{ AT_ENTRY, AT_SPIN }, 0 },
+	{ 0x86, L"SetAnimationStandSpeed", L"Change the standing animation speed.\n\n1st to 4th arguments: different animation speeds (default is 16), picked at random.", true, 4, new uint8_t[4]{ 1, 1, 1, 1 }, new wstring[4]{ L"1st speed", L"2nd speed", L"3rd speed", L"4th speed" }, new uint8_t[4]{ AT_USPIN, AT_USPIN, AT_USPIN, AT_USPIN }, 0 },
+	{ 0x87, L"TurnInstantEx", L"Make the specified character face an angle.\n\n1st argument: object to turn.\n2nd argument: angle.\n0 faces south, 64 faces west, 128 faces north and 192 faces east.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Entry", L"Angle" }, new uint8_t[2]{ AT_ENTRY, AT_USPIN }, 0 },
 	{ 0x88, L"RunModelCode", L"Run a model code.\n\n1st argument: model code.\n2nd to 4th arguments: depends on the model code.\n Texture Blend (blend mode) with blend mode being 1 for screen, 2 for multiply, 4 for Soft and 255 for a solid texture\n Slice (boolean slice/unslice, value)\n Enable Mirror (boolean enable/disable)\n Mirror Position (X, Z, Y)\n Mirror Normal (X, Z, Y)\n Mirror Color (Red, Green, Blue)\n Sound codes (Animation, Frame, Value)\n  For Add (Secondary) Sound, the 3rd argument is the sound ID\n  For Sound Random Pitch, the 3rd argument is a boolean random/not random\n  For Remove Sound, the 3rd argument is unused", true, 4, new uint8_t[4]{ 1, 2, 2, 2 }, new wstring[4]{ L"Model Code", L"Argument 1", L"Argument 2", L"Argument 3" }, new uint8_t[4]{ AT_MODELCODE, AT_SPIN, AT_SPIN, AT_SPIN }, 0 },
 	{ 0x89, L"SetSoundPosition", L"Set the position of a 3D sound.\n\n1st to 3rd arguments: sound position.\n4th argument: sound volume.", true, 4, new uint8_t[4]{ 2, 2, 2, 1 }, new wstring[2]{ L"Position", L"Volume" }, new uint8_t[4]{ AT_POSITION_X, AT_POSITION_Z, AT_POSITION_Y, AT_SPIN }, 0 },
 	{ 0x8A, L"SetSoundObjectPosition", L"Set the position of a 3D sound to the object's position.\n\n1st argument: object.\n2nd argument: sound volume.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Object", L"Volume" }, new uint8_t[2]{ AT_ENTRY, AT_SPIN }, 0 },
-	{ 0x8B, L"SetHeadAngle", L"Maybe define the maximum angle and distance for the character to turn his head toward an active object.\n\n1st argument: unknown.\n2nd argument: unknown.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 },
+	{ 0x8B, L"SetHeadFocusMask", L"Define a mask for characters to turn their head toward close characters: if this character's TargetMask has a common bit with another character's SelfMask, then he can turn to that other character.\nAlso enables the two EnableHeadFocus flags \"enable\" and \"turn toward close characters\".\nCharacters must be at least 31 units away to have head focus and at most 2000 units away (the closest character is determined both by the distance and the angle).\n\n1st argument: SelfMask.\n2nd argument: TargetMask.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"SelfMask", L"TargetMask" }, new uint8_t[2]{ AT_BOOLLIST, AT_BOOLLIST }, 0 },
 	{ 0x8C, L"BattleEx", L"Start a battle and choose its battle group.\n\n1st argument: rush type (unknown).\n2nd argument: group.\n3rd argument: gathered battle and Steiner's state (highest bit) informations.", true, 3, new uint8_t[3]{ 1, 1, 2 }, new wstring[3]{ L"Rush Type", L"Battle Group", L"Battle" }, new uint8_t[3]{ AT_SPIN, AT_SPIN, AT_BATTLE }, 0 },
 	{ 0x8D, L"ShowTimer", L"Activate the timer window.\n\n1st argument: boolean show/hide.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Enable" }, new uint8_t[1]{ AT_BOOL }, 0 },
 	{ 0x8E, L"RaiseWindows", L"Make all the dialogs and windows display over the filters.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x8F, L"SetModelColor", L"Change a 3D model's color.\n\n1st argument: entry associated with the model.\n2nd to 4th arguments: color in (Red, Green, Blue) format.", true, 4, new uint8_t[4]{ 1, 1, 1, 1 }, new wstring[2]{ L"Object", L"Color" }, new uint8_t[4]{ AT_ENTRY, AT_COLOR_RED, AT_COLOR_GREEN, AT_COLOR_BLUE }, 0 },
 	{ 0x90, L"DisableInactiveAnimation", L"Prevent player's character to play its inactive animation.", false, 0, NULL, NULL, NULL, 0 },
-	{ 0x91, L"0x91", L"Unknown Opcode (AUTOTURN).", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Unknown" }, new uint8_t[1]{ AT_BOOL }, 0 }, // actor.turninst0 = (arg ? 167: 4)
+	{ 0x91, L"FollowFocus", L"Automatically turn toward the character that is stared at when needed.\n\n1st argument: boolean on/off", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Enable" }, new uint8_t[1]{ AT_BOOL }, 0 },
 	{ 0x92, L"AttachTile", L"Make a part of the field background follow the player's movements. Also apply a color filter out of that tile block's range.\n\n1st argument: tile block.\n2nd and 3rd arguments: offset position in (X, Y) format.\n4th argument: filter mode ; use -1 for no filter effect.\n5th to 7th arguments: filter color in (Red, Green, Blue) format.", true, 7, new uint8_t[7]{ 1, 2, 1, 1, 1, 1, 1 }, new wstring[5]{ L"Tile Block", L"Position X", L"Position Y", L"Filter Mode", L"Filter Color" }, new uint8_t[7]{ AT_TILE, AT_SPIN, AT_SPIN, AT_SPIN, AT_COLOR_RED, AT_COLOR_GREEN, AT_COLOR_BLUE }, 0 },
-	{ 0x93, L"SetObjectFlags", L"Change flags of the current entry's object.\n\n1st argument: object flags.\n 1: show model\n 2: unknown\n 4: unknown\n 8: unknown\n 16: unknown\n 32: unknown", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Flags" }, new uint8_t[1]{ AT_BOOLLIST }, 0 },
+	{ 0x93, L"SetObjectFlags", L"Change flags of the current entry's object.\n\n1st argument: object flags.\n 1: show model\n 2: collision with player character\n 4: collision with NPC\n 8: disable talk\n 16: can't walk through by insisting\n 32: don't hide all\n 64: unknown/unused (can't change with this)\n 128: is turning (can't change with this)", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Flags" }, new uint8_t[1]{ AT_BOOLLIST }, 0 },
 	{ 0x94, L"SetJumpAnimation", L"Change the jumping animation.\n\n1st argument: animation ID.\n2nd argument: unknown.\n3rd argument: unknown.", true, 3, new uint8_t[3]{ 2, 1, 1 }, new wstring[3]{ L"Animation", L"Unknown", L"Unknown" }, new uint8_t[3]{ AT_ANIMATION, AT_SPIN, AT_SPIN }, 0 },
 	{ 0x95, L"WindowSyncEx", L"Display a window with text inside and wait until it closes.\n\n1st argument: talker's entry.\n2nd argument: window ID.\n3rd argument: UI flag list.\n 3: disable bubble tail\n 4: mognet format\n 5: hide window\n 7: ATE window\n 8: dialog window\n4th argument: text to display.", true, 4, new uint8_t[4]{ 1, 1, 1, 2 }, new wstring[4]{ L"Talker", L"Window ID", L"UI", L"Text" }, new uint8_t[4]{ AT_ENTRY, AT_USPIN, AT_BOOLLIST, AT_TEXT }, 0 },
 	{ 0x96, L"WindowAsyncEx", L"Display a window with text inside and continue the execution of the script without waiting.\n\n1st argument: talker's entry.\n2nd argument: window ID.\n3rd argument: UI flag list.\n 3: disable bubble tail\n 4: mognet format\n 5: hide window\n 7: ATE window\n 8: dialog window\n4th argument: text to display.", true, 4, new uint8_t[4]{ 1, 1, 1, 2 }, new wstring[4]{ L"Talker", L"Window ID", L"UI", L"Text" }, new uint8_t[4]{ AT_ENTRY, AT_USPIN, AT_BOOLLIST, AT_TEXT }, 0 },
@@ -246,22 +246,22 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0xA6, L"SetRunSpeedLimit", L"Change the speed at which the character uses his run animation instead of his walk animation (default is 31).\n\n1st argument: speed limit.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Speed Limit" }, new uint8_t[1]{ AT_USPIN }, 0 },
 	{ 0xA7, L"Turn", L"Make the character face an angle (animated). Speed is defaulted to 16.\n\n1st argument: angle.\n0 faces south, 64 faces west, 128 faces north and 192 faces east.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Angle" }, new uint8_t[1]{ AT_USPIN }, 0 },
 	{ 0xA8, L"SetPathing", L"Change the pathing of the character.\n\n1st argument: boolean pathing on/off.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Pathing" }, new uint8_t[1]{ AT_BOOL }, 0 },
-	{ 0xA9, L"0xA9", L"Unknown Opcode (GETSCREEN).", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Unknown" }, new uint8_t[1]{ AT_ENTRY }, 0 }, // change the sSys position
+	{ 0xA9, L"CalculateScreenPosition", L"Calculate the object's position in screen coordinates and store it in \"GetScreenCalculatedX\" and \"GetScreenCalculatedY\".", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Object" }, new uint8_t[1]{ AT_ENTRY }, 0 },
 	{ 0xAA, L"EnableMenu", L"Enable menu access by the player.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xAB, L"DisableMenu", L"Disable menu access by the player.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xAC, L"ChangeDisc", L"Allow to save the game and change disc.\n\n1st argument: gathered field destination and disc destination.", true, 1, new uint8_t[1]{ 2 }, new wstring[2]{ L"Field Destination", L"Disc" }, new uint8_t[1]{ AT_DISC_FIELD }, 0 },
 	{ 0xAD, L"MoveInstantXZYEx", L"Instantatly move an object.\n\n1st argument: object's entry.\n2nd to 4th arguments: destination in (X, Z, Y) format.", true, 4, new uint8_t[4]{ 1, 2, 2, 2 }, new wstring[4]{ L"Object", L"Destination" }, new uint8_t[4]{ AT_ENTRY, AT_POSITION_X, AT_POSITION_Z, AT_POSITION_Y }, 0 },
 	{ 0xAE, L"TetraMaster", L"Begin a card game.\n\n1st argument: card deck of the opponent.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Card Deck" }, new uint8_t[1]{ AT_DECK }, 0 },
-	{ 0xAF, L"0xAF", L"Unknown Opcode (DELETEALLCARD).", false, 0, NULL, NULL, NULL, 0 }, // doesn't seem to work
+	{ 0xAF, L"DeleteAllCards", L"Clear the player's Tetra Master's deck.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xB0, L"SetFieldName", L"Change the name of the field.\n\n1st argument: new name (unknown format).", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Name" }, new uint8_t[1]{ AT_SPIN }, 0 },
 	{ 0xB1, L"ResetFieldName", L"Reset the name of the field.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xB2, L"Party", L"Allow the player to change the members of its party.\n\n1st argument: party size (if characters occupy slots beyond it, they are locked).\n2nd argument: list of locked characters.", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Party Size", L"Locked Characters" }, new uint8_t[2]{ AT_USPIN, AT_CHARACTER }, 0 },
 	{ 0xB3, L"RunSPSCode", L"Run Sps code, which seems to be special model effects on the field.\n\n1st argument: sps ID.\n2nd argument: sps code.\n3rd to 5th arguments: depend on the sps code.\n Load Sps (sps type)\n Enable Attribute (attribute list, boolean enable/disable)\n Set Position (X, -Z, Y)\n Set Rotation (angle X, angle Z, angle Y)\n Set Scale (scale factor)\n Attach (object's entry to attach, bone number)\n Set Fade (fade)\n Set Animation Rate (rate)\n Set Frame Rate (rate)\n Set Frame (value) where the value is factored by 16 to get the frame\n Set Position Offset (X, -Z, Y)\n Set Depth Offset (depth)", true, 5, new uint8_t[5]{ 1, 1, 2, 2, 2 }, new wstring[5]{ L"Sps", L"Code", L"Parameter 1", L"Parameter 2", L"Parameter 3" }, new uint8_t[5]{ AT_USPIN, AT_SPSCODE, AT_SPIN, AT_SPIN, AT_SPIN }, 0 },
 	{ 0xB4, L"SetPartyReserve", L"Define the party member availability for a future Party call.\n\n1st argument: list of available characters.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Characters available" }, new uint8_t[1]{ AT_CHARACTER }, 0 },
-	{ 0xB5, L"0xB5", L"Seem to somehow make the object appropriate itself another entry's function list (PRETEND).\n\n1st argument: entry to get functions from.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Entry" }, new uint8_t[1]{ AT_ENTRY }, 0 },
+	{ 0xB5, L"PretendToBe", L"Link the object to another object, forcing this object to follow the linked object's position and logical animations.\n\n1st argument: object to pretend to be.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Entry" }, new uint8_t[1]{ AT_ENTRY }, 0 },
 	{ 0xB6, L"WorldMap", L"Change the scene to a world map.\n\n1st argument: world map destination.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"World Map" }, new uint8_t[1]{ AT_WORLDMAP }, 0 },
-	{ 0xB7, L"0xB7", L"Unknown Opcode (EYE).", false, 0, NULL, NULL, NULL, 0 },
-	{ 0xB8, L"0xB8", L"Unknown Opcode (AIM).", false, 0, NULL, NULL, NULL, 0 },
+	{ 0xB7, L"0xB7", L"Unknown World Map Opcode (EYE).", false, 0, NULL, NULL, NULL, 0 },
+	{ 0xB8, L"0xB8", L"Unknown World Map Opcode (AIM).", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xB9, L"AddControllerMask", L"Prevent the input to be processed by the game.\n\n1st argument: pad number (should only be 0 or 1).\n2nd argument: button list.\n1: Select\n4: Start\n5: Up\n6: Right\n7: Down\n8: Left\n9: L2\n10: R2\n11: L1\n12: R1\n13: Triangle\n14: Circle\n15: Cross\n16: Square\n17: Cancel\n18: Confirm\n20: Moogle\n21: L1 Ex\n22: R1 Ex\n23: L2 Ex\n24: R2 Ex\n25: Menu\n26: Select Ex", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Pad", L"Buttons" }, new uint8_t[2]{ AT_USPIN, AT_BUTTONLIST }, 0 },
 	{ 0xBA, L"RemoveControllerMask", L"Enable back the controller's inputs.\n\n1st argument: pad number (should only be 0 or 1).\n2nd argument: button list.\n1: Select\n4: Start\n5: Up\n6: Right\n7: Down\n8: Left\n9: L2\n10: R2\n11: L1\n12: R1\n13: Triangle\n14: Circle\n15: Cross\n16: Square\n17: Cancel\n18: Confirm\n20: Moogle\n21: L1 Ex\n22: R1 Ex\n23: L2 Ex\n24: R2 Ex\n25: Menu\n26: Select Ex", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Pad", L"Buttons" }, new uint8_t[2]{ AT_USPIN, AT_BUTTONLIST }, 0 },
 	{ 0xBB, L"TimedTurnEx", L"Make an object face an angle (animated).\n\n1st argument: object's entry.\n2nd argument: angle.\n0 faces south, 64 faces west, 128 faces north and 192 faces east.\n3rd argument: turn speed (1 is slowest).", true, 3, new uint8_t[3]{ 1, 1, 1 }, new wstring[3]{ L"Object", L"Angle", L"Speed" }, new uint8_t[3]{ AT_ENTRY, AT_USPIN, AT_USPIN }, 0 },
@@ -278,43 +278,43 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0xC6, L"RunSoundCode1", L"Same as RunSoundCode3( code, music, arg1, 0, 0 ).", true, 3, new uint8_t[3]{ 2, 2, 3 }, new wstring[3]{ L"Code", L"Sound", L"Argument" }, new uint8_t[3]{ AT_SOUNDCODE, AT_SOUND, AT_SPIN }, 0 },
 	{ 0xC7, L"RunSoundCode2", L"Same as RunSoundCode3( code, music, arg1, arg2, 0 ).", true, 4, new uint8_t[4]{ 2, 2, 3, 1 }, new wstring[4]{ L"Code", L"Sound", L"Argument", L"Argument" }, new uint8_t[4]{ AT_SOUNDCODE, AT_SOUND, AT_SPIN, AT_SPIN }, 0 },
 	{ 0xC8, L"RunSoundCode3", L"Run a sound code.\n\n1st argument: sound code.\n2nd argument: music or sound to process.\n3rd to 5th arguments: depend on the sound code.", true, 5, new uint8_t[5]{ 2, 2, 3, 1, 1 }, new wstring[5]{ L"Code", L"Sound", L"Argument", L"Argument", L"Argument" }, new uint8_t[5]{ AT_SOUNDCODE, AT_SOUND, AT_SPIN, AT_SPIN, AT_SPIN }, 0 },
-	{ 0xC9, L"0xC9", L"Unknown Opcode (EBG_overlayDefineViewport).", true, 5, new uint8_t[5]{ 1, 2, 2, 2, 2 }, new wstring[5]{ L"Unknown", L"Unknown", L"Unknown", L"Unknown", L"Unknown" }, new uint8_t[5]{ AT_USPIN, AT_USPIN, AT_USPIN, AT_USPIN, AT_USPIN }, 0 },
-	{ 0xCA, L"0xCA", L"Unknown Opcode (EBG_animSetVisible).", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Visible" }, new uint8_t[2]{ AT_SPIN, AT_BOOL }, 0 },
+	{ 0xC9, L"SetupTileLoopingWindow", L"Define the rectangular area for a looping tile block movement.\n\n1st argument: background tile block.\n2nd to 5th arguments: area that loops in local position (default position is (0, 0)).", true, 5, new uint8_t[5]{ 1, 2, 2, 2, 2 }, new wstring[5]{ L"Tile Block", L"Position X", L"Position Y", L"Width", L"Height" }, new uint8_t[5]{ AT_USPIN, AT_USPIN, AT_USPIN, AT_USPIN, AT_USPIN }, 0 },
+	{ 0xCA, L"ResetTileAnimation", L"Stop the background tile animation and optionally show its first frame's tile block.\n\n1st argument: background tile animation.\n2nd argument: show/hide the 1st frame's tile block.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Tile Animation", L"Visible" }, new uint8_t[2]{ AT_TILEANIM, AT_BOOL }, 0 },
 	{ 0xCB, L"EnablePath", L"Enable a field path.\n\n1st argument: field path ID.\n2nd argument: boolean enable/disable.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Path", L"Enable" }, new uint8_t[2]{ AT_WALKPATH, AT_BOOL }, 0 },
-	{ 0xCC, L"0xCC", L"Maybe make the character transparent (CHRSET).", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Flag List" }, new uint8_t[1]{ AT_BOOLLIST }, 0 },
-	{ 0xCD, L"0xCD", L"Unknown Opcode (CHRCLEAR).", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Flag List" }, new uint8_t[1]{ AT_BOOLLIST }, 0 },
+	{ 0xCC, L"AddCharacterAttribute", L"Add specific attributes for the player character corresponding to the current's entry (should only be used by the entries of player characters).\n\n1st argument: attribute flags.\n 3: use a ladder.\n 5: hide shadow.\n 6: lock spin angle.\n 7: enable animation sounds.\n others: unknown.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Attributes" }, new uint8_t[1]{ AT_BOOLLIST }, 0 },
+	{ 0xCD, L"RemoveCharacterAttribute", L"Remove specific attributes for the player character corresponding to the current's entry (should only be used by the entries of player characters).\n\n1st argument: attribute flags.\n 3: use a ladder.\n 5: hide shadow.\n 6: lock spin angle.\n 7: enable animation sounds.\n others: unknown.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Attributes" }, new uint8_t[1]{ AT_BOOLLIST }, 0 },
 	{ 0xCE, L"AddGil", L"Give gil to the player.\n\n1st argument: gil amount.", true, 1, new uint8_t[1]{ 3 }, new wstring[1]{ L"Amount" }, new uint8_t[1]{ AT_SPIN }, 0 },
 	{ 0xCF, L"RemoveGil", L"Remove gil from the player.\n\n1st argument: gil amount.", true, 1, new uint8_t[1]{ 3 }, new wstring[1]{ L"Amount" }, new uint8_t[1]{ AT_SPIN }, 0 },
 	{ 0xD0, L"BattleDialog", L"Display text in battle for 60 frames.\n\n1st argument: text to display.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Text" }, new uint8_t[1]{ AT_TEXT }, 0 },
 	{ 0xD1, L"0xD1", L"Unknown Opcode (GLOBALCLEAR); ignored in the non-PSX versions.", false, 0, NULL, NULL, NULL, 0 }, // Return 0 on Steam
 	{ 0xD2, L"0xD2", L"Unknown Opcode (DEBUGSAVE); ignored in the non-PSX versions.", false, 0, NULL, NULL, NULL, 0 }, // Return 0 on Steam
 	{ 0xD3, L"0xD3", L"Unknown Opcode (DEBUGLOAD); ignored in the non-PSX versions.", false, 0, NULL, NULL, NULL, 0 }, // Return 0 on Steam
-	{ 0xD4, L"0xD4", L"Unknown Opcode (geoAttachOffset).", true, 3, new uint8_t[3]{ 2, 2, 2 }, new wstring[3]{ L"Unknown", L"Unknown", L"Unknown" }, new uint8_t[3]{ AT_SPIN, AT_SPIN, AT_SPIN }, 0 },
-	{ 0xD5, L"0xD5", L"Unknown Opcode (PUSHHIDE).", false, 0, NULL, NULL, NULL, 0 },
-	{ 0xD6, L"0xD6", L"Unknown Opcode (POPSHOW).", false, 0, NULL, NULL, NULL, 0 },
+	{ 0xD4, L"AttachObjectOffset", L"Add an offset to the attachment point.\n\n1st argument: offset in (X, Z, Y) format.", true, 3, new uint8_t[3]{ 2, 2, 2 }, new wstring[1]{ L"Offset" }, new uint8_t[3]{ AT_POSITION_X, AT_POSITION_Z, AT_POSITION_Y }, 0 },
+	{ 0xD5, L"HideAllObjects", L"Hide all the objects except those flagged with \"don't hide all\" (6th object flag).", false, 0, NULL, NULL, NULL, 0 },
+	{ 0xD6, L"ShowAllObjects", L"Show all the (initialized) objects.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xD7, L"ATE", L"Enable or disable ATE.\n\n1st argument: maybe flags (unknown format).", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Unknown" }, new uint8_t[1]{ AT_SPIN }, 0 },
-	{ 0xD8, L"SetWeather", L"Add a foreground effect.\n\n1st argument: unknown.\n2nd argument: unknown.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_SPIN, AT_SPIN }, 0 },
+	{ 0xD8, L"SetWeather", L"Add a raining effect (works on the world maps, fields and in battles).\n\n1st argument: strength of rain.\n2nd argument: speed of rain (unused for a battle rain).", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Strength", L"Speed" }, new uint8_t[2]{ AT_USPIN, AT_USPIN }, 0 },
 	{ 0xD9, L"CureStatus", L"Cure the status ailments of a party member.\n\n1st argument: character.\n2nd argument: status list.\n 1: Petrified\n 2: Venom\n 3: Virus\n 4: Silence\n 5: Darkness\n 6: Trouble\n 7: Zombie", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Character", L"Statuses" }, new uint8_t[2]{ AT_LCHARACTER, AT_BOOLLIST }, 0 },
 	{ 0xDA, L"RunSPSCodeSimple", L"Run Sps code, which seems to be special model effects on the field.\n\n1st argument: sps ID.\n2nd argument: sps code.\n3rd to 5th arguments: depend on the sps code.\n Load Sps (sps type)\n Enable Attribute (attribute list, boolean enable/disable)\n Set Position (X, -Z, Y)\n Set Rotation (angle X, angle Z, angle Y)\n Set Scale (scale factor)\n Attach (object's entry to attach, bone number)\n Set Fade (fade)\n Set Animation Rate (rate)\n Set Frame Rate (rate)\n Set Frame (value) where the value is factored by 16 to get the frame\n Set Position Offset (X, -Z, Y)\n Set Depth Offset (depth)", true, 5, new uint8_t[5]{ 1, 1, 1, 2, 2 }, new wstring[5]{ L"Sps", L"Code", L"Parameter 1", L"Parameter 2", L"Parameter 3" }, new uint8_t[5]{ AT_USPIN, AT_SPSCODE, AT_SPIN, AT_SPIN, AT_SPIN }, 0 },
 	{ 0xDB, L"EnableVictoryPose", L"Enable or disable the victory pose at the end of battles for a specific character.\n\n1st argument: which character.\n2nd argument: boolean activate/deactivate.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Character", L"Enable" }, new uint8_t[2]{ AT_LCHARACTER, AT_BOOL }, 0 },
 	{ 0xDC, L"Jump", L"Perform a jumping animation. Must be used after a SetupJump call.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xDD, L"RemoveParty", L"Remove a character from the player's team.\n\n1st argument: character to remove.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Character" }, new uint8_t[1]{ AT_LCHARACTER }, 0 },
 	{ 0xDE, L"SetName", L"Change the name of a party member. Clear the text opcodes from the chosen text.\n\n1st argument: character to rename.\n2nd argument: new name.", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Character", L"Text" }, new uint8_t[2]{ AT_LCHARACTER, AT_TEXT }, 0 },
-	{ 0xDF, L"0xDF", L"Unknown Opcode (OVAL).", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Unknown" }, new uint8_t[1]{ AT_USPIN }, 0 }, // posObj.ovalRatio
+	{ 0xDF, L"SetObjectOvalRatio", L"Define a stretching factor for the object's collisions (seems to only work on world maps). The collisions' shape is not exactly an oval but consists of two discs patched together.\n\n1st argument: increase of the collision in the facing direction of the object.\n 0 removes the feature (both circles are merged)\n 48 makes the object's collision twice higher toward the facing direction than on its sides\n 100 corresponds to a factor of about 2.7 in the facing direction\n 255 corresponds to a factor of about 4", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Stretching Factor" }, new uint8_t[1]{ AT_USPIN }, 0 },
 	{ 0xE0, L"AddFrog", L"Add one frog to the frog counter.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xE1, L"TerminateBattle", L"Return to the field (or world map) when the rewards are disabled.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xE2, L"SetupJump", L"Setup datas for a Jump call.\n\n1st to 3rd arguments: destination in (X, Z, Y) format.\n4th argument: number of steps for the jump.", true, 4, new uint8_t[4]{ 2, 2, 2, 1 }, new wstring[2]{ L"Destination", L"Steps" }, new uint8_t[4]{ AT_POSITION_X, AT_POSITION_Z, AT_POSITION_Y, AT_USPIN }, 0 },
 	{ 0xE3, L"SetDialogProgression", L"Change the dialog progression value.\n\n1st argument: new value.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Progression" }, new uint8_t[1]{ AT_SPIN }, 0 },
-	{ 0xE4, L"0xE4", L"Seem to move field tile while applying a loop effect to it (EBG_overlaySetScrollWithOffset).\n\n1st argument: background tile block.\n2nd argument: boolean activate/deactivate.\n3rd and 4th arguments: seems to be the movement in (X/256, Y/256) format.\n5th argument: unknown boolean.", true, 5, new uint8_t[5]{ 1, 1, 2, 2, 1 }, new wstring[5]{ L"Tile Block", L"Enable", L"Delta", L"Offset", L"Is X Offset" }, new uint8_t[5]{ AT_TILE, AT_BOOL, AT_SPIN, AT_SPIN, AT_BOOL }, 0 },
+	{ 0xE4, L"MoveTileLoopWithOffset", L"Make the image of a field tile loop over space.\n\n1st argument: background tile block.\n2nd argument: boolean activate/deactivate.\n3rd argument: movement speed.\n4th argument: offset.\n5th argument: move along the X axis or Y axis.", true, 5, new uint8_t[5]{ 1, 1, 2, 2, 1 }, new wstring[5]{ L"Tile Block", L"Enable", L"Speed", L"Offset", L"Is X Movement" }, new uint8_t[5]{ AT_TILE, AT_BOOL, AT_SPIN, AT_SPIN, AT_BOOL }, 0 },
 	{ 0xE5, L"AttackSpecial", L"Make the enemy instantatly use a special move. It doesn't use nor modify the battle state so it should be used when the battle is paused. The target(s) are to be set using the SV_Target variable.\n\n1st argument: attack to perform.", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Attack" }, new uint8_t[1]{ AT_ATTACK }, 0 },
 	{ 0xE6, L"SetTileLoopType", L"Let tile be screen anchored or not.\n\n1st argument: background tile block.\n2nd argument: boolean on/off.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Tile Block", L"Screen Anchored" }, new uint8_t[2]{ AT_TILE, AT_BOOL }, 0 },
 	{ 0xE7, L"SetTileAnimationFrame", L"Change the frame of a field tile animation (can be used to hide them all if the given frame is out of range, eg. 255).\n\n1st argument: background animation.\n2nd argument: animation frame to display.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Animation", L"Frame ID" }, new uint8_t[2]{ AT_TILEANIM, AT_USPIN }, 0 },
 	{ 0xE8, L"SideWalkXZY", L"Make the character walk to destination without changing his facing angle. Make it synchronous if InitWalk is called before.\n\n1st to 3rd arguments: destination in (X, Z, Y) format.", true, 3, new uint8_t[3]{ 2, 2, 2 }, new wstring[3]{ L"Destination" }, new uint8_t[3]{ AT_POSITION_X, AT_POSITION_Z, AT_POSITION_Y }, 0 },
-	{ 0xE9, L"UpdatePartyUI", L"Update the party's menu icons and such.", false, 0, NULL, NULL, NULL, 0 },
-	{ 0xEA, L"0xEA", L"Unknown Opcode (VRP).", false, 0, NULL, NULL, NULL, 0 }, // EBG_sceneGetVRP; modify sSys Position
+	{ 0xE9, L"UpdatePartyUID", L"Update the party's entry list (Team Character 1-4 entries) for RunScript and InitObject calls. Should always be used after a Party call (it is automatic when using RemoveParty or AddParty).", false, 0, NULL, NULL, NULL, 0 },
+	{ 0xEA, L"CalculateScreenOrigin", L"Calculate the position of the top-left corner of the current camera view in screen coordinates and store it in \"GetScreenCalculatedX\" and \"GetScreenCalculatedY\".", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xEB, L"CloseAllWindows", L"Close all the dialogs and UI windows.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xEC, L"FadeFilter", L"Apply a fade filter on the screen.\n\n1st argument: filter mode (0 for ADD, 2 for SUBTRACT).\n2nd argument: fading time.\n3rd argument: unknown.\n4th to 6th arguments: color of the filter in (Cyan, Magenta, Yellow) format.", true, 6, new uint8_t[6]{ 1, 1, 1, 1, 1, 1 }, new wstring[4]{ L"Fade In/Out", L"Fading Time", L"Unknown", L"Color" }, new uint8_t[6]{ AT_USPIN, AT_USPIN, AT_SPIN, AT_COLOR_CYAN, AT_COLOR_MAGENTA, AT_COLOR_YELLOW }, 0 },
-	{ 0xED, L"0xED", L"Unknown opcode about tile looping movements (EBG_overlayDefineViewportAlpha).\n\n1st argument: camera ID.\n2nd and 3rd arguments: unknown factors (X, Y).", true, 3, new uint8_t[3]{ 1, 2, 2 }, new wstring[3]{ L"Camera ID", L"Unknown X", L"Unknown Y" }, new uint8_t[3]{ AT_USPIN, AT_SPIN, AT_SPIN }, 0 },
+	{ 0xED, L"SetTileLoopAlpha", L"Unknown opcode about tile looping movements (EBG_overlayDefineViewportAlpha).\n\n1st argument: background tile block.\n2nd and 3rd arguments: unknown factors (X, Y).", true, 3, new uint8_t[3]{ 1, 2, 2 }, new wstring[3]{ L"Tile Block", L"Unknown X", L"Unknown Y" }, new uint8_t[3]{ AT_TILE, AT_SPIN, AT_SPIN }, 0 },
 	{ 0xEE, L"EnableInactiveAnimation", L"Allow the player's character to play its inactive animation. The inaction time required is:\nFirst Time = 200 + 4 * Random[0, 255]\nFollowing Times = 200 + 2 * Random[0, 255]", false, 0, NULL, NULL, NULL, 0 },
 	{ 0xEF, L"ShowHereIcon", L"Show the Here icon over player's chatacter.\n\n1st argument: display type (0 to hide, 3 to show unconditionally)", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Show" }, new uint8_t[1]{ AT_SPIN }, 0 },
 	{ 0xF0, L"EnableRun", L"Allow the player's character to run.", false, 0, NULL, NULL, NULL, 0 },
@@ -355,8 +355,6 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 
 /* Opcodes used in scripts and still unnamed:
 0x3D // Fields + Worlds
-0x87 // Fields
-0x91 // Fields
 0xA9 // Fields
 0xB5 // Fields + Worlds
 0xB7 // Worlds
@@ -365,9 +363,6 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 0xCA // Fields
 0xCC // Fields
 0xCD // Fields
-0xD4 // Fields
-0xD5 // Fields
-0xD6 // Fields
 0xDF // Worlds
 0xE4 // Fields
 0xEA // Fields
@@ -419,8 +414,8 @@ static VariableOperation VarOpList[] = {
 	{ 1, L"++$", L"" },		{ 1, L"--$", L"" },
 	{ 0, L"++$", L"Increase each value of a list by 1.\n Prefixed, it returns the value of the last element of the list after the increment.\n Postfixed, it returns the value of the last element of the list before the increment." },
 	{ 0, L"--$", L"Decrease each value of a list by 1.\n Prefixed, it returns the value of the last element of the list after the decrement.\n Postfixed, it returns the value of the last element of the list before the decrement." },
-	{ 50, L"OpC", L"Single plus." },
-	{ 50, L"OpD", L"Single minus." },
+	{ 50, L"Plus", L"Single plus (do nothing)." },
+	{ 50, L"Minus", L"Single minus." },
 	{ 0, L"!", L"Boolean NOT operator." },
 	{ 0, L"!$", L"Boolean list NOT operator." },
 	
@@ -478,9 +473,9 @@ static VariableOperation VarOpList[] = {
 	{ 2, L"&=$", L"Bitwise list variable AND assignment." },
 	{ 2, L"^=$", L"Bitwise list variable XOR assignment." },
 	{ 2, L"|=$", L"Bitwise list variable OR assignment." },
-	{ 2, L"Op43", L"Boolean list variable AND assignment." },
-	{ 2, L"Op44", L"Boolean list variable XOR assignment." },
-	{ 2, L"Op45", L"Boolean list variable OR assignment." },
+	{ 2, L"&&=$", L"Boolean list variable AND assignment." },
+	{ 2, L"^^=$", L"Boolean list variable XOR assignment." },
+	{ 2, L"||=$", L"Boolean list variable OR assignment." },
 	{ 50, L"Char", L"Cast to an 8-bits value." },
 	{ 50, L"UChar", L"Cast to an 8-bits unsigned value." },
 	{ 50, L"Short", L"Cast to a 16-bits value." },
@@ -492,8 +487,8 @@ static VariableOperation VarOpList[] = {
 	{ 2, L"Op4E", L"ObjSpec." },
 	{ 50, L"IsButton", L"Check if a button of the controller was pressed right before the current frame." },
 	
-	{ 50, L"Op50", L"A sinus operator." },
-	{ 50, L"Op51", L"A cosinus operator." },
+	{ 50, L"Sin2", L"A sinus operator (the range 0-4096 corresponds to the range 0-360 in degrees)." },
+	{ 50, L"Cos2", L"A cosinus operator (the range 0-4096 corresponds to the range 0-360 in degrees)." },
 	{ 50, L"GetHP", L"Return the HP of the character." },
 	{ 50, L"GetMaxHP", L"Return the MAX HP of the character." },
 	{ 51, L"Matching", L"Return the list of indexes matching at least one bit of a bitflag condition.\n\n 1st argument: list of bitflags.\n 2nd argument: bitflag condition." },
@@ -509,13 +504,13 @@ static VariableOperation VarOpList[] = {
 	{ 51, L"Distance", L"Calculate the distance between the entry's object position and the target position, in the XY plane.\n\n 1st argument: target position X.\n 2nd argument: target position Y." },
 	{ 19, L"ObjectUID_", L"Retrieve an object's UID or 0 if not found.\nOnly useful for (1) checking if an object exists with the UID or (2) convert special entry IDs (250 to 255) to a valid UID." },
 	
-	{ 50, L"Op60", L"An angle calculation." },
-	{ 50, L"Op61", L"A distance calculation." },
+	{ 50, L"AngleWithEntry", L"Calculate the angle between the entry's object position and the target's position, in the XY plane." },
+	{ 50, L"DistanceWithEntry", L"Calculate the distance between the entry's object position and the target's position, in the XY plane." },
 	{ 50, L"Sin", L"Calculate the sinus of an angle and multiply it by 4096 to get an integer." },
 	{ 50, L"Cos", L"Calculate the cosinus of an angle and multiply it by 4096 to get an integer." },
 	{ 50, L"GetItemCount", L"Return the amount of items of an item type in the player's inventory." },
 	{ 50, L"GetTileAnimFrame", L"Return the current frame of the specified tile animation." },
-	{ 51, L"Op66", L"An angle calculation." },
+	{ 51, L"AngleOfVector", L"Calculate the angle of the given vector.\n\n 1st argument: vector X coordinate.\n 2nd argument: vector Y coordinate." },
 	{ 100, L"Op67", L"" },	{ 100, L"Op68", L"" },	{ 100, L"Op69", L"" },
 	{ 50, L"GetAnimDuration", L"Return the duration of the entry's object specified animation." },
 	{ 50, L"IsInParty", L"Check if a character is in the player's party." },
@@ -560,7 +555,7 @@ static VariableOperation VarEntryPropList[] = {
 	{ 1001, L"GetEntryPosZ", L"Return the specified entry's Z position." },
 	{ 1002, L"GetEntryPosY", L"Return the specified entry's Y position." },
 	{ 1003, L"GetEntryAngle", L"Return the specified entry's facing angle." },
-	{ 1004, L"GetEntryFlags", L"Return the specified object's model flags." },
+	{ 1004, L"GetEntryFlags", L"Return the specified object's model flags.\n 1: show model\n 2: collision with player character\n 4: collision with NPC\n 8: talk\n 16: can't walk through by insisting\n 32: don't hide all\n 64: unknown/unused\n 128: is turning" },
 	{ 1005, L"GetEntryUniqueID", L"Return the specified entry's unique ID." },
 	{ 1006, L"GetEntryScriptLevel", L"Return the specified entry's current script level." },
 	{ 1007, L"GetEntryAnimFrame", L"Return the current animation frame of the specified entry." }
@@ -597,17 +592,17 @@ static VariableOperationArgType VarOpTypeList[] = {
 								L"[ROW/COLUMN]\n"\
 								L"The row is 0/1 for front/back row while the column is an integer from 0 to 3, sorting the characters from right to left.\n\n"\
 								L"[MODEL_TYPE]\n"\
-								L"Zidane: 0 or 1\n"\
+								L"Zidane: 0 (dagger) or 1 (sword)\n"\
 								L"Vivi: 2\n"\
-								L"Dagger: 3, 4, 5 or 6\n"\
-								L"Steiner: 7 or 8\n"\
+								L"Dagger: 3 (long hair rod), 4 (long hair racket), 5 (short hair rod) or 6 (short hair racket)\n"\
+								L"Steiner: 7 or 8 (\"indoor\", dummied)\n"\
 								L"Quina: 9\n"\
-								L"Eiko: 10 or 11\n"\
+								L"Eiko: 10 (flute) or 11 (racket)\n"\
 								L"Freya: 12\n"\
 								L"Amarant: 13\n"\
 								L"Cinna: 14\n"\
 								L"Marcus: 15\n"\
-								L"Blank: 16 or 17\n"\
+								L"Blank: 16 (normal) or 17 (pluto)\n"\
 								L"Beatrix: 18\n\n"\
 								L"[CATEGORY]\n"\
 								L"1 : male\n"\
@@ -666,8 +661,8 @@ static VariableName VarNameList[] = {
 	{ VARCODE_ENGINE,    9,	L"GetDialogChoice",			L"Return the choice selected in a multichoice dialog." },
 	{ VARCODE_ENGINE,   10,	L"GetFieldExitX",			L"Return the field activated exit position." },
 	{ VARCODE_ENGINE,   11,	L"GetFieldExitY",			L"Return the field activated exit position." },
-//	{ VARCODE_ENGINE,   12,	L"",		L"." },		sSysX
-//	{ VARCODE_ENGINE,   13,	L"",		L"." },
+	{ VARCODE_ENGINE,   12,	L"GetScreenCalculatedX",	L"Return the X position (in screen coordinates) computed by either \"CalculateScreenOrigin\" or \"CalculateScreenPosition\"." },
+	{ VARCODE_ENGINE,   13,	L"GetScreenCalculatedY",	L"Return the Y position (in screen coordinates) computed by either \"CalculateScreenOrigin\" or \"CalculateScreenPosition\"." },
 	{ VARCODE_ENGINE,   14,	L"GetCinematicFrame",		L"Return the frame of the currently running cinematic." },
 	{ VARCODE_ENGINE,   15,	L"SyncCinematic",			L"Synchronise cinematic." },
 	{ VARCODE_ENGINE,   16,	L"GetFrogAmount",			L"Return the amount of frogs catched." },
@@ -717,7 +712,7 @@ static VariableName VarNameList[] = {
 	{ VARCODE_ENGINE,  210,	L"GetWorldTitleDisplay",	L"Return the state of the continent's name display.\n\n0 stands for a title waiting for display.\n1 stands for a fading in title.\n2 stands for a fading out title.\n3 stands for nothing displayed." },
 	{ VARCODE_UINT16,    0,	L"General_ScenarioCounter",	L"Scenario counter, increasing at various point of the game.\n\nSome key values:\n"
 														L"1000: Player gets control of Zidane\n1500: Blank wears Pluto armor\n1600: Blank wears off Pluto armor\n2400: Exited Evil Forest\n2990: South Gate destroyed\n"
-														L"3900: Disc 2\n4990: Clayra destroyed\n5598: Lindblum destroyed\n5990: Reached Exterior Continent\n6200: Black Mage Village entered\n6880: Amarant joined\n6990: South Gate recovered\n"
+														L"3900: Disc 2\n4990: Cleyra destroyed\n5598: Lindblum destroyed\n5990: Reached Exterior Continent\n6200: Black Mage Village entered\n6880: Amarant joined\n6990: South Gate recovered\n"
 														L"7010: Disc 3 (Tantalus ran out of Pub)\n8800: Alexandria destroyed\n9450: Desert Palace accessible through sand pit\n9600: Boarded Hilda Garde I\n9890: Desert Palace done\n"
 														L"10400: Hilda Garde III obtained\n10500: Ipsen Castle entered\n10600: Ipsen Castle done\n10620: Eiko and Dagger gone to Shrine\n10640: Amarant and Freya gone to Shrine\n10660: Steiner and Vivi gone to Shrine\n10700: Shrines done\n10830: Mikoto sighted\n"
 														L"11100: Disc 4\n11760: Crystal World reached\n12000: *spoilers* Kuja dies" },
@@ -777,11 +772,11 @@ static VariableName VarNameList[] = {
 	{ VARCODE_UINT8,   191,	L"Chocobo_ChocoColor",		L"Choco's current evolution." },
 	{ VARCODE_UINT8,   192,	L"General_TonberryCounter",	L"Counter of twice the Tonberries killed.\nUsed for Grudge's damage formula:\nDamage = 2 ^ General_TonberryCounter." },
 	{ VARCODE_UINT8,   193,	L"General_SummonMadeen",	L"Flag checking if Madeen has already been summoned at least once." },
-	{ VARCODE_UINT8,   194,	L"FriendlyMonster_Progress",L"Bit flags for friendly monsters met and satisfied." },
+	{ VARCODE_UINT8,   194,	L"FriendlyMonster_Progress",L"Bit flags for friendly monsters met and satisfied. Determine whether the related battle can be randomly encountered or not in their natural World Map areas." },
 	{ VARCODE_UINT8,   195,	L"Ragtime_QuizzDone1",		L"Bit flags for Ragtime Mouse questions already answered." },
 	{ VARCODE_UINT8,   196,	L"Ragtime_QuizzDone2",		L"Bit flags for Ragtime Mouse questions already answered." },
 	{ VARCODE_UINT8,   197,	L"Ragtime_QuizzDone3",		L"Bit flags for Ragtime Mouse questions already answered." },
-	{ VARCODE_UINT8,   198,	L"Ragtime_QuizzSuccess",	L"Bit flags and integer mainly used for Ragtime Mouse questions already successfully answered.\n\n 1st bit: Friendly monster quest completed.\n 2nd bit: Dagger reacted to Eiko summoning in the Mountain Path.\n 4th to 8th bits: amount of Ragtime Mouse questions rightfully answered." },
+	{ VARCODE_UINT8,   198,	L"Ragtime_QuizzSuccess",	L"Bit flags and integer mainly used for Ragtime Mouse questions already successfully answered.\n\n 1st bit: Friendly monster quest completed (determine if Friendly Yan can be encountered).\n 2nd bit: Dagger reacted to Eiko summoning in the Mountain Path.\n 4th to 8th bits: amount of Ragtime Mouse questions rightfully answered." },
 	{ VARCODE_UINT8,   207,	L"General_SummonFlag",		L"Bit flags for each summon checking if it has already been summoned at least once." },
 	{ VARCODE_INT16,   220,	L"Treasure_PositionX",		L"X coordinate of the treasure being picked up." },
 	{ VARCODE_INT16,   222,	L"Treasure_PositionY",		L"Y coordinate of the treasure being picked up." },
@@ -803,6 +798,8 @@ static VariableName VarNameList[] = {
 	{ VARCODE_LUINT8,  509,	L"Stiltzkin_ItemBought",	L"Bit flags for Stiltzkin items bought." },
 	{ VARCODE_BOOL,    184,	L"General_LoadedGame",		L"Flag checking if the game was just loaded from a save." },
 	{ VARCODE_LBOOL,   808,	L"World_WhiteTransition",	L"Flag stating whether the World Map fading transition is a black or white screen." },
+	{ VARCODE_LBOOL,   814,	L"Chocobo_ParadiseFound",	L"Flag checking if the Chocobo's Paradise has been found. Determine its entrance's appearance on the World Maps." },
+	{ VARCODE_LBOOL,   815,	L"Chocobo_MognetFound",		L"Flag checking if the Mognet has been found. Determine its entrance's appearance on the World Maps." },
 	{ VARCODE_LBOOL,   888,	L"Chocobo_Lv99",			L"Flag checking if Choco's beak level has reached maximum." },
 	{ VARCODE_LBOOL,   889,	L"Chocobo_NoMoreChocograph",L"Flag checking if all the chocographs (and pieces) are found in the current location." },
 	{ VARCODE_LBOOL,   890,	L"Chocobo_NoFindChocograph",L"Flag checking if all the available chocographs (and pieces) are found in the current location." },
@@ -949,7 +946,7 @@ static wstring BubbleSymbolName[] = {
 
 static wstring CommandAddendaName[] = {
 	L"Enemy Command",
-	L"Boundary Check", // ???
+	L"Boundary Check",
 	L"Party Counter",
 	L"Return Magic",
 	L"Auto-Potion",
@@ -1086,7 +1083,7 @@ static ConstantNames FMVNameList[] = {
 
 static ConstantNames BattleCodeName[] = {
 	{ 32, L"Disable ATB" },
-	{ 33, L"End Battle" }, // 1 = victory, 5 = interuption, 7 = Enmy flee
+	{ 33, L"End Battle" }, // 1 = victory, 5 = interuption, 7 = Enemy flee
 	{ 34, L"Game Over" },
 	{ 35, L"Enable ATB" },
 	{ 36, L"Run Camera" },

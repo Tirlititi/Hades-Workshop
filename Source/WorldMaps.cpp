@@ -4,14 +4,34 @@
 #include "Gui_LoadingDialog.h"
 #include "Database_Resource.h"
 
+#define WM_HWS_VERSION 1
+
 // PSX
-#define WM_DATA_CHUNK_ID	0x41B
-#define WM_SECTION_NAME		0
-#define WM_SECTION_BATTLES	3
+#define WM_DATA_CHUNK_ID		0x41B
+#define WM_SECTION_NAME			0
+#define WM_SECTION_BATTLES		3
+#define WM_SECTION_FRIENDLIES	4 // Friendly monsters
+#define WM_SECTION_TEXTURE_ANIM	6 // Animated textures (beach)
+#define WM_SECTION_EVA			37 // Something to do with Memoria's entrance effect
+#define WM_SECTION_SPS_START	41 // Start of the list of weather effects
+#define WM_SECTION_SPS_END		52 // (12 of them, 52 is included)
+#define WM_SECTION_BLOCK_HEADER	66 // Unknown
 
 // Steam
 #define WM_CHUNK_STEAM			1
 #define WM_CHUNK_AMOUNT_STEAM	11
+
+const vector<uint16_t> WorldMapDataStruct::friendly_battle_id[WORLD_MAP_FRIENDLY_AMOUNT] = {
+	   { 251, 363, 364, 838 },
+	   { 192, 193, 196, 197, 199 },
+	   { 235, 239, 270, 682, 686, 687, 689, 841 },
+	   { 216, 217, 652, 664, 668, 670, 751 },
+	   { 188, 189, 268, 636, 637, 641, 647 },
+	   { 631, 632 },
+	   { 365, 367, 368, 595, 605, 606 },
+	   { 723 },
+	   { 920, 921 }
+};
 
 int WorldMapDataStruct::SetName(unsigned int placeid, wstring newvalue) {
 	FF9String tmp(place_name[placeid]);
@@ -37,6 +57,41 @@ int WorldMapDataStruct::SetName(unsigned int placeid, FF9String& newvalue) {
 	if (GetGameType()!=GAME_TYPE_PSX)
 		place_name_size += newlen-oldlen;
 	return 0;
+}
+
+int WorldMapDataStruct::ChangeBattle(unsigned int groundid, unsigned int setid, uint16_t newid) {
+	if (groundid >= WORLD_MAP_BATTLE_GROUND_AMOUNT || setid >= WORLD_MAP_BATTLE_SET_AMOUNT)
+		return 2;
+	int friendlyidold = -1;
+	int friendlyidnew = -1;
+	int i, j;
+	for (i = 0; i < WORLD_MAP_FRIENDLY_AMOUNT; i++)
+		for (j = 0; j < WorldMapDataStruct::friendly_battle_id[i].size(); j++)
+		{
+			if (battle_id[groundid][setid] == WorldMapDataStruct::friendly_battle_id[i][j])
+				friendlyidold = i;
+			if (newid == WorldMapDataStruct::friendly_battle_id[i][j])
+				friendlyidnew = i;
+		}
+	battle_id[groundid][setid] = newid;
+	if (setid != 3)
+		return friendlyidnew >= 0 ? 1 : 0;
+	bool cantupdatefriendly = false;
+	if (friendlyidold >= 0 && friendlyidold != friendlyidnew) {
+		for (i = 0; i < WORLD_MAP_FRIENDLY_AREA_AMOUNT; i++)
+			if (friendly_area[friendlyidold][i] == groundid)
+				friendly_area[friendlyidold][i] = 0xFFFF;
+	}
+	if (friendlyidnew >= 0 && friendlyidold != friendlyidnew) {
+		cantupdatefriendly = true;
+		for (i = 0; i < WORLD_MAP_FRIENDLY_AREA_AMOUNT; i++)
+			if (friendly_area[friendlyidnew][i] == 0xFFFF) {
+				friendly_area[friendlyidnew][i] = groundid;
+				cantupdatefriendly = false;
+				break;
+			}
+	}
+	return cantupdatefriendly ? 1 : 0;
 }
 
 #define MACRO_WORLDSTRUCT_IOFUNCTION(IO,SEEK,READ,PPF) \
@@ -104,8 +159,16 @@ int WorldMapDataStruct::SetName(unsigned int placeid, FF9String& newvalue) {
 	for (i=0;i<WORLD_MAP_BATTLE_GROUND_AMOUNT;i++) { \
 		for (j=0;j<WORLD_MAP_BATTLE_SET_AMOUNT;j++) \
 			IO ## Short(f,battle_id[i][j]); \
-		IO ## Short(f,battle_unknown[i]); \
+		IO ## Short(f,battle_flags[i]); \
 	} \
+	if (PPF) PPFEndScanStep();
+
+#define MACRO_WORLDSTRUCT_FRIENDLY(IO,SEEK,READ,PPF) \
+	SEEK(f,headerpos,section_offset[WM_SECTION_FRIENDLIES]); \
+	if (PPF) PPFInitScanStep(f); \
+	for (i=0;i<WORLD_MAP_FRIENDLY_AMOUNT;i++) \
+		for (j=0;j<WORLD_MAP_FRIENDLY_AREA_AMOUNT;j++) \
+			IO ## Short(f,friendly_area[i][j]); \
 	if (PPF) PPFEndScanStep();
 
 
@@ -116,11 +179,13 @@ void WorldMapDataStruct::Read(fstream& f) {
 		MACRO_WORLDSTRUCT_IOFUNCTION(FFIXRead,FFIXSeek,true,false)
 		MACRO_WORLDSTRUCT_PLACE(FFIXRead,FFIXSeek,true,false)
 		MACRO_WORLDSTRUCT_BATTLE(FFIXRead,FFIXSeek,true,false)
+		MACRO_WORLDSTRUCT_FRIENDLY(FFIXRead,FFIXSeek,true,false)
 		place_name_extra_size = 0;
 	} else {
 		MACRO_WORLDSTRUCT_IOFUNCTION(SteamRead,SteamSeek,true,false)
 //		MACRO_WORLDSTRUCT_PLACE(SteamRead,SteamSeek,true,false)
 		MACRO_WORLDSTRUCT_BATTLE(SteamRead,SteamSeek,true,false)
+		MACRO_WORLDSTRUCT_FRIENDLY(SteamRead,SteamSeek,true,false)
 		place_name_extra_size = 0xFFFF;
 	}
 	loaded = true;
@@ -130,6 +195,7 @@ void WorldMapDataStruct::Write(fstream& f) {
 	MACRO_WORLDSTRUCT_IOFUNCTION(FFIXWrite,FFIXSeek,false,false)
 	MACRO_WORLDSTRUCT_PLACE(FFIXWrite,FFIXSeek,false,false)
 	MACRO_WORLDSTRUCT_BATTLE(FFIXWrite,FFIXSeek,false,false)
+	MACRO_WORLDSTRUCT_FRIENDLY(FFIXWrite,FFIXSeek,false,false)
 	modified = false;
 }
 
@@ -137,19 +203,27 @@ void WorldMapDataStruct::WritePPF(fstream& f) {
 	MACRO_WORLDSTRUCT_IOFUNCTION(PPFStepAdd,FFIXSeek,false,true)
 	MACRO_WORLDSTRUCT_PLACE(PPFStepAdd,FFIXSeek,false,true)
 	MACRO_WORLDSTRUCT_BATTLE(PPFStepAdd,FFIXSeek,false,true)
+	MACRO_WORLDSTRUCT_FRIENDLY(PPFStepAdd,FFIXSeek,false,true)
 }
 
 void WorldMapDataStruct::ReadHWS(fstream& f, bool usetext) {
+	uint8_t version;
+	HWSReadChar(f,version);
 	MACRO_WORLDSTRUCT_IOFUNCTION(HWSRead,HWSSeek,true,false)
 	if (usetext) {
 		MACRO_WORLDSTRUCT_PLACE(HWSRead,HWSSeek,true,false)
 	}
 	MACRO_WORLDSTRUCT_BATTLE(HWSRead,HWSSeek,true,false)
+	if (version >= 1) {
+		MACRO_WORLDSTRUCT_FRIENDLY(HWSRead,HWSSeek,true,false)
+	}
 	MarkDataModified();
 }
 
-void WorldMapDataStruct::WriteHWS(fstream& f, int steamdiscordiscmr) {
-	if (steamdiscordiscmr>=0 && steamdiscordiscmr<2)
+void WorldMapDataStruct::WriteHWS(fstream& f, bool saveversion, int steamdiscordiscmr) {
+	if (saveversion)
+		HWSWriteShort(f,WM_HWS_VERSION);
+	else if (steamdiscordiscmr>=0 && steamdiscordiscmr<2)
 		HWSSeek(f,f.tellg(),steam_chunk_pos_disc[steamdiscordiscmr]);
 	else if (steamdiscordiscmr>=2 && steamdiscordiscmr<4)
 		HWSSeek(f,f.tellg(),steam_chunk_pos_discmr[steamdiscordiscmr-2]);
@@ -158,6 +232,7 @@ void WorldMapDataStruct::WriteHWS(fstream& f, int steamdiscordiscmr) {
 		MACRO_WORLDSTRUCT_PLACE(HWSWrite,HWSSeek,false,false)
 	}
 	MACRO_WORLDSTRUCT_BATTLE(HWSWrite,HWSSeek,false,false)
+	MACRO_WORLDSTRUCT_FRIENDLY(HWSWrite,HWSSeek,false,false)
 }
 
 void WorldMapDataStruct::UpdateOffset() {
@@ -240,6 +315,7 @@ void WorldMapDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 		}
 	} else {
 		ClusterData** dummyclus = new ClusterData*[amount];
+		ClusterData** dummyclusdata = new ClusterData*[1];
 		ConfigurationSet& config = *clusset.config;
 		string fname = config.steam_dir_data;
 		SteamLanguage lang;
@@ -276,7 +352,7 @@ void WorldMapDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 		for (i=1;i<amount;i++)
 			text_data[i] = text_data[0];
 		world_data = new WorldMapDataStruct[1];
-		world_data->Init(false,CHUNK_TYPE_VARIOUS,STEAM_WORLD_MAP_TEXT_ID,&dummyclus[0]);
+		world_data->Init(true,CHUNK_TYPE_VARIOUS,WM_DATA_CHUNK_ID,dummyclusdata,CLUSTER_TYPE_WORLD_MAP);
 		for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
 			if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
 				continue;
@@ -402,25 +478,30 @@ int* WorldMapDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool
 						world_data->ReadHWS(ffhws,usetext);
 						world_data->SetSize(chunksize);
 					} else if (chunktype==2) {
-						HWSReadLong(ffhws,world_data->place_name_size);
-						for (j=0;j<WORLD_MAP_PLACE_AMOUNT;j++) {
-							SteamReadFF9String(ffhws,world_data->place_name[j]);
-							if (GetGameType()==GAME_TYPE_PSX)
-								world_data->place_name[j].SteamToPSX();
-						}
-					} else if (chunktype==0x82) {
-						uint32_t namesize;
-						HWSReadChar(ffhws,lang);
-						while (lang!=STEAM_LANGUAGE_NONE) {
-							HWSReadLong(ffhws,namesize);
-							if (GetGameType()==GAME_TYPE_PSX && lang!=GetSteamLanguage()) {
-								ffhws.seekg(namesize,ios::cur);
-								continue;
-							}
+						if (usetext) {
+							HWSReadLong(ffhws,world_data->place_name_size);
 							for (j=0;j<WORLD_MAP_PLACE_AMOUNT;j++) {
-								SteamReadFF9String(ffhws,world_data->place_name[j],lang);
+								SteamReadFF9String(ffhws,world_data->place_name[j]);
 								if (GetGameType()==GAME_TYPE_PSX)
 									world_data->place_name[j].SteamToPSX();
+							}
+						}
+					} else if (chunktype == CHUNK_STEAM_TEXT_MULTILANG) {
+						if (usetext) {
+							uint32_t namesize;
+							HWSReadChar(ffhws,lang);
+							while (lang!=STEAM_LANGUAGE_NONE) {
+								HWSReadLong(ffhws,namesize);
+								if (GetGameType()==GAME_TYPE_PSX && lang!=GetSteamLanguage()) {
+									ffhws.seekg(namesize,ios::cur);
+									continue;
+								}
+								for (j=0;j<WORLD_MAP_PLACE_AMOUNT;j++) {
+									SteamReadFF9String(ffhws,world_data->place_name[j],lang);
+									if (GetGameType()==GAME_TYPE_PSX)
+										world_data->place_name[j].SteamToPSX();
+								}
+								HWSReadChar(ffhws, lang);
 							}
 						}
 					} else
@@ -619,7 +700,7 @@ int* WorldMapDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool
 void WorldMapDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsigned int localflag) {
 	unsigned int i,j;
 	uint16_t nbmodified = 0;
-	uint32_t chunkpos, chunksize, nboffset = ffhws.tellg();
+	uint32_t cluspos, clussize, chunkpos, chunksize, nboffset = ffhws.tellg();
 	uint32_t aftlinkpos, linkpos;
 	SteamLanguage lang, sublang;
 	uint8_t nbscriptlink;
@@ -631,6 +712,7 @@ void WorldMapDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, uns
 		world_data->parent_cluster->UpdateOffset();
 		HWSWriteShort(ffhws,WM_DATA_CHUNK_ID);
 		HWSWriteLong(ffhws,world_data->parent_cluster->size);
+		cluspos = ffhws.tellg();
 		if (world_data->modified) {
 			HWSWriteChar(ffhws,1);
 			HWSWriteLong(ffhws,world_data->size);
@@ -638,17 +720,28 @@ void WorldMapDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, uns
 			world_data->WriteHWS(ffhws);
 			ffhws.seekg(chunkpos+world_data->size);
 			if (GetGameType()!=GAME_TYPE_PSX) {
-				HWSWriteChar(ffhws,0x82);
+				HWSWriteChar(ffhws, CHUNK_STEAM_TEXT_MULTILANG);
+				HWSWriteLong(ffhws, 0);
+				chunkpos = ffhws.tellg();
 				for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
 					if (hades::STEAM_LANGUAGE_SAVE_LIST[lang]) {
+						HWSWriteChar(ffhws, lang);
 						HWSWriteLong(ffhws,GetSteamTextSize(1,lang));
 						for (j=0;j<WORLD_MAP_PLACE_AMOUNT;j++)
 							SteamWriteFF9String(ffhws,world_data->place_name[j],lang);
 					}
 				HWSWriteChar(ffhws,STEAM_LANGUAGE_NONE);
+				chunksize = (long long)ffhws.tellg() - chunkpos;
+				ffhws.seekg(chunkpos - 4);
+				HWSWriteLong(ffhws, chunksize);
+				ffhws.seekg(chunkpos + chunksize);
 			}
 		}
 		HWSWriteChar(ffhws,0xFF);
+		clussize = (long long)ffhws.tellg() - cluspos;
+		ffhws.seekg(cluspos - 4);
+		HWSWriteLong(ffhws, clussize);
+		ffhws.seekg(cluspos + clussize);
 		nbmodified++;
 	}
 	for (i=0;i<amount;i++) {
@@ -657,6 +750,7 @@ void WorldMapDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, uns
 			clus->UpdateOffset();
 			HWSWriteShort(ffhws,script[i]->object_id);
 			HWSWriteLong(ffhws,clus->size);
+			cluspos = ffhws.tellg();
 			if (GetGameType()==GAME_TYPE_PSX) {
 				if (text_data[i]->modified && savemain) {
 					HWSWriteChar(ffhws,CHUNK_TYPE_TEXT);
@@ -804,6 +898,10 @@ void WorldMapDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, uns
 				}
 			}
 			HWSWriteChar(ffhws,0xFF);
+			clussize = (long long)ffhws.tellg() - cluspos;
+			ffhws.seekg(cluspos - 4);
+			HWSWriteLong(ffhws, clussize);
+			ffhws.seekg(cluspos + clussize);
 			nbmodified++;
 		}
 	}

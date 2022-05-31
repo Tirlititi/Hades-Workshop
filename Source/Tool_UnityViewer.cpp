@@ -1007,6 +1007,8 @@ bool ToolUnityViewer::PerformImportOfAsset(bool isnewfile, fstream& filebase, fs
 		}
 		uint32_t loopstart = 0;
 		uint32_t loopend = 0;
+		uint32_t secondaryloopstart = 0;
+		uint32_t secondaryloopend = 0;
 		uint32_t newsizeogg;
 		fileasset.seekg(0,ios::end);
 		newsizeogg = fileasset.tellg();
@@ -1024,6 +1026,10 @@ bool ToolUnityViewer::PerformImportOfAsset(bool isnewfile, fstream& filebase, fs
 				loopstart = atoi(&buffer[i+10]);
 			else if (i+8<newsizeogg && strncmp(&buffer[i],"LoopEnd=",8)==0)
 				loopend = atoi(&buffer[i+8]);
+			if (i+11<newsizeogg && strncmp(&buffer[i],"LoopStart2=",11)==0)
+				secondaryloopstart = atoi(&buffer[i+11]);
+			else if (i+9<newsizeogg && strncmp(&buffer[i],"LoopEnd2=",9)==0)
+				secondaryloopend = atoi(&buffer[i+9]);
 		}
 		BufferInitPosition(8);		BufferWriteLong((uint8_t*)buffer,filenewsize);
 //		BufferInitPosition(0x28);	BufferWriteLong((uint8_t*)buffer,akbid); // ToDo: be able to retrieve this kind of info without the old file
@@ -1033,8 +1039,8 @@ bool ToolUnityViewer::PerformImportOfAsset(bool isnewfile, fstream& filebase, fs
 //		BufferWriteLong((uint8_t*)buffer,samplecount);
 		BufferInitPosition(0xF0);	BufferWriteLong((uint8_t*)buffer,loopstart);
 		BufferWriteLong((uint8_t*)buffer,loopend);
-//		BufferInitPosition(0xFC);	BufferWriteLong((uint8_t*)buffer,secondaryloopstart); // For the music "Final Battle"
-//		BufferWriteLong((uint8_t*)buffer,secondaryloopend);
+		BufferInitPosition(0xFC);	BufferWriteLong((uint8_t*)buffer,secondaryloopstart); // For the music "Final Battle"
+		BufferWriteLong((uint8_t*)buffer,secondaryloopend);
 //		BufferInitPosition(0x124);	BufferWriteLong((uint8_t*)buffer,???);
 		filedest.write(buffer,filenewsize);
 		fileasset.close();

@@ -1711,39 +1711,54 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			}
 			vector<uint32_t> unitydataoff = config.meta_world.Duplicate(filebase, filedest, copylist, filenewsize);
 			filedest.seekp(unitydataoff[config.world_fx_file[0]]);
-			saveset.worldset->world_data->WriteHWS(filedest);
+			saveset.worldset->world_data->WriteHWS(filedest, false);
 			filedest.seekp(unitydataoff[config.world_fx_file[1]]);
-			saveset.worldset->world_data->WriteHWS(filedest);
+			saveset.worldset->world_data->WriteHWS(filedest, false);
 			filedest.seekp(unitydataoff[config.world_disc_file[0]]);
-			saveset.worldset->world_data->WriteHWS(filedest, 0);
+			saveset.worldset->world_data->WriteHWS(filedest, false, 0);
 			filedest.seekp(unitydataoff[config.world_disc_file[1]]);
-			saveset.worldset->world_data->WriteHWS(filedest, 1);
+			saveset.worldset->world_data->WriteHWS(filedest, false, 1);
 			filedest.seekp(unitydataoff[config.world_discmr_file[0]]);
-			saveset.worldset->world_data->WriteHWS(filedest, 2);
+			saveset.worldset->world_data->WriteHWS(filedest, false, 2);
 			filedest.seekp(unitydataoff[config.world_discmr_file[1]]);
-			saveset.worldset->world_data->WriteHWS(filedest, 3);
+			saveset.worldset->world_data->WriteHWS(filedest, false, 3);
 			filebase.close();
 			filedest.close();
 		}
 	} else if (assetformat == 1) {
 
-		#define MACRO_SAVE_ASSET_WORLD(FILEID, DISCMR) \
+		#define MACRO_SAVE_ASSET_WORLD(FILEID, DISCMR, COPYBASE) \
 			fname = destfolder + config.GetSteamAssetPath(UNITY_ARCHIVE_DATA3, config.FILEID); \
 			if (deleteold) remove(fname.c_str()); \
 			if (section[DATA_SECTION_WORLD_MAP] && saveset.worldset->world_data->modified) { \
 				MainFrame::MakeDirForFile(fname); \
 				filedest.open(fname.c_str(), ios::out | ios::binary); \
 				if (!filedest.is_open()) return 3; \
-				saveset.worldset->world_data->WriteHWS(filedest, DISCMR); \
+				if (COPYBASE) \
+				{ \
+					filebase.seekg(config.meta_world.GetFileOffsetByIndex(config.FILEID)); \
+					uint32_t copysize = config.meta_world.GetFileSizeByIndex(config.FILEID); \
+					char* buffer = new char[copysize]; \
+					filebase.read(buffer, copysize); \
+					filedest.write(buffer, copysize); \
+					delete[] buffer; \
+					filedest.seekp(0); \
+				} \
+				saveset.worldset->world_data->WriteHWS(filedest, false, DISCMR); \
 				filedest.close(); \
 			}
 
-		MACRO_SAVE_ASSET_WORLD(world_fx_file[0], -1)
-		MACRO_SAVE_ASSET_WORLD(world_fx_file[1], -1)
-		MACRO_SAVE_ASSET_WORLD(world_disc_file[0], 0)
-		MACRO_SAVE_ASSET_WORLD(world_disc_file[1], 1)
-		MACRO_SAVE_ASSET_WORLD(world_discmr_file[0], 2)
-		MACRO_SAVE_ASSET_WORLD(world_discmr_file[1], 3)
+		fname = config.steam_dir_assets + "p0data3.bin";
+		filebase.open(fname.c_str(), ios::in | ios::binary);
+		if (!filebase.is_open())
+			return 2;
+		MACRO_SAVE_ASSET_WORLD(world_fx_file[0], -1, false)
+		MACRO_SAVE_ASSET_WORLD(world_fx_file[1], -1, false)
+		MACRO_SAVE_ASSET_WORLD(world_disc_file[0], 0, true)
+		MACRO_SAVE_ASSET_WORLD(world_disc_file[1], 1, true)
+		MACRO_SAVE_ASSET_WORLD(world_discmr_file[0], 2, true)
+		MACRO_SAVE_ASSET_WORLD(world_discmr_file[1], 3, true)
+		filebase.close();
 	}
 
 	// p0data7 : script files

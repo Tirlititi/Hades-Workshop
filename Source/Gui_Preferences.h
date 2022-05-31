@@ -35,6 +35,9 @@ public:
 	static bool LoadToolBackgroundConfig(BackgroundEditorWindow* configwindow);
 	static bool SaveToolRandomizerConfig(RandomizerWindow* configwindow);
 	static bool LoadToolRandomizerConfig(RandomizerWindow* configwindow);
+	static bool SaveToolCalculatorProfile(DamageCalculatorWindow* configwindow, wxString profileid, wxString profilename);
+	static bool LoadToolCalculatorProfile(DamageCalculatorWindow* configwindow, wxString profileid);
+	static bool GetToolCalculatorProfileList(wxArrayString* id = NULL, wxArrayString* name = NULL);
 
 private:
 	bool ReadCharmaps();

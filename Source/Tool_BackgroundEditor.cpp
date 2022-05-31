@@ -555,10 +555,14 @@ void ToolBackgroundEditor::LoadAndMergeImages() {
 		main_img_base.Destroy();
 		return;
 	}
+	FieldTilesDataStruct* tileset = cddata->fieldset.background_data[m_fieldchoice->GetSelection()];
+	if (tileset == NULL) {
+		main_img_base.Destroy();
+		return;
+	}
 	unsigned int i,x,y;
 	uint32_t pix,pix1,pix2;
 	bool mainimgisempty = true;
-	FieldTilesDataStruct* tileset = cddata->fieldset.background_data[m_fieldchoice->GetSelection()];
 	wxFileName imgfilebasename = m_imagepicker->GetPath();
 	wxString imgfileext = _(L".")+imgfilebasename.GetExt();
 	int lastdigitchar = imgfilebasename.GetName().Len()-1;
@@ -607,7 +611,7 @@ void ToolBackgroundEditor::LoadAndMergeImages() {
 }
 
 void ToolBackgroundEditor::ComputeTileFilter(int x, int y) {
-	if (!main_img_base.IsOk() || m_fieldchoice->GetSelection()==wxNOT_FOUND)
+	if (!main_img_base.IsOk() || m_fieldchoice->GetSelection()==wxNOT_FOUND || cddata->fieldset.background_data[m_fieldchoice->GetSelection()] == NULL)
 		return;
 	if (x>=0 && y>=0) {
 		
@@ -722,6 +726,10 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 	unsigned int i,j;
 	if (id==wxID_APPLY) {
 		if (m_auinotebook->GetSelection()==0) { // Converter
+			if (m_fieldchoice->GetSelection() == wxNOT_FOUND || cddata->fieldset.background_data[m_fieldchoice->GetSelection()] == NULL) {
+				wxLogError(HADES_STRING_BACKGROUNDIMPORT_ERROR_NO_BACKGROUND);
+				return;
+			}
 			uint32_t textureformat;
 			if (m_convertformat->GetSelection()==0)			textureformat = 0x03;
 			else if (m_convertformat->GetSelection()==1)	textureformat = 0x04;
@@ -833,6 +841,8 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 				sourcefilenamecheck << sourcefilebase << sourcefiletoken[0] << fieldid << sourcefiletoken[1] << 0 << sourcefiletoken[2] << 0 << sourcefiletoken[3];
 				if (wxFile::Exists(sourcefilenamecheck)) {
 					FieldTilesDataStruct* tileset = cddata->fieldset.background_data[fieldindex];
+					if (tileset == NULL)
+						continue;
 					unsigned int tilesamountplustitle = tileset->tiles_amount+tileset->title_tile_amount*(STEAM_LANGUAGE_AMOUNT-1);
 					unsigned int tilesizebackup = tileset->parent->tile_size;
 					wxString imgfilebase;
@@ -858,7 +868,7 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 						log.AddError(errstr.wc_str());
 					} else if (res==3) {
 						wxString errstr;
-						errstr.Printf(wxT(HADES_STRING_BACKGROUNDIMPORT_ERROR_ALPHA),m_fieldchoice->GetSelection(),GetFieldNameOrDefault(cddata,m_fieldchoice->GetSelection()));
+						errstr.Printf(wxT(HADES_STRING_BACKGROUNDIMPORT_ERROR_ALPHA), fieldid, GetFieldNameOrDefault(cddata, fieldid));
 						log.AddError(errstr.wc_str());
 					}
 					delete[] imgfilelist;

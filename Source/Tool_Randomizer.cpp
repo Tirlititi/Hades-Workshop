@@ -1,6 +1,7 @@
 ﻿#include "Tool_Randomizer.h"
 
 #include <random>
+#include <wx/arrstr.h>
 #include "Gui_Preferences.h"
 #include "Database_SpellAnimation.h"
 #include "main.h"
@@ -27,6 +28,11 @@ inline bool SpellHasStatus(SpellDataStruct& sp) {
 	uint8_t eff = sp.effect;
 	uint8_t acc = sp.accuracy;
 	return (acc>0 && (eff==8 || eff==9 || eff==18 || eff==19 || eff==20 || eff==93 || eff==100 || eff==107)) || (eff>=11 && eff<=14) || eff==87 || eff==97 || eff==103 || eff==108 || eff==109;
+}
+
+inline bool SpellIsStatusRemove(SpellDataStruct& sp) {
+	uint8_t eff = sp.effect;
+	return eff == 12 || eff == 13;
 }
 
 inline bool IsNotSafeAbility(uint8_t abil, vector<uint8_t>& safelist) {
@@ -167,7 +173,61 @@ const static wstring TypicalNonElementName[STEAM_LANGUAGE_AMOUNT] = {
 	L"Non-elemental", L"Non-elemental", L"無", L"Neutral", L"Neutre", L"Non-elementali", L"no elemental"
 };
 
-inline void ReplaceStatusOrElementName(int status_element, FF9String& base, uint32_t statellist, uint32_t newstatellist, SpellDataStruct* spdata = NULL) {
+const static wstring TypicalStatusAddDescription[STEAM_LANGUAGE_AMOUNT] = {
+	L"Casts %s.", L"Casts %s.", L"%にします。", L"Versetzt in %s.", L"Lance %s.", L"Attiva %s.", L"Aplica %s."
+};
+
+const static wstring TypicalStatusRemoveDescription[STEAM_LANGUAGE_AMOUNT] = {
+	L"Removes %s.", L"Removes %s", L"%sを治します。", L"Hebt %s auf.", L"Soigne %s.", L"Cura status %s.", L"Cura %s."
+};
+
+const static wstring TypicalCoordinatingConjunction[STEAM_LANGUAGE_AMOUNT] = {
+	L" and ", L" and ", L"、", L" und ", L" et ", L" e ", L" y "
+};
+
+inline void ReplaceSteamStatusName(bool add, FF9String& base, uint32_t statlist, uint32_t newstatlist, SpellDataStruct* spdata = NULL) {
+	unsigned int i, statcount, statamount = 0;
+	wstring description, statusliststr;
+	SteamLanguage lang;
+	size_t spos;
+	for (i = 0; i < STATUS_AMOUNT; i++)
+		if ((newstatlist & (1 << i)))
+			statamount++;
+	if (statamount == 0)
+		return;
+	for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+		if (!base.multi_lang_init[lang])
+			continue;
+		statusliststr = L"";
+		statcount = 0;
+		for (i = 0; i < STATUS_AMOUNT; i++)
+			if ((newstatlist & (1 << i))) {
+				statcount++;
+				if (statcount == 1)
+					statusliststr += L"[A85038][HSHD]" + TypicalStatusName[i][lang] + L"[383838][HSHD]";
+				else if (statcount < statamount)
+					statusliststr += (lang == STEAM_LANGUAGE_JA ? L"、[A85038][HSHD]" : L", [A85038][HSHD]") + TypicalStatusName[i][lang] + L"[383838][HSHD]";
+				else
+					statusliststr += TypicalCoordinatingConjunction[lang] + L"[A85038][HSHD]" + TypicalStatusName[i][lang] + L"[383838][HSHD]";
+			}
+		description = add ? TypicalStatusAddDescription[lang] : TypicalStatusRemoveDescription[lang];
+		spos = description.find(L"%s");
+		if (spos != wstring::npos)
+			description = description.replace(spos, 2, statusliststr);
+		if (lang == GetSteamLanguage()) {
+			if (spdata)
+				spdata->SetHelp(description);
+			else
+				base.SetValue(description);
+		} else {
+			base.SetValue(description, lang);
+		}
+	}
+}
+
+inline void ReplaceStatusOrElementName(int status_element, bool statadd, FF9String& base, uint32_t statellist, uint32_t newstatellist, SpellDataStruct* spdata = NULL) {
+	//if (GetGameType() != GAME_TYPE_PSX && status_element == 0)
+	//	ReplaceSteamStatusName(statadd, base, statellist, newstatellist, spdata);
 	unsigned int i, j, tokenamount = status_element==0 ? STATUS_AMOUNT : 8;
 	SteamLanguage lang, foundlang;
 	wstring basestr;
@@ -521,7 +581,7 @@ void ToolRandomizer::ApplyRandomizerCharacter() {
 			if (SpellHasStatus(cddata->spellset.spell[i]) && (!m_charspellstatsafe->IsChecked() || IsNotSafeAbility(i, safe_abil_scramble))) {
 				prevstatus = cddata->spellset.status_set[cddata->spellset.spell[i].status];
 				cddata->spellset.spell[i].status = PickRandomInVector(statuslist);
-				ReplaceStatusOrElementName(0, cddata->spellset.spell[i].help, prevstatus, cddata->spellset.status_set[cddata->spellset.spell[i].status], &cddata->spellset.spell[i]);
+				ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[i]), cddata->spellset.spell[i].help, prevstatus, cddata->spellset.status_set[cddata->spellset.spell[i].status], &cddata->spellset.spell[i]);
 			}
 		cddata->MarkDataSpellModified();
 	} else if (m_charspellstatus->GetSelection()==2) {
@@ -550,7 +610,7 @@ void ToolRandomizer::ApplyRandomizerCharacter() {
 			if (SpellHasStatus(cddata->spellset.spell[i]) && (!m_charspellstatsafe->IsChecked() || IsNotSafeAbility(i, safe_abil_scramble))) {
 				oldstatus = (cddata->spellset.spell[i].status>=39 ? oldset[cddata->spellset.spell[i].status] : cddata->spellset.status_set[cddata->spellset.spell[i].status]);
 				cddata->spellset.spell[i].status = GetRandom(39, STATUS_SET_AMOUNT);
-				ReplaceStatusOrElementName(0, cddata->spellset.spell[i].help, oldstatus, cddata->spellset.status_set[cddata->spellset.spell[i].status], &cddata->spellset.spell[i]);
+				ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[i]), cddata->spellset.spell[i].help, oldstatus, cddata->spellset.status_set[cddata->spellset.spell[i].status], &cddata->spellset.spell[i]);
 			}
 		cddata->MarkDataSpellModified();
 	}
@@ -659,17 +719,17 @@ void ToolRandomizer::ApplyRandomizerCharacter() {
 									cddata->spellset.spell[46].model_alt = cddata->spellset.spell[46].model;
 							} else if (cddata->cmdset.cmd[cmdindex].spell_list[j]==66) { // Fenrir slot
 								ReplacePartySpell(&cddata->spellset.spell[67], spellpick.second);
-								ReplaceStatusOrElementName(1, cddata->spellset.spell[67].help, cddata->spellset.spell[67].element, 0x20, &cddata->spellset.spell[67]);
+								ReplaceStatusOrElementName(1, false, cddata->spellset.spell[67].help, cddata->spellset.spell[67].element, 0x20, &cddata->spellset.spell[67]);
 								cddata->spellset.spell[67].element = 0x20;
 							} else if (cddata->cmdset.cmd[cmdindex].spell_list[j]==68) { // Carbuncle slot
 								ReplacePartySpell(&cddata->spellset.spell[69], spellpick.second);
-								ReplaceStatusOrElementName(0, cddata->spellset.spell[69].help, cddata->spellset.status_set[cddata->spellset.spell[69].status], cddata->spellset.status_set[8], &cddata->spellset.spell[69]);
+								ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[69]), cddata->spellset.spell[69].help, cddata->spellset.status_set[cddata->spellset.spell[69].status], cddata->spellset.status_set[8], &cddata->spellset.spell[69]);
 								cddata->spellset.spell[69].status = 8;
 								ReplacePartySpell(&cddata->spellset.spell[70], spellpick.second);
-								ReplaceStatusOrElementName(0, cddata->spellset.spell[70].help, cddata->spellset.status_set[cddata->spellset.spell[70].status], cddata->spellset.status_set[6], &cddata->spellset.spell[70]);
+								ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[70]), cddata->spellset.spell[70].help, cddata->spellset.status_set[cddata->spellset.spell[70].status], cddata->spellset.status_set[6], &cddata->spellset.spell[70]);
 								cddata->spellset.spell[70].status = 6;
 								ReplacePartySpell(&cddata->spellset.spell[71], spellpick.second);
-								ReplaceStatusOrElementName(0, cddata->spellset.spell[71].help, cddata->spellset.status_set[cddata->spellset.spell[71].status], cddata->spellset.status_set[24], &cddata->spellset.spell[71]);
+								ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[71]), cddata->spellset.spell[71].help, cddata->spellset.status_set[cddata->spellset.spell[71].status], cddata->spellset.status_set[24], &cddata->spellset.spell[71]);
 								cddata->spellset.spell[71].status = 24;
 							}
 							if (m_charelan->IsChecked()) // Flair/Elan
