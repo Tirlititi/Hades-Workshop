@@ -40,21 +40,21 @@ enum ModelFileFormat {
  (uint32List) Unknown ID
  (uint32) One of the Unknown ID (or 0 if none)
  (bytex4) Usually 0 1 1 1 or 0 1 0 0 (weapons)
- (uint32) Size of Vertice List
- (uint16List) Vertice List
- (uint32) Number of Vertex Attachments (same as Vertice when Bones are present)
+ (uint32) Size of Vertex List
+ (uint16List) Vertex List
+ (uint32) Number of Vertex Attachments (same as Vertices when Bones are present)
  (ModelMeshVertexAttachment) Vertex Attachments - Size 0x20
  (uint32) Usually 0x8B or 0x9B (kuja burned)
- (uint32) Number of Vertice
- (???) Vertice Format Info - Usually 8
- (???) Vertice Format Info - Usually 0  0 0 3
- (???) Vertice Format Info - Usually 0 12 0 3
- (???) Vertice Format Info - Usually 0
- (???) Vertice Format Info - Usually 0 24 0 2
- (???) Vertice Format Info - Usually 0
- (???) Vertice Format Info - Usually 0
- (???) Vertice Format Info - Usually 0
- (???) Vertice Format Info - Usually 0 32 0 4
+ (uint32) Number of Vertices
+ (???) Vertex Format Info - Usually 8
+ (???) Vertex Format Info - Usually 0  0 0 3
+ (???) Vertex Format Info - Usually 0 12 0 3
+ (???) Vertex Format Info - Usually 0
+ (???) Vertex Format Info - Usually 0 24 0 2
+ (???) Vertex Format Info - Usually 0
+ (???) Vertex Format Info - Usually 0
+ (???) Vertex Format Info - Usually 0
+ (???) Vertex Format Info - Usually 0 32 0 4
  (uint32) Size of Vertex Datas
  (ModelMeshVertex) Vertex Datas
  (unknown) 0 (x41)

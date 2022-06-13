@@ -762,7 +762,7 @@ void EnemyDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 	unsigned int i,j,k,l;
 	modified_battle_scene_amount = 0;
 	image_map_amount = clusset.image_map_amount;
-	battle_amount = 40;// clusset.enemy_amount;
+	battle_amount = clusset.enemy_amount;
 	battle_name = new wstring[battle_amount];
 	battle_data = new BattleDataStruct*[battle_amount];
 	battle = new EnemyDataStruct*[battle_amount];

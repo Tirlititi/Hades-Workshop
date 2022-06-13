@@ -140,6 +140,7 @@ private:
 	int32_t world_pos_x;
 	int32_t world_pos_y;
 	bool refresh_control_disable;
+	bool refresh_help_force;
 	
 	wxTimer* timer;
 	wxMenu* func_popup_menu;
@@ -184,6 +185,7 @@ private:
 	void OnArgPositionMouseWheel(wxMouseEvent& event);
 	void OnArgPositionKeyboard(wxKeyEvent& event);
 	void OnArgColorPicker(wxColourPickerEvent& event);
+	void OnPickWalkmesh(wxMouseEvent& event);
 	
 	friend ScriptHelpDialog;
 	friend ScriptEditHandler;

@@ -942,6 +942,31 @@ bool PreferencesDialog::SaveToolCalculatorProfile(DamageCalculatorWindow* config
 	return true;
 }
 
+bool PreferencesDialog::DeleteToolCalculatorProfile(DamageCalculatorWindow* configwindowuncast, wxString profileid) {
+	ToolDamageCalculator* configwindow = static_cast<ToolDamageCalculator*>(configwindowuncast);
+	wxString before, after;
+	wxFile configfile(_(PREFERENCE_FILE_NAME), wxFile::read);
+	if (!configfile.IsOpened())
+		return false;
+	wxString cfgstr, cfgfile;
+	if (!configfile.ReadAll(&cfgstr))
+		return false;
+	configfile.Close();
+	cfgfile = cfgstr;
+	if (GoToSection(cfgstr, _(L"Calculator"))) {
+		if (!GetBeforeAndAfterSectionField(_(L"[Calculator]"), profileid, before, after))
+			return false;
+	} else {
+		before = cfgfile + _(L"\n\n[Calculator]\n");
+		after = _(L"\n");
+	}
+	wxFile configfileout(_(PREFERENCE_FILE_NAME), wxFile::write);
+	configfileout.Write(before);
+	configfileout.Write(after);
+	configfileout.Close();
+	return true;
+}
+
 bool PreferencesDialog::LoadToolCalculatorProfile(DamageCalculatorWindow* configwindowuncast, wxString profileid) {
 	ToolDamageCalculator* configwindow = static_cast<ToolDamageCalculator*>(configwindowuncast);
 	wxFile configfile(_(PREFERENCE_FILE_NAME), wxFile::read);

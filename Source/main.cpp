@@ -728,6 +728,9 @@ void MainFrame::OnBatchExportClick( wxCommandEvent& event ) {
 	} else if (id==wxID_BACKGROUND) {
 		BatchExportDialog dial(this);
 		dial.ShowModal(10,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->m_fieldlist->GetStrings(),CDPanel[currentpanel]->fieldsorted,dataloaded);
+	} else if (id == wxID_WALKMESH) {
+		BatchExportDialog dial(this);
+		dial.ShowModal(11, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->m_fieldlist->GetStrings(), CDPanel[currentpanel]->fieldsorted, dataloaded);
 	}
 }
 
@@ -892,6 +895,7 @@ void MainFrame::UpdateMenuAvailability(int panel) {
 		m_exportfieldscript->Enable(false);
 		m_importfieldscript->Enable(false);
 		m_exportfieldbackground->Enable(false);
+		m_exportfieldwalkmesh->Enable(false);
 		m_modmanager->Enable(false);
 		m_randomizer->Enable(false);
 		m_damagecalculator->Enable(false);
@@ -921,6 +925,7 @@ void MainFrame::UpdateMenuAvailability(int panel) {
 	m_exportfieldscript->Enable(CDPanel[panel]->fieldloaded);
 	m_importfieldscript->Enable(CDPanel[panel]->fieldloaded);
 	m_exportfieldbackground->Enable(CDPanel[panel]->fieldloaded);
+	m_exportfieldwalkmesh->Enable(CDPanel[panel]->fieldloaded);
 }
 
 void MainFrame::OnDebugClick( wxCommandEvent& event ) {

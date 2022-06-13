@@ -167,6 +167,10 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	m_menuBatch->Append( m_exportfieldbackground );
 	m_exportfieldbackground->Enable( false );
 
+	m_exportfieldwalkmesh = new wxMenuItem( m_menuBatch, wxID_WALKMESH, wxString( _("Export Field Walkmeshes") ) , _("Export all the field walkmeshes at once"), wxITEM_NORMAL );
+	m_menuBatch->Append( m_exportfieldwalkmesh );
+	m_exportfieldwalkmesh->Enable( false );
+
 	m_menuBar->Append( m_menuBatch, _("&Batch") );
 
 	m_menuTools = new wxMenu();
@@ -262,6 +266,7 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	m_menuBatch->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchExportClick ), this, m_exportfieldscript->GetId());
 	m_menuBatch->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchImportClick ), this, m_importfieldscript->GetId());
 	m_menuBatch->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchExportClick ), this, m_exportfieldbackground->GetId());
+	m_menuBatch->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchExportClick ), this, m_exportfieldwalkmesh->GetId());
 	m_menuTools->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnToolClick ), this, m_modmanager->GetId());
 	m_menuTools->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnToolClick ), this, m_randomizer->GetId());
 	m_menuTools->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnToolClick ), this, m_damagecalculator->GetId());
@@ -5151,12 +5156,13 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	wxBoxSizer* bSizer257;
 	bSizer257 = new wxBoxSizer( wxHORIZONTAL );
 
-	m_fieldexportwalk = new wxButton( m_fieldscrolledwindow, wxID_EXPORT, _("Export"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_fieldeditwalk = new wxButton( m_fieldscrolledwindow, wxID_WALKMESH, _("Edit"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer257->Add( m_fieldeditwalk, 0, wxALL, 3 );
+
+	m_fieldexportwalk = new wxButton( m_fieldscrolledwindow, wxID_EXPORT, _("Export Geometry"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer257->Add( m_fieldexportwalk, 0, wxALL, 3 );
 
-	m_fieldimportwalk = new wxButton( m_fieldscrolledwindow, wxID_IMPORT, _("Import"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_fieldimportwalk->Hide();
-
+	m_fieldimportwalk = new wxButton( m_fieldscrolledwindow, wxID_IMPORT, _("Import Geometry"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer257->Add( m_fieldimportwalk, 0, wxALL, 3 );
 
 
@@ -6191,6 +6197,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_fieldpreload->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldtexturechoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnFieldChangeChoice ), NULL, this );
 	m_fieldtexturemanage->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
+	m_fieldeditwalk->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldexportwalk->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldimportwalk->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldtexturepreview->Connect( wxEVT_PAINT, wxPaintEventHandler( CDPanel::OnFieldTexturePaint ), NULL, this );
@@ -6847,6 +6854,7 @@ CDPanel::~CDPanel()
 	m_fieldpreload->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldtexturechoice->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnFieldChangeChoice ), NULL, this );
 	m_fieldtexturemanage->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
+	m_fieldeditwalk->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldexportwalk->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldimportwalk->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldtexturepreview->Disconnect( wxEVT_PAINT, wxPaintEventHandler( CDPanel::OnFieldTexturePaint ), NULL, this );
@@ -10167,7 +10175,7 @@ WalkmeshImportWindow::WalkmeshImportWindow( wxWindow* parent, wxWindowID id, con
 	gbSizer2->SetFlexibleDirection( wxBOTH );
 	gbSizer2->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_NONE );
 
-	m_filepickerimport = new wxFilePickerCtrl( this, wxID_ANY, wxEmptyString, _("Import..."), _("Wavefront mesh (*.obj)|*.obj"), wxDefaultPosition, wxDefaultSize, wxFLP_DEFAULT_STYLE|wxFLP_USE_TEXTCTRL );
+	m_filepickerimport = new wxFilePickerCtrl( this, wxID_ANY, wxEmptyString, _("Import..."), _("Wavefront mesh (*.obj)|*.obj"), wxDefaultPosition, wxDefaultSize, wxFLP_FILE_MUST_EXIST|wxFLP_OPEN|wxFLP_USE_TEXTCTRL );
 	gbSizer2->Add( m_filepickerimport, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
 
 	wxBoxSizer* bSizer20;
@@ -10197,6 +10205,515 @@ WalkmeshImportWindow::WalkmeshImportWindow( wxWindow* parent, wxWindowID id, con
 
 WalkmeshImportWindow::~WalkmeshImportWindow()
 {
+}
+
+WalkmeshEditWindow::WalkmeshEditWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+
+	topsizer = new wxGridBagSizer( 0, 0 );
+	topsizer->SetFlexibleDirection( wxBOTH );
+	topsizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_ALL );
+
+	m_pathlist = new wxListBox( this, wxID_PATH, wxDefaultPosition, wxSize( 100,140 ), 0, NULL, 0 );
+	topsizer->Add( m_pathlist, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
+
+	m_trianglelist = new wxListBox( this, wxID_TRIANGLE, wxDefaultPosition, wxSize( 100,140 ), 0, NULL, 0 );
+	topsizer->Add( m_trianglelist, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
+
+	m_displaypanel = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxSize( 512,512 ), wxTAB_TRAVERSAL );
+	m_displaypanel->SetMinSize( wxSize( 512,512 ) );
+
+	topsizer->Add( m_displaypanel, wxGBPosition( 0, 3 ), wxGBSpan( 4, 1 ), wxALIGN_RIGHT|wxALL, 5 );
+
+	wxStaticBoxSizer* sbSizer6;
+	sbSizer6 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, _("Triangle") ), wxVERTICAL );
+
+	wxFlexGridSizer* fgSizer173;
+	fgSizer173 = new wxFlexGridSizer( 0, 1, 0, 0 );
+	fgSizer173->SetFlexibleDirection( wxBOTH );
+	fgSizer173->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	wxFlexGridSizer* fgSizer171;
+	fgSizer171 = new wxFlexGridSizer( 0, 3, 0, 0 );
+	fgSizer171->SetFlexibleDirection( wxBOTH );
+	fgSizer171->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_trianglex1 = new wxSpinCtrl( sbSizer6->GetStaticBox(), wxID_TRIX1, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	m_trianglex1->SetToolTip( _("1st Vertex X") );
+
+	fgSizer171->Add( m_trianglex1, 0, wxALL, 5 );
+
+	m_triangley1 = new wxSpinCtrl( sbSizer6->GetStaticBox(), wxID_TRIY1, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	m_triangley1->SetToolTip( _("1st Vertex Y") );
+
+	fgSizer171->Add( m_triangley1, 0, wxALL, 5 );
+
+	m_trianglez1 = new wxSpinCtrl( sbSizer6->GetStaticBox(), wxID_TRIZ1, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	m_trianglez1->SetToolTip( _("1st Vertex height") );
+
+	fgSizer171->Add( m_trianglez1, 0, wxALL, 5 );
+
+	m_trianglex2 = new wxSpinCtrl( sbSizer6->GetStaticBox(), wxID_TRIX2, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	m_trianglex2->SetToolTip( _("2nd Vertex X") );
+
+	fgSizer171->Add( m_trianglex2, 0, wxALL, 5 );
+
+	m_triangley2 = new wxSpinCtrl( sbSizer6->GetStaticBox(), wxID_TRIY2, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	m_triangley2->SetToolTip( _("2nd Vertex Y") );
+
+	fgSizer171->Add( m_triangley2, 0, wxALL, 5 );
+
+	m_trianglez2 = new wxSpinCtrl( sbSizer6->GetStaticBox(), wxID_TRIZ2, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	m_trianglez2->SetToolTip( _("2nd Vertex height") );
+
+	fgSizer171->Add( m_trianglez2, 0, wxALL, 5 );
+
+	m_trianglex3 = new wxSpinCtrl( sbSizer6->GetStaticBox(), wxID_TRIX3, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	m_trianglex3->SetToolTip( _("3rd Vertex X") );
+
+	fgSizer171->Add( m_trianglex3, 0, wxALL, 5 );
+
+	m_triangley3 = new wxSpinCtrl( sbSizer6->GetStaticBox(), wxID_TRIY3, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	m_triangley3->SetToolTip( _("3rd Vertex Y") );
+
+	fgSizer171->Add( m_triangley3, 0, wxALL, 5 );
+
+	m_trianglez3 = new wxSpinCtrl( sbSizer6->GetStaticBox(), wxID_TRIZ3, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	m_trianglez3->SetToolTip( _("3rd Vertex height") );
+
+	fgSizer171->Add( m_trianglez3, 0, wxALL, 5 );
+
+
+	fgSizer173->Add( fgSizer171, 1, wxEXPAND, 5 );
+
+	wxFlexGridSizer* fgSizer174;
+	fgSizer174 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer174->SetFlexibleDirection( wxBOTH );
+	fgSizer174->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_active = new wxCheckBox( sbSizer6->GetStaticBox(), wxID_ACTIVE, _("Active"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer174->Add( m_active, 0, wxALL, 5 );
+
+	m_altstep = new wxCheckBox( sbSizer6->GetStaticBox(), wxID_STEP, _("Alt. Step"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_altstep->SetToolTip( _("Use the alternate step sound") );
+
+	fgSizer174->Add( m_altstep, 0, wxALL, 5 );
+
+	m_preventnpc = new wxCheckBox( sbSizer6->GetStaticBox(), wxID_NPC, _("Disable NPC"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer174->Add( m_preventnpc, 0, wxALL, 5 );
+
+	m_preventpc = new wxCheckBox( sbSizer6->GetStaticBox(), wxID_PC, _("Disable PC"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer174->Add( m_preventpc, 0, wxALL, 5 );
+
+
+	fgSizer173->Add( fgSizer174, 1, wxEXPAND, 5 );
+
+	wxGridBagSizer* gbSizer66;
+	gbSizer66 = new wxGridBagSizer( 0, 0 );
+	gbSizer66->SetFlexibleDirection( wxBOTH );
+	gbSizer66->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_trianglethetax = new wxSpinCtrl( sbSizer6->GetStaticBox(), wxID_ANGLE1, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	m_trianglethetax->SetToolTip( _("Pitching angle") );
+
+	gbSizer66->Add( m_trianglethetax, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	m_trianglethetay = new wxSpinCtrl( sbSizer6->GetStaticBox(), wxID_ANGLE2, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	m_trianglethetay->SetToolTip( _("Rolling angle") );
+
+	gbSizer66->Add( m_trianglethetay, wxGBPosition( 0, 1 ), wxGBSpan( 1, 2 ), wxALL, 5 );
+
+	m_triangled = new wxSpinCtrlDouble( sbSizer6->GetStaticBox(), wxID_DISTANCE, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -30000, 30000, 0, 0.1 );
+	m_triangled->SetDigits( 4 );
+	m_triangled->SetToolTip( _("Unknown") );
+
+	gbSizer66->Add( m_triangled, wxGBPosition( 1, 0 ), wxGBSpan( 1, 2 ), wxALL, 5 );
+
+	wxString m_trianglenormaltypeChoices[] = { _("Default (down)"), _("Automatic"), _("Custom") };
+	int m_trianglenormaltypeNChoices = sizeof( m_trianglenormaltypeChoices ) / sizeof( wxString );
+	m_trianglenormaltype = new wxChoice( sbSizer6->GetStaticBox(), wxID_NORMAL, wxDefaultPosition, wxDefaultSize, m_trianglenormaltypeNChoices, m_trianglenormaltypeChoices, 0 );
+	m_trianglenormaltype->SetSelection( 0 );
+	m_trianglenormaltype->SetToolTip( _("Triangle normal") );
+
+	gbSizer66->Add( m_trianglenormaltype, wxGBPosition( 2, 0 ), wxGBSpan( 1, 2 ), wxALL, 5 );
+
+	m_trianglenormalx = new wxSpinCtrlDouble( sbSizer6->GetStaticBox(), wxID_TRIX4, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -30000, 30000, 0, 0.1 );
+	m_trianglenormalx->SetDigits( 4 );
+	m_trianglenormalx->SetToolTip( _("Normal X") );
+
+	gbSizer66->Add( m_trianglenormalx, wxGBPosition( 2, 2 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	m_trianglenormaly = new wxSpinCtrlDouble( sbSizer6->GetStaticBox(), wxID_TRIY4, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -30000, 30000, 0, 0.1 );
+	m_trianglenormaly->SetDigits( 4 );
+	m_trianglenormaly->SetToolTip( _("Normal Y") );
+
+	gbSizer66->Add( m_trianglenormaly, wxGBPosition( 3, 2 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	m_trianglenormalz = new wxSpinCtrlDouble( sbSizer6->GetStaticBox(), wxID_TRIZ4, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -30000, 30000, 0, 0.1 );
+	m_trianglenormalz->SetDigits( 4 );
+	m_trianglenormalz->SetToolTip( _("Normal Z") );
+
+	gbSizer66->Add( m_trianglenormalz, wxGBPosition( 4, 2 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	m_trianglenormaloverz = new wxSpinCtrlDouble( sbSizer6->GetStaticBox(), wxID_OVERZ, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -30000, 30000, 0, 0.1 );
+	m_trianglenormaloverz->SetDigits( 4 );
+	m_trianglenormaloverz->SetToolTip( _("Normal '1 over Z'") );
+
+	gbSizer66->Add( m_trianglenormaloverz, wxGBPosition( 4, 0 ), wxGBSpan( 1, 2 ), wxALL, 5 );
+
+
+	fgSizer173->Add( gbSizer66, 1, wxEXPAND, 5 );
+
+
+	sbSizer6->Add( fgSizer173, 1, wxEXPAND, 5 );
+
+
+	topsizer->Add( sbSizer6, wxGBPosition( 1, 0 ), wxGBSpan( 2, 3 ), 0, 5 );
+
+	wxStaticBoxSizer* sbSizer7;
+	sbSizer7 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, _("Walkpath") ), wxVERTICAL );
+
+	wxBoxSizer* bSizer299;
+	bSizer299 = new wxBoxSizer( wxVERTICAL );
+
+	wxString m_pathpostypeChoices[] = { _("Origin"), _("Current"), _("Min"), _("Max") };
+	int m_pathpostypeNChoices = sizeof( m_pathpostypeChoices ) / sizeof( wxString );
+	m_pathpostype = new wxChoice( sbSizer7->GetStaticBox(), wxID_POSTYPE, wxDefaultPosition, wxDefaultSize, m_pathpostypeNChoices, m_pathpostypeChoices, 0 );
+	m_pathpostype->SetSelection( 0 );
+	m_pathpostype->Hide();
+	m_pathpostype->SetToolTip( _("Min and Max positions seem unused") );
+
+	bSizer299->Add( m_pathpostype, 0, wxALL, 5 );
+
+	wxFlexGridSizer* fgSizer159;
+	fgSizer159 = new wxFlexGridSizer( 0, 3, 0, 0 );
+	fgSizer159->SetFlexibleDirection( wxBOTH );
+	fgSizer159->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_staticText506 = new wxStaticText( sbSizer7->GetStaticBox(), wxID_ANY, _("Pos X"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText506->Wrap( -1 );
+	fgSizer159->Add( m_staticText506, 0, 0, 5 );
+
+	m_staticText507 = new wxStaticText( sbSizer7->GetStaticBox(), wxID_ANY, _("Pos Y"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText507->Wrap( -1 );
+	fgSizer159->Add( m_staticText507, 0, 0, 5 );
+
+	m_staticText508 = new wxStaticText( sbSizer7->GetStaticBox(), wxID_ANY, _("Height"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText508->Wrap( -1 );
+	fgSizer159->Add( m_staticText508, 0, 0, 5 );
+
+	m_pathx = new wxSpinCtrl( sbSizer7->GetStaticBox(), wxID_PATHX, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	fgSizer159->Add( m_pathx, 0, wxALL, 5 );
+
+	m_pathy = new wxSpinCtrl( sbSizer7->GetStaticBox(), wxID_PATHY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	fgSizer159->Add( m_pathy, 0, wxALL, 5 );
+
+	m_pathz = new wxSpinCtrl( sbSizer7->GetStaticBox(), wxID_PATHZ, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	fgSizer159->Add( m_pathz, 0, wxALL, 5 );
+
+
+	bSizer299->Add( fgSizer159, 1, wxEXPAND, 5 );
+
+
+	sbSizer7->Add( bSizer299, 1, wxEXPAND, 5 );
+
+
+	topsizer->Add( sbSizer7, wxGBPosition( 3, 0 ), wxGBSpan( 2, 3 ), 0, 5 );
+
+	m_changeallpos = new wxCheckBox( this, wxID_ANY, _("Change positions consistently"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_changeallpos->SetValue(true);
+	m_changeallpos->Hide();
+	m_changeallpos->SetToolTip( _("When enabled, duplicate vertices of different walkpaths are moved together") );
+
+	topsizer->Add( m_changeallpos, wxGBPosition( 3, 0 ), wxGBSpan( 1, 3 ), wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+
+	wxBoxSizer* bSizer113;
+	bSizer113 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_buttoncancel = new wxButton( this, wxID_CANCEL, _("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer113->Add( m_buttoncancel, 0, wxALIGN_RIGHT|wxALL, 5 );
+
+	m_buttonok = new wxButton( this, wxID_OK, _("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer113->Add( m_buttonok, 0, wxALIGN_RIGHT|wxALL, 5 );
+
+
+	topsizer->Add( bSizer113, wxGBPosition( 4, 3 ), wxGBSpan( 1, 1 ), wxALIGN_RIGHT, 5 );
+
+
+	topsizer->AddGrowableCol( 3 );
+	topsizer->AddGrowableRow( 3 );
+
+	this->SetSizer( topsizer );
+	this->Layout();
+
+	this->Centre( wxBOTH );
+
+	// Connect Events
+	m_pathlist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( WalkmeshEditWindow::OnListBox ), NULL, this );
+	m_pathlist->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( WalkmeshEditWindow::OnWalkpathRightClick ), NULL, this );
+	m_trianglelist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( WalkmeshEditWindow::OnListBox ), NULL, this );
+	m_trianglelist->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( WalkmeshEditWindow::OnTriangleRightClick ), NULL, this );
+	m_trianglex1->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_triangley1->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_trianglez1->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_trianglex2->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_triangley2->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_trianglez2->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_trianglex3->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_triangley3->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_trianglez3->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_active->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( WalkmeshEditWindow::OnCheckBox ), NULL, this );
+	m_altstep->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( WalkmeshEditWindow::OnCheckBox ), NULL, this );
+	m_preventnpc->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( WalkmeshEditWindow::OnCheckBox ), NULL, this );
+	m_preventpc->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( WalkmeshEditWindow::OnCheckBox ), NULL, this );
+	m_trianglethetax->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_trianglethetay->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_triangled->Connect( wxEVT_COMMAND_SPINCTRLDOUBLE_UPDATED, wxSpinDoubleEventHandler( WalkmeshEditWindow::OnSpinCtrlDouble ), NULL, this );
+	m_trianglenormaltype->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( WalkmeshEditWindow::OnChoice ), NULL, this );
+	m_trianglenormalx->Connect( wxEVT_COMMAND_SPINCTRLDOUBLE_UPDATED, wxSpinDoubleEventHandler( WalkmeshEditWindow::OnSpinCtrlDouble ), NULL, this );
+	m_trianglenormaly->Connect( wxEVT_COMMAND_SPINCTRLDOUBLE_UPDATED, wxSpinDoubleEventHandler( WalkmeshEditWindow::OnSpinCtrlDouble ), NULL, this );
+	m_trianglenormalz->Connect( wxEVT_COMMAND_SPINCTRLDOUBLE_UPDATED, wxSpinDoubleEventHandler( WalkmeshEditWindow::OnSpinCtrlDouble ), NULL, this );
+	m_trianglenormaloverz->Connect( wxEVT_COMMAND_SPINCTRLDOUBLE_UPDATED, wxSpinDoubleEventHandler( WalkmeshEditWindow::OnSpinCtrlDouble ), NULL, this );
+	m_pathpostype->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( WalkmeshEditWindow::OnChoice ), NULL, this );
+	m_pathx->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_pathy->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_pathz->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_buttoncancel->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WalkmeshEditWindow::OnButtonClick ), NULL, this );
+	m_buttonok->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WalkmeshEditWindow::OnButtonClick ), NULL, this );
+}
+
+WalkmeshEditWindow::~WalkmeshEditWindow()
+{
+	// Disconnect Events
+	m_pathlist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( WalkmeshEditWindow::OnListBox ), NULL, this );
+	m_pathlist->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( WalkmeshEditWindow::OnWalkpathRightClick ), NULL, this );
+	m_trianglelist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( WalkmeshEditWindow::OnListBox ), NULL, this );
+	m_trianglelist->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( WalkmeshEditWindow::OnTriangleRightClick ), NULL, this );
+	m_trianglex1->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_triangley1->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_trianglez1->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_trianglex2->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_triangley2->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_trianglez2->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_trianglex3->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_triangley3->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_trianglez3->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_active->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( WalkmeshEditWindow::OnCheckBox ), NULL, this );
+	m_altstep->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( WalkmeshEditWindow::OnCheckBox ), NULL, this );
+	m_preventnpc->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( WalkmeshEditWindow::OnCheckBox ), NULL, this );
+	m_preventpc->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( WalkmeshEditWindow::OnCheckBox ), NULL, this );
+	m_trianglethetax->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_trianglethetay->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_triangled->Disconnect( wxEVT_COMMAND_SPINCTRLDOUBLE_UPDATED, wxSpinDoubleEventHandler( WalkmeshEditWindow::OnSpinCtrlDouble ), NULL, this );
+	m_trianglenormaltype->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( WalkmeshEditWindow::OnChoice ), NULL, this );
+	m_trianglenormalx->Disconnect( wxEVT_COMMAND_SPINCTRLDOUBLE_UPDATED, wxSpinDoubleEventHandler( WalkmeshEditWindow::OnSpinCtrlDouble ), NULL, this );
+	m_trianglenormaly->Disconnect( wxEVT_COMMAND_SPINCTRLDOUBLE_UPDATED, wxSpinDoubleEventHandler( WalkmeshEditWindow::OnSpinCtrlDouble ), NULL, this );
+	m_trianglenormalz->Disconnect( wxEVT_COMMAND_SPINCTRLDOUBLE_UPDATED, wxSpinDoubleEventHandler( WalkmeshEditWindow::OnSpinCtrlDouble ), NULL, this );
+	m_trianglenormaloverz->Disconnect( wxEVT_COMMAND_SPINCTRLDOUBLE_UPDATED, wxSpinDoubleEventHandler( WalkmeshEditWindow::OnSpinCtrlDouble ), NULL, this );
+	m_pathpostype->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( WalkmeshEditWindow::OnChoice ), NULL, this );
+	m_pathx->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_pathy->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_pathz->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshEditWindow::OnSpinCtrl ), NULL, this );
+	m_buttoncancel->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WalkmeshEditWindow::OnButtonClick ), NULL, this );
+	m_buttonok->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WalkmeshEditWindow::OnButtonClick ), NULL, this );
+
+}
+
+WalkmeshAddTriangleWindow::WalkmeshAddTriangleWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+
+	wxGridBagSizer* gbSizer67;
+	gbSizer67 = new wxGridBagSizer( 0, 0 );
+	gbSizer67->SetFlexibleDirection( wxBOTH );
+	gbSizer67->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	wxArrayString m_walkpathChoices;
+	m_walkpath = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_walkpathChoices, 0 );
+	m_walkpath->SetSelection( 0 );
+	gbSizer67->Add( m_walkpath, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	m_adjacency = new wxChoicebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxCHB_DEFAULT );
+	m_panel0 = new wxPanel( m_adjacency, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxFlexGridSizer* fgSizer171;
+	fgSizer171 = new wxFlexGridSizer( 0, 3, 0, 0 );
+	fgSizer171->SetFlexibleDirection( wxBOTH );
+	fgSizer171->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_trianglex1 = new wxSpinCtrl( m_panel0, wxID_TRIX1, wxT("-173"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	m_trianglex1->SetToolTip( _("1st Vertex X") );
+
+	fgSizer171->Add( m_trianglex1, 0, wxALL, 5 );
+
+	m_triangley1 = new wxSpinCtrl( m_panel0, wxID_TRIY1, wxT("-100"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	m_triangley1->SetToolTip( _("1st Vertex Y") );
+
+	fgSizer171->Add( m_triangley1, 0, wxALL, 5 );
+
+	m_trianglez1 = new wxSpinCtrl( m_panel0, wxID_TRIZ1, wxT("100"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	m_trianglez1->SetToolTip( _("1st Vertex Z") );
+
+	fgSizer171->Add( m_trianglez1, 0, wxALL, 5 );
+
+	m_trianglex2 = new wxSpinCtrl( m_panel0, wxID_TRIX2, wxT("173"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	m_trianglex2->SetToolTip( _("2nd Vertex X") );
+
+	fgSizer171->Add( m_trianglex2, 0, wxALL, 5 );
+
+	m_triangley2 = new wxSpinCtrl( m_panel0, wxID_TRIY2, wxT("-100"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	m_triangley2->SetToolTip( _("2nd Vertex Y") );
+
+	fgSizer171->Add( m_triangley2, 0, wxALL, 5 );
+
+	m_trianglez2 = new wxSpinCtrl( m_panel0, wxID_TRIZ2, wxT("100"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	m_trianglez2->SetToolTip( _("2nd Vertex Z") );
+
+	fgSizer171->Add( m_trianglez2, 0, wxALL, 5 );
+
+	m_trianglex3 = new wxSpinCtrl( m_panel0, wxID_TRIX3, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	m_trianglex3->SetToolTip( _("3rd Vertex X") );
+
+	fgSizer171->Add( m_trianglex3, 0, wxALL, 5 );
+
+	m_triangley3 = new wxSpinCtrl( m_panel0, wxID_TRIY3, wxT("200"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	m_triangley3->SetToolTip( _("3rd Vertex Y") );
+
+	fgSizer171->Add( m_triangley3, 0, wxALL, 5 );
+
+	m_trianglez3 = new wxSpinCtrl( m_panel0, wxID_TRIZ3, wxT("100"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	m_trianglez3->SetToolTip( _("3rd Vertex Z") );
+
+	fgSizer171->Add( m_trianglez3, 0, wxALL, 5 );
+
+
+	m_panel0->SetSizer( fgSizer171 );
+	m_panel0->Layout();
+	fgSizer171->Fit( m_panel0 );
+	m_adjacency->AddPage( m_panel0, _("Isolated triangle"), false );
+	m_panel1 = new wxPanel( m_adjacency, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer293;
+	bSizer293 = new wxBoxSizer( wxVERTICAL );
+
+	wxArrayString m_adjacentsingleChoices;
+	m_adjacentsingle = new wxChoice( m_panel1, wxID_TRIANGLE, wxDefaultPosition, wxDefaultSize, m_adjacentsingleChoices, 0 );
+	m_adjacentsingle->SetSelection( 0 );
+	bSizer293->Add( m_adjacentsingle, 0, wxALL, 5 );
+
+	wxString m_sideChoices[] = { _("1st side"), _("2nd side"), _("3rd side") };
+	int m_sideNChoices = sizeof( m_sideChoices ) / sizeof( wxString );
+	m_side = new wxChoice( m_panel1, wxID_SIDE, wxDefaultPosition, wxDefaultSize, m_sideNChoices, m_sideChoices, 0 );
+	m_side->SetSelection( 0 );
+	bSizer293->Add( m_side, 0, wxALL, 5 );
+
+	wxBoxSizer* bSizer2931;
+	bSizer2931 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_trianglex4 = new wxSpinCtrl( m_panel1, wxID_TRIX4, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	m_trianglex4->SetToolTip( _("Vertex X") );
+
+	bSizer2931->Add( m_trianglex4, 0, wxALL, 5 );
+
+	m_triangley4 = new wxSpinCtrl( m_panel1, wxID_TRIY4, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	m_triangley4->SetToolTip( _("Vertex Y") );
+
+	bSizer2931->Add( m_triangley4, 0, wxALL, 5 );
+
+	m_trianglez4 = new wxSpinCtrl( m_panel1, wxID_TRIZ4, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	m_trianglez4->SetToolTip( _("Vertex Z") );
+
+	bSizer2931->Add( m_trianglez4, 0, wxALL, 5 );
+
+
+	bSizer293->Add( bSizer2931, 1, wxEXPAND, 5 );
+
+
+	m_panel1->SetSizer( bSizer293 );
+	m_panel1->Layout();
+	bSizer293->Fit( m_panel1 );
+	m_adjacency->AddPage( m_panel1, _("Triangle with 1 neighbour"), true );
+	m_panel2 = new wxPanel( m_adjacency, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer297;
+	bSizer297 = new wxBoxSizer( wxVERTICAL );
+
+	wxArrayString m_adjacentcoupleChoices;
+	m_adjacentcouple = new wxChoice( m_panel2, wxID_ANY, wxDefaultPosition, wxSize( 150,-1 ), m_adjacentcoupleChoices, 0 );
+	m_adjacentcouple->SetSelection( 0 );
+	bSizer297->Add( m_adjacentcouple, 0, wxALL, 5 );
+
+
+	m_panel2->SetSizer( bSizer297 );
+	m_panel2->Layout();
+	bSizer297->Fit( m_panel2 );
+	m_adjacency->AddPage( m_panel2, _("Triangle with 2 neighbours"), false );
+	gbSizer67->Add( m_adjacency, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	wxBoxSizer* bSizer20;
+	bSizer20 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_buttoncancel = new wxButton( this, wxID_CANCEL, _("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer20->Add( m_buttoncancel, 0, wxALL, 5 );
+
+	m_buttonok = new wxButton( this, wxID_OK, _("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer20->Add( m_buttonok, 0, wxALL, 5 );
+
+
+	gbSizer67->Add( bSizer20, wxGBPosition( 2, 0 ), wxGBSpan( 1, 2 ), wxALIGN_RIGHT|wxEXPAND, 5 );
+
+
+	gbSizer67->AddGrowableCol( 0 );
+	gbSizer67->AddGrowableRow( 1 );
+
+	this->SetSizer( gbSizer67 );
+	this->Layout();
+
+	this->Centre( wxBOTH );
+
+	// Connect Events
+	m_walkpath->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( WalkmeshAddTriangleWindow::OnChangeWalkpath ), NULL, this );
+	m_adjacency->Connect( wxEVT_COMMAND_CHOICEBOOK_PAGE_CHANGED, wxChoicebookEventHandler( WalkmeshAddTriangleWindow::OnAdjacencyTypeChange ), NULL, this );
+	m_trianglex1->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshAddTriangleWindow::OnChangeTrianglePos ), NULL, this );
+	m_triangley1->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshAddTriangleWindow::OnChangeTrianglePos ), NULL, this );
+	m_trianglez1->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshAddTriangleWindow::OnChangeTrianglePos ), NULL, this );
+	m_trianglex2->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshAddTriangleWindow::OnChangeTrianglePos ), NULL, this );
+	m_triangley2->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshAddTriangleWindow::OnChangeTrianglePos ), NULL, this );
+	m_trianglez2->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshAddTriangleWindow::OnChangeTrianglePos ), NULL, this );
+	m_trianglex3->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshAddTriangleWindow::OnChangeTrianglePos ), NULL, this );
+	m_triangley3->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshAddTriangleWindow::OnChangeTrianglePos ), NULL, this );
+	m_trianglez3->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshAddTriangleWindow::OnChangeTrianglePos ), NULL, this );
+	m_adjacentsingle->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( WalkmeshAddTriangleWindow::OnChangeSingleTriangle ), NULL, this );
+	m_side->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( WalkmeshAddTriangleWindow::OnChangeSingleTriangle ), NULL, this );
+	m_trianglex4->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshAddTriangleWindow::OnChangeTrianglePos ), NULL, this );
+	m_triangley4->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshAddTriangleWindow::OnChangeTrianglePos ), NULL, this );
+	m_trianglez4->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshAddTriangleWindow::OnChangeTrianglePos ), NULL, this );
+	m_adjacentcouple->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( WalkmeshAddTriangleWindow::OnChangeCoupleTriangle ), NULL, this );
+	m_buttoncancel->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WalkmeshAddTriangleWindow::OnButtonClick ), NULL, this );
+	m_buttonok->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WalkmeshAddTriangleWindow::OnButtonClick ), NULL, this );
+}
+
+WalkmeshAddTriangleWindow::~WalkmeshAddTriangleWindow()
+{
+	// Disconnect Events
+	m_walkpath->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( WalkmeshAddTriangleWindow::OnChangeWalkpath ), NULL, this );
+	m_adjacency->Disconnect( wxEVT_COMMAND_CHOICEBOOK_PAGE_CHANGED, wxChoicebookEventHandler( WalkmeshAddTriangleWindow::OnAdjacencyTypeChange ), NULL, this );
+	m_trianglex1->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshAddTriangleWindow::OnChangeTrianglePos ), NULL, this );
+	m_triangley1->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshAddTriangleWindow::OnChangeTrianglePos ), NULL, this );
+	m_trianglez1->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshAddTriangleWindow::OnChangeTrianglePos ), NULL, this );
+	m_trianglex2->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshAddTriangleWindow::OnChangeTrianglePos ), NULL, this );
+	m_triangley2->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshAddTriangleWindow::OnChangeTrianglePos ), NULL, this );
+	m_trianglez2->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshAddTriangleWindow::OnChangeTrianglePos ), NULL, this );
+	m_trianglex3->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshAddTriangleWindow::OnChangeTrianglePos ), NULL, this );
+	m_triangley3->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshAddTriangleWindow::OnChangeTrianglePos ), NULL, this );
+	m_trianglez3->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshAddTriangleWindow::OnChangeTrianglePos ), NULL, this );
+	m_adjacentsingle->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( WalkmeshAddTriangleWindow::OnChangeSingleTriangle ), NULL, this );
+	m_side->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( WalkmeshAddTriangleWindow::OnChangeSingleTriangle ), NULL, this );
+	m_trianglex4->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshAddTriangleWindow::OnChangeTrianglePos ), NULL, this );
+	m_triangley4->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshAddTriangleWindow::OnChangeTrianglePos ), NULL, this );
+	m_trianglez4->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( WalkmeshAddTriangleWindow::OnChangeTrianglePos ), NULL, this );
+	m_adjacentcouple->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( WalkmeshAddTriangleWindow::OnChangeCoupleTriangle ), NULL, this );
+	m_buttoncancel->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WalkmeshAddTriangleWindow::OnButtonClick ), NULL, this );
+	m_buttonok->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WalkmeshAddTriangleWindow::OnButtonClick ), NULL, this );
+
 }
 
 ManageTextureWindow::ManageTextureWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
@@ -10387,7 +10904,7 @@ ManageTextureWindow::~ManageTextureWindow()
 
 ManageFieldTextureWindow::ManageFieldTextureWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
 {
-	this->SetSizeHints( wxSize( 540,560 ), wxDefaultSize );
+	this->SetSizeHints( wxSize( 720,500 ), wxDefaultSize );
 
 	wxBoxSizer* bSizer55;
 	bSizer55 = new wxBoxSizer( wxVERTICAL );
@@ -10404,44 +10921,128 @@ ManageFieldTextureWindow::ManageFieldTextureWindow( wxWindow* parent, wxWindowID
 	m_animlist = new wxListCtrl( this, wxID_ANY, wxDefaultPosition, wxSize( 135,160 ), wxLC_SINGLE_SEL|wxLC_SMALL_ICON );
 	gbSizer10->Add( m_animlist, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxALL, 5 );
 
-	wxBoxSizer* bSizer258;
-	bSizer258 = new wxBoxSizer( wxHORIZONTAL );
+	wxGridBagSizer* gbSizer661;
+	gbSizer661 = new wxGridBagSizer( 0, 0 );
+	gbSizer661->SetFlexibleDirection( wxBOTH );
+	gbSizer661->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
-	m_staticText458 = new wxStaticText( this, wxID_ANY, _("Depth"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText458->Wrap( -1 );
-	bSizer258->Add( m_staticText458, 0, wxALL, 5 );
+	m_staticText4681 = new wxStaticText( this, wxID_ANY, _("Pos X"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4681->Wrap( -1 );
+	gbSizer661->Add( m_staticText4681, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxLEFT, 5 );
 
-	m_texturetiledepth = new wxSpinCtrl( this, wxID_DEPTH, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 4095, 0 );
-	bSizer258->Add( m_texturetiledepth, 0, wxALL, 3 );
+	m_staticText4691 = new wxStaticText( this, wxID_ANY, _("Pos Y"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4691->Wrap( -1 );
+	gbSizer661->Add( m_staticText4691, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxLEFT, 5 );
+
+	m_staticText4701 = new wxStaticText( this, wxID_ANY, _("Depth"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4701->Wrap( -1 );
+	gbSizer661->Add( m_staticText4701, wxGBPosition( 0, 2 ), wxGBSpan( 1, 1 ), wxLEFT, 5 );
+
+	m_tilex = new wxSpinCtrl( this, wxID_POSX1, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	gbSizer661->Add( m_tilex, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	m_tiley = new wxSpinCtrl( this, wxID_POSY1, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	gbSizer661->Add( m_tiley, wxGBPosition( 1, 1 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	m_tiledepth = new wxSpinCtrl( this, wxID_POSZ1, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 4095, 0 );
+	gbSizer661->Add( m_tiledepth, wxGBPosition( 1, 2 ), wxGBSpan( 1, 1 ), wxALL, 5 );
 
 
-	gbSizer10->Add( bSizer258, wxGBPosition( 1, 0 ), wxGBSpan( 1, 2 ), wxEXPAND, 5 );
+	gbSizer10->Add( gbSizer661, wxGBPosition( 1, 0 ), wxGBSpan( 1, 2 ), wxEXPAND, 5 );
 
-	m_staticText1021 = new wxStaticText( this, wxID_ANY, _("Palette Selection :"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText1021->Wrap( -1 );
-	gbSizer10->Add( m_staticText1021, wxGBPosition( 2, 0 ), wxGBSpan( 1, 2 ), wxALIGN_BOTTOM|wxLEFT, 5 );
+	m_staticline9 = new wxStaticLine( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL );
+	gbSizer10->Add( m_staticline9, wxGBPosition( 2, 0 ), wxGBSpan( 1, 2 ), wxEXPAND | wxALL, 5 );
 
-	m_texturepaletteselection = new wxSpinCtrl( this, wxID_PALSEL, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 1, 0 );
-	m_texturepaletteselection->Enable( false );
+	m_tilepiecelist = new wxListBox( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
+	gbSizer10->Add( m_tilepiecelist, wxGBPosition( 3, 0 ), wxGBSpan( 1, 2 ), wxALL, 5 );
 
-	gbSizer10->Add( m_texturepaletteselection, wxGBPosition( 3, 0 ), wxGBSpan( 1, 2 ), wxALL, 3 );
+	wxGridBagSizer* gbSizer66;
+	gbSizer66 = new wxGridBagSizer( 0, 0 );
+	gbSizer66->SetFlexibleDirection( wxBOTH );
+	gbSizer66->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_staticText468 = new wxStaticText( this, wxID_ANY, _("Pos X"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText468->Wrap( -1 );
+	gbSizer66->Add( m_staticText468, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxLEFT, 5 );
+
+	m_staticText469 = new wxStaticText( this, wxID_ANY, _("Pos Y"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText469->Wrap( -1 );
+	gbSizer66->Add( m_staticText469, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxLEFT, 5 );
+
+	m_staticText470 = new wxStaticText( this, wxID_ANY, _("Depth"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText470->Wrap( -1 );
+	gbSizer66->Add( m_staticText470, wxGBPosition( 0, 2 ), wxGBSpan( 1, 1 ), wxLEFT, 5 );
+
+	m_tilepiecex = new wxSpinCtrl( this, wxID_POSX2, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 1023, 0 );
+	gbSizer66->Add( m_tilepiecex, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	m_tilepiecey = new wxSpinCtrl( this, wxID_POSY2, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 1023, 0 );
+	gbSizer66->Add( m_tilepiecey, wxGBPosition( 1, 1 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	m_tilepiecedepth = new wxSpinCtrl( this, wxID_POSZ2, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 4095, 0 );
+	gbSizer66->Add( m_tilepiecedepth, wxGBPosition( 1, 2 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+
+	gbSizer10->Add( gbSizer66, wxGBPosition( 4, 0 ), wxGBSpan( 3, 2 ), wxEXPAND, 5 );
 
 	m_texturewindow = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxSize( 280,120 ), wxHSCROLL|wxVSCROLL );
 	m_texturewindow->SetScrollRate( 5, 5 );
-	gbSizer10->Add( m_texturewindow, wxGBPosition( 0, 2 ), wxGBSpan( 3, 2 ), wxEXPAND | wxALL, 5 );
+	gbSizer10->Add( m_texturewindow, wxGBPosition( 0, 2 ), wxGBSpan( 6, 2 ), wxEXPAND | wxALL, 5 );
 
-	wxString m_modifytyperadioChoices[] = { _("Draw"), _("Import") };
-	int m_modifytyperadioNChoices = sizeof( m_modifytyperadioChoices ) / sizeof( wxString );
-	m_modifytyperadio = new wxRadioBox( this, wxID_MODIFY, _("Modify"), wxDefaultPosition, wxDefaultSize, m_modifytyperadioNChoices, m_modifytyperadioChoices, 1, wxRA_SPECIFY_ROWS );
-	m_modifytyperadio->SetSelection( 0 );
-	m_modifytyperadio->Enable( false );
+	wxBoxSizer* bSizer56;
+	bSizer56 = new wxBoxSizer( wxHORIZONTAL );
 
-	gbSizer10->Add( m_modifytyperadio, wxGBPosition( 4, 0 ), wxGBSpan( 1, 2 ), wxALL|wxEXPAND, 2 );
+	m_buttonexport = new wxButton( this, wxID_EXPORT, _("Export"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer56->Add( m_buttonexport, 0, wxALL, 5 );
+
+	m_buttoncancel = new wxButton( this, wxID_CANCEL, _("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer56->Add( m_buttoncancel, 0, wxALL, 5 );
+
+	m_buttonok = new wxButton( this, wxID_OK, _("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer56->Add( m_buttonok, 0, wxALL, 5 );
+
+
+	gbSizer10->Add( bSizer56, wxGBPosition( 7, 3 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
+
+	wxBoxSizer* dummied;
+	dummied = new wxBoxSizer( wxVERTICAL );
+
+	wxFlexGridSizer* fgSizer45;
+	fgSizer45 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer45->SetFlexibleDirection( wxBOTH );
+	fgSizer45->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_staticText99 = new wxStaticText( this, wxID_ANY, _("Position X"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText99->Wrap( -1 );
+	m_staticText99->Hide();
+
+	fgSizer45->Add( m_staticText99, 0, wxALL, 1 );
+
+	m_staticText100 = new wxStaticText( this, wxID_ANY, _("Position Y"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText100->Wrap( -1 );
+	m_staticText100->Hide();
+
+	fgSizer45->Add( m_staticText100, 0, wxALL, 1 );
+
+	m_textureposx = new wxSpinCtrl( this, wxID_POSX, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 10, 0 );
+	m_textureposx->Hide();
+
+	fgSizer45->Add( m_textureposx, 0, wxALL, 5 );
+
+	m_textureposy = new wxSpinCtrl( this, wxID_POSY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 10, 0 );
+	m_textureposy->Hide();
+
+	fgSizer45->Add( m_textureposy, 0, wxALL, 5 );
+
+
+	dummied->Add( fgSizer45, 1, wxEXPAND, 5 );
 
 	wxBoxSizer* bSizer112;
 	bSizer112 = new wxBoxSizer( wxVERTICAL );
 
 	m_modifypaneldraw = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	m_modifypaneldraw->Hide();
+
 	wxGridBagSizer* gbSizer16;
 	gbSizer16 = new wxGridBagSizer( 0, 0 );
 	gbSizer16->SetFlexibleDirection( wxBOTH );
@@ -10475,48 +11076,36 @@ ManageFieldTextureWindow::ManageFieldTextureWindow( wxWindow* parent, wxWindowID
 	bSizer112->Add( m_modifypanelimport, 1, wxEXPAND | wxALL, 2 );
 
 
-	gbSizer10->Add( bSizer112, wxGBPosition( 5, 0 ), wxGBSpan( 2, 2 ), wxEXPAND, 5 );
+	dummied->Add( bSizer112, 1, wxEXPAND, 5 );
 
-	wxFlexGridSizer* fgSizer45;
-	fgSizer45 = new wxFlexGridSizer( 0, 2, 0, 0 );
-	fgSizer45->SetFlexibleDirection( wxBOTH );
-	fgSizer45->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	m_staticText1021 = new wxStaticText( this, wxID_ANY, _("Palette Selection :"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText1021->Wrap( -1 );
+	m_staticText1021->Hide();
 
-	m_staticText99 = new wxStaticText( this, wxID_ANY, _("Position X"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText99->Wrap( -1 );
-	fgSizer45->Add( m_staticText99, 0, wxALL, 1 );
+	dummied->Add( m_staticText1021, 0, wxALL, 5 );
 
-	m_staticText100 = new wxStaticText( this, wxID_ANY, _("Position Y"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText100->Wrap( -1 );
-	fgSizer45->Add( m_staticText100, 0, wxALL, 1 );
+	m_texturepaletteselection = new wxSpinCtrl( this, wxID_PALSEL, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 1, 0 );
+	m_texturepaletteselection->Enable( false );
+	m_texturepaletteselection->Hide();
 
-	m_textureposx = new wxSpinCtrl( this, wxID_POSX, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 10, 0 );
-	fgSizer45->Add( m_textureposx, 0, wxALL, 5 );
+	dummied->Add( m_texturepaletteselection, 0, wxALL, 5 );
 
-	m_textureposy = new wxSpinCtrl( this, wxID_POSY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 10, 0 );
-	fgSizer45->Add( m_textureposy, 0, wxALL, 5 );
+	wxString m_modifytyperadioChoices[] = { _("Draw"), _("Import") };
+	int m_modifytyperadioNChoices = sizeof( m_modifytyperadioChoices ) / sizeof( wxString );
+	m_modifytyperadio = new wxRadioBox( this, wxID_MODIFY, _("Modify"), wxDefaultPosition, wxDefaultSize, m_modifytyperadioNChoices, m_modifytyperadioChoices, 1, wxRA_SPECIFY_ROWS );
+	m_modifytyperadio->SetSelection( 0 );
+	m_modifytyperadio->Enable( false );
+	m_modifytyperadio->Hide();
 
-
-	gbSizer10->Add( fgSizer45, wxGBPosition( 3, 2 ), wxGBSpan( 4, 2 ), wxEXPAND, 5 );
-
-	wxBoxSizer* bSizer56;
-	bSizer56 = new wxBoxSizer( wxHORIZONTAL );
-
-	m_buttonexport = new wxButton( this, wxID_EXPORT, _("Export"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer56->Add( m_buttonexport, 0, wxALL, 5 );
-
-	m_buttoncancel = new wxButton( this, wxID_CANCEL, _("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer56->Add( m_buttoncancel, 0, wxALL, 5 );
-
-	m_buttonok = new wxButton( this, wxID_OK, _("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer56->Add( m_buttonok, 0, wxALL, 5 );
+	dummied->Add( m_modifytyperadio, 0, wxALL, 5 );
 
 
-	gbSizer10->Add( bSizer56, wxGBPosition( 7, 3 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
+	gbSizer10->Add( dummied, wxGBPosition( 7, 0 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
 
 
 	gbSizer10->AddGrowableCol( 2 );
 	gbSizer10->AddGrowableRow( 0 );
+	gbSizer10->AddGrowableRow( 3 );
 
 	bSizer55->Add( gbSizer10, 1, wxEXPAND, 5 );
 
@@ -10532,23 +11121,29 @@ ManageFieldTextureWindow::ManageFieldTextureWindow( wxWindow* parent, wxWindowID
 	m_tilechecklist->Connect( wxEVT_COMMAND_CHECKLISTBOX_TOGGLED, wxCommandEventHandler( ManageFieldTextureWindow::OnTileButton ), NULL, this );
 	m_animlist->Connect( wxEVT_LEFT_DCLICK, wxMouseEventHandler( ManageFieldTextureWindow::OnAnimClick ), NULL, this );
 	m_animlist->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( ManageFieldTextureWindow::OnAnimClick ), NULL, this );
-	m_texturetiledepth->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
-	m_texturepaletteselection->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
+	m_tilex->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
+	m_tiley->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
+	m_tiledepth->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
+	m_tilepiecelist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( ManageFieldTextureWindow::OnTilePieceSelection ), NULL, this );
+	m_tilepiecex->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
+	m_tilepiecey->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
+	m_tilepiecedepth->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
 	m_texturewindow->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( ManageFieldTextureWindow::OnTextureMouseMove ), NULL, this );
 	m_texturewindow->Connect( wxEVT_MOTION, wxMouseEventHandler( ManageFieldTextureWindow::OnTextureMouseMove ), NULL, this );
 	m_texturewindow->Connect( wxEVT_MOUSEWHEEL, wxMouseEventHandler( ManageFieldTextureWindow::OnTextureMouseWheel ), NULL, this );
 	m_texturewindow->Connect( wxEVT_PAINT, wxPaintEventHandler( ManageFieldTextureWindow::OnPaintTexture ), NULL, this );
-	m_modifytyperadio->Connect( wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler( ManageFieldTextureWindow::OnModifyRadio ), NULL, this );
+	m_buttonexport->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ManageFieldTextureWindow::OnButtonClick ), NULL, this );
+	m_buttoncancel->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ManageFieldTextureWindow::OnButtonClick ), NULL, this );
+	m_buttonok->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ManageFieldTextureWindow::OnButtonClick ), NULL, this );
+	m_textureposx->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
+	m_textureposy->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
 	m_drawpanelcolor->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( ManageFieldTextureWindow::OnPaletteMouseMove ), NULL, this );
 	m_drawpanelcolor->Connect( wxEVT_MOTION, wxMouseEventHandler( ManageFieldTextureWindow::OnPaletteMouseMove ), NULL, this );
 	m_drawpanelcolor->Connect( wxEVT_PAINT, wxPaintEventHandler( ManageFieldTextureWindow::OnPaintPalette ), NULL, this );
 	m_texturepicker->Connect( wxEVT_COMMAND_FILEPICKER_CHANGED, wxFileDirPickerEventHandler( ManageFieldTextureWindow::OnChooseFileImage ), NULL, this );
 	m_buttonimport->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ManageFieldTextureWindow::OnButtonClick ), NULL, this );
-	m_textureposx->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
-	m_textureposy->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
-	m_buttonexport->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ManageFieldTextureWindow::OnButtonClick ), NULL, this );
-	m_buttoncancel->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ManageFieldTextureWindow::OnButtonClick ), NULL, this );
-	m_buttonok->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ManageFieldTextureWindow::OnButtonClick ), NULL, this );
+	m_texturepaletteselection->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
+	m_modifytyperadio->Connect( wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler( ManageFieldTextureWindow::OnModifyRadio ), NULL, this );
 }
 
 ManageFieldTextureWindow::~ManageFieldTextureWindow()
@@ -10558,23 +11153,29 @@ ManageFieldTextureWindow::~ManageFieldTextureWindow()
 	m_tilechecklist->Disconnect( wxEVT_COMMAND_CHECKLISTBOX_TOGGLED, wxCommandEventHandler( ManageFieldTextureWindow::OnTileButton ), NULL, this );
 	m_animlist->Disconnect( wxEVT_LEFT_DCLICK, wxMouseEventHandler( ManageFieldTextureWindow::OnAnimClick ), NULL, this );
 	m_animlist->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( ManageFieldTextureWindow::OnAnimClick ), NULL, this );
-	m_texturetiledepth->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
-	m_texturepaletteselection->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
+	m_tilex->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
+	m_tiley->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
+	m_tiledepth->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
+	m_tilepiecelist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( ManageFieldTextureWindow::OnTilePieceSelection ), NULL, this );
+	m_tilepiecex->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
+	m_tilepiecey->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
+	m_tilepiecedepth->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
 	m_texturewindow->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( ManageFieldTextureWindow::OnTextureMouseMove ), NULL, this );
 	m_texturewindow->Disconnect( wxEVT_MOTION, wxMouseEventHandler( ManageFieldTextureWindow::OnTextureMouseMove ), NULL, this );
 	m_texturewindow->Disconnect( wxEVT_MOUSEWHEEL, wxMouseEventHandler( ManageFieldTextureWindow::OnTextureMouseWheel ), NULL, this );
 	m_texturewindow->Disconnect( wxEVT_PAINT, wxPaintEventHandler( ManageFieldTextureWindow::OnPaintTexture ), NULL, this );
-	m_modifytyperadio->Disconnect( wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler( ManageFieldTextureWindow::OnModifyRadio ), NULL, this );
+	m_buttonexport->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ManageFieldTextureWindow::OnButtonClick ), NULL, this );
+	m_buttoncancel->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ManageFieldTextureWindow::OnButtonClick ), NULL, this );
+	m_buttonok->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ManageFieldTextureWindow::OnButtonClick ), NULL, this );
+	m_textureposx->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
+	m_textureposy->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
 	m_drawpanelcolor->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( ManageFieldTextureWindow::OnPaletteMouseMove ), NULL, this );
 	m_drawpanelcolor->Disconnect( wxEVT_MOTION, wxMouseEventHandler( ManageFieldTextureWindow::OnPaletteMouseMove ), NULL, this );
 	m_drawpanelcolor->Disconnect( wxEVT_PAINT, wxPaintEventHandler( ManageFieldTextureWindow::OnPaintPalette ), NULL, this );
 	m_texturepicker->Disconnect( wxEVT_COMMAND_FILEPICKER_CHANGED, wxFileDirPickerEventHandler( ManageFieldTextureWindow::OnChooseFileImage ), NULL, this );
 	m_buttonimport->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ManageFieldTextureWindow::OnButtonClick ), NULL, this );
-	m_textureposx->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
-	m_textureposy->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
-	m_buttonexport->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ManageFieldTextureWindow::OnButtonClick ), NULL, this );
-	m_buttoncancel->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ManageFieldTextureWindow::OnButtonClick ), NULL, this );
-	m_buttonok->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ManageFieldTextureWindow::OnButtonClick ), NULL, this );
+	m_texturepaletteselection->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
+	m_modifytyperadio->Disconnect( wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler( ManageFieldTextureWindow::OnModifyRadio ), NULL, this );
 
 }
 
@@ -15288,11 +15889,14 @@ DamageCalculatorSaveProfile::DamageCalculatorSaveProfile( wxWindow* parent, wxWi
 
 	gbSizer61->Add( m_description, wxGBPosition( 2, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
 
+	m_buttondelete = new wxButton( this, wxID_DELETE, _("Delete Profile"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer61->Add( m_buttondelete, wxGBPosition( 3, 0 ), wxGBSpan( 1, 1 ), wxALIGN_RIGHT|wxALL, 5 );
+
 	m_profilename = new wxTextCtrl( this, wxID_ANY, _("Character Profile 1"), wxDefaultPosition, wxDefaultSize, 0 );
 	gbSizer61->Add( m_profilename, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
 
 	m_listprofile = new wxListBox( this, wxID_ANY, wxDefaultPosition, wxSize( 150,-1 ), 0, NULL, 0 );
-	gbSizer61->Add( m_listprofile, wxGBPosition( 1, 1 ), wxGBSpan( 2, 1 ), wxALL|wxEXPAND, 5 );
+	gbSizer61->Add( m_listprofile, wxGBPosition( 1, 1 ), wxGBSpan( 3, 1 ), wxALL|wxEXPAND, 5 );
 
 	wxBoxSizer* bSizer286;
 	bSizer286 = new wxBoxSizer( wxHORIZONTAL );
@@ -15304,7 +15908,7 @@ DamageCalculatorSaveProfile::DamageCalculatorSaveProfile( wxWindow* parent, wxWi
 	bSizer286->Add( m_buttonok, 0, wxALL, 5 );
 
 
-	gbSizer61->Add( bSizer286, wxGBPosition( 3, 0 ), wxGBSpan( 1, 2 ), wxALIGN_RIGHT|wxEXPAND, 5 );
+	gbSizer61->Add( bSizer286, wxGBPosition( 4, 0 ), wxGBSpan( 1, 2 ), wxALIGN_RIGHT|wxEXPAND, 5 );
 
 
 	this->SetSizer( gbSizer61 );
@@ -15312,10 +15916,16 @@ DamageCalculatorSaveProfile::DamageCalculatorSaveProfile( wxWindow* parent, wxWi
 	gbSizer61->Fit( this );
 
 	this->Centre( wxBOTH );
+
+	// Connect Events
+	m_buttondelete->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DamageCalculatorSaveProfile::OnDeleteClick ), NULL, this );
 }
 
 DamageCalculatorSaveProfile::~DamageCalculatorSaveProfile()
 {
+	// Disconnect Events
+	m_buttondelete->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DamageCalculatorSaveProfile::OnDeleteClick ), NULL, this );
+
 }
 
 DamageCalculatorLoadProfile::DamageCalculatorLoadProfile( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )

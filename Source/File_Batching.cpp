@@ -1102,6 +1102,8 @@ int BatchExportDialog::ExportImageBackground(wxString path, bool* exportlist, bo
 	LoadingDialogInit(data.amount,_(L"Exporting field backgrounds..."));
 	for (i=0;i<data.amount;i++)
 		if (exportlist==NULL || exportlist[i]) {
+			if (data.background_data[i] == NULL)
+				continue;
 			mustflush = false;
 			if (GetGameType()!=GAME_TYPE_PSX && data.tim_data[i]!=NULL && !data.tim_data[i]->loaded) {
 				fstream ftmp;
@@ -1116,6 +1118,25 @@ int BatchExportDialog::ExportImageBackground(wxString path, bool* exportlist, bo
 			if (mustflush)
 				data.tim_data[i]->Flush();
 			LoadingDialogUpdate(i+1);
+		}
+	LoadingDialogEnd();
+	return 0;
+}
+
+//===============================//
+//           Walkmeshes          //
+//===============================//
+
+int BatchExportDialog::ExportWalkmesh(wxString path, bool* exportlist) {
+	FieldDataSet& data = *dataset->fieldset;
+	unsigned int i;
+	LoadingDialogInit(data.amount, _(L"Exporting field walkmeshes..."));
+	for (i = 0; i < data.amount; i++)
+		if (exportlist == NULL || exportlist[i]) {
+			if (data.walkmesh[i] == NULL)
+				continue;
+			data.walkmesh[i]->ExportAsObj((path + wxString::Format(wxT("_%u.obj"), i + 1)).ToStdString(), data.script_data[i]->name, data.script_data[i]->object_id);
+			LoadingDialogUpdate(i + 1);
 		}
 	LoadingDialogEnd();
 	return 0;
@@ -1145,14 +1166,16 @@ int BatchExportDialog::ShowModal(int type, SaveSet* datas, wxArrayString objlist
 	dataset = datas;
 	dataloaded = dload;
 	m_exportlist->Append(objlist);
-	for (i=0;i<objlist.Count();i++)
+	for (i = 0; i < objlist.Count(); i++)
 		m_exportlist->Check(i);
-	if (type==3 || type==4 || type==5) {
+	if (type == 3 || type == 4 || type == 5) {
 		m_splitfilepanel->Show(false);
 		m_scriptpanel->Show();
-	} else if (type==10) {
+	} else if (type == 10) {
 		m_splitfilepanel->Show(false);
 		m_backgroundpanel->Show();
+	} else if (type == 11) {
+		m_splitfilepanel->Show(false);
 	}
 	return wxDialog::ShowModal();
 }
@@ -1232,6 +1255,9 @@ void BatchExportDialog::OnButtonClick(wxCommandEvent& event) {
 			break;
 		case 10:
 			ExportImageBackground(m_filepicker->GetPath(),exportlist,m_mergetile->IsChecked(),m_exportorder->IsChecked(),m_languagetitle->GetSelection()-1);
+			break;
+		case 11:
+			ExportWalkmesh(m_filepicker->GetPath(), exportlist);
 			break;
 		}
 		delete[] exportlist;

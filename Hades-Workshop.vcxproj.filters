@@ -210,6 +210,9 @@
     <ClCompile Include="Source\Tool_DamageCalculator.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Gui_WalkmeshEditor.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\BattleScenes.h">
@@ -447,6 +450,9 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="Source\Tool_DamageCalculator.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Gui_WalkmeshEditor.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

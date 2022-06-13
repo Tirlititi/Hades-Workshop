@@ -208,7 +208,16 @@ int ToolModManager::ShowModal(CDDataStruct* data) {
 			lowitem = m_listtree->AppendItem(curitem,_(L"Model Role"));
 			m_listtree->SetItemData(lowitem,new ModManagerClientData(3,DATA_SECTION_FIELD,i,CHUNK_TYPE_FIELD_ROLE));
 			if (dataset->fieldset->role[i]->modified) m_listtree->CheckItem(lowitem);
-			// ToDo : add textures and backgrounds
+			if (dataset->fieldset->background_data[i] != NULL) {
+				lowitem = m_listtree->AppendItem(curitem, _(L"Background"));
+				m_listtree->SetItemData(lowitem, new ModManagerClientData(3, DATA_SECTION_FIELD, i, CHUNK_TYPE_FIELD_TILES));
+				if (dataset->fieldset->background_data[i]->modified) m_listtree->CheckItem(lowitem);
+			}
+			if (dataset->fieldset->walkmesh[i] != NULL) {
+				lowitem = m_listtree->AppendItem(curitem, _(L"Walkmesh"));
+				m_listtree->SetItemData(lowitem, new ModManagerClientData(3, DATA_SECTION_FIELD, i, CHUNK_TYPE_FIELD_WALK));
+				if (dataset->fieldset->walkmesh[i]->modified) m_listtree->CheckItem(lowitem);
+			}
 			if (!m_listtree->AreAllChildrenInState(curitem,wxCHK_UNCHECKED))
 				m_listtree->CheckItem(curitem);
 		}
@@ -474,6 +483,20 @@ void ToolModMarkModification(CDDataStruct* data, ModManagerClientData* info, boo
 				} else {
 					data->fieldset.role[info->index]->modified = false;
 					data->fieldset.role[info->index]->parent_chunk->modified = false;
+				}
+			} else if (info->chunk_type == CHUNK_TYPE_FIELD_TILES) {
+				if (check) {
+					data->fieldset.background_data[info->index]->MarkDataModified();
+				} else {
+					data->fieldset.background_data[info->index]->modified = false;
+					data->fieldset.background_data[info->index]->parent_chunk->modified = false;
+				}
+			} else if (info->chunk_type == CHUNK_TYPE_FIELD_WALK) {
+				if (check) {
+					data->fieldset.walkmesh[info->index]->MarkDataModified();
+				} else {
+					data->fieldset.walkmesh[info->index]->modified = false;
+					data->fieldset.walkmesh[info->index]->parent_chunk->modified = false;
 				}
 			}
 		} else if (info->section==DATA_SECTION_BATTLE_SCENE) {

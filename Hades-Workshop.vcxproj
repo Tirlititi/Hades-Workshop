@@ -219,6 +219,7 @@
     <ClCompile Include="Source\Gui_SpellAnimationsEditor.cpp" />
     <ClCompile Include="Source\Gui_TextEditor.cpp" />
     <ClCompile Include="Source\Gui_TextureEditor.cpp" />
+    <ClCompile Include="Source\Gui_WalkmeshEditor.cpp" />
     <ClCompile Include="Source\ImageMaps.cpp" />
     <ClCompile Include="Source\Items.cpp" />
     <ClCompile Include="Source\main.cpp" />
@@ -294,6 +295,7 @@
     <ClInclude Include="Source\Gui_SpellAnimationsEditor.h" />
     <ClInclude Include="Source\Gui_TextEditor.h" />
     <ClInclude Include="Source\Gui_TextureEditor.h" />
+    <ClInclude Include="Source\Gui_WalkmeshEditor.h" />
     <ClInclude Include="Source\Hades_Strings.h" />
     <ClInclude Include="Source\ImageMaps.h" />
     <ClInclude Include="Source\Items.h" />

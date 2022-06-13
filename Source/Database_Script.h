@@ -118,7 +118,7 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0x26, L"SetWalkSpeed", L"Change the walk speed.\n\n1st argument: speed (surely in unit/frame).", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Speed" }, new uint8_t[1]{ AT_USPIN }, 0 },
 	{ 0x27, L"SetTriangleFlagMask", L"Set a bitmask for some of the walkmesh triangle flags.\n\n1st argument: flag mask.\n 7: disable restricted triangles\n 8: disable player-restricted triangles", true, 1, new uint8_t[1]{ 1 }, new wstring[1]{ L"Flags" }, new uint8_t[1]{ AT_BOOLLIST }, 0 }, // BGIMASK
 	{ 0x28, L"Cinematic", L"Run or setup a cinematic.\n\n1st argument: unknown.\n2nd argument: cinematic ID (may depends on 1st argument's value).\n3rd argument: unknown.\n4th argument: unknown.", true, 4, new uint8_t[4]{ 1, 1, 1, 1 }, new wstring[4]{ L"Unknown", L"Cinematic ID", L"Unknown", L"Unknown" }, new uint8_t[4]{ AT_SPIN, AT_FMV, AT_SPIN, AT_SPIN }, 0 },
-	{ 0x29, L"SetRegion", L"Define the polygonal region linked with the entry script.\n\nArguments are in the format (Vertice X, Vertice Y) and can be of any amount.", true, -1, new uint8_t[1]{ 4 }, new wstring[1]{ L"Polygon" }, new uint8_t[1]{ AT_NONE }, 0 },
+	{ 0x29, L"SetRegion", L"Define the polygonal region linked with the entry script. If the polygon is not convex, its convex hull is used instead.\n\nArguments are in the format (Vertex X, Vertex Y) and there can be any number of them.", true, -1, new uint8_t[1]{ 4 }, new wstring[1]{ L"Polygon" }, new uint8_t[1]{ AT_NONE }, 0 },
 	{ 0x2A, L"Battle", L"Start a battle (using a random enemy group).\n\n1st argument: rush type (unknown).\n2nd argument: gathered battle and Steiner's state (highest bit) informations.", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Rush Type", L"Battle" }, new uint8_t[2]{ AT_SPIN, AT_BATTLE }, 0 },
 	{ 0x2B, L"Field", L"Change the field scene.\n\n1st argument: field scene destination.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Field" }, new uint8_t[1]{ AT_FIELD }, 0 },
 	{ 0x2C, L"DefinePlayerCharacter", L"Apply the player's control over the entry's object.", false, 0, NULL, NULL, NULL, 0 },
@@ -189,15 +189,15 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 	{ 0x6D, L"0x6D", L"Unknown Opcode (PPRINTF).", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x6E, L"0x6E", L"Unknown Opcode (MAPID).", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x6F, L"MoveCamera", L"Move camera over time.\n\n1st and 2nd arguments: destination in (X, Y) format.\n3nd argument: movement duration.\n4th argument: scrolling type (8 for sinusoidal, other values for linear interpolation).", true, 4, new uint8_t[4]{ 2, 2, 1, 1 }, new wstring[3]{ L"Destination", L"Time", L"Smoothness" }, new uint8_t[4]{ AT_POSITION_X, AT_POSITION_Y, AT_USPIN, AT_USPIN }, 0 }, // screen size = 320?
-	{ 0x70, L"ReleaseCamera", L"Release camera movement, getting back to its normal behaviour.\n\n1st arguments: duration of the repositioning.\n2nd argument: scrolling type (8 for sinusoidal, other values for linear interpolation).", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Time", L"Smoothness" }, new uint8_t[2]{ AT_SPIN, AT_USPIN }, 0 },
-	{ 0x71, L"EnableCameraServices", L"Enable or disable camera services. When disabling, the 2nd and 3rd arguments are ignored.\n\n1st arguments: boolean activate/deactivate.\n2nd argument: duration of the repositioning when activating (defaulted to 30 if -1 is given).\n3rd argument: scrolling type of the repositioning when activating (8 for sinusoidal, other values for linear interpolation).", true, 3, new uint8_t[3]{ 1, 1, 1 }, new wstring[3]{ L"Enable", L"Time", L"Smoothness" }, new uint8_t[3]{ AT_BOOL, AT_SPIN, AT_USPIN }, 0 },
+	{ 0x70, L"ReleaseCamera", L"Release camera movement, getting back to its normal behaviour.\n\n1st argument: duration of the repositioning.\n2nd argument: scrolling type (8 for sinusoidal, other values for linear interpolation).", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Time", L"Smoothness" }, new uint8_t[2]{ AT_SPIN, AT_USPIN }, 0 },
+	{ 0x71, L"EnableCameraServices", L"Enable or disable camera services. When disabling, the 2nd and 3rd arguments are ignored.\n\n1st argument: boolean activate/deactivate.\n2nd argument: duration of the repositioning when activating (defaulted to 30 if -1 is given).\n3rd argument: scrolling type of the repositioning when activating (8 for sinusoidal, other values for linear interpolation).", true, 3, new uint8_t[3]{ 1, 1, 1 }, new wstring[3]{ L"Enable", L"Time", L"Smoothness" }, new uint8_t[3]{ AT_BOOL, AT_SPIN, AT_USPIN }, 0 },
 	{ 0x72, L"SetCameraFollowHeight", L"Define the standard height gap between the player's character position and the camera view.\n\n1st argument: height.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Height" }, new uint8_t[1]{ AT_SPIN }, 0 },
 	{ 0x73, L"EnableCameraFollow", L"Make the camera follow the player's character.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x74, L"DisableCameraFollow", L"Stop making the camera follow the player's character.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x75, L"Menu", L"Open a menu.\n\n1st argument: menu type.\n2nd argument: depends on the menu type.\n Naming Menu: character to name.\n Shop Menu: shop ID.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Menu Type", L"Menu" }, new uint8_t[2]{ AT_MENUTYPE, AT_MENU }, 0 },
-	{ 0x76, L"0x76", L"Unknown Opcode (TRACKSTART).", true, 2, new uint8_t[2]{ 2, 2 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_SPIN, AT_SPIN }, 0 },
-	{ 0x77, L"0x77", L"Unknown Opcode (TRACK).", true, 2, new uint8_t[2]{ 2, 2 }, new wstring[2]{ L"Unknown", L"Unknown" }, new uint8_t[2]{ AT_SPIN, AT_SPIN }, 0 },
-	{ 0x78, L"0x78", L"Unknown Opcode (TRACKADD).", false, 0, NULL, NULL, NULL, 0 },
+	{ 0x76, L"DrawRegionStart", L"Start drawing the convex polygonal region linked with the entry script: two starting points are placed at the same position.\n\n1st and 2nd arguments: starting vertex position in (X, Y) format.", true, 2, new uint8_t[2]{ 2, 2 }, new wstring[1]{ L"Vertex Position" }, new uint8_t[2]{ AT_POSITION_X, AT_POSITION_Y }, 0 },
+	{ 0x77, L"DrawRegionSetLast", L"Change the position of the convex polygonal region's ending vertex.\n\n1st and 2nd arguments: new position in (X, Y) format.", true, 2, new uint8_t[2]{ 2, 2 }, new wstring[1]{ L"Vertex Position" }, new uint8_t[2]{ AT_POSITION_X, AT_POSITION_Y }, 0 },
+	{ 0x78, L"DrawRegionPushNew", L"Add a new vertex to the convex polygonal region linked with the entry script (defaulting its position to be the same as the current ending vertex's position). This method cannot exceed 8 vertices.", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x79, L"0x79", L"Unknown Opcode (PRINTQUAD).", false, 0, NULL, NULL, NULL, 0 },
 	{ 0x7A, L"SetLeftAnimation", L"Change the left turning animation.\n\n1st argument: animation ID.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Animation" }, new uint8_t[1]{ AT_ANIMATION }, 0 },
 	{ 0x7B, L"SetRightAnimation", L"Change the right turning animation.\n\n1st argument: animation ID.", true, 1, new uint8_t[1]{ 2 }, new wstring[1]{ L"Animation" }, new uint8_t[1]{ AT_ANIMATION }, 0 },
@@ -354,19 +354,8 @@ static SortedChoiceItemScriptOpcode HADES_STRING_SCRIPT_OPCODE[] = {
 };
 
 /* Opcodes used in scripts and still unnamed:
-0x3D // Fields + Worlds
-0xA9 // Fields
-0xB5 // Fields + Worlds
 0xB7 // Worlds
 0xB8 // Worlds
-0xC9 // Fields
-0xCA // Fields
-0xCC // Fields
-0xCD // Fields
-0xDF // Worlds
-0xE4 // Fields
-0xEA // Fields
-0xED // Fields
 0x102 // Fields
 0x103 // Fields
 0x104 // Fields

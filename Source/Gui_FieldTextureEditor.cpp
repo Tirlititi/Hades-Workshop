@@ -50,7 +50,12 @@ ManageFieldTextureDialog::ManageFieldTextureDialog(wxWindow* parent, FieldTilesD
 	for (i=0;i<field.anim_amount;i++)
 		m_animlist->InsertItem(i,_(L"Anim ")+wxString::Format(wxT("%u"),i),anim_play_flag[i]);
 	m_animlist->SetColumnWidth(0,200);
-	m_texturetiledepth->Enable(false);
+	m_tilex->Enable(false);
+	m_tiley->Enable(false);
+	m_tiledepth->Enable(false);
+	m_tilepiecex->Enable(false);
+	m_tilepiecey->Enable(false);
+	m_tilepiecedepth->Enable(false);
 	m_textureposx->Enable(false);
 	m_textureposy->Enable(false);
 	m_texturepaletteselection->Enable(false);
@@ -77,7 +82,7 @@ int ManageFieldTextureDialog::ShowModal(unsigned int camera) {
 	camera_id = camera;
 	for (i=0;i<field.tiles_amount;i++)
 		tileflag[i] = m_tilechecklist->IsChecked(i);
-	uint32_t* imgdata = field.ConvertAsImage(camera_id,tileflag,true);
+	uint32_t* imgdata = field.ConvertAsImageAccurate(camera_id,tileflag,true);
 	main_img_base = ConvertDataToImage(imgdata,field.camera[camera_id].width,field.camera[camera_id].height);
 	delete[] imgdata;
 	delete[] tileflag;
@@ -137,7 +142,7 @@ void ManageFieldTextureDialog::UpdateTexturePreview(int changeid) {
 	bool* tileflag = new bool[field.tiles_amount];
 	for (i=0;i<field.tiles_amount;i++)
 		tileflag[i] = m_tilechecklist->IsChecked(i);
-	uint32_t* imgdata = field.ConvertAsImage(camera_id,tileflag,true);
+	uint32_t* imgdata = field.ConvertAsImageAccurate(camera_id,tileflag,true);
 	main_img_base = ConvertDataToImage(imgdata,field.camera[camera_id].width,field.camera[camera_id].height);
 	delete[] imgdata;
 	delete[] tileflag;
@@ -149,10 +154,32 @@ void ManageFieldTextureDialog::OnTileButton(wxCommandEvent& event) {
 }
 
 void ManageFieldTextureDialog::OnTileSelection(wxCommandEvent& event) {
-	int texid = event.GetSelection();
-	if (texid != wxNOT_FOUND)
-		m_texturetiledepth->SetValue(field.tiles[texid].depth);
-	m_texturetiledepth->Enable(texid != wxNOT_FOUND);
+	int blockid = event.GetSelection();
+	m_tilepiecelist->Clear();
+	if (blockid != wxNOT_FOUND) {
+		m_tilex->SetValue(field.tiles[blockid].pos_x);
+		m_tiley->SetValue(field.tiles[blockid].pos_y);
+		m_tiledepth->SetValue(field.tiles[blockid].depth);
+		for (int i = 0; i < field.tiles[blockid].tile_amount; i++)
+			m_tilepiecelist->Append(wxString::Format(wxT("Tile (%d, %d)"), field.tiles[blockid].tile_pos_x[i], field.tiles[blockid].tile_pos_y[i]));
+	}
+	m_tilex->Enable(blockid != wxNOT_FOUND);
+	m_tiley->Enable(blockid != wxNOT_FOUND);
+	m_tiledepth->Enable(blockid != wxNOT_FOUND);
+	m_tilepiecex->Enable(false);
+	m_tilepiecey->Enable(false);
+	m_tilepiecedepth->Enable(false);
+}
+
+void ManageFieldTextureDialog::OnTilePieceSelection(wxCommandEvent& event) {
+	int blockid = m_tilechecklist->GetSelection();
+	int tileid = event.GetSelection();
+	m_tilepiecex->SetValue(field.tiles[blockid].tile_pos_x[tileid]);
+	m_tilepiecey->SetValue(field.tiles[blockid].tile_pos_y[tileid]);
+	m_tilepiecedepth->SetValue(field.tiles[blockid].tile_depth[tileid]);
+	m_tilepiecex->Enable(true);
+	m_tilepiecey->Enable(true);
+	m_tilepiecedepth->Enable(true);
 }
 
 void ManageFieldTextureDialog::OnAnimClick(wxMouseEvent& event) {
@@ -267,10 +294,34 @@ void ManageFieldTextureDialog::OnModifyRadio(wxCommandEvent& event) {
 
 void ManageFieldTextureDialog::OnSpinPosition(wxSpinEvent& event) {
 	int id = event.GetId();
-	int texid = m_tilechecklist->GetSelection();
-	if (id == wxID_DEPTH && texid != wxNOT_FOUND) {
-		field.tiles[texid].depth = event.GetPosition();
+	int blockid = m_tilechecklist->GetSelection();
+	int tileid = m_tilepiecelist->GetSelection();
+	if (id == wxID_POSX1 && blockid != wxNOT_FOUND) {
+		field.tiles[blockid].pos_x = event.GetPosition();
 		field.modified = true;
+		UpdateTexturePreview(id);
+	} else if (id == wxID_POSY1 && blockid != wxNOT_FOUND) {
+		field.tiles[blockid].pos_y = event.GetPosition();
+		field.modified = true;
+		UpdateTexturePreview(id);
+	} else if (id == wxID_POSZ1 && blockid != wxNOT_FOUND) {
+		field.tiles[blockid].depth = event.GetPosition();
+		field.modified = true;
+		field.SetupTilePerDepth();
+		UpdateTexturePreview(id);
+	} else if (id == wxID_POSX2 && blockid != wxNOT_FOUND && tileid != wxNOT_FOUND) {
+		field.tiles[blockid].tile_pos_x[tileid] = event.GetPosition();
+		field.modified = true;
+		UpdateTexturePreview(id);
+	} else if (id == wxID_POSY2 && blockid != wxNOT_FOUND && tileid != wxNOT_FOUND) {
+		field.tiles[blockid].tile_pos_y[tileid] = event.GetPosition();
+		field.modified = true;
+		UpdateTexturePreview(id);
+	} else if (id == wxID_POSZ2 && blockid != wxNOT_FOUND && tileid != wxNOT_FOUND) {
+		field.tiles[blockid].tile_depth[tileid] = event.GetPosition();
+		field.modified = true;
+		field.SetupTilePerDepth();
+		UpdateTexturePreview(id);
 	}
 /*	if (prevent_event)
 		return;

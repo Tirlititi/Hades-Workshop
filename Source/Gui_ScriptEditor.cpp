@@ -412,6 +412,7 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 	arg_control_type(NULL),
 	extra_size(script.GetExtraSize()),
 	refresh_control_disable(false),
+	refresh_help_force(false),
 	timer(new wxTimer(this)),
 	help_dial(NULL) {
 	unsigned int i;
@@ -437,6 +438,7 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 		gl_window->DisplayField(tiles,walk);
 		m_fielddisplaybackground->Enable(tiles!=NULL);
 		m_fielddisplaymesh->Enable(walk!=NULL);
+		gl_window->Connect(wxEVT_LEFT_DCLICK, wxMouseEventHandler(ScriptEditDialog::OnPickWalkmesh), NULL, this);
 	} else if (script_type==SCRIPT_TYPE_WORLD) {
 		world_pos_type = 0;
 	}
@@ -661,6 +663,8 @@ ScriptEditDialog::~ScriptEditDialog() {
 		delete animlist_id[i];
 	func_popup_menu->Disconnect(wxEVT_COMMAND_MENU_SELECTED,wxCommandEventHandler(ScriptEditDialog::OnFunctionRightClickMenu),NULL,this);
 	Disconnect(wxEVT_TIMER,wxTimerEventHandler(ScriptEditDialog::OnTimer),NULL,this);
+	if (script_type == SCRIPT_TYPE_FIELD)
+		gl_window->Disconnect(wxEVT_LEFT_DCLICK, wxMouseEventHandler(ScriptEditDialog::OnPickWalkmesh), NULL, this);
 	delete timer;
 }
 
@@ -2946,20 +2950,19 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 		cleanarg = false;
 	argi = 0;
 	if (current_opcode==0x29 && script_type==SCRIPT_TYPE_FIELD) {
-		unsigned int ptamount = 0;
-		int16_t regionpts[100];
+		vector<int16_t> regionpts;
 		bool islastarg = false;
 		while (!islastarg && cleanarg) {
 			tmpstr = GetNextPunc(line);
 			if (!tmpstr.IsSameAs(L"("))
 				cleanarg = false;
 			tmpstr = GetNextThing(line);
-			regionpts[2*ptamount] = wxAtoi(tmpstr);
+			regionpts.push_back(wxAtoi(tmpstr));
 			tmpstr = GetNextPunc(line);
 			if (!tmpstr.IsSameAs(L","))
 				cleanarg = false;
 			tmpstr = GetNextThing(line);
-			regionpts[2*ptamount+1] = wxAtoi(tmpstr);
+			regionpts.push_back(wxAtoi(tmpstr));
 			tmpstr = GetNextPunc(line);
 			if (!tmpstr.IsSameAs(L")"))
 				cleanarg = false;
@@ -2968,10 +2971,9 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 				islastarg = true;
 			else if (!tmpstr.IsSameAs(L","))
 				cleanarg = false;
-			ptamount++;
 		}
 		if (cleanarg)
-			gl_window->DisplayFieldRegion(ptamount,regionpts);
+			gl_window->DisplayFieldRegion(regionpts);
 	}
 	for (i=0;i<arg_amount;i++) {
 		if (refreshargcontrol && HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[argi]!=AT_NONE) {
@@ -3814,6 +3816,7 @@ void ScriptEditDialog::ScriptChangeArg(int argi, int64_t value, int argshift) {
 	long from = m_scripttext->XYToPosition(0,line_selection);
 	long to = from+m_scripttext->GetLineLength(line_selection);
 	m_scripttext->Replace(from,to,newtxt);
+	refresh_help_force = true;
 }
 
 void ScriptEditDialog::OnFunctionChoose(wxListEvent& event) {
@@ -4199,8 +4202,9 @@ void ScriptEditDialog::OnTimer(wxTimerEvent& event) {
 		return;
 	if (!wxGetMouseState().LeftIsDown())
 		refresh_control_disable = false;
-	if (x==text_x_selection && y==line_selection)
+	if (x==text_x_selection && y==line_selection && !refresh_help_force)
 		return;
+	refresh_help_force = false;
 	wxString line = m_scripttext->GetLineText(y);
 	bool refreshctrl = y!=line_selection;
 	UpdateLineHelp(x,y);
@@ -4399,6 +4403,35 @@ void ScriptEditDialog::OnArgColorPicker(wxColourPickerEvent& event) {
 		ScriptChangeArg(argi,255-event.GetColour().Green(),1);
 		ScriptChangeArg(argi,255-event.GetColour().Blue(),2);
 	}
+}
+
+void ScriptEditDialog::OnPickWalkmesh(wxMouseEvent& event) {
+	if (current_opcode == 0xFFFF || script_type != SCRIPT_TYPE_FIELD || gl_window->field_walk == NULL) {
+		event.Skip();
+		return;
+	}
+	int argi = -1;
+	bool pickpath = false;
+	for (int i = 0; i < arg_amount; i++) {
+		if (HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[i] == AT_WALKTRIANGLE) {
+			argi = i;
+			break;
+		} else if (HADES_STRING_SCRIPT_OPCODE[current_opcode].arg_type[i] == AT_WALKPATH) {
+			pickpath = true;
+			argi = i;
+			break;
+		}
+	}
+	if (argi >= 0) {
+		int triid = gl_window->GetMouseTriangle(event);
+		if (triid >= 0) {
+			if (pickpath)
+				ScriptChangeArg(argi, gl_window->field_walk->triangle_walkpath[triid]);
+			else
+				ScriptChangeArg(argi, triid);
+		}
+	}
+	event.Skip();
 }
 
 ScriptEditEntryDialog::ScriptEditEntryDialog(wxWindow* parent, ScriptDataStruct& scpt, int scpttype) :

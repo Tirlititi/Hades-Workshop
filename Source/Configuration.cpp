@@ -1527,11 +1527,11 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			remove(fname.c_str());
 			fname = dirassets + "p0data7.bin";
 			remove(fname.c_str());
-			/*for (i = 0; i < 9; i++) {
+			for (i = 0; i < 9; i++) {
 				stringstream ffieldname;
 				ffieldname << dirassets << "p0data1" << (i+1) << ".bin";
 				remove(ffieldname.str().c_str());
-			}*/
+			}
 			fname = dirdata + "resources.assets";
 			remove(fname.c_str());
 		}
@@ -1871,7 +1871,99 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		MACRO_SAVE_ASSET_SCRIPT(DATA_SECTION_WORLD_MAP, world_amount, worldset->script, world_script_file)
 	}
 	
-	// ToDo : p0data11 to 19
+	// p0data11 to 19 : field files
+	if (assetformat == 0) {
+		if (section[DATA_SECTION_FIELD]) {
+			for (int fieldi = 0; fieldi < 9; fieldi++) {
+				bool duplicate = false;
+				stringstream ffieldname;
+				ffieldname << "p0data1" << (fieldi + 1) << ".bin";
+				vector<bool> copylist(config.meta_field[fieldi].header_file_amount);
+				vector<uint32_t> filenewsize(config.meta_field[fieldi].header_file_amount);
+				for (i = 0; i < config.meta_field[fieldi].header_file_amount; i++) {
+					copylist[i] = true;
+					filenewsize[i] = config.meta_field[fieldi].file_size[i];
+					for (j = 0; j < config.field_amount; j++) {
+						if (config.field_file_id[j] == 0 || fieldi + 1 != config.field_file_id[j])
+							continue;
+						if (i == config.field_tiles_file[j][0]) {
+							if (saveset.fieldset->background_data[j]->modified) {
+								copylist[i] = false;
+								filenewsize[i] = saveset.fieldset->background_data[j]->size;
+								duplicate = true;
+							}
+							break;
+						} else if (i == config.field_walkmesh_file[j]) {
+							if (saveset.fieldset->walkmesh[j]->modified) {
+								copylist[i] = false;
+								filenewsize[i] = saveset.fieldset->walkmesh[j]->size;
+								duplicate = true;
+							}
+							break;
+						}
+					}
+				}
+				if (!duplicate)
+					continue;
+				fname = config.steam_dir_assets + ffieldname.str();
+				filebase.open(fname.c_str(), ios::in | ios::binary);
+				fname = dirassets + ffieldname.str();
+				filedest.open(fname.c_str(), ios::out | ios::binary);
+				if (!filebase.is_open())
+					return 2;
+				if (!filedest.is_open())
+					return 3;
+				vector<uint32_t> unitydataoff = config.meta_field[fieldi].Duplicate(filebase, filedest, copylist, filenewsize);
+				for (i = 0; i < config.meta_field[fieldi].header_file_amount; i++) {
+					for (j = 0; j < config.field_amount; j++) {
+						if (config.field_file_id[j] == 0 || fieldi + 1 != config.field_file_id[j])
+							continue;
+						if (i == config.field_tiles_file[j][0]) {
+							if (saveset.fieldset->background_data[j]->modified) {
+								filedest.seekg(unitydataoff[i]);
+								saveset.fieldset->background_data[j]->WriteHWS(filedest);
+							}
+							break;
+						} else if (i == config.field_walkmesh_file[j]) {
+							if (saveset.fieldset->walkmesh[j]->modified) {
+								filedest.seekg(unitydataoff[i]);
+								saveset.fieldset->walkmesh[j]->WriteHWS(filedest);
+							}
+							break;
+						}
+					}
+				}
+				filebase.close();
+				filedest.close();
+			}
+		}
+	} else if (assetformat == 1) {
+		for (i = 0; i < config.field_amount; i++) {
+			if (config.field_file_id[i] == 0)
+				continue;
+			UnityArchiveFile archtype = (UnityArchiveFile)(UNITY_ARCHIVE_DATA11 + config.field_file_id[i] - 1);
+			fname = destfolder + config.GetSteamAssetPath(archtype, config.field_tiles_file[i][0]);
+			if (deleteold) remove(fname.c_str());
+			if (section[DATA_SECTION_FIELD] && saveset.fieldset->background_data[i]->modified) {
+				MainFrame::MakeDirForFile(fname);
+				filedest.open(fname.c_str(), ios::out | ios::binary);
+				if (!filedest.is_open())
+					return 3;
+				saveset.fieldset->background_data[i]->WriteHWS(filedest);
+				filedest.close();
+			}
+			fname = destfolder + config.GetSteamAssetPath(archtype, config.field_walkmesh_file[i]);
+			if (deleteold) remove(fname.c_str());
+			if (section[DATA_SECTION_FIELD] && saveset.fieldset->walkmesh[i]->modified) {
+				MainFrame::MakeDirForFile(fname);
+				filedest.open(fname.c_str(), ios::out | ios::binary);
+				if (!filedest.is_open())
+					return 3;
+				saveset.fieldset->walkmesh[i]->WriteHWS(filedest);
+				filedest.close();
+			}
+		}
+	}
 	
 	// resources.assets : text and card files
 	if (assetformat == 0) {

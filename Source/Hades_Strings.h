@@ -302,6 +302,25 @@ static wxString HADES_STRING_PARTY_SPECIAL_DATA[] = {
 #define HADES_STRING_SPELL_WARN_LIMIT	L"A battle with more than 18 different attacks will bug\n"\
 										L"unless you increase the limit in the CIL method FF9StateBattleSystem::.ctor (Steam only)"
 
+//-- Field Panel
+#define HADES_STRING_WALKMESH_PROPAGATE_FLAGS L"Propagate flags to walkpath"
+#define HADES_STRING_WALKMESH_ERROR_NO_TRIANGLE L"Failed to add a triangle that way"
+#define HADES_STRING_WALKMESH_INVALID_TRIANGLE L"That triangle is degenerate!"
+#define HADES_STRING_WALKMESH_WRONG_CONNECTION L"A neighbour triangle already exists at that position"
+#define HADES_STRING_WALKMESH_SIDE_1 L"1st side"
+#define HADES_STRING_WALKMESH_SIDE_2 L"2nd side"
+#define HADES_STRING_WALKMESH_SIDE_3 L"3rd side"
+#define HADES_STRING_WALKMESH_IMPORT_FAIL L"Format error when parsing the object"
+#define HADES_STRING_WALKMESH_IMPORT_SUCCESS	"Walkmesh successfully imported:\n"\
+												" - %d walkpaths (different objects)\n"\
+												" - %d triangles\n"\
+												" - %d vertices"
+#define HADES_STRING_WALKMESH_IMPORT_DEGEN_TRI "%d triangles were degenerate (remember that vertex positions are rounded to whole numbers)"
+#define HADES_STRING_WALKMESH_IMPORT_ANIM_LOSS L"This field contained a walkmesh animation that got lost in the process"
+#define HADES_STRING_WALKMESH_IMPORT_NORMALS L"Triangles can accept only 1 normal (not 1 per vertex); the first normal was used everytimes it conflicted"
+#define HADES_STRING_WALKMESH_IMPORT_QUADS L"Only triangular faces are accepted; polygons with more than 3 vertices were cut down to 3 vertices"
+#define HADES_STRING_WALKMESH_IMPORT_HINT L"You would better edit the imported walkmesh in order to check it and setup its pathing flags"
+
 //-- Shop Panel
 #define HADES_STRING_SHOP_REACH_LIMIT			L"Can't add more than 32 items to a shop."
 #define HADES_STRING_SYNTH_REACH_LIMIT			"Synthesis Shops can't synth more than %d items.\n"

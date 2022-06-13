@@ -49,6 +49,7 @@ private:
 	void OnModifyRadio(wxCommandEvent& event);
 	void OnTileButton(wxCommandEvent& event);
 	void OnTileSelection(wxCommandEvent& event);
+	void OnTilePieceSelection(wxCommandEvent& event);
 	void OnAnimClick(wxMouseEvent& event);
 	void OnSpinPosition(wxSpinEvent& event);
 	void OnChooseFileImage(wxFileDirPickerEvent& event);

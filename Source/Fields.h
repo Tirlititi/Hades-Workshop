@@ -12,6 +12,7 @@ struct FieldTilesCameraDataStruct;
 struct FieldTilesDataStruct;
 
 struct FieldWalkmeshDataStruct;
+struct FieldWalkmeshTriple;
 struct FieldRoleDataStruct;
 
 struct FieldSteamTitleInfo;
@@ -22,6 +23,12 @@ struct FieldDataSet;
 #include "File_Manipulation.h"
 #include "Configuration.h"
 using namespace std;
+
+#define WALKMESH_TRIFLAG_ACTIVE			0x0001
+#define WALKMESH_TRIFLAG_VISITED		0x0080
+#define WALKMESH_TRIFLAG_ALTERNATE_STEP	0x1000
+#define WALKMESH_TRIFLAG_PREVENT_NPC	0x4000
+#define WALKMESH_TRIFLAG_PREVENT_PC		0x8000
 
 struct FieldTilesAnimDataStruct {
 public:
@@ -172,7 +179,8 @@ public:
 	FieldTilesLightDataStruct* light; // seems unused at all...
 	FieldTilesCameraDataStruct* camera;
 	
-	FieldTilesTileDataStruct** tiles_sorted;
+	FieldTilesTileDataStruct** tiles_sorted; // For ConvertAsImage: each tile block is a layer with a unique depth
+	vector<vector<pair<int, int>>> tile_per_depth; // For ConvertAsImageAccurate: each tile has its own depth
 	
 	unsigned int title_tile_amount; // Steam only
 	
@@ -180,7 +188,10 @@ public:
 	void Copy(FieldTilesDataStruct& cpy);
 	int GetRelatedTitleTileById(int tileid, SteamLanguage lang);
 	uint32_t* ConvertAsImage(unsigned int cameraid, bool tileflag[] = NULL, bool showtp = false); // delete[] it
+	uint32_t* ConvertAsImageAccurate(unsigned int cameraid, bool tileflag[] = NULL, bool showtp = false); // delete[] it
 	int Export(const char* outputfile, unsigned int cameraid, bool tileflag[] = NULL, bool showtp = false, bool mergetiles = false, bool depthorder = true, int steamtitlelang = -1);
+	void SetupDataInfos(bool readway);
+	void SetupTilePerDepth();
 	
 	void Read(fstream& f, unsigned int titletileamount);
 	void Read(fstream& f) { Read(f,0); }
@@ -193,8 +204,15 @@ public:
 	FieldDataSet* parent;
 	
 private:
-	void SetupDataInfos(bool readway);
 	void AddTilesetToImage(uint32_t* imgdest, FieldTilesTileDataStruct& t, bool showtp = false, uint32_t* steamimg = NULL, uint32_t steamimgwidth = 1, uint32_t steamimgheight = 1);
+	void AddTileToImage(uint32_t* imgdest, FieldTilesTileDataStruct& t, int tid, bool showtp = false, uint32_t* steamimg = NULL, uint32_t steamimgwidth = 1, uint32_t steamimgheight = 1);
+};
+
+struct FieldWalkmeshTriple {
+	int16_t index[3];
+
+	FieldWalkmeshTriple() : index{ -1, -1, -1 } {}
+	FieldWalkmeshTriple(int16_t a, int16_t b, int16_t c) : index{ a, b, c } {}
 };
 
 struct FieldWalkmeshDataStruct : public ChunkChild {
@@ -235,18 +253,12 @@ public:
 	vector<uint16_t> triangle_flag;
 	vector<uint16_t> triangle_data;
 	vector<uint16_t> triangle_walkpath;
-	vector<uint16_t> triangle_normal;
+	vector<int16_t> triangle_normal;
 	vector<uint16_t> triangle_thetax;
-	vector<uint16_t> triangle_thetaz;
-	vector<uint16_t> triangle_vertex1;
-	vector<uint16_t> triangle_vertex2;
-	vector<uint16_t> triangle_vertex3;
-	vector<uint16_t> triangle_edge1;
-	vector<uint16_t> triangle_edge2;
-	vector<uint16_t> triangle_edge3;
-	vector<uint16_t> triangle_adjacenttriangle1;
-	vector<uint16_t> triangle_adjacenttriangle2;
-	vector<uint16_t> triangle_adjacenttriangle3;
+	vector<uint16_t> triangle_thetay;
+	vector<FieldWalkmeshTriple> triangle_vertex;
+	vector<FieldWalkmeshTriple> triangle_edge;
+	vector<FieldWalkmeshTriple> triangle_adjacenttriangle;
 	vector<int16_t> triangle_centerx;
 	vector<int16_t> triangle_centerz;
 	vector<int16_t> triangle_centery;
@@ -293,14 +305,28 @@ public:
 	vector<int16_t> vertex_x;
 	vector<int16_t> vertex_z;
 	vector<int16_t> vertex_y;
-	
+
 	void Read(fstream& f);
 	void Write(fstream& f);
 	void WritePPF(fstream& f);
 	void ReadHWS(fstream& f);
 	void WriteHWS(fstream& f);
+	void UpdateOffset();
 
-	int ExportAsObj(string outputbase);
+	void GetPathCoordinate(int coordtype, int pathid, int16_t& cx, int16_t& cy, int16_t& cz);
+	void SetPathCoordinate(int coordtype, int pathid, int coordaxis, int16_t c);
+	int AddWalkpath(uint32_t& extrasize, int16_t x, int16_t y, int16_t z);
+	int AddTriangle2(uint32_t& extrasize, uint16_t path, uint16_t flag, int32_t d, uint16_t thetax, uint16_t thetay, int16_t adjtri1, int16_t adjtri2, int edgeid1, int edgeid2, int commonvert1, int commonvert2);
+	int AddTriangle1(uint32_t& extrasize, uint16_t path, uint16_t flag, int32_t d, uint16_t thetax, uint16_t thetay, int16_t adjtri, int edgeid, int16_t newvertx, int16_t newverty, int16_t newvertz);
+	int AddTriangle(uint32_t& extrasize, uint16_t path, uint16_t flag, int32_t d, uint16_t thetax, uint16_t thetay, array<int16_t, 3> newvertx, array<int16_t, 3> newverty, array<int16_t, 3> newvertz, array<int32_t, 4>* customnormal = NULL);
+	int AddNormal(uint32_t& extrasize, uint16_t triangle, int32_t nx, int32_t ny, int32_t nz, int32_t noverz);
+	void RemoveNormal(uint32_t& extrasize, uint16_t triangle);
+	void ComputeNormal(uint16_t triangle);
+	int ExportAsObj(string outputbase, FF9String fieldname, uint16_t fieldid);
+	int ImportFromObj(wxString intputfilename, wxString* message = NULL);
+
+private:
+	void AddTriangleShared(uint16_t path, uint16_t flag, int32_t d, uint16_t thetax, uint16_t thetay, array<int32_t, 4>* customnormal = NULL);
 };
 
 struct FieldRoleDataStruct : public ChunkChild {

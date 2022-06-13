@@ -21,7 +21,8 @@ public:
 	bool field_showwalk;
 
 	unsigned int field_walk_triangle_amount;
-	GLint** field_walk_triangle_pos;
+	vector<vector<GLint>> field_walk_triangle_pos;
+	unsigned int field_walk_offset_type; // 0: origin, 1: current, 2: min, 3:max
 	int field_walk_path_highlight;
 	int field_walk_triangle_highlight;
 	unsigned int field_region_vertex_amount;
@@ -56,19 +57,23 @@ public:
 	GLuint* texture_id;
 	
 	void DisplayField(FieldTilesDataStruct* tiles, FieldWalkmeshDataStruct* walk);
-	void DisplayFieldRegion(unsigned int vertamount, int16_t* vert);
+	void DisplayFieldRegion(vector<int16_t> vert);
+	void DisplayFieldPolygon(vector<int16_t> vert);
 	void DisplayFieldPoint3D(int16_t x, int16_t y, int16_t z);
 	void DisplayFieldPoint2D(int16_t x, int16_t y);
 	void DisplayFieldPlane(int planetype, int16_t coord); // 1 for x ; 2 for y ; 3 for z
 	void DisplayFieldTrianglePath(int triangleid);
 	void DisplayFieldPath(int pathid);
-	void DisplayFieldClear();
+	void DisplayFieldClear(bool clearpolygon = true, bool clearpoint = true, bool clearplane = true, bool clearhighlight = true);
+	void RecomputeGeometry(bool redraw = true);
+	int GetRayTriangle(GLdouble originx, GLdouble originy, GLdouble originz, GLdouble destx, GLdouble desty, GLdouble destz);
+	int GetMouseTriangle(wxMouseEvent& event);
 	
 	void Draw();
 	void ResetCamera();
 	void Prepare3DViewport(int topleft_x, int topleft_y, int bottomrigth_x, int bottomrigth_y);
 	void Prepare2DViewport(int topleft_x, int topleft_y, int bottomrigth_x, int bottomrigth_y);
-	GLWindow(wxWindow* parent, int* args);
+	GLWindow(wxWindow* parent, int* args, int size = 256);
 	virtual ~GLWindow();
 	
 private:

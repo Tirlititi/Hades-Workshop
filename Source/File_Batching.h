@@ -35,6 +35,7 @@ public:
 	int ExportWorldScript(wxString path, bool* exportlist = NULL, bool splitfile = true, int addedinfo = 0);
 	int ExportFieldScript(wxString path, bool* exportlist = NULL, bool splitfile = true, int addedinfo = 0);
 	int ExportImageBackground(wxString path, bool* exportlist = NULL, bool mergetile = true, bool depthorder = true, int steamtitlelang = -1);
+	int ExportWalkmesh(wxString path, bool* exportlist);
 
 private:
 	wxMenu* list_popup_menu;

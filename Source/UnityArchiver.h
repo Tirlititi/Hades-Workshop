@@ -146,11 +146,11 @@ struct UnityArchiveMetaData {
 	int32_t GetFileIndexByInfo(int64_t info, uint32_t filetype = 0x7FFFFFFF, string folder = "");
 	string GetFileFullName(unsigned int fileid, UnityArchiveFile archivefile, UnityArchiveAssetBundle* bundle = NULL, UnityArchiveIndexListData* indexlist = NULL, bool* found = NULL);
 
-	// Arrays must be of length header_file_amount
-	// Return the starting offset of the files in the duplicate (must be deleted[] if newmetadata is not given)
+	// Vectors must be of length header_file_amount
+	// Return the starting offset of the files in the duplicate
 	// If a newmetadata is given, an UnityArchiveMetaData compatible with the duplicate is computed and the offsets returned are file_offset_start instead (use GetFileOffsetByIndex instead)
 	vector<uint32_t> Duplicate(fstream& fbase, fstream& fdest, vector<bool> copylist, vector<uint32_t> filenewsize, UnityArchiveFileCreator* addfile = NULL, UnityArchiveMetaData* newmetadata = NULL);
-	// Array must be of length header_file_amount
+	// Vector must be of length header_file_amount
 	void DuplicateWithDeletion(fstream& fbase, fstream& fdest, vector<bool> filetokeep);
 
 	UnityArchiveMetaData() : loaded(false) {}

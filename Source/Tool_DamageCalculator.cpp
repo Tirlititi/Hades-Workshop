@@ -98,6 +98,7 @@
 #define STRING_RATE_PERCENT_MORE	"%.1f%% chances to "
 #define STRING_RATE_HIT				"hit"
 #define STRING_RATE_INFLICT_STATUS	"inflict %s (if not guarded)"
+#define STRING_RATE_ADD_STATUS		"inflict %s (with Add Status enabled and only if not guarded)"
 #define STRING_RATE_CURE_STATUS		"cure %s"
 #define STRING_RATE_CRITICAL		"land a critical strike"
 
@@ -269,51 +270,74 @@
 
 // Save/Load profiles
 
+class DamageCalculatorSaveProfileEx : public DamageCalculatorSaveProfile {
+public:
+	DamageCalculatorSaveProfileEx(wxWindow* p) : DamageCalculatorSaveProfile(p) {}
+
+private:
+	void OnDeleteClick(wxCommandEvent& event) {
+		EndModal(wxID_DELETE);
+	}
+};
+
 void ToolDamageCalculator::OnSaveProfile(wxCommandEvent& event) {
 	if (m_panelleft->GetSelection() == 0)
 		player_panel[0]->UpdatePlayerStatFromInterface();
 	if (m_panelright->GetSelection() == 0)
 		player_panel[1]->UpdatePlayerStatFromInterface();
-	DamageCalculatorSaveProfile dial(this);
-	wxArrayString profileid, profilename;
-	set<int> defaultiduse, defaultnameuse;
-	int i, j;
-	PreferencesDialog::GetToolCalculatorProfileList(&profileid, &profilename);
-	for (i = 0; i < profilename.GetCount(); i++) {
-		dial.m_listprofile->Append(profilename[i]);
-		if (profilename[i].StartsWith(wxT(HADES_STRING_CALCULATOR_PROFILE_DEFAULT)))
-			defaultnameuse.insert(wxAtoi(profilename[i].Mid(sizeof(HADES_STRING_CALCULATOR_PROFILE_DEFAULT) - 1)));
-		for (j = 0; j < profilename.GetCount(); j++)
-			if (profileid[i].IsSameAs(wxString::Format(wxT("Profile%d"), j))) {
-				defaultiduse.insert(j);
-				break;
-			}
-	}
-	if (profilename.GetCount() > 0)
-		dial.m_listprofile->SetSelection(0);
-	else
-		dial.m_radioold->Enable(false);
-	for (i = 1; defaultnameuse.find(i) != defaultnameuse.end(); i++) {}
-	dial.m_profilename->SetValue(wxT(HADES_STRING_CALCULATOR_PROFILE_DEFAULT) + wxString::Format(wxT("%d"), i));
-	if (dial.ShowModal() == wxID_OK) {
-		wxString newname;
-		wxString newid;
-		if (dial.m_radionew->GetValue()) {
-			newname = dial.m_profilename->GetValue();
-			newid = _(L"UnknownProfile");
-			for (j = 0; j <= profileid.GetCount(); j++)
-				if (defaultiduse.find(j) == defaultiduse.end()) {
-					newid = wxString::Format(wxT("Profile%d"), j);
+	while (true) {
+		DamageCalculatorSaveProfileEx dial(this);
+		wxArrayString profileid, profilename;
+		set<int> defaultiduse, defaultnameuse;
+		int i, j;
+		PreferencesDialog::GetToolCalculatorProfileList(&profileid, &profilename);
+		for (i = 0; i < profilename.GetCount(); i++) {
+			dial.m_listprofile->Append(profilename[i]);
+			if (profilename[i].StartsWith(wxT(HADES_STRING_CALCULATOR_PROFILE_DEFAULT)))
+				defaultnameuse.insert(wxAtoi(profilename[i].Mid(sizeof(HADES_STRING_CALCULATOR_PROFILE_DEFAULT) - 1)));
+			for (j = 0; j < profilename.GetCount(); j++)
+				if (profileid[i].IsSameAs(wxString::Format(wxT("Profile%d"), j))) {
+					defaultiduse.insert(j);
 					break;
 				}
+		}
+		if (profilename.GetCount() > 0) {
+			dial.m_listprofile->SetSelection(0);
 		} else {
-			newname = profilename[dial.m_listprofile->GetSelection()];
-			newid = profileid[dial.m_listprofile->GetSelection()];
+			dial.m_radioold->Enable(false);
+			dial.m_buttondelete->Enable(false);
 		}
-		if (!PreferencesDialog::SaveToolCalculatorProfile(this, newid, newname)) {
-			wxMessageDialog popup(this, HADES_STRING_CALCULATOR_SAVE_ERROR, HADES_STRING_ERROR, wxOK | wxSTAY_ON_TOP | wxCENTRE);
-			popup.ShowModal();
+		for (i = 1; defaultnameuse.find(i) != defaultnameuse.end(); i++) {}
+		dial.m_profilename->SetValue(wxT(HADES_STRING_CALCULATOR_PROFILE_DEFAULT) + wxString::Format(wxT("%d"), i));
+		int modalid = dial.ShowModal();
+		if (modalid == wxID_OK) {
+			wxString newname;
+			wxString newid;
+			if (dial.m_radionew->GetValue()) {
+				newname = dial.m_profilename->GetValue();
+				newid = _(L"UnknownProfile");
+				for (j = 0; j <= profileid.GetCount(); j++)
+					if (defaultiduse.find(j) == defaultiduse.end()) {
+						newid = wxString::Format(wxT("Profile%d"), j);
+						break;
+					}
+			} else {
+				newname = profilename[dial.m_listprofile->GetSelection()];
+				newid = profileid[dial.m_listprofile->GetSelection()];
+			}
+			if (!PreferencesDialog::SaveToolCalculatorProfile(this, newid, newname)) {
+				wxMessageDialog popup(this, HADES_STRING_CALCULATOR_SAVE_ERROR, HADES_STRING_ERROR, wxOK | wxSTAY_ON_TOP | wxCENTRE);
+				popup.ShowModal();
+			}
+		} else if (modalid == wxID_DELETE) {
+			wxString delid = profileid[dial.m_listprofile->GetSelection()];
+			if (!PreferencesDialog::DeleteToolCalculatorProfile(this, delid)) {
+				wxMessageDialog popup(this, HADES_STRING_CALCULATOR_SAVE_ERROR, HADES_STRING_ERROR, wxOK | wxSTAY_ON_TOP | wxCENTRE);
+				popup.ShowModal();
+			}
 		}
+		if (modalid != wxID_DELETE)
+			return;
 	}
 }
 
@@ -452,6 +476,7 @@ struct DamageCalculation {
 	bool is_summon = false;
 	bool is_drain = false;
 	bool cure_status = false;
+	bool weapon_status = false;
 	int use_jewel_id = -1;
 	double hit_rate = -1.0;
 	double status_rate = -1.0;
@@ -1018,6 +1043,7 @@ struct DamageCalculation {
 			if (spell_effect != 6) {
 				ApplyStatus(attacker_weapon_status, false);
 				status_rate = spell_accuracy / 100.0;
+				weapon_status = true;
 			}
 			break;
 		case 8: // Enemy Attack
@@ -2497,6 +2523,7 @@ void ToolDamageCalculator::UpdateInformation() {
 				description += calc.critical_rate >= 0 ? _(L", ") : _(L" and ");
 				description += wxString::Format(wxT(STRING_RATE_PERCENT_MORE), 100.0 * calc.status_rate);
 				if (calc.cure_status) description += wxString::Format(wxT(STRING_RATE_CURE_STATUS), CombineMultipleStrings(statusstrlist));
+				else if (calc.weapon_status) description += wxString::Format(wxT(STRING_RATE_ADD_STATUS), CombineMultipleStrings(statusstrlist));
 				else description += wxString::Format(wxT(STRING_RATE_INFLICT_STATUS), CombineMultipleStrings(statusstrlist));
 				statussaid = true;
 			}
@@ -2566,9 +2593,9 @@ void ToolDamageCalculator::UpdateInformation() {
 					description += _(L"\n");
 				}
 			} else if ((calc.has_damage || calc.has_heal) && calc.alternate_damage.size() > 0) {
-				description += wxString::Format(calc.has_heal ? wxT(STRING_ALTERNATE_HEAL) : wxT(STRING_ALTERNATE_DAMAGE), calc.alternate_damage_description) + _(L" ") + wxString::Format(wxT("%d"), calc.alternate_damage[0]);
+				description += wxString::Format(calc.has_heal ? wxT(STRING_ALTERNATE_HEAL) : wxT(STRING_ALTERNATE_DAMAGE), calc.alternate_damage_description) + _(L" ") + wxString::Format(wxT("%d\n"), calc.alternate_damage[0]);
 			} else if ((calc.has_damage || calc.has_heal) && calc.use_multi_target_damage) {
-				description += wxString::Format(calc.has_heal ? wxT(STRING_ALTERNATE_HEAL) : wxT(STRING_ALTERNATE_DAMAGE), _(STRING_MULTI_TARGET)) + _(L" ") + wxString::Format(wxT("%d"), calc.multi_target_damage[0]);
+				description += wxString::Format(calc.has_heal ? wxT(STRING_ALTERNATE_HEAL) : wxT(STRING_ALTERNATE_DAMAGE), _(STRING_MULTI_TARGET)) + _(L" ") + wxString::Format(wxT("%d\n"), calc.multi_target_damage[0]);
 			}
 			if (calc.has_special_damage) {
 				int sdcount = min(calc.special_damage.size(), calc.special_damage_description.GetCount());

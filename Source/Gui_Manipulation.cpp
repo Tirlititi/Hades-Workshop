@@ -11,6 +11,7 @@
 #include "Gui_SpellAnimationsEditor.h"
 #include "Gui_TextEditor.h"
 #include "Gui_TextureEditor.h"
+#include "Gui_WalkmeshEditor.h"
 #include "Hades_Strings.h"
 #include "Database_Script.h"
 #include "Database_Item.h"
@@ -1179,6 +1180,8 @@ void CDDataStruct::MarkDataFieldModified(unsigned int fieldid, Chunk_Type chunkt
 		fieldset.role[fieldid]->MarkDataModified();
 	} else if (chunktype == CHUNK_TYPE_FIELD_TILES) {
 		fieldset.background_data[fieldid]->MarkDataModified();
+	} else if (chunktype == CHUNK_TYPE_FIELD_WALK) {
+		fieldset.walkmesh[fieldid]->MarkDataModified();
 	} else if (chunktype==CHUNK_TYPE_IMAGE_MAP) {
 		fieldset.preload[fieldid]->MarkDataModified();
 		if (gametype==GAME_TYPE_PSX)
@@ -5578,7 +5581,7 @@ void CDDataStruct::OnTextCharmapPaint(wxPaintEvent &event) {
 //=============================//
 
 #define MACRO_FIELD_DISPLAY_BACKGROUND(FIELDID,BGID) \
-	uint32_t* imgdata = fieldset.background_data[FIELDID]->ConvertAsImage(BGID); \
+	uint32_t* imgdata = fieldset.background_data[FIELDID]->ConvertAsImageAccurate(BGID); \
 	wxBitmap bmp = wxBitmap(ConvertDataToImage(imgdata,fieldset.background_data[FIELDID]->camera[BGID].width,fieldset.background_data[FIELDID]->camera[BGID].height)); \
 	delete[] imgdata; \
 	if (bmp.IsOk()) { \
@@ -5612,7 +5615,13 @@ void CDDataStruct::DisplayField(int fieldid) {
 		}
 		m_fieldtexturechoice->SetSelection(0);
 		MACRO_FIELD_DISPLAY_BACKGROUND(fieldselection, 0)
+	} else {
+		wxClientDC dc(m_fieldtexturepreview);
+		dc.Clear();
+		m_fieldtexturepreview->DoPrepareDC(dc);
+		fieldtexpreview = wxNullBitmap;
 	}
+	m_fieldeditwalk->Enable(fieldset.walkmesh[fieldselection] != NULL);
 	m_fieldexportwalk->Enable(fieldset.walkmesh[fieldselection] != NULL);
 	m_fieldimportwalk->Enable(fieldset.walkmesh[fieldselection] != NULL);
 	m_fieldscrolledwindow->Layout();
@@ -5768,17 +5777,18 @@ walkbmp.SaveFile(_(L"aaaa.bmp"),wxBITMAP_TYPE_BMP);*/
 	} else if (id==wxID_TEXTURE) {
 		ManageFieldTextureDialog dial(this,*fieldset.background_data[*sortid]);
 		if (dial.ShowModal(m_fieldtexturechoice->GetSelection())==wxID_OK && dial.field.modified) {
+			dial.field.SetupDataInfos(false);
 			fieldset.background_data[*sortid]->Copy(dial.field);
 			MarkDataFieldModified(*sortid,CHUNK_TYPE_FIELD_TILES);
 		}
 	} else if (id == wxID_EXPORT) {
 		if (!TheWalkmeshExportWindow)
 			TheWalkmeshExportWindow = new WalkmeshExportWindow(GetTopWindow());
-		if (TheWalkmeshExportWindow->ShowModal() == wxID_OK) {
-			int res = fieldset.walkmesh[*sortid]->ExportAsObj(TheWalkmeshExportWindow->m_filepickerexport->GetPath().ToStdString());
-			if (res == 1)
+		if (TheWalkmeshExportWindow->ShowModal() == wxID_OK && !TheWalkmeshExportWindow->m_filepickerexport->GetPath().IsEmpty()) {
+			int res = fieldset.walkmesh[*sortid]->ExportAsObj(TheWalkmeshExportWindow->m_filepickerexport->GetPath().ToStdString(), fieldset.script_data[*sortid]->name, fieldset.script_data[*sortid]->object_id);
+			if (res == 1) {
 				wxLogError(HADES_STRING_OPEN_ERROR_CREATE, TheWalkmeshExportWindow->m_filepickerexport->GetPath().c_str());
-			else {
+			} else {
 				wxMessageDialog popupsuccess(this, HADES_STRING_WALKMESH_SAVE_SUCCESS, HADES_STRING_SUCCESS, wxOK | wxCENTRE);
 				popupsuccess.ShowModal();
 			}
@@ -5786,14 +5796,26 @@ walkbmp.SaveFile(_(L"aaaa.bmp"),wxBITMAP_TYPE_BMP);*/
 	} else if (id == wxID_IMPORT) {
 		if (!TheWalkmeshImportWindow)
 			TheWalkmeshImportWindow = new WalkmeshImportWindow(GetTopWindow());
-		if (TheWalkmeshImportWindow->ShowModal() == wxID_OK) {
-			//int res = fieldset.walkmesh[*sortid]->ImportFromObj(TheWalkmeshImportWindow->m_filepickerimport->GetPath().ToStdString());
-			//if (res == 1)
-			//	wxLogError(HADES_STRING_OPEN_ERROR_FAIL, TheWalkmeshImportWindow->m_filepickerimport->GetPath().c_str());
-			//else {
-			//	wxMessageDialog popupsuccess(this, HADES_STRING_WALKMESH_LOAD_SUCCESS, HADES_STRING_SUCCESS, wxOK | wxCENTRE);
-			//	popupsuccess.ShowModal();
-			//}
+		if (TheWalkmeshImportWindow->ShowModal() == wxID_OK && !TheWalkmeshImportWindow->m_filepickerimport->GetPath().IsEmpty()) {
+			wxString successmsg;
+			int res = fieldset.walkmesh[*sortid]->ImportFromObj(TheWalkmeshImportWindow->m_filepickerimport->GetPath().ToStdString(), &successmsg);
+			if (res == 0) {
+				wxMessageDialog popupsuccess(this, successmsg, HADES_STRING_SUCCESS, wxOK | wxCENTRE);
+				popupsuccess.ShowModal();
+				MarkDataFieldModified(*sortid, CHUNK_TYPE_FIELD_WALK);
+			} else if (res == -1) {
+				wxLogError(HADES_STRING_OPEN_ERROR_FAIL, TheWalkmeshImportWindow->m_filepickerimport->GetPath().c_str());
+			} else if (res < -1) {
+				wxLogError(HADES_STRING_WALKMESH_IMPORT_FAIL);
+			} else if (res == 1) {
+				wxLogError(HADES_STRING_DATA_REACH_LIMIT);
+			}
+		}
+	} else if (id == wxID_WALKMESH) {
+		WalkmeshEditDialog dial(this, fieldset.background_data[*sortid], fieldset.walkmesh[*sortid]);
+		if (dial.ShowModal() == wxID_OK) {
+			*fieldset.walkmesh[*sortid] = dial.walkmesh;
+			MarkDataFieldModified(*sortid, CHUNK_TYPE_FIELD_WALK);
 		}
 	}
 }
@@ -7263,6 +7285,7 @@ void CDDataStruct::InitField(void) {
 	GetTopWindow()->m_exportfieldscript->Enable();
 	GetTopWindow()->m_importfieldscript->Enable();
 	GetTopWindow()->m_exportfieldbackground->Enable();
+	GetTopWindow()->m_exportfieldwalkmesh->Enable();
 }
 
 void CDDataStruct::InitBattleScene(void) {
