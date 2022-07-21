@@ -326,7 +326,7 @@ public:
 	int ImportFromObj(wxString intputfilename, wxString* message = NULL);
 
 private:
-	void AddTriangleShared(uint16_t path, uint16_t flag, int32_t d, uint16_t thetax, uint16_t thetay, array<int32_t, 4>* customnormal = NULL);
+	void AddTriangleShared(int insertpos, uint16_t path, uint16_t flag, int32_t d, uint16_t thetax, uint16_t thetay, array<int32_t, 4>* customnormal = NULL);
 };
 
 struct FieldRoleDataStruct : public ChunkChild {
@@ -391,16 +391,16 @@ struct FieldSteamTitleInfo {
 struct FieldDataSet {
 public:
 	uint16_t amount;
-	uint16_t* cluster_id;
-	uint16_t* struct_id;
-	ScriptDataStruct** script_data;
-	ImageMapDataStruct** preload;
-	FieldTilesDataStruct** background_data;
-	FieldWalkmeshDataStruct** walkmesh;
-	TIMImageDataStruct** tim_data;
-	FieldRoleDataStruct** role;
+	vector<uint16_t> cluster_id; // PSX only
+	vector<uint16_t> struct_id;
+	vector<ScriptDataStruct*> script_data;
+	vector<ImageMapDataStruct*> preload;
+	vector<FieldTilesDataStruct*> background_data;
+	vector<FieldWalkmeshDataStruct*> walkmesh;
+	vector<TIMImageDataStruct*> tim_data;
+	vector<FieldRoleDataStruct*> role;
 	
-	TextDataStruct** related_text;
+	vector<TextDataStruct*> related_text;
 	FieldSteamTitleInfo* title_info; // Steam version only
 	uint32_t name_space_used; // Steam version only
 	
@@ -420,6 +420,7 @@ public:
 	void WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsigned int localflag);
 	int GetSteamTextSize(SteamLanguage lang = GetSteamLanguage());
 	void WriteSteamText(fstream& ffbin, SteamLanguage lang = GetSteamLanguage());
+	int GetIndexById(uint16_t fieldid);
 };
 
 #endif

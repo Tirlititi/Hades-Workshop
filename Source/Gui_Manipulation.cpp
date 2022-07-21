@@ -366,7 +366,7 @@ void CDDataStruct::ChangeFF9StringCharmap(wchar_t* chmapdef, wchar_t* chmapa, wc
 	unsigned int i,j;
 	if (gametype!=GAME_TYPE_PSX)
 		return;
-	if (spellloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_SPELL]) {
 		for (i=0;i<SPELL_AMOUNT;i++) {
 			spellset.spell[i].name.SetCharmaps(chmapdef,chmapa,chmapb,NULL);
 			spellset.spell[i].help.SetCharmaps(chmapdef,chmapa,chmapb,NULL);
@@ -375,7 +375,7 @@ void CDDataStruct::ChangeFF9StringCharmap(wchar_t* chmapdef, wchar_t* chmapa, wc
 		SpellDisplayNames();
 		DisplaySpell(m_spelllist->GetSelection());
 	}
-	if (supportloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_SUPPORT]) {
 		for (i=0;i<SUPPORT_AMOUNT;i++) {
 			supportset.support[i].name.SetCharmaps(chmapdef,chmapa,chmapb,NULL);
 			supportset.support[i].help.SetCharmaps(chmapdef,chmapa,chmapb,NULL);
@@ -384,7 +384,7 @@ void CDDataStruct::ChangeFF9StringCharmap(wchar_t* chmapdef, wchar_t* chmapa, wc
 		SupportDisplayNames();
 		DisplaySupport(m_supportlist->GetSelection());
 	}
-	if (cmdloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_CMD]) {
 		for (i=0;i<COMMAND_AMOUNT;i++) {
 			cmdset.cmd[i].name.SetCharmaps(chmapdef,chmapa,chmapb,NULL);
 			cmdset.cmd[i].help.SetCharmaps(chmapdef,chmapa,chmapb,NULL);
@@ -393,14 +393,14 @@ void CDDataStruct::ChangeFF9StringCharmap(wchar_t* chmapdef, wchar_t* chmapa, wc
 		CommandDisplayNames();
 		DisplayCommand(m_cmdlist->GetSelection());
 	}
-	if (statloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_STAT]) {
 		for (i=0;i<PLAYABLE_CHAR_AMOUNT;i++) {
 			statset.initial_stat[i].default_name.SetCharmaps(chmapdef,chmapa,chmapb,NULL);
 		}
 		StatDisplayNames();
 		DisplayStat(m_statlist->GetSelection());
 	}
-	if (enemyloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_ENMY]) {
 		for (i=0;i<enemyset.battle_amount;i++) {
 			wchar_t* txtchmapext = chmapext.GetCharmap(0);
 			for (j=0;j<enemyset.text[i]->amount;j++)
@@ -414,7 +414,7 @@ void CDDataStruct::ChangeFF9StringCharmap(wchar_t* chmapdef, wchar_t* chmapa, wc
 		EnemyDisplayNames();
 		DisplayEnemy(m_enemylist->GetSelection());
 	}
-	if (itemloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_ITEM]) {
 		for (i=0;i<ITEM_AMOUNT;i++) {
 			itemset.item[i].name.SetCharmaps(chmapdef,chmapa,chmapb,NULL);
 			itemset.item[i].help.SetCharmaps(chmapdef,chmapa,chmapb,NULL);
@@ -431,7 +431,7 @@ void CDDataStruct::ChangeFF9StringCharmap(wchar_t* chmapdef, wchar_t* chmapa, wc
 		DisplayItem(m_itemlist->GetSelection());
 		DisplayKeyItem(m_keyitemlist->GetSelection());
 	}
-	if (cardloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_CARD]) {
 		for (i=0;i<CARD_AMOUNT;i++) {
 			cardset.card[i].name.SetCharmaps(chmapdef,chmapa,chmapb,NULL);
 			UpdateCardName(i);
@@ -439,7 +439,7 @@ void CDDataStruct::ChangeFF9StringCharmap(wchar_t* chmapdef, wchar_t* chmapa, wc
 		CardDisplayNames();
 		DisplayCard(m_cardlist->GetSelection());
 	}
-	if (textloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_TEXT]) {
 		for (i=0;i<textset.amount;i++) {
 			wchar_t* txtchmapext;
 			if (textset.charmap[i])
@@ -454,7 +454,7 @@ void CDDataStruct::ChangeFF9StringCharmap(wchar_t* chmapdef, wchar_t* chmapa, wc
 		}
 		DisplayText(m_textlist->GetSelection());
 	}
-	if (worldloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_WORLD_MAP]) {
 		for (i=0;i<worldset.amount;i++) {
 			wchar_t* txtchmapext = chmapext.GetCharmap(worldset.script[i]->related_charmap_id);
 			for (j=0;j<worldset.text_data[i]->amount;j++)
@@ -466,7 +466,7 @@ void CDDataStruct::ChangeFF9StringCharmap(wchar_t* chmapdef, wchar_t* chmapa, wc
 		}
 		DisplayWorldMap(m_worldlist->GetSelection());
 	}
-	if (fieldloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_FIELD]) {
 		for (i=0;i<fieldset.amount;i++) {
 			wchar_t* txtchmapext = chmapext.GetCharmap(fieldset.script_data[i]->related_charmap_id);
 			fieldset.script_data[i]->name.SetCharmaps(chmapdef,chmapa,chmapb,txtchmapext);
@@ -474,7 +474,7 @@ void CDDataStruct::ChangeFF9StringCharmap(wchar_t* chmapdef, wchar_t* chmapa, wc
 		FieldDisplayNames();
 		DisplayField(m_fieldlist->GetSelection());
 	}
-	if (ffuiloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_MENU_UI]) {
 		for (i=0;i<ffuiset.special_text->amount;i++)
 			for (j=0;j<ffuiset.special_text->text_block[i].amount;j++)
 				ffuiset.special_text->text_block[i].text[j].SetCharmaps(chmapdef,chmapa,chmapb,NULL);
@@ -486,7 +486,7 @@ void CDDataStruct::ChangeFF9StringOpcodeChar(wchar_t newchar) {
 	unsigned int i,j;
 	if (gametype!=GAME_TYPE_PSX)
 		return;
-	if (spellloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_SPELL]) {
 		for (i=0;i<SPELL_AMOUNT;i++) {
 			spellset.spell[i].name.SetOpcodeChar(newchar);
 			spellset.spell[i].help.SetOpcodeChar(newchar);
@@ -495,7 +495,7 @@ void CDDataStruct::ChangeFF9StringOpcodeChar(wchar_t newchar) {
 		SpellDisplayNames();
 		DisplaySpell(m_spelllist->GetSelection());
 	}
-	if (supportloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_SUPPORT]) {
 		for (i=0;i<SUPPORT_AMOUNT;i++) {
 			supportset.support[i].name.SetOpcodeChar(newchar);
 			supportset.support[i].help.SetOpcodeChar(newchar);
@@ -504,7 +504,7 @@ void CDDataStruct::ChangeFF9StringOpcodeChar(wchar_t newchar) {
 		SupportDisplayNames();
 		DisplaySupport(m_supportlist->GetSelection());
 	}
-	if (cmdloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_CMD]) {
 		for (i=0;i<COMMAND_AMOUNT;i++) {
 			cmdset.cmd[i].name.SetOpcodeChar(newchar);
 			cmdset.cmd[i].help.SetOpcodeChar(newchar);
@@ -513,14 +513,14 @@ void CDDataStruct::ChangeFF9StringOpcodeChar(wchar_t newchar) {
 		CommandDisplayNames();
 		DisplayCommand(m_cmdlist->GetSelection());
 	}
-	if (statloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_STAT]) {
 		for (i=0;i<PLAYABLE_CHAR_AMOUNT;i++) {
 			statset.initial_stat[i].default_name.SetOpcodeChar(newchar);
 		}
 		StatDisplayNames();
 		DisplayStat(m_statlist->GetSelection());
 	}
-	if (enemyloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_ENMY]) {
 		for (i=0;i<enemyset.battle_amount;i++) {
 			for (j=0;j<enemyset.text[i]->amount;j++)
 				enemyset.text[i]->text[j].SetOpcodeChar(newchar);
@@ -533,7 +533,7 @@ void CDDataStruct::ChangeFF9StringOpcodeChar(wchar_t newchar) {
 		EnemyDisplayNames();
 		DisplayEnemy(m_enemylist->GetSelection());
 	}
-	if (itemloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_ITEM]) {
 		for (i=0;i<ITEM_AMOUNT;i++) {
 			itemset.item[i].name.SetOpcodeChar(newchar);
 			itemset.item[i].help.SetOpcodeChar(newchar);
@@ -550,7 +550,7 @@ void CDDataStruct::ChangeFF9StringOpcodeChar(wchar_t newchar) {
 		DisplayItem(m_itemlist->GetSelection());
 		DisplayKeyItem(m_keyitemlist->GetSelection());
 	}
-	if (cardloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_CARD]) {
 		for (i=0;i<CARD_AMOUNT;i++) {
 			cardset.card[i].name.SetOpcodeChar(newchar);
 			UpdateCardName(i);
@@ -558,7 +558,7 @@ void CDDataStruct::ChangeFF9StringOpcodeChar(wchar_t newchar) {
 		CardDisplayNames();
 		DisplayCard(m_cardlist->GetSelection());
 	}
-	if (textloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_TEXT]) {
 		for (i=0;i<textset.amount;i++) {
 			if (textset.text_data[i]) {
 				for (j=0;j<textset.text_data[i]->amount;j++) {
@@ -568,7 +568,7 @@ void CDDataStruct::ChangeFF9StringOpcodeChar(wchar_t newchar) {
 		}
 		DisplayText(m_textlist->GetSelection());
 	}
-	if (worldloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_WORLD_MAP]) {
 		for (i=0;i<worldset.amount;i++)
 			for (j=0;j<worldset.text_data[i]->amount;j++)
 				worldset.text_data[i]->text[j].SetOpcodeChar(newchar);
@@ -578,14 +578,14 @@ void CDDataStruct::ChangeFF9StringOpcodeChar(wchar_t newchar) {
 		}
 		DisplayWorldMap(m_worldlist->GetSelection());
 	}
-	if (fieldloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_FIELD]) {
 		for (i=0;i<fieldset.amount;i++) {
 			fieldset.script_data[i]->name.SetOpcodeChar(newchar);
 		}
 		FieldDisplayNames();
 		DisplayField(m_fieldlist->GetSelection());
 	}
-	if (ffuiloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_MENU_UI]) {
 		for (i=0;i<ffuiset.special_text->amount;i++)
 			for (j=0;j<ffuiset.special_text->text_block[i].amount;j++)
 				ffuiset.special_text->text_block[i].text[j].SetOpcodeChar(newchar);
@@ -597,7 +597,7 @@ void CDDataStruct::ChangeFF9StringSteamLanguage(SteamLanguage newlang) {
 	unsigned int i,j;
 	if (gametype==GAME_TYPE_PSX)
 		return;
-	if (spellloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_SPELL]) {
 		for (i=0;i<SPELL_AMOUNT;i++) {
 			spellset.spell[i].name.ChangeSteamLanguage(newlang);
 			spellset.spell[i].help.ChangeSteamLanguage(newlang);
@@ -606,7 +606,7 @@ void CDDataStruct::ChangeFF9StringSteamLanguage(SteamLanguage newlang) {
 		SpellDisplayNames();
 		DisplaySpell(m_spelllist->GetSelection());
 	}
-	if (supportloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_SUPPORT]) {
 		for (i=0;i<SUPPORT_AMOUNT;i++) {
 			supportset.support[i].name.ChangeSteamLanguage(newlang);
 			supportset.support[i].help.ChangeSteamLanguage(newlang);
@@ -615,7 +615,7 @@ void CDDataStruct::ChangeFF9StringSteamLanguage(SteamLanguage newlang) {
 		SupportDisplayNames();
 		DisplaySupport(m_supportlist->GetSelection());
 	}
-	if (cmdloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_CMD]) {
 		for (i=0;i<COMMAND_AMOUNT;i++) {
 			cmdset.cmd[i].name.ChangeSteamLanguage(newlang);
 			cmdset.cmd[i].help.ChangeSteamLanguage(newlang);
@@ -624,14 +624,14 @@ void CDDataStruct::ChangeFF9StringSteamLanguage(SteamLanguage newlang) {
 		CommandDisplayNames();
 		DisplayCommand(m_cmdlist->GetSelection());
 	}
-	if (statloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_STAT]) {
 		for (i=0;i<PLAYABLE_CHAR_AMOUNT;i++) {
 			statset.initial_stat[i].default_name.ChangeSteamLanguage(newlang);
 		}
 		StatDisplayNames();
 		DisplayStat(m_statlist->GetSelection());
 	}
-	if (enemyloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_ENMY]) {
 		for (i=0;i<enemyset.battle_amount;i++) {
 			for (j=0;j<enemyset.text[i]->amount;j++)
 				enemyset.text[i]->text[j].ChangeSteamLanguage(newlang);
@@ -645,7 +645,7 @@ void CDDataStruct::ChangeFF9StringSteamLanguage(SteamLanguage newlang) {
 		EnemyDisplayNames();
 		DisplayEnemy(m_enemylist->GetSelection());
 	}
-	if (itemloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_ITEM]) {
 		for (i=0;i<ITEM_AMOUNT;i++) {
 			itemset.item[i].name.ChangeSteamLanguage(newlang);
 			itemset.item[i].help.ChangeSteamLanguage(newlang);
@@ -662,7 +662,7 @@ void CDDataStruct::ChangeFF9StringSteamLanguage(SteamLanguage newlang) {
 		DisplayItem(m_itemlist->GetSelection());
 		DisplayKeyItem(m_keyitemlist->GetSelection());
 	}
-	if (cardloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_CARD]) {
 		for (i=0;i<CARD_AMOUNT;i++) {
 			cardset.card[i].name.ChangeSteamLanguage(newlang);
 			UpdateCardName(i);
@@ -670,7 +670,7 @@ void CDDataStruct::ChangeFF9StringSteamLanguage(SteamLanguage newlang) {
 		CardDisplayNames();
 		DisplayCard(m_cardlist->GetSelection());
 	}
-	if (textloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_TEXT]) {
 		for (i=0;i<textset.amount;i++) {
 			if (textset.text_data[i]) {
 				for (j=0;j<textset.text_data[i]->amount;j++) {
@@ -680,7 +680,7 @@ void CDDataStruct::ChangeFF9StringSteamLanguage(SteamLanguage newlang) {
 		}
 		DisplayText(m_textlist->GetSelection());
 	}
-	if (worldloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_WORLD_MAP]) {
 		for (i=0;i<worldset.amount;i++) {
 			for (j=0;j<worldset.text_data[i]->amount;j++)
 				worldset.text_data[i]->text[j].ChangeSteamLanguage(newlang);
@@ -692,7 +692,7 @@ void CDDataStruct::ChangeFF9StringSteamLanguage(SteamLanguage newlang) {
 		}
 		DisplayWorldMap(m_worldlist->GetSelection());
 	}
-	if (fieldloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_FIELD]) {
 		for (i=0;i<fieldset.amount;i++) {
 			fieldset.script_data[i]->name.ChangeSteamLanguage(newlang);
 			fieldset.script_data[i]->ChangeSteamLanguage(newlang);
@@ -700,7 +700,7 @@ void CDDataStruct::ChangeFF9StringSteamLanguage(SteamLanguage newlang) {
 		FieldDisplayNames();
 		DisplayField(m_fieldlist->GetSelection());
 	}
-	if (ffuiloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_MENU_UI]) {
 		for (i=0;i<ffuiset.special_text->amount;i++)
 			for (j=0;j<ffuiset.special_text->text_block[i].amount;j++)
 				ffuiset.special_text->text_block[i].text[j].ChangeSteamLanguage(newlang);
@@ -835,74 +835,10 @@ int IOHWSMessage::ShowModal(bool sv, bool* sct, bool* scttxt, bool* scton) {
 }
 
 bool CDDataStruct::OverwriteBinary() {
-	fstream f(filename.c_str(),ios::in | ios::out | ios::binary);
-	if (!f.is_open())
+	if (OverwritePSXBinary(filename, saveset.sectionmodified, config, saveset, cluster) != 0)
 		return false;
-	if (spellmodified) {
-		spellset.Write(f,config);
-		spellmodified = false;
-	}
-	if (supportmodified) {
-		supportset.Write(f,config);
-		supportmodified = false;
-	}
-	if (cmdmodified) {
-		cmdset.Write(f,config);
-		cmdmodified = false;
-	}
-	if (statmodified) {
-		statset.Write(f,config);
-		statmodified = false;
-	}
-	if (partyspecialmodified) {
-		partyspecialset.Write(f,config);
-		partyspecialmodified = false;
-	}
-	if (itemmodified) {
-		itemset.Write(f,config);
-		itemmodified = false;
-	}
-	if (shopmodified) {
-		shopset.Write(f,config);
-		shopmodified = false;
-	}
-	if (enemymodified) {
-		enemyset.Write(f,cluster,!worldmodified,!fieldmodified);
-		enemymodified = false;
-	}
-	if (cardmodified) {
-		cardset.Write(f,config);
-		cardmodified = false;
-	}
-	if (textmodified) {
-		textset.Write(f,cluster);
-		textmodified = false;
-	}
-	if (worldmodified) {
-		worldset.Write(f,cluster);
-		worldmodified = false;
-	}
-	if (fieldmodified) {
-		fieldset.Write(f,cluster);
-		fieldmodified = false;
-	}
-	if (scenemodified) {
-		sceneset.Write(f,cluster);
-		scenemodified = false;
-	}
-	if (spellanimmodified) {
-		spellanimset.Write(f,config,cluster.global_map);
-		spellanimmodified = false;
-	}
-	if (ffuimodified) {
-		ffuiset.Write(f,config);
-		ffuimodified = false;
-	}
-	if (mipsmodified) {
-		mipsset.Write(f,config);
-		mipsmodified = false;
-	}
-	f.close();
+	for (int i = 0; i < DATA_SECTION_AMOUNT; i++)
+		saveset.sectionmodified[i] = false;
 	return true;
 }
 
@@ -910,37 +846,37 @@ bool CDDataStruct::ExportPPF() {
 	fstream f(filename.c_str(),ios::in | ios::binary);
 	if (!f.is_open())
 		return false;
-	if (spellmodified)
+	if (saveset.sectionmodified[DATA_SECTION_SPELL])
 		spellset.WritePPF(f,config);
-	if (supportmodified)
+	if (saveset.sectionmodified[DATA_SECTION_SUPPORT])
 		supportset.WritePPF(f,config);
-	if (cmdmodified)
+	if (saveset.sectionmodified[DATA_SECTION_CMD])
 		cmdset.WritePPF(f,config);
-	if (statmodified)
+	if (saveset.sectionmodified[DATA_SECTION_STAT])
 		statset.WritePPF(f,config);
-	if (partyspecialmodified)
+	if (saveset.sectionmodified[DATA_SECTION_PARTY_SPECIAL])
 		partyspecialset.WritePPF(f,config);
-	if (itemmodified)
+	if (saveset.sectionmodified[DATA_SECTION_ITEM])
 		itemset.WritePPF(f,config);
-	if (shopmodified)
+	if (saveset.sectionmodified[DATA_SECTION_SHOP])
 		shopset.WritePPF(f,config);
-	if (enemymodified)
-		enemyset.WritePPF(f,cluster,!worldmodified,!fieldmodified);
-	if (cardmodified)
+	if (saveset.sectionmodified[DATA_SECTION_ENMY])
+		enemyset.WritePPF(f,cluster,!saveset.sectionmodified[DATA_SECTION_WORLD_MAP],!saveset.sectionmodified[DATA_SECTION_FIELD]);
+	if (saveset.sectionmodified[DATA_SECTION_CARD])
 		cardset.WritePPF(f,config);
-	if (textmodified)
+	if (saveset.sectionmodified[DATA_SECTION_TEXT])
 		textset.WritePPF(f,cluster);
-	if (worldmodified)
+	if (saveset.sectionmodified[DATA_SECTION_WORLD_MAP])
 		worldset.WritePPF(f,cluster);
-	if (fieldmodified)
+	if (saveset.sectionmodified[DATA_SECTION_FIELD])
 		fieldset.WritePPF(f,cluster);
-	if (scenemodified)
+	if (saveset.sectionmodified[DATA_SECTION_BATTLE_SCENE])
 		sceneset.WritePPF(f,cluster);
-	if (spellanimmodified)
+	if (saveset.sectionmodified[DATA_SECTION_SPELL_ANIM])
 		spellanimset.WritePPF(f,config,cluster.global_map);
-	if (ffuimodified)
+	if (saveset.sectionmodified[DATA_SECTION_MENU_UI])
 		ffuiset.WritePPF(f,config);
-	if (mipsmodified)
+	if (saveset.sectionmodified[DATA_SECTION_ASSEMBLY])
 		mipsset.WritePPF(f,config);
 	f.close();
 	return true;
@@ -1025,33 +961,33 @@ wstring* CDDataStruct::ReadHWS(const char* fname, bool* section, bool* sectext, 
 			m_synthshoplist->SetString(i,_(itemset.item[shopset.synthesis[i].synthesized].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 	}
 	if (section[DATA_SECTION_ENMY]) {
-		enemymodified = true;
+		saveset.sectionmodified[DATA_SECTION_ENMY] = true;
 		EnemyDisplayNames();
 	}
 	if (section[DATA_SECTION_CARD]) {
-		cardmodified = true;
+		saveset.sectionmodified[DATA_SECTION_CARD] = true;
 		CardDisplayNames();
 	}
 	if (section[DATA_SECTION_TEXT]) {
-		textmodified = true;
+		saveset.sectionmodified[DATA_SECTION_TEXT] = true;
 		TextDisplayNames();
 	}
 	if (section[DATA_SECTION_WORLD_MAP]) {
-		worldmodified = true;
+		saveset.sectionmodified[DATA_SECTION_WORLD_MAP] = true;
 		WorldMapDisplayNames();
 		for (i=0;i<WORLD_MAP_PLACE_AMOUNT;i++)
 			m_worldplacelist->SetString(i,_(worldset.world_data->place_name[i].GetStr(hades::TEXT_PREVIEW_TYPE)));
 	}
 	if (section[DATA_SECTION_FIELD]) {
-		fieldmodified = true;
+		saveset.sectionmodified[DATA_SECTION_FIELD] = true;
 		FieldDisplayNames();
 	}
 	if (section[DATA_SECTION_BATTLE_SCENE] && gametype==GAME_TYPE_PSX) {
-		scenemodified = true;
+		saveset.sectionmodified[DATA_SECTION_BATTLE_SCENE] = true;
 		BattleSceneDisplayNames();
 	}
 	if (section[DATA_SECTION_SPELL_ANIM]) {
-		spellanimmodified = true;
+		saveset.sectionmodified[DATA_SECTION_SPELL_ANIM] = true;
 		SpellAnimationDisplayNames();
 	}
 	if (section[DATA_SECTION_MENU_UI]) {
@@ -1069,32 +1005,32 @@ wstring* CDDataStruct::ReadHWS(const char* fname, bool* section, bool* sectext, 
 }
 
 void CDDataStruct::MarkDataSpellModified() {
-	spellmodified = true;
+	saveset.sectionmodified[DATA_SECTION_SPELL] = true;
 	GetTopWindow()->MarkDataModified();
 }
 
 void CDDataStruct::MarkDataSupportModified() {
-	supportmodified = true;
+	saveset.sectionmodified[DATA_SECTION_SUPPORT] = true;
 	GetTopWindow()->MarkDataModified();
 }
 
 void CDDataStruct::MarkDataCommandModified() {
-	cmdmodified = true;
+	saveset.sectionmodified[DATA_SECTION_CMD] = true;
 	GetTopWindow()->MarkDataModified();
 }
 
 void CDDataStruct::MarkDataStatModified() {
-	statmodified = true;
+	saveset.sectionmodified[DATA_SECTION_STAT] = true;
 	GetTopWindow()->MarkDataModified();
 }
 
 void CDDataStruct::MarkDataPartySpecialModified() {
-	partyspecialmodified = true;
+	saveset.sectionmodified[DATA_SECTION_PARTY_SPECIAL] = true;
 	GetTopWindow()->MarkDataModified();
 }
 
 void CDDataStruct::MarkDataEnemyModified(unsigned int battleid, Chunk_Type chunktype, bool alllang) {
-	enemymodified = true;
+	saveset.sectionmodified[DATA_SECTION_ENMY] = true;
 	if (chunktype==CHUNK_TYPE_ENEMY_STATS)
 		enemyset.battle[battleid]->MarkDataModified();
 	else if (chunktype==CHUNK_TYPE_BATTLE_DATA)
@@ -1113,22 +1049,22 @@ void CDDataStruct::MarkDataEnemyModified(unsigned int battleid, Chunk_Type chunk
 }
 
 void CDDataStruct::MarkDataItemModified() {
-	itemmodified = true;
+	saveset.sectionmodified[DATA_SECTION_ITEM] = true;
 	GetTopWindow()->MarkDataModified();
 }
 
 void CDDataStruct::MarkDataShopModified() {
-	shopmodified = true;
+	saveset.sectionmodified[DATA_SECTION_SHOP] = true;
 	GetTopWindow()->MarkDataModified();
 }
 
 void CDDataStruct::MarkDataCardModified() {
-	cardmodified = true;
+	saveset.sectionmodified[DATA_SECTION_CARD] = true;
 	GetTopWindow()->MarkDataModified();
 }
 
 void CDDataStruct::MarkDataTextModified(unsigned int textid, Chunk_Type chunktype, unsigned int objectnum) {
-	textmodified = true;
+	saveset.sectionmodified[DATA_SECTION_TEXT] = true;
 	if (chunktype==CHUNK_TYPE_TEXT)
 		textset.text_data[textid]->MarkDataModified();
 	else if (chunktype==CHUNK_TYPE_CHARMAP)
@@ -1139,7 +1075,7 @@ void CDDataStruct::MarkDataTextModified(unsigned int textid, Chunk_Type chunktyp
 }
 
 void CDDataStruct::MarkDataWorldMapModified(unsigned int worldid, Chunk_Type chunktype, unsigned int objectnum) {
-	worldmodified = true;
+	saveset.sectionmodified[DATA_SECTION_WORLD_MAP] = true;
 	if (chunktype==CHUNK_TYPE_VARIOUS)
 		worldset.world_data->MarkDataModified();
 	else if (chunktype==CHUNK_TYPE_SCRIPT)
@@ -1159,7 +1095,7 @@ void CDDataStruct::MarkDataWorldMapModified(unsigned int worldid, Chunk_Type chu
 }
 
 void CDDataStruct::MarkDataWorldMapScriptModified(unsigned int worldid, bool alllang) {
-	worldmodified = true;
+	saveset.sectionmodified[DATA_SECTION_WORLD_MAP] = true;
 	if (alllang && worldset.script[worldid]->multi_lang_script!=NULL)
 		for (SteamLanguage lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
 			if (worldset.script[worldid]->multi_lang_script->is_loaded[lang])
@@ -1169,7 +1105,7 @@ void CDDataStruct::MarkDataWorldMapScriptModified(unsigned int worldid, bool all
 }
 
 void CDDataStruct::MarkDataFieldModified(unsigned int fieldid, Chunk_Type chunktype, bool alllang) {
-	fieldmodified = true;
+	saveset.sectionmodified[DATA_SECTION_FIELD] = true;
 	if (chunktype==CHUNK_TYPE_SCRIPT) {
 		if (alllang && fieldset.script_data[fieldid]->multi_lang_script!=NULL)
 			for (SteamLanguage lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
@@ -1191,7 +1127,7 @@ void CDDataStruct::MarkDataFieldModified(unsigned int fieldid, Chunk_Type chunkt
 }
 
 void CDDataStruct::MarkDataBattleSceneModified(unsigned int sceneid, Chunk_Type chunktype, unsigned int objectnum) {
-	scenemodified = true;
+	saveset.sectionmodified[DATA_SECTION_BATTLE_SCENE] = true;
 	if (chunktype==CHUNK_TYPE_BATTLE_SCENE)
 		sceneset.scene[sceneid]->MarkDataModified();
 	else if (chunktype==CHUNK_TYPE_TIM)
@@ -1200,25 +1136,25 @@ void CDDataStruct::MarkDataBattleSceneModified(unsigned int sceneid, Chunk_Type 
 }
 
 void CDDataStruct::MarkDataSpellAnimationModified(unsigned int spellanimid, Spell_Animation_Data_Type datatype) {
-	spellanimmodified = true;
+	saveset.sectionmodified[DATA_SECTION_SPELL_ANIM] = true;
 	spellanimset.spell[spellanimid].modified_data |= datatype;
 	GetTopWindow()->MarkDataModified();
 }
 
 void CDDataStruct::MarkDataMenuUIModified() {
-	ffuimodified = true;
+	saveset.sectionmodified[DATA_SECTION_MENU_UI] = true;
 	ffuiset.special_text->modified = true;
 	GetTopWindow()->MarkDataModified();
 }
 
 void CDDataStruct::MarkDataMipsModified(int datatype) {
-	mipsmodified = true;
+	saveset.sectionmodified[DATA_SECTION_ASSEMBLY] = true;
 	mipsset.MarkAsModified(datatype);
 	GetTopWindow()->MarkDataModified();
 }
 
 void CDDataStruct::MarkDataCilModified() {
-	cilmodified = true;
+	saveset.sectionmodified[DATA_SECTION_ASSEMBLY] = true;
 	GetTopWindow()->MarkDataModified();
 }
 
@@ -1272,7 +1208,7 @@ public:
 	uint16_t** globallistid[7];
 	int extradata;
 	
-	ImageMapEditDialog(wxWindow* parent, ImageMapDataStruct* imgmap, ImageMapDataStruct* enemy, GlobalImageMapStruct* global, SaveSet& saveset, bool* dataloaded);
+	ImageMapEditDialog(wxWindow* parent, ImageMapDataStruct* imgmap, ImageMapDataStruct* enemy, GlobalImageMapStruct* global, SaveSet& saveset);
 	int ShowModal();
 	
 private:
@@ -1283,7 +1219,7 @@ private:
 	void OnButtonClick(wxCommandEvent& event);
 };
 
-ImageMapEditDialog::ImageMapEditDialog(wxWindow* parent, ImageMapDataStruct* imgmap, ImageMapDataStruct* enemy, GlobalImageMapStruct* global, SaveSet& saveset, bool* dataloaded) :
+ImageMapEditDialog::ImageMapEditDialog(wxWindow* parent, ImageMapDataStruct* imgmap, ImageMapDataStruct* enemy, GlobalImageMapStruct* global, SaveSet& saveset) :
 	ImageMapEditWindow(parent) {
 	GlobalMapCommonDirStruct* dir;
 	int objectnameindex;
@@ -1292,11 +1228,11 @@ ImageMapEditDialog::ImageMapEditDialog(wxWindow* parent, ImageMapDataStruct* img
 	enemymap = enemy;
 	globalmap = global;
 	extradata = imgmap->GetExtraSize()/0x10;
-	if (dataloaded[0])
+	if (saveset.sectionloaded[DATA_SECTION_ENMY])
 		enemyset = saveset.enemyset;
 	else
 		enemyset = NULL;
-	if (dataloaded[1])
+	if (saveset.sectionloaded[DATA_SECTION_FIELD])
 		fieldset = saveset.fieldset;
 	else
 		fieldset = NULL;
@@ -1964,7 +1900,7 @@ void CDDataStruct::OnSpellChangeButton(wxCommandEvent& event) {
 	} else if (id==wxID_HELP) {
 		if (gametype==GAME_TYPE_PSX) {
 			CharmapDataStruct* chmap = NULL;
-			if (textloaded)
+			if (saveset.sectionloaded[DATA_SECTION_TEXT])
 				chmap = textset.charmap[textset.main_charmap_index];
 			TextEditDialog ted(this,sp.help,spellset.help_space_total-spellset.help_space_used,TEXT_STYLE_HELP,chmap);
 			if (ted.ShowModal()==wxID_OK) {
@@ -2109,7 +2045,7 @@ void CDDataStruct::OnSupportChangeButton(wxCommandEvent& event) {
 	} else if (id==wxID_HELP) {
 		if (gametype==GAME_TYPE_PSX) {
 			CharmapDataStruct* chmap = NULL;
-			if (textloaded)
+			if (saveset.sectionloaded[DATA_SECTION_TEXT])
 				chmap = textset.charmap[textset.main_charmap_index];
 			TextEditDialog ted(this,sp.help,supportset.help_space_total-supportset.help_space_used,TEXT_STYLE_HELP,chmap);
 			if (ted.ShowModal()==wxID_OK) {
@@ -2329,7 +2265,7 @@ void CDDataStruct::OnCommandChangeButton(wxCommandEvent& event) {
 	} else if (id==wxID_HELP) {
 		if (gametype==GAME_TYPE_PSX) {
 			CharmapDataStruct* chmap = NULL;
-			if (textloaded)
+			if (saveset.sectionloaded[DATA_SECTION_TEXT])
 				chmap = textset.charmap[textset.main_charmap_index];
 			TextEditDialog ted(this,cmd.help,cmdset.help_space_total-cmdset.help_space_used,TEXT_STYLE_HELP,chmap);
 			if (ted.ShowModal()==wxID_OK) {
@@ -3248,7 +3184,7 @@ void CDDataStruct::OnItemChangeButton(wxCommandEvent& event) {
 		} else if (id==wxID_KEYHELP) {
 			if (gametype==GAME_TYPE_PSX) {
 				CharmapDataStruct* chmap = NULL;
-				if (textloaded)
+				if (saveset.sectionloaded[DATA_SECTION_TEXT])
 					chmap = textset.charmap[textset.main_charmap_index];
 				TextEditDialog ted(this,ki.help,itemset.key_help_space_total-itemset.key_help_space_used,TEXT_STYLE_HELP,chmap);
 				if (ted.ShowModal()==wxID_OK) {
@@ -3265,7 +3201,7 @@ void CDDataStruct::OnItemChangeButton(wxCommandEvent& event) {
 		} else if (id==wxID_KEYDESCRIPTION) {
 			if (gametype==GAME_TYPE_PSX) {
 				CharmapDataStruct* chmap = NULL;
-				if (textloaded)
+				if (saveset.sectionloaded[DATA_SECTION_TEXT])
 					chmap = textset.charmap[textset.main_charmap_index];
 				TextEditDialog ted(this,ki.description,itemset.key_desc_space_total-itemset.key_desc_space_used,TEXT_STYLE_DESCRIPTION,chmap);
 				if (ted.ShowModal()==wxID_OK) {
@@ -3301,7 +3237,7 @@ void CDDataStruct::OnItemChangeButton(wxCommandEvent& event) {
 		} else if (id==wxID_HELP) {
 			if (gametype==GAME_TYPE_PSX) {
 				CharmapDataStruct* chmap = NULL;
-				if (textloaded)
+				if (saveset.sectionloaded[DATA_SECTION_TEXT])
 					chmap = textset.charmap[textset.main_charmap_index];
 				TextEditDialog ted(this,it.help,itemset.help_space_total-itemset.help_space_used,TEXT_STYLE_HELP,chmap);
 				if (ted.ShowModal()==wxID_OK) {
@@ -3318,7 +3254,7 @@ void CDDataStruct::OnItemChangeButton(wxCommandEvent& event) {
 		} else if (id==wxID_BATTLEHELP) {
 			if (gametype==GAME_TYPE_PSX) {
 				CharmapDataStruct* chmap = NULL;
-				if (textloaded)
+				if (saveset.sectionloaded[DATA_SECTION_TEXT])
 					chmap = textset.charmap[textset.main_charmap_index];
 				TextEditDialog ted(this,it.battle_help,itemset.help2_space_total-itemset.help2_space_used,TEXT_STYLE_HELP,chmap);
 				if (ted.ShowModal()==wxID_OK) {
@@ -4810,8 +4746,7 @@ void CDDataStruct::OnEnemyChangeButton(wxCommandEvent& event) {
 			MarkDataSpellModified();
 		}
 	} else if (id==wxID_SCRIPT) {
-		bool dataloaded[8] = { statloaded, enemyloaded, fieldloaded, itemloaded, spellloaded, supportloaded, cmdloaded, cardloaded };
-		ScriptEditDialog dial(this,*enemyset.script[*sortid],SCRIPT_TYPE_BATTLE,&saveset,&eb,enemyset.text[*sortid],dataloaded);
+		ScriptEditDialog dial(this,*enemyset.script[*sortid],SCRIPT_TYPE_BATTLE,&saveset,&eb,enemyset.text[*sortid]);
 		if (dial.ShowModal()==wxID_OK) {
 			*enemyset.script[*sortid] = dial.script;
 			MarkDataEnemyModified(*sortid,CHUNK_TYPE_SCRIPT);
@@ -4829,7 +4764,6 @@ void CDDataStruct::OnEnemyChangeButton(wxCommandEvent& event) {
 			MarkDataEnemyModified(*sortid,CHUNK_TYPE_SCRIPT,true);
 		}
 /*	} else if (id==wxID_PRELOAD) {
-		bool dataloaded[2] = { enemyloaded, fieldloaded };
 		uint16_t battlescene = 0xFFFF, newscene = 0xFFFF;
 		unsigned int i;
 		for (i=0;i<enemyset.preload[*sortid]->amount;i++)
@@ -4837,7 +4771,7 @@ void CDDataStruct::OnEnemyChangeButton(wxCommandEvent& event) {
 				battlescene = enemyset.preload[*sortid]->data_id[i];
 				break;
 			}
-		ImageMapEditDialog dial(this,enemyset.preload[*sortid],cluster.enemy_shared_map,&cluster.global_map,saveset,dataloaded);
+		ImageMapEditDialog dial(this,enemyset.preload[*sortid],cluster.enemy_shared_map,&cluster.global_map,saveset);
 		if (dial.ShowModal()==wxID_OK) {
 			enemyset.preload[*sortid]->Copy(dial.map);
 			enemyset.preload[*sortid]->UpdateOffset();
@@ -5175,22 +5109,14 @@ void CDDataStruct::OnListBoxText(wxCommandEvent& event) {
 }
 
 void CDDataStruct::OnTextEditText(wxCommandEvent& event) {
-	wxListBox* itemlist = NULL;
-	wxListBox* subitemlist = NULL;
-	TextDataStruct** strlist = NULL;
-	CharmapDataStruct* chmap = NULL, *chmapext = NULL;
-	void (CDDataStruct::*markmodified)(unsigned int, Chunk_Type, unsigned int);
-	if (event.GetId()==wxID_TEXT) {
-		itemlist = m_textlist;
-		subitemlist = m_textdatalist;
-		strlist = textset.text_data;
-		markmodified = &CDDataStruct::MarkDataTextModified;
-	} else if (event.GetId()==wxID_WORLD) {
-		itemlist = m_worldlist;
-		subitemlist = m_worldtextlist;
-		strlist = worldset.text_data;
-		markmodified = &CDDataStruct::MarkDataWorldMapModified;
-	}
+	bool istext = event.GetId() == wxID_TEXT;
+	if (!istext && event.GetId() != wxID_WORLD)
+		return;
+	wxListBox* itemlist = istext ? m_textlist : m_worldlist;
+	wxListBox* subitemlist = istext ? m_textdatalist : m_worldtextlist;
+	vector<TextDataStruct*> strlist = istext ? textset.text_data : worldset.text_data;
+	void (CDDataStruct::*markmodified)(unsigned int, Chunk_Type, unsigned int) = istext ? &CDDataStruct::MarkDataTextModified : &CDDataStruct::MarkDataWorldMapModified;
+	CharmapDataStruct* chmap = NULL, * chmapext = NULL; ;
 	int sel = itemlist->GetSelection();
 	int textsel = subitemlist->GetSelection();
 	unsigned int* sortid = (unsigned int*)itemlist->GetClientData(sel);
@@ -5247,18 +5173,12 @@ TextExportDialog* TheTextExportDialog;
 void CDDataStruct::OnTextExportText(wxCommandEvent& event) {
 	if (!TheTextExportDialog)
 		TheTextExportDialog = new TextExportDialog(GetTopWindow());
-	wxListBox* itemlist = NULL;
-	TextDataStruct** strlist = NULL;
-	wstring* namelist = NULL;
-	if (event.GetId()==wxID_TEXT) {
-		itemlist = m_textlist;
-		strlist = textset.text_data;
-		namelist = textset.name;
-	} else if (event.GetId()==wxID_WORLD) {
-		itemlist = m_worldlist;
-		strlist = worldset.text_data;
-		namelist = worldset.name;
-	}
+	bool istext = event.GetId() == wxID_TEXT;
+	if (!istext && event.GetId() != wxID_WORLD)
+		return;
+	wxListBox* itemlist = istext ? m_textlist : m_worldlist;
+	vector<TextDataStruct*> strlist = istext ? textset.text_data : worldset.text_data;
+	vector<wstring> namelist = istext ? textset.name : worldset.name;
 	int sel = itemlist->GetSelection();
 	unsigned int* sortid = (unsigned int*)itemlist->GetClientData(sel);
 	if (strlist[*sortid]==NULL)
@@ -5289,27 +5209,15 @@ void CDDataStruct::OnTextExportText(wxCommandEvent& event) {
 }
 
 void CDDataStruct::OnTextCharmapListSelection(wxCommandEvent& event) {
-	wxListBox* itemlist = NULL;
-	wxListBox* subitemlist = NULL;
-	wxChoice* palchoice = NULL;
-	wxScrolledWindow* previewwindow = NULL;
-	wxBitmap* previewbmp = NULL;
-	TIMImageDataStruct** timlist = NULL;
-	if (event.GetId()==wxID_TEXT) {
-		itemlist = m_textlist;
-		subitemlist = m_textcharmaplist;
-		palchoice = m_textcharmappalchoice;
-		previewwindow = m_textcharmapwindow;
-		previewbmp = &chartexpreview;
-		timlist = textset.chartim;
-	} else if (event.GetId()==wxID_WORLD) {
-		itemlist = m_worldlist;
-		subitemlist = m_worldtextcharmaplist;
-		palchoice = m_worldtextcharmappalchoice;
-		previewwindow = m_worldtextcharmapwindow;
-		previewbmp = &worldchartexpreview;
-		timlist = worldset.chartim;
-	}
+	bool istext = event.GetId() == wxID_TEXT;
+	if (!istext && event.GetId() != wxID_WORLD)
+		return;
+	wxListBox* itemlist = istext ? m_textlist : m_worldlist;
+	wxListBox* subitemlist = istext ? m_textcharmaplist : m_worldtextcharmaplist;
+	wxChoice* palchoice = istext ? m_textcharmappalchoice : m_worldtextcharmappalchoice;
+	wxScrolledWindow* previewwindow = istext ? m_textcharmapwindow : m_worldtextcharmapwindow;
+	wxBitmap* previewbmp = istext ? &chartexpreview : &worldchartexpreview;
+	vector<TIMImageDataStruct*> timlist = istext ? textset.chartim : worldset.chartim;
 	int sel = itemlist->GetSelection();
 	int texsel = subitemlist->GetSelection();
 	unsigned int* sortid = (unsigned int*)itemlist->GetClientData(sel);
@@ -5327,27 +5235,15 @@ void CDDataStruct::OnTextCharmapListSelection(wxCommandEvent& event) {
 }
 
 void CDDataStruct::OnTextCharmapPaletteChoice(wxCommandEvent& event) {
-	wxListBox* itemlist = NULL;
-	wxListBox* subitemlist = NULL;
-	wxChoice* palchoice = NULL;
-	wxScrolledWindow* previewwindow = NULL;
-	wxBitmap* previewbmp = NULL;
-	TIMImageDataStruct** timlist = NULL;
-	if (event.GetId()==wxID_TEXT) {
-		itemlist = m_textlist;
-		subitemlist = m_textcharmaplist;
-		palchoice = m_textcharmappalchoice;
-		previewwindow = m_textcharmapwindow;
-		previewbmp = &chartexpreview;
-		timlist = textset.chartim;
-	} else if (event.GetId()==wxID_WORLD) {
-		itemlist = m_worldlist;
-		subitemlist = m_worldtextcharmaplist;
-		palchoice = m_worldtextcharmappalchoice;
-		previewwindow = m_worldtextcharmapwindow;
-		previewbmp = &worldchartexpreview;
-		timlist = worldset.chartim;
-	}
+	bool istext = event.GetId() == wxID_TEXT;
+	if (!istext && event.GetId() != wxID_WORLD)
+		return;
+	wxListBox* itemlist = istext ? m_textlist : m_worldlist;
+	wxListBox* subitemlist = istext ? m_textcharmaplist : m_worldtextcharmaplist;
+	wxChoice* palchoice = istext ? m_textcharmappalchoice : m_worldtextcharmappalchoice;
+	wxScrolledWindow* previewwindow = istext ? m_textcharmapwindow : m_worldtextcharmapwindow;
+	wxBitmap* previewbmp = istext ? &chartexpreview : &worldchartexpreview;
+	vector<TIMImageDataStruct*> timlist = istext ? textset.chartim : worldset.chartim;
 	int sel = itemlist->GetSelection();
 	int texsel = subitemlist->GetSelection();
 	if (texsel==wxNOT_FOUND)
@@ -5362,21 +5258,13 @@ void CDDataStruct::OnTextCharmapPaletteChoice(wxCommandEvent& event) {
 
 CharmapTextureExportWindow* TheCharmapTextureExportDialog;
 void CDDataStruct::OnTextExportCharmap(wxCommandEvent& event) {
-	wxListBox* itemlist = NULL;
-	wxListBox* subitemlist = NULL;
-	wxChoice* palchoice = NULL;
-	TIMImageDataStruct** timlist = NULL;
-	if (event.GetId()==wxID_TEXT) {
-		itemlist = m_textlist;
-		subitemlist = m_textcharmaplist;
-		palchoice = m_textcharmappalchoice;
-		timlist = textset.chartim;
-	} else if (event.GetId()==wxID_WORLD) {
-		itemlist = m_worldlist;
-		subitemlist = m_worldtextcharmaplist;
-		palchoice = m_worldtextcharmappalchoice;
-		timlist = worldset.chartim;
-	}
+	bool istext = event.GetId() == wxID_TEXT;
+	if (!istext && event.GetId() != wxID_WORLD)
+		return;
+	wxListBox* itemlist = istext ? m_textlist : m_worldlist;
+	wxListBox* subitemlist = istext ? m_textcharmaplist : m_worldtextcharmaplist;
+	wxChoice* palchoice = istext ? m_textcharmappalchoice : m_worldtextcharmappalchoice;
+	vector<TIMImageDataStruct*> timlist = istext ? textset.chartim : worldset.chartim;
 	if (!TheCharmapTextureExportDialog)
 		TheCharmapTextureExportDialog = new CharmapTextureExportWindow(GetTopWindow());
 	int sel = itemlist->GetSelection();
@@ -5399,30 +5287,16 @@ void CDDataStruct::OnTextExportCharmap(wxCommandEvent& event) {
 }
 
 void CDDataStruct::OnTextManageCharmap(wxCommandEvent& event) {
-	wxListBox* itemlist = NULL;
-	wxListBox* subitemlist = NULL;
-	CharmapDataStruct** chlist = NULL;
-	TIMImageDataStruct** timlist = NULL;
-	wxScrolledWindow* previewwindow = NULL;
-	wxBitmap* previewbmp = NULL;
-	void (CDDataStruct::*markmodified)(unsigned int, Chunk_Type, unsigned int);
-	if (event.GetId()==wxID_TEXT) {
-		itemlist = m_textlist;
-		subitemlist = m_textcharmaplist;
-		chlist = textset.charmap;
-		timlist = textset.chartim;
-		previewwindow = m_textcharmapwindow;
-		previewbmp = &chartexpreview;
-		markmodified = &CDDataStruct::MarkDataTextModified;
-	} else if (event.GetId()==wxID_WORLD) {
-		itemlist = m_worldlist;
-		subitemlist = m_worldtextcharmaplist;
-		chlist = worldset.charmap;
-		timlist = worldset.chartim;
-		previewwindow = m_worldtextcharmapwindow;
-		previewbmp = &worldchartexpreview;
-		markmodified = &CDDataStruct::MarkDataWorldMapModified;
-	}
+	bool istext = event.GetId() == wxID_TEXT;
+	if (!istext && event.GetId() != wxID_WORLD)
+		return;
+	wxListBox* itemlist = istext ? m_textlist : m_worldlist;
+	wxListBox* subitemlist = istext ? m_textcharmaplist : m_worldtextcharmaplist;
+	vector<CharmapDataStruct*> chlist = istext ? textset.charmap : worldset.charmap;
+	vector<TIMImageDataStruct*> timlist = istext ? textset.chartim : worldset.chartim;
+	wxScrolledWindow* previewwindow = istext ? m_textcharmapwindow : m_worldtextcharmapwindow;
+	wxBitmap* previewbmp = istext ? &chartexpreview : &worldchartexpreview;
+	void (CDDataStruct:: * markmodified)(unsigned int, Chunk_Type, unsigned int) = istext ? &CDDataStruct::MarkDataTextModified : &CDDataStruct::MarkDataWorldMapModified;
 	int sel = itemlist->GetSelection();
 	int texsel = subitemlist->GetSelection();
 	unsigned int* sortid = (unsigned int*)itemlist->GetClientData(sel);
@@ -5670,7 +5544,7 @@ void CDDataStruct::OnFieldChangeButton(wxCommandEvent& event) {
 	if (id==wxID_NAME) {
 		if (gametype==GAME_TYPE_PSX) {
 			CharmapDataStruct* chmap = NULL;
-			if (textloaded)
+			if (saveset.sectionloaded[DATA_SECTION_TEXT])
 				chmap = textset.charmap[textset.main_charmap_index];
 			TextEditDialog ted(this,sc->name,SCRIPT_NAME_MAX_LENGTH-sc->name.length,TEXT_STYLE_DEFAULT,chmap);
 			if (ted.ShowModal()==wxID_OK) {
@@ -5685,10 +5559,9 @@ void CDDataStruct::OnFieldChangeButton(wxCommandEvent& event) {
 			}
 		}
 	} else if (id==wxID_SCRIPT) {
-		bool dataloaded[8] = { statloaded, enemyloaded, fieldloaded, itemloaded, spellloaded, supportloaded, cmdloaded, cardloaded };
 		TextDataStruct* textobj = fieldset.related_text[*sortid];
 //fstream fout("aaaa.txt",ios::app|ios::out); fout << "Go" << endl; fout.close();
-		ScriptEditDialog dial(this,*sc,SCRIPT_TYPE_FIELD,&saveset,NULL,textobj,dataloaded);
+		ScriptEditDialog dial(this,*sc,SCRIPT_TYPE_FIELD,&saveset,NULL,textobj);
 //fout.open("aaaa.txt",ios::app|ios::out); fout << "Step" << endl; fout.close();
 		if (dial.ShowModal()==wxID_OK) {
 			*sc = dial.script;
@@ -5743,8 +5616,7 @@ walkbmp.SaveFile(_(L"aaaa.bmp"),wxBITMAP_TYPE_BMP);*/
 		}
 	} else if (id==wxID_PRELOAD) {
 		if (gametype==GAME_TYPE_PSX) {
-			bool dataloaded[2] = { enemyloaded, fieldloaded };
-			ImageMapEditDialog dial(this,fieldset.preload[*sortid],cluster.enemy_shared_map,&cluster.global_map,saveset,dataloaded);
+			ImageMapEditDialog dial(this,fieldset.preload[*sortid],cluster.enemy_shared_map,&cluster.global_map,saveset);
 			if (dial.ShowModal()==wxID_OK) {
 /*				// Field Role updates : don't seem to be required in the end
 				unsigned int i,j;
@@ -5814,6 +5686,20 @@ walkbmp.SaveFile(_(L"aaaa.bmp"),wxBITMAP_TYPE_BMP);*/
 	} else if (id == wxID_WALKMESH) {
 		WalkmeshEditDialog dial(this, fieldset.background_data[*sortid], fieldset.walkmesh[*sortid]);
 		if (dial.ShowModal() == wxID_OK) {
+			unsigned int pathamount = fieldset.walkmesh[*sortid]->walkpath_amount;
+			vector<pair<int, int>> triangleshift;
+			int shift, triindex = 0;
+			unsigned int i;
+			for (i = 0; i + 1 < pathamount && i < dial.walkmesh.walkpath_amount; i++) {
+				triindex += fieldset.walkmesh[*sortid]->walkpath_triangleamount[i];
+				shift = dial.walkmesh.walkpath_triangleamount[i] - fieldset.walkmesh[*sortid]->walkpath_triangleamount[i];
+				if (shift != 0)
+					triangleshift.push_back({ triindex, shift });
+			}
+			if (triangleshift.size() > 0) {
+				if (sc->ShiftArgument(AT_WALKTRIANGLE, triangleshift) > 0)
+					MarkDataFieldModified(*sortid, CHUNK_TYPE_SCRIPT);
+			}
 			*fieldset.walkmesh[*sortid] = dial.walkmesh;
 			MarkDataFieldModified(*sortid, CHUNK_TYPE_FIELD_WALK);
 		}
@@ -5844,7 +5730,7 @@ int CDDataStruct::GetWorldBattleSetFromSpot(int spot, int spotversion) {
 }
 
 void CDDataStruct::DisplayWorldBattleHelp(int spotversion, int whichbattle) {
-	if (!enemyloaded)
+	if (!saveset.sectionloaded[DATA_SECTION_ENMY])
 		return;
 	unsigned int i, j;
 	if (spotversion==-1) {
@@ -5982,7 +5868,7 @@ void CDDataStruct::DisplayWorldBattle(int worldbattleid) {
 	bool hasalt = bset0<100;
 	m_worldbattlelabelalt->Show(hasalt);
 	m_worldbattlelabelaltmist->Show(hasalt);
-	if (enemyloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_ENMY]) {
 		unsigned int i;
 		m_worldbattlepanelchoice3->Show(hasalt);
 		m_worldbattlepanelchoice4->Show(hasalt);
@@ -6063,8 +5949,7 @@ void CDDataStruct::OnWorldChangeButton(wxCommandEvent& event) {
 		unsigned int sel = m_worldlist->GetSelection();
 		unsigned int* sortid = (unsigned int*)m_worldlist->GetClientData(sel);
 		ScriptDataStruct* sc = worldset.script[*sortid];
-		bool dataloaded[8] = { statloaded, enemyloaded, fieldloaded, itemloaded, spellloaded, supportloaded, cmdloaded, cardloaded };
-		ScriptEditDialog dial(this,*sc,SCRIPT_TYPE_WORLD,&saveset,NULL,worldset.text_data[*sortid],dataloaded);
+		ScriptEditDialog dial(this,*sc,SCRIPT_TYPE_WORLD,&saveset,NULL,worldset.text_data[*sortid]);
 		if (dial.ShowModal()==wxID_OK) {
 			*sc = dial.script;
 			MarkDataWorldMapModified(*sortid,CHUNK_TYPE_SCRIPT);
@@ -6089,8 +5974,7 @@ void CDDataStruct::OnWorldChangeButton(wxCommandEvent& event) {
 		unsigned int sel = m_worldlist->GetSelection();
 		unsigned int* sortid = (unsigned int*)m_worldlist->GetClientData(sel);
 		if (gametype==GAME_TYPE_PSX) {
-			bool dataloaded[2] = { enemyloaded, fieldloaded };
-			ImageMapEditDialog dial(this,worldset.preload[*sortid],cluster.enemy_shared_map,&cluster.global_map,saveset,dataloaded);
+			ImageMapEditDialog dial(this,worldset.preload[*sortid],cluster.enemy_shared_map,&cluster.global_map,saveset);
 			if (dial.ShowModal()==wxID_OK) {
 				worldset.preload[*sortid]->Copy(dial.map);
 				worldset.preload[*sortid]->UpdateOffset();
@@ -6637,7 +6521,7 @@ void CDDataStruct::OnSpecialTextEditText(wxCommandEvent& event) {
 	SpecialTextDataStruct& st = ffuiset.special_text->text_block[m_specialtextlist->GetSelection()];
 	if (gametype==GAME_TYPE_PSX) {
 		CharmapDataStruct* chmap = NULL;
-		if (textloaded)
+		if (saveset.sectionloaded[DATA_SECTION_TEXT])
 			chmap = textset.charmap[textset.main_charmap_index];
 		TextEditDialog ted(this,st.text[textsel],st.space_total-st.space_used,TEXT_STYLE_DESCRIPTION,chmap);
 		if (ted.ShowModal()==wxID_OK) {
@@ -6870,9 +6754,9 @@ void CDDataStruct::OnCilParameterResolution(wxSpinEvent& event) {
 //=============================//
 
 void CDDataStruct::InitSpell(void) {
-	if (spellloaded)
+	if (saveset.sectionloaded[DATA_SECTION_SPELL])
 		return;
-	if (!ffuiloaded)
+	if (!saveset.sectionloaded[DATA_SECTION_MENU_UI])
 		InitMenuUI();
 	unsigned int i;
 	fstream f;
@@ -6896,28 +6780,28 @@ void CDDataStruct::InitSpell(void) {
 		}
 		TheSpellModelWindow->m_modelall->Append(SpellModelAnyList,vptany);
 	}
-	spellloaded = true;
+	saveset.sectionloaded[DATA_SECTION_SPELL] = true;
 	m_spelllist->SetSelection(0);
 }
 
 void CDDataStruct::InitSupport(void) {
-	if (supportloaded)
+	if (saveset.sectionloaded[DATA_SECTION_SUPPORT])
 		return;
 	fstream f;
 	if (gametype==GAME_TYPE_PSX) f.open(filename.c_str(),ios::in | ios::binary);
 	supportset.Load(f,config);
 	if (gametype==GAME_TYPE_PSX) f.close();
 	SupportDisplayNames(true);
-	supportloaded = true;
+	saveset.sectionloaded[DATA_SECTION_SUPPORT] = true;
 	m_supportlist->SetSelection(0);
 }
 
 void CDDataStruct::InitCommand(void) {
-	if (cmdloaded)
+	if (saveset.sectionloaded[DATA_SECTION_CMD])
 		return;
-	if (!spellloaded)
+	if (!saveset.sectionloaded[DATA_SECTION_SPELL])
 		InitSpell();
-	if (!itemloaded)
+	if (!saveset.sectionloaded[DATA_SECTION_ITEM])
 		InitItem();
 	unsigned int i;
 	fstream f;
@@ -6934,20 +6818,20 @@ void CDDataStruct::InitCommand(void) {
 		m_cmdobjectfirst->Append(_(itemset.item[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 		m_cmdobjectlast->Append(_(itemset.item[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 	}
-	cmdloaded = true;
+	saveset.sectionloaded[DATA_SECTION_CMD] = true;
 	m_cmdlist->SetSelection(0);
 }
 
 void CDDataStruct::InitStat(void) {
-	if (statloaded)
+	if (saveset.sectionloaded[DATA_SECTION_STAT])
 		return;
-	if (!spellloaded)
+	if (!saveset.sectionloaded[DATA_SECTION_SPELL])
 		InitSpell();
-	if (!cmdloaded)
+	if (!saveset.sectionloaded[DATA_SECTION_CMD])
 		InitCommand();
-	if (!supportloaded)
+	if (!saveset.sectionloaded[DATA_SECTION_SUPPORT])
 		InitSupport();
-	if (!itemloaded)
+	if (!saveset.sectionloaded[DATA_SECTION_ITEM])
 		InitItem();
 	unsigned int i;
 	fstream f;
@@ -6972,16 +6856,16 @@ void CDDataStruct::InitStat(void) {
 		m_statchararmor->Append(_(itemset.item[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 		m_statcharaccessory->Append(_(itemset.item[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 	}
-	statloaded = true;
+	saveset.sectionloaded[DATA_SECTION_STAT] = true;
 	m_statlist->SetSelection(0);
 }
 
 void CDDataStruct::InitPartySpecial(void) {
-	if (partyspecialloaded)
+	if (saveset.sectionloaded[DATA_SECTION_PARTY_SPECIAL])
 		return;
-	if (!spellloaded)
+	if (!saveset.sectionloaded[DATA_SECTION_SPELL])
 		InitSpell();
-	if (!ffuiloaded)
+	if (!saveset.sectionloaded[DATA_SECTION_MENU_UI])
 		InitMenuUI();
 	unsigned int i;
 	fstream f;
@@ -7001,18 +6885,18 @@ void CDDataStruct::InitPartySpecial(void) {
 	}
 	for (i=0;i<SPELL_AMOUNT;i++)
 		m_partyspecialmagicswordspell->Append(_(spellset.spell[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
-	partyspecialloaded = true;
+	saveset.sectionloaded[DATA_SECTION_PARTY_SPECIAL] = true;
 	m_partyspeciallist->SetSelection(0);
 }
 
 void CDDataStruct::InitItem(void) {
-	if (itemloaded)
+	if (saveset.sectionloaded[DATA_SECTION_ITEM])
 		return;
-	if (!spellloaded)
+	if (!saveset.sectionloaded[DATA_SECTION_SPELL])
 		InitSpell();
-	if (!supportloaded)
+	if (!saveset.sectionloaded[DATA_SECTION_SUPPORT])
 		InitSupport();
-	if (!textloaded)
+	if (!saveset.sectionloaded[DATA_SECTION_TEXT])
 		InitText();
 	unsigned int i;
 	fstream f;
@@ -7064,15 +6948,15 @@ void CDDataStruct::InitItem(void) {
 		}
 		TheSpellModelWindow->m_modelall->Append(SpellModelAnyList,vptany);
 	}
-	itemloaded = true;
+	saveset.sectionloaded[DATA_SECTION_ITEM] = true;
 	m_itemlist->SetSelection(0);
 	m_keyitemlist->SetSelection(0);
 }
 
 void CDDataStruct::InitShop(void) {
-	if (shoploaded)
+	if (saveset.sectionloaded[DATA_SECTION_SHOP])
 		return;
-	if (!itemloaded)
+	if (!saveset.sectionloaded[DATA_SECTION_ITEM])
 		InitItem();
 	unsigned int i;
 	fstream f;
@@ -7090,21 +6974,21 @@ void CDDataStruct::InitShop(void) {
 		m_synthshoprecipe1->Append(_(itemset.item[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 		m_synthshoprecipe2->Append(_(itemset.item[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 	}
-	shoploaded = true;
+	saveset.sectionloaded[DATA_SECTION_SHOP] = true;
 	m_shoplist->SetSelection(0);
 	m_synthshoplist->SetSelection(0);
 }
 
 void CDDataStruct::InitEnemy(void) {
-	if (enemyloaded)
+	if (saveset.sectionloaded[DATA_SECTION_ENMY])
 		return;
-	if (!spellloaded)
+	if (!saveset.sectionloaded[DATA_SECTION_SPELL])
 		InitSpell();
-	if (!supportloaded)
+	if (!saveset.sectionloaded[DATA_SECTION_SUPPORT])
 		InitSupport();
-	if (!itemloaded)
+	if (!saveset.sectionloaded[DATA_SECTION_ITEM])
 		InitItem();
-	if (!cardloaded)
+	if (!saveset.sectionloaded[DATA_SECTION_CARD])
 		InitCard();
 	unsigned int i;
 	fstream f;
@@ -7140,8 +7024,8 @@ void CDDataStruct::InitEnemy(void) {
 	m_enemystatdropcard->Append(HADES_STRING_CARD_NOCARD);
 	for (i=0;i<CARD_AMOUNT;i++)
 		m_enemystatdropcard->Append(cardset.card[i].name.GetStr(hades::TEXT_PREVIEW_TYPE));
-	enemyloaded = true;
-	if (worldloaded) {
+	saveset.sectionloaded[DATA_SECTION_ENMY] = true;
+	if (saveset.sectionloaded[DATA_SECTION_WORLD_MAP]) {
 		bool showalt = m_worldbattlepanelspin3->IsShown();
 		wxArrayString battlenames;
 		battlenames.Alloc(enemyset.battle_amount);
@@ -7179,7 +7063,7 @@ void CDDataStruct::InitEnemy(void) {
 }
 
 void CDDataStruct::InitCard(void) {
-	if (cardloaded)
+	if (saveset.sectionloaded[DATA_SECTION_CARD])
 		return;
 	unsigned int i;
 	fstream f;
@@ -7194,29 +7078,29 @@ void CDDataStruct::InitCard(void) {
 		cardsetinfo << _(L"Card Set ") << (i+1);
 		m_carddeckset->Append(cardsetinfo);
 	}
-	cardloaded = true;
+	saveset.sectionloaded[DATA_SECTION_CARD] = true;
 	m_cardlist->SetSelection(0);
 	m_carddecklist->SetSelection(0);
 }
 
 void CDDataStruct::InitText(void) {
-	if (textloaded)
+	if (saveset.sectionloaded[DATA_SECTION_TEXT])
 		return;
 	fstream f;
 	if (gametype==GAME_TYPE_PSX) f.open(filename.c_str(),ios::in | ios::binary);
 	textset.Load(f,cluster);
 	if (gametype==GAME_TYPE_PSX) f.close();
 	TextDisplayNames(true);
-	textloaded = true;
+	saveset.sectionloaded[DATA_SECTION_TEXT] = true;
 	m_textlist->SetSelection(0);
 	GetTopWindow()->m_exporttext->Enable();
 	GetTopWindow()->m_importtext->Enable();
 }
 
 void CDDataStruct::InitWorldMap(void) {
-	if (worldloaded)
+	if (saveset.sectionloaded[DATA_SECTION_WORLD_MAP])
 		return;
-	if (!textloaded)
+	if (!saveset.sectionloaded[DATA_SECTION_TEXT])
 		InitText();
 	unsigned int i;
 	fstream f;
@@ -7228,7 +7112,7 @@ void CDDataStruct::InitWorldMap(void) {
 		m_worldplacelist->Append(_(worldset.world_data->place_name[i].GetStr(hades::TEXT_PREVIEW_TYPE)));
 	for (i=0;i<WORLD_MAP_BATTLE_SPOT_AMOUNT;i++)
 		m_worldbattlelist->Append(wxString::Format(wxT(HADES_STRING_WORLD_BATTLE_NAME),i+1)); 
-	if (enemyloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_ENMY]) {
 		wxArrayString battlenames;
 		battlenames.Alloc(enemyset.battle_amount);
 		for (i=0;i<enemyset.battle_amount;i++)
@@ -7250,15 +7134,15 @@ void CDDataStruct::InitWorldMap(void) {
 		m_worldbattlebattlechoice43->Append(battlenames);
 		m_worldbattlebattlechoice44->Append(battlenames);
 	}
-	m_worldbattlepanelspin1->Show(!enemyloaded);
-	m_worldbattlepanelspin2->Show(!enemyloaded);
-	m_worldbattlepanelspin3->Show(!enemyloaded);
-	m_worldbattlepanelspin4->Show(!enemyloaded);
-	m_worldbattlepanelchoice1->Show(enemyloaded);
-	m_worldbattlepanelchoice2->Show(enemyloaded);
-	m_worldbattlepanelchoice3->Show(enemyloaded);
-	m_worldbattlepanelchoice4->Show(enemyloaded);
-	worldloaded = true;
+	m_worldbattlepanelspin1->Show(!saveset.sectionloaded[DATA_SECTION_ENMY]);
+	m_worldbattlepanelspin2->Show(!saveset.sectionloaded[DATA_SECTION_ENMY]);
+	m_worldbattlepanelspin3->Show(!saveset.sectionloaded[DATA_SECTION_ENMY]);
+	m_worldbattlepanelspin4->Show(!saveset.sectionloaded[DATA_SECTION_ENMY]);
+	m_worldbattlepanelchoice1->Show(saveset.sectionloaded[DATA_SECTION_ENMY]);
+	m_worldbattlepanelchoice2->Show(saveset.sectionloaded[DATA_SECTION_ENMY]);
+	m_worldbattlepanelchoice3->Show(saveset.sectionloaded[DATA_SECTION_ENMY]);
+	m_worldbattlepanelchoice4->Show(saveset.sectionloaded[DATA_SECTION_ENMY]);
+	saveset.sectionloaded[DATA_SECTION_WORLD_MAP] = true;
 	m_worldlist->SetSelection(0);
 	m_worldplacelist->SetSelection(0);
 	m_worldbattlelist->SetSelection(0);
@@ -7267,9 +7151,9 @@ void CDDataStruct::InitWorldMap(void) {
 }
 
 void CDDataStruct::InitField(void) {
-	if (fieldloaded)
+	if (saveset.sectionloaded[DATA_SECTION_FIELD])
 		return;
-	if (!textloaded)
+	if (!saveset.sectionloaded[DATA_SECTION_TEXT])
 		InitText();
 	fstream f;
 	if (gametype==GAME_TYPE_PSX) {
@@ -7280,7 +7164,7 @@ void CDDataStruct::InitField(void) {
 		fieldset.Load(f,cluster,&textset);
 	}
 	FieldDisplayNames(true);
-	fieldloaded = true;
+	saveset.sectionloaded[DATA_SECTION_FIELD] = true;
 	m_fieldlist->SetSelection(0);
 	GetTopWindow()->m_exportfieldscript->Enable();
 	GetTopWindow()->m_importfieldscript->Enable();
@@ -7289,31 +7173,31 @@ void CDDataStruct::InitField(void) {
 }
 
 void CDDataStruct::InitBattleScene(void) {
-	if (sceneloaded || gametype!=GAME_TYPE_PSX)
+	if (saveset.sectionloaded[DATA_SECTION_BATTLE_SCENE] || gametype!=GAME_TYPE_PSX)
 		return;
 	fstream f;
 	if (gametype==GAME_TYPE_PSX) f.open(filename.c_str(),ios::in | ios::binary);
 	sceneset.Load(f,cluster);
 	if (gametype==GAME_TYPE_PSX) f.close();
 	BattleSceneDisplayNames(true);
-	sceneloaded = true;
+	saveset.sectionloaded[DATA_SECTION_BATTLE_SCENE] = true;
 	m_battlescenelist->SetSelection(0);
 }
 
 void CDDataStruct::InitSpellAnimation(void) {
-	if (spellanimloaded)
+	if (saveset.sectionloaded[DATA_SECTION_SPELL_ANIM])
 		return;
 	fstream f;
 	if (gametype==GAME_TYPE_PSX) f.open(filename.c_str(),ios::in | ios::binary);
 	spellanimset.Load(f,config,cluster.global_map);
 	if (gametype==GAME_TYPE_PSX) f.close();
 	SpellAnimationDisplayNames(true);
-	spellanimloaded = true;
+	saveset.sectionloaded[DATA_SECTION_SPELL_ANIM] = true;
 	m_spellanimlist->SetSelection(0);
 }
 
 void CDDataStruct::InitMenuUI(void) {
-	if (ffuiloaded)
+	if (saveset.sectionloaded[DATA_SECTION_MENU_UI])
 		return;
 	unsigned int i;
 	fstream f;
@@ -7326,14 +7210,14 @@ void CDDataStruct::InitMenuUI(void) {
 	else
 		for (i=0;i<ffuiset.special_text->amount;i++)
 			m_specialtextlist->Append(HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM[i]);
-	ffuiloaded = true;
+	saveset.sectionloaded[DATA_SECTION_MENU_UI] = true;
 	m_specialtextlist->SetSelection(0);
 	GetTopWindow()->m_exportuitext->Enable();
 	GetTopWindow()->m_importuitext->Enable();
 }
 
 void CDDataStruct::InitMips(void) {
-	if (mipsloaded || gametype!=GAME_TYPE_PSX)
+	if (saveset.sectionloaded[DATA_SECTION_ASSEMBLY] || gametype!=GAME_TYPE_PSX)
 		return;
 	unsigned int i;
 	fstream f;
@@ -7344,12 +7228,12 @@ void CDDataStruct::InitMips(void) {
 	for (i=0;i<G_N_ELEMENTS(HADES_STRING_SPELL_EFFECT);i++)
 		m_mipsbattlelist->Append(HADES_STRING_SPELL_EFFECT[i].label);
 	m_mipsbattleramposgen->SetValue(wxString::Format(wxT("0x%X"),mipsset.battle_code.ram_pos & 0x7FFFFFFF));
-	mipsloaded = true;
+	saveset.sectionloaded[DATA_SECTION_ASSEMBLY] = true;
 	m_mipsbattlelist->SetSelection(0);
 }
 
 void CDDataStruct::InitCil(void) {
-	if (cilloaded || gametype==GAME_TYPE_PSX)
+	if (saveset.sectionloaded[DATA_SECTION_ASSEMBLY] || gametype==GAME_TYPE_PSX)
 		return;
 	unsigned int i;
 	fstream f;
@@ -7357,7 +7241,7 @@ void CDDataStruct::InitCil(void) {
 	CilDisplayNames(true);
 	for (i=0;i<G_N_ELEMENTS(CILMacroIDList);i++)
 		m_cilmacrolist->Append(_(CILMacroIDList[i].name));
-	cilloaded = true;
+	saveset.sectionloaded[DATA_SECTION_ASSEMBLY] = true;
 	m_ciltypelist->SetSelection(0);
 	m_cilmacrolist->SetSelection(0);
 }
@@ -7574,40 +7458,6 @@ CDDataStruct::CDDataStruct(wxWindow* parent, string fname, ConfigurationSet& cfg
 	config(cfg),
 	saveset(&spellset,&cmdset,&enemyset,&shopset,&textset,&worldset,&sceneset,&itemset,&supportset,&statset,&cardset,&fieldset,&spellanimset,&ffuiset,&partyspecialset,&mipsset,&cilset),
 	backupset(),
-	spellloaded(false),
-	spellmodified(false),
-	supportloaded(false),
-	supportmodified(false),
-	cmdloaded(false),
-	cmdmodified(false),
-	statloaded(false),
-	statmodified(false),
-	partyspecialloaded(false),
-	partyspecialmodified(false),
-	enemyloaded(false),
-	enemymodified(false),
-	itemloaded(false),
-	itemmodified(false),
-	shoploaded(false),
-	shopmodified(false),
-	cardloaded(false),
-	cardmodified(false),
-	textloaded(false),
-	textmodified(false),
-	worldloaded(false),
-	worldmodified(false),
-	fieldloaded(false),
-	fieldmodified(false),
-	sceneloaded(false),
-	scenemodified(false),
-	spellanimloaded(false),
-	spellanimmodified(false),
-	ffuiloaded(false),
-	ffuimodified(false),
-	mipsloaded(false),
-	mipsmodified(false),
-	cilloaded(false),
-	cilmodified(false),
 	spellsorted(OrderedIndex),
 	supportsorted(OrderedIndex),
 	cmdsorted(OrderedIndex),
@@ -7702,7 +7552,7 @@ CDDataStruct::CDDataStruct(wxWindow* parent, string fname, ConfigurationSet& cfg
 void CDDataStruct::DebugWrite() {
 	fstream fout("HadesWorkshopOutput.txt",ios::out);
 	unsigned int i;
-	if (itemloaded) {
+	if (saveset.sectionloaded[DATA_SECTION_ITEM]) {
 		fout << "ITEMS\n";
 		for (i=0;i<ITEM_AMOUNT;i++) {
 			fout << itemset.item[i].name.GetStr(2) << " : ";

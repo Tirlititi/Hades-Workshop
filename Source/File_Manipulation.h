@@ -31,7 +31,7 @@ typedef uint8_t SteamLanguage;
 #define STEAM_LANGUAGE_NONE		0xFF
 
 SteamLanguage GetSteamLanguage();
-void SetSteamLanguage(SteamLanguage gt);
+void SetSteamLanguage(SteamLanguage sl);
 SteamLanguage GetHWSSteamLanguage();
 void SetHWSSteamLanguage(SteamLanguage gt);
 

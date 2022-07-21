@@ -28,6 +28,7 @@ void LoadingDialogInit(unsigned int objamount, const wxString& title) {
 	TheLoadingDialog->is_active = true;
 	TheLoadingDialog->wxDialog::Show(true);
 	TheLoadingDialog->wxGenericProgressDialog::Update(0,wxString::Format(wxT("0 / %u"),objamount));
+	TheLoadingDialogParent->Freeze();
 	return;
 }
 
@@ -50,4 +51,5 @@ void LoadingDialogEnd() {
 	TheLoadingDialog->wxGenericProgressDialog::Update(100,_(L"Done"));
 	TheLoadingDialog->is_active = false;
 	TheLoadingDialog->wxDialog::Show(false);
+	TheLoadingDialogParent->Thaw();
 }

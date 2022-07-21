@@ -28,9 +28,11 @@ private:
 MipsScriptHelpDialog::MipsScriptHelpDialog(MipsScriptEditDialog* p) :
 	MipsScriptHelpWindow(p),
 	parent(p) {
+	wxArrayString choicelist;
 	unsigned int i;
-	for (i=0;i<G_N_ELEMENTS(MIPS_HELP);i++)
-		m_listfunction->Append(MIPS_HELP[i].label);
+	for (i = 0; i < G_N_ELEMENTS(MIPS_HELP); i++)
+		choicelist.Add(MIPS_HELP[i].label);
+	m_listfunction->Append(choicelist);
 	m_listfunction->SetSelection(0);
 	DisplayHelp(0);
 }

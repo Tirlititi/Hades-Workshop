@@ -10,6 +10,7 @@
 #include "Database_Steam.h"
 #include "Database_Resource.h"
 #include "Database_CSV.h"
+#include "makeppf3.h"
 using namespace std;
 
 SaveSet::SaveSet(SpellDataSet* sp, CommandDataSet* cmd, EnemyDataSet* enmy, ShopDataSet* shop, TextDataSet* text,/*
@@ -33,6 +34,10 @@ SaveSet::SaveSet(SpellDataSet* sp, CommandDataSet* cmd, EnemyDataSet* enmy, Shop
 	partyspecialset(partyspecial),
 	mipsset(mips),
 	cilset(cil) {
+	for (int i = 0; i < DATA_SECTION_AMOUNT; i++) {
+		sectionloaded[i] = false;
+		sectionmodified[i] = false;
+	}
 }
 
 GameType TheGameType;
@@ -1094,6 +1099,9 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	dest.field_preload_file = new int32_t[dest.field_amount];
 	dest.field_walkmesh_file = new int32_t[dest.field_amount];
 	dest.field_image_file = new int32_t[dest.field_amount];
+	dest.field_vibdata_file = new int32_t[dest.field_amount];
+	dest.field_spt_file = new int32_t[dest.field_amount];
+	dest.field_sps_file = new int32_t*[dest.field_amount];
 	dest.field_tiles_file = new int32_t*[dest.field_amount];
 	dest.field_tiles_localized = new bool[dest.field_amount];
 	dest.field_file_id = new uint8_t[dest.field_amount];
@@ -1200,11 +1208,14 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 		dest.field_preload_file[i] = dest.meta_script.GetFileIndexByInfo(dest.bundle_script.GetFileInfo(subfilepath),49);
 		subfilepath = "assets/resources/commonasset/mapconfigdata/"+fieldnamelower[i]+".bytes";
 		dest.field_role_file[i] = dest.meta_script.GetFileIndexByInfo(dest.bundle_script.GetFileInfo(subfilepath),49);
+		subfilepath = "assets/resources/commonasset/vibrationdata/" + fieldnamelower[i] + ".bytes";
+		dest.field_vibdata_file[i] = dest.meta_script.GetFileIndexByInfo(dest.bundle_script.GetFileInfo(subfilepath), 49);
 		if (dest.field_file_id[i]==0) {
-			dest.field_walkmesh_file[i] = 0;
-			dest.field_image_file[i] = 0;
-			dest.field_tiles_file[i] = new int32_t[1];
-			dest.field_tiles_file[i][0] = 0;
+			dest.field_walkmesh_file[i] = -1;
+			dest.field_image_file[i] = -1;
+			dest.field_spt_file[i] = -1;
+			dest.field_sps_file[i] = NULL;
+			dest.field_tiles_file[i] = NULL;
 			continue;
 		}
 		subfilepath = "assets/resources/fieldmaps/"+fieldbacknamelower[i]+"/"+fieldbacknamelower[i]+".bgi.bytes";
@@ -1228,6 +1239,13 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 		} else {
 			dest.field_tiles_file[i] = new int32_t[1];
 			dest.field_tiles_file[i][0] = fsharedbgs;
+		}
+		subfilepath = "assets/resources/fieldmaps/" + fieldbacknamelower[i] + "/spt.tcb.bytes";
+		dest.field_spt_file[i] = dest.meta_field[dest.field_file_id[i] - 1].GetFileIndexByInfo(dest.bundle_field[dest.field_file_id[i] - 1].GetFileInfo(subfilepath), 49);
+		dest.field_sps_file[i] = new int32_t[SteamFieldScript[i].sps_list.size()];
+		for (j = 0; j < SteamFieldScript[i].sps_list.size(); j++) {
+			subfilepath = "assets/resources/fieldmaps/" + fieldbacknamelower[i] + "/" + to_string(SteamFieldScript[i].sps_list[j]) + ".sps.bytes";
+			dest.field_sps_file[i][j] = dest.meta_field[dest.field_file_id[i] - 1].GetFileIndexByInfo(dest.bundle_field[dest.field_file_id[i] - 1].GetFileInfo(subfilepath), 49);
 		}
 	}
 	for (i=0;i<STEAM_LANGUAGE_AMOUNT;i++) {
@@ -1484,6 +1502,7 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	dest.atlas_icontexture_file = dest.meta_atlas.GetFileIndex("Icon Atlas", 28);
 	unityarchive.close();
 
+	dest.gametype = GAME_TYPE_STEAM;
 	dest.language = LANGUAGE_VERSION_UNKNOWN;
 	dest.spell_name_space_total = 0xFFFF;
 	dest.spell_help_space_total = 0xFFFF;
@@ -1614,7 +1633,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			saveset.ffuiset->special_text->text_block[i].UpdateOffset();
 
 	fstream filebase, filedest;
-	// p0data2 : battle files
+	// p0data2: battle files
 	if (assetformat == 0) {
 		if (section[DATA_SECTION_ENMY]) {
 			fname = config.steam_dir_assets + "p0data2.bin";
@@ -1684,7 +1703,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		}
 	}
 
-	// p0data3 : world map files
+	// p0data3: world map files
 	if (assetformat == 0) {
 		if (section[DATA_SECTION_WORLD_MAP] && saveset.worldset->world_data->modified) {
 			fname = config.steam_dir_assets + "p0data3.bin";
@@ -1761,7 +1780,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		filebase.close();
 	}
 
-	// p0data7 : script files
+	// p0data7: script files
 	if (assetformat == 0) {
 		if (section[DATA_SECTION_ENMY] || section[DATA_SECTION_FIELD] || section[DATA_SECTION_WORLD_MAP]) {
 			fname = config.steam_dir_assets + "p0data7.bin";
@@ -1871,7 +1890,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		MACRO_SAVE_ASSET_SCRIPT(DATA_SECTION_WORLD_MAP, world_amount, worldset->script, world_script_file)
 	}
 	
-	// p0data11 to 19 : field files
+	// p0data11 to 19: field files
 	if (assetformat == 0) {
 		if (section[DATA_SECTION_FIELD]) {
 			for (int fieldi = 0; fieldi < 9; fieldi++) {
@@ -1965,7 +1984,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		}
 	}
 	
-	// resources.assets : text and card files
+	// resources.assets: text and card files
 	if (assetformat == 0) {
 		fname = config.steam_dir_data + "resources.assets";
 		filebase.open(fname.c_str(), ios::in | ios::binary);
@@ -2159,7 +2178,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			}
 	}
 	
-	// Assembly-CSharp.dll : everything else...
+	// Assembly-CSharp.dll: everything else...
 	if (dllformat == 0) {
 		unsigned int dllmodifcount, dllmodifmax, sectionmodifcount;
 		dllmodifmax = 100; // DEBUG: arbitrary number higher than number of modifications (except CIL Code modifs); consider using vector<>
@@ -2323,6 +2342,146 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 	return result;
 }
 
+int SteamExtractAssetWithPath(string destfullpath, fstream& unityarchive, UnityArchiveMetaData& meta, int32_t assetindex) {
+	MainFrame::MakeDirForFile(destfullpath);
+	fstream filedest(destfullpath.c_str(), ios::out | ios::binary);
+	if (!filedest.is_open())
+		return 3;
+	uint32_t buffersize = meta.GetFileSizeByIndex(assetindex);
+	char* buffer = new char[buffersize];
+	unityarchive.seekg(meta.GetFileOffsetByIndex(assetindex));
+	unityarchive.read(buffer, buffersize);
+	filedest.write(buffer, buffersize);
+	delete[] buffer;
+	filedest.close();
+	return 0;
+}
+
+int CreateSteamCustomBattleAssets(string destfolder, ConfigurationSet& config, SaveSet& saveset, int basebattle, uint16_t scriptid, string battleid, string bgid) {
+	if (!saveset.sectionloaded[DATA_SECTION_ENMY])
+		return 1;
+	battleid = "EVT_BATTLE_" + battleid;
+	if (destfolder.back() != '\\')
+		destfolder += "\\";
+	SteamLanguage lang;
+	fstream filedest;
+	string fname;
+	fname = destfolder + "StreamingAssets\\Assets\\Resources\\BattleMap\\BattleScene\\" + battleid + "\\" + to_string(scriptid) + ".raw17.bytes";
+	MainFrame::MakeDirForFile(fname);
+	filedest.open(fname.c_str(), ios::out | ios::binary);
+	if (!filedest.is_open())
+		return 3;
+	saveset.enemyset->battle_data[basebattle]->WriteHWS(filedest);
+	filedest.close();
+	fname = destfolder + "StreamingAssets\\Assets\\Resources\\BattleMap\\BattleScene\\" + battleid + "\\dbfile0000.raw16.bytes";
+	MainFrame::MakeDirForFile(fname);
+	filedest.open(fname.c_str(), ios::out | ios::binary);
+	if (!filedest.is_open())
+		return 3;
+	saveset.enemyset->battle[basebattle]->WriteHWS(filedest);
+	filedest.close();
+	for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+		fname = destfolder + "StreamingAssets\\Assets\\Resources\\CommonAsset\\EventEngine\\EventBinary\\Battle\\" + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[lang].ToStdString() + "\\" + battleid + ".eb.bytes";
+		MainFrame::MakeDirForFile(fname);
+		filedest.open(fname.c_str(), ios::out | ios::binary);
+		if (!filedest.is_open())
+			return 3;
+		saveset.enemyset->script[basebattle]->WriteHWS(filedest, lang);
+		filedest.close();
+		fname = destfolder + "FF9_Data\\EmbeddedAsset\\Text\\" + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[lang].ToStdString() + "\\Battle\\" + to_string(scriptid) + ".mes";
+		MainFrame::MakeDirForFile(fname);
+		filedest.open(fname.c_str(), ios::out | ios::binary);
+		if (!filedest.is_open())
+			return 3;
+		saveset.enemyset->text[basebattle]->WriteSteam(filedest, lang);
+		filedest.close();
+	}
+	return 0;
+}
+
+int CreateSteamCustomFieldAssets(string destfolder, ConfigurationSet& config, SaveSet& saveset, int basefield, uint16_t scriptid, uint8_t areaid, string mapid, string fieldid, uint16_t textid) {
+	if (!saveset.sectionloaded[DATA_SECTION_FIELD] || config.field_file_id[basefield] == 0)
+		return 1;
+	mapid = "FBG_N" + (areaid < 10 ? "0" + to_string(areaid) : to_string(areaid)) + "_" + mapid;
+	fieldid = "EVT_" + fieldid;
+	if (destfolder.back() != '\\')
+		destfolder += "\\";
+	SteamLanguage lang;
+	fstream filebase;
+	fstream filedest;
+	unsigned int i;
+	string fname;
+	int errcode;
+	fname = destfolder + "StreamingAssets\\Assets\\Resources\\FieldMaps\\" + mapid + "\\" + mapid + ".bgs.bytes";
+	MainFrame::MakeDirForFile(fname);
+	filedest.open(fname.c_str(), ios::out | ios::binary);
+	if (!filedest.is_open())
+		return 3;
+	saveset.fieldset->background_data[basefield]->WriteHWS(filedest);
+	filedest.close();
+	fname = destfolder + "StreamingAssets\\Assets\\Resources\\FieldMaps\\" + mapid + "\\" + mapid + ".bgi.bytes";
+	MainFrame::MakeDirForFile(fname);
+	filedest.open(fname.c_str(), ios::out | ios::binary);
+	if (!filedest.is_open())
+		return 3;
+	saveset.fieldset->walkmesh[basefield]->WriteHWS(filedest);
+	filedest.close();
+	for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+		fname = destfolder + "StreamingAssets\\Assets\\Resources\\CommonAsset\\EventEngine\\EventBinary\\Field\\" + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[lang].ToStdString() + "\\" + fieldid + ".eb.bytes";
+		MainFrame::MakeDirForFile(fname);
+		filedest.open(fname.c_str(), ios::out | ios::binary);
+		if (!filedest.is_open())
+			return 3;
+		saveset.fieldset->script_data[basefield]->WriteHWS(filedest, lang);
+		filedest.close();
+	}
+	filebase.open(config.steam_dir_assets + "p0data1" + to_string(config.field_file_id[basefield]) + ".bin", ios::in | ios::binary);
+	if (!filebase.is_open())
+		return 2;
+	fname = destfolder + "StreamingAssets\\Assets\\Resources\\FieldMaps\\" + mapid + "\\atlas.png";
+	errcode = SteamExtractAssetWithPath(fname, filebase, config.meta_field[config.field_file_id[basefield] - 1], config.field_image_file[basefield]);
+	if (errcode != 0)
+		return errcode;
+	if (config.field_spt_file[basefield] >= 0) {
+		fname = destfolder + "StreamingAssets\\Assets\\Resources\\FieldMaps\\" + mapid + "\\spt.tcb.bytes";
+		errcode = SteamExtractAssetWithPath(fname, filebase, config.meta_field[config.field_file_id[basefield] - 1], config.field_spt_file[basefield]);
+		if (errcode != 0)
+			return errcode;
+	}
+	for (i = 0; i < SteamFieldScript[basefield].sps_list.size(); i++) {
+		if (config.field_sps_file[basefield][i] < 0)
+			continue;
+		fname = destfolder + "StreamingAssets\\Assets\\Resources\\FieldMaps\\" + mapid + "\\" + to_string(SteamFieldScript[basefield].sps_list[i]) + ".sps.bytes";
+		errcode = SteamExtractAssetWithPath(fname, filebase, config.meta_field[config.field_file_id[basefield] - 1], config.field_sps_file[basefield][i]);
+		if (errcode != 0)
+			return errcode;
+	}
+	filebase.close();
+	filebase.open(config.steam_dir_assets + "p0data7.bin", ios::in | ios::binary);
+	if (!filebase.is_open())
+		return 2;
+	if (config.field_preload_file[i] >= 0) {
+		fname = destfolder + "StreamingAssets\\Assets\\Resources\\CommonAsset\\EventEngine\\EventAnimation\\" + fieldid + ".txt.bytes";
+		errcode = SteamExtractAssetWithPath(fname, filebase, config.meta_script, config.field_preload_file[basefield]);
+		if (errcode != 0)
+			return errcode;
+	}
+	if (config.field_role_file[i] >= 0) {
+		fname = destfolder + "StreamingAssets\\Assets\\Resources\\CommonAsset\\MapConfigData\\" + fieldid + ".bytes";
+		errcode = SteamExtractAssetWithPath(fname, filebase, config.meta_script, config.field_role_file[basefield]);
+		if (errcode != 0)
+			return errcode;
+	}
+	if (config.field_vibdata_file[i] >= 0) {
+		fname = destfolder + "StreamingAssets\\Assets\\Resources\\CommonAsset\\VibrationData\\" + fieldid + ".bytes";
+		errcode = SteamExtractAssetWithPath(fname, filebase, config.meta_script, config.field_vibdata_file[basefield]);
+		if (errcode != 0)
+			return errcode;
+	}
+	filebase.close();
+	return 0;
+}
+
 //==================================================//
 //                   SAVE FILES                     //
 //==================================================//
@@ -2359,6 +2518,8 @@ void UnusedSaveBackupPart::Add(fstream& f, uint32_t size) {
 
 int PreloadHWS(string filepath, bool* section) {
 	unsigned int i;
+	for (i = 0; i < DATA_SECTION_AMOUNT; i++)
+		section[i] = false;
 	GameType hwsgt = GAME_TYPE_PSX;
 	fstream save(filepath.c_str(),ios::in|ios::binary);
 	if (!save.is_open())
@@ -2371,8 +2532,6 @@ int PreloadHWS(string filepath, bool* section) {
 		if (SAVE_HEADER_STEAM.compare(buffer))
 			return 2;
 	}
-	for (i=0;i<DATA_SECTION_AMOUNT;i++)
-		section[i] = false;
 	uint32_t nbsection,tmp32;
 	uint8_t sectiontype;
 	HWSReadLong(save,nbsection);
@@ -2636,5 +2795,104 @@ int WriteHWS(string filepath, bool* section, bool* localsec, SaveSet& saveset, U
 		}
 	}
 	save.close();
+	return 0;
+}
+
+int CreatePPF(string basefile, string ppfname, bool* section, ConfigurationSet& config, SaveSet& saveset, ClusterSet& cluster, bool undo, bool blockcheck, string description) {
+	fstream f(basefile.c_str(), ios::in | ios::binary);
+	if (!f.is_open())
+		return 3;
+	if (!PPFOpenFilesForCreate(const_cast<char*>(ppfname.c_str()), undo, blockcheck, const_cast<char*>(description.c_str())))
+		return 1;
+	if (blockcheck) {
+		unsigned char binblock[1024];
+		fstream ffbin(basefile.c_str(), ios::in | ios::binary);
+		ffbin.seekg(0x9320);
+		ffbin.read((char*)binblock, 1024);
+		ffbin.close();
+		if (PPFCreateHeader(binblock)) {
+			PPFCloseAllFiles();
+			return 2;
+		}
+	} else {
+		if (PPFCreateHeader(NULL)) {
+			PPFCloseAllFiles();
+			return 2;
+		}
+	}
+	if (section[DATA_SECTION_SPELL])
+		saveset.spellset->WritePPF(f, config);
+	if (section[DATA_SECTION_SUPPORT])
+		saveset.supportset->WritePPF(f, config);
+	if (section[DATA_SECTION_CMD])
+		saveset.cmdset->WritePPF(f, config);
+	if (section[DATA_SECTION_STAT])
+		saveset.statset->WritePPF(f, config);
+	if (section[DATA_SECTION_PARTY_SPECIAL])
+		saveset.partyspecialset->WritePPF(f, config);
+	if (section[DATA_SECTION_ITEM])
+		saveset.itemset->WritePPF(f, config);
+	if (section[DATA_SECTION_SHOP])
+		saveset.shopset->WritePPF(f, config);
+	if (section[DATA_SECTION_ENMY])
+		saveset.enemyset->WritePPF(f, cluster, !section[DATA_SECTION_WORLD_MAP], !section[DATA_SECTION_FIELD]);
+	if (section[DATA_SECTION_CARD])
+		saveset.cardset->WritePPF(f, config);
+	if (section[DATA_SECTION_TEXT])
+		saveset.textset->WritePPF(f, cluster);
+	if (section[DATA_SECTION_WORLD_MAP])
+		saveset.worldset->WritePPF(f, cluster);
+	if (section[DATA_SECTION_FIELD])
+		saveset.fieldset->WritePPF(f, cluster);
+	if (section[DATA_SECTION_BATTLE_SCENE])
+		saveset.sceneset->WritePPF(f, cluster);
+	if (section[DATA_SECTION_SPELL_ANIM])
+		saveset.spellanimset->WritePPF(f, config, cluster.global_map);
+	if (section[DATA_SECTION_MENU_UI])
+		saveset.ffuiset->WritePPF(f, config);
+	if (section[DATA_SECTION_ASSEMBLY])
+		saveset.mipsset->WritePPF(f, config);
+	f.close();
+	PPFCloseAllFiles();
+	return 0;
+}
+
+int OverwritePSXBinary(string filename, bool* section, ConfigurationSet& config, SaveSet& saveset, ClusterSet& cluster) {
+	fstream f(filename.c_str(), ios::in | ios::out | ios::binary);
+	if (!f.is_open())
+		return 1;
+	if (section[DATA_SECTION_SPELL])
+		saveset.spellset->Write(f, config);
+	if (section[DATA_SECTION_SUPPORT])
+		saveset.supportset->Write(f, config);
+	if (section[DATA_SECTION_CMD])
+		saveset.cmdset->Write(f, config);
+	if (section[DATA_SECTION_STAT])
+		saveset.statset->Write(f, config);
+	if (section[DATA_SECTION_PARTY_SPECIAL])
+		saveset.partyspecialset->Write(f, config);
+	if (section[DATA_SECTION_ITEM])
+		saveset.itemset->Write(f, config);
+	if (section[DATA_SECTION_SHOP])
+		saveset.shopset->Write(f, config);
+	if (section[DATA_SECTION_ENMY])
+		saveset.enemyset->Write(f, cluster, !section[DATA_SECTION_WORLD_MAP], !section[DATA_SECTION_FIELD]);
+	if (section[DATA_SECTION_CARD])
+		saveset.cardset->Write(f, config);
+	if (section[DATA_SECTION_TEXT])
+		saveset.textset->Write(f, cluster);
+	if (section[DATA_SECTION_WORLD_MAP])
+		saveset.worldset->Write(f, cluster);
+	if (section[DATA_SECTION_FIELD])
+		saveset.fieldset->Write(f, cluster);
+	if (section[DATA_SECTION_BATTLE_SCENE])
+		saveset.sceneset->Write(f, cluster);
+	if (section[DATA_SECTION_SPELL_ANIM])
+		saveset.spellanimset->Write(f, config, cluster.global_map);
+	if (section[DATA_SECTION_MENU_UI])
+		saveset.ffuiset->Write(f, config);
+	if (section[DATA_SECTION_ASSEMBLY])
+		saveset.mipsset->Write(f, config);
+	f.close();
 	return 0;
 }

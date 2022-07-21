@@ -20,15 +20,18 @@ ManageFieldTextureDialog::ManageFieldTextureDialog(wxWindow* parent, FieldTilesD
 	timer(new wxTimer(this)),
 	color_selected(-1),
 	prevent_event(false) {
+	wxArrayString choicelist;
 	unsigned int i;
 	tim = f.parent->tim_data[f.id]; // Unused now
 	field.Copy(f);
-	for (i=0;i<field.tiles_amount;i++) {
+	for (i = 0; i < field.tiles_amount; i++) {
 		wstringstream buffer;
 		buffer << "Tile Block " << i << endl;
-		m_tilechecklist->Append(_(buffer.str()));
-		m_tilechecklist->Check(i,field.tiles[i].is_static || field.tiles[i].is_first_of_anim);
+		choicelist.Add(_(buffer.str()));
 	}
+	m_tilechecklist->Append(choicelist);
+	for (i = 0; i < field.tiles_amount; i++)
+		m_tilechecklist->Check(i, field.tiles[i].is_static || field.tiles[i].is_first_of_anim);
 	animlist_img = new wxImageList(60,20,true,4);
 	animcontrol_loopplay = wxBitmap(wxBITMAP(animcontrolloopplay_image));
 	animcontrol_looppause = wxBitmap(wxBITMAP(animcontrollooppause_image));
@@ -155,14 +158,16 @@ void ManageFieldTextureDialog::OnTileButton(wxCommandEvent& event) {
 
 void ManageFieldTextureDialog::OnTileSelection(wxCommandEvent& event) {
 	int blockid = event.GetSelection();
+	wxArrayString choicelist;
 	m_tilepiecelist->Clear();
 	if (blockid != wxNOT_FOUND) {
 		m_tilex->SetValue(field.tiles[blockid].pos_x);
 		m_tiley->SetValue(field.tiles[blockid].pos_y);
 		m_tiledepth->SetValue(field.tiles[blockid].depth);
 		for (int i = 0; i < field.tiles[blockid].tile_amount; i++)
-			m_tilepiecelist->Append(wxString::Format(wxT("Tile (%d, %d)"), field.tiles[blockid].tile_pos_x[i], field.tiles[blockid].tile_pos_y[i]));
+			choicelist.Add(wxString::Format(wxT("Tile (%d, %d)"), field.tiles[blockid].tile_pos_x[i], field.tiles[blockid].tile_pos_y[i]));
 	}
+	m_tilepiecelist->Append(choicelist);
 	m_tilex->Enable(blockid != wxNOT_FOUND);
 	m_tiley->Enable(blockid != wxNOT_FOUND);
 	m_tiledepth->Enable(blockid != wxNOT_FOUND);

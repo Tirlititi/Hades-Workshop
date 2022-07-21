@@ -1612,7 +1612,7 @@ struct DamageCalculation {
 		case 52: // Angel's Snack
 			if (cddata == NULL)
 				break;
-			special_effect_description = wxString::Format(wxT(STRING_ANGEL_SNACK), cddata->itemset.item[spell_power].name.GetStr(2), defender_name);
+			special_effect_description = wxString::Format(wxT(STRING_ANGEL_SNACK), cddata->itemset.item[spell_power].name.str_nice, defender_name);
 			break;
 		case 53: // Lucky Seven
 			special_effect_description = wxString::Format(wxT(STRING_LUCKY_SEVEN), attacker_name);
@@ -1934,7 +1934,7 @@ struct DamageCalculation {
 			special_effect_description += wxString::Format(wxT(STRING_CHANGE_STAT), defender_name, L"magic defence", defender_magic_defence / 2);
 			break;
 		case 92: // Add Item
-			special_effect_description = wxString::Format(wxT(STRING_ADD_ITEM), cddata->itemset.item[spell_power].name.GetStr(2));
+			special_effect_description = wxString::Format(wxT(STRING_ADD_ITEM), cddata->itemset.item[spell_power].name.str_nice);
 			break;
 		case 93: // Maelstrom
 			if (!CheckStatusFail(defender_status, STATUS_EASY_KILL | STATUS_DEATH | STATUS_PETRIFY))
@@ -2010,7 +2010,7 @@ struct DamageCalculation {
 		case 101: // Inventory Steal
 			SetupAccuracyPhysic();
 			ComputeHitRate(hit_rate);
-			special_effect_description = wxString::Format(wxT(STRING_INVENTORY_STEAL), cddata->itemset.item[spell_accuracy].name.GetStr(2));
+			special_effect_description = wxString::Format(wxT(STRING_INVENTORY_STEAL), cddata->itemset.item[spell_accuracy].name.str_nice);
 			break;
 		case 102: // Inventory Mug
 			formulae += wxString::Format(wxT(STRING_FORMULA_DAMAGE), _(STRING_FORMULA_PHYSIC4));
@@ -2020,7 +2020,7 @@ struct DamageCalculation {
 			ApplyDefendProtectSleepMini();
 			ApplyBackAttackBackRow();
 			ComputeDamage();
-			special_effect_description = wxString::Format(wxT(STRING_INVENTORY_MUG), cddata->itemset.item[spell_accuracy].name.GetStr(2));
+			special_effect_description = wxString::Format(wxT(STRING_INVENTORY_MUG), cddata->itemset.item[spell_accuracy].name.str_nice);
 			break;
 		case 103: // Good Status
 			ApplyStatus(spell_status, true);
@@ -2170,7 +2170,7 @@ int ToolDamageCalculator::ShowModal(CDDataStruct* data) {
 				listed.insert({ battleid[k], stats[k]->id });
 		}
 	}
-	sort(sample.begin(), sample.end(), [](EnemyStatDataStruct* first, EnemyStatDataStruct* second) { return first->name.GetStr(2).compare(second->name.GetStr(2)) < 0; });
+	sort(sample.begin(), sample.end(), [](EnemyStatDataStruct* first, EnemyStatDataStruct* second) { return first->name.str_nice.compare(second->name.str_nice) < 0; });
 	for (i = 0; i < sample.size(); i++) {
 		enemy_list_battle.push_back(sample[i]->parent->id);
 		enemy_list_stat.push_back(sample[i]->id);
@@ -2232,7 +2232,7 @@ void ToolDamageCalculator::UpdateInformation() {
 		calc.spell_accuracy = player_panel[0]->m_accuracy->GetValue();
 		MACRO_CALCULATOR_GETELEMS_WIN(calc.spell_element, player_panel[0])
 		calc.spell_status = cddata->spellset.status_set[player_panel[0]->m_status->GetSelection()];
-		if (cddata->cmdloaded) {
+		if (cddata->saveset.sectionloaded[DATA_SECTION_CMD]) {
 			if (calc.spell_index == 67 || calc.spell_index == 69 || calc.spell_index == 70 || calc.spell_index == 71 || calc.spell_index == 73)
 				calc.spell_command = 20;
 			for (i = 0; i < COMMAND_AMOUNT && calc.spell_command < 0; i++) {
@@ -2401,7 +2401,7 @@ void ToolDamageCalculator::UpdateInformation() {
 			description += wxString::Format(wxT(STRING_SPIRIT), calc.attacker_spirit);
 		}
 	}
-	if (!cddata->statloaded && calc.attacker_is_player && (calc.use_caster_speed || calc.use_caster_strength || calc.use_caster_magic || calc.use_caster_spirit)) description += _(STRING_LOAD_STAT_HINT);
+	if (!cddata->saveset.sectionloaded[DATA_SECTION_STAT] && calc.attacker_is_player && (calc.use_caster_speed || calc.use_caster_strength || calc.use_caster_magic || calc.use_caster_spirit)) description += _(STRING_LOAD_STAT_HINT);
 	if (calc.use_caster_weapon) description += wxString::Format(wxT(STRING_WEAPON_ATTACK), calc.attacker_weapon_power);
 	// Display defender informations
 	description += _(L"\n");
@@ -2463,7 +2463,7 @@ void ToolDamageCalculator::UpdateInformation() {
 			description += wxString::Format(wxT(STRING_SPIRIT), calc.defender_spirit);
 		}
 	}
-	if (!cddata->statloaded && calc.defender_is_player && (calc.use_target_speed || calc.use_target_strength || calc.use_target_magic || calc.use_target_spirit)) description += _(STRING_LOAD_STAT_HINT);
+	if (!cddata->saveset.sectionloaded[DATA_SECTION_STAT] && calc.defender_is_player && (calc.use_target_speed || calc.use_target_strength || calc.use_target_magic || calc.use_target_spirit)) description += _(STRING_LOAD_STAT_HINT);
 	if (calc.use_target_defence) description += wxString::Format(wxT(STRING_DEFENCE), calc.defender_defence);
 	if (calc.use_target_evade) description += wxString::Format(wxT(STRING_EVADE), calc.defender_evade);
 	if (calc.use_target_magic_defence) description += wxString::Format(wxT(STRING_MAGIC_DEFENCE), calc.defender_magic_defence);
@@ -2603,7 +2603,7 @@ void ToolDamageCalculator::UpdateInformation() {
 					description += calc.special_damage_description[i] + wxString::Format(wxT("%d\n"), calc.special_damage[i]);
 			}
 			int desclengthtmp = description.Len();
-			if (calc.use_jewel_id >= 0) description += wxString::Format(wxT(STRING_USE_JEWEL), calc.jewel_count, cddata->itemset.item[calc.use_jewel_id].name.GetStr(2));
+			if (calc.use_jewel_id >= 0) description += wxString::Format(wxT(STRING_USE_JEWEL), calc.jewel_count, cddata->itemset.item[calc.use_jewel_id].name.str_nice);
 			if (calc.is_drain) description += _(STRING_DRAIN);
 			if (calc.use_target_zombie) description += wxString::Format(wxT(STRING_ZOMBIE), calc.defender_name);
 			if ((calc.use_caster_support & SUPPORT_ABILITY_HEALER) != 0) description += wxString::Format(wxT(STRING_MODIF_TRIGGER), L"Healer");
@@ -2698,23 +2698,38 @@ void ToolDamageCalculator::OnButtonSwap(wxCommandEvent& event) {
 ToolDamageCalculatorPlayer::ToolDamageCalculatorPlayer(wxWindow* p) : DamageCalculatorPlayerPanel(p) {}
 
 void ToolDamageCalculatorPlayer::Init(CDDataStruct* data, bool initializeprofile) {
+	wxArrayString choicelist;
 	int pchar, i;
 	for (i = 0; i < ITEM_WEAPON_AMOUNT; i++)
-		m_weapon->Append(_(data->itemset.item[i].name.GetStr(2)));
+		choicelist.Add(_(data->itemset.item[i].name.str_nice));
+	m_weapon->Append(choicelist);
+	choicelist.Clear();
 	for (i = 0; i < ITEM_AMOUNT; i++)
-		m_head->Append(_(data->itemset.item[i].name.GetStr(2)));
+		choicelist.Add(_(data->itemset.item[i].name.str_nice));
+	m_head->Append(choicelist);
+	choicelist.Clear();
 	for (i = 0; i < ITEM_AMOUNT; i++)
-		m_wrist->Append(_(data->itemset.item[i].name.GetStr(2)));
+		choicelist.Add(_(data->itemset.item[i].name.str_nice));
+	m_wrist->Append(choicelist);
+	choicelist.Clear();
 	for (i = 0; i < ITEM_AMOUNT; i++)
-		m_armor->Append(_(data->itemset.item[i].name.GetStr(2)));
+		choicelist.Add(_(data->itemset.item[i].name.str_nice));
+	m_armor->Append(choicelist);
+	choicelist.Clear();
 	for (i = 0; i < ITEM_AMOUNT; i++)
-		m_accessory->Append(_(data->itemset.item[i].name.GetStr(2)));
+		choicelist.Add(_(data->itemset.item[i].name.str_nice));
+	m_accessory->Append(choicelist);
+	choicelist.Clear();
 	for (i = 0; i < SPELL_AMOUNT; i++)
-		m_basespell->Append(_(data->spellset.spell[i].name.GetStr(2)));
+		choicelist.Add(_(data->spellset.spell[i].name.str_nice));
+	m_basespell->Append(choicelist);
+	choicelist.Clear();
 	for (i = 0; i < G_N_ELEMENTS(HADES_STRING_SPELL_EFFECT); i++)
 		m_effect->Append(HADES_STRING_SPELL_EFFECT[i].label, (void*)&HADES_STRING_SPELL_EFFECT[i]);
 	for (i = 0; i < STATUS_SET_AMOUNT; i++)
-		m_status->Append(data->spellset.status_set_name[i]);
+		choicelist.Add(data->spellset.status_set_name[i]);
+	m_status->Append(choicelist);
+	choicelist.Clear();
 	if (initializeprofile) {
 		for (pchar = 0; pchar < PLAYABLE_CHAR_AMOUNT; pchar++) {
 			stat = &parent->player_profile[pchar];
@@ -2812,7 +2827,7 @@ void ToolDamageCalculatorPlayer::ComputeEquipCumulatedStat() {
 }
 
 void ToolDamageCalculatorPlayer::ComputePlayerBaseStat() {
-	if (!parent->cddata->statloaded) {
+	if (!parent->cddata->saveset.sectionloaded[DATA_SECTION_STAT]) {
 		computed_base_stat_speed = 0;
 		computed_base_stat_strength = 0;
 		computed_base_stat_magic = 0;
@@ -2973,7 +2988,7 @@ void ToolDamageCalculatorPlayer::SelectBaseCharacter(int sel) {
 	if (weapid >= 0) {
 		m_basespell->SetSelection(SPELL_ATTACK_ID);
 		SelectBaseSpell(SPELL_ATTACK_ID);
-	} else if (parent->cddata->statloaded && parent->cddata->cmdloaded) {
+	} else if (parent->cddata->saveset.sectionloaded[DATA_SECTION_STAT] && parent->cddata->saveset.sectionloaded[DATA_SECTION_CMD]) {
 		int spellid = 0;
 		CommandSetDataStruct& cmd = parent->cddata->statset.command_list[parent->cddata->statset.GetCharacterCommandsId(sel)[0]];
 		CommandDataStruct& firstcmd = parent->cddata->cmdset.cmd[cmd.first_command];
@@ -3154,15 +3169,22 @@ void ToolDamageCalculatorPlayer::OnUpdateSpin(wxSpinEvent& event) {
 ToolDamageCalculatorEnemy::ToolDamageCalculatorEnemy(wxWindow* p) : DamageCalculatorEnemyPanel(p) {}
 
 void ToolDamageCalculatorEnemy::Init(CDDataStruct* data) {
+	wxArrayString choicelist;
 	int i;
 	for (i = 0; i < parent->enemy_list_battle.size(); i++)
-		m_baseenemy->Append(_(data->enemyset.battle[parent->enemy_list_battle[i]]->stat[parent->enemy_list_stat[i]].name.GetStr(2)));
+		choicelist.Add(_(data->enemyset.battle[parent->enemy_list_battle[i]]->stat[parent->enemy_list_stat[i]].name.str_nice));
+	m_baseenemy->Append(choicelist);
+	choicelist.Clear();
 	for (i = 0; i < data->enemyset.battle[parent->enemy_list_battle[0]]->spell_amount; i++)
-		m_basespell->Append(_(data->enemyset.battle[parent->enemy_list_battle[0]]->spell[i].name.GetStr(2)));
+		choicelist.Add(_(data->enemyset.battle[parent->enemy_list_battle[0]]->spell[i].name.str_nice));
+	m_basespell->Append(choicelist);
+	choicelist.Clear();
 	for (i = 0; i < G_N_ELEMENTS(HADES_STRING_SPELL_EFFECT); i++)
 		m_effect->Append(HADES_STRING_SPELL_EFFECT[i].label, (void*)&HADES_STRING_SPELL_EFFECT[i]);
 	for (i = 0; i < STATUS_SET_AMOUNT; i++)
-		m_status->Append(data->spellset.status_set_name[i]);
+		choicelist.Add(data->spellset.status_set_name[i]);
+	m_status->Append(choicelist);
+	choicelist.Clear();
 	m_baseenemy->SetSelection(0);
 	m_basespell->SetSelection(0);
 	m_effect->SetSelection(0);
@@ -3190,7 +3212,7 @@ void ToolDamageCalculatorEnemy::SelectBaseEnemy(int sel) {
 	EnemyDataStruct* enemy = parent->cddata->enemyset.battle[parent->enemy_list_battle[sel]];
 	EnemyStatDataStruct& stat = enemy->stat[parent->enemy_list_stat[sel]];
 	for (int i = 0; i < enemy->spell_amount; i++)
-		m_basespell->Append(_(enemy->spell[i].name.GetStr(2)));
+		m_basespell->Append(_(enemy->spell[i].name.str_nice));
 	m_basespell->SetSelection(0);
 	m_level->SetValue(stat.lvl);
 	m_maxhp->SetValue(stat.hp);
@@ -3240,9 +3262,9 @@ void ToolDamageCalculatorEnemy::Swap(ToolDamageCalculatorEnemy* other) {
 	m_basespell->Clear();
 	other->m_basespell->Clear();
 	for (i = 0; i < enemy1->spell_amount; i++)
-		other->m_basespell->Append(_(enemy1->spell[i].name.GetStr(2)));
+		other->m_basespell->Append(_(enemy1->spell[i].name.str_nice));
 	for (i = 0; i < enemy2->spell_amount; i++)
-		m_basespell->Append(_(enemy2->spell[i].name.GetStr(2)));
+		m_basespell->Append(_(enemy2->spell[i].name.str_nice));
 	other->m_basespell->SetSelection(spellsel1);
 	m_basespell->SetSelection(spellsel2);
 	swap(buff, other->buff);

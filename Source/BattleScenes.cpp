@@ -682,10 +682,10 @@ LogStruct BattleSceneDataStruct::Import(const char* inputfile, unsigned int* num
 void BattleSceneDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 	unsigned int i,j,k,l;
 	scene_amount = clusset.battle_scene_amount;
-	cluster_id = new uint16_t[scene_amount];
-	scene_name = new wstring[scene_amount];
-	scene = new BattleSceneDataStruct*[scene_amount];
-	image = new TIMImageDataStruct*[scene_amount];
+	cluster_id.resize(scene_amount);
+	scene_name.resize(scene_amount);
+	scene.resize(scene_amount);
+	image.resize(scene_amount);
 	j = 0;
 	LoadingDialogInit(scene_amount,_(L"Reading battle scenes..."));
 	for (i=0;i<clusset.amount;i++) {
@@ -845,4 +845,11 @@ void BattleSceneDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup) 
 	ffhws.seekg(nboffset);
 	HWSWriteShort(ffhws,nbmodified);
 	ffhws.seekg(endoffset);
+}
+
+int BattleSceneDataSet::GetIndexById(uint16_t sceneid) {
+	for (unsigned int i = 0; i < scene_amount; i++)
+		if (sceneid == scene[i]->object_id)
+			return i;
+	return -1;
 }

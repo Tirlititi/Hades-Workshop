@@ -424,8 +424,10 @@ void SpellAnimationDataSet::Load(fstream& ffbin, ConfigurationSet& config, Globa
 				spell[i].is_empty = false;
 				ffbin.seekg(IMG_HEADER_OFFSET+FILE_IGNORE_DATA_PERIOD*(globalmap.spell_dir->first_file_offset+globalmap.spell_dir->file_offset[i]));
 				spell[i].Read(ffbin);
-			} else
+			} else {
 				spell[i].is_empty = true;
+				spell[i].seq_code_amount = 0;
+			}
 		}
 	} else {
 		string fname = config.steam_dir_data;
@@ -440,8 +442,10 @@ debugimgspellcounter = i; // DEBUG
 				ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.spellanim_steam_file[i]));
 				spell[i].raw_size = config.meta_res.GetFileSizeByIndex(config.spellanim_steam_file[i]);
 				spell[i].Read(ffbin);
-			} else
+			} else {
 				spell[i].is_empty = true;
+				spell[i].seq_code_amount = 0;
+			}
 		}
 		ffbin.close();
 	}

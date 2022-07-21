@@ -29,14 +29,14 @@ struct WorldMapDataStruct : public ChunkChild {
 	uint32_t steam_chunk_pos_disc[2]; // Steam version only
 	uint32_t steam_chunk_pos_discmr[2]; // Steam version only
 
-	uint16_t place_name_extra_size;
+	int place_name_extra_size;
 	FF9String place_name[WORLD_MAP_PLACE_AMOUNT];
-	uint16_t* place_unknown_amount;
-	uint8_t** place_unknown;
+	uint16_t place_unknown_amount[WORLD_MAP_PLACE_AMOUNT];
+	uint8_t* place_unknown[WORLD_MAP_PLACE_AMOUNT];
 	uint32_t place_name_size; // Steam version only
 	
 	uint16_t battle_id[WORLD_MAP_BATTLE_GROUND_AMOUNT][WORLD_MAP_BATTLE_SET_AMOUNT];
-	uint16_t battle_flags[WORLD_MAP_BATTLE_GROUND_AMOUNT]; // 1: hasFog
+	uint16_t battle_flag[WORLD_MAP_BATTLE_GROUND_AMOUNT]; // 1: hasFog
 	
 	uint16_t friendly_area[WORLD_MAP_FRIENDLY_AMOUNT][WORLD_MAP_FRIENDLY_AREA_AMOUNT];
 	
@@ -50,7 +50,7 @@ struct WorldMapDataStruct : public ChunkChild {
 	void Write(fstream& f);
 	void WritePPF(fstream& f);
 	void ReadHWS(fstream& f, bool usetext = true);
-	void WriteHWS(fstream& f, bool saveversion = true, int steamdiscordiscmr = -1); // 0-1: disc.img, 2-3: dicmr.img
+	void WriteHWS(fstream& f, bool hwsformat = true, int steamdiscordiscmr = -1); // 0-1: disc.img, 2-3: dicmr.img
 	void UpdateOffset();
 
 	static const vector<uint16_t> friendly_battle_id[WORLD_MAP_FRIENDLY_AMOUNT];
@@ -59,14 +59,15 @@ struct WorldMapDataStruct : public ChunkChild {
 struct WorldMapDataSet {
 public:
 	uint16_t amount;
-	uint16_t* cluster_id;
-	wstring* name;
-	uint16_t* tim_amount;
-	ScriptDataStruct** script;
-	TextDataStruct** text_data;
-	CharmapDataStruct** charmap; // PSX only
-	TIMImageDataStruct** chartim; // PSX only
-	ImageMapDataStruct** preload; // PSX only (for now)
+	vector<uint16_t> cluster_id; // PSX only
+	vector<uint16_t> struct_id;
+	vector<wstring> name;
+	vector<uint16_t> tim_amount;
+	vector<ScriptDataStruct*> script;
+	vector<TextDataStruct*> text_data;
+	vector<CharmapDataStruct*> charmap; // PSX only
+	vector<TIMImageDataStruct*> chartim; // PSX only
+	vector<ImageMapDataStruct*> preload; // PSX only (for now)
 	WorldMapDataStruct* world_data;
 	
 	void Load(fstream& ffbin, ClusterSet& clusset);
@@ -80,6 +81,7 @@ public:
 	// texttype: 0 for world texts, 1 for place name
 	void WriteSteamText(fstream& ffbin, unsigned int texttype, SteamLanguage lang = GetSteamLanguage());
 	int GetSteamTextSize(unsigned int texttype, SteamLanguage lang = GetSteamLanguage());
+	int GetIndexById(uint16_t worldid);
 };
 
 #endif

@@ -98,12 +98,15 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IncludePath>$(IncludePath)</IncludePath>
+    <TargetName>HadesWorkshop</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <TargetName>HadesWorkshop</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release staticdll|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <TargetName>HadesWorkshop</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -113,6 +116,7 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;WXUSINGDLL;wxMSVC_VERSION_AUTO;_UNICODE;UNICODE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <AdditionalIncludeDirectories>C:\Dev\wxWidgets-3.1.3\include\;C:\Dev\wxWidgets-3.1.3\include\msvc\;C:\Program Files\Autodesk\FBX\FBX SDK\2020.0.1\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessToFile>false</PreprocessToFile>
     </ClCompile>
     <Link>
       <AdditionalDependencies>opengl32.lib;glu32.lib;libfbxsdk-md.lib;libxml2-md.lib;zlib-md.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -136,6 +140,7 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;WXUSINGDLL;wxMSVC_VERSION_AUTO;_UNICODE;UNICODE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>C:\Dev\wxWidgets-3.1.3\include\;C:\Dev\wxWidgets-3.1.3\include\msvc\;C:\Program Files\Autodesk\FBX\FBX SDK\2020.0.1\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessToFile>false</PreprocessToFile>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -155,6 +160,7 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;WXUSINGDLL;wxMSVC_VERSION_AUTO;_UNICODE;UNICODE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>C:\Dev\wxWidgets-3.1.3\include\;C:\Dev\wxWidgets-3.1.3\include\msvc\;C:\Program Files\Autodesk\FBX\FBX SDK\2020.0.1\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessToFile>false</PreprocessToFile>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -223,7 +229,9 @@
     <ClCompile Include="Source\ImageMaps.cpp" />
     <ClCompile Include="Source\Items.cpp" />
     <ClCompile Include="Source\main.cpp" />
+    <ClCompile Include="Source\main_command.cpp" />
     <ClCompile Include="Source\makeppf3.cpp" />
+    <ClCompile Include="Source\MemoriaUtility.cpp" />
     <ClCompile Include="Source\MenuUI.cpp" />
     <ClCompile Include="Source\MIPS.cpp" />
     <ClCompile Include="Source\ModelMesh.cpp" />
@@ -300,7 +308,9 @@
     <ClInclude Include="Source\ImageMaps.h" />
     <ClInclude Include="Source\Items.h" />
     <ClInclude Include="Source\main.h" />
+    <ClInclude Include="Source\main_command.h" />
     <ClInclude Include="Source\makeppf3.h" />
+    <ClInclude Include="Source\MemoriaUtility.h" />
     <ClInclude Include="Source\MenuUI.h" />
     <ClInclude Include="Source\MIPS.h" />
     <ClInclude Include="Source\ModelMesh.h" />

@@ -763,18 +763,19 @@ void EnemyDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 	modified_battle_scene_amount = 0;
 	image_map_amount = clusset.image_map_amount;
 	battle_amount = clusset.enemy_amount;
-	battle_name = new wstring[battle_amount];
-	battle_data = new BattleDataStruct*[battle_amount];
-	battle = new EnemyDataStruct*[battle_amount];
-	text = new TextDataStruct*[battle_amount];
-	script = new ScriptDataStruct*[battle_amount];
+	struct_id.resize(battle_amount);
+	battle_name.resize(battle_amount);
+	battle_data.resize(battle_amount);
+	battle.resize(battle_amount);
+	text.resize(battle_amount);
+	script.resize(battle_amount);
 	j = 0;
 	LoadingDialogInit(battle_amount,_(L"Reading enemy formations..."));
 	if (GetGameType()==GAME_TYPE_PSX) {
-		cluster_id = new uint16_t[battle_amount];
+		cluster_id.resize(battle_amount);
+		preload.resize(battle_amount);
 		shared_map = clusset.enemy_shared_map;
 		image_map = &clusset.image_map;
-		preload = new ImageMapDataStruct*[battle_amount];
 		for (i=0;i<clusset.amount;i++) {
 			if (clusset.clus_type[i]==CLUSTER_TYPE_ENEMY) {
 				ClusterData& clus = clusset.clus[i];
@@ -796,6 +797,7 @@ void EnemyDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 					else if (clus.chunk_type[k]==CHUNK_TYPE_IMAGE_MAP)
 						preload[j] = (ImageMapDataStruct*)&clus.chunk[k].GetObject(0);
 				}
+				struct_id[j] = battle_data[j]->object_id;
 				battle_data[j]->parent = this;
 				battle_data[j]->id = j;
 				battle[j]->parent = this;
@@ -858,6 +860,7 @@ void EnemyDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 		fname = config.steam_dir_assets + "p0data2.bin";
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
 		for (i=0;i<battle_amount;i++) {
+			struct_id[i] = config.enmy_id[i];
 			ffbin.seekg(config.meta_battle.GetFileOffsetByIndex(config.enmy_battle_file[i]));
 			battle_data[i] = new BattleDataStruct[1];
 			battle_data[i]->Init(false,CHUNK_TYPE_BATTLE_DATA,config.enmy_id[i],&dummyclus[i]);
@@ -1126,6 +1129,13 @@ bool EnemyDataSet::GenerateCSV(string basefolder) {
 	}
 	patchfile.close();
 	return true;
+}
+
+int EnemyDataSet::GetIndexById(uint16_t battleid) {
+	for (unsigned int i = 0; i < battle_amount; i++)
+		if (battleid == struct_id[i])
+			return i;
+	return -1;
 }
 
 void EnemyDataSet::Write(fstream& ffbin, ClusterSet& clusset, bool saveworldmap, bool savefieldmap) {
@@ -1676,10 +1686,10 @@ int EnemyDataSet::ChangeBattleScene(uint16_t battleid, uint16_t newsceneid, uint
 			break;
 		}
 	if (newmod) {
-		modified_battle_id[modified_battle_scene_amount] = battleid;
-		modified_scene_id[modified_battle_scene_amount] = newsceneid;
-		modified_scene_offset[modified_battle_scene_amount] = newsceneoffset;
-		modified_scene_size[modified_battle_scene_amount] = newscenesize;
+		modified_battle_id.push_back(battleid);
+		modified_scene_id.push_back(newsceneid);
+		modified_scene_offset.push_back(newsceneoffset);
+		modified_scene_size.push_back(newscenesize);
 		modified_battle_scene_amount++;
 	}
 	return 0;

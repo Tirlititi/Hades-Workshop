@@ -38,24 +38,24 @@ int WorldMapDataStruct::SetName(unsigned int placeid, wstring newvalue) {
 	tmp.SetValue(newvalue);
 	int oldlen = place_name[placeid].length;
 	int newlen = tmp.length;
-	if (newlen>oldlen+place_name_extra_size)
+	if (newlen > oldlen + place_name_extra_size)
 		return 1;
 	place_name[placeid].SetValue(newvalue);
-	place_name_extra_size += oldlen-newlen;
-	if (GetGameType()!=GAME_TYPE_PSX)
-		place_name_size += newlen-oldlen;
+	place_name_extra_size += oldlen - newlen;
+	if (GetGameType() != GAME_TYPE_PSX)
+		place_name_size += newlen - oldlen;
 	return 0;
 }
 
 int WorldMapDataStruct::SetName(unsigned int placeid, FF9String& newvalue) {
 	int oldlen = place_name[placeid].length;
 	int newlen = newvalue.length;
-	if (newlen>oldlen+place_name_extra_size)
+	if (newlen > oldlen + place_name_extra_size)
 		return 1;
 	place_name[placeid] = newvalue;
-	place_name_extra_size += oldlen-newlen;
-	if (GetGameType()!=GAME_TYPE_PSX)
-		place_name_size += newlen-oldlen;
+	place_name_extra_size += oldlen - newlen;
+	if (GetGameType() != GAME_TYPE_PSX)
+		place_name_size += newlen - oldlen;
 	return 0;
 }
 
@@ -124,11 +124,7 @@ int WorldMapDataStruct::ChangeBattle(unsigned int groundid, unsigned int setid, 
 #define MACRO_WORLDSTRUCT_PLACE(IO,SEEK,READ,PPF) \
 	unsigned int k; \
 	SEEK(f,headerpos,section_offset[WM_SECTION_NAME]); \
-	if (READ) { \
-		place_unknown_amount = new uint16_t[WORLD_MAP_PLACE_AMOUNT]; \
-		place_unknown = new uint8_t*[WORLD_MAP_PLACE_AMOUNT]; \
-		j = 0; \
-	} \
+	j = 0; \
 	for (i=0;i<WORLD_MAP_PLACE_AMOUNT;i++) { \
 		if (PPF) PPFInitScanStep(f,true,place_name[i].length); \
 		IO ## FF9String(f,place_name[i]); \
@@ -159,7 +155,7 @@ int WorldMapDataStruct::ChangeBattle(unsigned int groundid, unsigned int setid, 
 	for (i=0;i<WORLD_MAP_BATTLE_GROUND_AMOUNT;i++) { \
 		for (j=0;j<WORLD_MAP_BATTLE_SET_AMOUNT;j++) \
 			IO ## Short(f,battle_id[i][j]); \
-		IO ## Short(f,battle_flags[i]); \
+		IO ## Short(f,battle_flag[i]); \
 	} \
 	if (PPF) PPFEndScanStep();
 
@@ -186,7 +182,7 @@ void WorldMapDataStruct::Read(fstream& f) {
 //		MACRO_WORLDSTRUCT_PLACE(SteamRead,SteamSeek,true,false)
 		MACRO_WORLDSTRUCT_BATTLE(SteamRead,SteamSeek,true,false)
 		MACRO_WORLDSTRUCT_FRIENDLY(SteamRead,SteamSeek,true,false)
-		place_name_extra_size = 0xFFFF;
+		place_name_extra_size = 0xFFFFFF;
 	}
 	loaded = true;
 }
@@ -207,10 +203,10 @@ void WorldMapDataStruct::WritePPF(fstream& f) {
 }
 
 void WorldMapDataStruct::ReadHWS(fstream& f, bool usetext) {
-	uint8_t version;
-	HWSReadChar(f,version);
+	uint16_t version;
+	HWSReadShort(f,version);
 	MACRO_WORLDSTRUCT_IOFUNCTION(HWSRead,HWSSeek,true,false)
-	if (usetext) {
+	if (usetext && GetHWSGameType() == GAME_TYPE_PSX) {
 		MACRO_WORLDSTRUCT_PLACE(HWSRead,HWSSeek,true,false)
 	}
 	MACRO_WORLDSTRUCT_BATTLE(HWSRead,HWSSeek,true,false)
@@ -220,8 +216,8 @@ void WorldMapDataStruct::ReadHWS(fstream& f, bool usetext) {
 	MarkDataModified();
 }
 
-void WorldMapDataStruct::WriteHWS(fstream& f, bool saveversion, int steamdiscordiscmr) {
-	if (saveversion)
+void WorldMapDataStruct::WriteHWS(fstream& f, bool hwsformat, int steamdiscordiscmr) {
+	if (hwsformat)
 		HWSWriteShort(f,WM_HWS_VERSION);
 	else if (steamdiscordiscmr>=0 && steamdiscordiscmr<2)
 		HWSSeek(f,f.tellg(),steam_chunk_pos_disc[steamdiscordiscmr]);
@@ -243,16 +239,17 @@ void WorldMapDataStruct::UpdateOffset() {
 void WorldMapDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 	unsigned int i,j,k,l;
 	amount = clusset.world_amount;
-	name = new wstring[amount];
-	tim_amount = new uint16_t[amount];
-	script = new ScriptDataStruct*[amount];
+	struct_id.resize(amount);
+	name.resize(amount);
+	tim_amount.resize(amount);
+	script.resize(amount);
 	LoadingDialogInit(amount,_(L"Reading world maps..."));
 	if (GetGameType()==GAME_TYPE_PSX) {
-		cluster_id = new uint16_t[amount];
-		text_data = new TextDataStruct*[amount];
-		charmap = new CharmapDataStruct*[amount];
-		chartim = new TIMImageDataStruct*[amount];
-		preload = new ImageMapDataStruct*[amount];
+		cluster_id.resize(amount);
+		text_data.resize(amount);
+		charmap.resize(amount);
+		chartim.resize(amount);
+		preload.resize(amount);
 		clusset.clus[clusset.world_map_shared_data_index].CreateChildren(ffbin);
 		ChunkData& chunkworlddata = clusset.clus[clusset.world_map_shared_data_index].chunk[clusset.clus[clusset.world_map_shared_data_index].SearchChunkType(CHUNK_TYPE_VARIOUS)];
 		world_data = (WorldMapDataStruct*)&chunkworlddata.GetObject(1);
@@ -287,6 +284,7 @@ void WorldMapDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 				}
 				ChunkData& chunkscript = clus.chunk[clus.SearchChunkType(CHUNK_TYPE_SCRIPT)];
 				script[j] = (ScriptDataStruct*)&chunkscript.GetObject(0);
+				struct_id[j] = script[j]->object_id;
 				ChunkData& chunktxt = clus.chunk[clus.SearchChunkType(CHUNK_TYPE_TEXT)];
 				text_data[j] = (TextDataStruct*)&chunktxt.GetObject(0);
 				if (clus.SearchChunkType(CHUNK_TYPE_CHARMAP)>=0) {
@@ -324,7 +322,7 @@ void WorldMapDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 		char* buffer;
 		fname += "resources.assets";
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
-		text_data = new TextDataStruct*[amount];
+		text_data.resize(amount);
 		text_data[0] = new TextDataStruct[1];
 		text_data[0]->Init(true,CHUNK_TYPE_TEXT,STEAM_WORLD_MAP_TEXT_ID,&dummyclus[0],CLUSTER_TYPE_WORLD_MAP);
 		text_data[0]->amount = 0;
@@ -380,6 +378,7 @@ void WorldMapDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 		ffbin.open(fname.c_str(),ios::in | ios::binary);
 		for (i=0;i<amount;i++) {
 			tim_amount[i] = 0;
+			struct_id[i] = config.world_id[i];
 			script[i] = new ScriptDataStruct[1];
 			if (i==0)
 				script[i]->Init(false,CHUNK_TYPE_SCRIPT,config.world_id[i],&dummyclus[i]);
@@ -913,4 +912,11 @@ void WorldMapDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, uns
 	ffhws.seekg(nboffset);
 	HWSWriteShort(ffhws,nbmodified);
 	ffhws.seekg(endoffset);
+}
+
+int WorldMapDataSet::GetIndexById(uint16_t worldid) {
+	for (unsigned int i = 0; i < amount; i++)
+		if (worldid == struct_id[i])
+			return i;
+	return -1;
 }

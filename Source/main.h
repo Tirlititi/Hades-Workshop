@@ -247,6 +247,7 @@ protected:
 	virtual void OnBatchExportClick( wxCommandEvent& event );
 	virtual void OnBatchImportClick( wxCommandEvent& event );
 	virtual void OnToolClick( wxCommandEvent& event );
+	virtual void OnMemoriaClick( wxCommandEvent& event );
 	virtual void OnAboutClick( wxCommandEvent& event );
 	virtual void OnHelpClick( wxCommandEvent& event );
 	virtual void OnPanelChanged( wxAuiNotebookEvent& event );

@@ -329,9 +329,9 @@ public:
 	vector<uint8_t>* safelist[5];
 
 	wxString GetAbilName(uint8_t abil) {
-		if (abil<SPELL_AMOUNT && parent->cddata->spellloaded)
+		if (abil<SPELL_AMOUNT && parent->cddata->saveset.sectionloaded[DATA_SECTION_SPELL])
 			return _(parent->cddata->spellset.spell[abil].name.GetStr(hades::TEXT_PREVIEW_TYPE));
-		if (abil>=SPELL_AMOUNT && parent->cddata->supportloaded)
+		if (abil>=SPELL_AMOUNT && parent->cddata->saveset.sectionloaded[DATA_SECTION_SUPPORT])
 			return _(parent->cddata->supportset.support[abil-SPELL_AMOUNT].name.GetStr(hades::TEXT_PREVIEW_TYPE));
 		return wxString::Format(wxT("%i"), abil);
 	}
@@ -528,19 +528,19 @@ void ToolRandomizer::UpdateMenuAvailability() {
 	m_armorsupport->Enable(m_armorabil->GetSelection()==2);
 	m_battleprop->Enable(m_battlespell->IsChecked());
 	m_battlempfactor->Enable(m_battlemp->IsChecked());
-	bool charok = cddata->spellloaded && cddata->cmdloaded && cddata->statloaded;
+	bool charok = cddata->saveset.sectionloaded[DATA_SECTION_SPELL] && cddata->saveset.sectionloaded[DATA_SECTION_CMD] && cddata->saveset.sectionloaded[DATA_SECTION_STAT];
 	m_enablechar->Enable(charok);
 	if (!charok) m_enablechar->SetValue(false);
-	bool weapok = cddata->itemloaded;
+	bool weapok = cddata->saveset.sectionloaded[DATA_SECTION_ITEM];
 	m_enableweap->Enable(weapok);
 	if (!weapok) m_enableweap->SetValue(false);
-	bool armorok = cddata->itemloaded;
+	bool armorok = cddata->saveset.sectionloaded[DATA_SECTION_ITEM];
 	m_enablearmor->Enable(armorok);
 	if (!armorok) m_enablearmor->SetValue(false);
-	bool battleok = cddata->enemyloaded;
+	bool battleok = cddata->saveset.sectionloaded[DATA_SECTION_ENMY];
 	m_enablebattle->Enable(battleok);
 	if (!battleok) m_enablebattle->SetValue(false);
-	bool cardok = cddata->cardloaded && cddata->enemyloaded;
+	bool cardok = cddata->saveset.sectionloaded[DATA_SECTION_CARD] && cddata->saveset.sectionloaded[DATA_SECTION_ENMY];
 	m_enablecard->Enable(cardok);
 	if (!cardok) m_enablecard->SetValue(false);
 	if (!m_enablechar->IsChecked() && !m_enableweap->IsChecked() && !m_enablearmor->IsChecked() && !m_enablebattle->IsChecked() && !m_enablecard->IsChecked()) {

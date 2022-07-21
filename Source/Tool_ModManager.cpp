@@ -35,178 +35,178 @@ ToolModManager::~ToolModManager() {
 int ToolModManager::ShowModal(CDDataStruct* data) {
 	unsigned int i, j;
 	cddata = data;
-	wxTreeListItem topitem,curitem,lowitem;
+	wxTreeListItem topitem, curitem, lowitem;
 	SaveSet* dataset = &cddata->saveset;
-	topitem = m_listtree->AppendItem(m_listtree->GetRootItem(),_(L"Generic"));
-	m_listtree->SetItemData(topitem,new ModManagerClientData(0,0));
-	if (cddata->spellloaded) {
-		curitem = m_listtree->AppendItem(topitem,_(L"Spells"));
-		m_listtree->SetItemData(curitem,new ModManagerClientData(1,DATA_SECTION_SPELL));
-		if (cddata->spellmodified) m_listtree->CheckItem(curitem);
+	topitem = m_listtree->AppendItem(m_listtree->GetRootItem(), _(L"Generic"));
+	m_listtree->SetItemData(topitem, new ModManagerClientData(0, 0));
+	if (cddata->saveset.sectionloaded[DATA_SECTION_SPELL]) {
+		curitem = m_listtree->AppendItem(topitem, _(L"Spells"));
+		m_listtree->SetItemData(curitem, new ModManagerClientData(1, DATA_SECTION_SPELL));
+		if (cddata->saveset.sectionmodified[DATA_SECTION_SPELL]) m_listtree->CheckItem(curitem);
 	}
-	if (cddata->supportloaded) {
-		curitem = m_listtree->AppendItem(topitem,_(L"Supporting Abilities"));
-		m_listtree->SetItemData(curitem,new ModManagerClientData(1,DATA_SECTION_SUPPORT));
-		if (cddata->supportmodified) m_listtree->CheckItem(curitem);
+	if (cddata->saveset.sectionloaded[DATA_SECTION_SUPPORT]) {
+		curitem = m_listtree->AppendItem(topitem, _(L"Supporting Abilities"));
+		m_listtree->SetItemData(curitem, new ModManagerClientData(1, DATA_SECTION_SUPPORT));
+		if (cddata->saveset.sectionmodified[DATA_SECTION_SUPPORT]) m_listtree->CheckItem(curitem);
 	}
-	if (cddata->cmdloaded) {
-		curitem = m_listtree->AppendItem(topitem,_(L"Commands"));
-		m_listtree->SetItemData(curitem,new ModManagerClientData(1,DATA_SECTION_CMD));
-		if (cddata->cmdmodified) m_listtree->CheckItem(curitem);
+	if (cddata->saveset.sectionloaded[DATA_SECTION_CMD]) {
+		curitem = m_listtree->AppendItem(topitem, _(L"Commands"));
+		m_listtree->SetItemData(curitem, new ModManagerClientData(1, DATA_SECTION_CMD));
+		if (cddata->saveset.sectionmodified[DATA_SECTION_CMD]) m_listtree->CheckItem(curitem);
 	}
-	if (cddata->statloaded) {
-		curitem = m_listtree->AppendItem(topitem,_(L"Stats"));
-		m_listtree->SetItemData(curitem,new ModManagerClientData(1,DATA_SECTION_STAT));
-		if (cddata->statmodified) m_listtree->CheckItem(curitem);
+	if (cddata->saveset.sectionloaded[DATA_SECTION_STAT]) {
+		curitem = m_listtree->AppendItem(topitem, _(L"Stats"));
+		m_listtree->SetItemData(curitem, new ModManagerClientData(1, DATA_SECTION_STAT));
+		if (cddata->saveset.sectionmodified[DATA_SECTION_STAT]) m_listtree->CheckItem(curitem);
 	}
-	if (cddata->partyspecialloaded) {
-		curitem = m_listtree->AppendItem(topitem,_(L"Party - Special"));
-		m_listtree->SetItemData(curitem,new ModManagerClientData(1,DATA_SECTION_PARTY_SPECIAL));
-		if (cddata->partyspecialmodified) m_listtree->CheckItem(curitem);
+	if (cddata->saveset.sectionloaded[DATA_SECTION_PARTY_SPECIAL]) {
+		curitem = m_listtree->AppendItem(topitem, _(L"Party - Special"));
+		m_listtree->SetItemData(curitem, new ModManagerClientData(1, DATA_SECTION_PARTY_SPECIAL));
+		if (cddata->saveset.sectionmodified[DATA_SECTION_PARTY_SPECIAL]) m_listtree->CheckItem(curitem);
 	}
-	if (cddata->itemloaded) {
-		curitem = m_listtree->AppendItem(topitem,_(L"Items"));
-		m_listtree->SetItemData(curitem,new ModManagerClientData(1,DATA_SECTION_ITEM));
-		if (cddata->itemmodified) m_listtree->CheckItem(curitem);
+	if (cddata->saveset.sectionloaded[DATA_SECTION_ITEM]) {
+		curitem = m_listtree->AppendItem(topitem, _(L"Items"));
+		m_listtree->SetItemData(curitem, new ModManagerClientData(1, DATA_SECTION_ITEM));
+		if (cddata->saveset.sectionmodified[DATA_SECTION_ITEM]) m_listtree->CheckItem(curitem);
 	}
-	if (cddata->shoploaded) {
-		curitem = m_listtree->AppendItem(topitem,_(L"Shops"));
-		m_listtree->SetItemData(curitem,new ModManagerClientData(1,DATA_SECTION_SHOP));
-		if (cddata->shopmodified) m_listtree->CheckItem(curitem);
+	if (cddata->saveset.sectionloaded[DATA_SECTION_SHOP]) {
+		curitem = m_listtree->AppendItem(topitem, _(L"Shops"));
+		m_listtree->SetItemData(curitem, new ModManagerClientData(1, DATA_SECTION_SHOP));
+		if (cddata->saveset.sectionmodified[DATA_SECTION_SHOP]) m_listtree->CheckItem(curitem);
 	}
-	if (cddata->cardloaded) {
-		curitem = m_listtree->AppendItem(topitem,_(L"Tetra Master"));
-		m_listtree->SetItemData(curitem,new ModManagerClientData(1,DATA_SECTION_CARD));
-		if (cddata->cardmodified) m_listtree->CheckItem(curitem);
+	if (cddata->saveset.sectionloaded[DATA_SECTION_CARD]) {
+		curitem = m_listtree->AppendItem(topitem, _(L"Tetra Master"));
+		m_listtree->SetItemData(curitem, new ModManagerClientData(1, DATA_SECTION_CARD));
+		if (cddata->saveset.sectionmodified[DATA_SECTION_CARD]) m_listtree->CheckItem(curitem);
 	}
-	if (cddata->spellanimloaded) {
-		curitem = m_listtree->AppendItem(topitem,_(L"Spell Animations"));
-		m_listtree->SetItemData(curitem,new ModManagerClientData(1,DATA_SECTION_SPELL_ANIM));
-		for (i=0;i<cddata->spellanimset.amount;i++)
+	if (cddata->saveset.sectionloaded[DATA_SECTION_SPELL_ANIM]) {
+		curitem = m_listtree->AppendItem(topitem, _(L"Spell Animations"));
+		m_listtree->SetItemData(curitem, new ModManagerClientData(1, DATA_SECTION_SPELL_ANIM));
+		for (i = 0; i < cddata->spellanimset.amount; i++)
 			if (!cddata->spellanimset.spell[i].is_empty) {
-				for (j=0;j<G_N_ELEMENTS(HADES_STRING_SPELL_MODEL);j++)
-					if (HADES_STRING_SPELL_MODEL[j].id==i) {
-						lowitem = m_listtree->AppendItem(curitem,_(HADES_STRING_SPELL_MODEL[j].label));
+				for (j = 0; j < G_N_ELEMENTS(HADES_STRING_SPELL_MODEL); j++)
+					if (HADES_STRING_SPELL_MODEL[j].id == i) {
+						lowitem = m_listtree->AppendItem(curitem, _(HADES_STRING_SPELL_MODEL[j].label));
 						break;
 					}
-				if (j==G_N_ELEMENTS(HADES_STRING_SPELL_MODEL))
-					lowitem = m_listtree->AppendItem(curitem,wxString::Format(wxT("Spell Animation %u"),i));
-				m_listtree->SetItemData(lowitem,new ModManagerClientData(2,DATA_SECTION_SPELL_ANIM,i));
+				if (j == G_N_ELEMENTS(HADES_STRING_SPELL_MODEL))
+					lowitem = m_listtree->AppendItem(curitem, wxString::Format(wxT("Spell Animation %u"), i));
+				m_listtree->SetItemData(lowitem, new ModManagerClientData(2, DATA_SECTION_SPELL_ANIM, i));
 				if (cddata->spellanimset.spell[i].modified_data != 0) m_listtree->CheckItem(lowitem);
 			}
-		if (!m_listtree->AreAllChildrenInState(curitem,wxCHK_UNCHECKED))
+		if (!m_listtree->AreAllChildrenInState(curitem, wxCHK_UNCHECKED))
 			m_listtree->CheckItem(curitem);
 	}
-	if (!m_listtree->AreAllChildrenInState(topitem,wxCHK_UNCHECKED))
+	if (!m_listtree->AreAllChildrenInState(topitem, wxCHK_UNCHECKED))
 		m_listtree->CheckItem(topitem);
-	if (cddata->enemyloaded) {
-		topitem = m_listtree->AppendItem(m_listtree->GetRootItem(),_(L"Enemies"));
-		m_listtree->SetItemData(topitem,new ModManagerClientData(0,1));
-		for (i=0;i<dataset->enemyset->battle_amount;i++) {
-			curitem = m_listtree->AppendItem(topitem,_(dataset->enemyset->battle_name[i]));
-			m_listtree->SetItemData(curitem,new ModManagerClientData(2,DATA_SECTION_ENMY,i));
-			lowitem = m_listtree->AppendItem(curitem,_(L"Enemy Data"));
-			m_listtree->SetItemData(lowitem,new ModManagerClientData(3,DATA_SECTION_ENMY,i,CHUNK_TYPE_ENEMY_STATS));
+	if (cddata->saveset.sectionloaded[DATA_SECTION_ENMY]) {
+		topitem = m_listtree->AppendItem(m_listtree->GetRootItem(), _(L"Enemies"));
+		m_listtree->SetItemData(topitem, new ModManagerClientData(0, 1));
+		for (i = 0; i < dataset->enemyset->battle_amount; i++) {
+			curitem = m_listtree->AppendItem(topitem, _(dataset->enemyset->battle_name[i]));
+			m_listtree->SetItemData(curitem, new ModManagerClientData(2, DATA_SECTION_ENMY, i));
+			lowitem = m_listtree->AppendItem(curitem, _(L"Enemy Data"));
+			m_listtree->SetItemData(lowitem, new ModManagerClientData(3, DATA_SECTION_ENMY, i, CHUNK_TYPE_ENEMY_STATS));
 			if (dataset->enemyset->battle[i]->modified) m_listtree->CheckItem(lowitem);
-			lowitem = m_listtree->AppendItem(curitem,_(L"Script"));
-			m_listtree->SetItemData(lowitem,new ModManagerClientData(3,DATA_SECTION_ENMY,i,CHUNK_TYPE_SCRIPT));
+			lowitem = m_listtree->AppendItem(curitem, _(L"Script"));
+			m_listtree->SetItemData(lowitem, new ModManagerClientData(3, DATA_SECTION_ENMY, i, CHUNK_TYPE_SCRIPT));
 			if (dataset->enemyset->script[i]->modified) m_listtree->CheckItem(lowitem);
-			lowitem = m_listtree->AppendItem(curitem,_(L"Texts"));
-			m_listtree->SetItemData(lowitem,new ModManagerClientData(3,DATA_SECTION_ENMY,i,CHUNK_TYPE_TEXT));
+			lowitem = m_listtree->AppendItem(curitem, _(L"Texts"));
+			m_listtree->SetItemData(lowitem, new ModManagerClientData(3, DATA_SECTION_ENMY, i, CHUNK_TYPE_TEXT));
 			if (dataset->enemyset->text[i]->modified) m_listtree->CheckItem(lowitem);
-			if (GetGameType()==GAME_TYPE_PSX) {
-				lowitem = m_listtree->AppendItem(curitem,_(L"Preloading"));
-				m_listtree->SetItemData(lowitem,new ModManagerClientData(3,DATA_SECTION_ENMY,i,CHUNK_TYPE_IMAGE_MAP));
+			if (GetGameType() == GAME_TYPE_PSX) {
+				lowitem = m_listtree->AppendItem(curitem, _(L"Preloading"));
+				m_listtree->SetItemData(lowitem, new ModManagerClientData(3, DATA_SECTION_ENMY, i, CHUNK_TYPE_IMAGE_MAP));
 				if (dataset->enemyset->preload[i]->modified) m_listtree->CheckItem(lowitem);
 			}
-			lowitem = m_listtree->AppendItem(curitem,_(L"Animations & Cameras"));
-			m_listtree->SetItemData(lowitem,new ModManagerClientData(3,DATA_SECTION_ENMY,i,CHUNK_TYPE_BATTLE_DATA));
+			lowitem = m_listtree->AppendItem(curitem, _(L"Animations & Cameras"));
+			m_listtree->SetItemData(lowitem, new ModManagerClientData(3, DATA_SECTION_ENMY, i, CHUNK_TYPE_BATTLE_DATA));
 			if (dataset->enemyset->battle_data[i]->modified) m_listtree->CheckItem(lowitem);
-			if (!m_listtree->AreAllChildrenInState(curitem,wxCHK_UNCHECKED))
+			if (!m_listtree->AreAllChildrenInState(curitem, wxCHK_UNCHECKED))
 				m_listtree->CheckItem(curitem);
 		}
-		if (!m_listtree->AreAllChildrenInState(topitem,wxCHK_UNCHECKED))
+		if (!m_listtree->AreAllChildrenInState(topitem, wxCHK_UNCHECKED))
 			m_listtree->CheckItem(topitem);
 	}
-	if (cddata->textloaded) {
-		topitem = m_listtree->AppendItem(m_listtree->GetRootItem(),_(L"Texts"));
-		m_listtree->SetItemData(topitem,new ModManagerClientData(0,2));
-		for (i=0;i<dataset->textset->amount;i++) {
-			curitem = m_listtree->AppendItem(topitem,_(dataset->textset->name[i]));
-			m_listtree->SetItemData(curitem,new ModManagerClientData(2,DATA_SECTION_TEXT,i));
-			if (dataset->textset->text_data[i]!=NULL) {
-				lowitem = m_listtree->AppendItem(curitem,_(L"Texts"));
-				m_listtree->SetItemData(lowitem,new ModManagerClientData(3,DATA_SECTION_TEXT,i,CHUNK_TYPE_TEXT));
+	if (cddata->saveset.sectionloaded[DATA_SECTION_TEXT]) {
+		topitem = m_listtree->AppendItem(m_listtree->GetRootItem(), _(L"Texts"));
+		m_listtree->SetItemData(topitem, new ModManagerClientData(0, 2));
+		for (i = 0; i < dataset->textset->amount; i++) {
+			curitem = m_listtree->AppendItem(topitem, _(dataset->textset->name[i]));
+			m_listtree->SetItemData(curitem, new ModManagerClientData(2, DATA_SECTION_TEXT, i));
+			if (dataset->textset->text_data[i] != NULL) {
+				lowitem = m_listtree->AppendItem(curitem, _(L"Texts"));
+				m_listtree->SetItemData(lowitem, new ModManagerClientData(3, DATA_SECTION_TEXT, i, CHUNK_TYPE_TEXT));
 				if (dataset->textset->text_data[i]->modified) m_listtree->CheckItem(lowitem);
 			}
-			if (GetGameType()==GAME_TYPE_PSX && dataset->textset->charmap[i]!=NULL) {
-				lowitem = m_listtree->AppendItem(curitem,_(L"Charmap"));
-				m_listtree->SetItemData(lowitem,new ModManagerClientData(3,DATA_SECTION_TEXT,i,CHUNK_TYPE_CHARMAP));
+			if (GetGameType() == GAME_TYPE_PSX && dataset->textset->charmap[i] != NULL) {
+				lowitem = m_listtree->AppendItem(curitem, _(L"Charmap"));
+				m_listtree->SetItemData(lowitem, new ModManagerClientData(3, DATA_SECTION_TEXT, i, CHUNK_TYPE_CHARMAP));
 				if (dataset->textset->charmap[i]->modified) m_listtree->CheckItem(lowitem);
 			}
-			if (GetGameType()==GAME_TYPE_PSX && dataset->textset->chartim[i]!=NULL) {
-				lowitem = m_listtree->AppendItem(curitem,_(L"Texture"));
-				m_listtree->SetItemData(lowitem,new ModManagerClientData(3,DATA_SECTION_TEXT,i,CHUNK_TYPE_TIM));
+			if (GetGameType() == GAME_TYPE_PSX && dataset->textset->chartim[i] != NULL) {
+				lowitem = m_listtree->AppendItem(curitem, _(L"Texture"));
+				m_listtree->SetItemData(lowitem, new ModManagerClientData(3, DATA_SECTION_TEXT, i, CHUNK_TYPE_TIM));
 				if (dataset->textset->chartim[i]->parent_chunk->modified) m_listtree->CheckItem(lowitem);
 			}
-			if (!m_listtree->AreAllChildrenInState(curitem,wxCHK_UNCHECKED))
+			if (!m_listtree->AreAllChildrenInState(curitem, wxCHK_UNCHECKED))
 				m_listtree->CheckItem(curitem);
 		}
-		if (!m_listtree->AreAllChildrenInState(topitem,wxCHK_UNCHECKED))
+		if (!m_listtree->AreAllChildrenInState(topitem, wxCHK_UNCHECKED))
 			m_listtree->CheckItem(topitem);
 	}
-	if (cddata->worldloaded) {
-		topitem = m_listtree->AppendItem(m_listtree->GetRootItem(),_(L"World Maps"));
-		m_listtree->SetItemData(topitem,new ModManagerClientData(0,3));
-		curitem = m_listtree->AppendItem(topitem,_(L"Common Data"));
-		m_listtree->SetItemData(curitem,new ModManagerClientData(1,DATA_SECTION_WORLD_MAP));
+	if (cddata->saveset.sectionloaded[DATA_SECTION_WORLD_MAP]) {
+		topitem = m_listtree->AppendItem(m_listtree->GetRootItem(), _(L"World Maps"));
+		m_listtree->SetItemData(topitem, new ModManagerClientData(0, 3));
+		curitem = m_listtree->AppendItem(topitem, _(L"Common Data"));
+		m_listtree->SetItemData(curitem, new ModManagerClientData(1, DATA_SECTION_WORLD_MAP));
 		if (dataset->worldset->world_data->modified) m_listtree->CheckItem(curitem);
-		for (i=0;i<dataset->worldset->amount;i++) {
-			curitem = m_listtree->AppendItem(topitem,_(dataset->worldset->name[i]));
-			m_listtree->SetItemData(curitem,new ModManagerClientData(2,DATA_SECTION_WORLD_MAP,i));
-			lowitem = m_listtree->AppendItem(curitem,_(L"Script"));
-			m_listtree->SetItemData(lowitem,new ModManagerClientData(3,DATA_SECTION_WORLD_MAP,i,CHUNK_TYPE_SCRIPT));
+		for (i = 0; i < dataset->worldset->amount; i++) {
+			curitem = m_listtree->AppendItem(topitem, _(dataset->worldset->name[i]));
+			m_listtree->SetItemData(curitem, new ModManagerClientData(2, DATA_SECTION_WORLD_MAP, i));
+			lowitem = m_listtree->AppendItem(curitem, _(L"Script"));
+			m_listtree->SetItemData(lowitem, new ModManagerClientData(3, DATA_SECTION_WORLD_MAP, i, CHUNK_TYPE_SCRIPT));
 			if (dataset->worldset->script[i]->modified) m_listtree->CheckItem(lowitem);
-			if (GetGameType()==GAME_TYPE_PSX || i==0) {
-				lowitem = m_listtree->AppendItem(curitem,_(L"Texts"));
-				m_listtree->SetItemData(lowitem,new ModManagerClientData(3,DATA_SECTION_WORLD_MAP,i,CHUNK_TYPE_TEXT));
+			if (GetGameType() == GAME_TYPE_PSX || i == 0) {
+				lowitem = m_listtree->AppendItem(curitem, _(L"Texts"));
+				m_listtree->SetItemData(lowitem, new ModManagerClientData(3, DATA_SECTION_WORLD_MAP, i, CHUNK_TYPE_TEXT));
 				if (dataset->worldset->text_data[i]->modified) m_listtree->CheckItem(lowitem);
 			}
-			if (GetGameType()==GAME_TYPE_PSX) {
-				lowitem = m_listtree->AppendItem(curitem,_(L"Preloading"));
-				m_listtree->SetItemData(lowitem,new ModManagerClientData(3,DATA_SECTION_WORLD_MAP,i,CHUNK_TYPE_IMAGE_MAP));
+			if (GetGameType() == GAME_TYPE_PSX) {
+				lowitem = m_listtree->AppendItem(curitem, _(L"Preloading"));
+				m_listtree->SetItemData(lowitem, new ModManagerClientData(3, DATA_SECTION_WORLD_MAP, i, CHUNK_TYPE_IMAGE_MAP));
 				if (dataset->worldset->preload[i]->modified) m_listtree->CheckItem(lowitem);
 			}
-			if (GetGameType()==GAME_TYPE_PSX && dataset->worldset->charmap[i]!=NULL) {
-				lowitem = m_listtree->AppendItem(curitem,_(L"Charmap"));
-				m_listtree->SetItemData(lowitem,new ModManagerClientData(3,DATA_SECTION_WORLD_MAP,i,CHUNK_TYPE_CHARMAP));
+			if (GetGameType() == GAME_TYPE_PSX && dataset->worldset->charmap[i] != NULL) {
+				lowitem = m_listtree->AppendItem(curitem, _(L"Charmap"));
+				m_listtree->SetItemData(lowitem, new ModManagerClientData(3, DATA_SECTION_WORLD_MAP, i, CHUNK_TYPE_CHARMAP));
 				if (dataset->worldset->charmap[i]->modified) m_listtree->CheckItem(lowitem);
 			}
-			if (GetGameType()==GAME_TYPE_PSX && dataset->worldset->chartim[i]!=NULL) {
-				lowitem = m_listtree->AppendItem(curitem,_(L"Texture"));
-				m_listtree->SetItemData(lowitem,new ModManagerClientData(3,DATA_SECTION_WORLD_MAP,i,CHUNK_TYPE_TIM));
+			if (GetGameType() == GAME_TYPE_PSX && dataset->worldset->chartim[i] != NULL) {
+				lowitem = m_listtree->AppendItem(curitem, _(L"Texture"));
+				m_listtree->SetItemData(lowitem, new ModManagerClientData(3, DATA_SECTION_WORLD_MAP, i, CHUNK_TYPE_TIM));
 				if (dataset->worldset->chartim[i]->parent_chunk->modified) m_listtree->CheckItem(lowitem);
 			}
-			if (!m_listtree->AreAllChildrenInState(curitem,wxCHK_UNCHECKED))
+			if (!m_listtree->AreAllChildrenInState(curitem, wxCHK_UNCHECKED))
 				m_listtree->CheckItem(curitem);
 		}
-		if (!m_listtree->AreAllChildrenInState(topitem,wxCHK_UNCHECKED))
+		if (!m_listtree->AreAllChildrenInState(topitem, wxCHK_UNCHECKED))
 			m_listtree->CheckItem(topitem);
 	}
-	if (cddata->fieldloaded) {
-		topitem = m_listtree->AppendItem(m_listtree->GetRootItem(),_(L"Fields"));
-		m_listtree->SetItemData(topitem,new ModManagerClientData(0,4));
-		for (i=0;i<dataset->fieldset->amount;i++) {
-			curitem = m_listtree->AppendItem(topitem,_(dataset->fieldset->script_data[i]->name.str_nice));
-			m_listtree->SetItemData(curitem,new ModManagerClientData(2,DATA_SECTION_FIELD,i));
-			lowitem = m_listtree->AppendItem(curitem,_(L"Script"));
-			m_listtree->SetItemData(lowitem,new ModManagerClientData(3,DATA_SECTION_FIELD,i,CHUNK_TYPE_SCRIPT));
+	if (cddata->saveset.sectionloaded[DATA_SECTION_FIELD]) {
+		topitem = m_listtree->AppendItem(m_listtree->GetRootItem(), _(L"Fields"));
+		m_listtree->SetItemData(topitem, new ModManagerClientData(0, 4));
+		for (i = 0; i < dataset->fieldset->amount; i++) {
+			curitem = m_listtree->AppendItem(topitem, _(dataset->fieldset->script_data[i]->name.str_nice));
+			m_listtree->SetItemData(curitem, new ModManagerClientData(2, DATA_SECTION_FIELD, i));
+			lowitem = m_listtree->AppendItem(curitem, _(L"Script"));
+			m_listtree->SetItemData(lowitem, new ModManagerClientData(3, DATA_SECTION_FIELD, i, CHUNK_TYPE_SCRIPT));
 			if (dataset->fieldset->script_data[i]->modified) m_listtree->CheckItem(lowitem);
-			lowitem = m_listtree->AppendItem(curitem,_(L"Preloading"));
-			m_listtree->SetItemData(lowitem,new ModManagerClientData(3,DATA_SECTION_FIELD,i,CHUNK_TYPE_IMAGE_MAP));
+			lowitem = m_listtree->AppendItem(curitem, _(L"Preloading"));
+			m_listtree->SetItemData(lowitem, new ModManagerClientData(3, DATA_SECTION_FIELD, i, CHUNK_TYPE_IMAGE_MAP));
 			if (dataset->fieldset->preload[i]->modified) m_listtree->CheckItem(lowitem);
-			lowitem = m_listtree->AppendItem(curitem,_(L"Model Role"));
-			m_listtree->SetItemData(lowitem,new ModManagerClientData(3,DATA_SECTION_FIELD,i,CHUNK_TYPE_FIELD_ROLE));
+			lowitem = m_listtree->AppendItem(curitem, _(L"Model Role"));
+			m_listtree->SetItemData(lowitem, new ModManagerClientData(3, DATA_SECTION_FIELD, i, CHUNK_TYPE_FIELD_ROLE));
 			if (dataset->fieldset->role[i]->modified) m_listtree->CheckItem(lowitem);
 			if (dataset->fieldset->background_data[i] != NULL) {
 				lowitem = m_listtree->AppendItem(curitem, _(L"Background"));
@@ -218,54 +218,55 @@ int ToolModManager::ShowModal(CDDataStruct* data) {
 				m_listtree->SetItemData(lowitem, new ModManagerClientData(3, DATA_SECTION_FIELD, i, CHUNK_TYPE_FIELD_WALK));
 				if (dataset->fieldset->walkmesh[i]->modified) m_listtree->CheckItem(lowitem);
 			}
-			if (!m_listtree->AreAllChildrenInState(curitem,wxCHK_UNCHECKED))
+			if (!m_listtree->AreAllChildrenInState(curitem, wxCHK_UNCHECKED))
 				m_listtree->CheckItem(curitem);
 		}
-		if (!m_listtree->AreAllChildrenInState(topitem,wxCHK_UNCHECKED))
+		if (!m_listtree->AreAllChildrenInState(topitem, wxCHK_UNCHECKED))
 			m_listtree->CheckItem(topitem);
 	}
-	if (cddata->sceneloaded) {
-		topitem = m_listtree->AppendItem(m_listtree->GetRootItem(),_(L"Battle Scenes"));
-		m_listtree->SetItemData(topitem,new ModManagerClientData(0,5));
-		for (i=0;i<dataset->sceneset->scene_amount;i++) {
-			curitem = m_listtree->AppendItem(topitem,_(dataset->sceneset->scene_name[i]));
-			m_listtree->SetItemData(curitem,new ModManagerClientData(2,DATA_SECTION_BATTLE_SCENE,i));
-			lowitem = m_listtree->AppendItem(curitem,_(L"Model"));
-			m_listtree->SetItemData(lowitem,new ModManagerClientData(3,DATA_SECTION_BATTLE_SCENE,i,CHUNK_TYPE_BATTLE_SCENE));
+	if (cddata->saveset.sectionloaded[DATA_SECTION_BATTLE_SCENE]) {
+		topitem = m_listtree->AppendItem(m_listtree->GetRootItem(), _(L"Battle Scenes"));
+		m_listtree->SetItemData(topitem, new ModManagerClientData(0, 5));
+		for (i = 0; i < dataset->sceneset->scene_amount; i++) {
+			curitem = m_listtree->AppendItem(topitem, _(dataset->sceneset->scene_name[i]));
+			m_listtree->SetItemData(curitem, new ModManagerClientData(2, DATA_SECTION_BATTLE_SCENE, i));
+			lowitem = m_listtree->AppendItem(curitem, _(L"Model"));
+			m_listtree->SetItemData(lowitem, new ModManagerClientData(3, DATA_SECTION_BATTLE_SCENE, i, CHUNK_TYPE_BATTLE_SCENE));
 			if (dataset->sceneset->scene[i]->modified) m_listtree->CheckItem(lowitem);
-			if (dataset->sceneset->image[i]!=NULL) {
-				lowitem = m_listtree->AppendItem(curitem,_(L"Textures"));
-				m_listtree->SetItemData(lowitem,new ModManagerClientData(3,DATA_SECTION_BATTLE_SCENE,i,CHUNK_TYPE_TIM));
+			if (dataset->sceneset->image[i] != NULL) {
+				lowitem = m_listtree->AppendItem(curitem, _(L"Textures"));
+				m_listtree->SetItemData(lowitem, new ModManagerClientData(3, DATA_SECTION_BATTLE_SCENE, i, CHUNK_TYPE_TIM));
 				if (dataset->sceneset->image[i]->parent_chunk->modified) m_listtree->CheckItem(lowitem);
 			}
-			if (!m_listtree->AreAllChildrenInState(curitem,wxCHK_UNCHECKED))
+			if (!m_listtree->AreAllChildrenInState(curitem, wxCHK_UNCHECKED))
 				m_listtree->CheckItem(curitem);
 		}
-		if (!m_listtree->AreAllChildrenInState(topitem,wxCHK_UNCHECKED))
+		if (!m_listtree->AreAllChildrenInState(topitem, wxCHK_UNCHECKED))
 			m_listtree->CheckItem(topitem);
 	}
-	if (cddata->ffuiloaded) {
-		topitem = m_listtree->AppendItem(m_listtree->GetRootItem(),_(L"Interface"));
-		m_listtree->SetItemData(topitem,new ModManagerClientData(0,6));
-		curitem = m_listtree->AppendItem(topitem,_(L"UI Texts"));
-		m_listtree->SetItemData(curitem,new ModManagerClientData(1,DATA_SECTION_MENU_UI));
+	if (cddata->saveset.sectionloaded[DATA_SECTION_MENU_UI]) {
+		topitem = m_listtree->AppendItem(m_listtree->GetRootItem(), _(L"Interface"));
+		m_listtree->SetItemData(topitem, new ModManagerClientData(0, 6));
+		curitem = m_listtree->AppendItem(topitem, _(L"UI Texts"));
+		m_listtree->SetItemData(curitem, new ModManagerClientData(1, DATA_SECTION_MENU_UI));
 		if (dataset->ffuiset->special_text->modified) m_listtree->CheckItem(curitem);
-		if (!m_listtree->AreAllChildrenInState(topitem,wxCHK_UNCHECKED))
+		if (!m_listtree->AreAllChildrenInState(topitem, wxCHK_UNCHECKED))
 			m_listtree->CheckItem(topitem);
 	}
-	if (cddata->mipsloaded) {
-		topitem = m_listtree->AppendItem(m_listtree->GetRootItem(),_(L"MIPS Code"));
-		m_listtree->SetItemData(topitem,new ModManagerClientData(0,7));
-		curitem = m_listtree->AppendItem(topitem,_(L"Battle MIPS"));
-		m_listtree->SetItemData(curitem,new ModManagerClientData(1,DATA_SECTION_MIPS));
-		if (cddata->mipsset.battle_modified) m_listtree->CheckItem(curitem);
-		if (!m_listtree->AreAllChildrenInState(topitem,wxCHK_UNCHECKED))
-			m_listtree->CheckItem(topitem);
-	}
-	if (cddata->cilloaded) {
-		topitem = m_listtree->AppendItem(m_listtree->GetRootItem(),_(L"CIL Code"));
-		m_listtree->SetItemData(topitem,new ModManagerClientData(0,7));
-		if (cddata->cilmodified) m_listtree->CheckItem(topitem);
+	if (cddata->saveset.sectionloaded[DATA_SECTION_ASSEMBLY]) {
+		if (cddata->gametype == GAME_TYPE_PSX) {
+			topitem = m_listtree->AppendItem(m_listtree->GetRootItem(), _(L"MIPS Code"));
+			m_listtree->SetItemData(topitem, new ModManagerClientData(0, 7));
+			curitem = m_listtree->AppendItem(topitem, _(L"Battle MIPS"));
+			m_listtree->SetItemData(curitem, new ModManagerClientData(1, DATA_SECTION_MIPS));
+			if (cddata->mipsset.battle_modified) m_listtree->CheckItem(curitem);
+			if (!m_listtree->AreAllChildrenInState(topitem, wxCHK_UNCHECKED))
+				m_listtree->CheckItem(topitem);
+		} else {
+			topitem = m_listtree->AppendItem(m_listtree->GetRootItem(), _(L"CIL Code"));
+			m_listtree->SetItemData(topitem, new ModManagerClientData(0, 7));
+			if (cddata->saveset.sectionmodified[DATA_SECTION_ASSEMBLY]) m_listtree->CheckItem(topitem);
+		}
 	}
 	return ModManagerWindow::ShowModal();
 }
@@ -275,47 +276,47 @@ void ToolModMarkModification(CDDataStruct* data, ModManagerClientData* info, boo
 	if (info->type==0) {
 		if (!check) {
 			if (info->section==1)
-				data->enemymodified = false;
+				data->saveset.sectionmodified[DATA_SECTION_ENMY] = false;
 			else if (info->section==2)
-				data->textmodified = false;
+				data->saveset.sectionmodified[DATA_SECTION_TEXT] = false;
 			else if (info->section==3)
-				data->worldmodified = false;
+				data->saveset.sectionmodified[DATA_SECTION_WORLD_MAP] = false;
 			else if (info->section==4)
-				data->fieldmodified = false;
+				data->saveset.sectionmodified[DATA_SECTION_FIELD] = false;
 			else if (info->section==5)
-				data->scenemodified = false;
+				data->saveset.sectionmodified[DATA_SECTION_BATTLE_SCENE] = false;
 			else if (info->section==6)
-				data->ffuimodified = false;
+				data->saveset.sectionmodified[DATA_SECTION_MENU_UI] = false;
 			else if (info->section==7) {
 				if (GetGameType()==GAME_TYPE_PSX)
-					data->mipsmodified = false;
+					data->saveset.sectionmodified[DATA_SECTION_ASSEMBLY] = false;
 			}
 		}
 		if (info->section==7 && GetGameType()!=GAME_TYPE_PSX)
-			data->cilmodified = check;
+			data->saveset.sectionmodified[DATA_SECTION_ASSEMBLY] = check;
 	} else if (info->type==1) {
 		if (info->section==DATA_SECTION_SPELL) {
-			data->spellmodified = check;
+			data->saveset.sectionmodified[DATA_SECTION_SPELL] = check;
 		} else if (info->section==DATA_SECTION_SUPPORT) {
-			data->supportmodified = check;
+			data->saveset.sectionmodified[DATA_SECTION_SUPPORT] = check;
 		} else if (info->section==DATA_SECTION_CMD) {
-			data->cmdmodified = check;
+			data->saveset.sectionmodified[DATA_SECTION_CMD] = check;
 		} else if (info->section==DATA_SECTION_STAT) {
-			data->statmodified = check;
+			data->saveset.sectionmodified[DATA_SECTION_STAT] = check;
 		} else if (info->section==DATA_SECTION_PARTY_SPECIAL) {
-			data->partyspecialmodified = check;
+			data->saveset.sectionmodified[DATA_SECTION_PARTY_SPECIAL] = check;
 		} else if (info->section==DATA_SECTION_ITEM) {
-			data->itemmodified = check;
+			data->saveset.sectionmodified[DATA_SECTION_ITEM] = check;
 		} else if (info->section==DATA_SECTION_SHOP) {
-			data->shopmodified = check;
+			data->saveset.sectionmodified[DATA_SECTION_SHOP] = check;
 		} else if (info->section==DATA_SECTION_CARD) {
-			data->cardmodified = check;
+			data->saveset.sectionmodified[DATA_SECTION_CARD] = check;
 		} else if (info->section==DATA_SECTION_SPELL_ANIM) {
-			data->spellanimmodified = check;
+			data->saveset.sectionmodified[DATA_SECTION_SPELL_ANIM] = check;
 		} else if (info->section==DATA_SECTION_WORLD_MAP) {
 			if (check) {
 				data->worldset.world_data->MarkDataModified();
-				data->worldmodified = true;
+				data->saveset.sectionmodified[DATA_SECTION_WORLD_MAP] = true;
 			} else {
 				data->worldset.world_data->modified = false;
 				data->worldset.world_data->parent_chunk->modified = false;
@@ -323,11 +324,11 @@ void ToolModMarkModification(CDDataStruct* data, ModManagerClientData* info, boo
 		} else if (info->section==DATA_SECTION_MENU_UI) {
 			data->ffuiset.special_text->modified = check;
 			if (check)
-				data->ffuimodified = true;
+				data->saveset.sectionmodified[DATA_SECTION_MENU_UI] = true;
 		} else if (info->section==DATA_SECTION_ASSEMBLY) {
 			data->mipsset.battle_modified = check;
 			if (check)
-				data->mipsmodified = true;
+				data->saveset.sectionmodified[DATA_SECTION_ASSEMBLY] = true;
 		}
 	} else if (info->type==2) {
 		if (!check) {
@@ -355,7 +356,7 @@ void ToolModMarkModification(CDDataStruct* data, ModManagerClientData* info, boo
 	} else if (info->type==3) {
 		if (info->section==DATA_SECTION_ENMY) {
 			if (check)
-				data->enemymodified = true;
+				data->saveset.sectionmodified[DATA_SECTION_ENMY] = true;
 			if (info->chunk_type==CHUNK_TYPE_ENEMY_STATS) {
 				if (check) {
 					data->enemyset.battle[info->index]->MarkDataModified();
@@ -394,7 +395,7 @@ void ToolModMarkModification(CDDataStruct* data, ModManagerClientData* info, boo
 			}
 		} else if (info->section==DATA_SECTION_TEXT) {
 			if (check)
-				data->textmodified = true;
+				data->saveset.sectionmodified[DATA_SECTION_TEXT] = true;
 			if (info->chunk_type==CHUNK_TYPE_TEXT) {
 				if (check) {
 					data->textset.text_data[info->index]->MarkDataModified();
@@ -421,7 +422,7 @@ void ToolModMarkModification(CDDataStruct* data, ModManagerClientData* info, boo
 			}
 		} else if (info->section==DATA_SECTION_WORLD_MAP) {
 			if (check)
-				data->worldmodified = true;
+				data->saveset.sectionmodified[DATA_SECTION_WORLD_MAP] = true;
 			if (info->chunk_type==CHUNK_TYPE_SCRIPT) {
 				if (check) {
 					data->worldset.script[info->index]->MarkDataModified();
@@ -462,7 +463,7 @@ void ToolModMarkModification(CDDataStruct* data, ModManagerClientData* info, boo
 			}
 		} else if (info->section==DATA_SECTION_FIELD) {
 			if (check)
-				data->fieldmodified = true;
+				data->saveset.sectionmodified[DATA_SECTION_FIELD] = true;
 			if (info->chunk_type==CHUNK_TYPE_SCRIPT) {
 				if (check) {
 					data->fieldset.script_data[info->index]->MarkDataModified();
@@ -501,7 +502,7 @@ void ToolModMarkModification(CDDataStruct* data, ModManagerClientData* info, boo
 			}
 		} else if (info->section==DATA_SECTION_BATTLE_SCENE) {
 			if (check)
-				data->scenemodified = true;
+				data->saveset.sectionmodified[DATA_SECTION_BATTLE_SCENE] = true;
 			if (info->chunk_type==CHUNK_TYPE_BATTLE_SCENE) {
 				if (check) {
 					data->sceneset.scene[info->index]->MarkDataModified();

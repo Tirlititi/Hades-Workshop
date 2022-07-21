@@ -532,6 +532,46 @@ int ScriptDataStruct::RemoveEntry(int entrypos, int* modifiedargamount) {
 	return res;
 }
 
+int ScriptDataStruct::ShiftArgument(int argtype, vector<pair<int, int>> shift) {
+	SteamLanguage lang;
+	unsigned int i, j;
+	int count = 0;
+	auto shifter = [](ScriptFunction& f, int argtype, vector<pair<int, int>>& sh) {
+		unsigned int k, m, n;
+		bool change;
+		int c = 0;
+		for (k = 0; k < f.op_amount; k++) {
+			ScriptOperation& op = f.op[k];
+			for (m = 0; m < op.arg_amount; m++) {
+				if (op.arg[m].is_var)
+					continue;
+				if ((int)m < HADES_STRING_SCRIPT_OPCODE[op.opcode].arg_amount && HADES_STRING_SCRIPT_OPCODE[op.opcode].arg_type[m] == argtype) {
+					change = false;
+					for (n = 0; n < sh.size(); n++)
+						if (op.arg[m].value >= sh[n].first) {
+							change = true;
+							op.arg[m].value += sh[n].second;
+						}
+					if (change)
+						c++;
+				}
+			}
+		}
+		return c;
+	};
+	for (i = 0; i < entry_amount; i++)
+		for (j = 0; j < entry_function_amount[i]; j++)
+			count += shifter(func[i][j], argtype, shift);
+	if (multi_lang_script != NULL)
+		for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+			if (multi_lang_script->is_loaded[lang])
+				for (i = 0; i < multi_lang_script->func[lang].size(); i++)
+					for (j = 0; j < multi_lang_script->func[lang][i].size(); j++)
+						if (shifter(multi_lang_script->func[lang][i][j], argtype, shift) > 0)
+							multi_lang_script->is_modified[lang] = true;
+	return count;
+}
+
 void ScriptDataStruct::ChangeSteamLanguage(SteamLanguage newlang) {
 	if (multi_lang_script==NULL)
 		return;

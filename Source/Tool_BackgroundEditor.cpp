@@ -16,7 +16,7 @@ const static wxColor TILECOLOR_BOUNDARY = wxColor(0,0,0,255);
 const static wxColor TILECOLOR_INTERIOR = wxColor(80,80,80,50);
 
 wxString GetFieldNameOrDefault(CDDataStruct* cddata, unsigned int fieldindex) {
-	if (cddata && cddata->fieldloaded)
+	if (cddata && cddata->saveset.sectionloaded[DATA_SECTION_FIELD])
 		return _(cddata->fieldset.script_data[fieldindex]->name.GetStr(hades::TEXT_PREVIEW_TYPE));
 	return _(SteamFieldScript[fieldindex].default_name);
 }
@@ -31,17 +31,19 @@ ToolBackgroundEditor::~ToolBackgroundEditor() {
 }
 
 int ToolBackgroundEditor::ShowModal(CDDataStruct* data) {
+	wxArrayString choicelist;
 	unsigned int i;
 	cddata = data;
 	m_fieldchoice->Clear();
-	if (cddata && cddata->fieldloaded) {
-		for (i=0;i<cddata->fieldset.amount;i++)
-			m_fieldchoice->Append(cddata->fieldset.script_data[i]->name.GetStr(hades::TEXT_PREVIEW_TYPE));
+	if (cddata && cddata->saveset.sectionloaded[DATA_SECTION_FIELD]) {
+		for (i = 0; i < cddata->fieldset.amount; i++)
+			choicelist.Add(cddata->fieldset.script_data[i]->name.GetStr(hades::TEXT_PREVIEW_TYPE));
 	} else {
 		for (i=0;i<G_N_ELEMENTS(SteamFieldScript);i++)
-			m_fieldchoice->Append(_(SteamFieldScript[i].default_name));
+			choicelist.Add(_(SteamFieldScript[i].default_name));
 		m_usegametilebtn->Enable(false);
 	}
+	m_fieldchoice->Append(choicelist);
 	return BackgroundEditorWindow::ShowModal();
 }
 
@@ -678,15 +680,17 @@ void ToolBackgroundEditor::OnRadioClick(wxCommandEvent& event) {
 }
 
 void ToolBackgroundEditor::OnFieldChoice(wxCommandEvent& event) {
-	if (cddata && cddata->fieldloaded) {
+	if (cddata && cddata->saveset.sectionloaded[DATA_SECTION_FIELD]) {
 		FieldTilesDataStruct& tileset = *cddata->fieldset.background_data[event.GetSelection()];
+		wxArrayString choicelist;
 		unsigned int i;
 		m_tilelist->Clear();
 		for (i=0;i<tileset.tiles_amount+tileset.title_tile_amount*(STEAM_LANGUAGE_AMOUNT-1);i++) {
 			wxString tilelabel;
 			tilelabel << L"Tile Block " << i;
-			m_tilelist->Append(tilelabel);
+			choicelist.Add(tilelabel);
 		}
+		m_tilelist->Append(choicelist);
 	} // ToDo: else
 }
 

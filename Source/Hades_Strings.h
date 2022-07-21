@@ -163,6 +163,16 @@ static wxString HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[] = {
 	L"sp"
 };
 
+static wxString HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[] = {
+	L"us",
+	L"uk",
+	L"jp",
+	L"gr",
+	L"fr",
+	L"it",
+	L"es"
+};
+
 static wxString HADES_STRING_STEAM_LANGUAGE_LONG_NAME[] = {
 	L"English (US)",
 	L"English (UK)",
@@ -387,7 +397,11 @@ static wxString HADES_STRING_SYNTH_NAME[8] = {
 
 //-- File Batching
 #define HADES_STRING_BATCH_NOTHING					" - Nothing done\n"
+#define HADES_STRING_BATCH_FIELD_NOT_LOADED			L" - It is a field script and fields are not loaded\n"
+#define HADES_STRING_BATCH_WORLD_NOT_LOADED			L" - It is a world script and worlds are not loaded\n"
+#define HADES_STRING_BATCH_ENEMY_NOT_LOADED			L" - It is a battle script and battles are not loaded\n"
 #define HADES_STRING_BATCH_WRONG_FILETYPE			" - Line %u: Expected a %s filetype\n"
+#define HADES_STRING_BATCH_INVALID_FILETYPE			" - Line %u: Invalid filetype\n"
 #define HADES_STRING_BATCH_FILETYPE_TWICE			" - Line %u: Can't define typefile twice\n"
 #define HADES_STRING_BATCH_FILETYPE_NOTFIRST		" - Line %u: First command must be the filetype\n"
 #define HADES_STRING_BATCH_MISSING_INTEGER			" - Line %u: '%s' takes an integral argument\n"
@@ -531,6 +545,11 @@ static wxString HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM[] = {
 #define HADES_STRING_UNITYVIEWER_WARNING_REMOVE	L"This will delete the selected assets from the archive.\n\n"\
 												L"Do you want to generate the resulting archive as a duplicate (otherwise, the archive with fewer assets will replace the existing one)?"
 
+
+//-- Memoria
+#define HADES_STRING_MEMORIA_LOAD_SECTIONS "This action requires to load the %s"
+#define HADES_STRING_MEMORIA_CUSTOM_SUCCESS "Successfully generated assets"
+#define HADES_STRING_MEMORIA_CUSTOM_FAIL "Failed to generate assets"
 
 
 //-- Others

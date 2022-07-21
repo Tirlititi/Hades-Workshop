@@ -67,10 +67,10 @@ private:
 struct BattleSceneDataSet {
 public:
 	uint16_t scene_amount;
-	uint16_t* cluster_id;
-	wstring* scene_name;
-	BattleSceneDataStruct** scene;
-	TIMImageDataStruct** image;
+	vector<uint16_t> cluster_id;
+	vector<wstring> scene_name;
+	vector<BattleSceneDataStruct*> scene;
+	vector<TIMImageDataStruct*> image;
 	
 	void Load(fstream &ffbin, ClusterSet& clusset);
 	void Write(fstream &ffbin, ClusterSet& clusset);
@@ -79,6 +79,7 @@ public:
 	// {Number of oversized scenes, Number of unknown data, Number of unused scenes}
 	int* LoadHWS(fstream &ffhws, UnusedSaveBackupPart& backup);
 	void WriteHWS(fstream &ffhws, UnusedSaveBackupPart& backup);
+	int GetIndexById(uint16_t sceneid);
 };
 
 #endif

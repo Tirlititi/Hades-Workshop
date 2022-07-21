@@ -18,10 +18,13 @@ public:
 
 	WalkmeshAddTriangleDialog(WalkmeshEditDialog* p, int initialpath) : WalkmeshAddTriangleWindow(p), parent(p) {
 		FieldWalkmeshDataStruct* walk = &parent->walkmesh;
+		wxArrayString choicelist;
 		int i, j, k, l, di;
 		for (i = 0; i < walk->walkpath_amount; i++)
-			m_walkpath->Append(wxString::Format(wxT("Walkpath %d"), i));
+			choicelist.Add(wxString::Format(wxT("Walkpath %d"), i));
+		m_walkpath->Append(choicelist);
 		m_walkpath->SetSelection(initialpath);
+		choicelist.Clear();
 		vector<vector<int>> emptyside;
 		for (i = 0; i < walk->triangle_amount; i++) {
 			vector<int> triemptyside;
@@ -32,9 +35,11 @@ public:
 			if (triemptyside.size() > 0) {
 				triangle_single.push_back(i);
 				triangle_single_side.push_back(triemptyside);
-				m_adjacentsingle->Append(wxString::Format(wxT("Triangle %d"), i));
+				choicelist.Add(wxString::Format(wxT("Triangle %d"), i));
 			}
 		}
+		m_adjacentsingle->Append(choicelist);
+		choicelist.Clear();
 		vector<int> vcommon1, vcommon2;
 		for (i = 0; i < walk->triangle_amount; i++) {
 			if (emptyside[i].size() == 0)
@@ -55,7 +60,7 @@ public:
 					for (di = 0; di < parent->duplicate_vertex.size(); di++)
 						for (k = 0; k < 3; k++)
 							for (l = 0; l < 3; l++)
-								if ((parent->duplicate_vertex[di][0] == v1[k] && parent->duplicate_vertex[di][1] == v2[l]) || (parent->duplicate_vertex[di][0] == v2[l] && parent->duplicate_vertex[di][0] == v1[k])) {
+								if ((parent->duplicate_vertex[di][0] == v1[k] && parent->duplicate_vertex[di][1] == v2[l]) || (parent->duplicate_vertex[di][0] == v2[l] && parent->duplicate_vertex[di][1] == v1[k])) {
 									vcommon1.push_back(k);
 									vcommon2.push_back(l);
 								}
@@ -92,13 +97,14 @@ public:
 							triangle_couple.push_back({ i, j });
 							triangle_couple_side.push_back({ verttoside1[vcommon1[k]], verttoside2[vcommon2[k]] });
 							triangle_couple_common_vertex.push_back({ vcommon1[k], vcommon2[k] });
-							m_adjacentcouple->Append(wxString::Format(wxT("Triangles %d - %d"), i, j));
+							choicelist.Add(wxString::Format(wxT("Triangles %d - %d"), i, j));
 						}
 					vcommon1.clear();
 					vcommon2.clear();
 				}
 			}
 		}
+		m_adjacentcouple->Append(choicelist);
 		if (triangle_single.size() > 0)
 			m_adjacentsingle->SetSelection(0);
 		if (triangle_couple.size() > 0)

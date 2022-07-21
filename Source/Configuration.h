@@ -213,6 +213,9 @@ public:
 	int32_t* field_preload_file;
 	int32_t* field_walkmesh_file;
 	int32_t* field_image_file;
+	int32_t* field_vibdata_file;
+	int32_t* field_spt_file;
+	int32_t** field_sps_file;
 	int32_t** field_tiles_file;
 	bool* field_tiles_localized;
 	uint8_t* field_file_id;
@@ -288,6 +291,8 @@ public:
 	PartySpecialDataSet* partyspecialset;
 	MipsDataSet* mipsset;
 	CILDataSet* cilset;
+	bool sectionloaded[DATA_SECTION_AMOUNT];
+	bool sectionmodified[DATA_SECTION_AMOUNT];
 	
 	SaveSet(SpellDataSet* sp, CommandDataSet* cmd, EnemyDataSet* enmy, ShopDataSet* shop, TextDataSet* text,/*
 		*/  WorldMapDataSet* world, BattleSceneDataSet* scene, ItemDataSet* item, SupportDataSet* support,/*
@@ -332,7 +337,12 @@ int PreloadHWS(string filepath, bool* section);
 wstring* LoadHWS(string filepath, bool* section, bool* sectext, bool* localsec, SaveSet& saveset, UnusedSaveBackup& backup);
 int WriteHWS(string filepath, bool* section, bool* localsec, SaveSet& saveset, UnusedSaveBackup& backup);
 
+int CreatePPF(string basefile, string ppfname, bool* section, ConfigurationSet& config, SaveSet& saveset, ClusterSet& cluster, bool undo, bool blockcheck, string description);
+int OverwritePSXBinary(string filename, bool* section, ConfigurationSet& config, SaveSet& saveset, ClusterSet& cluster);
+
 int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, SaveSet& saveset, int dllformat, int assetformat, bool deleteold);
+int CreateSteamCustomBattleAssets(string destfolder, ConfigurationSet& config, SaveSet& saveset, int basebattle, uint16_t scriptid, string battleid, string bgid);
+int CreateSteamCustomFieldAssets(string destfolder, ConfigurationSet& config, SaveSet& saveset, int basefield, uint16_t scriptid, uint8_t areaid, string mapid, string fieldid, uint16_t textid);
 
 GameType GetGameType();
 void SetGameType(GameType gt);

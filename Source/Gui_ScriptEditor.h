@@ -47,11 +47,12 @@ public:
 	ScriptEditDialog* handler_dialog;
 	
 	// dataload[] = { statset, enemyset, fieldset, itemset, spellset, supportset, commandset, cardset }
-	ScriptEditHandler(ScriptDataStruct& scpt, int scpttype, SaveSet* sv, EnemyDataStruct* ed, TextDataStruct* td, bool* dataloaded);
+	ScriptEditHandler(ScriptDataStruct& scpt, int scpttype, SaveSet* sv, EnemyDataStruct* ed, TextDataStruct* td);
 	~ScriptEditHandler();
 	unsigned int GetFunctionAbsolutePos(unsigned int entry, unsigned int function);
 	void GenerateFunctionStrings(bool appendcomment = false);
 	void GenerateFunctionList();
+	void GenerateEntryNames();
 	void EntryChangeName(unsigned int entry, wxString newname);
 	wxString GetArgumentDescription(int64_t argvalue, uint8_t argtype);
 
@@ -124,8 +125,7 @@ public:
 	vector<wxStaticText*> arg_label;
 	vector<wxWindow*> arg_control;
 	
-	// dataload[] = { statset, enemyset, fieldset, itemset, spellset, supportset, commandset, cardset }
-	ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int scpttype, SaveSet* sv, EnemyDataStruct* ed, TextDataStruct* td, bool* dataloaded);
+	ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int scpttype, SaveSet* sv, EnemyDataStruct* ed, TextDataStruct* td);
 	~ScriptEditDialog();
 	int ShowModal();
 	void DisplayFunctionList(int newfunc = -1, int removedfunc = -1);

@@ -466,16 +466,16 @@ void TextDataStruct::UpdateOffset() {
 void TextDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 	unsigned int i,j,k,l;
 	amount = clusset.text_amount;
-	struct_id = new uint16_t[amount];
-	name = new wstring[amount];
-	text_data = new TextDataStruct*[amount];
-	tim_amount = new uint16_t[amount];
+	struct_id.resize(amount);
+	name.resize(amount);
+	text_data.resize(amount);
+	tim_amount.resize(amount);
 	j = 0;
 	LoadingDialogInit(amount,_(L"Reading text blocks..."));
 	if (GetGameType()==GAME_TYPE_PSX) {
-		cluster_id = new uint16_t[amount];
-		charmap = new CharmapDataStruct*[amount];
-		chartim = new TIMImageDataStruct*[amount];
+		cluster_id.resize(amount);
+		charmap.resize(amount);
+		chartim.resize(amount);
 		uint16_t numchmap = 0;
 		for (i=0;i<clusset.amount;i++) {
 			if (clusset.clus_type[i]==CLUSTER_TYPE_FIELD_TEXT) {
@@ -740,6 +740,13 @@ void TextDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup) {
 	ffhws.seekg(nboffset);
 	HWSWriteShort(ffhws,nbmodified);
 	ffhws.seekg(endoffset);
+}
+
+int TextDataSet::GetIndexById(uint16_t textid) {
+	for (unsigned int i = 0; i < amount; i++)
+		if (textid == struct_id[i])
+			return i;
+	return -1;
 }
 
 //=============================//

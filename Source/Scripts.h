@@ -3,9 +3,10 @@
 
 #define SCRIPT_NAME_MAX_LENGTH 84
 
-#define SCRIPT_TYPE_FIELD	1
-#define SCRIPT_TYPE_BATTLE	2
-#define SCRIPT_TYPE_WORLD	3
+#define SCRIPT_TYPE_ANY		-1
+#define SCRIPT_TYPE_FIELD	0
+#define SCRIPT_TYPE_BATTLE	1
+#define SCRIPT_TYPE_WORLD	2
 
 #define SCRIPT_VARIABLE_LOCALTYPE_UNKNOWN	0
 #define SCRIPT_VARIABLE_LOCALTYPE_LOCAL		1
@@ -166,6 +167,7 @@ public:
 	int RemoveFunction(int entryid, int funcid); // Returns nb of bytes freed
 	void AddEntry(int entrypos, uint8_t entrytype); // Needs 16 bytes available
 	int RemoveEntry(int entrypos, int* modifiedargamount = NULL); // Returns nb of bytes freed ; *modifiedargamount is incremented by the amount of arguments previously using the removed entry
+	int ShiftArgument(int argtype, vector<pair<int, int>> shift);
 	void ChangeSteamLanguage(SteamLanguage newlang);
 	void UpdateSteamMultiLanguage(); // Update the datas of multi_lang_script->data[current_language]
 

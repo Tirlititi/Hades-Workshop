@@ -1348,10 +1348,30 @@ int FieldWalkmeshDataStruct::AddTriangle(uint32_t& extrasize, uint16_t path, uin
 			adjedge.index[edgenewtri] = edgeoldtri;
 		}
 	}
+	// Shift triangle index
+	int insertpos = triangle_amount;
+	while (insertpos > 0 && triangle_walkpath[insertpos - 1] > path)
+		insertpos--;
+	for (i = 0; i < triangle_amount; i++)
+		for (j = 0; j < 3; j++)
+			if (triangle_adjacenttriangle[i].index[j] >= insertpos)
+				triangle_adjacenttriangle[i].index[j]++;
+	for (i = 0; i < animation_amount; i++)
+		for (j = 0; j < animation_frameamount[i]; j++)
+			for (k = 0; k < animation_frametriangleamount[i][j]; k++)
+				if (animation_frametriangle[i][j][k] >= insertpos)
+					animation_frametriangle[i][j][k]++;
+	for (i = 0; i < walkpath_amount; i++)
+		for (j = 0; j < walkpath_triangleamount[i]; j++)
+			if (walkpath_trianglelist[i][j] >= insertpos)
+				walkpath_trianglelist[i][j]++;
+	for (i = 0; i < 3; i++)
+		if (adjtri.index[i] >= insertpos)
+			adjtri.index[i]++;
 	// Add triangle
 	extrasize -= sizereq;
-	triangle_adjacenttriangle.push_back(adjtri);
-	triangle_edge.push_back(FieldWalkmeshTriple(edge_amount, edge_amount + 1, edge_amount + 2));
+	triangle_adjacenttriangle.insert(triangle_adjacenttriangle.begin() + insertpos, adjtri);
+	triangle_edge.insert(triangle_edge.begin() + insertpos, FieldWalkmeshTriple(edge_amount, edge_amount + 1, edge_amount + 2));
 	edge_flag.push_back(0);
 	edge_flag.push_back(0);
 	edge_flag.push_back(0);
@@ -1361,7 +1381,7 @@ int FieldWalkmeshDataStruct::AddTriangle(uint32_t& extrasize, uint16_t path, uin
 	edge_amount += 3;
 	for (k = 0; k < 3; k++)
 		if (adjtri.index[k] >= 0) {
-			triangle_adjacenttriangle[adjtri.index[k]].index[adjedge.index[k]] = triangle_amount;
+			triangle_adjacenttriangle[adjtri.index[k]].index[adjedge.index[k]] = insertpos;
 			edge_clone[triangle_edge[adjtri.index[k]].index[adjedge.index[k]]] = k;
 		}
 	FieldWalkmeshTriple vertlist = FieldWalkmeshTriple(-1, -1, -1);
@@ -1376,45 +1396,45 @@ int FieldWalkmeshDataStruct::AddTriangle(uint32_t& extrasize, uint16_t path, uin
 			vertlist.index[k] = existingvert.index[k];
 		}
 	}
-	triangle_vertex.push_back(vertlist);
-	AddTriangleShared(path, flag, d, thetax, thetay, customnormal);
+	triangle_vertex.insert(triangle_vertex.begin() + insertpos, vertlist);
+	AddTriangleShared(insertpos, path, flag, d, thetax, thetay, customnormal);
 	if (addnormal && customnormal == NULL) {
-		triangle_normal.push_back(normal_amount);
+		triangle_normal.insert(triangle_normal.begin() + insertpos, normal_amount);
 		normal_x.push_back(0);
 		normal_y.push_back(0);
 		normal_z.push_back(0);
 		normal_overz.push_back(0);
 		normal_amount++;
-		ComputeNormal(triangle_amount - 1);
+		ComputeNormal(insertpos);
 	}
 	return 0;
 }
 
-void FieldWalkmeshDataStruct::AddTriangleShared(uint16_t path, uint16_t flag, int32_t d, uint16_t thetax, uint16_t thetay, array<int32_t, 4>* customnormal) {
+void FieldWalkmeshDataStruct::AddTriangleShared(int insertpos, uint16_t path, uint16_t flag, int32_t d, uint16_t thetax, uint16_t thetay, array<int32_t, 4>* customnormal) {
 	// TODO: find out how d should be computed
-	uint16_t v1 = triangle_vertex[triangle_amount].index[0];
-	uint16_t v2 = triangle_vertex[triangle_amount].index[1];
-	uint16_t v3 = triangle_vertex[triangle_amount].index[2];
-	triangle_centerx.push_back((vertex_x[v1] + vertex_x[v2] + vertex_x[v3]) / 3);
-	triangle_centery.push_back((vertex_y[v1] + vertex_y[v2] + vertex_y[v3]) / 3);
-	triangle_centerz.push_back((vertex_z[v1] + vertex_z[v2] + vertex_z[v3]) / 3);
-	triangle_walkpath.push_back(path);
-	triangle_flag.push_back(flag);
-	triangle_d.push_back(d);
-	triangle_thetax.push_back(thetax);
-	triangle_thetay.push_back(thetay);
-	triangle_data.push_back(0);
+	uint16_t v1 = triangle_vertex[insertpos].index[0];
+	uint16_t v2 = triangle_vertex[insertpos].index[1];
+	uint16_t v3 = triangle_vertex[insertpos].index[2];
+	triangle_centerx.insert(triangle_centerx.begin() + insertpos, (vertex_x[v1] + vertex_x[v2] + vertex_x[v3]) / 3);
+	triangle_centery.insert(triangle_centery.begin() + insertpos, (vertex_y[v1] + vertex_y[v2] + vertex_y[v3]) / 3);
+	triangle_centerz.insert(triangle_centerz.begin() + insertpos, (vertex_z[v1] + vertex_z[v2] + vertex_z[v3]) / 3);
+	triangle_walkpath.insert(triangle_walkpath.begin() + insertpos, path);
+	triangle_flag.insert(triangle_flag.begin() + insertpos, flag);
+	triangle_d.insert(triangle_d.begin() + insertpos, d);
+	triangle_thetax.insert(triangle_thetax.begin() + insertpos, thetax);
+	triangle_thetay.insert(triangle_thetay.begin() + insertpos, thetay);
+	triangle_data.insert(triangle_data.begin() + insertpos, 0);
 	if (customnormal != NULL) {
-		triangle_normal.push_back(normal_amount);
+		triangle_normal.insert(triangle_normal.begin() + insertpos, normal_amount);
 		normal_x.push_back((*customnormal)[0]);
 		normal_y.push_back((*customnormal)[1]);
 		normal_z.push_back((*customnormal)[2]);
 		normal_overz.push_back((*customnormal)[3]);
 		normal_amount++;
 	} else {
-		triangle_normal.push_back(-1);
+		triangle_normal.insert(triangle_normal.begin() + insertpos, -1);
 	}
-	walkpath_trianglelist[path].push_back(triangle_amount);
+	walkpath_trianglelist[path].push_back(insertpos);
 	walkpath_triangleamount[path]++;
 	triangle_amount++;
 }
@@ -2153,20 +2173,20 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 	unsigned int i,j,k,l;
 	int relatedtxtid;
 	amount = clusset.field_amount;
-	struct_id = new uint16_t[amount];
-	script_data = new ScriptDataStruct*[amount];
-	preload = new ImageMapDataStruct*[amount];
-	background_data = new FieldTilesDataStruct*[amount];
-	walkmesh = new FieldWalkmeshDataStruct*[amount];
-	tim_data = new TIMImageDataStruct*[amount];
-	role = new FieldRoleDataStruct*[amount];
-	related_text = new TextDataStruct*[amount];
+	struct_id.resize(amount);
+	script_data.resize(amount);
+	preload.resize(amount);
+	background_data.resize(amount);
+	walkmesh.resize(amount);
+	tim_data.resize(amount);
+	role.resize(amount);
+	related_text.resize(amount);
 	tile_size = GetGameType()==GAME_TYPE_PSX ? FIELD_TILE_BASE_SIZE : hades::FIELD_BACKGROUND_RESOLUTION;
 	tile_gap = GetGameType()==GAME_TYPE_PSX ? 0 : 2;
 	j = 0;
 	LoadingDialogInit(amount,_(L"Reading fields..."));
 	if (GetGameType()==GAME_TYPE_PSX) {
-		cluster_id = new uint16_t[amount];
+		cluster_id.resize(amount);
 		for (i=0;i<clusset.amount;i++) {
 			if (clusset.clus_type[i]==CLUSTER_TYPE_FIELD) {
 				clusset.clus[i].CreateChildren(ffbin);
@@ -2433,6 +2453,13 @@ void FieldDataSet::WriteSteamText(fstream& ffbin, SteamLanguage lang) {
 		SteamWriteFF9String(ffbin,script_data[i]->name,lang);
 		WriteShort(ffbin,0x0A0D);
 	}
+}
+
+int FieldDataSet::GetIndexById(uint16_t fieldid) {
+	for (unsigned int i = 0; i < amount; i++)
+		if (fieldid == struct_id[i])
+			return i;
+	return -1;
 }
 
 void FieldDataSet::Write(fstream& ffbin, ClusterSet& clusset) {

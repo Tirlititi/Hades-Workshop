@@ -26,7 +26,7 @@ struct SynthesisDataStruct {
 
 struct ShopDataStruct {
 public:
-	// Quiet a simple struct ; list can be edited directly.
+	// Quite a simple struct ; list can be edited directly.
 	// Just make sure either item_amount==SHOP_ITEM_AMOUNT
 	// either item_list is 0xFF-terminated.
 	uint8_t item_amount;

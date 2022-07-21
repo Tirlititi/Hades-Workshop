@@ -272,6 +272,7 @@ struct CILDataSet {
 	CILMacro* macromodif;
 	
 	void Init(DllMetaData* d);
+	void Load(fstream& f, DllMetaData* d) { Init(d); }
 	int GetEnabledMacroIndex(uint32_t macroid);
 	// return a new'ed array to be deleted[]
 	uint8_t* GetModifiedMethodRaw(unsigned int tid, unsigned int mid, uint32_t* length);

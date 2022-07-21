@@ -11,6 +11,57 @@
 
 ///////////////////////////////////////////////////////////////////////////
 
+CommandFrameBase::CommandFrameBase( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxFrame( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+
+	wxGridBagSizer* gbSizer68;
+	gbSizer68 = new wxGridBagSizer( 0, 0 );
+	gbSizer68->SetFlexibleDirection( wxBOTH );
+	gbSizer68->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_commands = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), wxTE_DONTWRAP|wxTE_MULTILINE|wxTE_READONLY|wxTE_RICH|wxBORDER_SIMPLE );
+	m_commands->SetFont( wxFont( wxNORMAL_FONT->GetPointSize(), wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
+	m_commands->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
+	m_commands->SetMinSize( wxSize( -1,330 ) );
+
+	gbSizer68->Add( m_commands, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
+
+	m_output = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), wxTE_DONTWRAP|wxTE_MULTILINE|wxTE_READONLY|wxTE_RICH|wxBORDER_SIMPLE );
+	m_output->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_3DLIGHT ) );
+	m_output->SetMinSize( wxSize( -1,330 ) );
+
+	gbSizer68->Add( m_output, wxGBPosition( 0, 1 ), wxGBSpan( 2, 1 ), wxALL|wxEXPAND, 5 );
+
+	m_morecommand = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
+	m_morecommand->SetFont( wxFont( wxNORMAL_FONT->GetPointSize(), wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
+	m_morecommand->Enable( false );
+
+	gbSizer68->Add( m_morecommand, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
+
+
+	gbSizer68->AddGrowableCol( 0 );
+	gbSizer68->AddGrowableCol( 1 );
+	gbSizer68->AddGrowableRow( 0 );
+
+	this->SetSizer( gbSizer68 );
+	this->Layout();
+
+	this->Centre( wxBOTH );
+
+	// Connect Events
+	this->Connect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( CommandFrameBase::OnClosing ) );
+	m_morecommand->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( CommandFrameBase::OnAddCommand ), NULL, this );
+}
+
+CommandFrameBase::~CommandFrameBase()
+{
+	// Disconnect Events
+	this->Disconnect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( CommandFrameBase::OnClosing ) );
+	m_morecommand->Disconnect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( CommandFrameBase::OnAddCommand ), NULL, this );
+
+}
+
 MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxFrame( parent, id, title, pos, size, style )
 {
 	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
@@ -195,6 +246,17 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 
 	m_menuBar->Append( m_menuTools, _("&Tools") );
 
+	m_menuMemoria = new wxMenu();
+	m_customfield = new wxMenuItem( m_menuMemoria, wxID_CUSTOMFIELD, wxString( _("Export as Custom Field") ) , _("Generate the assets required for a field by specifying its identifiers"), wxITEM_NORMAL );
+	m_menuMemoria->Append( m_customfield );
+	m_customfield->Enable( false );
+
+	m_custombattle = new wxMenuItem( m_menuMemoria, wxID_CUSTOMBATTLE, wxString( _("Export as Custom Battle") ) , _("Generate the assets required for a battle by specifying its identifiers"), wxITEM_NORMAL );
+	m_menuMemoria->Append( m_custombattle );
+	m_custombattle->Enable( false );
+
+	m_menuBar->Append( m_menuMemoria, _("&Memoria") );
+
 	m_menuHelp = new wxMenu();
 	wxMenuItem* m_about;
 	m_about = new wxMenuItem( m_menuHelp, wxID_ANY, wxString( _("&About") ) + wxT('\t') + wxT("F1"), _("About Hades Workshop..."), wxITEM_NORMAL );
@@ -272,6 +334,8 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	m_menuTools->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnToolClick ), this, m_damagecalculator->GetId());
 	m_menuTools->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnToolClick ), this, m_backgroundeditor->GetId());
 	m_menuTools->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnToolClick ), this, m_unityviewer->GetId());
+	m_menuMemoria->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMemoriaClick ), this, m_customfield->GetId());
+	m_menuMemoria->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMemoriaClick ), this, m_custombattle->GetId());
 	m_menuHelp->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnAboutClick ), this, m_about->GetId());
 	m_menuHelp->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnHelpClick ), this, m_showhelp->GetId());
 	m_cdbook->Connect( wxEVT_COMMAND_AUINOTEBOOK_PAGE_CHANGED, wxAuiNotebookEventHandler( MainFrameBase::OnPanelChanged ), NULL, this );
@@ -8487,7 +8551,7 @@ ExportPPFWindow::ExportPPFWindow( wxWindow* parent, wxWindowID id, const wxStrin
 	bSizer31->Add( m_ppfpicker, 0, wxEXPAND|wxLEFT|wxRIGHT|wxTOP, 5 );
 
 	m_undo = new wxCheckBox( this, wxID_ANY, _("Add an undo feature"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_undo->SetToolTip( _("Make so the patch can be unapplied\nbut quiet double the ppf's size") );
+	m_undo->SetToolTip( _("Allow the patch to be unapplied\nat the cost of doubling its file size") );
 
 	bSizer31->Add( m_undo, 0, wxLEFT|wxRIGHT|wxTOP, 5 );
 
@@ -8640,6 +8704,244 @@ SaveSteamWindow::~SaveSteamWindow()
 
 }
 
+SaveCustomFieldWindow::SaveCustomFieldWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+
+	wxGridBagSizer* gbSizer3;
+	gbSizer3 = new wxGridBagSizer( 10, 0 );
+	gbSizer3->SetFlexibleDirection( wxBOTH );
+	gbSizer3->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	wxGridBagSizer* gbSizer74;
+	gbSizer74 = new wxGridBagSizer( 0, 0 );
+	gbSizer74->SetFlexibleDirection( wxBOTH );
+	gbSizer74->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_dirpicker = new wxDirPickerCtrl( this, wxID_ANY, wxEmptyString, _("Select a folder"), wxDefaultPosition, wxDefaultSize, wxDIRP_USE_TEXTCTRL );
+	gbSizer74->Add( m_dirpicker, wxGBPosition( 0, 0 ), wxGBSpan( 1, 5 ), wxALL|wxEXPAND, 5 );
+
+	m_staticText492 = new wxStaticText( this, wxID_ANY, _("Base field"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText492->Wrap( -1 );
+	gbSizer74->Add( m_staticText492, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	wxArrayString m_basefieldChoices;
+	m_basefield = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_basefieldChoices, 0 );
+	m_basefield->SetSelection( 0 );
+	m_basefield->SetMinSize( wxSize( 200,-1 ) );
+
+	gbSizer74->Add( m_basefield, wxGBPosition( 1, 1 ), wxGBSpan( 1, 4 ), wxALL|wxEXPAND, 3 );
+
+	m_staticText497 = new wxStaticText( this, wxID_ANY, _("Text Block"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText497->Wrap( -1 );
+	gbSizer74->Add( m_staticText497, wxGBPosition( 2, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	wxArrayString m_textidchoiceChoices;
+	m_textidchoice = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_textidchoiceChoices, 0 );
+	m_textidchoice->SetSelection( 0 );
+	m_textidchoice->SetMinSize( wxSize( 200,-1 ) );
+
+	gbSizer74->Add( m_textidchoice, wxGBPosition( 2, 1 ), wxGBSpan( 1, 3 ), wxALL|wxEXPAND, 3 );
+
+	m_textid = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	gbSizer74->Add( m_textid, wxGBPosition( 2, 4 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	m_staticText493 = new wxStaticText( this, wxID_ANY, _("Script ID"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText493->Wrap( -1 );
+	gbSizer74->Add( m_staticText493, wxGBPosition( 3, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	m_scriptid = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 4000 );
+	m_scriptid->SetToolTip( _("Use this ID in a script (typically in a line \"Field\")") );
+
+	gbSizer74->Add( m_scriptid, wxGBPosition( 3, 1 ), wxGBSpan( 1, 1 ), wxALL, 3 );
+
+	m_staticText494 = new wxStaticText( this, wxID_ANY, _("Area ID"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText494->Wrap( -1 );
+	gbSizer74->Add( m_staticText494, wxGBPosition( 3, 2 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	m_areaid = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 99, 57 );
+	gbSizer74->Add( m_areaid, wxGBPosition( 3, 3 ), wxGBSpan( 1, 1 ), wxALL, 3 );
+
+	m_staticText495 = new wxStaticText( this, wxID_ANY, _("Field Map Identifier"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText495->Wrap( -1 );
+	gbSizer74->Add( m_staticText495, wxGBPosition( 4, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	m_mapid = new wxTextCtrl( this, wxID_ANY, _("CUSTOM_FIELD_000"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer74->Add( m_mapid, wxGBPosition( 4, 1 ), wxGBSpan( 1, 4 ), wxALL|wxEXPAND, 3 );
+
+	m_staticText496 = new wxStaticText( this, wxID_ANY, _("Field Identifier"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText496->Wrap( -1 );
+	gbSizer74->Add( m_staticText496, wxGBPosition( 5, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	m_fieldid = new wxTextCtrl( this, wxID_ANY, _("CUSTOM_FIELD_000"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer74->Add( m_fieldid, wxGBPosition( 5, 1 ), wxGBSpan( 1, 4 ), wxALL|wxEXPAND, 3 );
+
+	wxStaticBoxSizer* sbSizer8;
+	sbSizer8 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, _("Line to copy/paste in DictionaryPatch.txt") ), wxVERTICAL );
+
+	m_dictionarypatch = new wxTextCtrl( sbSizer8->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY );
+	m_dictionarypatch->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
+
+	sbSizer8->Add( m_dictionarypatch, 0, wxALL|wxEXPAND, 5 );
+
+
+	gbSizer74->Add( sbSizer8, wxGBPosition( 6, 0 ), wxGBSpan( 1, 5 ), wxEXPAND, 5 );
+
+
+	gbSizer3->Add( gbSizer74, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer33;
+	bSizer33 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_buttoncancel = new wxButton( this, wxID_CANCEL, _("Cancel"), wxPoint( -1,-1 ), wxSize( 100,30 ), 0 );
+	bSizer33->Add( m_buttoncancel, 0, wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+
+	m_buttonok = new wxButton( this, wxID_OK, _("Ok"), wxDefaultPosition, wxSize( 100,30 ), 0 );
+	bSizer33->Add( m_buttonok, 0, wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+
+
+	gbSizer3->Add( bSizer33, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALIGN_RIGHT, 5 );
+
+
+	this->SetSizer( gbSizer3 );
+	this->Layout();
+	gbSizer3->Fit( this );
+
+	this->Centre( wxBOTH );
+
+	// Connect Events
+	m_basefield->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( SaveCustomFieldWindow::OnUpdateArg ), NULL, this );
+	m_textidchoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( SaveCustomFieldWindow::OnTextBlockChoice ), NULL, this );
+	m_textid->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( SaveCustomFieldWindow::OnUpdateArgSpin ), NULL, this );
+	m_scriptid->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( SaveCustomFieldWindow::OnUpdateArgSpin ), NULL, this );
+	m_areaid->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( SaveCustomFieldWindow::OnUpdateArgSpin ), NULL, this );
+	m_mapid->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( SaveCustomFieldWindow::OnUpdateArg ), NULL, this );
+	m_fieldid->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( SaveCustomFieldWindow::OnUpdateArg ), NULL, this );
+}
+
+SaveCustomFieldWindow::~SaveCustomFieldWindow()
+{
+	// Disconnect Events
+	m_basefield->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( SaveCustomFieldWindow::OnUpdateArg ), NULL, this );
+	m_textidchoice->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( SaveCustomFieldWindow::OnTextBlockChoice ), NULL, this );
+	m_textid->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( SaveCustomFieldWindow::OnUpdateArgSpin ), NULL, this );
+	m_scriptid->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( SaveCustomFieldWindow::OnUpdateArgSpin ), NULL, this );
+	m_areaid->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( SaveCustomFieldWindow::OnUpdateArgSpin ), NULL, this );
+	m_mapid->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( SaveCustomFieldWindow::OnUpdateArg ), NULL, this );
+	m_fieldid->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( SaveCustomFieldWindow::OnUpdateArg ), NULL, this );
+
+}
+
+SaveCustomBattleWindow::SaveCustomBattleWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+
+	wxGridBagSizer* gbSizer3;
+	gbSizer3 = new wxGridBagSizer( 10, 0 );
+	gbSizer3->SetFlexibleDirection( wxBOTH );
+	gbSizer3->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	wxGridBagSizer* gbSizer74;
+	gbSizer74 = new wxGridBagSizer( 0, 0 );
+	gbSizer74->SetFlexibleDirection( wxBOTH );
+	gbSizer74->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_dirpicker = new wxDirPickerCtrl( this, wxID_ANY, wxEmptyString, _("Select a folder"), wxDefaultPosition, wxDefaultSize, wxDIRP_USE_TEXTCTRL );
+	gbSizer74->Add( m_dirpicker, wxGBPosition( 0, 0 ), wxGBSpan( 1, 5 ), wxALL|wxEXPAND, 5 );
+
+	m_staticText492 = new wxStaticText( this, wxID_ANY, _("Base battle"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText492->Wrap( -1 );
+	gbSizer74->Add( m_staticText492, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	wxArrayString m_basebattleChoices;
+	m_basebattle = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_basebattleChoices, 0 );
+	m_basebattle->SetSelection( 0 );
+	m_basebattle->SetMinSize( wxSize( 200,-1 ) );
+
+	gbSizer74->Add( m_basebattle, wxGBPosition( 1, 1 ), wxGBSpan( 1, 4 ), wxALL|wxEXPAND, 3 );
+
+	m_staticText496 = new wxStaticText( this, wxID_ANY, _("Battle Background"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText496->Wrap( -1 );
+	gbSizer74->Add( m_staticText496, wxGBPosition( 2, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	wxArrayString m_backgroundidchoiceChoices;
+	m_backgroundidchoice = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_backgroundidchoiceChoices, 0 );
+	m_backgroundidchoice->SetSelection( 0 );
+	m_backgroundidchoice->SetMinSize( wxSize( 200,-1 ) );
+
+	gbSizer74->Add( m_backgroundidchoice, wxGBPosition( 2, 1 ), wxGBSpan( 1, 2 ), wxALL, 3 );
+
+	m_backgroundid = new wxTextCtrl( this, wxID_ANY, _("BBG_B001"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer74->Add( m_backgroundid, wxGBPosition( 2, 3 ), wxGBSpan( 1, 2 ), wxALL|wxEXPAND, 3 );
+
+	m_staticText493 = new wxStaticText( this, wxID_ANY, _("Script ID"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText493->Wrap( -1 );
+	gbSizer74->Add( m_staticText493, wxGBPosition( 3, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	m_scriptid = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 5000 );
+	m_scriptid->SetToolTip( _("Use this ID in a script (typically in a line \"Battle\" or \"BattleEx\")") );
+
+	gbSizer74->Add( m_scriptid, wxGBPosition( 3, 1 ), wxGBSpan( 1, 1 ), wxALL, 3 );
+
+	m_staticText495 = new wxStaticText( this, wxID_ANY, _("Battle Identifier"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText495->Wrap( -1 );
+	gbSizer74->Add( m_staticText495, wxGBPosition( 4, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	m_battleid = new wxTextCtrl( this, wxID_ANY, _("CUSTOM_BATTLE_000"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer74->Add( m_battleid, wxGBPosition( 4, 1 ), wxGBSpan( 1, 4 ), wxALL|wxEXPAND, 3 );
+
+	wxStaticBoxSizer* sbSizer8;
+	sbSizer8 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, _("Line to copy/paste in DictionaryPatch.txt") ), wxVERTICAL );
+
+	m_dictionarypatch = new wxTextCtrl( sbSizer8->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY );
+	m_dictionarypatch->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
+
+	sbSizer8->Add( m_dictionarypatch, 0, wxALL|wxEXPAND, 5 );
+
+
+	gbSizer74->Add( sbSizer8, wxGBPosition( 5, 0 ), wxGBSpan( 1, 5 ), wxEXPAND, 5 );
+
+
+	gbSizer3->Add( gbSizer74, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer33;
+	bSizer33 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_buttoncancel = new wxButton( this, wxID_CANCEL, _("Cancel"), wxPoint( -1,-1 ), wxSize( 100,30 ), 0 );
+	bSizer33->Add( m_buttoncancel, 0, wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+
+	m_buttonok = new wxButton( this, wxID_OK, _("Ok"), wxDefaultPosition, wxSize( 100,30 ), 0 );
+	bSizer33->Add( m_buttonok, 0, wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+
+
+	gbSizer3->Add( bSizer33, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALIGN_RIGHT, 5 );
+
+
+	this->SetSizer( gbSizer3 );
+	this->Layout();
+	gbSizer3->Fit( this );
+
+	this->Centre( wxBOTH );
+
+	// Connect Events
+	m_basebattle->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( SaveCustomBattleWindow::OnUpdateArg ), NULL, this );
+	m_backgroundidchoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( SaveCustomBattleWindow::OnBackgroundChoice ), NULL, this );
+	m_backgroundid->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( SaveCustomBattleWindow::OnUpdateArg ), NULL, this );
+	m_scriptid->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( SaveCustomBattleWindow::OnUpdateArgSpin ), NULL, this );
+	m_battleid->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( SaveCustomBattleWindow::OnUpdateArg ), NULL, this );
+}
+
+SaveCustomBattleWindow::~SaveCustomBattleWindow()
+{
+	// Disconnect Events
+	m_basebattle->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( SaveCustomBattleWindow::OnUpdateArg ), NULL, this );
+	m_backgroundidchoice->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( SaveCustomBattleWindow::OnBackgroundChoice ), NULL, this );
+	m_backgroundid->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( SaveCustomBattleWindow::OnUpdateArg ), NULL, this );
+	m_scriptid->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( SaveCustomBattleWindow::OnUpdateArgSpin ), NULL, this );
+	m_battleid->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( SaveCustomBattleWindow::OnUpdateArg ), NULL, this );
+
+}
+
 AboutWindow::AboutWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
 {
 	this->SetSizeHints( wxSize( 330,390 ), wxDefaultSize );
@@ -8647,7 +8949,7 @@ AboutWindow::AboutWindow( wxWindow* parent, wxWindowID id, const wxString& title
 	wxBoxSizer* bSizer16;
 	bSizer16 = new wxBoxSizer( wxVERTICAL );
 
-	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.42alpha\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for PSX model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\n - Satoh -\n - Ze_PilOt -\n\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_MULTILINE|wxTE_READONLY|wxTE_CENTER|wxBORDER_SIMPLE );
+	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.43\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for PSX model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\n - Satoh -\n - Ze_PilOt -\n\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_MULTILINE|wxTE_READONLY|wxTE_CENTER|wxBORDER_SIMPLE );
 	m_textCtrl13->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 	m_textCtrl13->SetMinSize( wxSize( -1,330 ) );
 

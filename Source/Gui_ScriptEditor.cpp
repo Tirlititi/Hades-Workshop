@@ -369,21 +369,21 @@ wxString ScriptEditHandler::GetArgumentDescription(int64_t argvalue, uint8_t arg
 	return wxEmptyString;
 }
 
-ScriptEditHandler::ScriptEditHandler(ScriptDataStruct& scpt, int scpttype, SaveSet* sv, EnemyDataStruct* ed, TextDataStruct* td, bool* dataloaded) :
+ScriptEditHandler::ScriptEditHandler(ScriptDataStruct& scpt, int scpttype, SaveSet* sv, EnemyDataStruct* ed, TextDataStruct* td) :
 	enemy(ed),
 	text(td),
 	datas(sv),
 	script_type(scpttype),
-	use_character(dataloaded[0]),
+	use_character(sv->sectionloaded[DATA_SECTION_STAT]),
 	use_text(td),
-	use_battle(dataloaded[1]),
+	use_battle(sv->sectionloaded[DATA_SECTION_ENMY]),
 	use_attack(ed),
-	use_field(dataloaded[2]),
-	use_item(dataloaded[3]),
-	use_ability(dataloaded[4]),
-	use_support(dataloaded[5]),
-	use_command(dataloaded[6]),
-	use_card(dataloaded[7]),
+	use_field(sv->sectionloaded[DATA_SECTION_FIELD]),
+	use_item(sv->sectionloaded[DATA_SECTION_ITEM]),
+	use_ability(sv->sectionloaded[DATA_SECTION_SPELL]),
+	use_support(sv->sectionloaded[DATA_SECTION_SUPPORT]),
+	use_command(sv->sectionloaded[DATA_SECTION_CMD]),
+	use_card(sv->sectionloaded[DATA_SECTION_CARD]),
 	entry_selection(SCRIPT_ID_NO_ENTRY),
 	handler_dialog(NULL) {
 	unsigned int i;
@@ -405,9 +405,9 @@ ScriptEditHandler::ScriptEditHandler(ScriptDataStruct& scpt, int scpttype, SaveS
 ScriptEditHandler::~ScriptEditHandler() {
 }
 
-ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int scpttype, SaveSet* sv, EnemyDataStruct* ed, TextDataStruct* td, bool* dataloaded) :
+ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int scpttype, SaveSet* sv, EnemyDataStruct* ed, TextDataStruct* td) :
 	ScriptEditWindow(parent),
-	ScriptEditHandler(scpt,scpttype,sv,ed,td,dataloaded),
+	ScriptEditHandler(scpt,scpttype,sv,ed,td),
 	current_opcode(0xFFFF),
 	arg_control_type(NULL),
 	extra_size(script.GetExtraSize()),
@@ -670,6 +670,7 @@ ScriptEditDialog::~ScriptEditDialog() {
 
 int ScriptEditDialog::ShowModal() {
 	unsigned int entryid = 0;
+	GenerateEntryNames();
 	GenerateFunctionStrings(false);
 	m_buttonok->SetFocus();
 	while (script.entry_function_amount[entryid]==0)
@@ -1307,22 +1308,6 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 			str += _(L" )");
 			MACRO_WRITECEOL()
 			funcpostrack[functrackline++] = funcpos;
-			if (func.op[oppos].opcode==0x2F) {
-				for (j=0;j<G_N_ELEMENTS(HADES_STRING_MODEL_NAME);j++)
-					if (func.op[oppos].arg[0].GetValue()==HADES_STRING_MODEL_NAME[j].id) {
-						entry_model_index[entry_selection] = j;
-						wxString entrynewname = HADES_STRING_MODEL_NAME[j].label;
-						entrynewname.Replace(_(L" "),_(L"_"));
-						EntryChangeName(entry_selection,entrynewname);
-						break;
-					}
-			} else if (func.op[oppos].opcode==0x07) {
-				if (!func.op[oppos].arg[0].is_var && func.op[oppos].arg[0].GetValue()<script.entry_amount)
-					EntryChangeName(func.op[oppos].arg[0].GetValue(),wxString::Format(wxT("Code%u"),func.op[oppos].arg[0].GetValue()));
-			} else if (func.op[oppos].opcode==0x08) {
-				if (!func.op[oppos].arg[0].is_var && func.op[oppos].arg[0].GetValue()<script.entry_amount)
-					EntryChangeName(func.op[oppos].arg[0].GetValue(),wxString::Format(wxT("Region%u"),func.op[oppos].arg[0].GetValue()));
-			}
 			funcpos += func.op[oppos++].size;
 		}
 	}
@@ -1395,6 +1380,45 @@ fout << endl;} fout << endl;}*/
 		}
 	}
 	entry_selection = entrytmp;
+}
+
+void ScriptEditHandler::GenerateEntryNames() {
+	unsigned int i, j, k, funcpos, oppos;
+	vector<bool> foundname;
+	foundname.resize(script.entry_amount, false);
+	for (i = 1; i < script.entry_amount; i++) {
+		if (foundname[i])
+			continue;
+		for (j = 0; j < script.entry_function_amount[i] && !foundname[i]; j++) {
+			funcpos = 0;
+			oppos = 0;
+			while (funcpos < script.func[i][j].length && !foundname[i]) {
+				ScriptOperation& op = script.func[i][j].op[oppos++];
+				if (op.opcode == 0x2F) {
+					for (k = 0; k < G_N_ELEMENTS(HADES_STRING_MODEL_NAME); k++)
+						if (op.arg[0].GetValue() == HADES_STRING_MODEL_NAME[k].id) {
+							entry_model_index[i] = k;
+							wxString entrynewname = HADES_STRING_MODEL_NAME[k].label;
+							entrynewname.Replace(_(L" "), _(L"_"));
+							EntryChangeName(i, entrynewname);
+							foundname[i] = true;
+							break;
+						}
+				} else if (op.opcode == 0x07) {
+					if (!op.arg[0].is_var && op.arg[0].GetValue() < script.entry_amount) {
+						EntryChangeName(op.arg[0].GetValue(), wxString::Format(wxT("Code%u"), op.arg[0].GetValue()));
+						foundname[op.arg[0].GetValue()] = true;
+					}
+				} else if (op.opcode == 0x08) {
+					if (!op.arg[0].is_var && op.arg[0].GetValue() < script.entry_amount) {
+						EntryChangeName(op.arg[0].GetValue(), wxString::Format(wxT("Region%u"), op.arg[0].GetValue()));
+						foundname[op.arg[0].GetValue()] = true;
+					}
+				}
+				funcpos += op.size;
+			}
+		}
+	}
 }
 
 void ScriptEditHandler::UpdateGlobalLocalStrings(int ignoreentry) {

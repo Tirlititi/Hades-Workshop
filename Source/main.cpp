@@ -8,6 +8,8 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <wx/cmdline.h>
+#include "main_command.h"
 #include "Gui_LoadingDialog.h"
 #include "Gui_Preferences.h"
 #include "Tool_ModManager.h"
@@ -17,9 +19,15 @@
 #include "Tool_UnityViewer.h"
 #include "File_Batching.h"
 #include "File_Manipulation.h"
+#include "MemoriaUtility.h"
 #include "Configuration.h"
 #include "Hades_Strings.h"
-#include "makeppf3.h"
+
+static const wxCmdLineEntryDesc cmdLineDesc[] = {
+	{ wxCMD_LINE_OPTION, "i", "input",   "Input command file", wxCMD_LINE_VAL_STRING, wxCMD_LINE_OPTION_MANDATORY },
+	{ wxCMD_LINE_OPTION, "o", "output",  "Output informations" },
+	{ wxCMD_LINE_NONE }
+};
 
 // initialize the application
 IMPLEMENT_APP(MainApp);
@@ -47,10 +55,31 @@ bool MainApp::OnInit() {
 	wxImage::AddHandler(new wxPNGHandler);
 	wxImage::AddHandler(new wxTGAHandler);
 	wxImage::AddHandler(new wxTIFFHandler);
+
+	if (argc >= 2) {
+		wxCmdLineParser parser(cmdLineDesc, argc, argv);
+		parser.SetSwitchChars("-");
+		wxString argstr, outputname;
+		wxFile input;
+		if (parser.Parse() == 0) {
+			if (parser.Found("i", &argstr)) {
+				input.Open(argstr, wxFile::read);
+				if (!parser.Found("o", &outputname))
+					outputname = wxEmptyString;
+				if (input.IsOpened()) {
+					CommandFrame* cmdframe = new CommandFrame(NULL);
+					SetTopWindow(cmdframe);
+					cmdframe->Show();
+					cmdframe->ExecuteCommands(input, outputname);
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	SetTopWindow(new MainFrame(NULL));
 	GetTopWindow()->Show();
-	
-	// true = enter the main loop
 	return true;
 }
 
@@ -205,6 +234,9 @@ void MainFrame::OnOpenClick(wxCommandEvent& event) {
 			case -2:
 				wxLogError(HADES_STRING_CONFIG_FIND_FAIL,filename);
 				break;
+			case -3:
+				wxLogError(HADES_STRING_CONFIG_FIND_FAIL_RNC, filename);
+				break;
 			default:
 				wxMessageDialog popupsuccess(this,HADES_STRING_CONFIG_FIND_SUCCESS,HADES_STRING_SUCCESS,wxOK|wxSTAY_ON_TOP|wxCENTRE);
 				popupsuccess.ShowModal();
@@ -327,45 +359,13 @@ void MainFrame::OnSaveHWSClick(wxCommandEvent& event) {
 	unsigned int i;
 	if (!TheIOHWSMessageOut)
 		TheIOHWSMessageOut = new IOHWSMessage(this);
-	bool* section = new bool[DATA_SECTION_AMOUNT];
-	bool* sectext = new bool[DATA_SECTION_AMOUNT];
-	bool* secton = new bool[DATA_SECTION_AMOUNT];
-	for (i=0;i<DATA_SECTION_AMOUNT;i++) {
-		section[i] =	i==DATA_SECTION_SPELL ? CDPanel[currentpanel]->spellloaded :
-						i==DATA_SECTION_SUPPORT ? CDPanel[currentpanel]->supportloaded :
-						i==DATA_SECTION_CMD ? CDPanel[currentpanel]->cmdloaded :
-						i==DATA_SECTION_STAT ? CDPanel[currentpanel]->statloaded :
-						i==DATA_SECTION_PARTY_SPECIAL ? CDPanel[currentpanel]->partyspecialloaded :
-						i==DATA_SECTION_ENMY ? CDPanel[currentpanel]->enemyloaded :
-						i==DATA_SECTION_ITEM ? CDPanel[currentpanel]->itemloaded :
-						i==DATA_SECTION_SHOP ? CDPanel[currentpanel]->shoploaded :
-						i==DATA_SECTION_CARD ? CDPanel[currentpanel]->cardloaded :
-						i==DATA_SECTION_TEXT ? CDPanel[currentpanel]->textloaded :
-						i==DATA_SECTION_WORLD_MAP ? CDPanel[currentpanel]->worldloaded :
-						i==DATA_SECTION_FIELD ? CDPanel[currentpanel]->fieldloaded :
-						i==DATA_SECTION_BATTLE_SCENE ? CDPanel[currentpanel]->sceneloaded :
-						i==DATA_SECTION_SPELL_ANIM ? CDPanel[currentpanel]->spellanimloaded :
-						i==DATA_SECTION_MENU_UI ? CDPanel[currentpanel]->ffuiloaded : 
-						i==DATA_SECTION_ASSEMBLY ? CDPanel[currentpanel]->mipsloaded || CDPanel[currentpanel]->cilloaded : false;
-	}
-	for (i=0;i<DATA_SECTION_AMOUNT;i++) {
-		secton[i] =		i==DATA_SECTION_SPELL ? CDPanel[currentpanel]->spellmodified :
-						i==DATA_SECTION_SUPPORT ? CDPanel[currentpanel]->supportmodified :
-						i==DATA_SECTION_CMD ? CDPanel[currentpanel]->cmdmodified :
-						i==DATA_SECTION_STAT ? CDPanel[currentpanel]->statmodified :
-						i==DATA_SECTION_PARTY_SPECIAL ? CDPanel[currentpanel]->partyspecialmodified :
-						i==DATA_SECTION_ENMY ? CDPanel[currentpanel]->enemymodified :
-						i==DATA_SECTION_ITEM ? CDPanel[currentpanel]->itemmodified :
-						i==DATA_SECTION_SHOP ? CDPanel[currentpanel]->shopmodified :
-						i==DATA_SECTION_CARD ? CDPanel[currentpanel]->cardmodified :
-						i==DATA_SECTION_TEXT ? CDPanel[currentpanel]->textmodified :
-						i==DATA_SECTION_WORLD_MAP ? CDPanel[currentpanel]->worldmodified :
-						i==DATA_SECTION_FIELD ? CDPanel[currentpanel]->fieldmodified :
-						i==DATA_SECTION_BATTLE_SCENE ? CDPanel[currentpanel]->scenemodified :
-						i==DATA_SECTION_SPELL_ANIM ? CDPanel[currentpanel]->spellanimmodified :
-						i==DATA_SECTION_MENU_UI ? CDPanel[currentpanel]->ffuimodified :
-						i==DATA_SECTION_ASSEMBLY ? CDPanel[currentpanel]->mipsmodified || CDPanel[currentpanel]->cilmodified : false;
-	}
+	bool section[DATA_SECTION_AMOUNT];
+	bool sectext[DATA_SECTION_AMOUNT];
+	bool secton[DATA_SECTION_AMOUNT];
+	for (i=0;i<DATA_SECTION_AMOUNT;i++)
+		section[i] = CDPanel[currentpanel]->saveset.sectionloaded[i];
+	for (i=0;i<DATA_SECTION_AMOUNT;i++)
+		secton[i] = CDPanel[currentpanel]->saveset.sectionmodified[i];
 	if (TheIOHWSMessageOut->ShowModal(true,section,sectext,secton)==wxID_OK) {
 		int hwslen = TheIOHWSMessageOut->m_hwspicker->GetPath().Length();
 		char* hwsname = new char[hwslen+1];
@@ -386,9 +386,6 @@ void MainFrame::OnSaveHWSClick(wxCommandEvent& event) {
 				CDModifiedState[currentpanel] = false;
 			}
 		}
-		delete[] section;
-		delete[] sectext;
-		delete[] secton;
 		delete[] hwsname;
 	}
 }
@@ -427,55 +424,38 @@ void MainFrame::OnSaveSteamClick(wxCommandEvent& event) {
 		dial.m_dllformat->SetSelection(1);
 		dial.m_assetformat->SetSelection(1);
 	}
-	if (dial.ShowModal()==wxID_OK) {
-		bool* modifiedsection = new bool[DATA_SECTION_AMOUNT];
-		for (i=0;i<DATA_SECTION_AMOUNT;i++) {
-			modifiedsection[i] =	i==DATA_SECTION_SPELL ? CDPanel[currentpanel]->spellmodified :
-									i==DATA_SECTION_SUPPORT ? CDPanel[currentpanel]->supportmodified :
-									i==DATA_SECTION_CMD ? CDPanel[currentpanel]->cmdmodified :
-									i==DATA_SECTION_STAT ? CDPanel[currentpanel]->statmodified :
-									i==DATA_SECTION_PARTY_SPECIAL ? CDPanel[currentpanel]->partyspecialmodified :
-									i==DATA_SECTION_ENMY ? CDPanel[currentpanel]->enemymodified :
-									i==DATA_SECTION_ITEM ? CDPanel[currentpanel]->itemmodified :
-									i==DATA_SECTION_SHOP ? CDPanel[currentpanel]->shopmodified :
-									i==DATA_SECTION_CARD ? CDPanel[currentpanel]->cardmodified :
-									i==DATA_SECTION_TEXT ? CDPanel[currentpanel]->textmodified :
-									i==DATA_SECTION_WORLD_MAP ? CDPanel[currentpanel]->worldmodified :
-									i==DATA_SECTION_FIELD ? CDPanel[currentpanel]->fieldmodified :
-									i==DATA_SECTION_BATTLE_SCENE ? CDPanel[currentpanel]->scenemodified :
-									i==DATA_SECTION_SPELL_ANIM ? CDPanel[currentpanel]->spellanimmodified :
-									i==DATA_SECTION_MENU_UI ? CDPanel[currentpanel]->ffuimodified :
-									i==DATA_SECTION_CIL ? CDPanel[currentpanel]->cilmodified : false;
-		}
+	if (dial.ShowModal() == wxID_OK) {
+		bool modifiedsection[DATA_SECTION_AMOUNT];
+		for (i = 0; i < DATA_SECTION_AMOUNT; i++)
+			modifiedsection[i] = CDPanel[currentpanel]->saveset.sectionmodified[i];
 		SteamSaveDir = dial.m_dirpicker->GetDirName();
 		wxArrayString dirname = SteamSaveDir.GetDirs();
 		int dllformat = dial.m_dllformat->GetSelection();
 		int assetformat = dial.m_assetformat->GetSelection();
-		bool deleteold = dirname.Last().compare(L"FINAL FANTASY IX")!=0;
-		if (dllformat==0)
-			wxFileName::Mkdir(SteamSaveDir.GetPath()+_(L"\\x64\\FF9_Data\\Managed\\"),wxS_DIR_DEFAULT,wxPATH_MKDIR_FULL);
-		if (assetformat==0) {
-			wxFileName::Mkdir(SteamSaveDir.GetPath()+_(L"\\StreamingAssets\\"),wxS_DIR_DEFAULT,wxPATH_MKDIR_FULL);
-			wxFileName::Mkdir(SteamSaveDir.GetPath()+_(L"\\x64\\FF9_Data\\"),wxS_DIR_DEFAULT,wxPATH_MKDIR_FULL);
+		bool deleteold = dirname.Last().compare(L"FINAL FANTASY IX") != 0;
+		if (dllformat == 0)
+			wxFileName::Mkdir(SteamSaveDir.GetPath() + _(L"\\x64\\FF9_Data\\Managed\\"), wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+		if (assetformat == 0) {
+			wxFileName::Mkdir(SteamSaveDir.GetPath() + _(L"\\StreamingAssets\\"), wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+			wxFileName::Mkdir(SteamSaveDir.GetPath() + _(L"\\x64\\FF9_Data\\"), wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 		}
-		int res = CreateSteamMod(SteamSaveDir.GetPath().ToStdString(),modifiedsection,CDPanel[currentpanel]->config,CDPanel[currentpanel]->saveset,dllformat,assetformat,deleteold);
-		if (res==0) {
-			wxMessageDialog popupsuccess(this,HADES_STRING_STEAM_SAVE_SUCCESS,HADES_STRING_SUCCESS,wxOK|wxCENTRE);
+		int res = CreateSteamMod(SteamSaveDir.GetPath().ToStdString(), modifiedsection, CDPanel[currentpanel]->config, CDPanel[currentpanel]->saveset, dllformat, assetformat, deleteold);
+		if (res == 0) {
+			wxMessageDialog popupsuccess(this, HADES_STRING_STEAM_SAVE_SUCCESS, HADES_STRING_SUCCESS, wxOK | wxCENTRE);
 			popupsuccess.ShowModal();
-		} else if (res==1) {
-			wxMessageDialog popupfail(this,HADES_STRING_STEAM_SAVE_ERROR_OPENED_FILES,HADES_STRING_ERROR,wxOK|wxCENTRE);
+		} else if (res == 1) {
+			wxMessageDialog popupfail(this, HADES_STRING_STEAM_SAVE_ERROR_OPENED_FILES, HADES_STRING_ERROR, wxOK | wxCENTRE);
 			popupfail.ShowModal();
-		} else if (res==2) {
-			wxMessageDialog popupfail(this,HADES_STRING_STEAM_SAVE_ERROR_FAIL_READ,HADES_STRING_ERROR,wxOK|wxCENTRE);
+		} else if (res == 2) {
+			wxMessageDialog popupfail(this, HADES_STRING_STEAM_SAVE_ERROR_FAIL_READ, HADES_STRING_ERROR, wxOK | wxCENTRE);
 			popupfail.ShowModal();
-		} else if (res==3) {
-			wxMessageDialog popupfail(this,HADES_STRING_STEAM_SAVE_ERROR_FAIL_WRITE,HADES_STRING_ERROR,wxOK|wxCENTRE);
+		} else if (res == 3) {
+			wxMessageDialog popupfail(this, HADES_STRING_STEAM_SAVE_ERROR_FAIL_WRITE, HADES_STRING_ERROR, wxOK | wxCENTRE);
 			popupfail.ShowModal();
-		} else if (res==-1) {
-			wxMessageDialog popupwarning(this,HADES_STRING_STEAM_SAVE_CSHARP_MEMORIA,HADES_STRING_WARNING,wxOK|wxCENTRE);
+		} else if (res == -1) {
+			wxMessageDialog popupwarning(this, HADES_STRING_STEAM_SAVE_CSHARP_MEMORIA, HADES_STRING_WARNING, wxOK | wxCENTRE);
 			popupwarning.ShowModal();
 		}
-		delete[] modifiedsection;
 	}
 }
 
@@ -485,51 +465,21 @@ void MainFrame::OnExportPPFClick(wxCommandEvent& event) {
 	if (!TheExportPPFMessage)
 		TheExportPPFMessage = new ExportPPFMessage(this);
 	if (TheExportPPFMessage->ShowModal()==wxID_OK) {
-		int ppflen = TheExportPPFMessage->m_ppfpicker->GetPath().Length();
-		int desclen = TheExportPPFMessage->m_description->GetValue().Length();
-		char* ppfname = new char[ppflen+1];
-		char* desc = new char[desclen+1];
-		ppfname[ppflen] = 0;
-		desc[desclen] = 0;
-		strncpy(ppfname, (const char*)TheExportPPFMessage->m_ppfpicker->GetPath().mb_str(), ppflen);
-		strncpy(desc, (const char*)TheExportPPFMessage->m_description->GetValue().mb_str(), desclen);
-		if (!PPFOpenFilesForCreate(ppfname,TheExportPPFMessage->m_undo->IsChecked(),TheExportPPFMessage->m_blockcheck->IsChecked(),desc)) {
+		string ppfname = TheExportPPFMessage->m_ppfpicker->GetPath().ToStdString();
+		string description = TheExportPPFMessage->m_description->GetValue().ToStdString();
+		bool undo = TheExportPPFMessage->m_undo->IsChecked();
+		bool blockcheck = TheExportPPFMessage->m_blockcheck->IsChecked();
+		int result = CreatePPF(CDPanel[currentpanel]->filename, ppfname, CDPanel[currentpanel]->saveset.sectionmodified, CDPanel[currentpanel]->config, CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->cluster, undo, blockcheck, description);
+		if (result == 1) {
 			wxLogError(HADES_STRING_OPEN_ERROR_CREATE,_(ppfname));
-			delete[] ppfname;
-			delete[] desc;
-			return;
-		}
-		if (TheExportPPFMessage->m_blockcheck->IsChecked()) {
-			unsigned char binblock[1024];
-			fstream ffbin(CDName[currentpanel].c_str(),ios::in | ios::binary);
-			ffbin.seekg(0x9320);
-			ffbin.read((char*)binblock,1024);
-			ffbin.close();
-			if (PPFCreateHeader(binblock)) {
-				wxLogError(HADES_STRING_OPEN_ERROR_FAIL,CDName[currentpanel]);
-				PPFCloseAllFiles();
-				delete[] ppfname;
-				delete[] desc;
-				return;
-			}
+		} else if (result == 2) {
+			wxLogError(HADES_STRING_OPEN_ERROR_FAIL, CDName[currentpanel]);
+		} else if (result == 3) {
+			wxLogError(HADES_STRING_OPEN_ERROR_FAIL, CDName[currentpanel]);
 		} else {
-			if (PPFCreateHeader(NULL)) {
-				wxLogError(HADES_STRING_OPEN_ERROR_FAIL,CDName[currentpanel]);
-				PPFCloseAllFiles();
-				delete[] ppfname;
-				delete[] desc;
-				return;
-			}
-		}
-		if (!CDPanel[currentpanel]->ExportPPF())
-			wxLogError(HADES_STRING_OPEN_ERROR_FAIL,CDName[currentpanel]);
-		else {
-			wxMessageDialog popupsuccess(this,HADES_STRING_PPF_SAVE_SUCCESS,HADES_STRING_SUCCESS,wxOK|wxCENTRE);
+			wxMessageDialog popupsuccess(this, HADES_STRING_PPF_SAVE_SUCCESS, HADES_STRING_SUCCESS, wxOK | wxCENTRE);
 			popupsuccess.ShowModal();
 		}
-		PPFCloseAllFiles();
-		delete[] ppfname;
-		delete[] desc;
 	}
 }
 
@@ -553,73 +503,73 @@ void MainFrame::OnSaveBinClick(wxCommandEvent& event) {
 
 void MainFrame::OnSortSpellClick( wxCommandEvent& event ) {
 	for (unsigned int i=0;i<CDPanelAmount;i++)
-		if (CDPanel[i]->spellloaded)
+		if (CDPanel[i]->saveset.sectionloaded[DATA_SECTION_SPELL])
 			CDPanel[i]->SpellDisplayNames();
 }
 
 void MainFrame::OnSortSupportClick( wxCommandEvent& event ) {
 	for (unsigned int i=0;i<CDPanelAmount;i++)
-		if (CDPanel[i]->supportloaded)
+		if (CDPanel[i]->saveset.sectionloaded[DATA_SECTION_SUPPORT])
 			CDPanel[i]->SupportDisplayNames();
 }
 
 void MainFrame::OnSortCommandClick( wxCommandEvent& event ) {
 	for (unsigned int i=0;i<CDPanelAmount;i++)
-		if (CDPanel[i]->cmdloaded)
+		if (CDPanel[i]->saveset.sectionloaded[DATA_SECTION_CMD])
 			CDPanel[i]->CommandDisplayNames();
 }
 
 void MainFrame::OnSortEnemyClick( wxCommandEvent& event ) {
 	for (unsigned int i=0;i<CDPanelAmount;i++)
-		if (CDPanel[i]->enemyloaded)
+		if (CDPanel[i]->saveset.sectionloaded[DATA_SECTION_ENMY])
 			CDPanel[i]->EnemyDisplayNames();
 }
 
 void MainFrame::OnSortCardClick( wxCommandEvent& event ) {
 	for (unsigned int i=0;i<CDPanelAmount;i++)
-		if (CDPanel[i]->cardloaded)
+		if (CDPanel[i]->saveset.sectionloaded[DATA_SECTION_CARD])
 			CDPanel[i]->CardDisplayNames();
 }
 
 void MainFrame::OnSortItemClick( wxCommandEvent& event ) {
 	for (unsigned int i=0;i<CDPanelAmount;i++)
-		if (CDPanel[i]->itemloaded)
+		if (CDPanel[i]->saveset.sectionloaded[DATA_SECTION_ITEM])
 			CDPanel[i]->ItemDisplayNames();
 }
 
 void MainFrame::OnSortKeyItemClick( wxCommandEvent& event ) {
 	for (unsigned int i=0;i<CDPanelAmount;i++)
-		if (CDPanel[i]->itemloaded)
+		if (CDPanel[i]->saveset.sectionloaded[DATA_SECTION_ITEM])
 			CDPanel[i]->KeyItemDisplayNames();
 }
 
 void MainFrame::OnSortTextClick( wxCommandEvent& event ) {
 	for (unsigned int i=0;i<CDPanelAmount;i++)
-		if (CDPanel[i]->textloaded)
+		if (CDPanel[i]->saveset.sectionloaded[DATA_SECTION_TEXT])
 			CDPanel[i]->TextDisplayNames();
 }
 
 void MainFrame::OnSortWorldMapClick( wxCommandEvent& event ) {
 	for (unsigned int i=0;i<CDPanelAmount;i++)
-		if (CDPanel[i]->worldloaded)
+		if (CDPanel[i]->saveset.sectionloaded[DATA_SECTION_WORLD_MAP])
 			CDPanel[i]->WorldMapDisplayNames();
 }
 
 void MainFrame::OnSortFieldClick( wxCommandEvent& event ) {
 	for (unsigned int i=0;i<CDPanelAmount;i++)
-		if (CDPanel[i]->fieldloaded)
+		if (CDPanel[i]->saveset.sectionloaded[DATA_SECTION_FIELD])
 			CDPanel[i]->FieldDisplayNames();
 }
 
 void MainFrame::OnSortBattleSceneClick( wxCommandEvent& event ) {
 	for (unsigned int i=0;i<CDPanelAmount;i++)
-		if (CDPanel[i]->sceneloaded)
+		if (CDPanel[i]->saveset.sectionloaded[DATA_SECTION_BATTLE_SCENE])
 			CDPanel[i]->BattleSceneDisplayNames();
 }
 
 void MainFrame::OnSortSpellAnimationClick( wxCommandEvent& event ) {
 	for (unsigned int i=0;i<CDPanelAmount;i++)
-		if (CDPanel[i]->spellanimloaded)
+		if (CDPanel[i]->saveset.sectionloaded[DATA_SECTION_SPELL_ANIM])
 			CDPanel[i]->SpellAnimationDisplayNames();
 }
 
@@ -680,7 +630,7 @@ void MainFrame::PreferencesUpdate() {
 	if (hades::FIELD_BACKGROUND_RESOLUTION!=PreferenceWindow->background_resolution) {
 		hades::FIELD_BACKGROUND_RESOLUTION = PreferenceWindow->background_resolution;
 		for (i=0;i<CDPanelAmount;i++)
-			if (CDPanel[i]->gametype!=GAME_TYPE_PSX && CDPanel[i]->fieldloaded) {
+			if (CDPanel[i]->gametype!=GAME_TYPE_PSX && CDPanel[i]->saveset.sectionloaded[DATA_SECTION_FIELD]) {
 				CDPanel[i]->fieldset.tile_size = hades::FIELD_BACKGROUND_RESOLUTION;
 				for (j=0;j<CDPanel[i]->fieldset.amount;j++)
 					if (CDPanel[i]->fieldset.background_data[j]!=NULL)
@@ -706,31 +656,30 @@ void MainFrame::OnPreferencesClick( wxCommandEvent& event ) {
 	}
 }
 
-void MainFrame::OnBatchExportClick( wxCommandEvent& event ) {
+void MainFrame::OnBatchExportClick(wxCommandEvent& event) {
 	unsigned int currentpanel = m_cdbook->GetSelection();
 	int id = event.GetId();
-	bool dataloaded[8] = { CDPanel[currentpanel]->statloaded, CDPanel[currentpanel]->enemyloaded, CDPanel[currentpanel]->fieldloaded, CDPanel[currentpanel]->itemloaded, CDPanel[currentpanel]->spellloaded, CDPanel[currentpanel]->supportloaded, CDPanel[currentpanel]->cmdloaded, CDPanel[currentpanel]->cardloaded };
-	if (id==wxID_TEXT) {
+	if (id == wxID_TEXT) {
 		BatchExportDialog dial(this);
-		dial.ShowModal(1,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->m_textlist->GetStrings(),CDPanel[currentpanel]->textsorted,dataloaded);
-	} else if (id==wxID_UITEXT) {
+		dial.ShowModal(1, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->m_textlist->GetStrings(), CDPanel[currentpanel]->textsorted);
+	} else if (id == wxID_UITEXT) {
 		BatchExportDialog dial(this);
-		dial.ShowModal(2,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->m_specialtextlist->GetStrings(),NULL,dataloaded);
-	} else if (id==wxID_ENMYSCRIPT) {
+		dial.ShowModal(2, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->m_specialtextlist->GetStrings(), NULL);
+	} else if (id == wxID_ENMYSCRIPT) {
 		BatchExportDialog dial(this);
-		dial.ShowModal(3,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->m_enemylist->GetStrings(),CDPanel[currentpanel]->enemysorted,dataloaded);
-	} else if (id==wxID_WORLDSCRIPT) {
+		dial.ShowModal(3, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->m_enemylist->GetStrings(), CDPanel[currentpanel]->enemysorted);
+	} else if (id == wxID_WORLDSCRIPT) {
 		BatchExportDialog dial(this);
-		dial.ShowModal(4,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->m_worldlist->GetStrings(),NULL,dataloaded);
-	} else if (id==wxID_FIELDSCRIPT) {
+		dial.ShowModal(4, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->m_worldlist->GetStrings(), NULL);
+	} else if (id == wxID_FIELDSCRIPT) {
 		BatchExportDialog dial(this);
-		dial.ShowModal(5,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->m_fieldlist->GetStrings(),CDPanel[currentpanel]->fieldsorted,dataloaded);
-	} else if (id==wxID_BACKGROUND) {
+		dial.ShowModal(5, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->m_fieldlist->GetStrings(), CDPanel[currentpanel]->fieldsorted);
+	} else if (id == wxID_BACKGROUND) {
 		BatchExportDialog dial(this);
-		dial.ShowModal(10,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->m_fieldlist->GetStrings(),CDPanel[currentpanel]->fieldsorted,dataloaded);
+		dial.ShowModal(10, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->m_fieldlist->GetStrings(), CDPanel[currentpanel]->fieldsorted);
 	} else if (id == wxID_WALKMESH) {
 		BatchExportDialog dial(this);
-		dial.ShowModal(11, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->m_fieldlist->GetStrings(), CDPanel[currentpanel]->fieldsorted, dataloaded);
+		dial.ShowModal(11, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->m_fieldlist->GetStrings(), CDPanel[currentpanel]->fieldsorted);
 	}
 }
 
@@ -741,35 +690,35 @@ void MainFrame::OnBatchImportClick( wxCommandEvent& event ) {
 		BatchImportDialog dial(this);
 		dial.ShowModal(1,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->config.language & LANGUAGE_VERSION_JAPAN);
 		if (dial.datamodified) {
-			CDPanel[currentpanel]->textmodified = true;
+			CDPanel[currentpanel]->saveset.sectionmodified[DATA_SECTION_TEXT] = true;
 			MarkDataModified();
 		}
 	} else if (id==wxID_IMPUITEXT) {
 		BatchImportDialog dial(this);
 		dial.ShowModal(2,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->config.language & LANGUAGE_VERSION_JAPAN);
 		if (dial.datamodified) {
-			CDPanel[currentpanel]->ffuimodified = true;
+			CDPanel[currentpanel]->saveset.sectionmodified[DATA_SECTION_MENU_UI] = true;
 			MarkDataModified();
 		}
 	} else if (id==wxID_IMPENMYSCRIPT) {
 		BatchImportDialog dial(this);
 		dial.ShowModal(3,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->config.language & LANGUAGE_VERSION_JAPAN);
 		if (dial.datamodified) {
-			CDPanel[currentpanel]->enemymodified = true;
+			CDPanel[currentpanel]->saveset.sectionmodified[DATA_SECTION_ENMY] = true;
 			MarkDataModified();
 		}
 	} else if (id==wxID_IMPWORLDSCRIPT) {
 		BatchImportDialog dial(this);
 		dial.ShowModal(4,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->config.language & LANGUAGE_VERSION_JAPAN);
 		if (dial.datamodified) {
-			CDPanel[currentpanel]->worldmodified = true;
+			CDPanel[currentpanel]->saveset.sectionmodified[DATA_SECTION_WORLD_MAP] = true;
 			MarkDataModified();
 		}
 	} else if (id==wxID_IMPFIELDSCRIPT) {
 		BatchImportDialog dial(this);
 		dial.ShowModal(5,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->config.language & LANGUAGE_VERSION_JAPAN);
 		if (dial.datamodified) {
-			CDPanel[currentpanel]->fieldmodified = true;
+			CDPanel[currentpanel]->saveset.sectionmodified[DATA_SECTION_FIELD] = true;
 			MarkDataModified();
 		}
 	}
@@ -793,7 +742,7 @@ void MainFrame::OnToolClick( wxCommandEvent& event ) {
 		if (currentpanel == wxNOT_FOUND)
 			return;
 		bool ok = true;
-		if (!CDPanel[currentpanel]->spellloaded || !CDPanel[currentpanel]->statloaded || !CDPanel[currentpanel]->itemloaded || !CDPanel[currentpanel]->enemyloaded) {
+		if (!CDPanel[currentpanel]->saveset.sectionloaded[DATA_SECTION_SPELL] || !CDPanel[currentpanel]->saveset.sectionloaded[DATA_SECTION_STAT] || !CDPanel[currentpanel]->saveset.sectionloaded[DATA_SECTION_ITEM] || !CDPanel[currentpanel]->saveset.sectionloaded[DATA_SECTION_ENMY]) {
 			wxMessageDialog popup(this, HADES_STRING_CALCULATOR_LOAD_SECTIONS, HADES_STRING_WARNING, wxOK | wxCANCEL | wxSTAY_ON_TOP | wxCENTRE);
 			if (popup.ShowModal() == wxID_OK) {
 				CDPanel[currentpanel]->InitSpell();
@@ -812,7 +761,7 @@ void MainFrame::OnToolClick( wxCommandEvent& event ) {
 		if (currentpanel == wxNOT_FOUND)
 			return;
 		bool ok = true;
-		if (!CDPanel[currentpanel]->fieldloaded) {
+		if (!CDPanel[currentpanel]->saveset.sectionloaded[DATA_SECTION_FIELD]) {
 			wxMessageDialog popup(this, HADES_STRING_BACKGROUND_LOAD_SECTIONS, HADES_STRING_WARNING, wxOK | wxCANCEL | wxSTAY_ON_TOP | wxCENTRE);
 			if (popup.ShowModal() == wxID_OK)
 				CDPanel[currentpanel]->InitField();
@@ -826,6 +775,58 @@ void MainFrame::OnToolClick( wxCommandEvent& event ) {
 	} else if (id==wxID_ASSETS) {
 		ToolUnityViewer* unityviewer = new ToolUnityViewer(this);
 		unityviewer->Show();
+	}
+}
+
+void MainFrame::OnMemoriaClick(wxCommandEvent& event) {
+	int currentpanel = m_cdbook->GetSelection();
+	if (currentpanel == wxNOT_FOUND)
+		return;
+	int id = event.GetId();
+	if (id == wxID_CUSTOMFIELD) {
+		bool ok = true;
+		if (!CDPanel[currentpanel]->saveset.sectionloaded[DATA_SECTION_FIELD]) {
+			wxMessageDialog popup(this, wxString::Format(wxT(HADES_STRING_MEMORIA_LOAD_SECTIONS), "fields"), HADES_STRING_WARNING, wxOK | wxCANCEL | wxSTAY_ON_TOP | wxCENTRE);
+			if (popup.ShowModal() == wxID_OK)
+				CDPanel[currentpanel]->InitField();
+			else
+				ok = false;
+		}
+		if (ok) {
+			SaveCustomFieldDialog dial(this, SteamSaveDir.GetFullPath(), CDPanel[currentpanel]->saveset);
+			if (dial.ShowModal() == wxID_OK) {
+				int res = dial.DoGenerate(CDPanel[currentpanel]->config, CDPanel[currentpanel]->saveset);
+				if (res == 0) {
+					wxMessageDialog popupsuccess(this, HADES_STRING_MEMORIA_CUSTOM_SUCCESS, HADES_STRING_SUCCESS, wxOK | wxSTAY_ON_TOP | wxCENTRE);
+					popupsuccess.ShowModal();
+				} else {
+					wxMessageDialog popupwarning(this, HADES_STRING_MEMORIA_CUSTOM_FAIL, HADES_STRING_WARNING, wxOK | wxCENTRE);
+					popupwarning.ShowModal();
+				}
+			}
+		}
+	} else if (id == wxID_CUSTOMBATTLE) {
+		bool ok = true;
+		if (!CDPanel[currentpanel]->saveset.sectionloaded[DATA_SECTION_ENMY]) {
+			wxMessageDialog popup(this, wxString::Format(wxT(HADES_STRING_MEMORIA_LOAD_SECTIONS), "battles"), HADES_STRING_WARNING, wxOK | wxCANCEL | wxSTAY_ON_TOP | wxCENTRE);
+			if (popup.ShowModal() == wxID_OK)
+				CDPanel[currentpanel]->InitEnemy();
+			else
+				ok = false;
+		}
+		if (ok) {
+			SaveCustomBattleDialog dial(this, SteamSaveDir.GetFullPath(), CDPanel[currentpanel]->saveset);
+			if (dial.ShowModal() == wxID_OK) {
+				int res = dial.DoGenerate(CDPanel[currentpanel]->config, CDPanel[currentpanel]->saveset);
+				if (res == 0) {
+					wxMessageDialog popupsuccess(this, HADES_STRING_MEMORIA_CUSTOM_SUCCESS, HADES_STRING_SUCCESS, wxOK | wxSTAY_ON_TOP | wxCENTRE);
+					popupsuccess.ShowModal();
+				} else {
+					wxMessageDialog popupwarning(this, HADES_STRING_MEMORIA_CUSTOM_FAIL, HADES_STRING_WARNING, wxOK | wxCENTRE);
+					popupwarning.ShowModal();
+				}
+			}
+		}
 	}
 }
 
@@ -900,6 +901,8 @@ void MainFrame::UpdateMenuAvailability(int panel) {
 		m_randomizer->Enable(false);
 		m_damagecalculator->Enable(false);
 		m_backgroundeditor->Enable(false);
+		m_customfield->Enable(false);
+		m_custombattle->Enable(false);
 		return;
 	}
 	SetGameType(CDPanel[panel]->gametype);
@@ -914,18 +917,20 @@ void MainFrame::UpdateMenuAvailability(int panel) {
 	m_savesteam->Enable(CDModifiedState[panel] && GetGameType()!=GAME_TYPE_PSX);
 	m_exportppf->Enable(CDModifiedState[panel] && GetGameType()==GAME_TYPE_PSX);
 	m_savebin->Enable(CDModifiedState[panel] && GetGameType()==GAME_TYPE_PSX);
-	m_exporttext->Enable(CDPanel[panel]->textloaded);
-	m_importtext->Enable(CDPanel[panel]->textloaded);
-	m_exportuitext->Enable(CDPanel[panel]->ffuiloaded);
-	m_importuitext->Enable(CDPanel[panel]->ffuiloaded);
-	m_exportenemyscript->Enable(CDPanel[panel]->enemyloaded);
-	m_importenemyscript->Enable(CDPanel[panel]->enemyloaded);
-	m_exportworldscript->Enable(CDPanel[panel]->worldloaded);
-	m_importworldscript->Enable(CDPanel[panel]->worldloaded);
-	m_exportfieldscript->Enable(CDPanel[panel]->fieldloaded);
-	m_importfieldscript->Enable(CDPanel[panel]->fieldloaded);
-	m_exportfieldbackground->Enable(CDPanel[panel]->fieldloaded);
-	m_exportfieldwalkmesh->Enable(CDPanel[panel]->fieldloaded);
+	m_exporttext->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_TEXT]);
+	m_importtext->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_TEXT]);
+	m_exportuitext->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_MENU_UI]);
+	m_importuitext->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_MENU_UI]);
+	m_exportenemyscript->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_ENMY]);
+	m_importenemyscript->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_ENMY]);
+	m_exportworldscript->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_WORLD_MAP]);
+	m_importworldscript->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_WORLD_MAP]);
+	m_exportfieldscript->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_FIELD]);
+	m_importfieldscript->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_FIELD]);
+	m_exportfieldbackground->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_FIELD]);
+	m_exportfieldwalkmesh->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_FIELD]);
+	m_customfield->Enable(CDPanel[panel]->config.gametype == GAME_TYPE_STEAM && CDPanel[panel]->config.dll_usage != 0);
+	m_custombattle->Enable(CDPanel[panel]->config.gametype == GAME_TYPE_STEAM && CDPanel[panel]->config.dll_usage != 0);
 }
 
 void MainFrame::OnDebugClick( wxCommandEvent& event ) {

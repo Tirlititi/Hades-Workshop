@@ -258,13 +258,14 @@ public:
 struct EnemyDataSet {
 public:
 	uint16_t battle_amount;
-	uint16_t* cluster_id;
-	wstring* battle_name;
-	BattleDataStruct** battle_data;
-	EnemyDataStruct** battle;
-	TextDataStruct** text;
-	ScriptDataStruct** script;
-	ImageMapDataStruct** preload; // PSX only
+	vector<uint16_t> cluster_id; // PSX only
+	vector<uint16_t> struct_id;
+	vector<wstring> battle_name;
+	vector<BattleDataStruct*> battle_data;
+	vector<EnemyDataStruct*> battle;
+	vector<TextDataStruct*> text;
+	vector<ScriptDataStruct*> script;
+	vector<ImageMapDataStruct*> preload; // PSX only
 	ImageMapDataStruct* shared_map; // PSX only
 	ImageMapDataStruct*** image_map; // PSX only - pointer to the cluster's image map list
 	unsigned int image_map_amount;
@@ -273,6 +274,10 @@ public:
 	uint32_t steam_method_base_length;
 	
 	unsigned int modified_battle_scene_amount; // readonly
+	vector<uint16_t> modified_battle_id;
+	vector<uint16_t> modified_scene_id;
+	vector<uint32_t> modified_scene_offset;
+	vector<uint32_t> modified_scene_size;
 	
 	static void GetSpellSequenceModelRef(vector<EnemySequenceCodeLine>& sequence, int* code, int* arg);
 	// Return temporary array not to be destroyed (as for battleids)
@@ -297,13 +302,9 @@ public:
 	DllMetaDataModification* ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount);
 	void GenerateCSharp(vector<string>& buffer);
 	bool GenerateCSV(string basefolder);
+	int GetIndexById(uint16_t battleid);
 	
 private:
-	uint16_t modified_battle_id[0x1000];
-	uint16_t modified_scene_id[0x1000];
-	uint32_t modified_scene_offset[0x1000];
-	uint32_t modified_scene_size[0x1000];
-	
 	void SetupEnemyInfo(uint16_t battleid);
 };
 

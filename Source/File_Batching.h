@@ -11,6 +11,7 @@ class BatchImportDialog;
 #define BATCHING_SCRIPT_INFO_FILENAME	1
 #define BATCHING_SCRIPT_INFO_ARGUMENT	2
 #define BATCHING_SCRIPT_INFO_TEXT_LINK	4
+#define BATCHING_SCRIPT_INFO_ALL		7
 
 class BatchExportDialog : public BatchExportWindow {
 public:
@@ -27,15 +28,15 @@ public:
 	
 	BatchExportDialog(wxWindow* p);
 	~BatchExportDialog();
-	int ShowModal(int type, SaveSet* datas, wxArrayString objlist, unsigned int* objlistsort, bool* dload);
+	int ShowModal(int type, SaveSet* datas, wxArrayString objlist, unsigned int* objlistsort);
 
-	int ExportText(wxString path, bool* exportlist = NULL, bool splitfile = true);
-	int ExportSpecialText(wxString path, bool* exportlist = NULL, bool splitfile = true);
-	int ExportEnemyScript(wxString path, bool* exportlist = NULL, bool splitfile = true, int addedinfo = 0);
-	int ExportWorldScript(wxString path, bool* exportlist = NULL, bool splitfile = true, int addedinfo = 0);
-	int ExportFieldScript(wxString path, bool* exportlist = NULL, bool splitfile = true, int addedinfo = 0);
-	int ExportImageBackground(wxString path, bool* exportlist = NULL, bool mergetile = true, bool depthorder = true, int steamtitlelang = -1);
-	int ExportWalkmesh(wxString path, bool* exportlist);
+	static int ExportText(TextDataSet& data, wxString path, bool* exportlist = NULL, bool splitfile = true);
+	static int ExportSpecialText(SpecialTextDataSet& data, wxString path, bool* exportlist = NULL, bool splitfile = true);
+	static int ExportEnemyScript(SaveSet* dataset, wxString path, bool* exportlist = NULL, bool splitfile = true, int addedinfo = 0);
+	static int ExportWorldScript(SaveSet* dataset, wxString path, bool* exportlist = NULL, bool splitfile = true, int addedinfo = 0);
+	static int ExportFieldScript(SaveSet* dataset, wxString path, bool* exportlist = NULL, bool splitfile = true, int addedinfo = 0);
+	static int ExportImageBackground(FieldDataSet& data, wxString path, bool* exportlist = NULL, bool mergetile = true, bool depthorder = true, int steamtitlelang = -1);
+	static int ExportWalkmesh(FieldDataSet& data, wxString path, bool* exportlist);
 
 private:
 	wxMenu* list_popup_menu;
@@ -58,9 +59,9 @@ public:
 	~BatchImportDialog();
 	int ShowModal(int type, SaveSet* datas, bool isjapan);
 
-	LogStruct ImportText(wxString filetext, bool adjustsize = true, bool isjapan = false, bool fatalwarning = false);
-	LogStruct ImportSpecialText(wxString filetext, bool fatalwarning = false);
-	LogStruct ImportScript(int scripttype, wxString filescript, bool fatalwarning = false);
+	static LogStruct ImportText(TextDataSet& data, wxString filetext, bool adjustsize = true, bool isjapan = false, bool fatalwarning = false);
+	static LogStruct ImportSpecialText(SpecialTextDataSet& data, wxString filetext, bool fatalwarning = false);
+	static LogStruct ImportScript(SaveSet* dataset, int scripttype, wxString filescript, bool fatalwarning = false, bool* datamodif = NULL);
 
 private:
 	wxMenu* list_popup_menu;

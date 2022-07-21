@@ -60,14 +60,14 @@ public:
 struct TextDataSet {
 public:
 	uint16_t amount;
-	uint16_t* cluster_id; // PSX only
-	uint16_t* struct_id;
+	vector<uint16_t> cluster_id; // PSX only
+	vector<uint16_t> struct_id;
 	uint16_t main_charmap_index; // PSX only
-	wstring* name;
-	uint16_t* tim_amount;
-	TextDataStruct** text_data;
-	CharmapDataStruct** charmap; // PSX only
-	TIMImageDataStruct** chartim; // PSX only
+	vector<wstring> name;
+	vector<uint16_t> tim_amount;
+	vector<TextDataStruct*> text_data;
+	vector<CharmapDataStruct*> charmap; // PSX only
+	vector<TIMImageDataStruct*> chartim; // PSX only
 	
 	void Load(fstream& ffbin, ClusterSet& clusset);
 	void Write(fstream& ffbin, ClusterSet& clusset);
@@ -76,6 +76,7 @@ public:
 	// {Number of oversized blocks, Number of unknown data, Number of unused blocks}
 	int* LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup);
 	void WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup);
+	int GetIndexById(uint16_t textid);
 };
 
 
