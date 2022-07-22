@@ -1386,15 +1386,13 @@ void ScriptEditHandler::GenerateEntryNames() {
 	unsigned int i, j, k, funcpos, oppos;
 	vector<bool> foundname;
 	foundname.resize(script.entry_amount, false);
-	for (i = 1; i < script.entry_amount; i++) {
-		if (foundname[i])
-			continue;
+	for (i = 0; i < script.entry_amount; i++) {
 		for (j = 0; j < script.entry_function_amount[i] && !foundname[i]; j++) {
 			funcpos = 0;
 			oppos = 0;
 			while (funcpos < script.func[i][j].length && !foundname[i]) {
 				ScriptOperation& op = script.func[i][j].op[oppos++];
-				if (op.opcode == 0x2F) {
+				if (op.opcode == 0x2F && !foundname[i]) {
 					for (k = 0; k < G_N_ELEMENTS(HADES_STRING_MODEL_NAME); k++)
 						if (op.arg[0].GetValue() == HADES_STRING_MODEL_NAME[k].id) {
 							entry_model_index[i] = k;
