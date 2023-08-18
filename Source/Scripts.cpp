@@ -205,8 +205,7 @@ bool IsScriptArgTypeSigned(uint8_t argtype) {
 		arg_amount = 2+size_byte; \
 		arg = NewScriptArgumentArray(arg_amount,this); \
 		arg[0].FUNC(f,2,false,false); \
-		arg[1].FUNC(f,2,false,true); \
-		for (i=2;i<arg_amount;i++) \
+		for (i=1;i<arg_amount;i++) \
 			arg[i].FUNC(f,2,false,true); \
 		size += 5+size_byte*2; \
 	} else if (opcode==0x29) { \
@@ -391,18 +390,18 @@ ScriptFunction::ScriptFunction(const ScriptFunction& from) :
 }
 
 int ScriptDataStruct::SetName(wstring newvalue, SteamLanguage lang) {
-	if (GetGameType()==GAME_TYPE_PSX) {
+	if (GetGameType() == GAME_TYPE_PSX) {
 		FF9String tmp(name);
 		tmp.SetValue(newvalue);
-		if (tmp.length>SCRIPT_NAME_MAX_LENGTH)
+		if (tmp.length > SCRIPT_NAME_MAX_LENGTH)
 			return 1;
 	}
-	name.SetValue(newvalue,lang);
+	name.SetValue(newvalue, lang);
 	return 0;
 }
 
 int ScriptDataStruct::SetName(FF9String& newvalue) {
-	if (GetGameType()==GAME_TYPE_PSX && newvalue.length>SCRIPT_NAME_MAX_LENGTH)
+	if (GetGameType() == GAME_TYPE_PSX && newvalue.length > SCRIPT_NAME_MAX_LENGTH)
 		return 1;
 	name = newvalue;
 	return 0;

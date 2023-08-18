@@ -56,6 +56,8 @@
 #define HADES_STRING_OPEN_WARNING_VERSION	L"The file's configuration is outdated.\n"\
 											L"Click OK to update it."
 #define HADES_STRING_OPEN_WARNING_DLL_USAGE	"Using the non-modded backup DLL '%s'."
+#define HADES_STRING_CLOSE_WARNING_SAVE	L"There are unsaved changes.\n"\
+										L"Do you really want to close?"
 #define HADES_STRING_CONFIG_FIND_FAIL L"Can't scan '%s' as a Final Fantasy IX binary file."
 #define HADES_STRING_CONFIG_FIND_FAIL_RNC L"'%s' has been compressed by a rnc patch and can't be read."
 #define HADES_STRING_CONFIG_FIND_SUCCESS L"Successfully scanned!"
@@ -152,6 +154,7 @@
 #define HADES_STRING_WALKMESH_SAVE_SUCCESS L"Walkmesh successfully exported!"
 #define HADES_STRING_WALKMESH_LOAD_SUCCESS L"Walkmesh successfully imported!"
 #define HADES_STRING_TEXT_TRANSLATE L"Auto-Translate"
+#define HADES_STRING_ADD_OBJECT_SAME_ID L"An object with that ID already exists!"
 
 static wxString HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[] = {
 	L"us",
@@ -302,9 +305,13 @@ static wstring HADES_STRING_CHARACTER_DEFAULT_NAME[] = {
 static wxString HADES_STRING_PARTY_SPECIAL_DATA[] = {
 	L"Ability Availabilities"
 };
+#define HADES_STRING_PARTY_SPECIAL_SWORD_MAGIC_SET			"Magic Sword %d"
+#define HADES_STRING_PARTY_SPECIAL_SWORD_MAGIC_SUPPORTER	L"Caster: "
+#define HADES_STRING_PARTY_SPECIAL_SWORD_MAGIC_BENEFICIARY	L"Knight: "
 
 //-- Enemy Panel
 #define HADES_STRING_NOGROUPEDIT	L"Warning: this type of data is not modified on similar enemies"
+#define HADES_STRING_STAT_TOO_HIGH	L"Warning: speed and spirit should not be 60 or higher"
 #define HADES_STRING_GROUPEDIT_ERROR_TEXT L"A similar battle is limited in size: failed to change the text."
 #define HADES_STRING_GROUPEDIT_ERROR_DATA L"A similar battle is limited in size: failed to change some of its data."
 #define HADES_STRING_STAT_WARN_LIMIT	L"A battle with more than 3 different enemy types will bug\n"\
@@ -331,10 +338,17 @@ static wxString HADES_STRING_PARTY_SPECIAL_DATA[] = {
 #define HADES_STRING_WALKMESH_IMPORT_QUADS L"Only triangular faces are accepted; polygons with more than 3 vertices were cut down to 3 vertices"
 #define HADES_STRING_WALKMESH_IMPORT_HINT L"You would better edit the imported walkmesh in order to check it and setup its pathing flags"
 
+//-- Item Panel
+#define HADES_STRING_ITEM_STAT_SET			L"Stat Set "
+#define HADES_STRING_ITEM_STAT_SET_PERSO	L"Individual Stat Set"
+
 //-- Shop Panel
+#define	HADES_STRING_SHOP_CUSTOM_NAME			"Custom shop %d"
 #define HADES_STRING_SHOP_REACH_LIMIT			L"Can't add more than 32 items to a shop."
 #define HADES_STRING_SYNTH_REACH_LIMIT			"Synthesis Shops can't synth more than %d items.\n"
 #define HADES_STRING_SYNTH_REACH_LIMIT_TOKEN	"\n - %s has %d items."
+#define HADES_STRING_SYNTH_ADD_ITEM_ADD			L"Add Item"
+#define HADES_STRING_SYNTH_ADD_ITEM_EDIT		L"Set Item"
 static wxString HADES_STRING_SYNTH_NAME[8] = {
 	L"Lindblum (Disc 1/2)",			L"Treno (Disc 2)",
 	L"Lindblum (Disc 2)",			L"Black Mage Village (Disc 2/3)",
@@ -348,6 +362,7 @@ static wxString HADES_STRING_SYNTH_NAME[8] = {
 #define HADES_STRING_SCRIPT_NEW_ENTRY	 		L"New Entry"
 #define HADES_STRING_ENTRY_ARG_LOST				"%u script lines used an entry that was deleted"
 #define HADES_STRING_SCRIPT_NO_DELETE	 		L"Can't delete the Main_Init function"
+#define HADES_STRING_SCRIPT_SAME_FUNCTYPE 		L"Better not create two functions with the same type for the same entry"
 #define HADES_STRING_MISSING_SPACE				L"Not enough space available"
 #define HADES_STRING_SCRIPT_SHOULDPARSE			L"Are you sure?\n"\
 												L"Some function(s) have been modified but are not parsed."
@@ -368,6 +383,8 @@ static wxString HADES_STRING_SYNTH_NAME[8] = {
 #define HADES_STRING_SCRIPT_CASE_TWICE			" - Line %u: Case '%s' handled twice\n"
 #define HADES_STRING_SCRIPT_CASE_RANGE			" - Line %u: Case is not in range\n"
 #define HADES_STRING_SCRIPT_LOOP				" - Line %u: Looping functions can only be made in top-level blocks\n"
+#define HADES_STRING_SCRIPT_FORWARD				" - Line %u: When the keyword '%s' is used, it must be used the function's only line\n"
+#define HADES_STRING_SCRIPT_FORWARD_END			" - Line %u: There is no function next to forward to\n"
 #define HADES_STRING_SCRIPT_VARARG_MAIN			" - Line %u: %s"
 #define HADES_STRING_SCRIPT_VARARG_EMPTY		"Empty argument\n"
 #define HADES_STRING_SCRIPT_VARARG_TOO_PAR		"Too many ')' in argument\n"

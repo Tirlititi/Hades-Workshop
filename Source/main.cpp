@@ -137,21 +137,47 @@ void MainFrame::MarkDataModified() {
 }
 
 void MainFrame::OnCloseFrame(wxCloseEvent& event) {
+	if (event.CanVeto()) {
+		bool warnclose = false;
+		for (unsigned int i = 0; i < CDPanelAmount; i++)
+			if (CDModifiedState[i]) {
+				warnclose = true;
+				break;
+			}
+		if (warnclose) {
+			wxMessageDialog popup(this, HADES_STRING_CLOSE_WARNING_SAVE, HADES_STRING_WARNING, wxYES_NO | wxICON_WARNING | wxSTAY_ON_TOP | wxCENTRE);
+			if (popup.ShowModal() != wxID_YES) {
+				event.Veto();
+				return;
+			}
+		}
+	}
 	Destroy();
 }
 
 void MainFrame::OnExitClick(wxCommandEvent& event) {
+	bool warnclose = false;
+	for (unsigned int i = 0; i < CDPanelAmount; i++)
+		if (CDModifiedState[i]) {
+			warnclose = true;
+			break;
+		}
+	if (warnclose) {
+		wxMessageDialog popup(this, HADES_STRING_CLOSE_WARNING_SAVE, HADES_STRING_WARNING, wxYES_NO | wxICON_WARNING | wxSTAY_ON_TOP | wxCENTRE);
+		if (popup.ShowModal() != wxID_YES)
+			return;
+	}
 	Destroy();
 }
 
 void MainFrame::OnOpenClick(wxCommandEvent& event) {
-	if (CDPanelAmount>=MAX_CD_PANELS) {
-		wxLogError(HADES_STRING_OPEN_ERROR_LIMIT,MAX_CD_PANELS);
+	if (CDPanelAmount >= MAX_CD_PANELS) {
+		wxLogError(HADES_STRING_OPEN_ERROR_LIMIT, MAX_CD_PANELS);
 		return;
 	}
 	unsigned int i;
 	bool success = false;
-	wxFileDialog* openFileDialog = new wxFileDialog(this,HADES_STRING_OPEN_FRAME_NAME,"","",HADES_STRING_OPEN_FILTERS,wxFD_OPEN|wxFD_FILE_MUST_EXIST);
+	wxFileDialog* openFileDialog = new wxFileDialog(this, HADES_STRING_OPEN_FRAME_NAME, "", "", HADES_STRING_OPEN_FILTERS, wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 	if (openFileDialog->ShowModal() == wxID_CANCEL) {
 		openFileDialog->Destroy();
 		return;
@@ -159,57 +185,58 @@ void MainFrame::OnOpenClick(wxCommandEvent& event) {
 	ConfigurationSet* configalloc = new ConfigurationSet; // Debug : ConfigurationSet, much like fstream, must never be copied ; ToDo : delete it at some point
 	ConfigurationSet& config = *configalloc;
 	string filename = openFileDialog->GetPath().ToStdString();
-	size_t dirsep = filename.find_last_of("/\\")+1;
+	size_t dirsep = filename.find_last_of("/\\") + 1;
 	GameType gt = GAME_TYPE_PSX;
 	if (filename.substr(filename.length() - 4).compare(".exe") == 0)
 		gt = GAME_TYPE_STEAM;
-	if (filename.substr(filename.length() - 4).compare(".bin") == 0 && filename.substr(dirsep+2, 4).compare("data") == 0) {
+	if (filename.substr(filename.length() - 4).compare(".bin") == 0 && filename.substr(dirsep + 2, 4).compare("data") == 0) {
 		wxLogError(HADES_STRING_OPEN_ERROR_BIN_ARCHIVE);
 		openFileDialog->Destroy();
 		return;
 	}
-	if (gt==GAME_TYPE_PSX)
-		for (i=0;i<CDPanelAmount;i++)
-			if (CDName[i]==filename) {
+	if (gt == GAME_TYPE_PSX) {
+		for (i = 0; i < CDPanelAmount; i++)
+			if (CDName[i] == filename) {
 				m_cdbook->SetSelection(i);
 				openFileDialog->Destroy();
 				return;
+			} else {
+				for (i = 0; i < CDPanelAmount; i++)
+					if (filename.substr(0, dirsep).compare(CDPanel[i]->filename) == 0) {
+						m_cdbook->SetSelection(i);
+						openFileDialog->Destroy();
+						return;
+					}
 			}
-	else
-		for (i=0;i<CDPanelAmount;i++)
-			if (filename.substr(0,dirsep).compare(CDPanel[i]->filename)==0) {
-				m_cdbook->SetSelection(i);
-				openFileDialog->Destroy();
-				return;
-			}
+	}
 	int res;
-	if (gt==GAME_TYPE_PSX)
-		res = FileCheckConfig(filename,config);
+	if (gt == GAME_TYPE_PSX)
+		res = FileCheckConfig(filename, config);
 	else
-		res = InitSteamConfiguration(filename.substr(0,dirsep),config);
+		res = InitSteamConfiguration(filename.substr(0, dirsep), config);
 	switch (res) {
 	case -1: {
-		wxLogError(HADES_STRING_OPEN_ERROR_FAIL,filename);
+		wxLogError(HADES_STRING_OPEN_ERROR_FAIL, filename);
 		break;
 	}
 	case -2: {
-		wxMessageDialog popup(this,HADES_STRING_OPEN_WARNING_UNKNOWN,HADES_STRING_WARNING,wxYES_NO|wxSTAY_ON_TOP|wxCENTRE);
-		if (popup.ShowModal()==wxID_YES) {
-			int fres = FindConfiguration(filename,config);
+		wxMessageDialog popup(this, HADES_STRING_OPEN_WARNING_UNKNOWN, HADES_STRING_WARNING, wxYES_NO | wxSTAY_ON_TOP | wxCENTRE);
+		if (popup.ShowModal() == wxID_YES) {
+			int fres = FindConfiguration(filename, config);
 			switch (fres) {
 			case -1:
-				wxLogError(HADES_STRING_OPEN_ERROR_FAIL,filename);
+				wxLogError(HADES_STRING_OPEN_ERROR_FAIL, filename);
 				break;
 			case -2:
-				wxLogError(HADES_STRING_CONFIG_FIND_FAIL,filename);
+				wxLogError(HADES_STRING_CONFIG_FIND_FAIL, filename);
 				break;
 			case -3:
-				wxLogError(HADES_STRING_CONFIG_FIND_FAIL_RNC,filename);
+				wxLogError(HADES_STRING_CONFIG_FIND_FAIL_RNC, filename);
 				break;
 			default:
-				wxMessageDialog popupsuccess(this,HADES_STRING_CONFIG_FIND_SUCCESS,HADES_STRING_SUCCESS,wxOK|wxSTAY_ON_TOP|wxCENTRE);
+				wxMessageDialog popupsuccess(this, HADES_STRING_CONFIG_FIND_SUCCESS, HADES_STRING_SUCCESS, wxOK | wxSTAY_ON_TOP | wxCENTRE);
 				popupsuccess.ShowModal();
-				WriteConfiguration(filename,config);
+				WriteConfiguration(filename, config);
 				success = true;
 			}
 		}
@@ -224,23 +251,23 @@ void MainFrame::OnOpenClick(wxCommandEvent& event) {
 		break;
 	}
 	case 1: {
-		wxMessageDialog popup(this,HADES_STRING_OPEN_WARNING_VERSION,HADES_STRING_WARNING,wxOK|wxCANCEL|wxSTAY_ON_TOP|wxCENTRE);
-		if (popup.ShowModal()==wxID_OK) {
-			int fres = FindConfiguration(filename,config);
+		wxMessageDialog popup(this, HADES_STRING_OPEN_WARNING_VERSION, HADES_STRING_WARNING, wxOK | wxCANCEL | wxSTAY_ON_TOP | wxCENTRE);
+		if (popup.ShowModal() == wxID_OK) {
+			int fres = FindConfiguration(filename, config);
 			switch (fres) {
 			case -1:
-				wxLogError(HADES_STRING_OPEN_ERROR_FAIL,filename);
+				wxLogError(HADES_STRING_OPEN_ERROR_FAIL, filename);
 				break;
 			case -2:
-				wxLogError(HADES_STRING_CONFIG_FIND_FAIL,filename);
+				wxLogError(HADES_STRING_CONFIG_FIND_FAIL, filename);
 				break;
 			case -3:
 				wxLogError(HADES_STRING_CONFIG_FIND_FAIL_RNC, filename);
 				break;
 			default:
-				wxMessageDialog popupsuccess(this,HADES_STRING_CONFIG_FIND_SUCCESS,HADES_STRING_SUCCESS,wxOK|wxSTAY_ON_TOP|wxCENTRE);
+				wxMessageDialog popupsuccess(this, HADES_STRING_CONFIG_FIND_SUCCESS, HADES_STRING_SUCCESS, wxOK | wxSTAY_ON_TOP | wxCENTRE);
 				popupsuccess.ShowModal();
-				WriteConfiguration(filename,config);
+				WriteConfiguration(filename, config);
 				success = true;
 			}
 		}
@@ -251,8 +278,9 @@ void MainFrame::OnOpenClick(wxCommandEvent& event) {
 	}
 	if (success) {
 		SetGameType(gt);
-		if (gt==GAME_TYPE_PSX) {
-			CDPanel[CDPanelAmount] = new CDDataStruct(m_cdbook,filename,config);
+		SetGameConfiguration(&config);
+		if (gt == GAME_TYPE_PSX) {
+			CDPanel[CDPanelAmount] = new CDDataStruct(m_cdbook, filename, config);
 			CDName[CDPanelAmount] = filename.substr(dirsep);
 		} else {
 			if (config.dll_usage == 1) {
@@ -265,12 +293,12 @@ void MainFrame::OnOpenClick(wxCommandEvent& event) {
 				wxMessageDialog popup(this, wxString::Format(wxT(HADES_STRING_OPEN_WARNING_DLL_USAGE), "Assembly-CSharp_Vanilla.dll"), HADES_STRING_WARNING, wxOK | wxSTAY_ON_TOP | wxCENTRE);
 				popup.ShowModal();
 			}
-			CDPanel[CDPanelAmount] = new CDDataStruct(m_cdbook,filename.substr(0,dirsep),config);
+			CDPanel[CDPanelAmount] = new CDDataStruct(m_cdbook, filename.substr(0, dirsep), config);
 			CDName[CDPanelAmount] = HADES_STRING_OPEN_STEAM_DEFAULT;
-			SteamSaveDir = CDPanel[CDPanelAmount]->filename+_(HADES_STRING_STEAM_SAVE_DEFAULT);
+			SteamSaveDir = CDPanel[CDPanelAmount]->filename + _(HADES_STRING_STEAM_SAVE_DEFAULT);
 		}
 		CDModifiedState[CDPanelAmount] = false;
-		m_cdbook->AddPage(CDPanel[CDPanelAmount],_(CDName[CDPanelAmount].c_str()),true,wxNullBitmap);
+		m_cdbook->AddPage(CDPanel[CDPanelAmount], _(CDName[CDPanelAmount].c_str()), true, wxNullBitmap);
 		m_openhws->Enable();
 		m_close->Enable();
 		m_closeall->Enable();
@@ -316,13 +344,18 @@ void MainFrame::OnOpenHWSClick(wxCommandEvent& event) {
 
 void MainFrame::OnCloseClick(wxCommandEvent& event) {
 	unsigned int currentpanel = m_cdbook->GetSelection();
+	if (CDModifiedState[currentpanel]) {
+		wxMessageDialog popup(this, HADES_STRING_CLOSE_WARNING_SAVE, HADES_STRING_WARNING, wxYES_NO | wxICON_WARNING | wxSTAY_ON_TOP | wxCENTRE);
+		if (popup.ShowModal() != wxID_YES)
+			return;
+	}
 	if (CDPanel[currentpanel]->gametype != GAME_TYPE_PSX && CDPanel[currentpanel]->config.meta_dll.dll_file.is_open())
 		CDPanel[currentpanel]->config.meta_dll.dll_file.close();
-	if (CDPanelAmount>1) {
-		for (unsigned int i=currentpanel;i+1<CDPanelAmount;i++) {
-			CDName[i] = CDName[i+1];
-			CDPanel[i] = CDPanel[i+1];
-			CDModifiedState[i] = CDModifiedState[i+1];
+	if (CDPanelAmount > 1) {
+		for (unsigned int i = currentpanel; i + 1 < CDPanelAmount; i++) {
+			CDName[i] = CDName[i + 1];
+			CDPanel[i] = CDPanel[i + 1];
+			CDModifiedState[i] = CDModifiedState[i + 1];
 		}
 	} else {
 		m_cdbook->Show(false);
@@ -906,6 +939,7 @@ void MainFrame::UpdateMenuAvailability(int panel) {
 		return;
 	}
 	SetGameType(CDPanel[panel]->gametype);
+	SetGameConfiguration(&CDPanel[panel]->config);
 	m_openhws->Enable(true);
 	m_close->Enable(true);
 	m_closeall->Enable(true);

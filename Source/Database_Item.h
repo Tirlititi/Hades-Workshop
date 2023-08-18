@@ -37,14 +37,14 @@ static SortedChoiceItem HADES_STRING_SHOP_NAME[] = {
 	{ 29, L"Item Shop 5 (Disc 3-4)" },
 	{ 30, L"Item Shop 6 (Disc 4)" },
 	{ 31, L"Item Shop 7 (Zorn & Thorn)" },
-	{ 32, L"Synth Shop : Lindblum (Disc 1-2)" },
-	{ 33, L"Synth Shop : Treno (Disc 2)" },
-	{ 34, L"Synth Shop : Lindblum (Disc 2)" },
-	{ 35, L"Synth Shop : B. M. Village (Disc 2-3)" },
-	{ 36, L"Synth Shop : Alex. Lind. Treno (Disc 3-4)" },
-	{ 37, L"Synth Shop : Daguerreo (Disc 3-4)" },
-	{ 38, L"Synth Shop : B. M. Village (Disc 4)" },
-	{ 39, L"Synth Shop : Hades (Disc 4)" }
+	{ 32, L"Synth Shop: Lindblum (Disc 1-2)" },
+	{ 33, L"Synth Shop: Treno (Disc 2)" },
+	{ 34, L"Synth Shop: Lindblum (Disc 2)" },
+	{ 35, L"Synth Shop: B. M. Village (Disc 2-3)" },
+	{ 36, L"Synth Shop: Alex. Lind. Treno (Disc 3-4)" },
+	{ 37, L"Synth Shop: Daguerreo (Disc 3-4)" },
+	{ 38, L"Synth Shop: B. M. Village (Disc 4)" },
+	{ 39, L"Synth Shop: Hades (Disc 4)" }
 };
 
 //-- Cards

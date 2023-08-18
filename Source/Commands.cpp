@@ -3,143 +3,157 @@
 #include "DllEditor.h"
 #include "main.h"
 #include "Database_CSV.h"
+#include "CommonUtility.h"
 
-#define COMMAND_HWS_VERSION 1
+#define COMMAND_HWS_VERSION 2
 
 const unsigned int steam_cmd_field_size[] = { 16, 16, 16, 8, 8, 32 };
 
 int CommandDataStruct::SetName(wstring newvalue) {
-	FF9String tmp(name);
-	tmp.SetValue(newvalue);
-	int oldlen = name.length;
-	int newlen = tmp.length;
-	if (parent->name_space_used+newlen>parent->name_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		FF9String tmp(name);
+		tmp.SetValue(newvalue);
+		int oldlen = name.length;
+		int newlen = tmp.length;
+		if (parent->name_space_used + newlen > parent->name_space_total + oldlen)
+			return 1;
+		parent->name_space_used += newlen - oldlen;
+	}
 	name.SetValue(newvalue);
-	parent->name_space_used += newlen-oldlen;
 	return 0;
 }
 
 int CommandDataStruct::SetName(FF9String& newvalue) {
-	int oldlen = name.length;
-	int newlen = newvalue.length;
-	if (parent->name_space_used+newlen>parent->name_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		int oldlen = name.length;
+		int newlen = newvalue.length;
+		if (parent->name_space_used + newlen > parent->name_space_total + oldlen)
+			return 1;
+		parent->name_space_used += newlen - oldlen;
+	}
 	name = newvalue;
-	parent->name_space_used += newlen-oldlen;
 	return 0;
 }
 
 int CommandDataStruct::SetHelp(wstring newvalue) {
-	FF9String tmp(help);
-	tmp.SetValue(newvalue);
-	int oldlen = help.length;
-	int newlen = tmp.length;
-	if (parent->help_space_used+newlen>parent->help_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		FF9String tmp(help);
+		tmp.SetValue(newvalue);
+		int oldlen = help.length;
+		int newlen = tmp.length;
+		if (parent->help_space_used + newlen > parent->help_space_total + oldlen)
+			return 1;
+		parent->help_space_used += newlen - oldlen;
+	}
 	help.SetValue(newvalue);
-	parent->help_space_used += newlen-oldlen;
 	return 0;
 }
 
 int CommandDataStruct::SetHelp(FF9String& newvalue) {
-	int oldlen = help.length;
-	int newlen = newvalue.length;
-	if (parent->help_space_used+newlen>parent->help_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		int oldlen = help.length;
+		int newlen = newvalue.length;
+		if (parent->help_space_used + newlen > parent->help_space_total + oldlen)
+			return 1;
+		parent->help_space_used += newlen - oldlen;
+	}
 	help = newvalue;
-	parent->help_space_used += newlen-oldlen;
 	return 0;
 }
 
 void CommandDataStruct::SetPanel(uint8_t newvalue) {
-	if (panel==COMMAND_PANEL_SPELL && newvalue!=COMMAND_PANEL_SPELL) {
-		if (link==0xFF)
+	if (panel == COMMAND_PANEL_SPELL && newvalue != COMMAND_PANEL_SPELL) {
+		if (link < 0)
 			parent->spell_space_remaining += spell_amount;
 		else {
-			parent->cmd[link].link = 0xFF;
-			link = 0xFF;
+			parent->GetCommandById(link).link = -1;
+			link = -1;
 		}
 		spell_list[0] = 0;
 		spell_amount = 0;
-	} else if (panel!=COMMAND_PANEL_SPELL && newvalue==COMMAND_PANEL_SPELL)
+		spell_list.resize(1);
+	} else if (panel != COMMAND_PANEL_SPELL && newvalue == COMMAND_PANEL_SPELL) {
 		spell_amount = 0;
+		spell_list.clear();
+	}
 	panel = newvalue;
 }
 
-bool CommandDataStruct::AddSpell(uint8_t spellid, uint8_t spellpos) {
-	if (parent->spell_space_remaining==0)
+bool CommandDataStruct::AddSpell(int spellid, int spellpos, bool uselimit) {
+	if (uselimit && parent->spell_space_remaining == 0)
 		return false;
-	int i;
-	parent->spell_space_remaining--;
-	for (i=spell_amount++;i>spellpos;i--)
-		spell_list[i] = spell_list[i-1];
-	spell_list[spellpos] = spellid;
-	if (link!=0xFF)
-		for (i=parent->cmd[link].spell_amount++;i>=spellpos;i--)
-			parent->cmd[link].spell_list[i] = spell_list[i];
+	if (uselimit)
+		parent->spell_space_remaining--;
+	spell_list.insert(spell_list.begin() + spellpos, spellid);
+	spell_amount++;
+	if (link >= 0) {
+		parent->GetCommandById(link).spell_list.insert(parent->GetCommandById(link).spell_list.begin() + spellpos, spellid);
+		parent->GetCommandById(link).spell_amount++;
+	}
 	return true;
 }
 
-void CommandDataStruct::RemoveSpell(uint8_t spellpos) {
-	int i;
-	parent->spell_space_remaining++;
+void CommandDataStruct::RemoveSpell(int spellpos, bool uselimit) {
+	if (uselimit)
+		parent->spell_space_remaining++;
 	spell_amount--;
-	for (i=spellpos;i<spell_amount;i++)
-		spell_list[i] = spell_list[i+1];
-	if (link!=0xFF) {
-		parent->cmd[link].spell_amount--;
-		for (i=spellpos;i<spell_amount;i++)
-			parent->cmd[link].spell_list[i] = spell_list[i];
+	spell_list.erase(spell_list.begin() + spellpos);
+	if (link >= 0) {
+		parent->GetCommandById(link).spell_list.erase(parent->GetCommandById(link).spell_list.begin() + spellpos);
+		parent->GetCommandById(link).spell_amount--;
 	}
 }
 
-void CommandDataStruct::MoveSpell(uint8_t spellpos, uint8_t newpos) {
-	uint8_t tmp = spell_list[spellpos];
+void CommandDataStruct::MoveSpell(int spellpos, int newpos) {
+	int tmp = spell_list[spellpos];
 	spell_list[spellpos] = spell_list[newpos];
 	spell_list[newpos] = tmp;
-	if (link!=0xFF) {
-		parent->cmd[link].spell_list[spellpos] = spell_list[spellpos];
-		parent->cmd[link].spell_list[newpos] = spell_list[newpos];
+	if (link >= 0) {
+		parent->GetCommandById(link).spell_list[spellpos] = spell_list[spellpos];
+		parent->GetCommandById(link).spell_list[newpos] = spell_list[newpos];
 	}
 }
 
-void CommandDataStruct::AddLink(uint8_t cmdid) {
+void CommandDataStruct::AddLink(int cmdid) {
 	parent->spell_space_remaining += spell_amount;
-	link = cmdid;
+	link = parent->cmd[cmdid].id;
 	parent->cmd[cmdid].link = id;
 	spell_amount = parent->cmd[cmdid].spell_amount;
-	for (int i=0;i<spell_amount;i++)
+	spell_list.resize(spell_amount);
+	for (int i = 0; i < spell_amount; i++)
 		spell_list[i] = parent->cmd[cmdid].spell_list[i];
 }
 
-void CommandDataStruct::ChangeLink(uint8_t newlink) {
-	parent->cmd[link].link = 0xFF;
-	link = newlink;
+void CommandDataStruct::ChangeLink(int newlink) {
+	parent->GetCommandById(link).link = -1;
+	link = parent->cmd[newlink].id;
 	parent->cmd[newlink].link = id;
 	spell_amount = parent->cmd[newlink].spell_amount;
-	for (int i=0;i<spell_amount;i++)
+	spell_list.resize(spell_amount);
+	for (int i = 0; i < spell_amount; i++)
 		spell_list[i] = parent->cmd[newlink].spell_list[i];
 }
 
 void CommandDataStruct::BreakLink() {
-	parent->cmd[link].link = 0xFF;
-	link = 0xFF;
-	if (parent->spell_space_remaining<spell_amount)
+	parent->GetCommandById(link).link = -1;
+	link = -1;
+	if (parent->spell_space_remaining < spell_amount) {
 		spell_amount = 0;
-	else
+		spell_list.clear();
+	} else {
 		parent->spell_space_remaining -= spell_amount;
+	}
 }
 
 #define MACRO_COMMAND_IOFUNCTIONDATA(IO,SEEK,READ,PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<COMMAND_AMOUNT;i++) { \
+	for (i=0;i<cmdamount;i++) { \
 		IO ## Short(ffbin,cmd[i].name_offset); \
 		IO ## Short(ffbin,cmd[i].help_offset); \
 		IO ## Short(ffbin,cmd[i].help_size_x); \
 		IO ## Char(ffbin,cmd[i].panel); \
-		IO ## Char(ffbin,cmd[i].spell_amount); \
-		IO ## Char(ffbin,cmd[i].spell_index); \
+		IO ## FlexibleChar(ffbin,cmd[i].spell_amount, useextendedtype); \
+		IO ## FlexibleChar(ffbin,cmd[i].spell_index, useextendedtype); \
 		IO ## Char(ffbin,zero8); \
 		IO ## Short(ffbin,zero16); \
 	} \
@@ -149,7 +163,7 @@ void CommandDataStruct::BreakLink() {
 	txtpos = ffbin.tellg(); \
 	if (READ) name_space_used = 0; \
 	if (PPF) PPFInitScanStep(ffbin,true,name_space_total); \
-	for (i=0;i<COMMAND_AMOUNT;i++) { \
+	for (i=0;i<cmdamount;i++) { \
 		SEEK(ffbin,txtpos,cmd[i].name_offset); \
 		IO ## FF9String(ffbin,cmd[i].name); \
 		if (READ) name_space_used += cmd[i].name.length; \
@@ -161,7 +175,7 @@ void CommandDataStruct::BreakLink() {
 	txtpos = ffbin.tellg(); \
 	if (READ) help_space_used = 0; \
 	if (PPF) PPFInitScanStep(ffbin,true,help_space_total); \
-	for (i=0;i<COMMAND_AMOUNT;i++) { \
+	for (i=0;i<cmdamount;i++) { \
 		SEEK(ffbin,txtpos,cmd[i].help_offset); \
 		IO ## FF9String(ffbin,cmd[i].help); \
 		if (READ) help_space_used += cmd[i].help.length; \
@@ -171,46 +185,60 @@ void CommandDataStruct::BreakLink() {
 
 #define MACRO_COMMAND_IOFUNCTIONLIST(IO,SEEK,READ,PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<COMMAND_SPELL_AMOUNT;i++) \
-		IO ## Char(ffbin,spell_full_list[i]); \
+	if (useextendedtype) { \
+		int fullistsize; \
+		if (!READ) fullistsize = spell_full_list.size(); \
+		IO ## FlexibleChar(ffbin, fullistsize, useextendedtype); \
+		if (READ) spell_full_list.resize(fullistsize); \
+		for (i = 0; i < fullistsize; i++) \
+			IO ## FlexibleChar(ffbin, spell_full_list[i], useextendedtype); \
+	} else { \
+		if (READ) spell_full_list.resize(COMMAND_SPELL_AMOUNT); \
+		for (i = 0; i < COMMAND_SPELL_AMOUNT; i++) \
+			IO ## FlexibleChar(ffbin, spell_full_list[i], useextendedtype); \
+	} \
 	if (PPF) PPFEndScanStep(); \
 	if (READ) SetupLinks();
 
 
-void CommandDataSet::Load(fstream &ffbin, ConfigurationSet& config) {
-	unsigned int i;
+void CommandDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
+	int cmdamount = COMMAND_AMOUNT;
+	bool useextendedtype = false;
+	int i;
 	uint32_t txtpos;
 	uint8_t zero8 = 0;
 	uint16_t zero16 = 0;
 	name_space_total = config.cmd_name_space_total;
 	help_space_total = config.cmd_help_space_total;
-	for (i=0;i<COMMAND_AMOUNT;i++) {
+	cmd.resize(COMMAND_AMOUNT);
+	spell_full_list.resize(COMMAND_SPELL_AMOUNT);
+	for (i = 0; i < COMMAND_AMOUNT; i++) {
 		cmd[i].parent = this;
 		cmd[i].id = i;
 	}
-	if (GetGameType()==GAME_TYPE_PSX) {
+	if (GetGameType() == GAME_TYPE_PSX) {
 		ffbin.seekg(config.cmd_data_offset[0]);
-		MACRO_COMMAND_IOFUNCTIONDATA(FFIXRead,FFIXSeek,true,false)
-		MACRO_COMMAND_IOFUNCTIONNAME(FFIXRead,FFIXSeek,true,false)
-		MACRO_COMMAND_IOFUNCTIONHELP(FFIXRead,FFIXSeek,true,false)
-		MACRO_COMMAND_IOFUNCTIONLIST(FFIXRead,FFIXSeek,true,false)
+		MACRO_COMMAND_IOFUNCTIONDATA(FFIXRead, FFIXSeek, true, false)
+		MACRO_COMMAND_IOFUNCTIONNAME(FFIXRead, FFIXSeek, true, false)
+		MACRO_COMMAND_IOFUNCTIONHELP(FFIXRead, FFIXSeek, true, false)
+		MACRO_COMMAND_IOFUNCTIONLIST(FFIXRead, FFIXSeek, true, false)
 	} else {
 		DllMetaData& dlldata = config.meta_dll;
 		DllMethodInfo methinfo;
 		string fname = config.steam_dir_data;
 		fname += "resources.assets";
-		ffbin.open(fname.c_str(),ios::in | ios::binary);
-		for (SteamLanguage lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
-			if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+		ffbin.open(fname.c_str(), ios::in | ios::binary);
+		for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+			if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang != GetSteamLanguage())
 				continue;
 			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.cmd_name_file[lang]));
 			name_space_used = config.meta_res.GetFileSizeByIndex(config.cmd_name_file[lang]);
-			for (i=0;i<COMMAND_AMOUNT;i++)
-				SteamReadFF9String(ffbin,cmd[i].name,lang);
+			for (i = 0; i < COMMAND_AMOUNT; i++)
+				SteamReadFF9String(ffbin, cmd[i].name, lang);
 			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.cmd_help_file[lang]));
 			help_space_used = config.meta_res.GetFileSizeByIndex(config.cmd_help_file[lang]);
-			for (i=0;i<COMMAND_AMOUNT;i++)
-				SteamReadFF9String(ffbin,cmd[i].help,lang);
+			for (i = 0; i < COMMAND_AMOUNT; i++)
+				SteamReadFF9String(ffbin, cmd[i].help, lang);
 		}
 		ffbin.close();
 		dlldata.dll_file.seekg(dlldata.GetMethodOffset(config.dll_rdata_method_id));
@@ -220,21 +248,21 @@ void CommandDataSet::Load(fstream &ffbin, ConfigurationSet& config) {
 			{ 0x8D, dlldata.GetTypeTokenIdentifier("FF9COMMAND") },
 			{ 0x25 }
 		};
-		methinfo.JumpToInstructions(dlldata.dll_file,3,initinst);
+		methinfo.JumpToInstructions(dlldata.dll_file, 3, initinst);
 		steam_method_position = dlldata.dll_file.tellg();
-		uint8_t* rawcmddata = dlldata.ConvertScriptToRaw_Object(COMMAND_AMOUNT,6,steam_cmd_field_size);
-		steam_method_base_length = (unsigned int)dlldata.dll_file.tellg()-steam_method_position;
+		uint8_t* rawcmddata = dlldata.ConvertScriptToRaw_Object(COMMAND_AMOUNT, 6, steam_cmd_field_size);
+		steam_method_base_length = (unsigned int)dlldata.dll_file.tellg() - steam_method_position;
 		dlldata.dll_file.seekg(dlldata.GetStaticFieldOffset(config.dll_cmdspelllist_field_id));
-		for (i=0;i<COMMAND_SPELL_AMOUNT;i++) {
-			SteamReadChar(dlldata.dll_file,spell_full_list[i]);
-			dlldata.dll_file.seekg(3,ios::cur);
+		for (i = 0; i < COMMAND_SPELL_AMOUNT; i++) {
+			SteamReadFlexibleChar(dlldata.dll_file, spell_full_list[i], false);
+			dlldata.dll_file.seekg(3, ios::cur);
 		}
 		fname = tmpnam(NULL);
-		ffbin.open(fname.c_str(),ios::out | ios::binary);
-		ffbin.write((const char*)rawcmddata,0xC*COMMAND_AMOUNT);
+		ffbin.open(fname.c_str(), ios::out | ios::binary);
+		ffbin.write((const char*)rawcmddata, 0xC * COMMAND_AMOUNT);
 		ffbin.close();
-		ffbin.open(fname.c_str(),ios::in | ios::binary);
-		MACRO_COMMAND_IOFUNCTIONDATA(SteamRead,SteamSeek,true,false)
+		ffbin.open(fname.c_str(), ios::in | ios::binary);
+		MACRO_COMMAND_IOFUNCTIONDATA(SteamRead, SteamSeek, true, false)
 		ffbin.close();
 		remove(fname.c_str());
 		delete[] rawcmddata;
@@ -245,10 +273,10 @@ void CommandDataSet::Load(fstream &ffbin, ConfigurationSet& config) {
 DllMetaDataModification* CommandDataSet::ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount) {
 	DllMetaDataModification* res = new DllMetaDataModification[2];
 	DllMetaData& dlldata = config.meta_dll;
-	uint32_t** argvalue = new uint32_t*[COMMAND_AMOUNT];
+	uint32_t** argvalue = new uint32_t * [COMMAND_AMOUNT];
 	UpdateSpellsDatas();
 	unsigned int i;
-	for (i=0;i<COMMAND_AMOUNT;i++) {
+	for (i = 0; i < COMMAND_AMOUNT; i++) {
 		argvalue[i] = new uint32_t[6];
 		argvalue[i][0] = cmd[i].name_offset;
 		argvalue[i][1] = cmd[i].help_offset;
@@ -257,17 +285,17 @@ DllMetaDataModification* CommandDataSet::ComputeSteamMod(ConfigurationSet& confi
 		argvalue[i][4] = cmd[i].spell_amount;
 		argvalue[i][5] = cmd[i].spell_index;
 	}
-	res[0] = dlldata.ConvertRawToScript_Object(argvalue,steam_method_position,steam_method_base_length,COMMAND_AMOUNT,6,steam_cmd_field_size);
-	for (i=0;i<COMMAND_AMOUNT;i++)
+	res[0] = dlldata.ConvertRawToScript_Object(argvalue, steam_method_position, steam_method_base_length, COMMAND_AMOUNT, 6, steam_cmd_field_size);
+	for (i = 0; i < COMMAND_AMOUNT; i++)
 		delete[] argvalue[i];
 	delete[] argvalue;
 	res[1].position = config.meta_dll.GetStaticFieldOffset(config.dll_cmdspelllist_field_id);
-	res[1].base_length = 4*COMMAND_SPELL_AMOUNT; // config.meta_dll.GetStaticFieldRange(config.dll_cmdspelllist_field_id);
-	res[1].new_length = 4*COMMAND_SPELL_AMOUNT;
+	res[1].base_length = 4 * COMMAND_SPELL_AMOUNT; // config.meta_dll.GetStaticFieldRange(config.dll_cmdspelllist_field_id);
+	res[1].new_length = 4 * COMMAND_SPELL_AMOUNT;
 	res[1].value = new uint8_t[res[1].new_length];
 	BufferInitPosition();
-	for (i=0;i<COMMAND_SPELL_AMOUNT;i++)
-		BufferWriteLong(res[1].value,spell_full_list[i]);
+	for (i = 0; i < COMMAND_SPELL_AMOUNT; i++)
+		BufferWriteLong(res[1].value, i < spell_full_list.size() ? spell_full_list[i] : 0);
 	*modifamount = 2;
 	return res;
 }
@@ -278,65 +306,55 @@ void CommandDataSet::GenerateCSharp(vector<string>& buffer) {
 	cmddb << "// Method: rdata::.cctor\n\n";
 	cmddb << "\trdata._FF9FAbil_ComData = new rdata.FF9COMMAND[] {\n";
 	for (i = 0; i < COMMAND_AMOUNT; i++)
-		cmddb << "\t\tnew rdata.FF9COMMAND(" << (int)cmd[i].name_offset << ", " << (int)cmd[i].help_offset << ", " << (int)cmd[i].help_size_x << ", " << (int)cmd[i].panel << ", " << (int)cmd[i].spell_amount << ", " << (unsigned long)cmd[i].spell_index << (i+1==COMMAND_AMOUNT ? "UL)" : "UL),") << " // " << ConvertWStrToStr(cmd[i].name.str_nice) << "\n";
+		cmddb << "\t\tnew rdata.FF9COMMAND(" << (int)cmd[i].name_offset << ", " << (int)cmd[i].help_offset << ", " << (int)cmd[i].help_size_x << ", " << (int)cmd[i].panel << ", " << (int)cmd[i].spell_amount << ", " << (unsigned long)cmd[i].spell_index << (i + 1 == COMMAND_AMOUNT ? "UL)" : "UL),") << " // " << ConvertWStrToStr(cmd[i].name.str_nice) << "\n";
 	cmddb << "\t};\n";
 	cmddb << "\trdata._FF9BMenu_ComData = rdata._FF9FAbil_ComData;\n";
 	cmddb << "\trdata._FF9BMenu_ComAbil = new int[] { ";
 	for (i = 0; i < COMMAND_SPELL_AMOUNT; i++)
-		cmddb << (int)spell_full_list[i] << (i+1==COMMAND_SPELL_AMOUNT ? " " : ", ");
+		cmddb << (i < spell_full_list.size() ? spell_full_list[i] : 0) << (i + 1 == COMMAND_SPELL_AMOUNT ? " " : ", ");
 	cmddb << "};\n";
 	cmddb << "\trdata._FF9FAbil_ComAbil = rdata._FF9BMenu_ComAbil;\n";
 	buffer.push_back(cmddb.str());
 }
 
+wxString CSV_CommandConstructor(CommandDataStruct& cm, int index) {
+	wxString csventry = wxString::Format(wxT("%d;%d;%d;"), cm.id, cm.panel, cm.spell_list.size() > 0 ? cm.spell_list[0] : 0);
+	if (cm.panel == COMMAND_PANEL_SPELL)
+		csventry += ConcatenateStrings<int>(", ", cm.spell_list, static_cast<string(*)(int)>(&to_string));
+	csventry += wxString::Format(wxT(";# %s"), cm.name.str_nice);
+	return csventry;
+}
+
+bool CSV_CommandComparer(wxString left, wxString right) {
+	wxArrayString leftentries = MemoriaUtility::LoadCSVEntry(left);
+	if (leftentries.GetCount() >= 4 && wxAtoi(leftentries[1]) != COMMAND_PANEL_SPELL)
+		return left.BeforeLast(L';').BeforeLast(L';').IsSameAs(right.BeforeLast(L';').BeforeLast(L';'));
+	return left.BeforeLast(L';').IsSameAs(right.BeforeLast(L';'));
+}
+
 bool CommandDataSet::GenerateCSV(string basefolder) {
-	unsigned int i, j;
-	string fname = basefolder + HADES_STRING_CSV_COMMAND_FILE;
-	wfstream csv(fname.c_str(), ios::out);
-	if (!csv.is_open()) return false;
-	csv << HADES_STRING_CSV_COMMAND_HEADER;
-	for (i=0; i<COMMAND_AMOUNT; i++) {
-		if (cmd[i].panel==COMMAND_PANEL_SPELL) {
-			csv << (int)cmd[i].panel << L";" << (int)spell_full_list[cmd[i].spell_index] << L";";
-			for (j=0; j<cmd[i].spell_amount; j++)
-				csv << (j==0 ? L"" : L", ") << (int)spell_full_list[cmd[i].spell_index+j];
-		} else {
-			csv << (int)cmd[i].panel << L";" << (int)cmd[i].spell_index << L";";
-			if (cmd[i].panel!=COMMAND_PANEL_NONE)
-				for (j=0; j<cmd[i].spell_amount; j++)
-					csv << (j==0 ? L"" : L", ") << (int)cmd[i].spell_index;
-		}
-		csv << L";# " << ConvertWStrToStr(cmd[i].name.str_nice).c_str() << L"\n";
-	}
-	csv.close();
-	return true;
+	return MemoriaUtility::GenerateCSVGeneric<CommandDataStruct>(_(basefolder), _(HADES_STRING_CSV_COMMAND_FILE), _(HADES_STRING_CSV_COMMAND_HEADER), cmd, &CSV_CommandConstructor, &CSV_CommandComparer, true);
 }
 
-int CommandDataSet::GetSteamTextSize(unsigned int texttype, SteamLanguage lang) {
-	unsigned int i;
-	int res = 0;
-	if (texttype==0)
-		for (i=0;i<COMMAND_AMOUNT;i++)
-			res += cmd[i].name.GetLength(lang);
-	else
-		for (i=0;i<COMMAND_AMOUNT;i++)
-			res += cmd[i].help.GetLength(lang);
-	return res;
-}
-
-void CommandDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype, SteamLanguage lang) {
-	unsigned int i;
-	if (texttype==0) {
-		for (i=0;i<COMMAND_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,cmd[i].name,lang);
+void CommandDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype, bool onlymodified, bool asmes, SteamLanguage lang) {
+	vector<int> writesubset;
+	if (texttype == 0) {
+		if (onlymodified && MemoriaUtility::GetModifiedSteamTexts<CommandDataStruct>(&writesubset, GetGameConfiguration()->cmd_name_file, cmd, [lang](CommandDataStruct& cm) { return cm.name.multi_lang_str[lang]; }, lang))
+			WriteSteamTextGeneric(ffbin, cmd, &CommandDataStruct::name, &writesubset, asmes, lang);
+		else
+			WriteSteamTextGeneric(ffbin, cmd, &CommandDataStruct::name, NULL, asmes, lang);
 	} else {
-		for (i=0;i<COMMAND_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,cmd[i].help,lang);
+		if (onlymodified && MemoriaUtility::GetModifiedSteamTexts<CommandDataStruct>(&writesubset, GetGameConfiguration()->cmd_help_file, cmd, [lang](CommandDataStruct& cm) { return cm.help.multi_lang_str[lang]; }, lang))
+			WriteSteamTextGeneric(ffbin, cmd, &CommandDataStruct::help, &writesubset, asmes, lang);
+		else
+			WriteSteamTextGeneric(ffbin, cmd, &CommandDataStruct::help, NULL, asmes, lang);
 	}
 }
 
 void CommandDataSet::Write(fstream &ffbin, ConfigurationSet& config) {
-	unsigned int i;
+	int cmdamount = COMMAND_AMOUNT;
+	bool useextendedtype = false;
+	int i;
 	uint32_t txtpos;
 	uint8_t zero8 = 0;
 	uint16_t zero16 = 0;
@@ -357,7 +375,9 @@ void CommandDataSet::Write(fstream &ffbin, ConfigurationSet& config) {
 }
 
 void CommandDataSet::WritePPF(fstream &ffbin, ConfigurationSet& config) {
-	unsigned int i;
+	int cmdamount = COMMAND_AMOUNT;
+	bool useextendedtype = false;
+	int i;
 	uint32_t txtpos;
 	uint8_t zero8 = 0;
 	uint16_t zero16 = 0;
@@ -377,160 +397,175 @@ void CommandDataSet::WritePPF(fstream &ffbin, ConfigurationSet& config) {
 	MACRO_COMMAND_IOFUNCTIONNAME(PPFStepAdd,FFIXSeek,false,true)
 }
 
-int CommandDataSet::LoadHWS(fstream &ffbin, bool usetext) {
-	unsigned int i;
+int CommandDataSet::LoadHWS(fstream& ffbin, bool usetext) {
+	int cmdamount = COMMAND_AMOUNT;
+	bool useextendedtype = false;
+	vector<CommandDataStruct> nonmodified;
+	SteamLanguage lg;
+	int txtspace;
+	int i;
 	uint32_t txtpos;
 	uint8_t zero8 = 0;
 	uint16_t zero16 = 0;
 	int res = 0;
 	uint16_t version;
 	uint16_t namesize = name_space_total, helpsize = help_space_total;
-	HWSReadShort(ffbin,version);
-	if (version>50) {
+	HWSReadShort(ffbin, version);
+	if (version > 50) {
 		name_space_total = version;
 		version = 1;
-	} else
-		HWSReadShort(ffbin,name_space_total);
-	HWSReadShort(ffbin,help_space_total);
-	MACRO_COMMAND_IOFUNCTIONDATA(HWSRead,HWSSeek,true,false)
-	if (name_space_total<=namesize && usetext) {
-		if (GetHWSGameType()==GAME_TYPE_PSX) {
-			MACRO_COMMAND_IOFUNCTIONNAME(HWSRead,HWSSeek,true,false)
-			if (GetGameType()!=GAME_TYPE_PSX)
-				for (i=0;i<COMMAND_AMOUNT;i++)
+	} else {
+		HWSReadShort(ffbin, name_space_total);
+	}
+	HWSReadShort(ffbin, help_space_total);
+	if (version >= 2) {
+		useextendedtype = true;
+		vector<int> added;
+		cmdamount = PrepareHWSFlexibleList(ffbin, cmd, nonmodified, added);
+		for (i = 0; i < (int)added.size(); i++) {
+			cmd[added[i]].name.CreateEmpty(true);
+			cmd[added[i]].help.CreateEmpty(true);
+			cmd[added[i]].parent = this;
+		}
+	}
+	MACRO_COMMAND_IOFUNCTIONDATA(HWSRead, HWSSeek, true, false)
+	if (name_space_total <= namesize && usetext) {
+		if (GetHWSGameType() == GAME_TYPE_PSX) {
+			MACRO_COMMAND_IOFUNCTIONNAME(HWSRead, HWSSeek, true, false)
+			if (GetGameType() != GAME_TYPE_PSX)
+				for (i = 0; i < cmdamount; i++)
 					cmd[i].name.PSXToSteam();
 		} else {
-			SteamLanguage lg;
-			uint16_t txtspace;
 			uint32_t tmppos;
-			HWSReadChar(ffbin,lg);
-			while (lg!=STEAM_LANGUAGE_NONE) {
-				HWSReadShort(ffbin,txtspace);
+			HWSReadChar(ffbin, lg);
+			while (lg != STEAM_LANGUAGE_NONE) {
+				HWSReadFlexibleShort(ffbin, txtspace, useextendedtype);
 				tmppos = ffbin.tellg();
-				if (GetGameType()!=GAME_TYPE_PSX)
-					for (i=0;i<COMMAND_AMOUNT;i++)
-						SteamReadFF9String(ffbin,cmd[i].name,lg);
-				else if (lg==GetSteamLanguage())
-					for (i=0;i<COMMAND_AMOUNT;i++) {
-						SteamReadFF9String(ffbin,cmd[i].name);
+				if (GetGameType() != GAME_TYPE_PSX)
+					for (i = 0; i < cmdamount; i++)
+						SteamReadFF9String(ffbin, cmd[i].name, lg);
+				else if (lg == GetSteamLanguage())
+					for (i = 0; i < cmdamount; i++) {
+						SteamReadFF9String(ffbin, cmd[i].name);
 						cmd[i].name.SteamToPSX();
 					}
-				ffbin.seekg(tmppos+txtspace);
-				HWSReadChar(ffbin,lg);
+				ffbin.seekg(tmppos + txtspace);
+				HWSReadChar(ffbin, lg);
 			}
 		}
 	} else {
-		if (GetHWSGameType()==GAME_TYPE_PSX) {
-			ffbin.seekg(name_space_total,ios::cur);
+		if (GetHWSGameType() == GAME_TYPE_PSX) {
+			ffbin.seekg(name_space_total, ios::cur);
 		} else {
-			SteamLanguage lg;
-			uint16_t txtspace;
-			HWSReadChar(ffbin,lg);
-			while (lg!=STEAM_LANGUAGE_NONE) {
-				HWSReadShort(ffbin,txtspace);
-				ffbin.seekg(txtspace,ios::cur);
-				HWSReadChar(ffbin,lg);
+			HWSReadChar(ffbin, lg);
+			while (lg != STEAM_LANGUAGE_NONE) {
+				HWSReadFlexibleShort(ffbin, txtspace, useextendedtype);
+				ffbin.seekg(txtspace, ios::cur);
+				HWSReadChar(ffbin, lg);
 			}
 		}
 		if (usetext)
 			res |= 1;
 	}
-	if (help_space_total<=helpsize && usetext) {
-		if (GetHWSGameType()==GAME_TYPE_PSX) {
-			MACRO_COMMAND_IOFUNCTIONHELP(HWSRead,HWSSeek,true,false)
-			if (GetGameType()!=GAME_TYPE_PSX)
-				for (i=0;i<COMMAND_AMOUNT;i++)
+	if (help_space_total <= helpsize && usetext) {
+		if (GetHWSGameType() == GAME_TYPE_PSX) {
+			MACRO_COMMAND_IOFUNCTIONHELP(HWSRead, HWSSeek, true, false)
+			if (GetGameType() != GAME_TYPE_PSX)
+				for (i = 0; i < cmdamount; i++)
 					cmd[i].help.PSXToSteam();
 		} else {
-			SteamLanguage lg;
-			uint16_t txtspace;
 			uint32_t tmppos;
-			HWSReadChar(ffbin,lg);
-			while (lg!=STEAM_LANGUAGE_NONE) {
-				HWSReadShort(ffbin,txtspace);
+			HWSReadChar(ffbin, lg);
+			while (lg != STEAM_LANGUAGE_NONE) {
+				HWSReadFlexibleShort(ffbin, txtspace, useextendedtype);
 				tmppos = ffbin.tellg();
-				if (GetGameType()!=GAME_TYPE_PSX)
-					for (i=0;i<COMMAND_AMOUNT;i++)
-						SteamReadFF9String(ffbin,cmd[i].help,lg);
-				else if (lg==GetSteamLanguage())
-					for (i=0;i<COMMAND_AMOUNT;i++) {
-						SteamReadFF9String(ffbin,cmd[i].help);
+				if (GetGameType() != GAME_TYPE_PSX)
+					for (i = 0; i < cmdamount; i++)
+						SteamReadFF9String(ffbin, cmd[i].help, lg);
+				else if (lg == GetSteamLanguage())
+					for (i = 0; i < cmdamount; i++) {
+						SteamReadFF9String(ffbin, cmd[i].help);
 						cmd[i].help.SteamToPSX();
 					}
-				ffbin.seekg(tmppos+txtspace);
-				HWSReadChar(ffbin,lg);
+				ffbin.seekg(tmppos + txtspace);
+				HWSReadChar(ffbin, lg);
 			}
 		}
 	} else {
-		if (GetHWSGameType()==GAME_TYPE_PSX) {
-			ffbin.seekg(help_space_total,ios::cur);
+		if (GetHWSGameType() == GAME_TYPE_PSX) {
+			ffbin.seekg(help_space_total, ios::cur);
 		} else {
-			SteamLanguage lg;
-			uint16_t txtspace;
-			HWSReadChar(ffbin,lg);
-			while (lg!=STEAM_LANGUAGE_NONE) {
-				HWSReadShort(ffbin,txtspace);
-				ffbin.seekg(txtspace,ios::cur);
-				HWSReadChar(ffbin,lg);
+			HWSReadChar(ffbin, lg);
+			while (lg != STEAM_LANGUAGE_NONE) {
+				HWSReadFlexibleShort(ffbin, txtspace, useextendedtype);
+				ffbin.seekg(txtspace, ios::cur);
+				HWSReadChar(ffbin, lg);
 			}
 		}
 		if (usetext)
 			res |= 2;
 	}
-	MACRO_COMMAND_IOFUNCTIONLIST(HWSRead,HWSSeek,true,false)
+	MACRO_COMMAND_IOFUNCTIONLIST(HWSRead, HWSSeek, true, false)
+	for (i = 0; i < (int)nonmodified.size(); i++)
+		InsertAtId(cmd, nonmodified[i], nonmodified[i].id);
 	name_space_total = namesize;
 	help_space_total = helpsize;
 	UpdateOffset();
 	return res;
 }
 
-void CommandDataSet::WriteHWS(fstream &ffbin) {
-	unsigned int i;
+void CommandDataSet::WriteHWS(fstream& ffbin) {
+	int cmdamount = cmd.size();
+	bool useextendedtype = true;
+	int i;
 	uint32_t txtpos;
 	uint8_t zero8 = 0;
 	uint16_t zero16 = 0;
 	UpdateOffset();
 	UpdateSpellsDatas();
-	HWSWriteShort(ffbin,COMMAND_HWS_VERSION);
+	HWSWriteShort(ffbin, COMMAND_HWS_VERSION);
 	uint16_t namesize = name_space_total, helpsize = help_space_total;
 	name_space_total = name_space_used;
 	help_space_total = help_space_used;
-	HWSWriteShort(ffbin,name_space_total);
-	HWSWriteShort(ffbin,help_space_total);
-	MACRO_COMMAND_IOFUNCTIONDATA(HWSWrite,HWSSeek,false,false)
-	if (GetGameType()==GAME_TYPE_PSX) {
-		MACRO_COMMAND_IOFUNCTIONNAME(HWSWrite,HWSSeek,false,false)
-		MACRO_COMMAND_IOFUNCTIONHELP(HWSWrite,HWSSeek,false,false)
+	HWSWriteShort(ffbin, name_space_total);
+	HWSWriteShort(ffbin, help_space_total);
+	HWSWriteFlexibleChar(ffbin, cmdamount, true);
+	for (i = 0; i < cmdamount; i++)
+		HWSWriteFlexibleChar(ffbin, cmd[i].id, true);
+	MACRO_COMMAND_IOFUNCTIONDATA(HWSWrite, HWSSeek, false, false)
+	if (GetGameType() == GAME_TYPE_PSX) {
+		MACRO_COMMAND_IOFUNCTIONNAME(HWSWrite, HWSSeek, false, false)
+		MACRO_COMMAND_IOFUNCTIONHELP(HWSWrite, HWSSeek, false, false)
 	} else {
 		SteamLanguage lg;
-		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
+		for (lg = STEAM_LANGUAGE_US; lg < STEAM_LANGUAGE_AMOUNT; lg++) {
 			if (hades::STEAM_LANGUAGE_SAVE_LIST[lg]) {
-				HWSWriteChar(ffbin,lg);
-				HWSWriteShort(ffbin,GetSteamTextSize(0,lg));
-				WriteSteamText(ffbin,0,lg);
+				HWSWriteChar(ffbin, lg);
+				HWSWriteFlexibleShort(ffbin, GetSteamTextSizeGeneric(cmd, &CommandDataStruct::name, false, lg), true);
+				WriteSteamText(ffbin, 0, false, false, lg);
 			}
 		}
-		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
-		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
+		HWSWriteChar(ffbin, STEAM_LANGUAGE_NONE);
+		for (lg = STEAM_LANGUAGE_US; lg < STEAM_LANGUAGE_AMOUNT; lg++) {
 			if (hades::STEAM_LANGUAGE_SAVE_LIST[lg]) {
-				HWSWriteChar(ffbin,lg);
-				HWSWriteShort(ffbin,GetSteamTextSize(1,lg));
-				WriteSteamText(ffbin,1,lg);
+				HWSWriteChar(ffbin, lg);
+				HWSWriteFlexibleShort(ffbin, GetSteamTextSizeGeneric(cmd, &CommandDataStruct::help, false, lg), true);
+				WriteSteamText(ffbin, 1, false, false, lg);
 			}
 		}
-		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
+		HWSWriteChar(ffbin, STEAM_LANGUAGE_NONE);
 	}
-	MACRO_COMMAND_IOFUNCTIONLIST(HWSWrite,HWSSeek,false,false)
+	MACRO_COMMAND_IOFUNCTIONLIST(HWSWrite, HWSSeek, false, false)
 	name_space_total = namesize;
 	help_space_total = helpsize;
 }
 
 void CommandDataSet::UpdateOffset() {
-	if (GetGameType()!=GAME_TYPE_PSX)
+	if (GetGameType() != GAME_TYPE_PSX)
 		return;
-	uint16_t j=0,k=0;
-	unsigned int i;
-	for (i=0;i<COMMAND_AMOUNT;i++) {
+	uint16_t j = 0, k = 0;
+	int i;
+	for (i = 0; i < COMMAND_AMOUNT; i++) {
 		cmd[i].name_offset = j;
 		j += cmd[i].name.length;
 		cmd[i].help_offset = k;
@@ -541,37 +576,64 @@ void CommandDataSet::UpdateOffset() {
 }
 
 void CommandDataSet::SetupLinks() {
-	unsigned int i,j;
+	unsigned int i, j;
 	spell_space_remaining = COMMAND_SPELL_AMOUNT;
-	for (i=0;i<COMMAND_AMOUNT;i++)
-		cmd[i].link = 0xFF;
-	for (i=0;i<COMMAND_AMOUNT;i++)
-		if (cmd[i].panel==COMMAND_PANEL_SPELL) {
-			if (cmd[i].link==0xFF) {
+	for (i = 0; i < cmd.size(); i++)
+		cmd[i].link = -1;
+	for (i = 0; i < cmd.size(); i++)
+		if (cmd[i].panel == COMMAND_PANEL_SPELL) {
+			if (cmd[i].link < 0) {
 				spell_space_remaining -= cmd[i].spell_amount;
-				for (j=i+1;j<COMMAND_AMOUNT;j++)
-					if (cmd[i].spell_index==cmd[j].spell_index && cmd[i].spell_amount==cmd[j].spell_amount) {
-						cmd[i].link = j;
-						cmd[j].link = i;
+				for (j = i + 1; j < cmd.size(); j++)
+					if (cmd[i].spell_index == cmd[j].spell_index && cmd[i].spell_amount == cmd[j].spell_amount) {
+						cmd[i].link = cmd[j].id;
+						cmd[j].link = cmd[i].id;
 						break;
 					}
 			}
-			for (j=0;j<cmd[i].spell_amount;j++)
-				cmd[i].spell_list[j] = spell_full_list[cmd[i].spell_index+j];
-		} else
+			cmd[i].spell_list.resize(cmd[i].spell_amount);
+			for (j = 0; (int)j < cmd[i].spell_amount; j++)
+				cmd[i].spell_list[j] = spell_full_list[cmd[i].spell_index + j];
+		} else {
+			cmd[i].spell_list.resize(1);
 			cmd[i].spell_list[0] = cmd[i].spell_index;
+		}
 }
 
 void CommandDataSet::UpdateSpellsDatas() {
-	int i,j,k = 0;
-	for (i=0;i<COMMAND_AMOUNT;i++)
-		if (cmd[i].panel==COMMAND_PANEL_SPELL) {
-			if (cmd[i].link>i) {
+	int i, j, k = 0;
+	for (i = 0; i < (int)cmd.size(); i++)
+		if (cmd[i].panel == COMMAND_PANEL_SPELL) {
+			if (cmd[i].link < 0 || cmd[i].link > i) {
 				cmd[i].spell_index = k;
-				for (j=0;j<cmd[i].spell_amount;j++)
+				if ((int)spell_full_list.size() < cmd[i].spell_index + cmd[i].spell_amount)
+					spell_full_list.resize(cmd[i].spell_index + cmd[i].spell_amount);
+				for (j = 0; j < cmd[i].spell_amount; j++)
 					spell_full_list[k++] = cmd[i].spell_list[j];
-			} else
-				cmd[i].spell_index = cmd[cmd[i].link].spell_index;
-		} else
+			} else {
+				cmd[i].spell_index = GetCommandById(cmd[i].link).spell_index;
+			}
+		} else {
 			cmd[i].spell_index = cmd[i].spell_list[0];
+		}
+}
+
+int CommandDataSet::GetCommandIndexById(int cmdid) {
+	if (cmdid < COMMAND_AMOUNT)
+		return cmdid;
+	for (unsigned int i = COMMAND_AMOUNT; i < cmd.size(); i++)
+		if (cmd[i].id == cmdid)
+			return i;
+	return -1;
+}
+
+CommandDataStruct dummycmd;
+CommandDataStruct& CommandDataSet::GetCommandById(int cmdid) {
+	int index = GetCommandIndexById(cmdid);
+	if (index >= 0)
+		return cmd[index];
+	dummycmd.id = -1;
+	dummycmd.name.CreateEmpty();
+	dummycmd.name.SetValue(L"[Invalid]");
+	return dummycmd;
 }

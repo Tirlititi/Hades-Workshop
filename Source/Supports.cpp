@@ -3,59 +3,67 @@
 #include "main.h"
 #include "DllEditor.h"
 #include "Database_CSV.h"
+#include "CommonUtility.h"
 
-#define SUPPORT_HWS_VERSION 1
+#define SUPPORT_HWS_VERSION 2
 
 const unsigned int steam_support_field_size[] = { 8, 8, 16, 16, 16 };
 
 int SupportDataStruct::SetName(wstring newvalue) {
-	FF9String tmp(name);
-	tmp.SetValue(newvalue);
-	int oldlen = name.length;
-	int newlen = tmp.length;
-	if (parent->name_space_used+newlen>parent->name_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		FF9String tmp(name);
+		tmp.SetValue(newvalue);
+		int oldlen = name.length;
+		int newlen = tmp.length;
+		if (parent->name_space_used + newlen > parent->name_space_total + oldlen)
+			return 1;
+		parent->name_space_used += newlen - oldlen;
+	}
 	name.SetValue(newvalue);
-	parent->name_space_used += newlen-oldlen;
 	return 0;
 }
 
 int SupportDataStruct::SetName(FF9String& newvalue) {
-	int oldlen = name.length;
-	int newlen = newvalue.length;
-	if (parent->name_space_used+newlen>parent->name_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		int oldlen = name.length;
+		int newlen = newvalue.length;
+		if (parent->name_space_used + newlen > parent->name_space_total + oldlen)
+			return 1;
+		parent->name_space_used += newlen - oldlen;
+	}
 	name = newvalue;
-	parent->name_space_used += newlen-oldlen;
 	return 0;
 }
 
 int SupportDataStruct::SetHelp(wstring newvalue) {
-	FF9String tmp(help);
-	tmp.SetValue(newvalue);
-	int oldlen = help.length;
-	int newlen = tmp.length;
-	if (parent->help_space_used+newlen>parent->help_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		FF9String tmp(help);
+		tmp.SetValue(newvalue);
+		int oldlen = help.length;
+		int newlen = tmp.length;
+		if (parent->help_space_used + newlen > parent->help_space_total + oldlen)
+			return 1;
+		parent->help_space_used += newlen - oldlen;
+	}
 	help.SetValue(newvalue);
-	parent->help_space_used += newlen-oldlen;
 	return 0;
 }
 
 int SupportDataStruct::SetHelp(FF9String& newvalue) {
-	int oldlen = help.length;
-	int newlen = newvalue.length;
-	if (parent->help_space_used+newlen>parent->help_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		int oldlen = help.length;
+		int newlen = newvalue.length;
+		if (parent->help_space_used + newlen > parent->help_space_total + oldlen)
+			return 1;
+		parent->help_space_used += newlen - oldlen;
+	}
 	help = newvalue;
-	parent->help_space_used += newlen-oldlen;
 	return 0;
 }
 
 #define MACRO_SUPPORT_IOFUNCTIONDATA(IO,SEEK,READ,PPF) \
-	uint32_t txtpos; \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<SUPPORT_AMOUNT;i++) { \
+	for (i=0;i<supportamount;i++) { \
 		IO ## Char(ffbin,support[i].category); \
 		IO ## Char(ffbin,support[i].cost); \
 		IO ## Short(ffbin,support[i].name_offset); \
@@ -68,7 +76,7 @@ int SupportDataStruct::SetHelp(FF9String& newvalue) {
 	txtpos = ffbin.tellg(); \
 	if (READ) name_space_used = 0; \
 	if (PPF) PPFInitScanStep(ffbin,true,name_space_total); \
-	for (i=0;i<SUPPORT_AMOUNT;i++) { \
+	for (i=0;i<supportamount;i++) { \
 		SEEK(ffbin,txtpos,support[i].name_offset); \
 		IO ## FF9String(ffbin,support[i].name); \
 		if (READ) name_space_used += support[i].name.length; \
@@ -80,7 +88,7 @@ int SupportDataStruct::SetHelp(FF9String& newvalue) {
 	txtpos = ffbin.tellg(); \
 	if (READ) help_space_used = 0; \
 	if (PPF) PPFInitScanStep(ffbin,true,help_space_total); \
-	for (i=0;i<SUPPORT_AMOUNT;i++) { \
+	for (i=0;i<supportamount;i++) { \
 		SEEK(ffbin,txtpos,support[i].help_offset); \
 		IO ## FF9String(ffbin,support[i].help); \
 		if (READ) help_space_used += support[i].help.length; \
@@ -90,34 +98,39 @@ int SupportDataStruct::SetHelp(FF9String& newvalue) {
 
 
 void SupportDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
-	unsigned int i;
+	int supportamount = SUPPORT_AMOUNT;
+	int i;
 	name_space_total = config.support_name_space_total;
 	help_space_total = config.support_help_space_total;
-	for (i=0;i<SUPPORT_AMOUNT;i++)
+	support.resize(SUPPORT_AMOUNT);
+	for (i = 0; i < SUPPORT_AMOUNT; i++) {
 		support[i].parent = this;
-	if (GetGameType()==GAME_TYPE_PSX) {
+		support[i].id = i;
+	}
+	if (GetGameType() == GAME_TYPE_PSX) {
+		uint32_t txtpos;
 		ffbin.seekg(config.support_data_offset);
-		MACRO_SUPPORT_IOFUNCTIONDATA(FFIXRead,FFIXSeek,true,false)
+		MACRO_SUPPORT_IOFUNCTIONDATA(FFIXRead, FFIXSeek, true, false)
 		ffbin.seekg(config.support_text_offset[0]);
-		MACRO_SUPPORT_IOFUNCTIONNAME(FFIXRead,FFIXSeek,true,false)
-		MACRO_SUPPORT_IOFUNCTIONHELP(FFIXRead,FFIXSeek,true,false)
+		MACRO_SUPPORT_IOFUNCTIONNAME(FFIXRead, FFIXSeek, true, false)
+		MACRO_SUPPORT_IOFUNCTIONHELP(FFIXRead, FFIXSeek, true, false)
 	} else {
 		DllMetaData& dlldata = config.meta_dll;
 		DllMethodInfo methinfo;
 		string fname = config.steam_dir_data;
 		fname += "resources.assets";
-		ffbin.open(fname.c_str(),ios::in | ios::binary);
-		for (SteamLanguage lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
-			if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+		ffbin.open(fname.c_str(), ios::in | ios::binary);
+		for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+			if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang != GetSteamLanguage())
 				continue;
 			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.support_name_file[lang]));
 			name_space_used = config.meta_res.GetFileSizeByIndex(config.support_name_file[lang]);
-			for (i=0;i<SUPPORT_AMOUNT;i++)
-				SteamReadFF9String(ffbin,support[i].name,lang);
+			for (i = 0; i < SUPPORT_AMOUNT; i++)
+				SteamReadFF9String(ffbin, support[i].name, lang);
 			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.support_help_file[lang]));
 			help_space_used = config.meta_res.GetFileSizeByIndex(config.support_help_file[lang]);
-			for (i=0;i<SUPPORT_AMOUNT;i++)
-				SteamReadFF9String(ffbin,support[i].help,lang);
+			for (i = 0; i < SUPPORT_AMOUNT; i++)
+				SteamReadFF9String(ffbin, support[i].help, lang);
 		}
 		ffbin.close();
 		dlldata.dll_file.seekg(dlldata.GetMethodOffset(config.dll_ability_method_id));
@@ -127,16 +140,16 @@ void SupportDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 			{ 0x8D, dlldata.GetTypeTokenIdentifier("SA_DATA","FF9") },
 			{ 0x25 }
 		};
-		methinfo.JumpToInstructions(dlldata.dll_file,3,initinst);
+		methinfo.JumpToInstructions(dlldata.dll_file, 3, initinst);
 		steam_method_position = dlldata.dll_file.tellg();
-		uint8_t* rawsupportdata = dlldata.ConvertScriptToRaw_Object(SUPPORT_AMOUNT,5,steam_support_field_size);
-		steam_method_base_length = (unsigned int)dlldata.dll_file.tellg()-steam_method_position;
+		uint8_t* rawsupportdata = dlldata.ConvertScriptToRaw_Object(SUPPORT_AMOUNT, 5, steam_support_field_size);
+		steam_method_base_length = (unsigned int)dlldata.dll_file.tellg() - steam_method_position;
 		fname = tmpnam(NULL);
-		ffbin.open(fname.c_str(),ios::out | ios::binary);
-		ffbin.write((const char*)rawsupportdata,8*SUPPORT_AMOUNT);
+		ffbin.open(fname.c_str(), ios::out | ios::binary);
+		ffbin.write((const char*)rawsupportdata, 8 * SUPPORT_AMOUNT);
 		ffbin.close();
-		ffbin.open(fname.c_str(),ios::in | ios::binary);
-		MACRO_SUPPORT_IOFUNCTIONDATA(SteamRead,SteamSeek,true,false)
+		ffbin.open(fname.c_str(), ios::in | ios::binary);
+		MACRO_SUPPORT_IOFUNCTIONDATA(SteamRead, SteamSeek, true, false)
 		ffbin.close();
 		remove(fname.c_str());
 		delete[] rawsupportdata;
@@ -175,43 +188,33 @@ void SupportDataSet::GenerateCSharp(vector<string>& buffer) {
 	buffer.push_back(supportdb.str());
 }
 
+wxString CSV_SupportConstructor(SupportDataStruct& sp, int index) {
+	return wxString::Format(wxT("%s;%d;%d;"), sp.name.str_nice, sp.id, sp.cost);
+}
+
 bool SupportDataSet::GenerateCSV(string basefolder) {
-	unsigned int i;
-	string fname = basefolder + HADES_STRING_CSV_SUPPORT_FILE;
-	wfstream csv(fname.c_str(), ios::out);
-	if (!csv.is_open()) return false;
-	csv << HADES_STRING_CSV_SUPPORT_HEADER;
-	for (i=0; i<SUPPORT_AMOUNT; i++)
-		csv << ConvertWStrToStr(support[i].name.str_nice).c_str() << L";" << i << L";" << (int)support[i].cost << L"\n";
-	csv.close();
-	return true;
+	return MemoriaUtility::GenerateCSVGeneric<SupportDataStruct>(_(basefolder), _(HADES_STRING_CSV_SUPPORT_FILE), _(HADES_STRING_CSV_SUPPORT_HEADER), support, &CSV_SupportConstructor, &MemoriaUtility::CSV_ComparerWithoutStart, true);
 }
 
-int SupportDataSet::GetSteamTextSize(unsigned int texttype, SteamLanguage lang) {
-	unsigned int i;
-	int res = 0;
-	if (texttype==0)
-		for (i=0;i<SUPPORT_AMOUNT;i++)
-			res += support[i].name.GetLength(lang);
-	else
-		for (i=0;i<SUPPORT_AMOUNT;i++)
-			res += support[i].help.GetLength(lang);
-	return res;
-}
-
-void SupportDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype, SteamLanguage lang) {
-	unsigned int i;
-	if (texttype==0) {
-		for (i=0;i<SUPPORT_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,support[i].name,lang);
+void SupportDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype, bool onlymodified, bool asmes, SteamLanguage lang) {
+	vector<int> writesubset;
+	if (texttype == 0) {
+		if (onlymodified && MemoriaUtility::GetModifiedSteamTexts<SupportDataStruct>(&writesubset, GetGameConfiguration()->support_name_file, support, [lang](SupportDataStruct& sp) { return sp.name.multi_lang_str[lang]; }, lang))
+			WriteSteamTextGeneric(ffbin, support, &SupportDataStruct::name, &writesubset, asmes, lang);
+		else
+			WriteSteamTextGeneric(ffbin, support, &SupportDataStruct::name, NULL, asmes, lang);
 	} else {
-		for (i=0;i<SUPPORT_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,support[i].help,lang);
+		if (onlymodified && MemoriaUtility::GetModifiedSteamTexts<SupportDataStruct>(&writesubset, GetGameConfiguration()->support_help_file, support, [lang](SupportDataStruct& sp) { return sp.help.multi_lang_str[lang]; }, lang))
+			WriteSteamTextGeneric(ffbin, support, &SupportDataStruct::help, &writesubset, asmes, lang);
+		else
+			WriteSteamTextGeneric(ffbin, support, &SupportDataStruct::help, NULL, asmes, lang);
 	}
 }
 
 void SupportDataSet::Write(fstream& ffbin, ConfigurationSet& config) {
-	unsigned int i;
+	int supportamount = SUPPORT_AMOUNT;
+	uint32_t txtpos;
+	int i;
 	UpdateOffset();
 	ffbin.seekg(config.support_data_offset);
 	MACRO_SUPPORT_IOFUNCTIONDATA(FFIXWrite,FFIXSeek,false,false)
@@ -227,7 +230,9 @@ void SupportDataSet::Write(fstream& ffbin, ConfigurationSet& config) {
 }
 
 void SupportDataSet::WritePPF(fstream& ffbin, ConfigurationSet& config) {
-	unsigned int i;
+	int supportamount = SUPPORT_AMOUNT;
+	uint32_t txtpos;
+	int i;
 	UpdateOffset();
 	ffbin.seekg(config.support_data_offset);
 	MACRO_SUPPORT_IOFUNCTIONDATA(PPFStepAdd,FFIXSeek,false,true)
@@ -243,98 +248,109 @@ void SupportDataSet::WritePPF(fstream& ffbin, ConfigurationSet& config) {
 }
 
 int SupportDataSet::LoadHWS(fstream& ffbin, bool usetext) {
-	unsigned int i;
+	int supportamount = SUPPORT_AMOUNT;
+	bool useextendedtype = false;
+	vector<SupportDataStruct> nonmodified;
+	SteamLanguage lg;
+	int txtspace;
+	int i;
 	int res = 0;
 	uint16_t version;
 	uint16_t namesize = name_space_total, helpsize = help_space_total;
-	HWSReadShort(ffbin,version);
-	HWSReadShort(ffbin,name_space_total);
-	HWSReadShort(ffbin,help_space_total);
-	MACRO_SUPPORT_IOFUNCTIONDATA(HWSRead,HWSSeek,true,false)
-	if (name_space_total<=namesize && usetext) {
-		if (GetHWSGameType()==GAME_TYPE_PSX) {
-			MACRO_SUPPORT_IOFUNCTIONNAME(HWSRead,HWSSeek,true,false)
-			if (GetGameType()!=GAME_TYPE_PSX)
-				for (i=0;i<SUPPORT_AMOUNT;i++)
+	HWSReadShort(ffbin, version);
+	HWSReadShort(ffbin, name_space_total);
+	HWSReadShort(ffbin, help_space_total);
+	if (version >= 2) {
+		useextendedtype = true;
+		vector<int> added;
+		supportamount = PrepareHWSFlexibleList(ffbin, support, nonmodified, added);
+		for (i = 0; i < (int)added.size(); i++) {
+			support[added[i]].name.CreateEmpty(true);
+			support[added[i]].help.CreateEmpty(true);
+			support[added[i]].parent = this;
+		}
+	}
+	MACRO_SUPPORT_IOFUNCTIONDATA(HWSRead, HWSSeek, true, false)
+	if (name_space_total <= namesize && usetext) {
+		if (GetHWSGameType() == GAME_TYPE_PSX) {
+			uint32_t txtpos;
+			MACRO_SUPPORT_IOFUNCTIONNAME(HWSRead, HWSSeek, true, false)
+			if (GetGameType() != GAME_TYPE_PSX)
+				for (i = 0; i < supportamount; i++)
 					support[i].name.PSXToSteam();
 		} else {
-			SteamLanguage lg;
-			uint16_t txtspace;
 			uint32_t tmppos;
-			HWSReadChar(ffbin,lg);
-			while (lg!=STEAM_LANGUAGE_NONE) {
-				HWSReadShort(ffbin,txtspace);
+			HWSReadChar(ffbin, lg);
+			while (lg != STEAM_LANGUAGE_NONE) {
+				HWSReadFlexibleShort(ffbin, txtspace, useextendedtype);
 				tmppos = ffbin.tellg();
-				if (GetGameType()!=GAME_TYPE_PSX)
-					for (i=0;i<SUPPORT_AMOUNT;i++)
-						SteamReadFF9String(ffbin,support[i].name,lg);
-				else if (lg==GetSteamLanguage())
-					for (i=0;i<SUPPORT_AMOUNT;i++) {
-						SteamReadFF9String(ffbin,support[i].name);
+				if (GetGameType() != GAME_TYPE_PSX)
+					for (i = 0; i < supportamount; i++)
+						SteamReadFF9String(ffbin, support[i].name, lg);
+				else if (lg == GetSteamLanguage())
+					for (i = 0; i < supportamount; i++) {
+						SteamReadFF9String(ffbin, support[i].name);
 						support[i].name.SteamToPSX();
 					}
-				ffbin.seekg(tmppos+txtspace);
-				HWSReadChar(ffbin,lg);
+				ffbin.seekg(tmppos + txtspace);
+				HWSReadChar(ffbin, lg);
 			}
 		}
 	} else {
-		if (GetHWSGameType()==GAME_TYPE_PSX) {
-			ffbin.seekg(name_space_total,ios::cur);
+		if (GetHWSGameType() == GAME_TYPE_PSX) {
+			ffbin.seekg(name_space_total, ios::cur);
 		} else {
-			SteamLanguage lg;
-			uint16_t txtspace;
-			HWSReadChar(ffbin,lg);
-			while (lg!=STEAM_LANGUAGE_NONE) {
-				HWSReadShort(ffbin,txtspace);
-				ffbin.seekg(txtspace,ios::cur);
-				HWSReadChar(ffbin,lg);
+			HWSReadChar(ffbin, lg);
+			while (lg != STEAM_LANGUAGE_NONE) {
+				HWSReadFlexibleShort(ffbin, txtspace, useextendedtype);
+				ffbin.seekg(txtspace, ios::cur);
+				HWSReadChar(ffbin, lg);
 			}
 		}
 		if (usetext)
 			res |= 1;
 	}
-	if (help_space_total<=helpsize && usetext) {
-		if (GetHWSGameType()==GAME_TYPE_PSX) {
-			MACRO_SUPPORT_IOFUNCTIONHELP(HWSRead,HWSSeek,true,false)
-			if (GetGameType()!=GAME_TYPE_PSX)
-				for (i=0;i<SUPPORT_AMOUNT;i++)
+	if (help_space_total <= helpsize && usetext) {
+		if (GetHWSGameType() == GAME_TYPE_PSX) {
+			uint32_t txtpos;
+			MACRO_SUPPORT_IOFUNCTIONHELP(HWSRead, HWSSeek, true, false)
+			if (GetGameType() != GAME_TYPE_PSX)
+				for (i = 0; i < supportamount; i++)
 					support[i].help.PSXToSteam();
 		} else {
-			SteamLanguage lg;
-			uint16_t txtspace;
 			uint32_t tmppos;
-			HWSReadChar(ffbin,lg);
-			while (lg!=STEAM_LANGUAGE_NONE) {
-				HWSReadShort(ffbin,txtspace);
+			HWSReadChar(ffbin, lg);
+			while (lg != STEAM_LANGUAGE_NONE) {
+				HWSReadFlexibleShort(ffbin, txtspace, useextendedtype);
 				tmppos = ffbin.tellg();
-				if (GetGameType()!=GAME_TYPE_PSX)
-					for (i=0;i<SUPPORT_AMOUNT;i++)
-						SteamReadFF9String(ffbin,support[i].help,lg);
-				else if (lg==GetSteamLanguage())
-					for (i=0;i<SUPPORT_AMOUNT;i++) {
-						SteamReadFF9String(ffbin,support[i].help);
+				if (GetGameType() != GAME_TYPE_PSX)
+					for (i = 0; i < supportamount; i++)
+						SteamReadFF9String(ffbin, support[i].help, lg);
+				else if (lg == GetSteamLanguage())
+					for (i = 0; i < supportamount; i++) {
+						SteamReadFF9String(ffbin, support[i].help);
 						support[i].help.SteamToPSX();
 					}
-				ffbin.seekg(tmppos+txtspace);
-				HWSReadChar(ffbin,lg);
+				ffbin.seekg(tmppos + txtspace);
+				HWSReadChar(ffbin, lg);
 			}
 		}
 	} else {
-		if (GetHWSGameType()==GAME_TYPE_PSX) {
-			ffbin.seekg(help_space_total,ios::cur);
+		if (GetHWSGameType() == GAME_TYPE_PSX) {
+			ffbin.seekg(help_space_total, ios::cur);
 		} else {
-			SteamLanguage lg;
-			uint16_t txtspace;
-			HWSReadChar(ffbin,lg);
-			while (lg!=STEAM_LANGUAGE_NONE) {
-				HWSReadShort(ffbin,txtspace);
-				ffbin.seekg(txtspace,ios::cur);
-				HWSReadChar(ffbin,lg);
+			HWSReadChar(ffbin, lg);
+			while (lg != STEAM_LANGUAGE_NONE) {
+				HWSReadFlexibleShort(ffbin, txtspace, useextendedtype);
+				ffbin.seekg(txtspace, ios::cur);
+				HWSReadChar(ffbin, lg);
 			}
 		}
 		if (usetext)
 			res |= 2;
 	}
+	for (i = 0; i < (int)nonmodified.size(); i++)
+		InsertAtId(support, nonmodified[i], nonmodified[i].id);
 	name_space_total = namesize;
 	help_space_total = helpsize;
 	UpdateOffset();
@@ -342,36 +358,41 @@ int SupportDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 }
 
 void SupportDataSet::WriteHWS(fstream& ffbin) {
-	unsigned int i;
+	int supportamount = support.size();
+	int i;
 	UpdateOffset();
-	HWSWriteShort(ffbin,SUPPORT_HWS_VERSION);
+	HWSWriteShort(ffbin, SUPPORT_HWS_VERSION);
 	uint16_t namesize = name_space_total, helpsize = help_space_total;
 	name_space_total = name_space_used;
 	help_space_total = help_space_used;
-	HWSWriteShort(ffbin,name_space_total);
-	HWSWriteShort(ffbin,help_space_total);
-	MACRO_SUPPORT_IOFUNCTIONDATA(HWSWrite,HWSSeek,false,false)
-	if (GetGameType()==GAME_TYPE_PSX) {
-		MACRO_SUPPORT_IOFUNCTIONNAME(HWSWrite,HWSSeek,false,false)
-		MACRO_SUPPORT_IOFUNCTIONHELP(HWSWrite,HWSSeek,false,false)
+	HWSWriteShort(ffbin, name_space_total);
+	HWSWriteShort(ffbin, help_space_total);
+	HWSWriteFlexibleChar(ffbin, supportamount, true);
+	for (i = 0; i < supportamount; i++)
+		HWSWriteFlexibleChar(ffbin, support[i].id, true);
+	MACRO_SUPPORT_IOFUNCTIONDATA(HWSWrite, HWSSeek, false, false)
+	if (GetGameType() == GAME_TYPE_PSX) {
+		uint32_t txtpos;
+		MACRO_SUPPORT_IOFUNCTIONNAME(HWSWrite, HWSSeek, false, false)
+		MACRO_SUPPORT_IOFUNCTIONHELP(HWSWrite, HWSSeek, false, false)
 	} else {
 		SteamLanguage lg;
-		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
+		for (lg = STEAM_LANGUAGE_US; lg < STEAM_LANGUAGE_AMOUNT; lg++) {
 			if (hades::STEAM_LANGUAGE_SAVE_LIST[lg]) {
-				HWSWriteChar(ffbin,lg);
-				HWSWriteShort(ffbin,GetSteamTextSize(0,lg));
-				WriteSteamText(ffbin,0,lg);
+				HWSWriteChar(ffbin, lg);
+				HWSWriteFlexibleShort(ffbin, GetSteamTextSizeGeneric(support, &SupportDataStruct::name, false, lg), true);
+				WriteSteamText(ffbin, 0, false, false, lg);
 			}
 		}
-		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
-		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
+		HWSWriteChar(ffbin, STEAM_LANGUAGE_NONE);
+		for (lg = STEAM_LANGUAGE_US; lg < STEAM_LANGUAGE_AMOUNT; lg++) {
 			if (hades::STEAM_LANGUAGE_SAVE_LIST[lg]) {
-				HWSWriteChar(ffbin,lg);
-				HWSWriteShort(ffbin,GetSteamTextSize(1,lg));
-				WriteSteamText(ffbin,1,lg);
+				HWSWriteChar(ffbin, lg);
+				HWSWriteFlexibleShort(ffbin, GetSteamTextSizeGeneric(support, &SupportDataStruct::help, false, lg), true);
+				WriteSteamText(ffbin, 1, false, false, lg);
 			}
 		}
-		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
+		HWSWriteChar(ffbin, STEAM_LANGUAGE_NONE);
 	}
 	name_space_total = namesize;
 	help_space_total = helpsize;
@@ -390,4 +411,24 @@ void SupportDataSet::UpdateOffset() {
 	}
 	name_space_used = j;
 	help_space_used = k;
+}
+
+int SupportDataSet::GetSupportIndexById(int supportid) {
+	if (supportid < SUPPORT_AMOUNT)
+		return supportid;
+	for (unsigned int i = SUPPORT_AMOUNT; i < support.size(); i++)
+		if (support[i].id == supportid)
+			return i;
+	return -1;
+}
+
+SupportDataStruct dummysupport;
+SupportDataStruct& SupportDataSet::GetSupportById(int supportid) {
+	int index = GetSupportIndexById(supportid);
+	if (index >= 0)
+		return support[index];
+	dummysupport.id = -1;
+	dummysupport.name.CreateEmpty();
+	dummysupport.name.SetValue(L"[Invalid]");
+	return dummysupport;
 }

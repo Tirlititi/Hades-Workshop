@@ -44,7 +44,7 @@ public:
 	unsigned int* scenesorted;
 	unsigned int* spellanimsorted;
 	unsigned int* cilsorted;
-	
+
 	CDDataStruct(wxWindow* parent, string fname, ConfigurationSet& cfg);
 	void MarkDataSpellModified();
 	void MarkDataSupportModified();
@@ -74,16 +74,26 @@ public:
 	void DisplaySpell(int spellid);
 	void UpdateSpellName(unsigned int spellid);
 	void UpdateSpellStatusName(unsigned int statusid);
+	void RegisterSpellAdded(unsigned int spellid);
+	void RegisterSpellRemoved(unsigned int spellid);
 	void InitSupport(void);
 	void DisplaySupport(int supportid);
 	void UpdateSupportName(unsigned int supportid);
+	void RegisterSupportAdded(unsigned int supportid);
+	void RegisterSupportRemoved(unsigned int supportid);
 	void InitCommand(void);
 	void DisplayCommand(int cmdid);
 	void UpdateCommandName(unsigned int cmdid);
+	void RegisterCommandAdded(unsigned int cmdid);
+	void RegisterCommandRemoved(unsigned int cmdid);
 	void InitStat(void);
 	void DisplayLevelStat(void);
+	void DisplayStatSelectedAbility();
 	void DisplayStatAbilityList(int abilsetid);
 	void DisplayStat(int charid);
+	void UpdateStatName(unsigned int statid);
+	void RegisterStatAdded(unsigned int statid);
+	void RegisterStatRemoved(unsigned int statid);
 	void InitPartySpecial(void);
 	void DisplayPartySpecial(int specialid);
 	void InitEnemy(void);
@@ -96,11 +106,20 @@ public:
 	void DisplayItem(int itemid);
 	void DisplayKeyItem(int keyitemid);
 	void UpdateItemName(unsigned int itemid);
+	void RegisterItemAdded(unsigned int itemid);
+	void RegisterItemRemoved(unsigned int itemid);
+	void RegisterKeyItemAdded(unsigned int keyitemid);
+	void RegisterKeyItemRemoved(unsigned int keyitemid);
+	ItemStatDataStruct& GetItemStat(int itemid);
 	void DisplayItemStatIdHelp(void);
 	void DisplayItemIcon(void);
 	void InitShop(void);
 	void DisplayShop(int shopid);
 	void DisplaySynthesisShop(int synthshopid);
+	void RegisterShopAdded(unsigned int shopid);
+	void RegisterShopRemoved(unsigned int shopid);
+	void RegisterSynthesisShopAdded(unsigned int synthshopid);
+	void RegisterSynthesisShopRemoved(unsigned int synthshopid);
 	void InitCard(void);
 	void DisplayCard(int cardid);
 	void DisplayCardDeck(int deckid);
@@ -129,24 +148,28 @@ public:
 	void DisplayCilStruct(int cilstructid);
 	void DisplayCilMacro(int cilmacroid);
 	void DisplayCurrentData();
-	
-	void SpellDisplayNames(bool create=false);
-	void SupportDisplayNames(bool create=false);
-	void CommandDisplayNames(bool create=false);
-	void StatDisplayNames(bool create=false);
+
+	void SpellDisplayNames(bool create = false);
+	void SupportDisplayNames(bool create = false);
+	void CommandDisplayNames(bool create = false);
+	void StatDisplayNames(bool create = false);
+	wxString GetMagicSwordName(FF9String& spellname);
 	wxString GetEnemyBattleName(int battleid);
-	void EnemyDisplayNames(bool create=false);
-	void ItemDisplayNames(bool create=false);
-	void KeyItemDisplayNames(bool create=false);
-	void CardDisplayNames(bool create=false);
-	void TextDisplayNames(bool create=false);
-	void WorldMapDisplayNames(bool create=false);
+	void EnemyDisplayNames(bool create = false);
+	void ItemDisplayNames(bool create = false);
+	void KeyItemDisplayNames(bool create = false);
+	wxString GetShopName(int shopid);
+	void ShopDisplayNames(bool create = false);
+	void SynthesisShopDisplayNames(bool create = false);
+	void CardDisplayNames(bool create = false);
+	void TextDisplayNames(bool create = false);
+	void WorldMapDisplayNames(bool create = false);
 	wxString GetFieldName(int fieldid);
-	void FieldDisplayNames(bool create=false);
-	void BattleSceneDisplayNames(bool create=false);
-	void SpellAnimationDisplayNames(bool create=false);
-	void CilDisplayNames(bool create=false);
-	
+	void FieldDisplayNames(bool create = false);
+	void BattleSceneDisplayNames(bool create = false);
+	void SpellAnimationDisplayNames(bool create = false);
+	void CilDisplayNames(bool create = false);
+
 private:
 	uint16_t* scenetex;
 	uint16_t* scenepal;
@@ -160,6 +183,7 @@ private:
 	wxBitmap fieldtexpreview;
 	wxBitmap scenetexpreview;
 	wxBitmap scenetexlinkpreview;
+	wxMenu* sharedmenu;
 	wxMenu* scenetexmenu;
 	wxMenu* enemystatmenu;
 	wxMenu* enemyspellmenu;
@@ -168,9 +192,11 @@ private:
 	wxMenu* worldtextmenu;
 	wxMenu* textmenu;
 	wxMenu* specialtextmenu;
+	wxMenuItem* sharedmenuadd;
+	wxMenuItem* sharedmenuremove;
 	wxMenuItem* enemystatmenupaste;
 	wxMenuItem* enemyspellmenupaste;
-	
+
 	void TextReachLimit();
 	void OnNotebookMain(wxNotebookEvent& event);
 	void OnNotebookParty(wxNotebookEvent& event);
@@ -181,7 +207,9 @@ private:
 	void OnNotebookMips(wxNotebookEvent& event);
 	void OnNotebookCil(wxNotebookEvent& event);
 	void OnNotebookNone(wxNotebookEvent& event) {} // Without this, wxNotebookEvent are passed to children notebooks for some reason
+	void OnSharedRightClickMenu(wxCommandEvent& event);
 	void OnListBoxSpell(wxCommandEvent& event);
+	void OnSpellRightClick(wxMouseEvent& event);
 	void OnSpellChangeName(wxCommandEvent& event);
 	void OnSpellChangeHelp(wxCommandEvent& event);
 	void OnSpellChangeSpin(wxSpinEvent& event);
@@ -191,16 +219,21 @@ private:
 	void OnButtonClickSpellModel(wxCommandEvent& event);
 	void OnButtonClickSpellModelAlt(wxCommandEvent& event);
 	void OnListBoxSupport(wxCommandEvent& event);
+	void OnSupportRightClick(wxMouseEvent& event);
 	void OnSupportChangeName(wxCommandEvent& event);
 	void OnSupportChangeHelp(wxCommandEvent& event);
 	void OnSupportChangeSpin(wxSpinEvent& event);
 	void OnSupportChangeButton(wxCommandEvent& event);
 	void OnListBoxCommand(wxCommandEvent& event);
+	void OnCommandRightClick(wxMouseEvent& event);
 	void OnCommandChangeName(wxCommandEvent& event);
 	void OnCommandChangeHelp(wxCommandEvent& event);
+	void OnCommandChangeSpin(wxSpinEvent& event);
 	void OnCommandChangeChoice(wxCommandEvent& event);
 	void OnCommandChangeButton(wxCommandEvent& event);
 	void OnListBoxStat(wxCommandEvent& event);
+	void OnStatRightClick(wxMouseEvent& event);
+	void OnStatAbilityRightClick(wxMouseEvent& event);
 	void OnStatChangeDefaultName(wxCommandEvent& event);
 	void OnStatChangeSpin(wxSpinEvent& event);
 	void OnStatChangeChoice(wxCommandEvent& event);
@@ -209,6 +242,8 @@ private:
 	void OnListBoxPartySpecial(wxCommandEvent& event);
 	void OnPartySpecialChangeChoice(wxCommandEvent& event);
 	void OnPartySpecialChangeList(wxCommandEvent& event);
+	void OnPartySpecialChangeButton(wxCommandEvent& event);
+	void OnPartySpecialMagicSwordRightClick(wxMouseEvent& event);
 	void OnListBoxEnemy(wxCommandEvent& event);
 	void OnListBoxEnemyStat(wxCommandEvent& event);
 	void OnListBoxEnemySpell(wxCommandEvent& event);
@@ -230,20 +265,26 @@ private:
 	void OnEnemyTextRightClickMenu(wxCommandEvent& event);
 	void OnListBoxItem(wxCommandEvent& event);
 	void OnListBoxKeyItem(wxCommandEvent& event);
+	void OnItemRightClick(wxMouseEvent& event);
+	void OnKeyItemRightClick(wxMouseEvent& event);
 	void OnItemChangeName(wxCommandEvent& event);
 	void OnItemChangeHelp(wxCommandEvent& event);
 	void OnItemChangeBattleHelp(wxCommandEvent& event);
 	void OnKeyItemChangeName(wxCommandEvent& event);
 	void OnKeyItemChangeHelp(wxCommandEvent& event);
 	void OnKeyItemChangeDescription(wxCommandEvent& event);
+	void OnItemChangeModelName(wxCommandEvent& event);
 	void OnItemChangeSpin(wxSpinEvent& event);
 	void OnItemChangeChoice(wxCommandEvent& event);
 	void OnItemChangeFlags(wxCommandEvent& event);
 	void OnItemChangeButton(wxCommandEvent& event);
+	void OnKeyItemChangeSpin(wxSpinEvent& event);
 	void OnButtonClickItemModel(wxCommandEvent& event);
 	void OnItemPositionListClick(wxMouseEvent& event);
 	void OnListBoxShop(wxCommandEvent& event);
 	void OnListBoxSynthesisShop(wxCommandEvent& event);
+	void OnShopRightClick(wxMouseEvent& event);
+	void OnSynthesisRightClick(wxMouseEvent& event);
 	void OnShopChangeSpin(wxSpinEvent& event);
 	void OnShopChangeChoice(wxCommandEvent& event);
 	void OnShopChangeFlags(wxCommandEvent& event);
@@ -268,8 +309,6 @@ private:
 	void OnListBoxWorldPlace(wxCommandEvent& event);
 	void OnListBoxWorldBattle(wxCommandEvent& event);
 	void OnWorldChangeName(wxCommandEvent& event);
-	void OnWorldMapEditText(wxCommandEvent& event);
-	void OnWorldMapExportText(wxCommandEvent& event);
 	void OnWorldChangeButton(wxCommandEvent& event);
 	void OnWorldChangeChoice(wxCommandEvent& event);
 	void OnWorldChangeSpin(wxSpinEvent& event);
@@ -305,8 +344,8 @@ private:
 	void OnListBoxCilMacro(wxCommandEvent& event);
 	void OnCilMethodButton(wxCommandEvent& event);
 	void OnCilMacroButton(wxCommandEvent& event);
-	void OnCilParameterResolution(wxSpinEvent & event);
-	
+	void OnCilParameterResolution(wxSpinEvent& event);
+
 public:
 	void DebugWrite();
 };

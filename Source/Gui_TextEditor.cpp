@@ -91,7 +91,7 @@ void ButtonOp(TextEditDialogBase* dialog, uint8_t* args) {
 	static wxBitmap GTE_NEW = InitButton(wxBITMAP(indicatornew_image));
 	if (args[0]==0x2F)			dialog->preview_ctrl->WriteImage(GTE_BUTTONS[0x10]);
 	else if (args[0]==0x70)		dialog->preview_ctrl->WriteImage(GTE_NEW);
-	else						dialog->preview_ctrl->WriteImage(GTE_BUTTONS[args[0] & 0x2F]);
+	else						dialog->preview_ctrl->WriteImage(GTE_BUTTONS[args[0] & 0xF]);
 }
 
 void (*TextOp[128])(TextEditDialogBase* dialog, uint8_t* args) = {

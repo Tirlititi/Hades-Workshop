@@ -38,24 +38,28 @@ int WorldMapDataStruct::SetName(unsigned int placeid, wstring newvalue) {
 	tmp.SetValue(newvalue);
 	int oldlen = place_name[placeid].length;
 	int newlen = tmp.length;
-	if (newlen > oldlen + place_name_extra_size)
-		return 1;
-	place_name[placeid].SetValue(newvalue);
-	place_name_extra_size += oldlen - newlen;
-	if (GetGameType() != GAME_TYPE_PSX)
+	if (GetGameType() == GAME_TYPE_PSX) {
+		if (newlen > oldlen + place_name_extra_size)
+			return 1;
+		place_name_extra_size += oldlen - newlen;
+	} else {
 		place_name_size += newlen - oldlen;
+	}
+	place_name[placeid].SetValue(newvalue);
 	return 0;
 }
 
 int WorldMapDataStruct::SetName(unsigned int placeid, FF9String& newvalue) {
 	int oldlen = place_name[placeid].length;
 	int newlen = newvalue.length;
-	if (newlen > oldlen + place_name_extra_size)
-		return 1;
-	place_name[placeid] = newvalue;
-	place_name_extra_size += oldlen - newlen;
-	if (GetGameType() != GAME_TYPE_PSX)
+	if (GetGameType() == GAME_TYPE_PSX) {
+		if (newlen > oldlen + place_name_extra_size)
+			return 1;
+		place_name_extra_size += oldlen - newlen;
+	} else {
 		place_name_size += newlen - oldlen;
+	}
+	place_name[placeid] = newvalue;
 	return 0;
 }
 
@@ -66,7 +70,7 @@ int WorldMapDataStruct::ChangeBattle(unsigned int groundid, unsigned int setid, 
 	int friendlyidnew = -1;
 	int i, j;
 	for (i = 0; i < WORLD_MAP_FRIENDLY_AMOUNT; i++)
-		for (j = 0; j < WorldMapDataStruct::friendly_battle_id[i].size(); j++)
+		for (j = 0; j < (int)WorldMapDataStruct::friendly_battle_id[i].size(); j++)
 		{
 			if (battle_id[groundid][setid] == WorldMapDataStruct::friendly_battle_id[i][j])
 				friendlyidold = i;

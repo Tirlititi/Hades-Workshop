@@ -5,24 +5,28 @@
 #define CARD_HWS_VERSION 1
 
 int CardDataStruct::SetName(wstring newvalue) {
-	FF9String tmp(name);
-	tmp.SetValue(newvalue);
-	int oldlen = name.length;
-	int newlen = tmp.length;
-	if (parent->name_space_used+newlen>parent->name_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		FF9String tmp(name);
+		tmp.SetValue(newvalue);
+		int oldlen = name.length;
+		int newlen = tmp.length;
+		if (parent->name_space_used + newlen > parent->name_space_total + oldlen)
+			return 1;
+		parent->name_space_used += newlen - oldlen;
+	}
 	name.SetValue(newvalue);
-	parent->name_space_used += newlen-oldlen;
 	return 0;
 }
 
 int CardDataStruct::SetName(FF9String& newvalue) {
-	int oldlen = name.length;
-	int newlen = newvalue.length;
-	if (parent->name_space_used+newlen>parent->name_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		int oldlen = name.length;
+		int newlen = newvalue.length;
+		if (parent->name_space_used + newlen > parent->name_space_total + oldlen)
+			return 1;
+		parent->name_space_used += newlen - oldlen;
+	}
 	name = newvalue;
-	parent->name_space_used += newlen-oldlen;
 	return 0;
 }
 

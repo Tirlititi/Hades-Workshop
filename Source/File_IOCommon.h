@@ -23,6 +23,7 @@ void WriteShort(fstream& f, uint16_t value);
 void WriteShortBE(fstream& f, uint16_t value);
 void WriteFloat(fstream& f, float value);
 void WriteDouble(fstream& f, double value);
+void WriteString(fstream& f, string value);
 
 uint32_t GetAlignOffset(uint32_t baseoffset, uint32_t align = 4);
 

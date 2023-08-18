@@ -14,11 +14,11 @@ class ToolRandomizer : public RandomizerWindow {
 public:
 	CDDataStruct* cddata;
 	int used_seed;
-	vector<uint8_t> safe_abil_scramble;
-	vector<uint8_t> safe_abil_spell;
-	vector<uint8_t> safe_abil_support;
-	vector<uint8_t> safe_abil_weap;
-	vector<uint8_t> safe_abil_armor;
+	vector<int> safe_abil_scramble;
+	vector<int> safe_abil_spell;
+	vector<int> safe_abil_support;
+	vector<int> safe_abil_weap;
+	vector<int> safe_abil_armor;
 	
 	ToolRandomizer(wxWindow* p);
 	~ToolRandomizer();

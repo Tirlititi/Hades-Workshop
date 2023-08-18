@@ -71,6 +71,7 @@
 #define STRING_CHANGE_STAT			"changes %s's %s to %d"
 #define STRING_CHANGE_STAT_RND		"changes %s's %s to a random value between %d and %d"
 #define STRING_LIMIT_GLOVE			"deals %d damage (always miss unless %s's HP is exactly 1)"
+#define STRING_JUMP					"launches an attack after %d ticks (%.2f/%.2f/%.2f seconds in slow/normal/fast modes respectively)"
 #define STRING_SIX_DRAGONS			"scrambles %s's HP and MP:\nFully heals HP and MP (10%%)\nFully heals HP (20%%)\nFully heals MP (20%%)\nReduces HP to 1 (15%%)\nReduces MP to 1 (15%%)\nReduces both HP and MP to 1 (20%%)"
 #define STRING_CURSE				"weakens %s against %s"
 #define STRING_CURSE_RND			"weakens %s against a random element"
@@ -109,6 +110,7 @@
 #define STRING_FORMULA_MPDAMAGE		"MP Damage Formula: %s\n"
 #define STRING_FORMULA_MPHEAL		"MP Heal Formula: %s\n"
 #define STRING_FORMULA_CRITICAL		L"Critical Rate Formula: (Spirit / 4 - 1) / 2\n"
+#define STRING_FORMULA_JUMP_TIME	L"Jump duration Formula: 40 * (60 - Spirit) ticks\n"
 #define STRING_FORMULA_GIL			L"Gil Loss Formula: Level * Power\n"
 #define STRING_FORMULA_FLEE			L"Flee Rate Formula: 200 * TeamMeanLevel / EnemiesMeanLevel / 16\n"
 #define STRING_FORMULA_STEAL		L"Steal Base Chance (without Bandit):\n"\
@@ -1538,7 +1540,11 @@ struct DamageCalculation {
 		case 48: // Spear
 		case 83: // Trance Spear
 		{
+			formulae += _(STRING_FORMULA_JUMP_TIME);
 			formulae += wxString::Format(wxT(STRING_FORMULA_DAMAGE), spell_effect == 48 ? _(STRING_FORMULA_SPEAR) : _(STRING_FORMULA_SPEAR_TRANCE));
+			int durationticks = 40 * (60 - attacker_spirit);
+			use_caster_spirit = true;
+			special_effect_description = wxString::Format(wxT(STRING_JUMP), durationticks, (float)durationticks / (8 * 15.0f), (float)durationticks / (10 * 15.0f), (float)durationticks / (14 * 15.0f));
 			vector<int> highjumpnum;
 			alternate_damage_description = _(STRING_HIGH_JUMP);
 			SetupAttackCommand(spell_effect == 48 ? 1 : 5, false);
@@ -2206,7 +2212,7 @@ void ToolDamageCalculator::UpdateInformation() {
 		calc.attacker_weapon_index = player_panel[0]->m_weapon->GetSelection();
 		if (calc.attacker_weapon_index >= 0 && calc.attacker_weapon_index < ITEM_WEAPON_AMOUNT) {
 			calc.attacker_weapon_element = cddata->itemset.weapon[calc.attacker_weapon_index].element;
-			calc.attacker_weapon_status = cddata->spellset.status_set[cddata->itemset.weapon[calc.attacker_weapon_index].status];
+			calc.attacker_weapon_status = cddata->spellset.status_set[cddata->itemset.weapon[calc.attacker_weapon_index].status].status;
 		}
 		calc.attacker_weapon_power = max(0, min(255, player_panel[0]->equip.attack + player_panel[0]->stat->attack));
 		calc.attacker_level = player_panel[0]->m_level->GetValue();
@@ -2231,11 +2237,11 @@ void ToolDamageCalculator::UpdateInformation() {
 		calc.spell_power = player_panel[0]->m_power->GetValue();
 		calc.spell_accuracy = player_panel[0]->m_accuracy->GetValue();
 		MACRO_CALCULATOR_GETELEMS_WIN(calc.spell_element, player_panel[0])
-		calc.spell_status = cddata->spellset.status_set[player_panel[0]->m_status->GetSelection()];
+		calc.spell_status = cddata->spellset.status_set[player_panel[0]->m_status->GetSelection()].status;
 		if (cddata->saveset.sectionloaded[DATA_SECTION_CMD]) {
 			if (calc.spell_index == 67 || calc.spell_index == 69 || calc.spell_index == 70 || calc.spell_index == 71 || calc.spell_index == 73)
 				calc.spell_command = 20;
-			for (i = 0; i < COMMAND_AMOUNT && calc.spell_command < 0; i++) {
+			for (i = 0; i < cddata->cmdset.cmd.size() && calc.spell_command < 0; i++) {
 				if (cddata->cmdset.cmd[i].panel == COMMAND_PANEL_NONE && cddata->cmdset.cmd[i].spell_list[0] == calc.spell_index)
 					calc.spell_command = i;
 				else if (cddata->cmdset.cmd[i].panel == COMMAND_PANEL_SPELL)
@@ -2266,7 +2272,7 @@ void ToolDamageCalculator::UpdateInformation() {
 		calc.spell_power = enemy_panel[0]->m_power->GetValue();
 		calc.spell_accuracy = enemy_panel[0]->m_accuracy->GetValue();
 		MACRO_CALCULATOR_GETELEMS_WIN(calc.spell_element, enemy_panel[0])
-		calc.spell_status = cddata->spellset.status_set[enemy_panel[0]->m_status->GetSelection()];
+		calc.spell_status = cddata->spellset.status_set[enemy_panel[0]->m_status->GetSelection()].status;
 		calc.reflect_count = (cddata->enemyset.battle[enemy_list_battle[enemy_panel[0]->m_baseenemy->GetSelection()]]->spell[enemy_panel[0]->m_basespell->GetSelection()].flag & SPELL_FLAG_REFLECTABLE) != 0 ? enemy_panel[0]->buff.reflect_count : 0;
 	}
 	if (calc.defender_is_player) {
@@ -2704,30 +2710,30 @@ void ToolDamageCalculatorPlayer::Init(CDDataStruct* data, bool initializeprofile
 		choicelist.Add(_(data->itemset.item[i].name.str_nice));
 	m_weapon->Append(choicelist);
 	choicelist.Clear();
-	for (i = 0; i < ITEM_AMOUNT; i++)
+	for (i = 0; i < data->itemset.item.size(); i++)
 		choicelist.Add(_(data->itemset.item[i].name.str_nice));
 	m_head->Append(choicelist);
 	choicelist.Clear();
-	for (i = 0; i < ITEM_AMOUNT; i++)
+	for (i = 0; i < data->itemset.item.size(); i++)
 		choicelist.Add(_(data->itemset.item[i].name.str_nice));
 	m_wrist->Append(choicelist);
 	choicelist.Clear();
-	for (i = 0; i < ITEM_AMOUNT; i++)
+	for (i = 0; i < data->itemset.item.size(); i++)
 		choicelist.Add(_(data->itemset.item[i].name.str_nice));
 	m_armor->Append(choicelist);
 	choicelist.Clear();
-	for (i = 0; i < ITEM_AMOUNT; i++)
+	for (i = 0; i < data->itemset.item.size(); i++)
 		choicelist.Add(_(data->itemset.item[i].name.str_nice));
 	m_accessory->Append(choicelist);
 	choicelist.Clear();
-	for (i = 0; i < SPELL_AMOUNT; i++)
+	for (i = 0; i < data->spellset.spell.size(); i++)
 		choicelist.Add(_(data->spellset.spell[i].name.str_nice));
 	m_basespell->Append(choicelist);
 	choicelist.Clear();
 	for (i = 0; i < G_N_ELEMENTS(HADES_STRING_SPELL_EFFECT); i++)
 		m_effect->Append(HADES_STRING_SPELL_EFFECT[i].label, (void*)&HADES_STRING_SPELL_EFFECT[i]);
 	for (i = 0; i < STATUS_SET_AMOUNT; i++)
-		choicelist.Add(data->spellset.status_set_name[i]);
+		choicelist.Add(data->spellset.status_set[i].name);
 	m_status->Append(choicelist);
 	choicelist.Clear();
 	if (initializeprofile) {
@@ -2741,7 +2747,7 @@ void ToolDamageCalculatorPlayer::Init(CDDataStruct* data, bool initializeprofile
 			bool armorset = false;
 			bool accessoryset = false;
 			stat->buff.back_row = pchar == 1 || pchar == 2 || pchar == 6;
-			for (i = 0; i < ITEM_AMOUNT; i++) {
+			for (i = 0; i < itset.item.size(); i++) {
 				ItemDataStruct& it = itset.item[i];
 				if ((it.char_availability & charfilter) != 0) {
 					if (!weaponset && (it.type & ITEM_TYPE_WEAPON) != 0 && it.weapon_id >= 0) {
@@ -2800,17 +2806,17 @@ void ToolDamageCalculatorPlayer::ComputeEquipCumulatedStat() {
 	ItemDataStruct& wrist = itemset.item[m_wrist->GetSelection()];
 	ItemDataStruct& armor = itemset.item[m_armor->GetSelection()];
 	ItemDataStruct& accessory = itemset.item[m_accessory->GetSelection()];
-	ItemStatDataStruct& weaponstat = itemset.stat[weapon.stat_id];
-	ItemStatDataStruct& headstat = itemset.stat[head.stat_id];
-	ItemStatDataStruct& wriststat = itemset.stat[wrist.stat_id];
-	ItemStatDataStruct& armorstat = itemset.stat[armor.stat_id];
-	ItemStatDataStruct& accessorystat = itemset.stat[accessory.stat_id];
-	ItemArmorDataStruct* weaponarmor = weapon.armor_id >= 0 ? &itemset.armor[weapon.armor_id] : NULL;
-	ItemArmorDataStruct* headarmor = head.armor_id >= 0 ? &itemset.armor[head.armor_id] : NULL;
-	ItemArmorDataStruct* wristarmor = wrist.armor_id >= 0 ? &itemset.armor[wrist.armor_id] : NULL;
-	ItemArmorDataStruct* armorarmor = armor.armor_id >= 0 ? &itemset.armor[armor.armor_id] : NULL;
-	ItemArmorDataStruct* accessoryarmor = accessory.armor_id >= 0 ? &itemset.armor[accessory.armor_id] : NULL;
-	equip.attack = weapon.weapon_id >= 0 ? itemset.weapon[weapon.weapon_id].power : 0;
+	ItemStatDataStruct& weaponstat = itemset.GetStatById(weapon.stat_id);
+	ItemStatDataStruct& headstat = itemset.GetStatById(head.stat_id);
+	ItemStatDataStruct& wriststat = itemset.GetStatById(wrist.stat_id);
+	ItemStatDataStruct& armorstat = itemset.GetStatById(armor.stat_id);
+	ItemStatDataStruct& accessorystat = itemset.GetStatById(accessory.stat_id);
+	ItemArmorDataStruct* weaponarmor = weapon.armor_id >= 0 ? &itemset.GetArmorById(weapon.armor_id) : NULL;
+	ItemArmorDataStruct* headarmor = head.armor_id >= 0 ? &itemset.GetArmorById(head.armor_id) : NULL;
+	ItemArmorDataStruct* wristarmor = wrist.armor_id >= 0 ? &itemset.GetArmorById(wrist.armor_id) : NULL;
+	ItemArmorDataStruct* armorarmor = armor.armor_id >= 0 ? &itemset.GetArmorById(armor.armor_id) : NULL;
+	ItemArmorDataStruct* accessoryarmor = accessory.armor_id >= 0 ? &itemset.GetArmorById(accessory.armor_id) : NULL;
+	equip.attack = weapon.weapon_id >= 0 ? itemset.GetWeaponById(weapon.weapon_id).power : 0;
 	equip.speed = weaponstat.speed + headstat.speed + wriststat.speed + armorstat.speed + accessorystat.speed;
 	equip.strength = weaponstat.strength + headstat.strength + wriststat.strength + armorstat.strength + accessorystat.strength;
 	equip.magic = weaponstat.magic + headstat.magic + wriststat.magic + armorstat.magic + accessorystat.magic;
@@ -2990,9 +2996,9 @@ void ToolDamageCalculatorPlayer::SelectBaseCharacter(int sel) {
 		SelectBaseSpell(SPELL_ATTACK_ID);
 	} else if (parent->cddata->saveset.sectionloaded[DATA_SECTION_STAT] && parent->cddata->saveset.sectionloaded[DATA_SECTION_CMD]) {
 		int spellid = 0;
-		CommandSetDataStruct& cmd = parent->cddata->statset.command_list[parent->cddata->statset.GetCharacterCommandsId(sel)[0]];
-		CommandDataStruct& firstcmd = parent->cddata->cmdset.cmd[cmd.first_command];
-		CommandDataStruct& secondcmd = parent->cddata->cmdset.cmd[cmd.second_command];
+		CommandSetDataStruct& cmd = parent->cddata->statset.command_list[parent->cddata->statset.GetCharacterCommandsIndices(sel)[0]];
+		CommandDataStruct& firstcmd = parent->cddata->cmdset.GetCommandById(cmd.first_command);
+		CommandDataStruct& secondcmd = parent->cddata->cmdset.GetCommandById(cmd.second_command);
 		if (firstcmd.panel == COMMAND_PANEL_SPELL && firstcmd.spell_amount > 0)
 			spellid = firstcmd.spell_list[0];
 		else if (secondcmd.panel == COMMAND_PANEL_SPELL && secondcmd.spell_amount > 0)
@@ -3014,7 +3020,7 @@ void ToolDamageCalculatorPlayer::SelectBaseSpell(int sel) {
 		ItemDataSet& itset = parent->cddata->itemset;
 		int weapid = itset.item[m_weapon->GetSelection()].weapon_id;
 		if (weapid >= 0) {
-			ItemWeaponDataStruct& weap = itset.weapon[weapid];
+			ItemWeaponDataStruct& weap = itset.GetWeaponById(weapid);
 			for (int i = 0; i < G_N_ELEMENTS(HADES_STRING_SPELL_EFFECT); i++)
 				if (HADES_STRING_SPELL_EFFECT[i].id == weap.damage_formula) {
 					m_effect->SetSelection(i);
@@ -3182,7 +3188,7 @@ void ToolDamageCalculatorEnemy::Init(CDDataStruct* data) {
 	for (i = 0; i < G_N_ELEMENTS(HADES_STRING_SPELL_EFFECT); i++)
 		m_effect->Append(HADES_STRING_SPELL_EFFECT[i].label, (void*)&HADES_STRING_SPELL_EFFECT[i]);
 	for (i = 0; i < STATUS_SET_AMOUNT; i++)
-		choicelist.Add(data->spellset.status_set_name[i]);
+		choicelist.Add(data->spellset.status_set[i].name);
 	m_status->Append(choicelist);
 	choicelist.Clear();
 	m_baseenemy->SetSelection(0);

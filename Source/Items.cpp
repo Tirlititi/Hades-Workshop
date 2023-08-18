@@ -1,11 +1,14 @@
 #include "Items.h"
 
+#include <set>
+#include <unordered_map>
 #include "DllEditor.h"
 #include "main.h"
 #include "Database_Item.h"
 #include "Database_CSV.h"
+#include "CommonUtility.h"
 
-#define ITEM_HWS_VERSION 1
+#define ITEM_HWS_VERSION 2
 
 const unsigned int steam_item_field_size[] = { 16, 16, 16, 16, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8 };
 const unsigned int steam_item_field_array[] = { 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0 };
@@ -16,139 +19,175 @@ const unsigned int steam_weapon_field_size[] = { 8, 8, 16, 8, 8, 8, 8, 16, 16 };
 const unsigned int steam_weapon_field_array[] = { 0, 0, 0, 0, 0, 0, 0, 2, 0 };
 
 int ItemDataStruct::SetName(wstring newvalue) {
-	FF9String tmp(name);
-	tmp.SetValue(newvalue);
-	int oldlen = name.length;
-	int newlen = tmp.length;
-	if (parent->name_space_used+newlen>parent->name_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		FF9String tmp(name);
+		tmp.SetValue(newvalue);
+		int oldlen = name.length;
+		int newlen = tmp.length;
+		if (parent->name_space_used + newlen > parent->name_space_total + oldlen)
+			return 1;
+		parent->name_space_used += newlen - oldlen;
+	}
 	name.SetValue(newvalue);
-	parent->name_space_used += newlen-oldlen;
 	return 0;
 }
 
 int ItemDataStruct::SetName(FF9String& newvalue) {
-	int oldlen = name.length;
-	int newlen = newvalue.length;
-	if (parent->name_space_used+newlen>parent->name_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		int oldlen = name.length;
+		int newlen = newvalue.length;
+		if (parent->name_space_used + newlen > parent->name_space_total + oldlen)
+			return 1;
+		parent->name_space_used += newlen - oldlen;
+	}
 	name = newvalue;
-	parent->name_space_used += newlen-oldlen;
 	return 0;
 }
 
 int ItemDataStruct::SetHelp(wstring newvalue) {
-	FF9String tmp(help);
-	tmp.SetValue(newvalue);
-	int oldlen = help.length;
-	int newlen = tmp.length;
-	if (parent->help_space_used+newlen>parent->help_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		FF9String tmp(help);
+		tmp.SetValue(newvalue);
+		int oldlen = help.length;
+		int newlen = tmp.length;
+		if (parent->help_space_used + newlen > parent->help_space_total + oldlen)
+			return 1;
+		parent->help_space_used += newlen - oldlen;
+	}
 	help.SetValue(newvalue);
-	parent->help_space_used += newlen-oldlen;
 	return 0;
 }
 
 int ItemDataStruct::SetHelp(FF9String& newvalue) {
-	int oldlen = help.length;
-	int newlen = newvalue.length;
-	if (parent->help_space_used+newlen>parent->help_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		int oldlen = help.length;
+		int newlen = newvalue.length;
+		if (parent->help_space_used + newlen > parent->help_space_total + oldlen)
+			return 1;
+		parent->help_space_used += newlen - oldlen;
+	}
 	help = newvalue;
-	parent->help_space_used += newlen-oldlen;
 	return 0;
 }
 
 int ItemDataStruct::SetBattleHelp(wstring newvalue) {
-	FF9String tmp(battle_help);
-	tmp.SetValue(newvalue);
-	int oldlen = battle_help.length;
-	int newlen = tmp.length;
-	if (parent->help2_space_used+newlen>parent->help2_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		FF9String tmp(battle_help);
+		tmp.SetValue(newvalue);
+		int oldlen = battle_help.length;
+		int newlen = tmp.length;
+		if (parent->help2_space_used + newlen > parent->help2_space_total + oldlen)
+			return 1;
+		parent->help2_space_used += newlen - oldlen;
+	}
 	battle_help.SetValue(newvalue);
-	parent->help2_space_used += newlen-oldlen;
 	return 0;
 }
 
 int ItemDataStruct::SetBattleHelp(FF9String& newvalue) {
-	int oldlen = battle_help.length;
-	int newlen = newvalue.length;
-	if (parent->help2_space_used+newlen>parent->help2_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		int oldlen = battle_help.length;
+		int newlen = newvalue.length;
+		if (parent->help2_space_used + newlen > parent->help2_space_total + oldlen)
+			return 1;
+		parent->help2_space_used += newlen - oldlen;
+	}
 	battle_help = newvalue;
-	parent->help2_space_used += newlen-oldlen;
 	return 0;
 }
 
 int KeyItemDataStruct::SetName(wstring newvalue) {
-	FF9String tmp(name);
-	tmp.SetValue(newvalue);
-	int oldlen = name.length;
-	int newlen = tmp.length;
-	if (parent->key_name_space_used+newlen>parent->key_name_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		FF9String tmp(name);
+		tmp.SetValue(newvalue);
+		int oldlen = name.length;
+		int newlen = tmp.length;
+		if (parent->key_name_space_used + newlen > parent->key_name_space_total + oldlen)
+			return 1;
+		parent->key_name_space_used += newlen - oldlen;
+	}
 	name.SetValue(newvalue);
-	parent->key_name_space_used += newlen-oldlen;
 	return 0;
 }
 
 int KeyItemDataStruct::SetName(FF9String& newvalue) {
-	int oldlen = name.length;
-	int newlen = newvalue.length;
-	if (parent->key_name_space_used+newlen>parent->key_name_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		int oldlen = name.length;
+		int newlen = newvalue.length;
+		if (parent->key_name_space_used + newlen > parent->key_name_space_total + oldlen)
+			return 1;
+		parent->key_name_space_used += newlen - oldlen;
+	}
 	name = newvalue;
-	parent->key_name_space_used += newlen-oldlen;
 	return 0;
 }
 
 int KeyItemDataStruct::SetHelp(wstring newvalue) {
-	FF9String tmp(help);
-	tmp.SetValue(newvalue);
-	int oldlen = help.length;
-	int newlen = tmp.length;
-	if (parent->key_help_space_used+newlen>parent->key_help_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		FF9String tmp(help);
+		tmp.SetValue(newvalue);
+		int oldlen = help.length;
+		int newlen = tmp.length;
+		if (parent->key_help_space_used + newlen > parent->key_help_space_total + oldlen)
+			return 1;
+		parent->key_help_space_used += newlen - oldlen;
+	}
 	help.SetValue(newvalue);
-	parent->key_help_space_used += newlen-oldlen;
 	return 0;
 }
 
 int KeyItemDataStruct::SetHelp(FF9String& newvalue) {
-	int oldlen = help.length;
-	int newlen = newvalue.length;
-	if (parent->key_help_space_used+newlen>parent->key_help_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		int oldlen = help.length;
+		int newlen = newvalue.length;
+		if (parent->key_help_space_used + newlen > parent->key_help_space_total + oldlen)
+			return 1;
+		parent->key_help_space_used += newlen - oldlen;
+	}
 	help = newvalue;
-	parent->key_help_space_used += newlen-oldlen;
 	return 0;
 }
 
 int KeyItemDataStruct::SetDescription(wstring newvalue) {
-	if (description_out_of_bounds)
-		return 2;
-	FF9String tmp(description);
-	tmp.SetValue(newvalue);
-	int oldlen = description.length;
-	int newlen = tmp.length;
-	if (parent->key_desc_space_used+newlen>parent->key_desc_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		if (description_out_of_bounds)
+			return 2;
+		FF9String tmp(description);
+		tmp.SetValue(newvalue);
+		int oldlen = description.length;
+		int newlen = tmp.length;
+		if (parent->key_desc_space_used + newlen > parent->key_desc_space_total + oldlen)
+			return 1;
+		parent->key_desc_space_used += newlen - oldlen;
+	}
 	description.SetValue(newvalue);
-	parent->key_desc_space_used += newlen-oldlen;
 	return 0;
 }
 
 int KeyItemDataStruct::SetDescription(FF9String& newvalue) {
-	if (description_out_of_bounds)
-		return 2;
-	int oldlen = description.length;
-	int newlen = newvalue.length;
-	if (parent->key_desc_space_used+newlen>parent->key_desc_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		if (description_out_of_bounds)
+			return 2;
+		int oldlen = description.length;
+		int newlen = newvalue.length;
+		if (parent->key_desc_space_used + newlen > parent->key_desc_space_total + oldlen)
+			return 1;
+		parent->key_desc_space_used += newlen - oldlen;
+	}
 	description = newvalue;
-	parent->key_desc_space_used += newlen-oldlen;
 	return 0;
+}
+
+void ItemUsableDataStruct::InitializeDefault(int dataid) {
+	id = dataid;
+	target_type = 0;
+	model = 0;
+	target_flag = 0;
+	effect = 0;
+	power = 0;
+	element = 0;
+	accuracy = 0;
+	status = 0;
 }
 
 Spell_Panel ItemUsableDataStruct::GetPanel() {
@@ -240,21 +279,52 @@ void ItemUsableDataStruct::SetSound(uint16_t newvalue) {
 #define MACRO_ITEM_IOFUNCTIONDATA(IO,SEEK,READ,PPF) \
 	uint8_t zero8 = 0; \
 	uint16_t zero16 = 0; \
+	int skillrawid[3]; \
+	int skillsize; \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<ITEM_AMOUNT;i++) { \
+	for (i=0;i<itemamount;i++) { \
+		if (useextendedtype) { \
+			IO ## FlexibleChar(ffbin, item[i].usable_id, true); \
+			IO ## FlexibleChar(ffbin, item[i].weapon_id, true); \
+			IO ## FlexibleChar(ffbin, item[i].armor_id, true); \
+		} \
 		IO ## Short(ffbin,item[i].name_offset); \
 		IO ## Short(ffbin,item[i].help_offset); \
-		IO ## Short(ffbin,item[i].price); \
+		IO ## FlexibleShort(ffbin,item[i].price, useextendedtype); \
 		IO ## Short(ffbin,item[i].char_availability); \
-		IO ## Char(ffbin,item[i].icon); \
+		IO ## FlexibleChar(ffbin,item[i].icon, useextendedtype); \
 		IO ## Char(ffbin,item[i].icon_color); \
-		IO ## Char(ffbin,item[i].equip_position); \
-		IO ## Char(ffbin,item[i].stat_id); \
-		IO ## Char(ffbin,item[i].skill[0]); \
-		IO ## Char(ffbin,item[i].skill[1]); \
-		IO ## Char(ffbin,item[i].skill[2]); \
+		if (useextendedtype) IO ## Char(ffbin, item[i].equip_position_type); \
+		IO ## FlexibleChar(ffbin,item[i].equip_position, useextendedtype); \
+		IO ## FlexibleChar(ffbin,item[i].stat_id, useextendedtype); \
+		if (useextendedtype) { \
+			if (!READ) skillsize = item[i].skill.size(); \
+			IO ## FlexibleChar(ffbin, skillsize, true); \
+			if (READ) item[i].skill.resize(skillsize); \
+			for (j = 0; j < skillsize; j++) { \
+				IO ## Char(ffbin, item[i].skill[j].is_active); \
+				IO ## FlexibleChar(ffbin, item[i].skill[j].id, true); \
+			} \
+		} else { \
+			if (READ) { \
+				item[i].skill.resize(3); \
+			} else { \
+				skillrawid[0] = item[i].skill[0].GetRawId(); \
+				skillrawid[1] = item[i].skill[1].GetRawId(); \
+				skillrawid[2] = item[i].skill[2].GetRawId(); \
+			} \
+			IO ## FlexibleChar(ffbin,skillrawid[0], false); \
+			IO ## FlexibleChar(ffbin,skillrawid[1], false); \
+			IO ## FlexibleChar(ffbin,skillrawid[2], false); \
+			if (READ) { \
+				item[i].skill[0].Setup(skillrawid[0]); \
+				item[i].skill[1].Setup(skillrawid[1]); \
+				item[i].skill[2].Setup(skillrawid[2]); \
+			} \
+		} \
 		IO ## Char(ffbin,item[i].type); \
-		IO ## Char(ffbin,item[i].menu_position); \
+		if (useextendedtype) IO ## Char(ffbin, item[i].menu_position_type); \
+		IO ## FlexibleChar(ffbin,item[i].menu_position, useextendedtype); \
 		IO ## Char(ffbin,item[i].zero); \
 	} \
 	if (PPF) PPFEndScanStep();
@@ -263,7 +333,7 @@ void ItemUsableDataStruct::SetSound(uint16_t newvalue) {
 	txtpos = ffbin.tellg(); \
 	if (READ) name_space_used = 0; \
 	if (PPF) PPFInitScanStep(ffbin,true,name_space_total); \
-	for (i=0;i<ITEM_AMOUNT;i++) { \
+	for (i=0;i<itemamount;i++) { \
 		SEEK(ffbin,txtpos,item[i].name_offset); \
 		IO ## FF9String(ffbin,item[i].name); \
 		if (READ) name_space_used += item[i].name.length; \
@@ -275,21 +345,21 @@ void ItemUsableDataStruct::SetSound(uint16_t newvalue) {
 
 #define MACRO_ITEM_IOFUNCTIONUSABLE(IO,SEEK,READ,PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<ITEM_USABLE_AMOUNT;i++) { \
+	for (i=0;i<usableamount;i++) { \
 		IO ## Char(ffbin,usable[i].target_type); \
-		IO ## Short(ffbin,usable[i].model); \
+		IO ## FlexibleShort(ffbin,usable[i].model, useextendedtype); \
 		IO ## Char(ffbin,usable[i].target_flag); \
-		IO ## Char(ffbin,usable[i].effect); \
-		IO ## Char(ffbin,usable[i].power); \
+		IO ## FlexibleChar(ffbin,usable[i].effect, useextendedtype); \
+		IO ## FlexibleChar(ffbin,usable[i].power, useextendedtype); \
 		IO ## Char(ffbin,usable[i].element); \
-		IO ## Char(ffbin,usable[i].accuracy); \
+		IO ## FlexibleChar(ffbin,usable[i].accuracy, useextendedtype); \
 		IO ## Long(ffbin,usable[i].status); \
 	} \
 	if (PPF) PPFEndScanStep();
 
 #define MACRO_ITEM_IOFUNCTIONKEY(IO,SEEK,READ,PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<KEY_ITEM_AMOUNT;i++) { \
+	for (i=0;i<keyitemamount;i++) { \
 		IO ## Short(ffbin,key_item[i].name_offset); \
 		IO ## Short(ffbin,key_item[i].help_offset); \
 		IO ## Short(ffbin,key_item[i].help_size_x); \
@@ -301,7 +371,7 @@ void ItemUsableDataStruct::SetSound(uint16_t newvalue) {
 	SEEK(ffbin,txtpos,0); \
 	if (READ) key_name_space_used = 0; \
 	if (PPF) PPFInitScanStep(ffbin,true,key_name_space_total); \
-	for (i=0;i<KEY_ITEM_AMOUNT;i++) { \
+	for (i=0;i<keyitemamount;i++) { \
 		SEEK(ffbin,txtpos,key_item[i].name_offset); \
 		IO ## FF9String(ffbin,key_item[i].name); \
 		if (READ) key_name_space_used += key_item[i].name.length; \
@@ -311,7 +381,7 @@ void ItemUsableDataStruct::SetSound(uint16_t newvalue) {
 
 #define MACRO_ITEM_IOFUNCTIONARMOR(IO,SEEK,READ,PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<ITEM_ARMOR_AMOUNT;i++) { \
+	for (i=0;i<armoramount;i++) { \
 		IO ## Char(ffbin,armor[i].defence); \
 		IO ## Char(ffbin,armor[i].evade); \
 		IO ## Char(ffbin,armor[i].magic_defence); \
@@ -321,7 +391,7 @@ void ItemUsableDataStruct::SetSound(uint16_t newvalue) {
 
 #define MACRO_ITEM_IOFUNCTIONSTAT(IO,SEEK,READ,PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<ITEM_STAT_AMOUNT;i++) { \
+	for (i=0;i<statamount;i++) { \
 		IO ## Char(ffbin,stat[i].speed); \
 		IO ## Char(ffbin,stat[i].strength); \
 		IO ## Char(ffbin,stat[i].magic); \
@@ -338,16 +408,17 @@ void ItemUsableDataStruct::SetSound(uint16_t newvalue) {
 
 #define MACRO_ITEM_IOFUNCTIONWEAPONSTAT(IO,SEEK,READ,PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<ITEM_WEAPON_AMOUNT;i++) { \
+	for (i=0;i<weaponamount;i++) { \
 		IO ## Char(ffbin,weapon[i].flag); \
 		IO ## Char(ffbin,weapon[i].status); \
 		IO ## Short(ffbin,weapon[i].model); \
-		IO ## Char(ffbin,weapon[i].damage_formula); \
-		IO ## Char(ffbin,weapon[i].power); \
+		IO ## FlexibleChar(ffbin,weapon[i].damage_formula, useextendedtype); \
+		IO ## FlexibleChar(ffbin,weapon[i].power, useextendedtype); \
 		IO ## Char(ffbin,weapon[i].element); \
-		IO ## Char(ffbin,weapon[i].status_accuracy); \
+		IO ## FlexibleChar(ffbin,weapon[i].status_accuracy, useextendedtype); \
 		IO ## Short(ffbin,(uint16_t&)weapon[i].offset1); \
 		IO ## Short(ffbin,(uint16_t&)weapon[i].offset2); \
+		if (READ) weapon[i].UpdateModelName(); \
 	} \
 	if (PPF) PPFEndScanStep();
 
@@ -355,25 +426,25 @@ void ItemUsableDataStruct::SetSound(uint16_t newvalue) {
 	txtpos = ffbin.tellg(); \
 	SEEK(ffbin,txtpos,help2_space_total); \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<ITEM_AMOUNT;i++) \
+	for (i=0;i<itemamount;i++) \
 		IO ## Short(ffbin,item[i].battle_help_offset); \
 	if (PPF) PPFEndScanStep(); \
 	SEEK(ffbin,txtpos,0); \
 	if (READ) help2_space_used = 0; \
 	if (PPF) PPFInitScanStep(ffbin,true,help2_space_total); \
-	for (i=0;i<ITEM_AMOUNT;i++) { \
+	for (i=0;i<itemamount;i++) { \
 		SEEK(ffbin,txtpos,item[i].battle_help_offset); \
 		IO ## FF9String(ffbin,item[i].battle_help); \
 		if (READ) help2_space_used += item[i].battle_help.length; \
 	} \
 	if (PPF) PPFEndScanStep(); \
-	SEEK(ffbin,txtpos,help2_space_total+2*ITEM_AMOUNT);
+	SEEK(ffbin,txtpos,help2_space_total+2*itemamount);
 
 #define MACRO_ITEM_IOFUNCTIONHELP(IO,SEEK,READ,PPF) \
 	txtpos = ffbin.tellg(); \
 	if (READ) help_space_used = 0; \
 	if (PPF) PPFInitScanStep(ffbin,true,help_space_total); \
-	for (i=0;i<ITEM_AMOUNT;i++) { \
+	for (i=0;i<itemamount;i++) { \
 		SEEK(ffbin,txtpos,item[i].help_offset); \
 		IO ## FF9String(ffbin,item[i].help); \
 		if (READ) help_space_used += item[i].help.length; \
@@ -385,7 +456,7 @@ void ItemUsableDataStruct::SetSound(uint16_t newvalue) {
 	txtpos = ffbin.tellg(); \
 	if (READ) key_help_space_used = 0; \
 	if (PPF) PPFInitScanStep(ffbin,true,key_help_space_total); \
-	for (i=0;i<KEY_ITEM_AMOUNT;i++) { \
+	for (i=0;i<keyitemamount;i++) { \
 		SEEK(ffbin,txtpos,key_item[i].help_offset); \
 		IO ## FF9String(ffbin,key_item[i].help); \
 		if (READ) key_help_space_used += key_item[i].help.length; \
@@ -397,7 +468,7 @@ void ItemUsableDataStruct::SetSound(uint16_t newvalue) {
 	txtpos = ffbin.tellg(); \
 	if (READ) key_desc_space_used = 0; \
 	if (PPF) PPFInitScanStep(ffbin,true,key_desc_space_total); \
-	for (i=0;i<KEY_ITEM_AMOUNT;i++) { \
+	for (i=0;i<keyitemamount;i++) { \
 		if (key_item[i].description_offset<key_desc_space_total) { \
 			SEEK(ffbin,txtpos,key_item[i].description_offset); \
 			IO ## FF9String(ffbin,key_item[i].description); \
@@ -415,7 +486,14 @@ void ItemUsableDataStruct::SetSound(uint16_t newvalue) {
 
 
 void ItemDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
-	unsigned int i;
+	int itemamount = ITEM_AMOUNT;
+	int weaponamount = ITEM_WEAPON_AMOUNT;
+	int armoramount = ITEM_ARMOR_AMOUNT;
+	int usableamount = ITEM_USABLE_AMOUNT;
+	int statamount = ITEM_STAT_AMOUNT;
+	int keyitemamount = KEY_ITEM_AMOUNT;
+	bool useextendedtype = false;
+	int i, j;
 	uint32_t txtpos;
 	name_space_total = config.item_name_space_total;
 	help_space_total = config.item_help_space_total;
@@ -423,10 +501,31 @@ void ItemDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 	key_name_space_total = config.item_key_name_space_total;
 	key_help_space_total = config.item_key_help_space_total;
 	key_desc_space_total = config.item_key_desc_space_total;
-	for (i=0;i<ITEM_AMOUNT;i++)
+	item.resize(ITEM_AMOUNT);
+	key_item.resize(KEY_ITEM_AMOUNT);
+	usable.resize(ITEM_USABLE_AMOUNT);
+	weapon.resize(ITEM_WEAPON_AMOUNT);
+	armor.resize(ITEM_ARMOR_AMOUNT);
+	stat.resize(ITEM_STAT_AMOUNT);
+	for (i = 0; i < ITEM_AMOUNT; i++) {
 		item[i].parent = this;
-	for (i=0;i<KEY_ITEM_AMOUNT;i++)
+		item[i].id = i;
+		item[i].skill.resize(3);
+	}
+	for (i = 0; i < KEY_ITEM_AMOUNT; i++) {
 		key_item[i].parent = this;
+		key_item[i].id = i;
+	}
+	for (i = 0; i < ITEM_USABLE_AMOUNT; i++)
+		usable[i].id = i;
+	for (i = 0; i < ITEM_WEAPON_AMOUNT; i++) {
+		weapon[i].id = i;
+		weapon[i].hit_sfx = i;
+	}
+	for (i = 0; i < ITEM_ARMOR_AMOUNT; i++)
+		armor[i].id = i;
+	for (i = 0; i < ITEM_STAT_AMOUNT; i++)
+		stat[i].id = i;
 	if (GetGameType()==GAME_TYPE_PSX) {
 		ffbin.seekg(config.item_data_offset);
 		MACRO_ITEM_IOFUNCTIONDATA(FFIXRead,FFIXSeek,true,false)
@@ -577,9 +676,9 @@ void ItemDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 DllMetaDataModification* ItemDataSet::ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount) {
 	DllMetaDataModification* res = new DllMetaDataModification[5];
 	DllMetaData& dlldata = config.meta_dll;
-	uint32_t** argvalue = new uint32_t*[ITEM_AMOUNT];
+	uint32_t** argvalue = new uint32_t * [ITEM_AMOUNT];
 	unsigned int i;
-	for (i=0;i<ITEM_AMOUNT;i++) {
+	for (i = 0; i < ITEM_AMOUNT; i++) {
 		argvalue[i] = new uint32_t[14];
 		argvalue[i][0] = item[i].name_offset;
 		argvalue[i][1] = item[i].help_offset;
@@ -589,19 +688,19 @@ DllMetaDataModification* ItemDataSet::ComputeSteamMod(ConfigurationSet& config, 
 		argvalue[i][5] = item[i].icon_color;
 		argvalue[i][6] = item[i].equip_position;
 		argvalue[i][7] = item[i].stat_id;
-		argvalue[i][8] = item[i].skill[0];
-		argvalue[i][9] = item[i].skill[1];
-		argvalue[i][10] = item[i].skill[2];
+		argvalue[i][8] = item[i].skill[0].GetRawId();
+		argvalue[i][9] = item[i].skill[1].GetRawId();
+		argvalue[i][10] = item[i].skill[2].GetRawId();
 		argvalue[i][11] = item[i].type;
 		argvalue[i][12] = item[i].menu_position;
 		argvalue[i][13] = item[i].zero;
 	}
-	res[0] = dlldata.ConvertRawToScript_Object(argvalue,steam_method_position[0],steam_method_base_length[0],ITEM_AMOUNT,14,steam_item_field_size,steam_item_field_array);
-	for (i=0;i<ITEM_AMOUNT;i++)
+	res[0] = dlldata.ConvertRawToScript_Object(argvalue, steam_method_position[0], steam_method_base_length[0], ITEM_AMOUNT, 14, steam_item_field_size, steam_item_field_array);
+	for (i = 0; i < ITEM_AMOUNT; i++)
 		delete[] argvalue[i];
 	delete[] argvalue;
-	argvalue = new uint32_t*[ITEM_USABLE_AMOUNT];
-	for (i=0;i<ITEM_USABLE_AMOUNT;i++) {
+	argvalue = new uint32_t * [ITEM_USABLE_AMOUNT];
+	for (i = 0; i < ITEM_USABLE_AMOUNT; i++) {
 		argvalue[i] = new uint32_t[13];
 		argvalue[i][0] = usable[i].target_type & 0xF;
 		argvalue[i][1] = (usable[i].target_type >> 4) & 0x1;
@@ -617,24 +716,24 @@ DllMetaDataModification* ItemDataSet::ComputeSteamMod(ConfigurationSet& config, 
 		argvalue[i][11] = usable[i].accuracy;
 		argvalue[i][12] = usable[i].status;
 	}
-	res[1] = dlldata.ConvertRawToScript_Object(argvalue,steam_method_position[1],steam_method_base_length[1],ITEM_USABLE_AMOUNT,13,steam_usable_field_size);
-	for (i=0;i<ITEM_USABLE_AMOUNT;i++)
+	res[1] = dlldata.ConvertRawToScript_Object(argvalue, steam_method_position[1], steam_method_base_length[1], ITEM_USABLE_AMOUNT, 13, steam_usable_field_size);
+	for (i = 0; i < ITEM_USABLE_AMOUNT; i++)
 		delete[] argvalue[i];
 	delete[] argvalue;
-	argvalue = new uint32_t*[ITEM_ARMOR_AMOUNT];
-	for (i=0;i<ITEM_ARMOR_AMOUNT;i++) {
+	argvalue = new uint32_t * [ITEM_ARMOR_AMOUNT];
+	for (i = 0; i < ITEM_ARMOR_AMOUNT; i++) {
 		argvalue[i] = new uint32_t[4];
 		argvalue[i][0] = armor[i].defence;
 		argvalue[i][1] = armor[i].evade;
 		argvalue[i][2] = armor[i].magic_defence;
 		argvalue[i][3] = armor[i].magic_evade;
 	}
-	res[2] = dlldata.ConvertRawToScript_Object(argvalue,steam_method_position[2],steam_method_base_length[2],ITEM_ARMOR_AMOUNT,4,steam_armor_field_size);
-	for (i=0;i<ITEM_ARMOR_AMOUNT;i++)
+	res[2] = dlldata.ConvertRawToScript_Object(argvalue, steam_method_position[2], steam_method_base_length[2], ITEM_ARMOR_AMOUNT, 4, steam_armor_field_size);
+	for (i = 0; i < ITEM_ARMOR_AMOUNT; i++)
 		delete[] argvalue[i];
 	delete[] argvalue;
-	argvalue = new uint32_t*[ITEM_STAT_AMOUNT];
-	for (i=0;i<ITEM_STAT_AMOUNT;i++) {
+	argvalue = new uint32_t * [ITEM_STAT_AMOUNT];
+	for (i = 0; i < ITEM_STAT_AMOUNT; i++) {
 		argvalue[i] = new uint32_t[9];
 		argvalue[i][0] = stat[i].speed;
 		argvalue[i][1] = stat[i].strength;
@@ -646,12 +745,12 @@ DllMetaDataModification* ItemDataSet::ComputeSteamMod(ConfigurationSet& config, 
 		argvalue[i][7] = stat[i].element_weak;
 		argvalue[i][8] = stat[i].element_boost;
 	}
-	res[3] = dlldata.ConvertRawToScript_Object(argvalue,steam_method_position[3],steam_method_base_length[3],ITEM_STAT_AMOUNT,9,steam_stat_field_size);
-	for (i=0;i<ITEM_STAT_AMOUNT;i++)
+	res[3] = dlldata.ConvertRawToScript_Object(argvalue, steam_method_position[3], steam_method_base_length[3], ITEM_STAT_AMOUNT, 9, steam_stat_field_size);
+	for (i = 0; i < ITEM_STAT_AMOUNT; i++)
 		delete[] argvalue[i];
 	delete[] argvalue;
-	argvalue = new uint32_t*[ITEM_WEAPON_AMOUNT];
-	for (i=0;i<ITEM_WEAPON_AMOUNT;i++) {
+	argvalue = new uint32_t * [ITEM_WEAPON_AMOUNT];
+	for (i = 0; i < ITEM_WEAPON_AMOUNT; i++) {
 		argvalue[i] = new uint32_t[9];
 		argvalue[i][0] = weapon[i].flag;
 		argvalue[i][1] = weapon[i].status;
@@ -663,8 +762,8 @@ DllMetaDataModification* ItemDataSet::ComputeSteamMod(ConfigurationSet& config, 
 		argvalue[i][7] = (uint16_t)weapon[i].offset1;
 		argvalue[i][8] = (uint16_t)weapon[i].offset2;
 	}
-	res[4] = dlldata.ConvertRawToScript_Object(argvalue,steam_method_position[4],steam_method_base_length[4],ITEM_WEAPON_AMOUNT,9,steam_weapon_field_size,steam_weapon_field_array);
-	for (i=0;i<ITEM_WEAPON_AMOUNT;i++)
+	res[4] = dlldata.ConvertRawToScript_Object(argvalue, steam_method_position[4], steam_method_base_length[4], ITEM_WEAPON_AMOUNT, 9, steam_weapon_field_size, steam_weapon_field_array);
+	for (i = 0; i < ITEM_WEAPON_AMOUNT; i++)
 		delete[] argvalue[i];
 	delete[] argvalue;
 	*modifamount = 5;
@@ -672,13 +771,13 @@ DllMetaDataModification* ItemDataSet::ComputeSteamMod(ConfigurationSet& config, 
 }
 
 void ItemDataSet::GenerateCSharp(vector<string>& buffer) {
-	unsigned int i, j;
+	unsigned int i;
 	stringstream itemdb;
 	itemdb << "// Method: ff9item::.cctor\n\n";
 	itemdb << "\tff9item._FF9Item_Data = new FF9ITEM_DATA[] {\n";
 	for (i = 0; i < ITEM_AMOUNT; i++)
 		itemdb	<< "\t\tnew FF9ITEM_DATA(" << (int)item[i].name_offset << ", " << (int)item[i].help_offset << ", " << (int)item[i].price << ", " << StreamAsHex(item[i].char_availability) << ", " << (int)item[i].icon << ", " << (int)item[i].icon_color << ", " << (int)item[i].equip_position << ", " << (int)item[i].stat_id
-				<< ", new byte[]{ " << (int)item[i].skill[0] << ", " << (int)item[i].skill[1] << ", " << (int)item[i].skill[2] << " }, " << StreamAsHex(item[i].type) << ", " << (int)item[i].menu_position << ", " << (int)item[i].zero << (i+1==ITEM_AMOUNT ? ")" : "),") << " // " << ConvertWStrToStr(item[i].name.str_nice) << "\n";
+				<< ", new byte[]{ " << (int)item[i].skill[0].GetRawId() << ", " << (int)item[i].skill[1].GetRawId() << ", " << (int)item[i].skill[2].GetRawId() << " }, " << StreamAsHex(item[i].type) << ", " << (int)item[i].menu_position << ", " << (int)item[i].zero << (i+1==ITEM_AMOUNT ? ")" : "),") << " // " << ConvertWStrToStr(item[i].name.str_nice) << "\n";
 	itemdb << "\t};\n";
 	itemdb << "\tff9item._FF9Item_Info = new ITEM_DATA[] {\n";
 	for (i = 0; i < ITEM_USABLE_AMOUNT; i++)
@@ -691,12 +790,7 @@ void ItemDataSet::GenerateCSharp(vector<string>& buffer) {
 	weapondb << "// Method: FF9.ff9weap::.cctor\n\n";
 	weapondb << "\tff9weap._FF9Weapon_Data = new WEAPON[] {\n";
 	for (i = 0; i < ITEM_WEAPON_AMOUNT; i++) {
-		string modelsteamid = "null";
-		for (j = 0; j < G_N_ELEMENTS(SteamWeaponModel); j++)
-			if (weapon[i].model == SteamWeaponModel[j].id) {
-				modelsteamid = "\""+ConvertWStrToStr(SteamWeaponModel[j].name)+"\"";
-				break;
-			}
+		string modelsteamid = weapon[i].model == 0 ? "null" : "\"" + ConvertWStrToStr(weapon[i].model_name) + "\"";
 		weapondb	<< "\t\tnew WEAPON(" << StreamAsHex(weapon[i].flag) << ", " << (int)weapon[i].status << ", " << modelsteamid << ", new BTL_REF(" << (int)weapon[i].damage_formula << ", " << (int)weapon[i].power << ", " << StreamAsHex(weapon[i].element) << ", " << (int)weapon[i].status_accuracy
 					<< "), new short[]{ " << (short)weapon[i].offset1 << ", " << (short)weapon[i].offset2 << (i+1==ITEM_WEAPON_AMOUNT ? " })" : " }),") << " // " << ConvertWStrToStr(item[i].name.str_nice) << "\n";
 	}
@@ -720,120 +814,235 @@ void ItemDataSet::GenerateCSharp(vector<string>& buffer) {
 	buffer.push_back(itemstatdb.str());
 }
 
+bool ItemDataSet::GetEquipPositionFloat(int itemindex, float step, float* position) {
+	if (item[itemindex].equip_position_type == ITEM_POSITION_ABSOLUTE) {
+		*position = item[itemindex].equip_position;
+		return true;
+	}
+	set<int> safetycheck;
+	int nextid = item[itemindex].equip_position;
+	float delta = item[itemindex].equip_position_type == ITEM_POSITION_AFTER ? step :
+		item[itemindex].equip_position_type == ITEM_POSITION_BEFORE ? -step :
+		0.0f;
+	while (true) {
+		if (safetycheck.count(nextid) > 0)
+			return false;
+		safetycheck.insert(nextid);
+		ItemDataStruct& nextit = GetItemById(nextid);
+		if (nextit.id < 0)
+			return false;
+		if (nextit.equip_position_type == ITEM_POSITION_ABSOLUTE) {
+			*position = (float)nextit.equip_position + delta;
+			return true;
+		}
+		if (nextit.equip_position_type == ITEM_POSITION_AFTER)
+			delta += step;
+		else if (nextit.equip_position_type == ITEM_POSITION_BEFORE)
+			delta -= step;
+		nextid = nextit.equip_position;
+	}
+}
+
+bool ItemDataSet::GetMenuPositionFloat(int itemindex, float step, float* position) {
+	if (item[itemindex].menu_position_type == ITEM_POSITION_ABSOLUTE) {
+		*position = item[itemindex].menu_position;
+		return true;
+	}
+	set<int> safetycheck;
+	int nextid = item[itemindex].menu_position;
+	float delta = item[itemindex].menu_position_type == ITEM_POSITION_AFTER ? step :
+		item[itemindex].menu_position_type == ITEM_POSITION_BEFORE ? -step :
+		0.0f;
+	while (true) {
+		if (safetycheck.count(nextid) > 0)
+			return false;
+		safetycheck.insert(nextid);
+		ItemDataStruct& nextit = GetItemById(nextid);
+		if (nextit.id < 0)
+			return false;
+		if (nextit.menu_position_type == ITEM_POSITION_ABSOLUTE) {
+			*position = (float)nextit.menu_position + delta;
+			return true;
+		}
+		if (nextit.menu_position_type == ITEM_POSITION_AFTER)
+			delta += step;
+		else if (nextit.menu_position_type == ITEM_POSITION_BEFORE)
+			delta -= step;
+		nextid = nextit.menu_position;
+	}
+}
+
+wxString CSV_ItemConstructor(ItemDataStruct& it, int index, ItemDataSet* itemset, int posprecision, float posstep) {
+	wxString equipposstr, menuposstr;
+	float pos;
+	if (it.equip_position_type == ITEM_POSITION_ABSOLUTE)
+		equipposstr = wxString::Format(wxT("%d"), it.equip_position);
+	else if (itemset->GetEquipPositionFloat(index, posstep, &pos))
+		equipposstr = wxString::Format(wxString::Format(wxT("%%.%df"), posprecision), pos);
+	else
+		equipposstr = wxString::Format(wxT("%d"), it.id);
+	if (it.menu_position_type == ITEM_POSITION_ABSOLUTE)
+		menuposstr = wxString::Format(wxT("%d"), it.menu_position);
+	else if (itemset->GetMenuPositionFloat(index, posstep, &pos))
+		menuposstr = wxString::Format(wxString::Format(wxT("%%.%df"), posprecision), pos);
+	else
+		menuposstr = wxString::Format(wxT("%d"), it.id);
+	wxString csventry = wxString::Format(wxT("%d;%d;%d;%d;%d;%d;%d;%s;%d;%s;%d;%d;%d;%d;%d;%d;%d;%d;%s;"),
+		it.id,
+		it.weapon_id,
+		it.armor_id,
+		it.usable_id,
+		it.price,
+		it.icon,
+		it.icon_color,
+		equipposstr,
+		it.stat_id,
+		it.skill[0].IsVoid() ? "0" : ConcatenateStrings<AnyAbilityStruct>(", ", it.skill, [](AnyAbilityStruct ab) { return ab.IsVoid() ? "" : ab.GetStringId(); }, true),
+		(it.type & ITEM_TYPE_WEAPON) != 0 ? 1 : 0,
+		(it.type & ITEM_TYPE_WRIST) != 0 ? 1 : 0,
+		(it.type & ITEM_TYPE_HEAD) != 0 ? 1 : 0,
+		(it.type & ITEM_TYPE_ARMOR) != 0 ? 1 : 0,
+		(it.type & ITEM_TYPE_ACCESSORY) != 0 ? 1 : 0,
+		(it.type & ITEM_TYPE_USABLE) != 0 ? 1 : 0,
+		(it.type & ITEM_TYPE_SPECIAL) != 0 ? 1 : 0,
+		(it.type & ITEM_TYPE_CONSUMABLE) != 0 ? 1 : 0,
+		menuposstr);
+	for (int i = 0; i < PLAYABLE_CHAR_AMOUNT; i++)
+		csventry += wxString::Format(wxT("%d;"), (it.char_availability >> (PLAYABLE_CHAR_AMOUNT - i - 1)) & 1);
+	csventry += wxString::Format(wxT("# %d - %s"), it.id, it.name.str_nice);
+	return csventry;
+}
+
+wxString CSV_WeaponConstructor(ItemWeaponDataStruct& iw, int index, unordered_map<int, ItemDataStruct&>& usagemap) {
+	auto it = usagemap.find(iw.id);
+	if (it == usagemap.end())
+		return wxEmptyString;
+	return wxString::Format(wxT("%s;%d;%d;%d;%s;%d;%d;%d;%d;%d;%d;%d;"),
+		it->second.name.str_nice,
+		iw.id,
+		iw.flag,
+		iw.status,
+		iw.model_name,
+		iw.damage_formula,
+		iw.power,
+		iw.element,
+		iw.status_accuracy,
+		iw.offset1,
+		iw.offset2,
+		iw.hit_sfx);
+}
+
+wxString CSV_ArmorConstructor(ItemArmorDataStruct& ia, int index, unordered_map<int, ItemDataStruct&>& usagemap) {
+	auto it = usagemap.find(ia.id);
+	if (it == usagemap.end())
+		return wxEmptyString;
+	return wxString::Format(wxT("%s;%d;%d;%d;%d;%d"),
+		it->second.name.str_nice,
+		ia.id,
+		ia.defence,
+		ia.evade,
+		ia.magic_defence,
+		ia.magic_evade);
+}
+
+wxString CSV_UsableConstructor(ItemUsableDataStruct& ic, int index, unordered_map<int, ItemDataStruct&>& usagemap) {
+	auto it = usagemap.find(ic.id);
+	if (it == usagemap.end())
+		return wxEmptyString;
+	return wxString::Format(wxT("%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%u;# %d - %s"),
+		ic.id,
+		ic.target_type & 0xF,
+		(ic.target_type >> 4) & 0x1,
+		ic.GetPanel(),
+		ic.model,
+		(ic.target_flag >> 5) & 0x1,
+		(ic.target_flag >> 7) & 0x1,
+		ic.effect,
+		ic.power,
+		ic.accuracy,
+		ic.element,
+		ic.status,
+		ic.id,
+		it->second.name.str_nice);
+}
+
+wxString CSV_StatConstructor(ItemStatDataStruct& is, int index, unordered_map<int, ItemDataStruct&>& usagemap) {
+	auto it = usagemap.find(is.id);
+	if (it == usagemap.end())
+		return wxEmptyString;
+	return wxString::Format(wxT("Stat Set %d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d"),
+		is.id,
+		is.id,
+		is.speed,
+		is.strength,
+		is.magic,
+		is.spirit,
+		is.element_boost,
+		is.element_immune,
+		is.element_absorb,
+		is.element_half,
+		is.element_weak);
+}
+
 bool ItemDataSet::GenerateCSV(string basefolder) {
-	unsigned int i, j;
-	string fname = basefolder + HADES_STRING_CSV_ITEM_FILE;
-	wfstream csv(fname.c_str(), ios::out);
-	if (!csv.is_open()) return false;
-	csv << HADES_STRING_CSV_ITEM_HEADER;
-	for (i=0; i<ITEM_AMOUNT; i++) {
-		csv << (int)item[i].price << L";" << (int)item[i].icon << L";" << (int)item[i].icon_color << L";" << (int)item[i].equip_position << L";" << (int)item[i].stat_id << L";";
-		csv << (int)item[i].skill[0] << L", " << (int)item[i].skill[1] << L", " << (int)item[i].skill[2] << L";";
-		for (j=0; j<8; j++)
-			csv << (int)((item[i].type >> (7-j)) & 1) << L";";
-		csv << (int)item[i].menu_position << L";";
-		for (j=0; j<PLAYABLE_CHAR_AMOUNT; j++)
-			csv << (int)((item[i].char_availability >> (PLAYABLE_CHAR_AMOUNT-j-1)) & 1) << L";";
-		csv << L"# " << i << L" - " << ConvertWStrToStr(item[i].name.str_nice).c_str() << L"\n";
+	int posprecision = item.size() > ITEM_AMOUNT ? (int)ceil(log10(item.size() - ITEM_AMOUNT + 1)) : 0;
+	float posstep = 1.0f / pow(10.0f, posprecision);
+	unordered_map<int, ItemDataStruct&> weaponmap;
+	unordered_map<int, ItemDataStruct&> armormap;
+	unordered_map<int, ItemDataStruct&> usablemap;
+	unordered_map<int, ItemDataStruct&> statmap;
+	for (unsigned int i = 0; i < item.size(); i++) {
+		if (item[i].weapon_id >= 0)		weaponmap.emplace(item[i].weapon_id, item[i]);
+		if (item[i].armor_id >= 0)		armormap.emplace(item[i].armor_id, item[i]);
+		if (item[i].usable_id >= 0)		usablemap.emplace(item[i].usable_id, item[i]);
+		if (item[i].stat_id >= 0)		statmap.emplace(item[i].stat_id, item[i]);
 	}
-	csv.close();
-	fname = basefolder + HADES_STRING_CSV_WEAPON_FILE;
-	csv.open(fname.c_str(), ios::out);
-	if (!csv.is_open()) return false;
-	csv << HADES_STRING_CSV_WEAPON_HEADER;
-	for (i=0; i<ITEM_WEAPON_AMOUNT; i++) {
-		wstring modelsteamid = L"<null>";
-		for (j=0; j<G_N_ELEMENTS(SteamWeaponModel); j++)
-			if (weapon[i].model == SteamWeaponModel[j].id) {
-				modelsteamid = SteamWeaponModel[j].name;
-				break;
-			}
-		csv << ConvertWStrToStr(item[i].name.str_nice).c_str() << L";" << i << L";" << (int)weapon[i].flag << L";" << (int)weapon[i].status << L";" << modelsteamid << L";";
-		csv << (int)weapon[i].damage_formula << L";" << (int)weapon[i].power << L";" << (int)weapon[i].element << L";" << (int)weapon[i].status_accuracy << L";" << (int)weapon[i].offset1 << L";" << (int)weapon[i].offset2 << L"\n";
-	}
-	csv.close();
-	fname = basefolder + HADES_STRING_CSV_ARMOR_FILE;
-	csv.open(fname.c_str(), ios::out);
-	if (!csv.is_open()) return false;
-	csv << HADES_STRING_CSV_ARMOR_HEADER;
-	for (i=0; i<ITEM_ARMOR_AMOUNT; i++)
-		csv << ConvertWStrToStr(item[ITEM_WEAPON_AMOUNT+i].name.str_nice).c_str() << L";" << i << L";" << (int)armor[i].defence << L";" << (int)armor[i].evade << L";" << (int)armor[i].magic_defence << L";" << (int)armor[i].magic_evade << L"\n";
-	csv.close();
-	fname = basefolder + HADES_STRING_CSV_USABLE_FILE;
-	csv.open(fname.c_str(), ios::out);
-	if (!csv.is_open()) return false;
-	csv << HADES_STRING_CSV_USABLE_HEADER;
-	for (i=0; i<ITEM_USABLE_AMOUNT; i++) {
-		csv << (int)(usable[i].target_type & 0xF) << L";" << (int)((usable[i].target_type >> 4) & 0x1) << L";" << (int)usable[i].GetPanel() << L";" << (int)usable[i].model << L";";
-		csv << (int)((usable[i].target_flag >> 5) & 0x1) << L";" << (int)((usable[i].target_flag >> 7) & 0x1) << L";" << (int)usable[i].effect << L";" << (int)usable[i].power << L";" << (int)usable[i].accuracy << L";" << (int)usable[i].element << L";" << (unsigned long)usable[i].status << L";# " << ITEM_WEAPON_AMOUNT+ITEM_ARMOR_AMOUNT+i << L" - " << ConvertWStrToStr(item[ITEM_WEAPON_AMOUNT+ITEM_ARMOR_AMOUNT+i].name.str_nice).c_str() << L"\n";
-	}
-	csv.close();
-	fname = basefolder + HADES_STRING_CSV_ITEMSTAT_FILE;
-	csv.open(fname.c_str(), ios::out);
-	if (!csv.is_open()) return false;
-	csv << HADES_STRING_CSV_ITEMSTAT_HEADER;
-	for (i=0; i<ITEM_STAT_AMOUNT; i++)
-		csv << L"Stat Set " << i << L";" << i << L";" << (int)stat[i].speed << L";" << (int)stat[i].strength << L";" << (int)stat[i].magic << L";" << (int)stat[i].spirit << L";" << (int)stat[i].element_boost << L";" << (int)stat[i].element_immune << L";" << (int)stat[i].element_absorb << L";" << (int)stat[i].element_half << L";" << (int)stat[i].element_weak << L"\n";
-	csv.close();
+	if (!MemoriaUtility::GenerateCSVGeneric<ItemDataStruct>(_(basefolder), _(HADES_STRING_CSV_ITEM_FILE), _(HADES_STRING_CSV_ITEM_HEADER), item, [this, posprecision, posstep](ItemDataStruct& it, int index) { return CSV_ItemConstructor(it, index, this, posprecision, posstep); }, &MemoriaUtility::CSV_ComparerWithoutEnd, true))
+		return false;
+	if (!MemoriaUtility::GenerateCSVGeneric<ItemWeaponDataStruct>(_(basefolder), _(HADES_STRING_CSV_WEAPON_FILE), _(HADES_STRING_CSV_WEAPON_HEADER), weapon, [&weaponmap](ItemWeaponDataStruct& iw, int index) { return CSV_WeaponConstructor(iw, index, weaponmap); }, &MemoriaUtility::CSV_ComparerWithoutStart, true))
+		return false;
+	if (!MemoriaUtility::GenerateCSVGeneric<ItemArmorDataStruct>(_(basefolder), _(HADES_STRING_CSV_ARMOR_FILE), _(HADES_STRING_CSV_ARMOR_HEADER), armor, [&armormap](ItemArmorDataStruct& ia, int index) { return CSV_ArmorConstructor(ia, index, armormap); }, &MemoriaUtility::CSV_ComparerWithoutStart, true))
+		return false;
+	if (!MemoriaUtility::GenerateCSVGeneric<ItemUsableDataStruct>(_(basefolder), _(HADES_STRING_CSV_USABLE_FILE), _(HADES_STRING_CSV_USABLE_HEADER), usable, [&usablemap](ItemUsableDataStruct& ic, int index) { return CSV_UsableConstructor(ic, index, usablemap); }, &MemoriaUtility::CSV_ComparerWithoutEnd, true))
+		return false;
+	if (!MemoriaUtility::GenerateCSVGeneric<ItemStatDataStruct>(_(basefolder), _(HADES_STRING_CSV_ITEMSTAT_FILE), _(HADES_STRING_CSV_ITEMSTAT_HEADER), stat, [&statmap](ItemStatDataStruct& is, int index) { return CSV_StatConstructor(is, index, statmap); }, &MemoriaUtility::CSV_ComparerWithoutStart, true))
+		return false;
 	return true;
 }
 
-int ItemDataSet::GetSteamTextSize(unsigned int texttype, SteamLanguage lang) {
-	unsigned int i;
-	int res = 0;
-	switch (texttype) {
-	case 0:
-		for (i=0;i<ITEM_AMOUNT;i++)
-			res += item[i].name.GetLength(lang);
-		break;
-	case 1:
-		for (i=0;i<ITEM_AMOUNT;i++)
-			res += item[i].help.GetLength(lang);
-		break;
-	case 2:
-		for (i=0;i<ITEM_AMOUNT;i++)
-			res += item[i].battle_help.GetLength(lang);
-		break;
-	case 3:
-		for (i=0;i<KEY_ITEM_AMOUNT;i++)
-			res += key_item[i].name.GetLength(lang);
-		break;
-	case 4:
-		for (i=0;i<KEY_ITEM_AMOUNT;i++)
-			res += key_item[i].help.GetLength(lang);
-		break;
-	default:
-		for (i=0;i<KEY_ITEM_AMOUNT;i++)
-			res += key_item[i].description.GetLength(lang);
-	}
-	return res;
-}
+void ItemDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype, bool onlymodified, bool asmes, SteamLanguage lang) {
+	vector<int> writesubset;
 
-void ItemDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype, SteamLanguage lang) {
-	unsigned int i;
-	if (texttype==0) {
-		for (i=0;i<ITEM_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,item[i].name,lang);
-	} else if (texttype==1) {
-		for (i=0;i<ITEM_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,item[i].help,lang);
-	} else if (texttype==2) {
-		for (i=0;i<ITEM_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,item[i].battle_help,lang);
-	} else if (texttype==3) {
-		for (i=0;i<KEY_ITEM_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,key_item[i].name,lang);
-	} else if (texttype==4) {
-		for (i=0;i<KEY_ITEM_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,key_item[i].help,lang);
+	#define MACRO_WRITE_STEAM_TEXT(ITTYPE, ITLIST, ITFILE, ITTXT) \
+		if (onlymodified && MemoriaUtility::GetModifiedSteamTexts<ITTYPE>(&writesubset, GetGameConfiguration()->ITFILE, ITLIST, [lang](ITTYPE& it) { return it.ITTXT.multi_lang_str[lang]; }, lang)) \
+			WriteSteamTextGeneric(ffbin, ITLIST, &ITTYPE::ITTXT, &writesubset, asmes, lang); \
+		else \
+			WriteSteamTextGeneric(ffbin, ITLIST, &ITTYPE::ITTXT, NULL, asmes, lang);
+
+	if (texttype == 0) {
+		MACRO_WRITE_STEAM_TEXT(ItemDataStruct, item, item_name_file, name)
+	} else if (texttype == 1) {
+		MACRO_WRITE_STEAM_TEXT(ItemDataStruct, item, item_help_file, help)
+	} else if (texttype == 2) {
+		MACRO_WRITE_STEAM_TEXT(ItemDataStruct, item, item_help2_file, battle_help)
+	} else if (texttype == 3) {
+		MACRO_WRITE_STEAM_TEXT(KeyItemDataStruct, key_item, itemkey_name_file, name)
+	} else if (texttype == 4) {
+		MACRO_WRITE_STEAM_TEXT(KeyItemDataStruct, key_item, itemkey_help_file, help)
 	} else {
-		for (i=0;i<KEY_ITEM_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,key_item[i].description,lang);
+		MACRO_WRITE_STEAM_TEXT(KeyItemDataStruct, key_item, itemkey_desc_file, description)
 	}
 }
 
 void ItemDataSet::Write(fstream& ffbin, ConfigurationSet& config) {
-	unsigned int i;
+	int itemamount = ITEM_AMOUNT;
+	int weaponamount = ITEM_WEAPON_AMOUNT;
+	int armoramount = ITEM_ARMOR_AMOUNT;
+	int usableamount = ITEM_USABLE_AMOUNT;
+	int statamount = ITEM_STAT_AMOUNT;
+	int keyitemamount = KEY_ITEM_AMOUNT;
+	bool useextendedtype = false;
+	int i, j;
 	uint32_t txtpos;
 	UpdateOffset();
 	ffbin.seekg(config.item_data_offset);
@@ -860,7 +1069,14 @@ void ItemDataSet::Write(fstream& ffbin, ConfigurationSet& config) {
 }
 
 void ItemDataSet::WritePPF(fstream& ffbin, ConfigurationSet& config) {
-	unsigned int i;
+	int itemamount = ITEM_AMOUNT;
+	int weaponamount = ITEM_WEAPON_AMOUNT;
+	int armoramount = ITEM_ARMOR_AMOUNT;
+	int usableamount = ITEM_USABLE_AMOUNT;
+	int statamount = ITEM_STAT_AMOUNT;
+	int keyitemamount = KEY_ITEM_AMOUNT;
+	bool useextendedtype = false;
+	int i, j;
 	uint32_t txtpos;
 	UpdateOffset();
 	ffbin.seekg(config.item_data_offset);
@@ -887,136 +1103,197 @@ void ItemDataSet::WritePPF(fstream& ffbin, ConfigurationSet& config) {
 }
 
 int ItemDataSet::LoadHWS(fstream& ffbin, bool usetext) {
-	unsigned int i;
+	int itemamount = ITEM_AMOUNT;
+	int weaponamount = ITEM_WEAPON_AMOUNT;
+	int armoramount = ITEM_ARMOR_AMOUNT;
+	int usableamount = ITEM_USABLE_AMOUNT;
+	int statamount = ITEM_STAT_AMOUNT;
+	int keyitemamount = KEY_ITEM_AMOUNT;
+	bool useextendedtype = false;
+	vector<ItemDataStruct> nonmodifieditem;
+	vector<ItemWeaponDataStruct> nonmodifiedweapon;
+	vector<ItemArmorDataStruct> nonmodifiedarmor;
+	vector<ItemUsableDataStruct> nonmodifiedusable;
+	vector<ItemStatDataStruct> nonmodifiedstat;
+	vector<KeyItemDataStruct> nonmodifiedkeyitem;
+	int i, j;
 	uint32_t txtpos;
 	int res = 0;
 	uint16_t version;
 	uint16_t namesize = name_space_total, helpsize = help_space_total, helpsize2 = help2_space_total;
 	uint16_t knamesize = key_name_space_total, khelpsize = key_help_space_total, kdescsize = key_desc_space_total;
-	HWSReadShort(ffbin,version);
-	HWSReadShort(ffbin,name_space_total);
-	HWSReadShort(ffbin,help_space_total);
-	HWSReadShort(ffbin,help2_space_total);
-	HWSReadShort(ffbin,key_name_space_total);
-	HWSReadShort(ffbin,key_help_space_total);
-	HWSReadShort(ffbin,key_desc_space_total);
-	MACRO_ITEM_IOFUNCTIONDATA(HWSRead,HWSSeek,true,false)
-	if (GetHWSGameType()==GAME_TYPE_PSX) {
-		if (name_space_total<=namesize && usetext) {
-			MACRO_ITEM_IOFUNCTIONNAME(HWSRead,HWSSeek,true,false)
-			if (GetGameType()!=GAME_TYPE_PSX)
-				for (i=0;i<ITEM_AMOUNT;i++)
+	HWSReadShort(ffbin, version);
+	HWSReadShort(ffbin, name_space_total);
+	HWSReadShort(ffbin, help_space_total);
+	HWSReadShort(ffbin, help2_space_total);
+	HWSReadShort(ffbin, key_name_space_total);
+	HWSReadShort(ffbin, key_help_space_total);
+	HWSReadShort(ffbin, key_desc_space_total);
+	if (version >= 2) {
+		useextendedtype = true;
+		vector<int> added;
+		itemamount = PrepareHWSFlexibleList(ffbin, item, nonmodifieditem, added);
+		for (i = 0; i < (int)added.size(); i++) {
+			item[added[i]].name.CreateEmpty(true);
+			item[added[i]].help.CreateEmpty(true);
+			item[added[i]].battle_help.CreateEmpty(true);
+			item[added[i]].parent = this;
+		}
+		weaponamount = PrepareHWSFlexibleList(ffbin, weapon, nonmodifiedweapon, added);
+		armoramount = PrepareHWSFlexibleList(ffbin, armor, nonmodifiedarmor, added);
+		usableamount = PrepareHWSFlexibleList(ffbin, usable, nonmodifiedusable, added);
+		statamount = PrepareHWSFlexibleList(ffbin, stat, nonmodifiedstat, added);
+		keyitemamount = PrepareHWSFlexibleList(ffbin, key_item, nonmodifiedkeyitem, added);
+		for (i = 0; i < (int)added.size(); i++) {
+			key_item[added[i]].name.CreateEmpty(true);
+			key_item[added[i]].help.CreateEmpty(true);
+			key_item[added[i]].description.CreateEmpty(true);
+			key_item[added[i]].parent = this;
+		}
+	}
+	MACRO_ITEM_IOFUNCTIONDATA(HWSRead, HWSSeek, true, false)
+	if (GetHWSGameType() == GAME_TYPE_PSX) {
+		if (name_space_total <= namesize && usetext) {
+			MACRO_ITEM_IOFUNCTIONNAME(HWSRead, HWSSeek, true, false)
+			if (GetGameType() != GAME_TYPE_PSX)
+				for (i = 0; i < itemamount; i++)
 					item[i].name.PSXToSteam();
 		} else {
-			ffbin.seekg(name_space_total,ios::cur);
+			ffbin.seekg(name_space_total, ios::cur);
 			txtpos = ffbin.tellg();
-			ffbin.seekg(key_name_space_total,ios::cur);
+			ffbin.seekg(key_name_space_total, ios::cur);
 			if (usetext)
 				res |= 0x1;
 		}
 	}
-	MACRO_ITEM_IOFUNCTIONUSABLE(HWSRead,HWSSeek,true,false)
-	MACRO_ITEM_IOFUNCTIONKEY(HWSRead,HWSSeek,true,false)
-	if (GetHWSGameType()==GAME_TYPE_PSX) {
-		if (key_name_space_total<=knamesize && usetext) {
-			MACRO_ITEM_IOFUNCTIONKEYNAME(HWSRead,HWSSeek,true,false)
-			if (GetGameType()!=GAME_TYPE_PSX)
-				for (i=0;i<KEY_ITEM_AMOUNT;i++)
+	MACRO_ITEM_IOFUNCTIONUSABLE(HWSRead, HWSSeek, true, false)
+	MACRO_ITEM_IOFUNCTIONKEY(HWSRead, HWSSeek, true, false)
+	if (GetHWSGameType() == GAME_TYPE_PSX) {
+		if (key_name_space_total <= knamesize && usetext) {
+			MACRO_ITEM_IOFUNCTIONKEYNAME(HWSRead, HWSSeek, true, false)
+			if (GetGameType() != GAME_TYPE_PSX)
+				for (i = 0; i < keyitemamount; i++)
 					key_item[i].name.PSXToSteam();
-		} else if (usetext)
+		} else if (usetext) {
 			res |= 0x8;
+		}
 	}
-	MACRO_ITEM_IOFUNCTIONARMOR(HWSRead,HWSSeek,true,false)
-	MACRO_ITEM_IOFUNCTIONSTAT(HWSRead,HWSSeek,true,false)
-	MACRO_ITEM_IOFUNCTIONWEAPONSTAT(HWSRead,HWSSeek,true,false)
-	if (GetHWSGameType()==GAME_TYPE_PSX) {
-		if (help_space_total<=helpsize && usetext) {
-			MACRO_ITEM_IOFUNCTIONHELP(HWSRead,HWSSeek,true,false)
-			if (GetGameType()!=GAME_TYPE_PSX)
-				for (i=0;i<ITEM_AMOUNT;i++)
+	MACRO_ITEM_IOFUNCTIONARMOR(HWSRead, HWSSeek, true, false)
+	MACRO_ITEM_IOFUNCTIONSTAT(HWSRead, HWSSeek, true, false)
+	MACRO_ITEM_IOFUNCTIONWEAPONSTAT(HWSRead, HWSSeek, true, false)
+	if (GetHWSGameType() == GAME_TYPE_PSX) {
+		if (help_space_total <= helpsize && usetext) {
+			MACRO_ITEM_IOFUNCTIONHELP(HWSRead, HWSSeek, true, false)
+			if (GetGameType() != GAME_TYPE_PSX)
+				for (i = 0; i < itemamount; i++)
 					item[i].help.PSXToSteam();
 		} else {
-			ffbin.seekg(help_space_total,ios::cur);
+			ffbin.seekg(help_space_total, ios::cur);
 			if (usetext)
 				res |= 0x2;
 		}
-		if (help2_space_total<=helpsize2 && usetext) {
-			MACRO_ITEM_IOFUNCTIONBATTLEHELP(HWSRead,HWSSeek,true,false)
-			if (GetGameType()!=GAME_TYPE_PSX)
-				for (i=0;i<ITEM_AMOUNT;i++)
+		if (help2_space_total <= helpsize2 && usetext) {
+			MACRO_ITEM_IOFUNCTIONBATTLEHELP(HWSRead, HWSSeek, true, false)
+			if (GetGameType() != GAME_TYPE_PSX)
+				for (i = 0; i < itemamount; i++)
 					item[i].battle_help.PSXToSteam();
 		} else {
-			ffbin.seekg(help2_space_total+2*ITEM_AMOUNT,ios::cur);
+			ffbin.seekg(help2_space_total + 2 * itemamount, ios::cur);
 			if (usetext)
 				res |= 0x4;
 		}
-		if (key_help_space_total<=khelpsize && usetext) {
-			MACRO_ITEM_IOFUNCTIONKEYHELP(HWSRead,HWSSeek,true,false)
-			if (GetGameType()!=GAME_TYPE_PSX)
-				for (i=0;i<KEY_ITEM_AMOUNT;i++)
+		if (key_help_space_total <= khelpsize && usetext) {
+			MACRO_ITEM_IOFUNCTIONKEYHELP(HWSRead, HWSSeek, true, false)
+			if (GetGameType() != GAME_TYPE_PSX)
+				for (i = 0; i < keyitemamount; i++)
 					key_item[i].help.PSXToSteam();
 		} else {
-			ffbin.seekg(key_help_space_total,ios::cur);
+			ffbin.seekg(key_help_space_total, ios::cur);
 			if (usetext)
 				res |= 0x10;
 		}
-		if (key_desc_space_total<=kdescsize && usetext) {
-			MACRO_ITEM_IOFUNCTIONKEYDESC(HWSRead,HWSSeek,true,false)
-			if (GetGameType()!=GAME_TYPE_PSX)
-				for (i=0;i<KEY_ITEM_AMOUNT;i++)
+		if (key_desc_space_total <= kdescsize && usetext) {
+			MACRO_ITEM_IOFUNCTIONKEYDESC(HWSRead, HWSSeek, true, false)
+			if (GetGameType() != GAME_TYPE_PSX)
+				for (i = 0; i < keyitemamount; i++)
 					key_item[i].description.PSXToSteam();
 		} else {
-			ffbin.seekg(key_desc_space_total,ios::cur);
+			ffbin.seekg(key_desc_space_total, ios::cur);
 			if (usetext)
 				res |= 0x20;
 		}
 	}
+	if (version >= 2) {
+		for (i = 0; i < weaponamount; i++) {
+			HWSReadWString(ffbin, weapon[i].model_name);
+			HWSReadFlexibleChar(ffbin, weapon[i].hit_sfx, true);
+		}
+	}
+	for (i = 0; i < (int)nonmodifieditem.size(); i++)
+		InsertAtId(item, nonmodifieditem[i], nonmodifieditem[i].id);
+	for (i = 0; i < (int)nonmodifiedweapon.size(); i++)
+		InsertAtId(weapon, nonmodifiedweapon[i], nonmodifiedweapon[i].id);
+	for (i = 0; i < (int)nonmodifiedarmor.size(); i++)
+		InsertAtId(armor, nonmodifiedarmor[i], nonmodifiedarmor[i].id);
+	for (i = 0; i < (int)nonmodifiedusable.size(); i++)
+		InsertAtId(usable, nonmodifiedusable[i], nonmodifiedusable[i].id);
+	for (i = 0; i < (int)nonmodifiedstat.size(); i++)
+		InsertAtId(stat, nonmodifiedstat[i], nonmodifiedstat[i].id);
+	for (i = 0; i < (int)nonmodifiedkeyitem.size(); i++)
+		InsertAtId(key_item, nonmodifiedkeyitem[i], nonmodifiedkeyitem[i].id);
 	name_space_total = namesize;
 	help_space_total = helpsize;
 	help2_space_total = helpsize2;
 	key_name_space_total = knamesize;
 	key_help_space_total = khelpsize;
 	key_desc_space_total = kdescsize;
-	if (GetHWSGameType()!=GAME_TYPE_PSX) {
+	if (GetHWSGameType() != GAME_TYPE_PSX) {
 		SteamLanguage lg;
-		uint16_t txtspace;
+		int txtspace;
 		uint32_t tmppos;
-		
-		#define MACRO_ITEM_HWSSTEAMTEXT(STR,AMT) \
-			HWSReadChar(ffbin,lg); \
-			while (lg!=STEAM_LANGUAGE_NONE) { \
-				HWSReadShort(ffbin,txtspace); \
+
+		#define MACRO_ITEM_HWSSTEAMTEXT(STR, AMT) \
+			HWSReadChar(ffbin, lg); \
+			while (lg != STEAM_LANGUAGE_NONE) { \
+				HWSReadFlexibleShort(ffbin, txtspace, useextendedtype); \
 				tmppos = ffbin.tellg(); \
 				if (usetext) { \
-					if (GetGameType()!=GAME_TYPE_PSX) \
-						for (i=0;i<AMT;i++) \
-							SteamReadFF9String(ffbin,STR,lg); \
-					else if (lg==GetSteamLanguage()) \
-						for (i=0;i<AMT;i++) { \
-							SteamReadFF9String(ffbin,STR); \
+					if (GetGameType() != GAME_TYPE_PSX) \
+						for (i = 0; i < AMT; i++) \
+							SteamReadFF9String(ffbin, STR, lg); \
+					else if (lg == GetSteamLanguage()) \
+						for (i = 0; i < AMT; i++) { \
+							SteamReadFF9String(ffbin, STR); \
 							STR.SteamToPSX(); \
 						} \
 				} \
-				ffbin.seekg(tmppos+txtspace); \
-				HWSReadChar(ffbin,lg); \
+				ffbin.seekg(tmppos + txtspace); \
+				HWSReadChar(ffbin, lg); \
 			}
-		
-		MACRO_ITEM_HWSSTEAMTEXT(item[i].name,ITEM_AMOUNT)
-		MACRO_ITEM_HWSSTEAMTEXT(item[i].help,ITEM_AMOUNT)
-		MACRO_ITEM_HWSSTEAMTEXT(item[i].battle_help,ITEM_AMOUNT)
-		MACRO_ITEM_HWSSTEAMTEXT(key_item[i].name,KEY_ITEM_AMOUNT)
-		MACRO_ITEM_HWSSTEAMTEXT(key_item[i].help,KEY_ITEM_AMOUNT)
-		MACRO_ITEM_HWSSTEAMTEXT(key_item[i].description,KEY_ITEM_AMOUNT)
+
+		MACRO_ITEM_HWSSTEAMTEXT(item[i].name, itemamount)
+		MACRO_ITEM_HWSSTEAMTEXT(item[i].help, itemamount)
+		MACRO_ITEM_HWSSTEAMTEXT(item[i].battle_help, itemamount)
+		MACRO_ITEM_HWSSTEAMTEXT(key_item[i].name, keyitemamount)
+		MACRO_ITEM_HWSSTEAMTEXT(key_item[i].help, keyitemamount)
+		MACRO_ITEM_HWSSTEAMTEXT(key_item[i].description, keyitemamount)
 	}
 	UpdateOffset();
 	return res;
 }
 
 void ItemDataSet::WriteHWS(fstream& ffbin) {
-	unsigned int i;
+	int itemamount = item.size();
+	int weaponamount = weapon.size();
+	int armoramount = armor.size();
+	int usableamount = usable.size();
+	int statamount = stat.size();
+	int keyitemamount = key_item.size();
+	bool useextendedtype = true;
+	int i, j;
 	uint32_t txtpos;
 	UpdateOffset();
-	HWSWriteShort(ffbin,ITEM_HWS_VERSION);
+	HWSWriteShort(ffbin, ITEM_HWS_VERSION);
 	uint16_t namesize = name_space_total, helpsize = help_space_total, helpsize2 = help2_space_total;
 	uint16_t knamesize = key_name_space_total, khelpsize = key_help_space_total, kdescsize = key_desc_space_total;
 	name_space_total = name_space_used;
@@ -1025,29 +1302,51 @@ void ItemDataSet::WriteHWS(fstream& ffbin) {
 	key_name_space_total = key_name_space_used;
 	key_help_space_total = key_help_space_used;
 	key_desc_space_total = key_desc_space_used;
-	HWSWriteShort(ffbin,name_space_total);
-	HWSWriteShort(ffbin,help_space_total);
-	HWSWriteShort(ffbin,help2_space_total);
-	HWSWriteShort(ffbin,key_name_space_total);
-	HWSWriteShort(ffbin,key_help_space_total);
-	HWSWriteShort(ffbin,key_desc_space_total);
-	MACRO_ITEM_IOFUNCTIONDATA(HWSWrite,HWSSeek,false,false)
-	if (GetGameType()==GAME_TYPE_PSX) {
-		MACRO_ITEM_IOFUNCTIONNAME(HWSWrite,HWSSeek,false,false)
+	HWSWriteShort(ffbin, name_space_total);
+	HWSWriteShort(ffbin, help_space_total);
+	HWSWriteShort(ffbin, help2_space_total);
+	HWSWriteShort(ffbin, key_name_space_total);
+	HWSWriteShort(ffbin, key_help_space_total);
+	HWSWriteShort(ffbin, key_desc_space_total);
+	HWSWriteFlexibleChar(ffbin, itemamount, true);
+	for (i = 0; i < itemamount; i++)
+		HWSWriteFlexibleChar(ffbin, item[i].id, true);
+	HWSWriteFlexibleChar(ffbin, weaponamount, true);
+	for (i = 0; i < weaponamount; i++)
+		HWSWriteFlexibleChar(ffbin, weapon[i].id, true);
+	HWSWriteFlexibleChar(ffbin, armoramount, true);
+	for (i = 0; i < armoramount; i++)
+		HWSWriteFlexibleChar(ffbin, armor[i].id, true);
+	HWSWriteFlexibleChar(ffbin, usableamount, true);
+	for (i = 0; i < usableamount; i++)
+		HWSWriteFlexibleChar(ffbin, usable[i].id, true);
+	HWSWriteFlexibleChar(ffbin, statamount, true);
+	for (i = 0; i < statamount; i++)
+		HWSWriteFlexibleChar(ffbin, stat[i].id, true);
+	HWSWriteFlexibleChar(ffbin, keyitemamount, true);
+	for (i = 0; i < keyitemamount; i++)
+		HWSWriteFlexibleChar(ffbin, key_item[i].id, true);
+	MACRO_ITEM_IOFUNCTIONDATA(HWSWrite, HWSSeek, false, false)
+	if (GetGameType() == GAME_TYPE_PSX) {
+		MACRO_ITEM_IOFUNCTIONNAME(HWSWrite, HWSSeek, false, false)
 	}
-	MACRO_ITEM_IOFUNCTIONUSABLE(HWSWrite,HWSSeek,false,false)
-	MACRO_ITEM_IOFUNCTIONKEY(HWSWrite,HWSSeek,false,false)
-	if (GetGameType()==GAME_TYPE_PSX) {
-		MACRO_ITEM_IOFUNCTIONKEYNAME(HWSWrite,HWSSeek,false,false)
+	MACRO_ITEM_IOFUNCTIONUSABLE(HWSWrite, HWSSeek, false, false)
+	MACRO_ITEM_IOFUNCTIONKEY(HWSWrite, HWSSeek, false, false)
+	if (GetGameType() == GAME_TYPE_PSX) {
+		MACRO_ITEM_IOFUNCTIONKEYNAME(HWSWrite, HWSSeek, false, false)
 	}
-	MACRO_ITEM_IOFUNCTIONARMOR(HWSWrite,HWSSeek,false,false)
-	MACRO_ITEM_IOFUNCTIONSTAT(HWSWrite,HWSSeek,false,false)
-	MACRO_ITEM_IOFUNCTIONWEAPONSTAT(HWSWrite,HWSSeek,false,false)
-	if (GetGameType()==GAME_TYPE_PSX) {
-		MACRO_ITEM_IOFUNCTIONHELP(HWSWrite,HWSSeek,false,false)
-		MACRO_ITEM_IOFUNCTIONBATTLEHELP(HWSWrite,HWSSeek,false,false)
-		MACRO_ITEM_IOFUNCTIONKEYHELP(HWSWrite,HWSSeek,false,false)
-		MACRO_ITEM_IOFUNCTIONKEYDESC(HWSWrite,HWSSeek,false,false)
+	MACRO_ITEM_IOFUNCTIONARMOR(HWSWrite, HWSSeek, false, false)
+	MACRO_ITEM_IOFUNCTIONSTAT(HWSWrite, HWSSeek, false, false)
+	MACRO_ITEM_IOFUNCTIONWEAPONSTAT(HWSWrite, HWSSeek, false, false)
+	if (GetGameType() == GAME_TYPE_PSX) {
+		MACRO_ITEM_IOFUNCTIONHELP(HWSWrite, HWSSeek, false, false)
+		MACRO_ITEM_IOFUNCTIONBATTLEHELP(HWSWrite, HWSSeek, false, false)
+		MACRO_ITEM_IOFUNCTIONKEYHELP(HWSWrite, HWSSeek, false, false)
+		MACRO_ITEM_IOFUNCTIONKEYDESC(HWSWrite, HWSSeek, false, false)
+	}
+	for (i = 0; i < (int)weapon.size(); i++) {
+		HWSWriteWString(ffbin, weapon[i].model_name);
+		HWSWriteFlexibleChar(ffbin, weapon[i].hit_sfx, true);
 	}
 	name_space_total = namesize;
 	help_space_total = helpsize;
@@ -1055,27 +1354,35 @@ void ItemDataSet::WriteHWS(fstream& ffbin) {
 	key_name_space_total = knamesize;
 	key_help_space_total = khelpsize;
 	key_desc_space_total = kdescsize;
-	if (GetGameType()!=GAME_TYPE_PSX) {
+	if (GetGameType() != GAME_TYPE_PSX) {
 		SteamLanguage lg;
-		for (i=0;i<6;i++) {
-			for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
+		function<int()> textsizegetter[] = {
+			[&]() { return GetSteamTextSizeGeneric(item, &ItemDataStruct::name, false, lg); },
+			[&]() { return GetSteamTextSizeGeneric(item, &ItemDataStruct::help, false, lg); },
+			[&]() { return GetSteamTextSizeGeneric(item, &ItemDataStruct::battle_help, false, lg); },
+			[&]() { return GetSteamTextSizeGeneric(key_item, &KeyItemDataStruct::name, false, lg); },
+			[&]() { return GetSteamTextSizeGeneric(key_item, &KeyItemDataStruct::help, false, lg); },
+			[&]() { return GetSteamTextSizeGeneric(key_item, &KeyItemDataStruct::description, false, lg); }
+		};
+		for (i = 0; i < 6; i++) {
+			for (lg = STEAM_LANGUAGE_US; lg < STEAM_LANGUAGE_AMOUNT; lg++) {
 				if (hades::STEAM_LANGUAGE_SAVE_LIST[lg]) {
-					HWSWriteChar(ffbin,lg);
-					HWSWriteShort(ffbin,GetSteamTextSize(i,lg));
-					WriteSteamText(ffbin,i,lg);
+					HWSWriteChar(ffbin, lg);
+					HWSWriteFlexibleShort(ffbin, textsizegetter[i](), true);
+					WriteSteamText(ffbin, i, false, false, lg);
 				}
 			}
-			HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
+			HWSWriteChar(ffbin, STEAM_LANGUAGE_NONE);
 		}
 	}
 }
 
 void ItemDataSet::UpdateOffset() {
-	if (GetGameType()!=GAME_TYPE_PSX)
+	if (GetGameType() != GAME_TYPE_PSX)
 		return;
-	uint16_t j=0,k=0,l=0;
-	unsigned int i;
-	for (i=0;i<ITEM_AMOUNT;i++) {
+	uint16_t j = 0, k = 0, l = 0;
+	int i;
+	for (i = 0; i < ITEM_AMOUNT; i++) {
 		item[i].name_offset = j;
 		j += item[i].name.length;
 		item[i].help_offset = k;
@@ -1089,7 +1396,7 @@ void ItemDataSet::UpdateOffset() {
 	j = 0;
 	k = 0;
 	l = 0;
-	for (i=0;i<KEY_ITEM_AMOUNT;i++) {
+	for (i = 0; i < KEY_ITEM_AMOUNT; i++) {
 		key_item[i].name_offset = j;
 		j += key_item[i].name.length;
 		key_item[i].help_offset = k;
@@ -1104,4 +1411,205 @@ void ItemDataSet::UpdateOffset() {
 	key_name_space_used = j;
 	key_help_space_used = k;
 	key_desc_space_used = l;
+}
+
+int ItemDataSet::GetItemIndexById(int itemid) {
+	if (itemid < ITEM_AMOUNT)
+		return itemid;
+	for (unsigned int i = ITEM_AMOUNT; i < item.size(); i++)
+		if (item[i].id == itemid)
+			return i;
+	return -1;
+}
+
+int ItemDataSet::GetKeyItemIndexById(int keyitemid) {
+	if (keyitemid < KEY_ITEM_AMOUNT)
+		return keyitemid;
+	for (unsigned int i = KEY_ITEM_AMOUNT; i < key_item.size(); i++)
+		if (key_item[i].id == keyitemid)
+			return i;
+	return -1;
+}
+
+int ItemDataSet::GetUsableIndexById(int usableid) {
+	if (usableid < ITEM_USABLE_AMOUNT)
+		return usableid;
+	for (unsigned int i = ITEM_USABLE_AMOUNT; i < usable.size(); i++)
+		if (usable[i].id == usableid)
+			return i;
+	return -1;
+}
+
+int ItemDataSet::GetWeaponIndexById(int weaponid) {
+	if (weaponid < ITEM_WEAPON_AMOUNT)
+		return weaponid;
+	for (unsigned int i = ITEM_WEAPON_AMOUNT; i < weapon.size(); i++)
+		if (weapon[i].id == weaponid)
+			return i;
+	return -1;
+}
+
+int ItemDataSet::GetArmorIndexById(int armorid) {
+	if (armorid < ITEM_ARMOR_AMOUNT)
+		return armorid;
+	for (unsigned int i = ITEM_ARMOR_AMOUNT; i < armor.size(); i++)
+		if (armor[i].id == armorid)
+			return i;
+	return -1;
+}
+
+int ItemDataSet::GetStatIndexById(int statid) {
+	if (statid < ITEM_STAT_AMOUNT)
+		return statid;
+	for (unsigned int i = ITEM_STAT_AMOUNT; i < stat.size(); i++)
+		if (stat[i].id == statid)
+			return i;
+	return -1;
+}
+
+ItemDataStruct dummyitem;
+ItemDataStruct& ItemDataSet::GetItemById(int itemid) {
+	int index = GetItemIndexById(itemid);
+	if (index >= 0)
+		return item[index];
+	dummyitem.id = -1;
+	dummyitem.name.CreateEmpty();
+	dummyitem.name.SetValue(L"[Invalid]");
+	return dummyitem;
+}
+
+KeyItemDataStruct dummykeyitem;
+KeyItemDataStruct& ItemDataSet::GetKeyItemById(int keyitemid) {
+	int index = GetKeyItemIndexById(keyitemid);
+	if (index >= 0)
+		return key_item[index];
+	dummykeyitem.id = -1;
+	dummykeyitem.name.CreateEmpty();
+	dummykeyitem.name.SetValue(L"[Invalid]");
+	return dummykeyitem;
+}
+
+ItemUsableDataStruct dummyusable;
+ItemUsableDataStruct& ItemDataSet::GetUsableById(int usableid) {
+	int index = GetUsableIndexById(usableid);
+	if (index >= 0)
+		return usable[index];
+	dummyusable.id = -1;
+	return dummyusable;
+}
+
+ItemWeaponDataStruct dummyweapon;
+ItemWeaponDataStruct& ItemDataSet::GetWeaponById(int weaponid) {
+	int index = GetWeaponIndexById(weaponid);
+	if (index >= 0)
+		return weapon[index];
+	dummyweapon.id = -1;
+	return dummyweapon;
+}
+
+ItemArmorDataStruct dummyarmor;
+ItemArmorDataStruct& ItemDataSet::GetArmorById(int armorid) {
+	int index = GetArmorIndexById(armorid);
+	if (index >= 0)
+		return armor[index];
+	dummyarmor.id = -1;
+	return dummyarmor;
+}
+
+ItemStatDataStruct dummystat;
+ItemStatDataStruct& ItemDataSet::GetStatById(int statid) {
+	int index = GetStatIndexById(statid);
+	if (index >= 0)
+		return stat[index];
+	dummystat.id = -1;
+	return dummystat;
+}
+
+void ItemWeaponDataStruct::InitializeDefault(int dataid) {
+	id = dataid;
+	flag = 0;
+	status = 0;
+	model = 0;
+	model_name = L"";
+	damage_formula = 0;
+	power = 0;
+	element = 0;
+	status_accuracy = 0;
+	offset1 = 0;
+	offset2 = 0;
+	hit_sfx = 0;
+}
+
+void ItemWeaponDataStruct::UpdateModelName() {
+	unsigned int i;
+	for (i = 0; i < G_N_ELEMENTS(SteamWeaponModel); i++)
+		if (model == SteamWeaponModel[i].id) {
+			model_name = SteamWeaponModel[i].name;
+			return;
+		}
+	model_name = L"<null>";
+}
+
+void ItemWeaponDataStruct::UpdateModelId() {
+	unsigned int i;
+	for (i = 0; i < G_N_ELEMENTS(SteamWeaponModel); i++)
+		if (model_name.compare(SteamWeaponModel[i].name) == 0) {
+			model = SteamWeaponModel[i].id;
+			return;
+		}
+	model = 0;
+}
+
+void ItemArmorDataStruct::InitializeDefault(int dataid) {
+	id = dataid;
+	defence = 0;
+	evade = 0;
+	magic_defence = 0;
+	magic_evade = 0;
+}
+
+void ItemStatDataStruct::InitializeDefault(int dataid) {
+	id = dataid;
+	speed = 0;
+	strength = 0;
+	magic = 0;
+	spirit = 0;
+	element_immune = 0;
+	element_absorb = 0;
+	element_half = 0;
+	element_weak = 0;
+	element_boost = 0;
+}
+
+void AnyAbilityStruct::Setup(uint8_t rawid) {
+	if (rawid < SPELL_AMOUNT) {
+		id = rawid;
+		is_active = true;
+	} else {
+		id = rawid - SPELL_AMOUNT;
+		is_active = false;
+	}
+}
+
+void AnyAbilityStruct::Setup(int abilid, bool active) {
+	id = abilid;
+	is_active = active;
+}
+
+uint8_t AnyAbilityStruct::GetRawId() {
+	if (is_active)
+		return (uint8_t)id;
+	return (uint8_t)(SPELL_AMOUNT + id);
+}
+
+bool AnyAbilityStruct::IsVoid() {
+	return is_active && id == 0;
+}
+
+string AnyAbilityStruct::GetStringId() {
+	if (IsVoid())
+		return "0";
+	if (is_active)
+		return "AA:" + to_string(id);
+	return "SA:" + to_string(id);
 }

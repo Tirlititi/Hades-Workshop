@@ -824,6 +824,13 @@ static wstring FunctionTypeName[] {
 	L"Reinit"
 };
 
+static wstring WorldFunctionTriggerType[]{
+	L"T0",
+	L"T1",
+	L"T2",
+	L"T3"
+};
+
 static wstring DiscName[] {
 	L"Disc 1",
 	L"Disc 2",
@@ -923,6 +930,28 @@ static wstring AbilitySetName[] {
 	L"Theater Cinna's",
 	L"Theater Marcus's",
 	L"Theater Blank's"
+};
+
+static wstring BattleParamName[] {
+	L"Zidane (dagger)",
+	L"Zidane (thief sword)",
+	L"Vivi",
+	L"Dagger (long hair - rod)",
+	L"Dagger (long hair - racket)",
+	L"Dagger (short hair - rod)",
+	L"Dagger (short hair - racket)",
+	L"Steiner (normal)",
+	L"Steiner (dummied)",
+	L"Quina",
+	L"Eiko (flute)",
+	L"Eiko (racket)",
+	L"Freya",
+	L"Amarant",
+	L"Cinna",
+	L"Marcus",
+	L"Blank",
+	L"Blank (pluto armor)",
+	L"Beatrix"
 };
 
 static wstring BubbleSymbolName[] = {

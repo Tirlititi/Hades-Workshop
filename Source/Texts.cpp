@@ -148,24 +148,28 @@ void TextDataStruct::RemoveText(uint16_t id) {
 }
 
 int TextDataStruct::SetText(uint16_t id, wstring& newvalue, SteamLanguage lang) {
-	FF9String tmp(text[id]);
-	tmp.SetValue(newvalue,lang);
-	uint16_t oldlen = text[id].length;
-	uint16_t newlen = tmp.length;
-	if (newlen>GetExtraSize()+oldlen)
-		return 1;
-	text[id].SetValue(newvalue,lang);
-	SetSize(size+newlen-oldlen);
+	if (GetGameType() == GAME_TYPE_PSX) {
+		FF9String tmp(text[id]);
+		tmp.SetValue(newvalue, lang);
+		uint16_t oldlen = text[id].length;
+		uint16_t newlen = tmp.length;
+		if (newlen > GetExtraSize() + oldlen)
+			return 1;
+		SetSize(size + newlen - oldlen);
+	}
+	text[id].SetValue(newvalue, lang);
 	return 0;
 }
 
 int TextDataStruct::SetText(uint16_t id, FF9String& newvalue) {
-	uint16_t oldlen = text[id].length;
-	uint16_t newlen = newvalue.length;
-	if (newlen>GetExtraSize()+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		uint16_t oldlen = text[id].length;
+		uint16_t newlen = newvalue.length;
+		if (newlen > GetExtraSize() + oldlen)
+			return 1;
+		SetSize(size + newlen - oldlen);
+	}
 	text[id] = FF9String(newvalue);
-	SetSize(size+newlen-oldlen);
 	return 0;
 }
 

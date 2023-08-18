@@ -203,6 +203,7 @@
     <ClCompile Include="Source\ClusterData.cpp" />
     <ClCompile Include="Source\Cluts.cpp" />
     <ClCompile Include="Source\Commands.cpp" />
+    <ClCompile Include="Source\CommonUtility.cpp" />
     <ClCompile Include="Source\Configuration.cpp" />
     <ClCompile Include="Source\DllCilMacro.cpp" />
     <ClCompile Include="Source\DllEditor.cpp" />
@@ -222,6 +223,7 @@
     <ClCompile Include="Source\Gui_Manipulation.cpp" />
     <ClCompile Include="Source\Gui_Preferences.cpp" />
     <ClCompile Include="Source\Gui_ScriptEditor.cpp" />
+    <ClCompile Include="Source\Gui_SmallDialogs.cpp" />
     <ClCompile Include="Source\Gui_SpellAnimationsEditor.cpp" />
     <ClCompile Include="Source\Gui_TextEditor.cpp" />
     <ClCompile Include="Source\Gui_TextureEditor.cpp" />
@@ -263,6 +265,7 @@
     <ClCompile Include="Source\Tool_DamageCalculator.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source\CommonUtility.h" />
     <ClInclude Include="Source\Database_CSV.h" />
     <ClInclude Include="Source\BattleScenes.h" />
     <ClInclude Include="Source\Cards.h" />
@@ -300,6 +303,7 @@
     <ClInclude Include="Source\Gui_Manipulation.h" />
     <ClInclude Include="Source\Gui_Preferences.h" />
     <ClInclude Include="Source\Gui_ScriptEditor.h" />
+    <ClInclude Include="Source\Gui_SmallDialogs.h" />
     <ClInclude Include="Source\Gui_SpellAnimationsEditor.h" />
     <ClInclude Include="Source\Gui_TextEditor.h" />
     <ClInclude Include="Source\Gui_TextureEditor.h" />

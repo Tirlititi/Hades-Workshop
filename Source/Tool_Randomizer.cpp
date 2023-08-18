@@ -20,31 +20,31 @@ inline void SetRandomSeed(unsigned int s) {
 	ThePRNGEngine.seed(s);
 }
 
-inline bool SpellHasPower(uint8_t effect) {
+inline bool SpellHasPower(int effect) {
 	return effect==8 || effect==9 || effect==10 || (effect>=15 && effect<=21) || effect==23 || effect==26 || effect==32 || effect==37 || effect==38 || effect==39 || effect==63 || effect==85 || effect==86 || effect==87 || effect==91 || effect==98 || effect==99 || effect==100 || effect==102 || effect==107;
 }
 
 inline bool SpellHasStatus(SpellDataStruct& sp) {
-	uint8_t eff = sp.effect;
-	uint8_t acc = sp.accuracy;
+	int eff = sp.effect;
+	int acc = sp.accuracy;
 	return (acc>0 && (eff==8 || eff==9 || eff==18 || eff==19 || eff==20 || eff==93 || eff==100 || eff==107)) || (eff>=11 && eff<=14) || eff==87 || eff==97 || eff==103 || eff==108 || eff==109;
 }
 
 inline bool SpellIsStatusRemove(SpellDataStruct& sp) {
-	uint8_t eff = sp.effect;
+	int eff = sp.effect;
 	return eff == 12 || eff == 13;
 }
 
-inline bool IsNotSafeAbility(uint8_t abil, vector<uint8_t>& safelist) {
-	for (unsigned int i=0; i<safelist.size(); i++)
-		if (safelist[i]==abil)
+inline bool IsNotSafeAbility(int abil, vector<int>& safelist) {
+	for (unsigned int i = 0; i < safelist.size(); i++)
+		if (safelist[i] == abil)
 			return false;
 	return true;
 }
 
-inline bool DoesCharacterUseSpell(AbilitySetDataStruct& abillist, uint8_t spell) {
-	for (unsigned int i=0; i<ABILITY_SET_CAPACITY; i++)
-		if (abillist.ability[i]==spell)
+inline bool DoesCharacterUseSpell(AbilitySetDataStruct& abillist, int spell) {
+	for (unsigned int i = 0; i < ABILITY_SET_CAPACITY; i++)
+		if (abillist.ability[i].id == spell)
 			return true;
 	return false;
 }
@@ -65,23 +65,25 @@ inline Spell_Target_Amount GetEnemySpellTargetAmountFromModel(uint16_t modelid) 
 }
 
 inline bool IsEnemySpellRandomizable(EnemySpellDataStruct& spell, vector<EnemySequenceCodeLine>& sequence, uint16_t* modelid = NULL, Spell_Target_Amount* ta = NULL) {
-	if (spell.id==8 && spell.parent->parent->battle_data[spell.parent->id]->object_id==301) // Absorb of "Prison Cage ; Vivi"
+	if (spell.id == 8 && spell.parent->parent->battle_data[spell.parent->id]->object_id == 301) // Absorb of "Prison Cage ; Vivi"
 		return false;
-	if (spell.id==13 && spell.parent->parent->battle_data[spell.parent->id]->object_id==302) // Absorb of "Prison Cage ; Garnet"
+	if (spell.id == 13 && spell.parent->parent->battle_data[spell.parent->id]->object_id == 302) // Absorb of "Prison Cage ; Garnet"
 		return false;
-	if (spell.effect==0 || spell.effect==64 || spell.effect==10 || spell.effect==12 || spell.effect==13 || spell.effect==30 || spell.effect==37 || spell.effect==41 || spell.effect==43 || spell.effect==44 || spell.effect==45 || spell.effect==47 || spell.effect==52 || (spell.effect>=55 && spell.effect<=58) || spell.effect==96 || spell.effect==103 || spell.effect==106)
+	if (spell.effect == 0 || spell.effect == 64 || spell.effect == 10 || spell.effect == 12 || spell.effect == 13 || spell.effect == 30 || spell.effect == 37 || spell.effect == 41 || spell.effect == 43 || spell.effect == 44 || spell.effect == 45 || spell.effect == 47 || spell.effect == 52 || (spell.effect >= 55 && spell.effect <= 58) || spell.effect == 96 || spell.effect == 103 || spell.effect == 106)
 		return false;
 	int seqcode, codearg;
 	EnemyDataSet::GetSpellSequenceModelRef(sequence, &seqcode, &codearg);
-	if (seqcode<0 || codearg<0)
+	if (seqcode < 0 || codearg < 0)
 		return false;
 	Spell_Target_Amount targetamount = GetEnemySpellTargetAmountFromModel(sequence[seqcode].arg[codearg]);
-	if (targetamount==SPELL_TARGET_AMOUNT_ZERO)
+	if (targetamount == SPELL_TARGET_AMOUNT_ZERO)
 		return false;
 	if (modelid)
 		*modelid = sequence[seqcode].arg[codearg];
 	if (ta)
 		*ta = targetamount;
+	if (sequence[seqcode].arg[codearg] == 383) // Melt SFX: triggers soft-locks because of disappearance
+		return false;
 	return true;
 }
 
@@ -317,22 +319,22 @@ inline T PickRandomInVector(vector<T>& v) {
 class RandomizerListDialog : public RandomizerListWindow {
 public:
 	struct RLD_AbilityRegistered {
-		uint8_t id;
+		int id;
 		bool safe[5];
-		RLD_AbilityRegistered(uint8_t abil) : id(abil) {
+		RLD_AbilityRegistered(int abil) : id(abil) {
 			for (unsigned int i=0; i<5; i++) safe[i] = false;
 		}
 	};
 	vector<RLD_AbilityRegistered> list;
 
 	ToolRandomizer* parent;
-	vector<uint8_t>* safelist[5];
+	vector<int>* safelist[5];
 
-	wxString GetAbilName(uint8_t abil) {
-		if (abil<SPELL_AMOUNT && parent->cddata->saveset.sectionloaded[DATA_SECTION_SPELL])
+	wxString GetAbilName(int abil) {
+		if (abil < SPELL_AMOUNT && parent->cddata->saveset.sectionloaded[DATA_SECTION_SPELL])
 			return _(parent->cddata->spellset.spell[abil].name.GetStr(hades::TEXT_PREVIEW_TYPE));
-		if (abil>=SPELL_AMOUNT && parent->cddata->saveset.sectionloaded[DATA_SECTION_SUPPORT])
-			return _(parent->cddata->supportset.support[abil-SPELL_AMOUNT].name.GetStr(hades::TEXT_PREVIEW_TYPE));
+		if (abil >= SPELL_AMOUNT && parent->cddata->saveset.sectionloaded[DATA_SECTION_SUPPORT])
+			return _(parent->cddata->supportset.support[abil - SPELL_AMOUNT].name.GetStr(hades::TEXT_PREVIEW_TYPE));
 		return wxString::Format(wxT("%i"), abil);
 	}
 
@@ -391,7 +393,7 @@ public:
 		UpdateDisplay();
 	}
 
-	void AddAbility(uint8_t abil, unsigned int pos) {
+	void AddAbility(int abil, unsigned int pos) {
 		unsigned int i, safei;
 		for (i=0; i<list.size(); i++)
 			if (abil==list[i].id) {
@@ -555,213 +557,215 @@ void ToolRandomizer::UpdateMenuAvailability() {
 }
 
 void ToolRandomizer::ApplyRandomizerCharacter() {
-	unsigned int i,j,k,rnd;
-	if (m_charspellpower->GetSelection()==1) {
-		vector<uint8_t> powerlist;
-		for (i=0; i<SPELL_AMOUNT; i++)
+	unsigned int i, j, k, rnd;
+	if (m_charspellpower->GetSelection() == 1) {
+		vector<int> powerlist;
+		for (i = 0; i < SPELL_AMOUNT; i++)
 			if (SpellHasPower(cddata->spellset.spell[i].effect) && (!m_charspellstatsafe->IsChecked() || IsNotSafeAbility(i, safe_abil_scramble)))
 				powerlist.push_back(cddata->spellset.spell[i].power);
-		for (i=0; i<SPELL_AMOUNT; i++)
+		for (i = 0; i < SPELL_AMOUNT; i++)
 			if (SpellHasPower(cddata->spellset.spell[i].effect) && (!m_charspellstatsafe->IsChecked() || IsNotSafeAbility(i, safe_abil_scramble)))
 				cddata->spellset.spell[i].power = PickRandomInVector(powerlist);
 		cddata->MarkDataSpellModified();
-	} else if (m_charspellpower->GetSelection()==2) {
-		for (i=0; i<SPELL_AMOUNT; i++)
+	} else if (m_charspellpower->GetSelection() == 2) {
+		for (i = 0; i < SPELL_AMOUNT; i++)
 			if (SpellHasPower(cddata->spellset.spell[i].effect) && (!m_charspellstatsafe->IsChecked() || IsNotSafeAbility(i, safe_abil_scramble)))
 				cddata->spellset.spell[i].power = GetRandom(5, 121);
 		cddata->MarkDataSpellModified();
 	}
-	if (m_charspellstatus->GetSelection()==1) {
+	if (m_charspellstatus->GetSelection() == 1) {
 		vector<uint8_t> statuslist;
 		uint32_t prevstatus;
-		for (i=0; i<SPELL_AMOUNT; i++)
+		for (i = 0; i < SPELL_AMOUNT; i++)
 			if (SpellHasStatus(cddata->spellset.spell[i]) && (!m_charspellstatsafe->IsChecked() || IsNotSafeAbility(i, safe_abil_scramble)))
 				statuslist.push_back(cddata->spellset.spell[i].status);
-		for (i=0; i<SPELL_AMOUNT; i++)
+		for (i = 0; i < SPELL_AMOUNT; i++)
 			if (SpellHasStatus(cddata->spellset.spell[i]) && (!m_charspellstatsafe->IsChecked() || IsNotSafeAbility(i, safe_abil_scramble))) {
-				prevstatus = cddata->spellset.status_set[cddata->spellset.spell[i].status];
+				prevstatus = cddata->spellset.status_set[cddata->spellset.spell[i].status].status;
 				cddata->spellset.spell[i].status = PickRandomInVector(statuslist);
-				ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[i]), cddata->spellset.spell[i].help, prevstatus, cddata->spellset.status_set[cddata->spellset.spell[i].status], &cddata->spellset.spell[i]);
+				ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[i]), cddata->spellset.spell[i].help, prevstatus, cddata->spellset.status_set[cddata->spellset.spell[i].status].status, &cddata->spellset.spell[i]);
 			}
 		cddata->MarkDataSpellModified();
-	} else if (m_charspellstatus->GetSelection()==2) {
+	} else if (m_charspellstatus->GetSelection() == 2) {
 		array<uint32_t, STATUS_SET_AMOUNT> oldset;
 		vector<uint8_t> validstatus;
 		unsigned int newcount;
 		uint32_t oldstatus;
 		uint8_t newstatus;
 		wstring help;
-		for (i=39; i<STATUS_SET_AMOUNT; i++) { // Use defaultly unused status sets to avoid messing with items/enemy spells
-			oldset[i] = cddata->spellset.status_set[i];
-			cddata->spellset.status_set[i] = 0;
+		for (i = 39; i < STATUS_SET_AMOUNT; i++) { // Use defaultly unused status sets to avoid messing with items/enemy spells
+			oldset[i] = cddata->spellset.status_set[i].status;
+			cddata->spellset.status_set[i].status = 0;
 			newcount = 1; // approx.: [1 50%] [2 25%] [3 12.5%] etc...
-			while (newcount<29 && GetRandom(0, 2))
+			while (newcount < 29 && GetRandom(0, 2))
 				newcount++;
-			for (j=0; j<newcount; j++) {
+			for (j = 0; j < newcount; j++) {
 				newstatus = GetRandom(0, 29);
-				if (newstatus>=7) newstatus++; // Easy Kill, Low HP, Jump
-				if (newstatus>=9) newstatus++;
-				if (newstatus>=30) newstatus++;
-				cddata->spellset.status_set[i] |= (1 << newstatus);
+				if (newstatus >= 7) newstatus++; // Easy Kill, Low HP, Jump
+				if (newstatus >= 9) newstatus++;
+				if (newstatus >= 30) newstatus++;
+				cddata->spellset.status_set[i].status |= (1 << newstatus);
 			}
 			cddata->UpdateSpellStatusName(i);
 		}
-		for (i=0; i<SPELL_AMOUNT; i++)
+		for (i = 0; i < SPELL_AMOUNT; i++)
 			if (SpellHasStatus(cddata->spellset.spell[i]) && (!m_charspellstatsafe->IsChecked() || IsNotSafeAbility(i, safe_abil_scramble))) {
-				oldstatus = (cddata->spellset.spell[i].status>=39 ? oldset[cddata->spellset.spell[i].status] : cddata->spellset.status_set[cddata->spellset.spell[i].status]);
+				oldstatus = (cddata->spellset.spell[i].status >= 39 ? oldset[cddata->spellset.spell[i].status] : cddata->spellset.status_set[cddata->spellset.spell[i].status].status);
 				cddata->spellset.spell[i].status = GetRandom(39, STATUS_SET_AMOUNT);
-				ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[i]), cddata->spellset.spell[i].help, oldstatus, cddata->spellset.status_set[cddata->spellset.spell[i].status], &cddata->spellset.spell[i]);
+				ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[i]), cddata->spellset.spell[i].help, oldstatus, cddata->spellset.status_set[cddata->spellset.spell[i].status].status, &cddata->spellset.spell[i]);
 			}
 		cddata->MarkDataSpellModified();
 	}
 	if (m_charspell->IsChecked()) {
 		unsigned int spellamount, cmdi;
-		vector<uint8_t> spellpoolalt;
-		vector<uint8_t> spellpool;
-		vector<uint8_t> flairpool;
-		vector<uint8_t> elanpool;
-		uint8_t cmdindex;
+		vector<int> spellpoolalt;
+		vector<int> spellpool;
+		vector<int> flairpool;
+		vector<int> elanpool;
+		int cmdindex;
 		bool newspell;
 		if (m_charelan->IsChecked()) {
 			spellamount = 0;
-			if (cddata->cmdset.cmd[28].panel==COMMAND_PANEL_SPELL) spellamount = cddata->cmdset.cmd[28].spell_amount;
-			for (i=0; i<spellamount; i++)
-				if (cddata->cmdset.cmd[28].spell_list[i]>0 && (!m_charspellsafe->IsChecked() || IsNotSafeAbility(cddata->cmdset.cmd[28].spell_list[i], safe_abil_spell)))
+			if (cddata->cmdset.cmd[28].panel == COMMAND_PANEL_SPELL) spellamount = cddata->cmdset.cmd[28].spell_amount;
+			for (i = 0; i < spellamount; i++)
+				if (cddata->cmdset.cmd[28].spell_list[i] > 0 && (!m_charspellsafe->IsChecked() || IsNotSafeAbility(cddata->cmdset.cmd[28].spell_list[i], safe_abil_spell)))
 					flairpool.push_back(cddata->cmdset.cmd[28].spell_list[i]);
 			spellamount = 0;
-			if (cddata->cmdset.cmd[29].panel==COMMAND_PANEL_SPELL) spellamount = cddata->cmdset.cmd[29].spell_amount;
-			for (i=0; i<spellamount; i++)
-				if (cddata->cmdset.cmd[29].spell_list[i]>0 && (!m_charspellsafe->IsChecked() || IsNotSafeAbility(cddata->cmdset.cmd[29].spell_list[i], safe_abil_spell)))
+			if (cddata->cmdset.cmd[29].panel == COMMAND_PANEL_SPELL) spellamount = cddata->cmdset.cmd[29].spell_amount;
+			for (i = 0; i < spellamount; i++)
+				if (cddata->cmdset.cmd[29].spell_list[i] > 0 && (!m_charspellsafe->IsChecked() || IsNotSafeAbility(cddata->cmdset.cmd[29].spell_list[i], safe_abil_spell)))
 					elanpool.push_back(cddata->cmdset.cmd[29].spell_list[i]);
 		}
-		for (i=0; i<COMMAND_SET_AMOUNT; i++)
-			for (cmdi=0; cmdi<4; cmdi++) {
-				if (cmdi==0)		cmdindex = cddata->statset.command_list[i].first_command;
-				else if (cmdi==1)	cmdindex = cddata->statset.command_list[i].second_command;
-				else if (cmdi==2)	cmdindex = cddata->statset.command_list[i].first_command_trance;
-				else if (cmdi==3)	cmdindex = cddata->statset.command_list[i].second_command_trance;
+		for (i = 0; i < COMMAND_SET_AMOUNT; i++)
+			for (cmdi = 0; cmdi < 4; cmdi++) {
+				if (cmdi == 0)		cmdindex = cddata->statset.command_list[i].first_command;
+				else if (cmdi == 1)	cmdindex = cddata->statset.command_list[i].second_command;
+				else if (cmdi == 2)	cmdindex = cddata->statset.command_list[i].first_command_trance;
+				else if (cmdi == 3)	cmdindex = cddata->statset.command_list[i].second_command_trance;
+				CommandDataStruct& cmd = cddata->cmdset.GetCommandById(cmdindex);
 				spellamount = 0;
-				if (cddata->cmdset.cmd[cmdindex].panel==COMMAND_PANEL_SPELL) spellamount = cddata->cmdset.cmd[cmdindex].spell_amount;
-				for (j=0; j<spellamount; j++)
-					if (cddata->cmdset.cmd[cmdindex].spell_list[j]>0 && (!m_charspellsafe->IsChecked() || IsNotSafeAbility(cddata->cmdset.cmd[cmdindex].spell_list[j], safe_abil_spell))) {
+				if (cmd.panel == COMMAND_PANEL_SPELL) spellamount = cmd.spell_amount;
+				for (j = 0; j < spellamount; j++)
+					if (cmd.spell_list[j] > 0 && (!m_charspellsafe->IsChecked() || IsNotSafeAbility(cmd.spell_list[j], safe_abil_spell))) {
 						newspell = true;
-						for (k=0; k<spellpool.size(); k++)
-							if (spellpool[k]==cddata->cmdset.cmd[cmdindex].spell_list[j]) {
+						for (k = 0; k < spellpool.size(); k++)
+							if (spellpool[k] == cmd.spell_list[j]) {
 								newspell = false;
 								break;
 							}
-						for (k=0; k<spellpoolalt.size(); k++)
-							if (spellpoolalt[k]==cddata->cmdset.cmd[cmdindex].spell_list[j]) {
+						for (k = 0; k < spellpoolalt.size(); k++)
+							if (spellpoolalt[k] == cmd.spell_list[j]) {
 								newspell = false;
 								break;
 							}
 						if (m_charelan->IsChecked())
-							for (k=0; k<elanpool.size(); k++)
-								if (elanpool[k]==cddata->cmdset.cmd[cmdindex].spell_list[j]) {
+							for (k = 0; k < elanpool.size(); k++)
+								if (elanpool[k] == cmd.spell_list[j]) {
 									newspell = false;
 									break;
 								}
 						if (newspell) {
-							if (m_charsummon->IsChecked() && IsSpellSummon(cddata->spellset.spell[cddata->cmdset.cmd[cmdindex].spell_list[j]]))
-								spellpoolalt.push_back(cddata->cmdset.cmd[cmdindex].spell_list[j]);
+							if (m_charsummon->IsChecked() && IsSpellSummon(cddata->spellset.spell[cmd.spell_list[j]]))
+								spellpoolalt.push_back(cmd.spell_list[j]);
 							else
-								spellpool.push_back(cddata->cmdset.cmd[cmdindex].spell_list[j]);
+								spellpool.push_back(cmd.spell_list[j]);
 						}
 					}
 			}
-		vector<pair<uint8_t, SpellDataStruct>> spellpoolaltdata;
-		vector<pair<uint8_t, SpellDataStruct>> spellpooldata;
-		pair<uint8_t, SpellDataStruct> spellpick;
-		for (i=0; i<spellpool.size(); i++)
+		vector<pair<int, SpellDataStruct>> spellpoolaltdata;
+		vector<pair<int, SpellDataStruct>> spellpooldata;
+		pair<int, SpellDataStruct> spellpick;
+		for (i = 0; i < spellpool.size(); i++)
 			spellpooldata.push_back(make_pair(spellpool[i], cddata->spellset.spell[spellpool[i]]));
-		for (i=0; i<spellpoolalt.size(); i++)
+		for (i = 0; i < spellpoolalt.size(); i++)
 			spellpoolaltdata.push_back(make_pair(spellpoolalt[i], cddata->spellset.spell[spellpoolalt[i]]));
 		spellpool.clear();
 		spellpoolalt.clear();
-		for (i=0; i<COMMAND_SET_AMOUNT; i++)
-			for (cmdi=0; cmdi<4; cmdi++) {
-				if (cmdi==0)		cmdindex = cddata->statset.command_list[i].first_command;
-				else if (cmdi==1)	cmdindex = cddata->statset.command_list[i].second_command;
-				else if (cmdi==2)	cmdindex = cddata->statset.command_list[i].first_command_trance;
-				else if (cmdi==3)	cmdindex = cddata->statset.command_list[i].second_command_trance;
+		for (i = 0; i < COMMAND_SET_AMOUNT; i++)
+			for (cmdi = 0; cmdi < 4; cmdi++) {
+				if (cmdi == 0)		cmdindex = cddata->statset.command_list[i].first_command;
+				else if (cmdi == 1)	cmdindex = cddata->statset.command_list[i].second_command;
+				else if (cmdi == 2)	cmdindex = cddata->statset.command_list[i].first_command_trance;
+				else if (cmdi == 3)	cmdindex = cddata->statset.command_list[i].second_command_trance;
+				CommandDataStruct& cmd = cddata->cmdset.GetCommandById(cmdindex);
 				spellamount = 0;
-				if (cddata->cmdset.cmd[cmdindex].panel==COMMAND_PANEL_SPELL) spellamount = cddata->cmdset.cmd[cmdindex].spell_amount;
-				for (j=0; j<spellamount; j++)
-					if (cddata->cmdset.cmd[cmdindex].spell_list[j]>0 && (!m_charspellsafe->IsChecked() || IsNotSafeAbility(cddata->cmdset.cmd[cmdindex].spell_list[j], safe_abil_spell))) {
+				if (cmd.panel == COMMAND_PANEL_SPELL) spellamount = cmd.spell_amount;
+				for (j = 0; j < spellamount; j++)
+					if (cmd.spell_list[j] > 0 && (!m_charspellsafe->IsChecked() || IsNotSafeAbility(cmd.spell_list[j], safe_abil_spell))) {
 						newspell = true;
-						for (k=0; k<spellpool.size(); k++)
-							if (spellpool[k]==cddata->cmdset.cmd[cmdindex].spell_list[j]) {
+						for (k = 0; k < spellpool.size(); k++)
+							if (spellpool[k] == cmd.spell_list[j]) {
 								newspell = false;
 								break;
 							}
-						for (k=0; k<spellpoolalt.size(); k++)
-							if (spellpoolalt[k]==cddata->cmdset.cmd[cmdindex].spell_list[j]) {
+						for (k = 0; k < spellpoolalt.size(); k++)
+							if (spellpoolalt[k] == cmd.spell_list[j]) {
 								newspell = false;
 								break;
 							}
 						if (m_charelan->IsChecked())
-							for (k=0; k<elanpool.size(); k++)
-								if (elanpool[k]==cddata->cmdset.cmd[cmdindex].spell_list[j]) {
+							for (k = 0; k < elanpool.size(); k++)
+								if (elanpool[k] == cmd.spell_list[j]) {
 									newspell = false;
 									break;
 								}
 						if (newspell) {
-							if (m_charsummon->IsChecked() && IsSpellSummon(cddata->spellset.spell[cddata->cmdset.cmd[cmdindex].spell_list[j]])) {
+							if (m_charsummon->IsChecked() && IsSpellSummon(cddata->spellset.spell[cmd.spell_list[j]])) {
 								spellpick = PickRandomInVector(spellpoolaltdata);
-								spellpoolalt.push_back(cddata->cmdset.cmd[cmdindex].spell_list[j]);
+								spellpoolalt.push_back(cmd.spell_list[j]);
 							} else {
 								spellpick = PickRandomInVector(spellpooldata);
-								spellpool.push_back(cddata->cmdset.cmd[cmdindex].spell_list[j]);
+								spellpool.push_back(cmd.spell_list[j]);
 							}
-							cddata->spellset.spell[cddata->cmdset.cmd[cmdindex].spell_list[j]] = spellpick.second;
-							if (cddata->cmdset.cmd[cmdindex].spell_list[j]==46) { // Meteor slot
-								if (cddata->spellset.spell[46].model_alt!=143)
+							cddata->spellset.spell[cmd.spell_list[j]] = spellpick.second;
+							if (cmd.spell_list[j] == 46) { // Meteor slot
+								if (cddata->spellset.spell[46].model_alt != 143)
 									cddata->spellset.spell[46].model_alt = cddata->spellset.spell[46].model;
-							} else if (cddata->cmdset.cmd[cmdindex].spell_list[j]==66) { // Fenrir slot
+							} else if (cmd.spell_list[j] == 66) { // Fenrir slot
 								ReplacePartySpell(&cddata->spellset.spell[67], spellpick.second);
 								ReplaceStatusOrElementName(1, false, cddata->spellset.spell[67].help, cddata->spellset.spell[67].element, 0x20, &cddata->spellset.spell[67]);
 								cddata->spellset.spell[67].element = 0x20;
-							} else if (cddata->cmdset.cmd[cmdindex].spell_list[j]==68) { // Carbuncle slot
+							} else if (cmd.spell_list[j] == 68) { // Carbuncle slot
 								ReplacePartySpell(&cddata->spellset.spell[69], spellpick.second);
-								ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[69]), cddata->spellset.spell[69].help, cddata->spellset.status_set[cddata->spellset.spell[69].status], cddata->spellset.status_set[8], &cddata->spellset.spell[69]);
+								ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[69]), cddata->spellset.spell[69].help, cddata->spellset.status_set[cddata->spellset.spell[69].status].status, cddata->spellset.status_set[8].status, &cddata->spellset.spell[69]);
 								cddata->spellset.spell[69].status = 8;
 								ReplacePartySpell(&cddata->spellset.spell[70], spellpick.second);
-								ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[70]), cddata->spellset.spell[70].help, cddata->spellset.status_set[cddata->spellset.spell[70].status], cddata->spellset.status_set[6], &cddata->spellset.spell[70]);
+								ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[70]), cddata->spellset.spell[70].help, cddata->spellset.status_set[cddata->spellset.spell[70].status].status, cddata->spellset.status_set[6].status, &cddata->spellset.spell[70]);
 								cddata->spellset.spell[70].status = 6;
 								ReplacePartySpell(&cddata->spellset.spell[71], spellpick.second);
-								ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[71]), cddata->spellset.spell[71].help, cddata->spellset.status_set[cddata->spellset.spell[71].status], cddata->spellset.status_set[24], &cddata->spellset.spell[71]);
+								ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[71]), cddata->spellset.spell[71].help, cddata->spellset.status_set[cddata->spellset.spell[71].status].status, cddata->spellset.status_set[24].status, &cddata->spellset.spell[71]);
 								cddata->spellset.spell[71].status = 24;
 							}
 							if (m_charelan->IsChecked()) // Flair/Elan
-								for (k=0; k<flairpool.size() && k<elanpool.size(); k++)
-									if (cddata->cmdset.cmd[cmdindex].spell_list[j]==flairpool[k]) {
+								for (k = 0; k < flairpool.size() && k < elanpool.size(); k++)
+									if (cmd.spell_list[j] == flairpool[k]) {
 										cddata->spellset.spell[flairpool[k]].SetTargetAmount(SPELL_TARGET_AMOUNT_ONE);
 										ReplacePartySpell(&cddata->spellset.spell[elanpool[k]], spellpick.second);
 										cddata->spellset.spell[elanpool[k]].SetTargetAmount(SPELL_TARGET_AMOUNT_GROUP);
-										if (GetSpellModelInfo(cddata->spellset.spell[elanpool[k]].model).target_amount==SPELL_TARGET_AMOUNT_ONE)
+										if (GetSpellModelInfo(cddata->spellset.spell[elanpool[k]].model).target_amount == SPELL_TARGET_AMOUNT_ONE)
 											cddata->spellset.spell[elanpool[k]].model = 31; // Explosion
 										break;
 									}
 						}
 					}
 			}
-		for (i=0; i<ABILITY_SET_CAPACITY; i++) // Quina AP
-			if (cddata->statset.ability_list[5].ability[i]>0 && cddata->statset.ability_list[5].ability[i]<SPELL_AMOUNT && (!m_charspellsafe->IsChecked() || IsNotSafeAbility(cddata->statset.ability_list[5].ability[i], safe_abil_spell)))
+		for (i = 0; i < cddata->statset.ability_list[5].ability.size(); i++) // Quina AP
+			if (!cddata->statset.ability_list[5].ability[i].IsVoid() && cddata->statset.ability_list[5].ability[i].is_active && (!m_charspellsafe->IsChecked() || IsNotSafeAbility(cddata->statset.ability_list[5].ability[i].id, safe_abil_spell)))
 				cddata->statset.ability_list[5].ap_cost[i] = m_charquinaap->GetValue();
-		for (i=0; i<SPELL_AMOUNT; i++)
+		for (i = 0; i < SPELL_AMOUNT; i++)
 			if (!m_charspellsafe->IsChecked() || IsNotSafeAbility(i, safe_abil_spell)) {
 				cddata->spellset.spell[i].menu_flag &= 0xF9;
 				cddata->UpdateSpellName(i);
 			}
-		if (m_charmpboost->GetSelection()==1) {
-			for (i=0; i<SPELL_AMOUNT; i++)
+		if (m_charmpboost->GetSelection() == 1) {
+			for (i = 0; i < SPELL_AMOUNT; i++)
 				if (IsSpellSummon(cddata->spellset.spell[i]) && (!m_charspellsafe->IsChecked() || IsNotSafeAbility(i, safe_abil_spell)))
 					cddata->spellset.spell[i].menu_flag |= 4;
-		} else if (m_charmpboost->GetSelection()==2) { // Summon command
+		} else if (m_charmpboost->GetSelection() == 2) { // Summon command
 			unsigned int spellcmdamount = 0;
-			if (cddata->cmdset.cmd[16].panel==COMMAND_PANEL_NONE) spellcmdamount = 1;
-			if (cddata->cmdset.cmd[16].panel==COMMAND_PANEL_SPELL) spellcmdamount = cddata->cmdset.cmd[16].spell_amount;
-			for (i=0; i<spellcmdamount; i++)
+			if (cddata->cmdset.cmd[16].panel == COMMAND_PANEL_NONE) spellcmdamount = 1;
+			if (cddata->cmdset.cmd[16].panel == COMMAND_PANEL_SPELL) spellcmdamount = cddata->cmdset.cmd[16].spell_amount;
+			for (i = 0; i < spellcmdamount; i++)
 				if (!m_charspellsafe->IsChecked() || IsNotSafeAbility(cddata->cmdset.cmd[16].spell_list[i], safe_abil_spell))
 					cddata->spellset.spell[cddata->cmdset.cmd[16].spell_list[i]].menu_flag |= 4;
 		}
@@ -770,38 +774,37 @@ void ToolRandomizer::ApplyRandomizerCharacter() {
 		cddata->SpellDisplayNames();
 	}
 	if (m_charsupport->IsChecked()) {
-		vector<uint8_t> supportfulllist;
-		vector<uint8_t> supportavaillist;
-		vector<uint8_t> supportnewlist;
-		array<uint8_t, SUPPORT_AMOUNT> apcost;
-		for (i=0; i+1<SUPPORT_AMOUNT; i++)
-			if (!m_charsupportsafe->IsChecked() || IsNotSafeAbility(SPELL_AMOUNT+i, safe_abil_support))
-				supportfulllist.push_back(SPELL_AMOUNT+i);
-		for (i=0; i<ABILITY_SET_AMOUNT; i++) {
+		vector<int> supportfulllist;
+		vector<int> supportavaillist;
+		vector<int> supportnewlist;
+		map<int, int> apcost;
+		for (i = 0; i < cddata->supportset.support.size(); i++)
+			if (i != 63 && (!m_charsupportsafe->IsChecked() || IsNotSafeAbility(cddata->spellset.spell.size() + i, safe_abil_support)))
+				supportfulllist.push_back(cddata->supportset.support[i].id);
+		for (i = 0; i < ABILITY_SET_AMOUNT; i++) {
 			supportnewlist.clear();
-			for (j=0; j<SUPPORT_AMOUNT; j++)
-				apcost[j] = 0;
+			apcost.clear();
 			supportavaillist = supportfulllist;
-			for (j=0; j<ABILITY_SET_CAPACITY; j++)
-				if (cddata->statset.ability_list[i].ability[j]>=SPELL_AMOUNT) {
-					apcost[cddata->statset.ability_list[i].ability[j]-SPELL_AMOUNT] = cddata->statset.ability_list[i].ap_cost[j];
-					if (!m_charsupportsafe->IsChecked() || IsNotSafeAbility(cddata->statset.ability_list[i].ability[j], safe_abil_support))
+			for (j = 0; j < cddata->statset.ability_list[i].ability.size(); j++)
+				if (!cddata->statset.ability_list[i].ability[j].is_active) {
+					apcost[cddata->statset.ability_list[i].ability[j].id] = cddata->statset.ability_list[i].ap_cost[j];
+					if (!m_charsupportsafe->IsChecked() || IsNotSafeAbility(cddata->statset.ability_list[i].ability[j].id, safe_abil_support))
 						supportnewlist.push_back(PickRandomInVector(supportavaillist));
 					else
-						supportnewlist.push_back(cddata->statset.ability_list[i].ability[j]);
+						supportnewlist.push_back(cddata->statset.ability_list[i].ability[j].id);
 				}
 			sort(supportnewlist.begin(), supportnewlist.end());
 			k = 0;
-			for (j=0; j<ABILITY_SET_CAPACITY; j++)
-				if (cddata->statset.ability_list[i].ability[j]>=SPELL_AMOUNT) {
-					cddata->statset.ability_list[i].ability[j] = supportnewlist[k];
-					if (apcost[supportnewlist[k]-SPELL_AMOUNT]>0) {
-						cddata->statset.ability_list[i].ap_cost[j] = apcost[supportnewlist[k]-SPELL_AMOUNT];
+			for (j = 0; j < cddata->statset.ability_list[i].ability.size(); j++)
+				if (!cddata->statset.ability_list[i].ability[j].is_active) {
+					cddata->statset.ability_list[i].ability[j].id = supportnewlist[k];
+					if (apcost[supportnewlist[k]] > 0) {
+						cddata->statset.ability_list[i].ap_cost[j] = apcost[supportnewlist[k]];
 					} else {
 						rnd = GetRandom(0, 50); // AP cost between 5 and 95 with higher density around 50
-						rnd = rnd*rnd/50;
-						rnd -= rnd%5;
-						cddata->statset.ability_list[i].ap_cost[j] = 50+(2*GetRandom(0, 2)-1)*rnd;
+						rnd = rnd * rnd / 50;
+						rnd -= rnd % 5;
+						cddata->statset.ability_list[i].ap_cost[j] = 50 + (2 * GetRandom(0, 2) - 1) * rnd;
 					}
 					k++;
 				}
@@ -811,35 +814,35 @@ void ToolRandomizer::ApplyRandomizerCharacter() {
 }
 
 void ToolRandomizer::ApplyRandomizerWeapon() {
-	unsigned int i,j,k;
-	if (m_weapabil->GetSelection()==1) {
+	unsigned int i, j, k;
+	if (m_weapabil->GetSelection() == 1) {
 		unsigned int curchari, otherchari;
 		uint16_t curchar, interestchar;
 		vector<uint16_t> charlist;
-		vector<uint8_t> abillist;
+		vector<int> abillist;
 		bool addchar;
-		for (i=0; i<PLAYABLE_CHAR_AMOUNT; i++) // Handle abilities of single characters + add multi-character weapons during the process
+		for (i = 0; i < PLAYABLE_CHAR_AMOUNT; i++) // Handle abilities of single characters + add multi-character weapons during the process
 			charlist.push_back(1 << i);
-		for (curchari=0; curchari<charlist.size(); curchari++) {
+		for (curchari = 0; curchari < charlist.size(); curchari++) {
 			curchar = charlist[curchari];
 			abillist.clear();
-			for (i=0; i<ITEM_WEAPON_AMOUNT; i++)
-				if (curchar==(curchar & cddata->itemset.item[i].char_availability))
-					for (j=0; j<3; j++)
-						if (cddata->itemset.item[i].skill[j]>0 && (!m_weapsafe->IsChecked() || IsNotSafeAbility(cddata->itemset.item[i].skill[j], safe_abil_weap)))
-							if (curchari<PLAYABLE_CHAR_AMOUNT && cddata->itemset.item[i].skill[j]>=SPELL_AMOUNT) {
-								abillist.push_back(cddata->itemset.item[i].skill[j]);
-							} else if (cddata->itemset.item[i].skill[j]<SPELL_AMOUNT) {
+			for (i = 0; i < ITEM_WEAPON_AMOUNT; i++)
+				if (curchar == (curchar & cddata->itemset.item[i].char_availability))
+					for (j = 0; j < 3; j++)
+						if (!cddata->itemset.item[i].skill[j].IsVoid() && (!m_weapsafe->IsChecked() || IsNotSafeAbility(cddata->itemset.item[i].skill[j].id, safe_abil_weap)))
+							if (curchari < PLAYABLE_CHAR_AMOUNT && !cddata->itemset.item[i].skill[j].is_active) {
+								abillist.push_back(cddata->itemset.item[i].skill[j].id);
+							} else if (cddata->itemset.item[i].skill[j].is_active) {
 								interestchar = 0;
-								for (k=0; k<PLAYABLE_CHAR_AMOUNT; k++)
-									if (((1 << k) & cddata->itemset.item[i].char_availability) && DoesCharacterUseSpell(cddata->statset.ability_list[cddata->statset.GetCharacterCommandsId(PLAYABLE_CHAR_AMOUNT-k-1)[0]], cddata->itemset.item[i].skill[j]))
+								for (k = 0; k < PLAYABLE_CHAR_AMOUNT; k++)
+									if (((1 << k) & cddata->itemset.item[i].char_availability) && DoesCharacterUseSpell(cddata->statset.ability_list[cddata->statset.GetCharacterCommandsIndices(PLAYABLE_CHAR_AMOUNT - k - 1)[0]], cddata->itemset.item[i].skill[j].id))
 										interestchar |= 1 << k;
-								if (interestchar==curchar) {
-									abillist.push_back(cddata->itemset.item[i].skill[j]);
-								} else if (interestchar>0) {
+								if (interestchar == curchar) {
+									abillist.push_back(cddata->itemset.item[i].skill[j].id);
+								} else if (interestchar > 0) {
 									addchar = true;
-									for (otherchari=0; otherchari<charlist.size(); otherchari++)
-										if (interestchar==charlist[otherchari]) {
+									for (otherchari = 0; otherchari < charlist.size(); otherchari++)
+										if (interestchar == charlist[otherchari]) {
 											addchar = false;
 											break;
 										}
@@ -847,84 +850,84 @@ void ToolRandomizer::ApplyRandomizerWeapon() {
 										charlist.push_back(interestchar);
 								}
 							}
-			for (i=0; i<ITEM_WEAPON_AMOUNT; i++)
-				if (curchar==(curchar & cddata->itemset.item[i].char_availability))
-					for (j=0; j<3; j++)
-						if (cddata->itemset.item[i].skill[j]>0 && (!m_weapsafe->IsChecked() || IsNotSafeAbility(cddata->itemset.item[i].skill[j], safe_abil_weap)))
-							if (curchari<PLAYABLE_CHAR_AMOUNT && cddata->itemset.item[i].skill[j]>=SPELL_AMOUNT) {
-								cddata->itemset.item[i].skill[j] = PickRandomInVector(abillist);
-							} else if (cddata->itemset.item[i].skill[j]<SPELL_AMOUNT) {
-								interestchar = 0;
-								for (k=0; k<PLAYABLE_CHAR_AMOUNT; k++)
-									if (((1 << k) & cddata->itemset.item[i].char_availability) && DoesCharacterUseSpell(cddata->statset.ability_list[cddata->statset.GetCharacterCommandsId(PLAYABLE_CHAR_AMOUNT-k-1)[0]], cddata->itemset.item[i].skill[j]))
-										interestchar |= 1 << k;
-								if (interestchar==curchar)
-									cddata->itemset.item[i].skill[j] = PickRandomInVector(abillist);
-							}
+							for (i = 0; i < ITEM_WEAPON_AMOUNT; i++)
+								if (curchar == (curchar & cddata->itemset.item[i].char_availability))
+									for (j = 0; j < 3; j++)
+										if (!cddata->itemset.item[i].skill[j].IsVoid() && (!m_weapsafe->IsChecked() || IsNotSafeAbility(cddata->itemset.item[i].skill[j].id, safe_abil_weap)))
+											if (curchari < PLAYABLE_CHAR_AMOUNT && !cddata->itemset.item[i].skill[j].is_active) {
+												cddata->itemset.item[i].skill[j].id = PickRandomInVector(abillist);
+											} else if (cddata->itemset.item[i].skill[j].is_active) {
+												interestchar = 0;
+												for (k = 0; k < PLAYABLE_CHAR_AMOUNT; k++)
+													if (((1 << k) & cddata->itemset.item[i].char_availability) && DoesCharacterUseSpell(cddata->statset.ability_list[cddata->statset.GetCharacterCommandsIndices(PLAYABLE_CHAR_AMOUNT - k - 1)[0]], cddata->itemset.item[i].skill[j].id))
+														interestchar |= 1 << k;
+												if (interestchar == curchar)
+													cddata->itemset.item[i].skill[j].id = PickRandomInVector(abillist);
+											}
 		}
 		cddata->MarkDataItemModified();
-	} else if (m_weapabil->GetSelection()==2) {
-		vector<uint8_t> availableslotlist;
-		vector<uint8_t> charspelllist;
-		vector<uint8_t> charsupplist;
-		vector<uint8_t> charweaplist;
-		uint8_t slotpick, abilpick;
+	} else if (m_weapabil->GetSelection() == 2) {
+		vector<int> availableslotlist;
+		vector<int> charspelllist;
+		vector<int> charsupplist;
+		vector<int> charweaplist;
+		int slotpick, abilpick;
 		bool addspell;
-		for (i=0; i<ITEM_WEAPON_AMOUNT; i++)
-			for (j=0; j<3; j++)
-				if (!m_weapsafe->IsChecked() || IsNotSafeAbility(cddata->itemset.item[i].skill[j], safe_abil_weap))
-					cddata->itemset.item[i].skill[j] = 0;
-		for (i=0; i<PLAYABLE_CHAR_AMOUNT; i++) {
+		for (i = 0; i < ITEM_WEAPON_AMOUNT; i++)
+			for (j = 0; j < 3; j++)
+				if (!m_weapsafe->IsChecked() || IsNotSafeAbility(cddata->itemset.item[i].skill[j].id, safe_abil_weap))
+					cddata->itemset.item[i].skill[j].Setup(0);
+		for (i = 0; i < PLAYABLE_CHAR_AMOUNT; i++) {
 			availableslotlist.clear();
 			charspelllist.clear();
 			charsupplist.clear();
 			charweaplist.clear();
-			AbilitySetDataStruct& abil = cddata->statset.ability_list[cddata->statset.GetCharacterCommandsId(i)[0]];
-			for (j=0; j<ABILITY_SET_CAPACITY; j++)
-				if (abil.ability[j]>0 && (!m_weapsafe->IsChecked() || IsNotSafeAbility(abil.ability[j], safe_abil_weap))) {
-					if (abil.ability[j]<SPELL_AMOUNT)
-						charspelllist.push_back(abil.ability[j]);
+			AbilitySetDataStruct& abil = cddata->statset.ability_list[cddata->statset.GetCharacterCommandsIndices(i)[0]];
+			for (j = 0; j < ABILITY_SET_CAPACITY; j++)
+				if (!abil.ability[j].IsVoid() && (!m_weapsafe->IsChecked() || IsNotSafeAbility(abil.ability[j].id, safe_abil_weap))) {
+					if (abil.ability[j].is_active)
+						charspelllist.push_back(abil.ability[j].id);
 					else
-						charsupplist.push_back(abil.ability[j]);
+						charsupplist.push_back(abil.ability[j].id);
 				}
-			if (charspelllist.size()==0 && charsupplist.size()==0)
+			if (charspelllist.size() == 0 && charsupplist.size() == 0)
 				continue;
-			for (j=0; j<ITEM_WEAPON_AMOUNT; j++)
-				if (cddata->itemset.item[j].char_availability & (1 << (PLAYABLE_CHAR_AMOUNT-i-1))) {
+			for (j = 0; j < ITEM_WEAPON_AMOUNT; j++)
+				if (cddata->itemset.item[j].char_availability & (1 << (PLAYABLE_CHAR_AMOUNT - i - 1))) {
 					charweaplist.push_back(j);
-					for (k=0; k<3; k++)
-						if (cddata->itemset.item[j].skill[k]==0)
+					for (k = 0; k < 3; k++)
+						if (cddata->itemset.item[j].skill[k].IsVoid())
 							availableslotlist.push_back(j);
 				}
-			if (charweaplist.size()==0)
+			if (charweaplist.size() == 0)
 				continue;
-			if (m_weapall->IsChecked() && charspelllist.size()>0)
-				for (j=0; j<charspelllist.size() && availableslotlist.size()>0; j++) {
+			if (m_weapall->IsChecked() && charspelllist.size() > 0)
+				for (j = 0; j < charspelllist.size() && availableslotlist.size()>0; j++) {
 					addspell = true;
-					for (slotpick=0; slotpick<charweaplist.size() && addspell; slotpick++)
-						for (k=0; k<3; k++)
-							if (charsupplist[j]==cddata->itemset.item[charweaplist[slotpick]].skill[k]) {
+					for (slotpick = 0; slotpick < charweaplist.size() && addspell; slotpick++)
+						for (k = 0; k < 3; k++)
+							if (charsupplist[j] == cddata->itemset.item[charweaplist[slotpick]].skill[k].id) {
 								addspell = false;
 								break;
 							}
 					if (!addspell)
 						continue;
 					slotpick = PickRandomInVector(availableslotlist);
-					for (k=0; k<3; k++)
-						if (cddata->itemset.item[slotpick].skill[k]==0) {
-							cddata->itemset.item[slotpick].skill[k] = charspelllist[j];
+					for (k = 0; k < 3; k++)
+						if (cddata->itemset.item[slotpick].skill[k].IsVoid()) {
+							cddata->itemset.item[slotpick].skill[k].id = charspelllist[j];
 							break;
 						}
 				}
-			while (100*availableslotlist.size()>3*(100-m_weapslot->GetValue())*charweaplist.size()) {
+			while (100 * availableslotlist.size() > 3 * (100 - m_weapslot->GetValue()) * charweaplist.size()) {
 				slotpick = PickRandomInVector(availableslotlist);
-				for (k=0; k<3; k++)
-					if (cddata->itemset.item[slotpick].skill[k]==0) {
-						if (charspelllist.size()==0 || (charsupplist.size()>0 && GetRandom(0,100)<m_weapsupport->GetValue()))
+				for (k = 0; k < 3; k++)
+					if (cddata->itemset.item[slotpick].skill[k].IsVoid()) {
+						if (charspelllist.size() == 0 || (charsupplist.size() > 0 && GetRandom(0, 100) < m_weapsupport->GetValue()))
 							abilpick = charsupplist[GetRandom(0, charsupplist.size())];
 						else
 							abilpick = charspelllist[GetRandom(0, charspelllist.size())];
-						cddata->itemset.item[slotpick].skill[k] = abilpick;
+						cddata->itemset.item[slotpick].skill[k].id = abilpick;
 						break;
 					}
 			}
@@ -934,80 +937,80 @@ void ToolRandomizer::ApplyRandomizerWeapon() {
 }
 
 void ToolRandomizer::ApplyRandomizerArmor() {
-	unsigned int i,j,k;
-	if (m_armorabil->GetSelection()==1) {
-		vector<uint8_t> abillist;
-		for (i=0; i<ITEM_ARMOR_AMOUNT+ITEM_USABLE_AMOUNT; i++)
-			for (j=0; j<3; j++)
-				if (cddata->itemset.item[ITEM_WEAPON_AMOUNT+i].skill[j]>0 && (!m_armorsafe->IsChecked() || IsNotSafeAbility(cddata->itemset.item[ITEM_WEAPON_AMOUNT+i].skill[j], safe_abil_armor)))
-					abillist.push_back(cddata->itemset.item[ITEM_WEAPON_AMOUNT+i].skill[j]);
-		for (i=0; i<ITEM_ARMOR_AMOUNT+ITEM_USABLE_AMOUNT; i++)
-			for (j=0; j<3; j++)
-				if (cddata->itemset.item[ITEM_WEAPON_AMOUNT+i].skill[j]>0 && (!m_armorsafe->IsChecked() || IsNotSafeAbility(cddata->itemset.item[ITEM_WEAPON_AMOUNT+i].skill[j], safe_abil_armor)))
-					cddata->itemset.item[ITEM_WEAPON_AMOUNT+i].skill[j] = PickRandomInVector(abillist);
+	unsigned int i, j, k;
+	if (m_armorabil->GetSelection() == 1) {
+		vector<int> abillist;
+		for (i = 0; i < ITEM_ARMOR_AMOUNT + ITEM_USABLE_AMOUNT; i++)
+			for (j = 0; j < 3; j++)
+				if (!cddata->itemset.item[ITEM_WEAPON_AMOUNT + i].skill[j].IsVoid() && (!m_armorsafe->IsChecked() || IsNotSafeAbility(cddata->itemset.item[ITEM_WEAPON_AMOUNT + i].skill[j].id, safe_abil_armor)))
+					abillist.push_back(cddata->itemset.item[ITEM_WEAPON_AMOUNT + i].skill[j].id);
+		for (i = 0; i < ITEM_ARMOR_AMOUNT + ITEM_USABLE_AMOUNT; i++)
+			for (j = 0; j < 3; j++)
+				if (!cddata->itemset.item[ITEM_WEAPON_AMOUNT + i].skill[j].IsVoid() && (!m_armorsafe->IsChecked() || IsNotSafeAbility(cddata->itemset.item[ITEM_WEAPON_AMOUNT + i].skill[j].id, safe_abil_armor)))
+					cddata->itemset.item[ITEM_WEAPON_AMOUNT + i].skill[j].id = PickRandomInVector(abillist);
 		cddata->MarkDataItemModified();
-	} else if (m_armorabil->GetSelection()==2) {
-		vector<uint8_t> availableslotlist;
-		vector<uint8_t> chararmorlist;
-		vector<uint8_t> charspelllist;
-		vector<uint8_t> charsupplist;
-		uint8_t slotpick, abilpick;
+	} else if (m_armorabil->GetSelection() == 2) {
+		vector<int> availableslotlist;
+		vector<int> chararmorlist;
+		vector<int> charspelllist;
+		vector<int> charsupplist;
+		int slotpick, abilpick;
 		bool addsupp;
-		for (i=0; i<ITEM_ARMOR_AMOUNT+ITEM_USABLE_AMOUNT; i++)
-			for (j=0; j<3; j++)
-				if (!m_armorsafe->IsChecked() || IsNotSafeAbility(cddata->itemset.item[ITEM_WEAPON_AMOUNT+i].skill[j], safe_abil_armor))
-					cddata->itemset.item[ITEM_WEAPON_AMOUNT+i].skill[j] = 0;
-		for (i=0; i<PLAYABLE_CHAR_AMOUNT; i++) { // ToDo: Looping over "char_availability" instead of characters may be a better randomization in some cases...
+		for (i = 0; i < ITEM_ARMOR_AMOUNT + ITEM_USABLE_AMOUNT; i++)
+			for (j = 0; j < 3; j++)
+				if (!m_armorsafe->IsChecked() || IsNotSafeAbility(cddata->itemset.item[ITEM_WEAPON_AMOUNT + i].skill[j].id, safe_abil_armor))
+					cddata->itemset.item[ITEM_WEAPON_AMOUNT + i].skill[j].Setup(0);
+		for (i = 0; i < PLAYABLE_CHAR_AMOUNT; i++) { // ToDo: Looping over "char_availability" instead of characters may be a better randomization in some cases...
 			availableslotlist.clear();
 			chararmorlist.clear();
 			charspelllist.clear();
 			charsupplist.clear();
-			AbilitySetDataStruct& abil = cddata->statset.ability_list[cddata->statset.GetCharacterCommandsId(i)[0]];
-			for (j=0; j<ABILITY_SET_CAPACITY; j++)
-				if (abil.ability[j]>0 && (!m_armorsafe->IsChecked() || IsNotSafeAbility(abil.ability[j], safe_abil_armor))) {
-					if (abil.ability[j]<SPELL_AMOUNT)
-						charspelllist.push_back(abil.ability[j]);
+			AbilitySetDataStruct& abil = cddata->statset.ability_list[cddata->statset.GetCharacterCommandsIndices(i)[0]];
+			for (j = 0; j < ABILITY_SET_CAPACITY; j++)
+				if (!abil.ability[j].IsVoid() && (!m_armorsafe->IsChecked() || IsNotSafeAbility(abil.ability[j].id, safe_abil_armor))) {
+					if (abil.ability[j].is_active)
+						charspelllist.push_back(abil.ability[j].id);
 					else
-						charsupplist.push_back(abil.ability[j]);
+						charsupplist.push_back(abil.ability[j].id);
 				}
-			if (charspelllist.size()==0 && charsupplist.size()==0)
+			if (charspelllist.size() == 0 && charsupplist.size() == 0)
 				continue;
-			for (j=0; j<ITEM_ARMOR_AMOUNT+ITEM_USABLE_AMOUNT; j++)
-				if (cddata->itemset.item[ITEM_WEAPON_AMOUNT+j].char_availability & (1 << (PLAYABLE_CHAR_AMOUNT-i-1))) {
-					chararmorlist.push_back(ITEM_WEAPON_AMOUNT+j);
-					for (k=0; k<3; k++)
-						if (cddata->itemset.item[ITEM_WEAPON_AMOUNT+j].skill[k]==0)
-							availableslotlist.push_back(ITEM_WEAPON_AMOUNT+j);
+			for (j = 0; j < ITEM_ARMOR_AMOUNT + ITEM_USABLE_AMOUNT; j++)
+				if (cddata->itemset.item[ITEM_WEAPON_AMOUNT + j].char_availability & (1 << (PLAYABLE_CHAR_AMOUNT - i - 1))) {
+					chararmorlist.push_back(ITEM_WEAPON_AMOUNT + j);
+					for (k = 0; k < 3; k++)
+						if (cddata->itemset.item[ITEM_WEAPON_AMOUNT + j].skill[k].IsVoid())
+							availableslotlist.push_back(ITEM_WEAPON_AMOUNT + j);
 				}
-			if (chararmorlist.size()==0)
+			if (chararmorlist.size() == 0)
 				continue;
-			if (m_armorall->IsChecked() && charspelllist.size()>0)
-				for (j=0; j<charsupplist.size() && availableslotlist.size()>0; j++) {
+			if (m_armorall->IsChecked() && charspelllist.size() > 0)
+				for (j = 0; j < charsupplist.size() && availableslotlist.size()>0; j++) {
 					addsupp = true;
-					for (slotpick=0; slotpick<chararmorlist.size() && addsupp; slotpick++)
-						for (k=0; k<3; k++)
-							if (charsupplist[j]==cddata->itemset.item[chararmorlist[slotpick]].skill[k]) {
+					for (slotpick = 0; slotpick < chararmorlist.size() && addsupp; slotpick++)
+						for (k = 0; k < 3; k++)
+							if (charsupplist[j] == cddata->itemset.item[chararmorlist[slotpick]].skill[k].id) {
 								addsupp = false;
 								break;
 							}
 					if (!addsupp)
 						continue;
 					slotpick = PickRandomInVector(availableslotlist);
-					for (k=0; k<3; k++)
-						if (cddata->itemset.item[slotpick].skill[k]==0) {
-							cddata->itemset.item[slotpick].skill[k] = charsupplist[j];
+					for (k = 0; k < 3; k++)
+						if (cddata->itemset.item[slotpick].skill[k].IsVoid()) {
+							cddata->itemset.item[slotpick].skill[k].id = charsupplist[j];
 							break;
 						}
 				}
-			while (100*availableslotlist.size()>3*(100-m_armorslot->GetValue())*chararmorlist.size()) {
+			while (100 * availableslotlist.size() > 3 * (100 - m_armorslot->GetValue()) * chararmorlist.size()) {
 				slotpick = PickRandomInVector(availableslotlist);
-				for (k=0; k<3; k++)
-					if (cddata->itemset.item[slotpick].skill[k]==0) {
-						if (charspelllist.size()==0 || (charsupplist.size()>0 && GetRandom(0,100)<m_armorsupport->GetValue()))
+				for (k = 0; k < 3; k++)
+					if (cddata->itemset.item[slotpick].skill[k].IsVoid()) {
+						if (charspelllist.size() == 0 || (charsupplist.size() > 0 && GetRandom(0, 100) < m_armorsupport->GetValue()))
 							abilpick = charsupplist[GetRandom(0, charsupplist.size())];
 						else
 							abilpick = charspelllist[GetRandom(0, charspelllist.size())];
-						cddata->itemset.item[slotpick].skill[k] = abilpick;
+						cddata->itemset.item[slotpick].skill[k].id = abilpick;
 						break;
 					}
 			}

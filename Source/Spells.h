@@ -6,6 +6,7 @@
 #define STATUS_AMOUNT		32
 #define STATUS_SET_AMOUNT	64
 struct SpellDataStruct;
+struct StatusSetStruct;
 struct SpellDataSet;
 
 #include <inttypes.h>
@@ -109,20 +110,21 @@ typedef uint8_t Spell_Target_Amount;
 
 struct SpellDataStruct {
 public:
+	int id;
 	FF9String name; // readonly
 	FF9String help; // readonly
 	uint8_t target_type;
-	uint16_t model;
+	int model;
 	uint8_t target_flag;
-	uint8_t effect;
-	uint8_t power;
+	int effect;
+	int power;
 	uint8_t element;
-	uint8_t accuracy;
+	int accuracy;
 	uint8_t flag;
 	uint8_t status;
-	uint8_t mp;
+	int mp;
 	uint8_t menu_flag;
-	uint16_t model_alt;
+	int model_alt;
 	uint16_t help_size_x;
 	
 	uint8_t perform_name;
@@ -151,11 +153,17 @@ private:
 	friend SpellDataSet;
 };
 
+struct StatusSetStruct {
+public:
+	int id;
+	wstring name;
+	uint32_t status;
+};
+
 struct SpellDataSet {
 public:
-	SpellDataStruct spell[SPELL_AMOUNT];
-	uint32_t status_set[STATUS_SET_AMOUNT];
-	wstring status_set_name[STATUS_SET_AMOUNT];
+	vector<SpellDataStruct> spell;
+	vector<StatusSetStruct> status_set;
 	uint16_t name_space_total;
 	uint16_t help_space_total;
 	uint16_t name_space_used;
@@ -163,6 +171,9 @@ public:
 	
 	uint32_t steam_method_position;
 	uint32_t steam_method_base_length;
+
+	int GetSpellIndexById(int spellid);
+	SpellDataStruct& GetSpellById(int spellid);
 	
 	void Load(fstream& ffbin, ConfigurationSet& config);
 	void Write(fstream& ffbin, ConfigurationSet& config);
@@ -175,8 +186,7 @@ public:
 	void GenerateCSharp(vector<string>& buffer);
 	bool GenerateCSV(string basefolder);
 	// texttype: 0 for name, 1 for help
-	void WriteSteamText(fstream& ffbin, unsigned int texttype, SteamLanguage lang = GetSteamLanguage());
-	int GetSteamTextSize(unsigned int texttype, SteamLanguage lang = GetSteamLanguage());
+	void WriteSteamText(fstream& ffbin, unsigned int texttype, bool onlymodified, bool asmes, SteamLanguage lang = GetSteamLanguage());
 	void UpdateOffset();
 };
 

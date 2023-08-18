@@ -55,6 +55,7 @@ public:
 	void GenerateEntryNames();
 	void EntryChangeName(unsigned int entry, wxString newname);
 	wxString GetArgumentDescription(int64_t argvalue, uint8_t argtype);
+	wxString GetFunctionName(unsigned int entry, uint16_t functype);
 
 	// Change entry_selection and function_selection
 	LogStruct ParseFunction(wxString str, unsigned int entry, unsigned int function, unsigned int startinglinenumber = 0);
@@ -67,7 +68,7 @@ public:
 
 private:
 	bool GenerateFunctionStrings_Rec(wxString& str, ScriptFunction& func, unsigned int& funcpos, unsigned int& oppos, int endfuncpos = -1, unsigned int tabpos = 1, int blocktype = 0, int endblockpos = -1, bool appendcomment = false);
-	wxString ConvertVarArgument(ScriptArgument& arg, wxArrayString* argcomment = NULL);
+	wxString ConvertVarArgument(ScriptArgument& arg, wxArrayString* argcomment = NULL, bool* ignorenulljump = NULL);
 	void UpdateGlobalLocalStrings(int ignoreentry = -1);
 };
 
@@ -130,6 +131,7 @@ public:
 	int ShowModal();
 	void DisplayFunctionList(int newfunc = -1, int removedfunc = -1);
 	void DisplayFunction(unsigned int entry, unsigned int function);
+	void UpdateWorldRegion(unsigned int entry, unsigned int function);
 	void DisplayOperation(wxString line, bool refreshargcontrol = true, bool refresharg = true);
 	void UpdateLineHelp(long x, long y);
 	void UpdateMultiLangDialogHelp(wxChoice* dialogchoice);
@@ -139,6 +141,8 @@ private:
 	unsigned int world_pos_type;
 	int32_t world_pos_x;
 	int32_t world_pos_y;
+	int32_t world_region_x;
+	int32_t world_region_y;
 	bool refresh_control_disable;
 	bool refresh_help_force;
 	
@@ -157,6 +161,7 @@ private:
 	wxPanel* ArgCreatePosition(wxArrayString& arg, unsigned int id);
 	wxColourPickerCtrl* ArgCreateColorPicker(wxArrayString& arg, unsigned int id, bool rgb);
 	
+	void WorldMapDraw(wxDC& dc);
 	void ScriptChangeArg(int argi, int64_t value, int argshift = 0);
 	
 	void OnFunctionChoose(wxListEvent& event);

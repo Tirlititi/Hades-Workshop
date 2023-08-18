@@ -746,13 +746,13 @@ bool PreferencesDialog::LoadToolRandomizerConfig(RandomizerWindow* configwindowu
 			configwindow->used_seed = wxAtoi(TmpArgs[argcount]);
 		cfgfield = cfgstr;
 		bool clearsafe[5], safe[5];
-		vector<uint8_t>* safelist[5] = { &configwindow->safe_abil_scramble, &configwindow->safe_abil_spell, &configwindow->safe_abil_support, &configwindow->safe_abil_weap, &configwindow->safe_abil_armor };
+		vector<int>* safelist[5] = { &configwindow->safe_abil_scramble, &configwindow->safe_abil_spell, &configwindow->safe_abil_support, &configwindow->safe_abil_weap, &configwindow->safe_abil_armor };
 		for (i=0; i<5; i++)
 			clearsafe[i] = true;
 		while (SearchField(cfgfield, _(L"SafeAbilities"), TmpArgs, argcount)) {
 			wxStringTokenizer abillist(TmpArgs[argcount],L",");
 			wxString abiltoken;
-			uint8_t abilid;
+			int abilid;
 			bool duplicate;
 			safe[0] = argcount==0 || TmpArgs[0].IsSameAs(L"Characters") || TmpArgs[0].IsSameAs(L"SpellStats");
 			safe[1] = argcount==0 || TmpArgs[0].IsSameAs(L"Characters") || TmpArgs[0].IsSameAs(L"Spells");

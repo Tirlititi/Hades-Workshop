@@ -219,6 +219,12 @@
     <ClCompile Include="Source\MemoriaUtility.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Gui_SmallDialogs.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\CommonUtility.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\BattleScenes.h">
@@ -465,6 +471,12 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="Source\MemoriaUtility.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Gui_SmallDialogs.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\CommonUtility.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

@@ -18,9 +18,15 @@ inline wxString FB_GetWxStringLine(wxString& str) {
 }
 
 inline wxString FB_GetNextWord(wxString& str) {
-	wxString tmpstr;
-	wxString res = str.BeforeFirst(L' ', &tmpstr);
-	str = tmpstr;
+	size_t pos = str.find_first_of(L" \n");
+	if (pos == wxString::npos)
+	{
+		wxString strcpy = str;
+		str = _(L"");
+		return strcpy;
+	}
+	wxString res = str.Mid(0, pos);
+	str = str.Mid(pos + 1);
 	return res;
 }
 
@@ -1028,6 +1034,7 @@ LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, int scripttype, wxSt
 									break;
 								}
 							current_handler->AddFunction(currententry, i, value);
+							currentfunction = i;
 						}
 						codevalue = _(L"");
 						codelinenum = linenum;

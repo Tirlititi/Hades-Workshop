@@ -178,14 +178,14 @@ FF9String::~FF9String() {
 	}*/
 }
 
-void FF9String::CreateEmpty() {
+void FF9String::CreateEmpty(bool forceinitall) {
 	str = L"";
 	str_ext = L"";
 	str_nice = L"";
 	code_amount = 0;
 	if (raw)
 		delete[] raw;
-	if (GetGameType()==GAME_TYPE_PSX) {
+	if (GetGameType() == GAME_TYPE_PSX) {
 		length = 1;
 		null_terminated = 1;
 		raw = new uint8_t[length];
@@ -196,6 +196,12 @@ void FF9String::CreateEmpty() {
 		raw = NULL;
 	}
 	created = true;
+	if (forceinitall && GetGameType() != GAME_TYPE_PSX) {
+		for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+			multi_lang_init[lang] = true;
+			multi_lang_str[lang] = L"";
+		}
+	}
 }
 
 uint8_t tmparg[SPECIAL_STRING_MAX_OPCODE][SPECIAL_STRING_MAX_ARGUMENT];
@@ -583,20 +589,20 @@ void FF9String::SteamToPSX() {
 void FF9String::PSXToSteam() {
 	wstring tmpstr = str;
 	GameType gt = GetGameType();
-	bool timedend = null_terminated==0 && code_amount>0;
+	bool timedend = null_terminated == 0 && code_amount > 0;
 	int timedendvalue;
 	int i;
 	if (timedend) {
-		if (code_arg[code_amount-1][0]==0x01)
-			timedendvalue = code_arg[code_amount-1][1];
+		if (code_arg[code_amount - 1][0] == 0x01)
+			timedendvalue = code_arg[code_amount - 1][1];
 		else // 0x09
 			timedendvalue = -1;
 	}
 	SetGameType(GAME_TYPE_STEAM);
 	CreateEmpty();
-	for (i=0;i<tmpstr.length();i++)
-		if (tmpstr[i]==hades::SPECIAL_STRING_OPCODE_WCHAR) {
-			tmpstr.erase(i,1);
+	for (i = 0; i < (int)tmpstr.length(); i++)
+		if (tmpstr[i] == hades::SPECIAL_STRING_OPCODE_WCHAR) {
+			tmpstr.erase(i, 1);
 			i--;
 		}
 	if (timedend) {
@@ -677,9 +683,9 @@ void FFIXWriteFF9String(fstream& f, FF9String& str) {
 
 uint32_t FFIXReadLongAlign(fstream& f, uint32_t& destvalue) {
 	destvalue = f.get();
-	destvalue += f.get() << 8;
-	destvalue += f.get() << 16;
-	destvalue += f.get() << 24;
+	destvalue |= f.get() << 8;
+	destvalue |= f.get() << 16;
+	destvalue |= f.get() << 24;
 	JumpIfNeeded(f);
 	return destvalue;
 }
@@ -699,11 +705,11 @@ uint32_t FFIXReadLongBE(fstream& f, uint32_t& destvalue) {
 uint32_t FFIXReadLong(fstream& f, uint32_t& destvalue) {
 	destvalue = f.get();
 	JumpIfNeeded(f);
-	destvalue += f.get() << 8;
+	destvalue |= f.get() << 8;
 	JumpIfNeeded(f);
-	destvalue += f.get() << 16;
+	destvalue |= f.get() << 16;
 	JumpIfNeeded(f);
-	destvalue += f.get() << 24;
+	destvalue |= f.get() << 24;
 	JumpIfNeeded(f);
 	return destvalue;
 }
@@ -723,9 +729,9 @@ void FFIXWriteLong(fstream& f, uint32_t value) {
 uint32_t FFIXReadLong3(fstream& f, uint32_t& destvalue) {
 	destvalue = f.get();
 	JumpIfNeeded(f);
-	destvalue += f.get() << 8;
+	destvalue |= f.get() << 8;
 	JumpIfNeeded(f);
-	destvalue += f.get() << 16;
+	destvalue |= f.get() << 16;
 	JumpIfNeeded(f);
 	return destvalue;
 }
@@ -762,6 +768,32 @@ uint8_t FFIXReadChar(fstream& f, uint8_t& destvalue) {
 
 void FFIXWriteChar(fstream& f, uint8_t value) {
 	f.put(value);
+	JumpIfNeeded(f);
+}
+
+int FFIXReadFlexibleShort(fstream& f, int& destvalue, bool asint) {
+	destvalue = f.get();
+	JumpIfNeeded(f);
+	destvalue |= f.get() << 8;
+	JumpIfNeeded(f);
+	return destvalue;
+}
+
+void FFIXWriteFlexibleShort(fstream& f, int value, bool asint) {
+	f.put(value & 0xFF);
+	JumpIfNeeded(f);
+	f.put((value >> 8) & 0xFF);
+	JumpIfNeeded(f);
+}
+
+int FFIXReadFlexibleChar(fstream& f, int& destvalue, bool asint) {
+	destvalue = f.get();
+	JumpIfNeeded(f);
+	return destvalue;
+}
+
+void FFIXWriteFlexibleChar(fstream& f, int value, bool asint) {
+	f.put(value & 0xFF);
 	JumpIfNeeded(f);
 }
 
@@ -892,9 +924,9 @@ void SteamWriteFF9String(fstream& f, FF9String& str, SteamLanguage lang, bool wr
 
 uint32_t SteamReadLong(fstream& f, uint32_t& destvalue) {
 	destvalue = f.get();
-	destvalue += f.get() << 8;
-	destvalue += f.get() << 16;
-	destvalue += f.get() << 24;
+	destvalue |= f.get() << 8;
+	destvalue |= f.get() << 16;
+	destvalue |= f.get() << 24;
 	return destvalue;
 }
 
@@ -907,8 +939,8 @@ void SteamWriteLong(fstream& f, uint32_t value) {
 
 uint32_t SteamReadLong3(fstream& f, uint32_t& destvalue) {
 	destvalue = f.get();
-	destvalue += f.get() << 8;
-	destvalue += f.get() << 16;
+	destvalue |= f.get() << 8;
+	destvalue |= f.get() << 16;
 	return destvalue;
 }
 
@@ -920,7 +952,7 @@ void SteamWriteLong3(fstream& f, uint32_t value) {
 
 uint16_t SteamReadShort(fstream& f, uint16_t& destvalue) {
 	destvalue = f.get();
-	destvalue += f.get() << 8;
+	destvalue |= f.get() << 8;
 	return destvalue;
 }
 
@@ -935,6 +967,26 @@ uint8_t SteamReadChar(fstream& f, uint8_t& destvalue) {
 }
 
 void SteamWriteChar(fstream& f, uint8_t value) {
+	f.put(value & 0xFF);
+}
+
+int SteamReadFlexibleShort(fstream& f, int& destvalue, bool asint) {
+	destvalue = f.get();
+	destvalue |= f.get() << 8;
+	return destvalue;
+}
+
+void SteamWriteFlexibleShort(fstream& f, int value, bool asint) {
+	f.put(value & 0xFF);
+	f.put((value >> 8) & 0xFF);
+}
+
+int SteamReadFlexibleChar(fstream& f, int& destvalue, bool asint) {
+	destvalue = f.get();
+	return destvalue;
+}
+
+void SteamWriteFlexibleChar(fstream& f, int value, bool asint) {
 	f.put(value & 0xFF);
 }
 
@@ -974,6 +1026,21 @@ inline void PPFStepIgnoreData(fstream& f) {
 		}
 		ppfstepnextignore += FILE_IGNORE_DATA_PERIOD;
 	}
+}
+
+void PPFStepAddFlexibleChar(fstream& f, int value, bool asint) {
+	ppfstepx[ppfstepsize] = f.get();
+	ppfstepy[ppfstepsize++] = value;
+	PPFStepIgnoreData(f);
+}
+
+void PPFStepAddFlexibleShort(fstream& f, int value, bool asint) {
+	ppfstepx[ppfstepsize] = f.get();
+	ppfstepy[ppfstepsize++] = value & 0xFF;
+	PPFStepIgnoreData(f);
+	ppfstepx[ppfstepsize] = f.get();
+	ppfstepy[ppfstepsize++] = (value >> 8) & 0xFF;
+	PPFStepIgnoreData(f);
 }
 
 void PPFStepAddChar(fstream& f, uint8_t value) {
@@ -1046,9 +1113,9 @@ void HWSWriteFF9String(fstream& f, FF9String& str) {
 
 uint32_t HWSReadLong(fstream& f, uint32_t& destvalue) {
 	destvalue = f.get();
-	destvalue += f.get() << 8;
-	destvalue += f.get() << 16;
-	destvalue += f.get() << 24;
+	destvalue |= f.get() << 8;
+	destvalue |= f.get() << 16;
+	destvalue |= f.get() << 24;
 	return destvalue;
 }
 
@@ -1061,8 +1128,8 @@ void HWSWriteLong(fstream& f, uint32_t value) {
 
 uint32_t HWSReadLong3(fstream& f, uint32_t& destvalue) {
 	destvalue = f.get();
-	destvalue += f.get() << 8;
-	destvalue += f.get() << 16;
+	destvalue |= f.get() << 8;
+	destvalue |= f.get() << 16;
 	return destvalue;
 }
 
@@ -1074,7 +1141,7 @@ void HWSWriteLong3(fstream& f, uint32_t value) {
 
 uint16_t HWSReadShort(fstream& f, uint16_t& destvalue) {
 	destvalue = f.get();
-	destvalue += f.get() << 8;
+	destvalue |= f.get() << 8;
 	return destvalue;
 }
 
@@ -1092,6 +1159,73 @@ void HWSWriteChar(fstream& f, uint8_t value) {
 	f.put(value);
 }
 
+int HWSReadFlexibleShort(fstream& f, int& destvalue, bool asint) {
+	if (asint) {
+		destvalue = f.get();
+		destvalue |= f.get() << 8;
+		destvalue |= f.get() << 16;
+		destvalue |= f.get() << 24;
+	} else {
+		destvalue = f.get();
+		destvalue |= f.get() << 8;
+	}
+	return destvalue;
+}
+
+void HWSWriteFlexibleShort(fstream& f, int value, bool asint) {
+	if (asint) {
+		f.put(value & 0xFF);
+		f.put((value >> 8) & 0xFF);
+		f.put((value >> 16) & 0xFF);
+		f.put((value >> 24) & 0xFF);
+	} else {
+		f.put(value & 0xFF);
+		f.put((value >> 8) & 0xFF);
+	}
+}
+
+int HWSReadFlexibleChar(fstream& f, int& destvalue, bool asint) {
+	if (asint) {
+		destvalue = f.get();
+		destvalue |= f.get() << 8;
+		destvalue |= f.get() << 16;
+		destvalue |= f.get() << 24;
+	} else {
+		destvalue = f.get();
+	}
+	return destvalue;
+}
+
+void HWSWriteFlexibleChar(fstream& f, int value, bool asint) {
+	if (asint) {
+		f.put(value & 0xFF);
+		f.put((value >> 8) & 0xFF);
+		f.put((value >> 16) & 0xFF);
+		f.put((value >> 24) & 0xFF);
+	} else {
+		f.put(value & 0xFF);
+	}
+}
+
 void HWSSeek(fstream& f, uint32_t abspos, uint32_t offset) {
 	f.seekg(abspos+offset);
+}
+
+void HWSReadWString(fstream& f, wstring& str) {
+	int strlen;
+	char* raw;
+	HWSReadFlexibleChar(f, strlen, true);
+	raw = new char[strlen];
+	for (int i = 0; i < strlen; i++)
+		raw[i] = f.get();
+	str = wxString::FromUTF8(raw, strlen).wc_str();
+}
+
+void HWSWriteWString(fstream& f, wstring str) {
+	wxString wxstr(str);
+	wxCharBuffer raw = wxstr.mb_str(wxConvUTF8);
+	int strlen = raw.length();
+	HWSWriteFlexibleChar(f, strlen, true);
+	for (unsigned int i = 0; (int)i < strlen; i++)
+		f.put(raw[i]);
 }

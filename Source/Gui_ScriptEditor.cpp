@@ -17,11 +17,12 @@
 #define WORLDMAP_PANEL_HEIGHT		216
 #define SCRIPT_FIXED_ENTRY_AMOUNT	9
 
-const static wxColour FUNCTION_COLOR_NORMAL(255,255,255);
-const static wxColour FUNCTION_COLOR_MODIFIED(255,200,0);
-const static wxColour FUNCTION_COLOR_PARSED(40,255,40);
-const static wxColour FUNCTION_COLOR_FAILED(255,0,0);
-const static wxColour POSITION_POINT_COLOR(0,0,255);
+const static wxColour FUNCTION_COLOR_NORMAL(255, 255, 255);
+const static wxColour FUNCTION_COLOR_MODIFIED(255, 200, 0);
+const static wxColour FUNCTION_COLOR_PARSED(40, 255, 40);
+const static wxColour FUNCTION_COLOR_FAILED(255, 0, 0);
+const static wxColour POSITION_POINT_COLOR(0, 0, 255);
+const static wxColour POSITION_REGION_COLOR(255, 0, 180);
 
 /*********************************************************************
  * Interpreting and displaying the game scripts is done there.
@@ -369,6 +370,14 @@ wxString ScriptEditHandler::GetArgumentDescription(int64_t argvalue, uint8_t arg
 	return wxEmptyString;
 }
 
+wxString ScriptEditHandler::GetFunctionName(unsigned int entry, uint16_t functype) {
+	if (functype < G_N_ELEMENTS(FunctionTypeName))
+		return _(L"Function ") + wxString::Format(wxT("%s_%s"), entry_name[entry], FunctionTypeName[functype]);
+	if (script_type == SCRIPT_TYPE_WORLD && entry == 0 && functype >= 0x8000)
+		return _(L"Function ") + wxString::Format(wxT("%s_x%u_y%u_%s"), entry_name[entry], (functype & 0xFC) >> 2, (functype & 0x3F00) >> 8, WorldFunctionTriggerType[functype & 3]);
+	return _(L"Function ") + wxString::Format(wxT("%s_%u"), entry_name[entry], functype);
+}
+
 ScriptEditHandler::ScriptEditHandler(ScriptDataStruct& scpt, int scpttype, SaveSet* sv, EnemyDataStruct* ed, TextDataStruct* td) :
 	enemy(ed),
 	text(td),
@@ -407,7 +416,7 @@ ScriptEditHandler::~ScriptEditHandler() {
 
 ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int scpttype, SaveSet* sv, EnemyDataStruct* ed, TextDataStruct* td) :
 	ScriptEditWindow(parent),
-	ScriptEditHandler(scpt,scpttype,sv,ed,td),
+	ScriptEditHandler(scpt, scpttype, sv, ed, td),
 	current_opcode(0xFFFF),
 	arg_control_type(NULL),
 	extra_size(script.GetExtraSize()),
@@ -417,46 +426,48 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 	help_dial(NULL) {
 	unsigned int i;
 	handler_dialog = this;
-	m_panelbattle->Enable(script_type==SCRIPT_TYPE_BATTLE);
-	m_panelfield->Enable(script_type==SCRIPT_TYPE_FIELD);
-	m_panelworld->Enable(script_type==SCRIPT_TYPE_WORLD);
-	if (script_type==SCRIPT_TYPE_FIELD) {
-		gl_window = new GLWindow(m_fielddisplaypanel,NULL);
+	m_panelbattle->Enable(script_type == SCRIPT_TYPE_BATTLE);
+	m_panelfield->Enable(script_type == SCRIPT_TYPE_FIELD);
+	m_panelworld->Enable(script_type == SCRIPT_TYPE_WORLD);
+	if (script_type == SCRIPT_TYPE_FIELD) {
+		gl_window = new GLWindow(m_fielddisplaypanel, NULL);
 		FieldTilesDataStruct* tiles = NULL;
 		FieldWalkmeshDataStruct* walk = NULL;
-		if (GetGameType()==GAME_TYPE_PSX) {
+		if (GetGameType() == GAME_TYPE_PSX) {
 			tiles = (FieldTilesDataStruct*)&script.parent_cluster->chunk[script.parent_cluster->SearchChunkType(CHUNK_TYPE_FIELD_TILES)].GetObject(0);
 			walk = (FieldWalkmeshDataStruct*)&script.parent_cluster->chunk[script.parent_cluster->SearchChunkType(CHUNK_TYPE_FIELD_WALK)].GetObject(0);
 		} else {
-			for (i=0;i<datas->fieldset->amount;i++)
-				if (scpt.object_id==datas->fieldset->script_data[i]->object_id) {
+			for (i = 0; i < datas->fieldset->amount; i++)
+				if (scpt.object_id == datas->fieldset->script_data[i]->object_id) {
 					tiles = datas->fieldset->background_data[i];
 					walk = datas->fieldset->walkmesh[i];
 					break;
 				}
 		}
-		gl_window->DisplayField(tiles,walk);
-		m_fielddisplaybackground->Enable(tiles!=NULL);
-		m_fielddisplaymesh->Enable(walk!=NULL);
+		gl_window->DisplayField(tiles, walk);
+		m_fielddisplaybackground->Enable(tiles != NULL);
+		m_fielddisplaymesh->Enable(walk != NULL);
 		gl_window->Connect(wxEVT_LEFT_DCLICK, wxMouseEventHandler(ScriptEditDialog::OnPickWalkmesh), NULL, this);
-	} else if (script_type==SCRIPT_TYPE_WORLD) {
+	} else if (script_type == SCRIPT_TYPE_WORLD) {
 		world_pos_type = 0;
+		world_region_x = -1;
+		world_region_y = -1;
 	}
-	for (i=1;i<script.entry_amount;i++)
-		if (enemy && i<=enemy->stat_amount) {
-			entry_name[i] = _(enemy->stat[i-1].name.GetStr(2));
-			entry_name[i].Replace(_(L" "),_(L"_"));
+	for (i = 1; i < script.entry_amount; i++)
+		if (enemy && i <= enemy->stat_amount) {
+			entry_name[i] = _(enemy->stat[i - 1].name.GetStr(2));
+			entry_name[i].Replace(_(L" "), _(L"_"));
 		}
 	modellist_id.resize(G_N_ELEMENTS(HADES_STRING_MODEL_NAME));
 	modellist_str.Alloc(G_N_ELEMENTS(HADES_STRING_MODEL_NAME));
-	for (i=0;i<G_N_ELEMENTS(HADES_STRING_MODEL_NAME);i++) {
+	for (i = 0; i < G_N_ELEMENTS(HADES_STRING_MODEL_NAME); i++) {
 		modellist_str.Add(_(HADES_STRING_MODEL_NAME[i].label));
 		modellist_id[i] = new uint16_t(HADES_STRING_MODEL_NAME[i].id);
 	}
 	DisplayFunctionList();
 	if (use_character) {
 		character_str.Alloc(13);
-		for (i=0;i<8;i++)
+		for (i = 0; i < 8; i++)
 			character_str.Add(_(datas->statset->initial_stat[i].default_name.str_nice));
 		character_str.Add(_(datas->statset->initial_stat[11].default_name.str_nice));
 		character_str.Add(_(datas->statset->initial_stat[8].default_name.str_nice));
@@ -464,29 +475,29 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 		character_str.Add(_(datas->statset->initial_stat[10].default_name.str_nice));
 		character_str.Add(_(HADES_STRING_NULL_CHARACTER_SLOT));
 		character_id.resize(13);
-		for (i=0;i<12;i++)
+		for (i = 0; i < 12; i++)
 			character_id[i] = new uint16_t(i);
 		character_id[12] = new uint16_t(0xFF);
 	}
 	if (use_battle) {
 		battle_str.Alloc(datas->enemyset->battle_amount);
 		battle_id.resize(datas->enemyset->battle_amount);
-		for (i=0;i<datas->enemyset->battle_amount;i++) {
+		for (i = 0; i < datas->enemyset->battle_amount; i++) {
 			battle_str.Add(_(datas->enemyset->battle_name[i]));
 			battle_id[i] = new uint16_t(datas->enemyset->battle_data[i]->object_id);
 		}
 	}
-	m_intvalueattack->Enable(enemy!=NULL);
-	m_intvalueattacklabel->Enable(enemy!=NULL);
+	m_intvalueattack->Enable(enemy != NULL);
+	m_intvalueattacklabel->Enable(enemy != NULL);
 	if (use_attack) {
 		attack_str.Alloc(enemy->spell_amount);
-		for (i=0;i<enemy->spell_amount;i++)
+		for (i = 0; i < enemy->spell_amount; i++)
 			attack_str.Add(_(enemy->spell[i].name.str_nice));
 	}
 	if (use_field) {
-		field_str.Alloc(datas->fieldset->amount+1);
-		field_id.resize(datas->fieldset->amount+1);
-		for (i=0;i<datas->fieldset->amount;i++) {
+		field_str.Alloc(datas->fieldset->amount + 1);
+		field_id.resize(datas->fieldset->amount + 1);
+		for (i = 0; i < datas->fieldset->amount; i++) {
 			field_str.Add(_(datas->fieldset->script_data[i]->name.str_nice));
 			field_id[i] = new uint16_t(datas->fieldset->script_data[i]->object_id);
 		}
@@ -496,129 +507,129 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 	m_intvalueitem->Enable(use_item);
 	m_intvalueitemlabel->Enable(use_item);
 	if (use_item) {
-		item_str.Alloc(ITEM_AMOUNT+KEY_ITEM_AMOUNT+CARD_AMOUNT);
-		item_id.resize(ITEM_AMOUNT+KEY_ITEM_AMOUNT+CARD_AMOUNT);
-		for (i=0;i<ITEM_AMOUNT;i++) {
+		item_str.Alloc(ITEM_AMOUNT + KEY_ITEM_AMOUNT + CARD_AMOUNT);
+		item_id.resize(ITEM_AMOUNT + KEY_ITEM_AMOUNT + CARD_AMOUNT);
+		for (i = 0; i < ITEM_AMOUNT; i++) {
 			item_str.Add(_(datas->itemset->item[i].name.str_nice));
 			item_id[i] = new uint16_t(i);
 		}
-		for (i=0;i<KEY_ITEM_AMOUNT;i++) {
+		for (i = 0; i < KEY_ITEM_AMOUNT; i++) {
 			item_str.Add(_(datas->itemset->key_item[i].name.str_nice));
-			item_id[ITEM_AMOUNT+i] = new uint16_t(0x100+i);
+			item_id[ITEM_AMOUNT + i] = new uint16_t(0x100 + i);
 		}
 		if (use_card) {
-			for (i=0;i<CARD_AMOUNT;i++) {
+			for (i = 0; i < CARD_AMOUNT; i++) {
 				item_str.Add(_(datas->cardset->card[i].name.str_nice));
-				item_id[ITEM_AMOUNT+KEY_ITEM_AMOUNT+i] = new uint16_t(0x200+i);
+				item_id[ITEM_AMOUNT + KEY_ITEM_AMOUNT + i] = new uint16_t(0x200 + i);
 			}
 		} else {
-			for (i=0;i<CARD_AMOUNT;i++) {
+			for (i = 0; i < CARD_AMOUNT; i++) {
 				item_str.Add(_(HADES_STRING_CARD_NAME[i].label));
-				item_id[ITEM_AMOUNT+KEY_ITEM_AMOUNT+i] = new uint16_t(0x200+HADES_STRING_CARD_NAME[i].id);
+				item_id[ITEM_AMOUNT + KEY_ITEM_AMOUNT + i] = new uint16_t(0x200 + HADES_STRING_CARD_NAME[i].id);
 			}
 		}
 	}
 	m_intvaluespell->Enable(use_ability);
 	m_intvaluespelllabel->Enable(use_ability);
 	if (use_ability) {
-		ability_str.Alloc(use_support ? SPELL_AMOUNT+SUPPORT_AMOUNT : SPELL_AMOUNT);
-		for (i=0;i<SPELL_AMOUNT;i++)
+		ability_str.Alloc(use_support ? SPELL_AMOUNT + SUPPORT_AMOUNT : SPELL_AMOUNT);
+		for (i = 0; i < SPELL_AMOUNT; i++)
 			ability_str.Add(_(datas->spellset->spell[i].name.str_nice));
 		if (use_support)
-			for (i=0;i<SUPPORT_AMOUNT;i++)
+			for (i = 0; i < SUPPORT_AMOUNT; i++)
 				ability_str.Add(_(datas->supportset->support[i].name.str_nice));
 	}
 	m_intvaluecmd->Enable(use_command);
 	m_intvaluecmdlabel->Enable(use_command);
 	if (use_command) {
-		command_str.Alloc(COMMAND_AMOUNT);
-		for (i=0;i+1<COMMAND_AMOUNT;i++)
+		command_str.Alloc(COMMAND_AMOUNT + G_N_ELEMENTS(CommandAddendaName));
+		for (i = 0; i + 1 < COMMAND_AMOUNT; i++)
 			command_str.Add(_(datas->cmdset->cmd[i].name.str_nice));
-		for (i=0;i<G_N_ELEMENTS(CommandAddendaName);i++)
+		for (i = 0; i < G_N_ELEMENTS(CommandAddendaName); i++)
 			command_str.Add(_(CommandAddendaName[i]));
 	}
 	if (use_text) {
 		text_str.Alloc(text->amount);
-		for (i=0;i<text->amount;i++)
-			text_str.Add(_(text->text[i].str_nice.substr(0,30)));
+		for (i = 0; i < text->amount; i++)
+			text_str.Add(_(text->text[i].str_nice.substr(0, 30)));
 	}
 	defaultbool_str.Alloc(16);
-	for (i=0;i<16;i++)
-		defaultbool_str.Add(_(wxString::Format(wxT("%u"),i+1)));
+	for (i = 0; i < 16; i++)
+		defaultbool_str.Add(_(wxString::Format(wxT("%u"), i + 1)));
 	disc_str.Alloc(G_N_ELEMENTS(DiscName));
-	for (i=0;i<G_N_ELEMENTS(DiscName);i++)
+	for (i = 0; i < G_N_ELEMENTS(DiscName); i++)
 		disc_str.Add(_(DiscName[i]));
 	menutype_str.Alloc(G_N_ELEMENTS(MenuType));
-	for (i=0;i<G_N_ELEMENTS(MenuType);i++)
+	for (i = 0; i < G_N_ELEMENTS(MenuType); i++)
 		menutype_str.Add(_(MenuType[i]));
 	shop_str.Alloc(G_N_ELEMENTS(HADES_STRING_SHOP_NAME));
-	for (i=0;i<G_N_ELEMENTS(HADES_STRING_SHOP_NAME);i++)
+	for (i = 0; i < G_N_ELEMENTS(HADES_STRING_SHOP_NAME); i++)
 		shop_str.Add(_(HADES_STRING_SHOP_NAME[i].label));
 	abilityset_str.Alloc(G_N_ELEMENTS(AbilitySetName));
-	for (i=0;i<G_N_ELEMENTS(AbilitySetName);i++)
+	for (i = 0; i < G_N_ELEMENTS(AbilitySetName); i++)
 		abilityset_str.Add(_(AbilitySetName[i]));
 	bubblesymbol_str.Alloc(G_N_ELEMENTS(BubbleSymbolName));
-	for (i=0;i<G_N_ELEMENTS(BubbleSymbolName);i++)
+	for (i = 0; i < G_N_ELEMENTS(BubbleSymbolName); i++)
 		bubblesymbol_str.Add(_(BubbleSymbolName[i]));
 	deck_str.Alloc(G_N_ELEMENTS(HADES_STRING_DECK_NAME));
-	for (i=0;i<G_N_ELEMENTS(HADES_STRING_DECK_NAME);i++)
+	for (i = 0; i < G_N_ELEMENTS(HADES_STRING_DECK_NAME); i++)
 		deck_str.Add(_(HADES_STRING_DECK_NAME[i].label));
 	equipset_id.resize(G_N_ELEMENTS(EquipSetName));
 	equipset_str.Alloc(G_N_ELEMENTS(EquipSetName));
-	for (i=0;i<G_N_ELEMENTS(EquipSetName);i++) {
+	for (i = 0; i < G_N_ELEMENTS(EquipSetName); i++) {
 		equipset_str.Add(_(EquipSetName[i].name));
 		equipset_id[i] = new uint16_t(EquipSetName[i].id);
 	}
 	fmv_id.resize(G_N_ELEMENTS(FMVNameList));
 	fmv_str.Alloc(G_N_ELEMENTS(FMVNameList));
-	for (i=0;i<G_N_ELEMENTS(FMVNameList);i++) {
+	for (i = 0; i < G_N_ELEMENTS(FMVNameList); i++) {
 		fmv_str.Add(_(FMVNameList[i].name));
 		fmv_id[i] = new uint16_t(FMVNameList[i].id);
 	}
 	battlecode_id.resize(G_N_ELEMENTS(BattleCodeName));
 	battlecode_str.Alloc(G_N_ELEMENTS(BattleCodeName));
-	for (i=0;i<G_N_ELEMENTS(BattleCodeName);i++) {
+	for (i = 0; i < G_N_ELEMENTS(BattleCodeName); i++) {
 		battlecode_str.Add(_(BattleCodeName[i].name));
 		battlecode_id[i] = new uint16_t(BattleCodeName[i].id);
 	}
 	modelcode_id.resize(G_N_ELEMENTS(ModelCodeName));
 	modelcode_str.Alloc(G_N_ELEMENTS(ModelCodeName));
-	for (i=0;i<G_N_ELEMENTS(ModelCodeName);i++) {
+	for (i = 0; i < G_N_ELEMENTS(ModelCodeName); i++) {
 		modelcode_str.Add(_(ModelCodeName[i].name));
 		modelcode_id[i] = new uint16_t(ModelCodeName[i].id);
 	}
 	worldcode_id.resize(G_N_ELEMENTS(WorldCodeName));
 	worldcode_str.Alloc(G_N_ELEMENTS(WorldCodeName));
-	for (i=0;i<G_N_ELEMENTS(WorldCodeName);i++) {
+	for (i = 0; i < G_N_ELEMENTS(WorldCodeName); i++) {
 		worldcode_str.Add(_(WorldCodeName[i].name));
 		worldcode_id[i] = new uint16_t(WorldCodeName[i].id);
 	}
 	soundcode_id.resize(G_N_ELEMENTS(SoundCodeName));
 	soundcode_str.Alloc(G_N_ELEMENTS(SoundCodeName));
-	for (i=0;i<G_N_ELEMENTS(SoundCodeName);i++) {
+	for (i = 0; i < G_N_ELEMENTS(SoundCodeName); i++) {
 		soundcode_str.Add(_(SoundCodeName[i].name));
 		soundcode_id[i] = new uint16_t(SoundCodeName[i].id);
 	}
 	spscode_id.resize(G_N_ELEMENTS(SpsCodeName));
 	spscode_str.Alloc(G_N_ELEMENTS(SpsCodeName));
-	for (i=0;i<G_N_ELEMENTS(SpsCodeName);i++) {
+	for (i = 0; i < G_N_ELEMENTS(SpsCodeName); i++) {
 		spscode_str.Add(_(SpsCodeName[i].name));
 		spscode_id[i] = new uint16_t(SpsCodeName[i].id);
 	}
 	worldmap_id.resize(G_N_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME));
 	worldmap_str.Alloc(G_N_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME));
-	for (i=0;i<G_N_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME);i++) {
+	for (i = 0; i < G_N_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME); i++) {
 		worldmap_str.Add(_(HADES_STRING_WORLD_BLOCK_NAME[i].label));
 		worldmap_id[i] = new uint16_t(HADES_STRING_WORLD_BLOCK_NAME[i].id);
 	}
 	func_popup_menu = new wxMenu();
-	func_popup_menu->Append(wxID_ADD,HADES_STRING_GENERIC_ADD);
-	func_popup_menu->Append(wxID_REMOVE,HADES_STRING_GENERIC_REMOVE);
-	func_popup_menu->Append(wxID_SET,HADES_STRING_GENERIC_PROPERTIES);
-	func_popup_menu->Connect(wxEVT_COMMAND_MENU_SELECTED,wxCommandEventHandler(ScriptEditDialog::OnFunctionRightClickMenu),NULL,this);
+	func_popup_menu->Append(wxID_ADD, HADES_STRING_GENERIC_ADD);
+	func_popup_menu->Append(wxID_REMOVE, HADES_STRING_GENERIC_REMOVE);
+	func_popup_menu->Append(wxID_SET, HADES_STRING_GENERIC_PROPERTIES);
+	func_popup_menu->Connect(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(ScriptEditDialog::OnFunctionRightClickMenu), NULL, this);
 	wxImage tmpimg = wxBITMAP(bulletdown_image).ConvertToImage();
 	m_localvarshowimg->SetBitmap(wxBitmap(tmpimg));
-	Connect(wxEVT_TIMER,wxTimerEventHandler(ScriptEditDialog::OnTimer),NULL,this);
+	Connect(wxEVT_TIMER, wxTimerEventHandler(ScriptEditDialog::OnTimer), NULL, this);
 }
 
 ScriptEditDialog::~ScriptEditDialog() {
@@ -683,12 +694,9 @@ int ScriptEditDialog::ShowModal() {
 void ScriptEditHandler::AddFunction(int entryid, int funcidpos, uint16_t functype) {
 	script.AddFunction(entryid, funcidpos, functype);
 	unsigned int absoluteid = GetFunctionAbsolutePos(entryid, funcidpos);
-	functionlist_id.insert(functionlist_id.begin()+absoluteid, new uint16_t(functype));
-	if (functype<G_N_ELEMENTS(FunctionTypeName))
-		functionlist_str.insert(functionlist_str.begin()+absoluteid, _(L"Function ")+wxString::Format(wxT("%s_%s"), entry_name[entryid], FunctionTypeName[functype]));
-	else
-		functionlist_str.insert(functionlist_str.begin()+absoluteid, _(L"Function ")+wxString::Format(wxT("%s_%u"), entry_name[entryid], functype));
-	func_str[entryid].Insert(functionlist_str[absoluteid]+_(L"\n"), funcidpos);
+	functionlist_id.insert(functionlist_id.begin() + absoluteid, new uint16_t(functype));
+	functionlist_str.insert(functionlist_str.begin() + absoluteid, GetFunctionName(entryid, functype));
+	func_str[entryid].Insert(functionlist_str[absoluteid] + _(L"\n"), funcidpos);
 }
 
 void ScriptEditHandler::AddEntry(int entrypos, uint8_t entrytype) {
@@ -713,28 +721,25 @@ void ScriptEditHandler::AddEntry(int entrypos, uint8_t entrytype) {
 
 unsigned int ScriptEditHandler::GetFunctionAbsolutePos(unsigned int entry, unsigned int func) {
 	unsigned int i, res = func;
-	for (i=0; i<entry; i++)
+	for (i = 0; i < entry; i++)
 		res += script.entry_function_amount[i];
 	return res;
 }
 
 void ScriptEditHandler::GenerateFunctionList() {
 	unsigned int funcamount = 0;
-	unsigned int i,j;
-	for (i=0;i<functionlist_id.size();i++)
+	unsigned int i, j;
+	for (i = 0; i < functionlist_id.size(); i++)
 		delete functionlist_id[i];
-	for (i=0;i<script.entry_amount;i++)
+	for (i = 0; i < script.entry_amount; i++)
 		funcamount += script.entry_function_amount[i];
 	functionlist_str.resize(funcamount);
 	functionlist_id.resize(funcamount);
 	funcamount = 0;
-	for (i=0;i<script.entry_amount;i++) {
-		for (j=0;j<script.entry_function_amount[i];j++) {
+	for (i = 0; i < script.entry_amount; i++) {
+		for (j = 0; j < script.entry_function_amount[i]; j++) {
 			functionlist_id[funcamount] = new uint16_t(script.function_type[i][j]);
-			if (script.function_type[i][j]<G_N_ELEMENTS(FunctionTypeName))
-				functionlist_str[funcamount] = _(L"Function ")+wxString::Format(wxT("%s_%s"), entry_name[i], FunctionTypeName[script.function_type[i][j]]);
-			else
-				functionlist_str[funcamount] = _(L"Function ")+wxString::Format(wxT("%s_%u"), entry_name[i], script.function_type[i][j]);
+			functionlist_str[funcamount] = GetFunctionName(i, script.function_type[i][j]);
 			funcamount++;
 		}
 	}
@@ -809,13 +814,10 @@ void ScriptEditDialog::DisplayFunctionList(int newfunc, int removedfunc) {
 wxString operandtmp[SCRPT_MAX_OPERAND];
 unsigned int funcpostrack[SCRPT_MAX_FUNC_LINE];
 unsigned int functrackline;
-// varvoidcounter's purpose is solely to avoid adding a "break" in the functions that lead to World Maps
-// In those, there's a "set Global_ScenarioCounter" dummy line followed by another "JUMP 0" dummy line not to be turned into a "break"
-unsigned int varvoidcounter = 0;
-wxString ScriptEditHandler::ConvertVarArgument(ScriptArgument& arg, wxArrayString* argcomment) {
+wxString ScriptEditHandler::ConvertVarArgument(ScriptArgument& arg, wxArrayString* argcomment, bool* ignorenulljump) {
 	if (!arg.is_var)
 		return wxEmptyString;
-	
+
 	unsigned int macroi;
 	uint8_t varcat;
 	uint16_t varid;
@@ -843,96 +845,100 @@ wxString ScriptEditHandler::ConvertVarArgument(ScriptArgument& arg, wxArrayStrin
 				} \
 			} \
 		}
-	
-	unsigned int operand = 0, i = 0, j, k, voidcheck = 0;
+
+	unsigned int operand = 0, i = 0, j, k, operandtotalcount = 0;
 	uint8_t varbyte = arg.var[i++];
 	int vartype = VarOpList[varbyte].type;
+	bool isignorenulljumpsetter = false;
 	int64_t argvalue;
 	bool argisnum;
-	while (vartype!=-1) {
-		if (argcomment!=NULL) {
+	while (vartype != -1) {
+		if (argcomment != NULL) {
 			k = 0;
-			for (j=0;j<G_N_ELEMENTS(VarOpTypeList);j++) {
-				if (VarOpTypeList[j].op==varbyte) {
+			for (j = 0; j < G_N_ELEMENTS(VarOpTypeList); j++) {
+				if (VarOpTypeList[j].op == varbyte) {
 					k++;
-					argisnum = operandtmp[operand-k].ToLongLong(&argvalue);
-					if (argisnum || (operandtmp[operand-k].Len()>0 && operandtmp[operand-k].Last()==L'L')) {
-						wxString argcommenttoken = GetArgumentDescription(argvalue,VarOpTypeList[j].type);
-						if (argcommenttoken.Len()>0)
+					argisnum = operandtmp[operand - k].ToLongLong(&argvalue);
+					if (argisnum || (operandtmp[operand - k].Len() > 0 && operandtmp[operand - k].Last() == L'L')) {
+						wxString argcommenttoken = GetArgumentDescription(argvalue, VarOpTypeList[j].type);
+						if (argcommenttoken.Len() > 0)
 							argcomment->Add(argcommenttoken);
 					}
 				}
 			}
 		}
-		if (vartype==0) {
-			operandtmp[operand-1] = _(L"( ")+_(VarOpList[varbyte].opstring)+operandtmp[operand-1]+_(L" )");
-		} else if (vartype==1) {
-			operandtmp[operand-1] = _(L"( ")+operandtmp[operand-1]+_(VarOpList[varbyte].opstring)+_(L" )");
-		} else if (vartype==2) {
-			operandtmp[operand-2] = _(L"( ")+operandtmp[operand-2]+_(L" ")+_(VarOpList[varbyte].opstring)+_(L" ")+operandtmp[operand-1]+_(L" )");
+		if (vartype == 0) {
+			operandtmp[operand - 1] = _(L"( ") + _(VarOpList[varbyte].opstring) + operandtmp[operand - 1] + _(L" )");
+		} else if (vartype == 1) {
+			operandtmp[operand - 1] = _(L"( ") + operandtmp[operand - 1] + _(VarOpList[varbyte].opstring) + _(L" )");
+		} else if (vartype == 2) {
+			operandtmp[operand - 2] = _(L"( ") + operandtmp[operand - 2] + _(L" ") + _(VarOpList[varbyte].opstring) + _(L" ") + operandtmp[operand - 1] + _(L" )");
 			operand--;
-		} else if (vartype==3) {
-			operandtmp[operand-1] += _(L"[");
-			for (j=0;j<G_N_ELEMENTS(ScriptCharacterField);j++)
-				if (ScriptCharacterField[j].id==arg.var[i]) {
-					operandtmp[operand-1] << _(ScriptCharacterField[j].name);
+		} else if (vartype == 3) {
+			operandtmp[operand - 1] += _(L"[");
+			for (j = 0; j < G_N_ELEMENTS(ScriptCharacterField); j++)
+				if (ScriptCharacterField[j].id == arg.var[i]) {
+					operandtmp[operand - 1] << _(ScriptCharacterField[j].name);
 					break;
 				}
-			if (j==G_N_ELEMENTS(ScriptCharacterField))
-				operandtmp[operand-1] << (int)arg.var[i];
+			if (j == G_N_ELEMENTS(ScriptCharacterField))
+				operandtmp[operand - 1] << (int)arg.var[i];
 			i++;
-			operandtmp[operand-1] += _(L"]");
-		} else if (vartype==5) {
+			operandtmp[operand - 1] += _(L"]");
+		} else if (vartype == 5) {
 			operandtmp[operand].Empty();
 			operandtmp[operand] << (unsigned int)arg.var[i++];
 			operandtmp[operand++] += L"S";
-		} else if (vartype==6) {
+		} else if (vartype == 6) {
 			operandtmp[operand].Empty();
-			operandtmp[operand++] << (unsigned int)(arg.var[i]+(arg.var[i+1] << 8));
+			operandtmp[operand++] << (unsigned int)(arg.var[i] + (arg.var[i + 1] << 8));
 			i += 2;
-		} else if (vartype==7) {
+		} else if (vartype == 7) {
 			operandtmp[operand].Empty();
-			operandtmp[operand] << (unsigned int)(arg.var[i]+(arg.var[i+1] << 8)+(arg.var[i+2] << 16)+(arg.var[i+3] << 24));
+			operandtmp[operand] << (unsigned int)(arg.var[i] + (arg.var[i + 1] << 8) + (arg.var[i + 2] << 16) + (arg.var[i + 3] << 24));
 			operandtmp[operand++] += L"L";
 			i += 4;
-		} else if (vartype>=10 && vartype<20) {
+		} else if (vartype >= 10 && vartype < 20) {
 			varcat = varbyte;
 			varid = arg.var[i++];
 			MACRO_SEARCHVARNAME(operandtmp[operand])
 			operand++;
-		} else if (vartype>=20 && vartype<30) {
+			isignorenulljumpsetter = (varbyte == 0xDC && varid == 0)		// "General_ScenarioCounter"
+								  || (varbyte == 0x7A && varid == 9)		// "GetDialogChoice"
+								  || (varcat >= 0xD0 && (varcat % 4) == 1);	// "VAR_Glob..."
+		} else if (vartype >= 20 && vartype < 30) {
 			varcat = varbyte;
-			varid = arg.var[i]+(arg.var[i+1] << 8);
+			varid = arg.var[i] + (arg.var[i + 1] << 8);
 			i += 2;
 			MACRO_SEARCHVARNAME(operandtmp[operand])
 			operand++;
-		} else if (vartype==50) {
-			operandtmp[operand-1] = _(VarOpList[varbyte].opstring)+_(L"(")+operandtmp[operand-1]+_(L")");
-		} else if (vartype==51) {
-			operandtmp[operand-2] = _(VarOpList[varbyte].opstring)+_(L"(")+operandtmp[operand-2]+_(L", ")+operandtmp[operand-1]+_(L")");
+		} else if (vartype == 50) {
+			operandtmp[operand - 1] = _(VarOpList[varbyte].opstring) + _(L"(") + operandtmp[operand - 1] + _(L")");
+		} else if (vartype == 51) {
+			operandtmp[operand - 2] = _(VarOpList[varbyte].opstring) + _(L"(") + operandtmp[operand - 2] + _(L", ") + operandtmp[operand - 1] + _(L")");
 			operand--;
-		} else if (vartype==55) {
-			if (arg.var[i+1]<G_N_ELEMENTS(VarEntryPropList)) {
+		} else if (vartype == 55) {
+			if (arg.var[i + 1] < G_N_ELEMENTS(VarEntryPropList)) {
 				operandtmp[operand].Empty();
-				operandtmp[operand] << _(VarEntryPropList[arg.var[i+1]].opstring) << _(L"(") << (unsigned int)arg.var[i] << _(L")");
+				operandtmp[operand] << _(VarEntryPropList[arg.var[i + 1]].opstring) << _(L"(") << (unsigned int)arg.var[i] << _(L")");
 				operand++;
 				i += 2;
 			} else {
 				operandtmp[operand].Empty();
-				operandtmp[operand] << _(VarOpList[varbyte].opstring) << _(L"(") << (unsigned int)arg.var[i+1] << _(L", ") << (unsigned int)arg.var[i] << _(L")");
+				operandtmp[operand] << _(VarOpList[varbyte].opstring) << _(L"(") << (unsigned int)arg.var[i + 1] << _(L", ") << (unsigned int)arg.var[i] << _(L")");
 				operand++;
 				i += 2;
 			}
 		}
 		varbyte = arg.var[i++];
 		vartype = VarOpList[varbyte].type;
-		voidcheck++;
+		operandtotalcount++;
 	}
-	if (operand==1) {
-		if (voidcheck<=1)
-			varvoidcounter = 3;
-		if (operandtmp[0][0]==L'(')
-			operandtmp[0] = operandtmp[0].substr(2,operandtmp[0].length()-4);
+	if (operand == 1) {
+		if (operandtotalcount <= 1 && isignorenulljumpsetter && ignorenulljump != NULL)
+			*ignorenulljump = true;
+		if (operandtmp[0][0] == L'(')
+			operandtmp[0] = operandtmp[0].substr(2, operandtmp[0].length() - 4);
 		return operandtmp[0];
 	}
 	return wxEmptyString;
@@ -968,6 +974,11 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 		} \
 		str += _(L"\n");
 
+	// ignorenulljump's purpose is solely to avoid adding a "break" in the functions that lead to World Maps
+	// In those, there's a "set Global_ScenarioCounter" dummy line followed by another "JUMP 0" dummy line not to be turned into a "break"
+	// The same thing happens in "Ramuh_SpeakBTN" (when chosing the order of the story) but this time with a line "set GetDialogChoice"
+	// And the same appear with "set VAR_GlobUInt8_24" / "set VAR_GlobInt16_29" / "set VAR_GlobInt16_28" at very minor places
+	bool ignorenulljump = false;
 	unsigned int i,j;
 	wxString tabstr = L"";
 	wxArrayString argcomment;
@@ -979,8 +990,6 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 	if (endblockpos==-1)
 		endblockpos = func.length;
 	while (funcpos<endfuncpos) {
-		if (varvoidcounter>0)
-			varvoidcounter--;
 		// Assume there are 0x05 opcodes before jump opcodes recquiring a stack value
 		switch (func.op[oppos].opcode) {
 		case 0x01: {
@@ -1007,8 +1016,10 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 				} else if (blocktype==BLOCK_TYPE_IF && funcpos+3==endfuncpos) {
 					funcpos += func.op[oppos++].size;
 					return true;
-				} else if (func.op[oppos].arg[0].GetValue()==0 && varvoidcounter>0) {
+				} else if (func.op[oppos].arg[0].GetValue() == 0 && ignorenulljump && endfuncpos > funcpos + func.op[oppos].size) {
 					funcpos += func.op[oppos++].size;
+					ignorenulljump = false;
+					str += tabstr + _(L"// JMP(0)\n");
 				} else {
 					str += tabstr+_(L"break\n");
 					funcpostrack[functrackline++] = funcpos;
@@ -1031,7 +1042,6 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 			break;
 		}
 		case 0x02: {
-			varvoidcounter = 0;
 			str += tabstr+_(L"if ( ");
 			str += ConvertVarArgument(func.op[oppos-1].arg[0],argcommentptr);
 			str += _(L" ) {");
@@ -1053,7 +1063,6 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 			break;
 		}
 		case 0x03: {
-			varvoidcounter = 0;
 			if (func.op[oppos].arg[0].GetValue()>=0) {
 				str += tabstr+_(L"ifnot ( ");
 				str += ConvertVarArgument(func.op[oppos-1].arg[0],argcommentptr);
@@ -1119,8 +1128,8 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 			return blocktype==BLOCK_TYPE_ELSE;
 		}
 		case 0x05: {
-			if (func.op[oppos+1].opcode!=0x02 && func.op[oppos+1].opcode!=0x03 && func.op[oppos+1].opcode!=0x06 && func.op[oppos+1].opcode!=0x0B) {
-				str += tabstr+_(HADES_STRING_SCRIPT_OPCODE[func.op[oppos].opcode].label)+_(L" ")+ConvertVarArgument(func.op[oppos].arg[0],argcommentptr);
+			if (func.op[oppos + 1].opcode != 0x02 && func.op[oppos + 1].opcode != 0x03 && func.op[oppos + 1].opcode != 0x06 && func.op[oppos + 1].opcode != 0x0B) {
+				str += tabstr + _(HADES_STRING_SCRIPT_OPCODE[func.op[oppos].opcode].label) + _(L" ") + ConvertVarArgument(func.op[oppos].arg[0], argcommentptr, &ignorenulljump);
 				MACRO_WRITECEOL()
 				funcpostrack[functrackline++] = funcpos;
 			}
@@ -1128,120 +1137,166 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 			break;
 		}
 		case 0x06: {
-			varvoidcounter = 0;
 			ScriptOperation& swop = func.op[oppos];
-			str += tabstr+_(L"switchex ");
+			str += tabstr + _(L"switchex ");
 			str << (unsigned int)swop.size_byte;
-			str += _(L" ( ")+ConvertVarArgument(func.op[oppos-1].arg[0],argcommentptr);
+			str += _(L" ( ") + ConvertVarArgument(func.op[oppos - 1].arg[0], argcommentptr);
 			str += _(L" ) {");
 			MACRO_WRITECEOL()
 			funcpostrack[functrackline++] = funcpos;
-			unsigned int swoppos = oppos;
-			unsigned int swpos = funcpos+4;
-			unsigned int swdefpos = swpos+swop.arg[0].GetValue();
-			int swendpos = -1;
-			unsigned int currentcasepos = 0xFFFF;
-			unsigned int nextcasepos = swop.arg[0].GetValue();
 			unsigned int nbcasedone = 0;
+			unsigned int swoppos = oppos;
+			unsigned int swpos = funcpos + 4;
+			unsigned int swdefpos = swop.arg[0].GetValue();
+			int swendofdefpos = -1;
+			int swendpos = -1;
+			unsigned int highestpos = swdefpos;
+			unsigned int highestendpos = swpos + swdefpos;
+			unsigned int currentcasepos = 0xFFFF;
+			int currentcaseendpos = -1;
 			bool casedone[SCRPT_MAX_SWITCH_CASE];
-			for (i=0;i<swop.size_byte;i++)
-				casedone[i] = false;
-			while (nbcasedone<swop.size_byte) {
-				for (i=0;i<swop.size_byte;i++)
-					if (!casedone[i] && currentcasepos>swop.arg[2+i*2].GetValue())
-						currentcasepos = swop.arg[2+i*2].GetValue();
-				nextcasepos = swop.arg[0].GetValue();
-				for (i=0;i<swop.size_byte;i++)
-					if (nextcasepos>swop.arg[2+i*2].GetValue() && swop.arg[2+i*2].GetValue()>currentcasepos)
-						nextcasepos = swop.arg[2+i*2].GetValue();
+			bool defislastcase = true;
+			for (i = 0; i < swop.size_byte; i++) {
+				casedone[i] = swop.arg[2 + i * 2].GetValue() == swdefpos;
+				if (casedone[i])
+					nbcasedone++;
+				if (highestpos < swop.arg[2 + i * 2].GetValue())
+					highestpos = swop.arg[2 + i * 2].GetValue();
+				// Default position may be one of the case position
+				// It's problematic if that is not the last case because it removes info on case's limits
+				// Cases are then re-ordered
+				if (swop.arg[2 + i * 2].GetValue() > swdefpos) {
+					defislastcase = false;
+					if (swendofdefpos == -1 || swendofdefpos < swpos + swop.arg[2 + i * 2].GetValue())
+						swendofdefpos = swpos + swop.arg[2 + i * 2].GetValue();
+				}
+			}
+			while (nbcasedone < swop.size_byte) {
+				currentcasepos = 0xFFFF;
+				for (i = 0; i < swop.size_byte; i++)
+					if (!casedone[i] && currentcasepos > swop.arg[2 + i * 2].GetValue())
+						currentcasepos = swop.arg[2 + i * 2].GetValue();
+				if (currentcasepos == 0xFFFF || (swendpos >= 0 && swpos + currentcasepos >= (unsigned int)swendpos))
+					break;
+				currentcaseendpos = -1;
+				for (i = 0; i < swop.size_byte; i++)
+					if ((currentcaseendpos == -1 || currentcaseendpos > swpos + swop.arg[2 + i * 2].GetValue()) && swop.arg[2 + i * 2].GetValue() > currentcasepos)
+						currentcaseendpos = swpos + swop.arg[2 + i * 2].GetValue();
+				if (currentcaseendpos == -1) {
+					if (swdefpos > currentcasepos)
+						currentcaseendpos = (int)(swpos + swdefpos);
+					else
+						currentcaseendpos = swendpos;
+				}
 				bool needsemicolon = false;
-				str += tabstr+_(L"case ");
-				for (i=0;i<swop.size_byte;i++)
-					if (currentcasepos==swop.arg[2+i*2].GetValue()) {
+				str += tabstr + _(L"case ");
+				for (i = 0; i < swop.size_byte; i++)
+					if (currentcasepos == swop.arg[2 + i * 2].GetValue()) {
 						if (needsemicolon)
 							str << _(L" ; ");
 						else
 							needsemicolon = true;
-						str << (int)swop.arg[1+i*2].GetValue();
+						str << (int)swop.arg[1 + i * 2].GetValue();
 						casedone[i] = true;
 						nbcasedone++;
 					}
 				str += _(L":\n");
-				funcpos = swpos+swop.size-4;
-				oppos = swoppos+1;
-				while (funcpos<swpos+currentcasepos) {
+				funcpos = swpos + swop.size - 4;
+				oppos = swoppos + 1;
+				while (funcpos < swpos + currentcasepos) {
 					funcpos += func.op[oppos].size;
 					oppos++;
 				}
 				funcpostrack[functrackline++] = funcpos;
-				GenerateFunctionStrings_Rec(str,func,funcpos,oppos,swpos+nextcasepos,tabpos+1,BLOCK_TYPE_SWITCHEX,swpos+nextcasepos,appendcomment);
-				if (func.op[oppos-1].opcode==0x01)
-					swendpos = funcpos+func.op[oppos-1].arg[0].GetValue();
-				currentcasepos = nextcasepos;
+				GenerateFunctionStrings_Rec(str, func, funcpos, oppos, currentcaseendpos, tabpos + 1, BLOCK_TYPE_SWITCHEX, currentcaseendpos, appendcomment);
+				if (highestendpos < funcpos)
+					highestendpos = funcpos;
+				if (func.op[oppos - 1].opcode == 0x01 && swendpos == -1 && func.op[oppos - 1].arg[0].GetValue() >= 0) {
+					swendpos = funcpos + func.op[oppos - 1].arg[0].GetValue();
+					if (defislastcase)
+						swendofdefpos = swendpos;
+				}
 			}
-			funcpos = swpos+swop.size-4;
-			oppos = swoppos+1;
-			while (funcpos<swdefpos) {
+			if ((int)highestendpos < swendofdefpos)
+				highestendpos = swendofdefpos;
+			funcpos = swpos + swop.size - 4;
+			oppos = swoppos + 1;
+			while (funcpos < swpos + swdefpos) {
 				funcpos += func.op[oppos].size;
 				oppos++;
 			}
-			if (swendpos>=0 && funcpos<swendpos) {
-				str += tabstr+_(L"default:\n");
+			if (swendofdefpos >= 0 && funcpos < swendofdefpos) {
+				str += tabstr + _(L"default:\n");
 				funcpostrack[functrackline++] = funcpos;
-				GenerateFunctionStrings_Rec(str,func,funcpos,oppos,swendpos,tabpos+1,BLOCK_TYPE_SWITCHEXDEF,swendpos,appendcomment);
+				GenerateFunctionStrings_Rec(str, func, funcpos, oppos, swendofdefpos, tabpos + 1, BLOCK_TYPE_SWITCHEXDEF, swendofdefpos, appendcomment);
 			}
-			str += tabstr+_(L"}\n");
-			funcpostrack[functrackline] = funcpostrack[functrackline-1];
+			while (funcpos < highestendpos) {
+				funcpos += func.op[oppos].size;
+				oppos++;
+			}
+			str += tabstr + _(L"}\n");
+			funcpostrack[functrackline] = funcpostrack[functrackline - 1];
 			functrackline++;
 			break;
 		}
 		case 0x0B: {
-			varvoidcounter = 0;
 			ScriptOperation& swop = func.op[oppos];
-			str += tabstr+_(L"switch ");
+			str += tabstr + _(L"switch ");
 			str << (unsigned int)swop.size_byte;
-			str += _(L" ( ")+ConvertVarArgument(func.op[oppos-1].arg[0],argcommentptr);
+			str += _(L" ( ") + ConvertVarArgument(func.op[oppos - 1].arg[0], argcommentptr);
 			str += _(L" ) from ");
 			str << (unsigned int)swop.arg[0].GetValue();
 			str += _(" {");
 			MACRO_WRITECEOL()
 			funcpostrack[functrackline++] = funcpos;
-			unsigned int swoppos = oppos;
-			unsigned int swpos = funcpos+1;
-			unsigned int swdefpos = swpos+swop.arg[1].GetValue();
-			int caseendpos = swdefpos;
-			int swendpos = -1;
-			unsigned int highestpos = swop.arg[1].GetValue();
-			unsigned int highestendpos = swdefpos;
-			unsigned int currentcasepos = 0xFFFF;
-			unsigned int nextcasepos = 0;
 			unsigned int nbcasedone = 0;
+			unsigned int swoppos = oppos;
+			unsigned int swpos = funcpos + 1;
+			unsigned int swdefpos = swop.arg[1].GetValue();
+			int swendofdefpos = -1;
+			int swendpos = -1;
+			unsigned int highestpos = swdefpos;
+			unsigned int highestendpos = swpos + swdefpos;
+			unsigned int currentcasepos = 0xFFFF;
+			int currentcaseendpos = -1;
 			bool casedone[SCRPT_MAX_SWITCH_CASE];
-			for (i=0;i<swop.size_byte;i++) {
-				casedone[i] = false;
-				if (highestpos<swop.arg[2+i].GetValue())
-					highestpos = swop.arg[2+i].GetValue();
+			bool defislastcase = true;
+			for (i = 0; i < swop.size_byte; i++) {
+				casedone[i] = swop.arg[2 + i].GetValue() == swdefpos;
+				if (casedone[i])
+					nbcasedone++;
+				if (highestpos < swop.arg[2 + i].GetValue())
+					highestpos = swop.arg[2 + i].GetValue();
 				// Default position may be one of the case position
 				// It's problematic if that is not the last case because it removes info on case's limits
 				// Cases are then re-ordered
-				if (swop.arg[2+i].GetValue()>swop.arg[1].GetValue()) {
-					caseendpos = -1;
-					if (swendpos==-1 || swendpos>swpos+swop.arg[2+i].GetValue())
-						swendpos = swpos+swop.arg[2+i].GetValue();
+				if (swop.arg[2 + i].GetValue() > swdefpos) {
+					defislastcase = false;
+					if (swendofdefpos == -1 || swendofdefpos < swpos + swop.arg[2 + i].GetValue())
+						swendofdefpos = swpos + swop.arg[2 + i].GetValue();
 				}
 			}
-			while (nbcasedone<swop.size_byte && nextcasepos<highestpos) {
-				for (i=0;i<swop.size_byte;i++)
-					if (!casedone[i] && currentcasepos>swop.arg[2+i].GetValue() && swop.arg[2+i].GetValue()!=swop.arg[1].GetValue())
-						currentcasepos = swop.arg[2+i].GetValue();
-				nextcasepos = 0xFFFF;
-				for (i=0;i<swop.size_byte;i++)
-					if (nextcasepos>swop.arg[2+i].GetValue() && swop.arg[2+i].GetValue()>currentcasepos)
-						nextcasepos = swop.arg[2+i].GetValue();
+			while (nbcasedone < swop.size_byte) {
+				currentcasepos = 0xFFFF;
+				for (i = 0; i < swop.size_byte; i++)
+					if (!casedone[i] && currentcasepos > swop.arg[2 + i].GetValue())
+						currentcasepos = swop.arg[2 + i].GetValue();
+				if (currentcasepos == 0xFFFF || (swendpos >= 0 && swpos + currentcasepos >= (unsigned int)swendpos))
+					break;
+				currentcaseendpos = -1;
+				for (i = 0; i < swop.size_byte; i++)
+					if ((currentcaseendpos == -1 || currentcaseendpos > swpos + swop.arg[2 + i].GetValue()) && swop.arg[2 + i].GetValue() > currentcasepos)
+						currentcaseendpos = swpos + swop.arg[2 + i].GetValue();
+				if (currentcaseendpos == -1) {
+					if (swdefpos > currentcasepos)
+						currentcaseendpos = (int)(swpos + swdefpos);
+					else
+						currentcaseendpos = swendpos;
+				}
 				bool needsemicolon = false;
-				str += tabstr+_(L"case +");
-				for (i=0;i<swop.size_byte;i++)
-					if (currentcasepos==swop.arg[2+i].GetValue()) {
+				str += tabstr + _(L"case +");
+				for (i = 0; i < swop.size_byte; i++)
+					if (currentcasepos == swop.arg[2 + i].GetValue()) {
 						if (needsemicolon)
 							str << _(L" ; +");
 						else
@@ -1251,39 +1306,41 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 						nbcasedone++;
 					}
 				str += _(L":\n");
-				funcpos = swpos+swop.size-1;
-				oppos = swoppos+1;
-				while (funcpos<swpos+currentcasepos) {
+				funcpos = swpos + swop.size - 1;
+				oppos = swoppos + 1;
+				while (funcpos < swpos + currentcasepos) {
 					funcpos += func.op[oppos].size;
 					oppos++;
 				}
 				funcpostrack[functrackline++] = funcpos;
-				GenerateFunctionStrings_Rec(str,func,funcpos,oppos,nextcasepos!=0xFFFF ? swpos+nextcasepos : caseendpos,tabpos+1,BLOCK_TYPE_SWITCH,nextcasepos!=0xFFFF ? swpos+nextcasepos : -1,appendcomment);
-				if (highestendpos<funcpos)
+				GenerateFunctionStrings_Rec(str, func, funcpos, oppos, currentcaseendpos, tabpos + 1, BLOCK_TYPE_SWITCH, currentcaseendpos, appendcomment);
+				if (highestendpos < funcpos)
 					highestendpos = funcpos;
-				if (func.op[oppos-1].opcode==0x01 && swendpos==-1)
-					swendpos = funcpos+func.op[oppos-1].arg[0].GetValue();
-				currentcasepos = nextcasepos;
+				if (func.op[oppos - 1].opcode == 0x01 && swendpos == -1 && func.op[oppos - 1].arg[0].GetValue() >= 0) {
+					swendpos = funcpos + func.op[oppos - 1].arg[0].GetValue();
+					if (defislastcase)
+						swendofdefpos = swendpos;
+				}
 			}
-			if ((int)highestendpos<swendpos)
-				highestendpos = swendpos;
-			funcpos = swpos+swop.size-1;
-			oppos = swoppos+1;
-			while (funcpos<swdefpos) {
+			if ((int)highestendpos < swendofdefpos)
+				highestendpos = swendofdefpos;
+			funcpos = swpos + swop.size - 1;
+			oppos = swoppos + 1;
+			while (funcpos < swpos + swdefpos) {
 				funcpos += func.op[oppos].size;
 				oppos++;
 			}
-			if (swendpos>=0 && funcpos<swendpos) {
-				str += tabstr+_(L"default:\n");
+			if (swendofdefpos >= 0 && funcpos < swendofdefpos) {
+				str += tabstr + _(L"default:\n");
 				funcpostrack[functrackline++] = funcpos;
-				GenerateFunctionStrings_Rec(str,func,funcpos,oppos,swendpos,tabpos+1,BLOCK_TYPE_SWITCHDEF,swendpos,appendcomment);
+				GenerateFunctionStrings_Rec(str, func, funcpos, oppos, swendofdefpos, tabpos + 1, BLOCK_TYPE_SWITCHDEF, swendofdefpos, appendcomment);
 			}
-			while (funcpos<highestendpos) {
+			while (funcpos < highestendpos) {
 				funcpos += func.op[oppos].size;
 				oppos++;
 			}
-			str += tabstr+_(L"}\n");
-			funcpostrack[functrackline] = funcpostrack[functrackline-1];
+			str += tabstr + _(L"}\n");
+			funcpostrack[functrackline] = funcpostrack[functrackline - 1];
 			functrackline++;
 			break;
 		}
@@ -1315,67 +1372,69 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 }
 
 void ScriptEditHandler::GenerateFunctionStrings(bool appendcomment) {
-	unsigned int i,j,funci = 0,funcpos,oppos,entrytmp = entry_selection;
+	unsigned int i, j, funci = 0, funcpos, oppos, entrytmp = entry_selection;
 	func_str.resize(script.entry_amount);
 	localvar_str.resize(script.entry_amount);
-/*fstream fout("aaaa.txt",ios::app|ios::out);
-for (i=0;i<script.entry_amount;i++) for (j=0;j<script.entry_function_amount[i];j++) {
-fout << "New Function : " << i << " " << j << endl;
-for (unsigned int k=0;k<script.func[i][j].op_amount;k++) {fout << std::hex << (unsigned int)script.func[i][j].op[k].size << " : " << std::hex << (unsigned int)script.func[i][j].op[k].opcode;
-for (unsigned int l=0;l<script.func[i][j].op[k].arg_amount;l++) fout << " " << std::hex << (unsigned int)script.func[i][j].op[k].arg[l].value;
-fout << endl;} fout << endl;}*/
+	/*fstream fout("aaaa.txt",ios::app|ios::out);
+	for (i=0;i<script.entry_amount;i++) for (j=0;j<script.entry_function_amount[i];j++) {
+	fout << "New Function : " << i << " " << j << endl;
+	for (unsigned int k=0;k<script.func[i][j].op_amount;k++) {fout << std::hex << (unsigned int)script.func[i][j].op[k].size << " : " << std::hex << (unsigned int)script.func[i][j].op[k].opcode;
+	for (unsigned int l=0;l<script.func[i][j].op[k].arg_amount;l++) fout << " " << std::hex << (unsigned int)script.func[i][j].op[k].arg[l].value;
+	fout << endl;} fout << endl;}*/
 	globalvar_str = _(L"");
-	if (script.global_data.amount>0) {
-		for (j=0;j<script.global_data.amount;j++) {
+	if (script.global_data.amount > 0) {
+		for (j = 0; j < script.global_data.amount; j++) {
 			globalvar_str += _(L"global ");
-			if (script.global_data.type[j]==SCRIPT_VARIABLE_TYPE_BOOL)
+			if (script.global_data.type[j] == SCRIPT_VARIABLE_TYPE_BOOL)
 				globalvar_str += _(L"bool ");
 			else {
-				if (script.global_data.type[j]==SCRIPT_VARIABLE_TYPE_INT)
+				if (script.global_data.type[j] == SCRIPT_VARIABLE_TYPE_INT)
 					globalvar_str += _(L"int");
-				else if (script.global_data.type[j]==SCRIPT_VARIABLE_TYPE_UINT)
+				else if (script.global_data.type[j] == SCRIPT_VARIABLE_TYPE_UINT)
 					globalvar_str += _(L"uint");
-				globalvar_str += wxString::Format(wxT("%u "),script.global_data.size[j]);
+				globalvar_str += wxString::Format(wxT("%u "), script.global_data.size[j]);
 			}
-			globalvar_str += wxString::Format(wxT("%s %s%u\n"),script.global_data.name[j],VarOpList[script.global_data.cat[j]].opstring,script.global_data.id[j]);
+			globalvar_str += wxString::Format(wxT("%s %s%u\n"), script.global_data.name[j], VarOpList[script.global_data.cat[j]].opstring, script.global_data.id[j]);
 		}
 	}
-	for (i=0;i<script.entry_amount;i++) {
+	for (i = 0; i < script.entry_amount; i++) {
 		localvar_str[i] = _(L"");
-		if (script.entry_local_var[i]>0)
-			localvar_str[i] += wxString::Format(wxT("allocate %u\n"),script.entry_local_var[i]);
-		if (script.global_data.amount>0) {
-			if (script.entry_local_var[i]>0)
+		if (script.entry_local_var[i] > 0)
+			localvar_str[i] += wxString::Format(wxT("allocate %u\n"), script.entry_local_var[i]);
+		if (script.global_data.amount > 0) {
+			if (script.entry_local_var[i] > 0)
 				localvar_str[i] += _(L"\n");
 			localvar_str[i] += globalvar_str;
 		}
-		if (script.local_data[i].amount>0) {
+		if (script.local_data[i].amount > 0) {
 			localvar_str[i] += _(L"\n");
-			for (j=0;j<script.local_data[i].amount;j++) {
+			for (j = 0; j < script.local_data[i].amount; j++) {
 				localvar_str[i] += _(L"local ");
-				if (script.local_data[i].type[j]==SCRIPT_VARIABLE_TYPE_BOOL)
+				if (script.local_data[i].type[j] == SCRIPT_VARIABLE_TYPE_BOOL)
 					localvar_str[i] += _(L"bool ");
 				else {
-					if (script.local_data[i].type[j]==SCRIPT_VARIABLE_TYPE_INT)
+					if (script.local_data[i].type[j] == SCRIPT_VARIABLE_TYPE_INT)
 						localvar_str[i] += _(L"int");
-					else if (script.local_data[i].type[j]==SCRIPT_VARIABLE_TYPE_UINT)
+					else if (script.local_data[i].type[j] == SCRIPT_VARIABLE_TYPE_UINT)
 						localvar_str[i] += _(L"uint");
-					localvar_str[i] += wxString::Format(wxT("%u "),script.local_data[i].size[j]);
+					localvar_str[i] += wxString::Format(wxT("%u "), script.local_data[i].size[j]);
 				}
-				localvar_str[i] += wxString::Format(wxT("%s %s%u\n"),script.local_data[i].name[j],VarOpList[script.local_data[i].cat[j]].opstring,script.local_data[i].id[j]);
+				localvar_str[i] += wxString::Format(wxT("%s %s%u\n"), script.local_data[i].name[j], VarOpList[script.local_data[i].cat[j]].opstring, script.local_data[i].id[j]);
 			}
 		}
 		func_str[i].resize(script.entry_function_amount[i]);
 		entry_selection = i;
-		for (j=0;j<script.entry_function_amount[i];j++) {
+		for (j = 0; j < script.entry_function_amount[i]; j++) {
 			funcpos = 0;
 			oppos = 0;
 			functrackline = 0;
 			funcpostrack[functrackline++] = funcpos;
-			while (funcpos<script.func[i][j].length)
-				GenerateFunctionStrings_Rec(func_str[i][j],script.func[i][j],funcpos,oppos,-1,1,BLOCK_TYPE_ROOT,-1,appendcomment);
+			if (script.func[i][j].length == 0)
+				func_str[i][j] = _(TAB_STR) + _(L"forward");
+			while (funcpos < script.func[i][j].length)
+				GenerateFunctionStrings_Rec(func_str[i][j], script.func[i][j], funcpos, oppos, -1, 1, BLOCK_TYPE_ROOT, -1, appendcomment);
 			funcpostrack[functrackline++] = script.func[i][j].length;
-			func_str[i][j] = functionlist_str[funci]+_(L"\n")+func_str[i][j];
+			func_str[i][j] = functionlist_str[funci] + _(L"\n") + func_str[i][j];
 			funci++;
 		}
 	}
@@ -1466,19 +1525,16 @@ void ScriptEditHandler::UpdateGlobalLocalStrings(int ignoreentry) {
 }
 
 void ScriptEditHandler::EntryChangeName(unsigned int entry, wxString newname) {
-	unsigned int i,j,funci = 0;
-		entry_name[entry] = newname;
+	unsigned int i, j, funci = 0;
+	entry_name[entry] = newname;
 	if (handler_dialog)
-		handler_dialog->entrylist_str[entry] = _(L"Entry ")+newname;
-	for (i=0;i<script.entry_amount;i++)
-		for (j=0;j<script.entry_function_amount[i];j++) {
-			if (i==entry) {
-				if (script.function_type[i][j]<G_N_ELEMENTS(FunctionTypeName))
-					functionlist_str[funci] = _(L"Function ")+wxString::Format(wxT("%s_%s"),newname,FunctionTypeName[script.function_type[i][j]]);
-				else
-					functionlist_str[funci] = _(L"Function ")+wxString::Format(wxT("%s_%u"),newname,script.function_type[i][j]);
+		handler_dialog->entrylist_str[entry] = _(L"Entry ") + newname;
+	for (i = 0; i < script.entry_amount; i++)
+		for (j = 0; j < script.entry_function_amount[i]; j++) {
+			if (i == entry) {
+				functionlist_str[funci] = GetFunctionName(entry, script.function_type[i][j]);
 				if (handler_dialog)
-					handler_dialog->m_functionlist->SetItemText(funci,functionlist_str[funci]);
+					handler_dialog->m_functionlist->SetItemText(funci, functionlist_str[funci]);
 			}
 			funci++;
 		}
@@ -2041,7 +2097,8 @@ static wxString keywords[] = {
 	L"if",		L"else",		L"ifnot",
 	L"while",	L"do",			L"loop",
 	L"switch",	L"switchex",	L"case",
-	L"default",	L"break",		L"Function"
+	L"default",	L"break",		L"Function",
+	L"forward"
 };
 ScriptOperation parseop[0x8000];
 unsigned int parseopamount = 0;
@@ -2143,6 +2200,8 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 		if (isfunctionreturned) {
 			errstr.Printf(wxT(HADES_STRING_SCRIPT_IGNORE_POSTRET),line);
 			res.AddWarning(errstr.ToStdWstring());
+			if (opi == 0)
+				continue;
 		}
 		for (i=0;i<G_N_ELEMENTS(keywords);i++)
 			if (token.IsSameAs(keywords[i])) {
@@ -2382,6 +2441,21 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 				case 11: // Function
 					functionlist_str[GetFunctionAbsolutePos(entry_selection, function_selection)] = _(L"Function") + linestr;
 					break;
+				case 12: // forward
+					if (opi > 0)
+					{
+						errstr.Printf(wxT(HADES_STRING_SCRIPT_FORWARD), line, L"forward");
+						res.AddError(errstr.ToStdWstring());
+					}
+					else if (function_selection + 1 >= script.entry_function_amount[entry_selection])
+					{
+						errstr.Printf(wxT(HADES_STRING_SCRIPT_FORWARD_END), line);
+						res.AddError(errstr.ToStdWstring());
+					}
+					else
+					{
+						isfunctionreturned = true;
+					}
 				}
 				break;
 			}
@@ -2876,32 +2950,57 @@ struct PositionStruct {
 	}
 };
 
+void WorldMapCoordinatesToBmpPos(int32_t& x, int32_t& y) {
+	x = (x * (WORLDMAP_PANEL_WIDTH - 16) / 0x60000L) % (WORLDMAP_PANEL_WIDTH - 16);
+	y = (y * (WORLDMAP_PANEL_HEIGHT - 16) / 0x50000L) % (WORLDMAP_PANEL_HEIGHT - 16);
+	if (x < 0)
+		x += (WORLDMAP_PANEL_WIDTH - 16);
+	if (y < 0)
+		y += (WORLDMAP_PANEL_HEIGHT - 16);
+	x += 8;
+	y = WORLDMAP_PANEL_HEIGHT - 8 - y;
+}
 
-void WorldMapDraw(wxDC& dc, bool drawx, bool drawy, int32_t x, int32_t y) {
-	unsigned char* bmpdata = (unsigned char*)malloc(WORLDMAP_PANEL_WIDTH*WORLDMAP_PANEL_HEIGHT*3*sizeof(unsigned char));
-	for (unsigned int i=0;i<WORLDMAP_PANEL_WIDTH*WORLDMAP_PANEL_HEIGHT*3;i++)
+void ScriptEditDialog::WorldMapDraw(wxDC& dc) {
+	bool drawx = world_pos_type & 1, drawy = world_pos_type & 2;
+	int32_t x = world_pos_x, y = world_pos_y;
+	unsigned char* bmpdata = (unsigned char*)malloc(WORLDMAP_PANEL_WIDTH * WORLDMAP_PANEL_HEIGHT * 3 * sizeof(unsigned char));
+	for (unsigned int i = 0; i < WORLDMAP_PANEL_WIDTH * WORLDMAP_PANEL_HEIGHT * 3; i++)
 		bmpdata[i] = 255;
-	wxImage mdcimg(WORLDMAP_PANEL_WIDTH,WORLDMAP_PANEL_HEIGHT,bmpdata);
+	wxImage mdcimg(WORLDMAP_PANEL_WIDTH, WORLDMAP_PANEL_HEIGHT, bmpdata);
 	wxBitmap mdcbmp(mdcimg);
 	wxMemoryDC mdc(mdcbmp);
-	mdc.DrawBitmap(wxBITMAP(worldmap_image),0,0);
+	WorldMapCoordinatesToBmpPos(x, y);
+	mdc.DrawBitmap(wxBITMAP(worldmap_image), 0, 0);
 	mdc.SetPen(wxPen(POSITION_POINT_COLOR));
 	mdc.SetBrush(wxBrush(POSITION_POINT_COLOR));
-	x = (x*(WORLDMAP_PANEL_WIDTH-16)/0x60000L)%(WORLDMAP_PANEL_WIDTH-16);
-	y = (y*(WORLDMAP_PANEL_HEIGHT-16)/0x50000L)%(WORLDMAP_PANEL_HEIGHT-16);
-	if (x<0)
-		x += (WORLDMAP_PANEL_WIDTH-16);
-	if (y<0)
-		y += (WORLDMAP_PANEL_HEIGHT-16);
-	x += 8;
-	y = WORLDMAP_PANEL_HEIGHT-8-y;
 	if (drawx && drawy)
-		mdc.DrawCircle(x,y,2);
+		mdc.DrawCircle(x, y, 2);
 	else if (drawx)
-		mdc.DrawLine(x,0,x,WORLDMAP_PANEL_HEIGHT);
+		mdc.DrawLine(x, 0, x, WORLDMAP_PANEL_HEIGHT);
 	else if (drawy)
-		mdc.DrawLine(0,y,WORLDMAP_PANEL_WIDTH,y);
-	dc.Blit(wxPoint(0,0),mdc.GetSize(),&mdc,wxPoint(0,0));
+		mdc.DrawLine(0, y, WORLDMAP_PANEL_WIDTH, y);
+	if (world_region_x >= 0 && world_region_y >= 0)
+	{
+		mdc.SetPen(wxPen(POSITION_REGION_COLOR));
+		mdc.SetBrush(wxBrush(POSITION_REGION_COLOR));
+		x = world_region_x;
+		y = world_region_y;
+		mdc.DrawRectangle(8 + x * (WORLDMAP_PANEL_WIDTH - 16) / 48, 8 + y * (WORLDMAP_PANEL_HEIGHT - 16) / 40, (WORLDMAP_PANEL_WIDTH - 16) / 48, (WORLDMAP_PANEL_HEIGHT - 16) / 40);
+	}
+	dc.Blit(wxPoint(0, 0), mdc.GetSize(), &mdc, wxPoint(0, 0));
+}
+
+void ScriptEditDialog::UpdateWorldRegion(unsigned int entry, unsigned int function) {
+	if (script_type == SCRIPT_TYPE_WORLD) {
+		if (entry == 0 && script.function_type[entry][function] >= 0x8000) {
+			world_region_x = (script.function_type[entry][function] & 0xFC) >> 2;
+			world_region_y = (script.function_type[entry][function] & 0x3F00) >> 8;
+		} else {
+			world_region_x = -1;
+			world_region_y = -1;
+		}
+	}
 }
 
 void ScriptEditDialog::DisplayFunction(unsigned int entry, unsigned int function) {
@@ -2912,6 +3011,7 @@ void ScriptEditDialog::DisplayFunction(unsigned int entry, unsigned int function
 	DisplayOperation(wxEmptyString);
 	entry_selection = entry;
 	function_selection = function;
+	UpdateWorldRegion(entry, function);
 }
 
 void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, bool refresharg) {
@@ -3343,7 +3443,7 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 				else
 					world_pos_y = wxAtoi(arrarg[1]);
 				wxClientDC dc(m_worlddisplaypanel);
-				WorldMapDraw(dc,world_pos_type & 1,world_pos_type & 2,world_pos_x,world_pos_y);
+				WorldMapDraw(dc);
 			}
 			break;
 		}
@@ -3508,7 +3608,7 @@ void ScriptEditDialog::UpdateLineHelp(long x, long y) {
 		world_pos_x = selectedint;
 		world_pos_y = selectedint;
 		wxClientDC dc(m_worlddisplaypanel);
-		WorldMapDraw(dc,world_pos_type & 1,world_pos_type & 2,world_pos_x,world_pos_y);
+		WorldMapDraw(dc);
 	}
 }
 
@@ -3991,17 +4091,35 @@ void ScriptEditDialog::OnFunctionRightClick(wxListEvent& event) {
 	}
 }
 
+class ScriptEditPropertiesDialog : public ScriptEditPropertiesWindow
+{
+public:
+	ScriptEditPropertiesDialog(wxWindow* parent, bool enableWorldType) : ScriptEditPropertiesWindow(parent) {
+		m_typeworldxlabel->Enable(enableWorldType);
+		m_typeworldylabel->Enable(enableWorldType);
+		m_typeterrainlabel->Enable(enableWorldType);
+		m_typeworldx->Enable(enableWorldType);
+		m_typeworldy->Enable(enableWorldType);
+		m_typeterrain->Enable(enableWorldType);
+	}
+
+private:
+	void ScriptEditPropertiesDialog::OnWorldSpin(wxSpinEvent& event) {
+		m_typectrl->SetValue(0x8000 | (m_typeworldy->GetValue() << 8 & 0x3F00) | (m_typeworldx->GetValue() << 2 & 0xFC) | (m_typeterrain->GetValue() & 3));
+	}
+};
+
 void ScriptEditDialog::OnFunctionRightClickMenu(wxCommandEvent& event) {
-	long sel = m_functionlist->GetNextItem(-1,wxLIST_NEXT_ALL,wxLIST_STATE_SELECTED);
+	long sel = m_functionlist->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
 	long seltmp = sel;
-	if (sel==-1)
+	if (sel == -1)
 		return;
 	unsigned int entryid = 0, funcid = 0;
-	while (script.entry_function_amount[entryid]==0)
+	while (script.entry_function_amount[entryid] == 0)
 		entryid++;
-	while (seltmp>0) {
+	while (seltmp > 0) {
 		funcid++;
-		while (funcid>=script.entry_function_amount[entryid]) {
+		while (funcid >= script.entry_function_amount[entryid]) {
 			entryid++;
 			funcid = 0;
 		}
@@ -4009,72 +4127,101 @@ void ScriptEditDialog::OnFunctionRightClickMenu(wxCommandEvent& event) {
 	}
 	int id = event.GetId();
 	unsigned int i;
-	if (id==wxID_ADD) {
-		if (extra_size<8) {
-			wxMessageDialog popup(NULL,HADES_STRING_MISSING_SPACE,HADES_STRING_ERROR,wxOK|wxCENTRE);
+	if (id == wxID_ADD) {
+		if (extra_size < 8) {
+			wxMessageDialog popup(NULL, HADES_STRING_MISSING_SPACE, HADES_STRING_ERROR, wxOK | wxCENTRE);
 			popup.ShowModal();
 			return;
 		}
-		ScriptEditPropertiesWindow dial(this);
-		for (i=0;i<script.entry_amount;i++)
+		ScriptEditPropertiesDialog dial(this, script_type == SCRIPT_TYPE_WORLD && entryid == 0);
+		for (i = 0; i < script.entry_amount; i++)
 			dial.m_entryctrl->Append(entry_name[i]);
 		dial.m_entryctrl->SetSelection(entryid);
 		dial.m_entrytypectrl->SetValue(script.entry_type[entryid]);
 		dial.m_entrytypectrl->Enable(false);
 		dial.m_typectrl->SetValue(script.function_type[entryid][funcid]);
-		if (dial.ShowModal()==wxID_OK) {
-			if (entryid!=dial.m_entryctrl->GetSelection()) {
-				entryid = dial.m_entryctrl->GetSelection();
-				funcid = script.entry_function_amount[entryid];
-				seltmp = 0;
-				sel = 0;
-				while (seltmp<entryid) {
-					sel += script.entry_function_amount[seltmp];
-					seltmp++;
+		bool showdiag = true;
+		while (showdiag)
+		{
+			showdiag = false;
+			if (dial.ShowModal() == wxID_OK) {
+				unsigned int entrysel = dial.m_entryctrl->GetSelection();
+				for (i = 0; i < script.entry_function_amount[entrysel]; i++)
+					if (script.function_type[entrysel][i] == dial.m_typectrl->GetValue())
+					{
+						showdiag = true;
+						break;
+					}
+				if (showdiag)
+				{
+					wxMessageDialog popup(NULL, HADES_STRING_SCRIPT_SAME_FUNCTYPE, HADES_STRING_ERROR, wxOK | wxCENTRE);
+					popup.ShowModal();
+					continue;
 				}
-				seltmp = 0;
-				while (seltmp<funcid) {
+				if (entryid != entrysel) {
+					entryid = entrysel;
+					funcid = script.entry_function_amount[entryid];
+					seltmp = 0;
+					sel = 0;
+					while (seltmp < entryid) {
+						sel += script.entry_function_amount[seltmp];
+						seltmp++;
+					}
+					seltmp = 0;
+					while (seltmp < funcid) {
+						sel++;
+						seltmp++;
+					}
+				} else {
+					funcid++;
 					sel++;
-					seltmp++;
 				}
-			} else {
-				funcid++;
-				sel++;
+				//script.entry_type[entryid] = dial.m_entrytypectrl->GetValue();
+				if (script.entry_function_amount[entryid] == 0) {
+					extra_size -= 8;
+					if (script.entry_type[entryid] == 0xFF)
+						script.entry_type[entryid] = 0;
+				} else {
+					extra_size -= 4;
+				}
+				AddFunction(entryid, funcid, dial.m_typectrl->GetValue());
+				DisplayFunctionList(sel, -1);
+				m_functionlist->SetItemState(sel, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
 			}
-//			script.entry_type[entryid] = dial.m_entrytypectrl->GetValue();
-			if (script.entry_function_amount[entryid]==0) {
-				extra_size -= 8;
-				if (script.entry_type[entryid]==0xFF)
-					script.entry_type[entryid] = 0;
-			} else
-				extra_size -= 4;
-			AddFunction(entryid, funcid, dial.m_typectrl->GetValue());
-			DisplayFunctionList(sel, -1);
-			m_functionlist->SetItemState(sel, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
 		}
-	} else if (id==wxID_REMOVE) {
-		if (entryid==0 && funcid==0) {
-			wxMessageDialog popup(NULL,HADES_STRING_SCRIPT_NO_DELETE,HADES_STRING_ERROR,wxOK|wxCENTRE);
+	} else if (id == wxID_REMOVE) {
+		if (entryid == 0 && funcid == 0) {
+			wxMessageDialog popup(NULL, HADES_STRING_SCRIPT_NO_DELETE, HADES_STRING_ERROR, wxOK | wxCENTRE);
 			popup.ShowModal();
 			return;
 		}
-		extra_size += script.RemoveFunction(entryid,funcid);
-		DisplayFunctionList(-1,sel);
-		for (i=funcid;i<script.entry_function_amount[entryid];i++)
-			func_str[entryid][i] = func_str[entryid][i+1];
-		if (funcid<m_functionlist->GetItemCount())
+		extra_size += script.RemoveFunction(entryid, funcid);
+		DisplayFunctionList(-1, sel);
+		for (i = funcid; i < script.entry_function_amount[entryid]; i++)
+			func_str[entryid][i] = func_str[entryid][i + 1];
+		if (funcid < m_functionlist->GetItemCount())
 			m_functionlist->SetItemState(funcid, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
-	} else if (id==wxID_SET) {
-		ScriptEditPropertiesWindow dial(this);
-		for (i=0;i<script.entry_amount;i++)
+	} else if (id == wxID_SET) {
+		ScriptEditPropertiesDialog dial(this, script_type == SCRIPT_TYPE_WORLD && entryid == 0);
+		for (i = 0; i < script.entry_amount; i++)
 			dial.m_entryctrl->Append(entry_name[i]);
 		dial.m_entryctrl->SetSelection(entryid);
 		dial.m_entryctrl->Enable(false);
 		dial.m_entrytypectrl->SetValue(script.entry_type[entryid]);
 		dial.m_typectrl->SetValue(script.function_type[entryid][funcid]);
-		if (dial.ShowModal()==wxID_OK) {
+		if (script.function_type[entryid][funcid] >= 0x8000)
+		{
+			dial.m_typeworldx->SetValue((script.function_type[entryid][funcid] & 0xFC) >> 2);
+			dial.m_typeworldy->SetValue((script.function_type[entryid][funcid] & 0x3F00) >> 8);
+			dial.m_typeterrain->SetValue(script.function_type[entryid][funcid] & 3);
+		}
+		if (dial.ShowModal() == wxID_OK) {
 			script.entry_type[entryid] = dial.m_entrytypectrl->GetValue();
 			script.function_type[entryid][funcid] = dial.m_typectrl->GetValue();
+			UpdateWorldRegion(entryid, funcid);
+			functionlist_str[sel] = GetFunctionName(entryid, script.function_type[entryid][funcid]);
+			DisplayFunctionList(-1, -1);
+			m_functionlist->SetItemState(sel, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
 		}
 	}
 }
@@ -4120,7 +4267,7 @@ void ScriptEditDialog::OnChoiceSelection(wxCommandEvent& event) {
 		else {
 			world_pos_type = 0;
 			wxClientDC dc(m_worlddisplaypanel);
-			WorldMapDraw(dc,world_pos_type & 1,world_pos_type & 2,world_pos_x,world_pos_y);
+			WorldMapDraw(dc);
 		}
 	}
 }
@@ -4138,7 +4285,7 @@ void ScriptEditDialog::OnCheckBox(wxCommandEvent& event) {
 
 void ScriptEditDialog::OnWorldMapPaint(wxPaintEvent& event) {
 	wxPaintDC dc(m_worlddisplaypanel);
-	WorldMapDraw(dc,world_pos_type & 1,world_pos_type & 2,world_pos_x,world_pos_y);
+	WorldMapDraw(dc);
 }
 
 void ScriptEditDialog::OnShowHideLocalVar(wxMouseEvent& event) {

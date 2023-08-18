@@ -2,52 +2,61 @@
 
 #include "main.h"
 #include "Database_CSV.h"
+#include "CommonUtility.h"
 
-#define SPELL_HWS_VERSION 3
+#define SPELL_HWS_VERSION 4
 
 const unsigned int steam_spell_field_size[] = { 4, 1, 3, 9, 12, 1, 1, 1, 8, 8, 8, 8, 8, 8, 8, 8, 16, 16 };
 
 int SpellDataStruct::SetName(wstring newvalue) {
-	FF9String tmp(name);
-	tmp.SetValue(newvalue);
-	int oldlen = name.length;
-	int newlen = tmp.length;
-	if (parent->name_space_used+newlen>parent->name_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		FF9String tmp(name);
+		tmp.SetValue(newvalue);
+		int oldlen = name.length;
+		int newlen = tmp.length;
+		if (parent->name_space_used + newlen > parent->name_space_total + oldlen)
+			return 1;
+		parent->name_space_used += newlen - oldlen;
+	}
 	name.SetValue(newvalue);
-	parent->name_space_used += newlen-oldlen;
 	return 0;
 }
 
 int SpellDataStruct::SetName(FF9String& newvalue) {
-	int oldlen = name.length;
-	int newlen = newvalue.length;
-	if (parent->name_space_used+newlen>parent->name_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		int oldlen = name.length;
+		int newlen = newvalue.length;
+		if (parent->name_space_used + newlen > parent->name_space_total + oldlen)
+			return 1;
+		parent->name_space_used += newlen - oldlen;
+	}
 	name = newvalue;
-	parent->name_space_used += newlen-oldlen;
 	return 0;
 }
 
 int SpellDataStruct::SetHelp(wstring newvalue) {
-	FF9String tmp(help);
-	tmp.SetValue(newvalue);
-	int oldlen = help.length;
-	int newlen = tmp.length;
-	if (parent->help_space_used+newlen>parent->help_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		FF9String tmp(help);
+		tmp.SetValue(newvalue);
+		int oldlen = help.length;
+		int newlen = tmp.length;
+		if (parent->help_space_used + newlen > parent->help_space_total + oldlen)
+			return 1;
+		parent->help_space_used += newlen - oldlen;
+	}
 	help.SetValue(newvalue);
-	parent->help_space_used += newlen-oldlen;
 	return 0;
 }
 
 int SpellDataStruct::SetHelp(FF9String& newvalue) {
-	int oldlen = help.length;
-	int newlen = newvalue.length;
-	if (parent->help_space_used+newlen>parent->help_space_total+oldlen)
-		return 1;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		int oldlen = help.length;
+		int newlen = newvalue.length;
+		if (parent->help_space_used + newlen > parent->help_space_total + oldlen)
+			return 1;
+		parent->help_space_used += newlen - oldlen;
+	}
 	help = newvalue;
-	parent->help_space_used += newlen-oldlen;
 	return 0;
 }
 
@@ -139,19 +148,19 @@ void SpellDataStruct::SetSound(uint16_t newvalue) {
 
 #define MACRO_SPELL_IOFUNCTIONDATA(IO,SEEK,READ,PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<SPELL_AMOUNT;i++) { \
+	for (i=0;i<spellamount;i++) { \
 		IO ## Char(ffbin,spell[i].target_type); \
-		IO ## Short(ffbin,spell[i].model); \
+		IO ## FlexibleShort(ffbin,spell[i].model, useextendedtype); \
 		IO ## Char(ffbin,spell[i].target_flag); \
-		IO ## Char(ffbin,spell[i].effect); \
-		IO ## Char(ffbin,spell[i].power); \
+		IO ## FlexibleChar(ffbin,spell[i].effect, useextendedtype); \
+		IO ## FlexibleChar(ffbin,spell[i].power, useextendedtype); \
 		IO ## Char(ffbin,spell[i].element); \
-		IO ## Char(ffbin,spell[i].accuracy); \
+		IO ## FlexibleChar(ffbin,spell[i].accuracy, useextendedtype); \
 		IO ## Char(ffbin,spell[i].flag); \
 		IO ## Char(ffbin,spell[i].status); \
-		IO ## Char(ffbin,spell[i].mp); \
+		IO ## FlexibleChar(ffbin,spell[i].mp, useextendedtype); \
 		IO ## Char(ffbin,spell[i].menu_flag); \
-		IO ## Short(ffbin,spell[i].model_alt); \
+		IO ## FlexibleShort(ffbin,spell[i].model_alt, useextendedtype); \
 		IO ## Short(ffbin,spell[i].name_offset); \
 	} \
 	if (PPF) PPFEndScanStep();
@@ -161,7 +170,7 @@ void SpellDataStruct::SetSound(uint16_t newvalue) {
 	if (READ) name_space_used = 0; \
 	ffbin.seekg(txtpos); \
 	if (PPF) PPFInitScanStep(ffbin,true,name_space_total); \
-	for (i=0;i<SPELL_AMOUNT;i++) { \
+	for (i=0;i<spellamount;i++) { \
 		SEEK(ffbin,txtpos,spell[i].name_offset); \
 		IO ## FF9String(ffbin,spell[i].name); \
 		if (READ) name_space_used += spell[i].name.length; \
@@ -173,7 +182,7 @@ void SpellDataStruct::SetSound(uint16_t newvalue) {
 	txtpos = ffbin.tellg(); \
 	SEEK(ffbin,txtpos,help_space_total); \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<SPELL_AMOUNT;i++) { \
+	for (i=0;i<spellamount;i++) { \
 		IO ## Short(ffbin,spell[i].help_offset); \
 		IO ## Short(ffbin,spell[i].help_size_x); \
 	} \
@@ -181,34 +190,42 @@ void SpellDataStruct::SetSound(uint16_t newvalue) {
 	if (READ) help_space_used = 0; \
 	ffbin.seekg(txtpos); \
 	if (PPF) PPFInitScanStep(ffbin,true,help_space_total); \
-	for (i=0;i<SPELL_AMOUNT;i++) { \
+	for (i=0;i<spellamount;i++) { \
 		SEEK(ffbin,txtpos,spell[i].help_offset); \
 		IO ## FF9String(ffbin,spell[i].help); \
 		if (READ) help_space_used += spell[i].help.length; \
 	} \
 	if (PPF) PPFEndScanStep(); \
-	SEEK(ffbin,txtpos,help_space_total+4*SPELL_AMOUNT);
+	SEEK(ffbin,txtpos,help_space_total+4*spellamount);
 
 #define MACRO_SPELL_IOFUNCTIONPERFNAME(IO,SEEK,READ,PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<SPELL_AMOUNT;i++) \
+	for (i=0;i<spellamount;i++) \
 		IO ## Char(ffbin,spell[i].perform_name); \
 	if (PPF) PPFEndScanStep();
 
 #define MACRO_SPELL_IOFUNCTIONSTATUS(IO,SEEK,READ,PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
 	for (i=0;i<STATUS_SET_AMOUNT;i++) \
-		IO ## Long(ffbin,status_set[i]); \
+		IO ## Long(ffbin,status_set[i].status); \
 	if (PPF) PPFEndScanStep();
 
 
 void SpellDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
+	int spellamount = SPELL_AMOUNT;
+	bool useextendedtype = false;
 	uint32_t txtpos;
-	unsigned int i;
+	int i;
 	name_space_total = config.spell_name_space_total;
 	help_space_total = config.spell_help_space_total;
-	for (i=0;i<SPELL_AMOUNT;i++)
+	spell.resize(SPELL_AMOUNT);
+	status_set.resize(STATUS_SET_AMOUNT);
+	for (i = 0; i < SPELL_AMOUNT; i++) {
 		spell[i].parent = this;
+		spell[i].id = i;
+	}
+	for (i = 0; i < STATUS_SET_AMOUNT; i++)
+		status_set[i].id = i;
 	if (GetGameType()==GAME_TYPE_PSX) {
 		ffbin.seekg(config.spell_data_offset[0]);
 		MACRO_SPELL_IOFUNCTIONDATA(FFIXRead,FFIXSeek,true,false)
@@ -242,7 +259,7 @@ void SpellDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 			SteamReadChar(dlldata.dll_file,spell[i].perform_name);
 		dlldata.dll_file.seekg(dlldata.GetStaticFieldOffset(config.dll_statusset_field_id));
 		for (i=0;i<STATUS_SET_AMOUNT;i++)
-			SteamReadLong(dlldata.dll_file,status_set[i]);
+			SteamReadLong(dlldata.dll_file,status_set[i].status);
 		dlldata.dll_file.seekg(dlldata.GetMethodOffset(config.dll_battledb_method_id));
 		methinfo.ReadMethodInfo(dlldata.dll_file);
 		ILInstruction initinst[3] = {
@@ -270,7 +287,7 @@ DllMetaDataModification* SpellDataSet::ComputeSteamMod(ConfigurationSet& config,
 	DllMetaDataModification* res = new DllMetaDataModification[3];
 	DllMetaData& dlldata = config.meta_dll;
 	uint32_t** argvalue = new uint32_t*[SPELL_AMOUNT];
-	unsigned int i;
+	int i;
 	for (i=0;i<SPELL_AMOUNT;i++) {
 		argvalue[i] = new uint32_t[18];
 		argvalue[i][0] = spell[i].target_type & 0xF;
@@ -308,7 +325,7 @@ DllMetaDataModification* SpellDataSet::ComputeSteamMod(ConfigurationSet& config,
 	res[2].value = new uint8_t[res[2].new_length];
 	BufferInitPosition();
 	for (i = 0; i<STATUS_SET_AMOUNT; i++)
-		BufferWriteLong(res[2].value, status_set[i]);
+		BufferWriteLong(res[2].value, status_set[i].status);
 	for (i = 0; i<STATUS_SET_AMOUNT; i++) // DEBUG: Steam version has 2x more status sets...
 		BufferWriteLong(res[2].value, 0);
 	*modifamount = 3;
@@ -316,7 +333,7 @@ DllMetaDataModification* SpellDataSet::ComputeSteamMod(ConfigurationSet& config,
 }
 
 void SpellDataSet::GenerateCSharp(vector<string>& buffer) {
-	unsigned int i;
+	int i;
 	stringstream battledb;
 	battledb << "// Method: FF9BattleDB::.cctor\n\n";
 	battledb << "\tFF9BattleDB.aa_data = new AA_DATA[] {\n";
@@ -328,7 +345,7 @@ void SpellDataSet::GenerateCSharp(vector<string>& buffer) {
 	battledb << "\t// ...\n";
 	battledb << "\tFF9BattleDB.add_status = new uint[] { ";
 	for (i = 0; i < STATUS_SET_AMOUNT; i++)
-		battledb << StreamAsHex(status_set[i]) << "u, ";
+		battledb << StreamAsHex(status_set[i].status) << "u, ";
 	for (i = 0; i < STATUS_SET_AMOUNT; i++)
 		battledb << 0 << (i+1==STATUS_SET_AMOUNT ? "u " : "u, ");
 	battledb << "};\n";
@@ -342,77 +359,108 @@ void SpellDataSet::GenerateCSharp(vector<string>& buffer) {
 	buffer.push_back(spellnaming.str());
 }
 
-bool SpellDataSet::GenerateCSV(string basefolder) {
-	static const wstring CSV_PANEL_NAME[] {
-		L"None", L"HP", L"MP", L"BadStatus", L"GoodStatus", L"Empty", L"Card", L"Bug"
+wxString CSV_SpellConstructor(SpellDataStruct& sp, int index) {
+	static const wxString CSV_PANEL_NAME[]{
+		L"None", L"Hp", L"Mp", L"Debuffs", L"Buffs", L"Empty", L"Card", L"Special"
 	};
-	unsigned int i, j;
-	string fname = basefolder + HADES_STRING_CSV_SPELL_FILE;
-	wfstream csv(fname.c_str(), ios::out);
-	if (!csv.is_open()) return false;
-	csv << HADES_STRING_CSV_SPELL_HEADER;
-	for (i=0; i<SPELL_AMOUNT; i++) {
-		csv << ConvertWStrToStr(spell[i].name.str_nice).c_str() << L";" << i << L";";
-		csv << CSV_PANEL_NAME[spell[i].GetPanel()] << L"(" << (int)spell[i].GetPanel() << L");" << (int)(spell[i].target_type & 0xF) << L";" << (int)((spell[i].target_type >> 4) & 0x1) << L";";
-		csv << (int)((spell[i].target_flag >> 5) & 0x1) << L";" << (int)((spell[i].target_flag >> 7) & 0x1) << L";" << (int)((spell[i].target_flag >> 6) & 0x1) << L";" << (int)(spell[i].model & 0x1FF) << L";";
-		csv << (int)spell[i].model_alt << L";" << (int)spell[i].effect << L";" << (int)spell[i].power << L";" << (int)spell[i].element << L";" << (int)spell[i].accuracy << L";";
-		csv << (int)spell[i].flag << L";" << (int)spell[i].status << L";" << (int)spell[i].mp << L";" << (int)spell[i].menu_flag << L";# " << ConvertWStrToStr(spell[i].name.str_nice).c_str() << L"\n";
-		// Note that the Sound is removed from Memoria's AA_DATA class
+	static const wxString CSV_TARGET_TYPE_NAME[]{
+		L"SingleAny",	L"SingleAlly",	L"SingleEnemy",	L"ManyAny",		L"ManyAlly",	L"ManyEnemy",	L"All",			L"AllAlly",
+		L"AllEnemy",	L"Random",		L"RandomAlly",	L"RandomEnemy",	L"Everyone",	L"Self",		L"Automatic",	L"Special"
+	};
+	// Note that the Sound is removed from Memoria's AA_DATA class
+	return wxString::Format(wxT("%s;%d;%s(%d);%s(%d);%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;# %s"),
+		sp.name.str_nice,
+		sp.id,
+		CSV_PANEL_NAME[sp.GetPanel()], sp.GetPanel(),
+		CSV_TARGET_TYPE_NAME[sp.target_type & 0xF], sp.target_type & 0xF,
+		(sp.target_type >> 4) & 0x1,
+		(sp.target_flag >> 5) & 0x1,
+		(sp.target_flag >> 7) & 0x1,
+		(sp.target_flag >> 6) & 0x1,
+		sp.model,
+		sp.model_alt,
+		sp.effect,
+		sp.power,
+		sp.element,
+		sp.accuracy,
+		sp.flag,
+		sp.status,
+		sp.mp,
+		sp.menu_flag,
+		sp.perform_name,
+		sp.name.str_nice);
+}
+
+wxString CSV_StatusSetConstructor(StatusSetStruct& st, int index) {
+	static const wxString CSV_STATUS_NAME[]{
+		L"Petrify",	L"Venom",	L"Virus",	L"Silence",	L"Blind",	L"Trouble",		L"Zombie",	L"EasyKill",
+		L"Death",	L"LowHP",	L"Confuse",	L"Berserk",	L"Stop",	L"AutoLife",	L"Trance",	L"Defend",
+		L"Poison",	L"Sleep",	L"Regen",	L"Haste",	L"Slow",	L"Float",		L"Shell",	L"Protect",
+		L"Heat",	L"Freeze",	L"Vanish",	L"Doom",	L"Mini",	L"Reflect",		L"Jump",	L"GradualPetrify"
+	};
+	wxString csventry = wxString::Format(wxT("Set %d;%d;"), index, index);
+	if (st.status == 0) {
+		csventry += _(L"None(0)");
+	} else {
+		bool addcomma = false;
+		for (int i = 0; i < STATUS_AMOUNT; i++) {
+			if (st.status & (1u << i)) {
+				if (addcomma)
+					csventry += _(L", ");
+				csventry += wxString::Format(wxT("%s(%d)"), CSV_STATUS_NAME[i], i + 1);
+				addcomma = true;
+			}
+		}
 	}
-	csv.close();
-	fname = basefolder + HADES_STRING_CSV_STATUS_FILE;
-	csv.open(fname.c_str(), ios::out);
-	if (!csv.is_open()) return false;
-	csv << HADES_STRING_CSV_STATUS_HEADER;
-	for (i=0; i<STATUS_SET_AMOUNT; i++) {
-		csv << L"Set " << i << L";" << i << L";";
-		if (status_set[i]==0)
-			csv << L"0;";
-		else
-			for (j=0; j<STATUS_AMOUNT; j++)
-				if (status_set[i] & (1 << j))
-					csv << j+1 << L";";
-		csv << L"# " << status_set_name[i] << L"\n";
-	}
-	for (i=0; i<STATUS_SET_AMOUNT; i++)
-		csv << L"Set " << STATUS_SET_AMOUNT+i << L";" << STATUS_SET_AMOUNT+i << L";0;# Set " << STATUS_SET_AMOUNT+i << L"\n";
-	csv.close();
-	fname = basefolder + HADES_STRING_CSV_SPELLTITLE_FILE;
-	csv.open(fname.c_str(), ios::out);
-	if (!csv.is_open()) return false;
-	csv << HADES_STRING_CSV_SPELLTITLE_HEADER;
-	for (i=0; i<SPELL_AMOUNT; i++)
-		csv << ConvertWStrToStr(spell[i].name.str_nice).c_str() << L";" << i << L";" << (int)spell[i].perform_name << L"\n";
-	csv.close();
+	csventry += wxString::Format(wxT(";# %s"), st.name);
+	return csventry;
+}
+
+bool CSV_SpellComparer(wxString left, wxString right) {
+	wxArrayString leftcsv = MemoriaUtility::LoadCSVEntry(left);
+	wxArrayString rightcsv = MemoriaUtility::LoadCSVEntry(right);
+	if (leftcsv.GetCount() != rightcsv.GetCount() || leftcsv.GetCount() < 4)
+		return false;
+	if (!leftcsv[1].IsSameAs(rightcsv[1]))
+		return false;
+	if (MemoriaUtility::GetEntryEnum(leftcsv[2]) != MemoriaUtility::GetEntryEnum(leftcsv[2]))
+		return false;
+	if (MemoriaUtility::GetEntryEnum(leftcsv[3]) != MemoriaUtility::GetEntryEnum(leftcsv[3]))
+		return false;
+	for (unsigned int i = 4; i < leftcsv.GetCount(); i++)
+		if (!leftcsv[i].IsSameAs(rightcsv[i]))
+			return false;
 	return true;
 }
 
-int SpellDataSet::GetSteamTextSize(unsigned int texttype, SteamLanguage lang) {
-	unsigned int i;
-	int res = 0;
-	if (texttype==0)
-		for (i=0;i<SPELL_AMOUNT;i++)
-			res += spell[i].name.GetLength(lang);
-	else
-		for (i=0;i<SPELL_AMOUNT;i++)
-			res += spell[i].help.GetLength(lang);
-	return res;
+bool SpellDataSet::GenerateCSV(string basefolder) {
+	if (!MemoriaUtility::GenerateCSVGeneric<SpellDataStruct>(_(basefolder), _(HADES_STRING_CSV_SPELL_FILE), _(HADES_STRING_CSV_SPELL_HEADER), spell, &CSV_SpellConstructor, &CSV_SpellComparer, true))
+		return false;
+	if (!MemoriaUtility::GenerateCSVGeneric<StatusSetStruct>(_(basefolder), _(HADES_STRING_CSV_STATUS_FILE), _(HADES_STRING_CSV_STATUS_HEADER), status_set, &CSV_StatusSetConstructor, &MemoriaUtility::CSV_ComparerWithoutBoth, true))
+		return false;
+	return true;
 }
 
-void SpellDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype, SteamLanguage lang) {
-	unsigned int i;
-	if (texttype==0) {
-		for (i=0;i<SPELL_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,spell[i].name,lang);
+void SpellDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype, bool onlymodified, bool asmes, SteamLanguage lang) {
+	vector<int> writesubset;
+	if (texttype == 0) {
+		if (onlymodified && MemoriaUtility::GetModifiedSteamTexts<SpellDataStruct>(&writesubset, GetGameConfiguration()->spell_name_file, spell, [lang](SpellDataStruct& sp) { return sp.name.multi_lang_str[lang]; }, lang))
+			WriteSteamTextGeneric(ffbin, spell, &SpellDataStruct::name, &writesubset, asmes, lang);
+		else
+			WriteSteamTextGeneric(ffbin, spell, &SpellDataStruct::name, NULL, asmes, lang);
 	} else {
-		for (i=0;i<SPELL_AMOUNT;i++)
-			SteamWriteFF9String(ffbin,spell[i].help,lang);
+		if (onlymodified && MemoriaUtility::GetModifiedSteamTexts<SpellDataStruct>(&writesubset, GetGameConfiguration()->spell_help_file, spell, [lang](SpellDataStruct& sp) { return sp.help.multi_lang_str[lang]; }, lang))
+			WriteSteamTextGeneric(ffbin, spell, &SpellDataStruct::help, &writesubset, asmes, lang);
+		else
+			WriteSteamTextGeneric(ffbin, spell, &SpellDataStruct::help, NULL, asmes, lang);
 	}
 }
 
 void SpellDataSet::Write(fstream& ffbin, ConfigurationSet& config) {
+	int spellamount = SPELL_AMOUNT;
+	bool useextendedtype = false;
 	uint32_t txtpos;
-	unsigned int i;
+	int i;
 	UpdateOffset();
 	ffbin.seekg(config.spell_data_offset[0]);
 	MACRO_SPELL_IOFUNCTIONDATA(FFIXWrite,FFIXSeek,false,false)
@@ -438,8 +486,10 @@ void SpellDataSet::Write(fstream& ffbin, ConfigurationSet& config) {
 }
 
 void SpellDataSet::WritePPF(fstream& ffbin, ConfigurationSet& config) {
+	int spellamount = SPELL_AMOUNT;
+	bool useextendedtype = false;
 	uint32_t txtpos;
-	unsigned int i;
+	int i;
 	UpdateOffset();
 	ffbin.seekg(config.spell_data_offset[0]);
 	MACRO_SPELL_IOFUNCTIONDATA(PPFStepAdd,FFIXSeek,false,true)
@@ -465,109 +515,119 @@ void SpellDataSet::WritePPF(fstream& ffbin, ConfigurationSet& config) {
 }
 
 int SpellDataSet::LoadHWS(fstream& ffbin, bool usetext) {
+	int spellamount = SPELL_AMOUNT;
+	bool useextendedtype = false;
+	vector<SpellDataStruct> nonmodified;
 	uint32_t txtpos;
-	unsigned int i;
+	SteamLanguage lg;
+	int txtspace;
+	int i;
 	int res = 0;
 	uint16_t version;
 	uint16_t namesize = name_space_total, helpsize = help_space_total;
-	HWSReadShort(ffbin,version);
-	if (version>50) {
+	HWSReadShort(ffbin, version);
+	if (version > 50) {
 		name_space_total = version;
 		version = 1;
-	} else
-		HWSReadShort(ffbin,name_space_total);
-	HWSReadShort(ffbin,help_space_total);
-	MACRO_SPELL_IOFUNCTIONDATA(HWSRead,HWSSeek,true,false)
-	if (name_space_total<=namesize && usetext) {
-		if (GetHWSGameType()==GAME_TYPE_PSX) {
-			MACRO_SPELL_IOFUNCTIONNAME(HWSRead,HWSSeek,ffbin.tellg(),true,false)
-			if (GetGameType()!=GAME_TYPE_PSX)
-				for (i=0;i<SPELL_AMOUNT;i++)
+	} else {
+		HWSReadShort(ffbin, name_space_total);
+	}
+	HWSReadShort(ffbin, help_space_total);
+	if (version >= 4) {
+		useextendedtype = true;
+		vector<int> added;
+		spellamount = PrepareHWSFlexibleList(ffbin, spell, nonmodified, added);
+		for (i = 0; i < (int)added.size(); i++) {
+			spell[added[i]].name.CreateEmpty(true);
+			spell[added[i]].help.CreateEmpty(true);
+			spell[added[i]].parent = this;
+		}
+	}
+	MACRO_SPELL_IOFUNCTIONDATA(HWSRead, HWSSeek, true, false)
+	if (name_space_total <= namesize && usetext) {
+		if (GetHWSGameType() == GAME_TYPE_PSX) {
+			MACRO_SPELL_IOFUNCTIONNAME(HWSRead, HWSSeek, ffbin.tellg(), true, false)
+			if (GetGameType() != GAME_TYPE_PSX)
+				for (i = 0; i < spellamount; i++)
 					spell[i].name.PSXToSteam();
 		} else {
-			SteamLanguage lg;
-			uint16_t txtspace;
 			uint32_t tmppos;
-			HWSReadChar(ffbin,lg);
-			while (lg!=STEAM_LANGUAGE_NONE) {
-				HWSReadShort(ffbin,txtspace);
+			HWSReadChar(ffbin, lg);
+			while (lg != STEAM_LANGUAGE_NONE) {
+				HWSReadFlexibleShort(ffbin, txtspace, useextendedtype);
 				tmppos = ffbin.tellg();
-				if (GetGameType()!=GAME_TYPE_PSX)
-					for (i=0;i<SPELL_AMOUNT;i++)
-						SteamReadFF9String(ffbin,spell[i].name,lg);
-				else if (lg==GetSteamLanguage()) // DEBUG: should somehow check if the total length of converted strings is low enough
-					for (i=0;i<SPELL_AMOUNT;i++) {
-						SteamReadFF9String(ffbin,spell[i].name);
+				if (GetGameType() != GAME_TYPE_PSX)
+					for (i = 0; i < spellamount; i++)
+						SteamReadFF9String(ffbin, spell[i].name, lg);
+				else if (lg == GetSteamLanguage()) // DEBUG: should somehow check if the total length of converted strings is low enough
+					for (i = 0; i < spellamount; i++) {
+						SteamReadFF9String(ffbin, spell[i].name);
 						spell[i].name.SteamToPSX();
 					}
-				ffbin.seekg(tmppos+txtspace);
-				HWSReadChar(ffbin,lg);
+				ffbin.seekg(tmppos + txtspace);
+				HWSReadChar(ffbin, lg);
 			}
 		}
 	} else {
-		if (GetHWSGameType()==GAME_TYPE_PSX) {
-			ffbin.seekg(name_space_total,ios::cur);
+		if (GetHWSGameType() == GAME_TYPE_PSX) {
+			ffbin.seekg(name_space_total, ios::cur);
 		} else {
-			SteamLanguage lg;
-			uint16_t txtspace;
-			HWSReadChar(ffbin,lg);
-			while (lg!=STEAM_LANGUAGE_NONE) {
-				HWSReadShort(ffbin,txtspace);
-				ffbin.seekg(txtspace,ios::cur);
-				HWSReadChar(ffbin,lg);
+			HWSReadChar(ffbin, lg);
+			while (lg != STEAM_LANGUAGE_NONE) {
+				HWSReadFlexibleShort(ffbin, txtspace, useextendedtype);
+				ffbin.seekg(txtspace, ios::cur);
+				HWSReadChar(ffbin, lg);
 			}
 		}
 		if (usetext)
 			res |= 1;
 	}
-	if (help_space_total<=helpsize && usetext) {
-		if (GetHWSGameType()==GAME_TYPE_PSX) {
-			MACRO_SPELL_IOFUNCTIONHELP(HWSRead,HWSSeek,true,false)
-			if (GetGameType()!=GAME_TYPE_PSX)
-				for (i=0;i<SPELL_AMOUNT;i++)
+	if (help_space_total <= helpsize && usetext) {
+		if (GetHWSGameType() == GAME_TYPE_PSX) {
+			MACRO_SPELL_IOFUNCTIONHELP(HWSRead, HWSSeek, true, false)
+			if (GetGameType() != GAME_TYPE_PSX)
+				for (i = 0; i < spellamount; i++)
 					spell[i].help.PSXToSteam();
 		} else {
-			SteamLanguage lg;
-			uint16_t txtspace;
 			uint32_t tmppos;
-			HWSReadChar(ffbin,lg);
-			while (lg!=STEAM_LANGUAGE_NONE) {
-				HWSReadShort(ffbin,txtspace);
+			HWSReadChar(ffbin, lg);
+			while (lg != STEAM_LANGUAGE_NONE) {
+				HWSReadFlexibleShort(ffbin, txtspace, useextendedtype);
 				tmppos = ffbin.tellg();
-				if (GetGameType()!=GAME_TYPE_PSX)
-					for (i=0;i<SPELL_AMOUNT;i++)
-						SteamReadFF9String(ffbin,spell[i].help,lg);
-				else if (lg==GetSteamLanguage())
-					for (i=0;i<SPELL_AMOUNT;i++) {
-						SteamReadFF9String(ffbin,spell[i].help,lg);
+				if (GetGameType() != GAME_TYPE_PSX)
+					for (i = 0; i < spellamount; i++)
+						SteamReadFF9String(ffbin, spell[i].help, lg);
+				else if (lg == GetSteamLanguage())
+					for (i = 0; i < spellamount; i++) {
+						SteamReadFF9String(ffbin, spell[i].help, lg);
 						spell[i].help.SteamToPSX();
 					}
-				ffbin.seekg(tmppos+txtspace);
-				HWSReadChar(ffbin,lg);
+				ffbin.seekg(tmppos + txtspace);
+				HWSReadChar(ffbin, lg);
 			}
 		}
 	} else {
-		if (GetHWSGameType()==GAME_TYPE_PSX) {
-			ffbin.seekg(help_space_total+4*SPELL_AMOUNT,ios::cur);
+		if (GetHWSGameType() == GAME_TYPE_PSX) {
+			ffbin.seekg(help_space_total + 4 * spellamount, ios::cur);
 		} else {
-			SteamLanguage lg;
-			uint16_t txtspace;
-			HWSReadChar(ffbin,lg);
-			while (lg!=STEAM_LANGUAGE_NONE) {
-				HWSReadShort(ffbin,txtspace);
-				ffbin.seekg(txtspace,ios::cur);
-				HWSReadChar(ffbin,lg);
+			HWSReadChar(ffbin, lg);
+			while (lg != STEAM_LANGUAGE_NONE) {
+				HWSReadFlexibleShort(ffbin, txtspace, useextendedtype);
+				ffbin.seekg(txtspace, ios::cur);
+				HWSReadChar(ffbin, lg);
 			}
 		}
 		if (usetext)
 			res |= 2;
 	}
-	if (version>=2) {
-		MACRO_SPELL_IOFUNCTIONPERFNAME(HWSRead,HWSSeek,true,false)
+	if (version >= 2) {
+		MACRO_SPELL_IOFUNCTIONPERFNAME(HWSRead, HWSSeek, true, false)
 	}
-	if (version>=3) {
-		MACRO_SPELL_IOFUNCTIONSTATUS(HWSRead,HWSSeek,true,false)
+	if (version >= 3) {
+		MACRO_SPELL_IOFUNCTIONSTATUS(HWSRead, HWSSeek, true, false)
 	}
+	for (i = 0; i < (int)nonmodified.size(); i++)
+		InsertAtId(spell, nonmodified[i], nonmodified[i].id);
 	name_space_total = namesize;
 	help_space_total = helpsize;
 	UpdateOffset();
@@ -575,40 +635,45 @@ int SpellDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 }
 
 void SpellDataSet::WriteHWS(fstream& ffbin) {
+	int spellamount = spell.size();
+	bool useextendedtype = true;
 	uint32_t txtpos;
-	unsigned int i;
+	int i;
 	UpdateOffset();
-	HWSWriteShort(ffbin,SPELL_HWS_VERSION);
+	HWSWriteShort(ffbin, SPELL_HWS_VERSION);
 	uint16_t namesize = name_space_total, helpsize = help_space_total;
 	name_space_total = name_space_used;
 	help_space_total = help_space_used;
-	HWSWriteShort(ffbin,name_space_total);
-	HWSWriteShort(ffbin,help_space_total);
-	MACRO_SPELL_IOFUNCTIONDATA(HWSWrite,HWSSeek,false,false)
-	if (GetGameType()==GAME_TYPE_PSX) {
-		MACRO_SPELL_IOFUNCTIONNAME(HWSWrite,HWSSeek,ffbin.tellg(),false,false)
-		MACRO_SPELL_IOFUNCTIONHELP(HWSWrite,HWSSeek,false,false)
+	HWSWriteShort(ffbin, name_space_total);
+	HWSWriteShort(ffbin, help_space_total);
+	HWSWriteFlexibleChar(ffbin, spellamount, true);
+	for (i = 0; i < spellamount; i++)
+		HWSWriteFlexibleChar(ffbin, spell[i].id, true);
+	MACRO_SPELL_IOFUNCTIONDATA(HWSWrite, HWSSeek, false, false)
+	if (GetGameType() == GAME_TYPE_PSX) {
+		MACRO_SPELL_IOFUNCTIONNAME(HWSWrite, HWSSeek, ffbin.tellg(), false, false)
+		MACRO_SPELL_IOFUNCTIONHELP(HWSWrite, HWSSeek, false, false)
 	} else {
 		SteamLanguage lg;
-		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
+		for (lg = STEAM_LANGUAGE_US; lg < STEAM_LANGUAGE_AMOUNT; lg++) {
 			if (hades::STEAM_LANGUAGE_SAVE_LIST[lg]) {
-				HWSWriteChar(ffbin,lg);
-				HWSWriteShort(ffbin,GetSteamTextSize(0,lg));
-				WriteSteamText(ffbin,0,lg);
+				HWSWriteChar(ffbin, lg);
+				HWSWriteFlexibleShort(ffbin, GetSteamTextSizeGeneric(spell, &SpellDataStruct::name, false, lg), true);
+				WriteSteamText(ffbin, 0, false, false, lg);
 			}
 		}
-		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
-		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
+		HWSWriteChar(ffbin, STEAM_LANGUAGE_NONE);
+		for (lg = STEAM_LANGUAGE_US; lg < STEAM_LANGUAGE_AMOUNT; lg++) {
 			if (hades::STEAM_LANGUAGE_SAVE_LIST[lg]) {
-				HWSWriteChar(ffbin,lg);
-				HWSWriteShort(ffbin,GetSteamTextSize(1,lg));
-				WriteSteamText(ffbin,1,lg);
+				HWSWriteChar(ffbin, lg);
+				HWSWriteFlexibleShort(ffbin, GetSteamTextSizeGeneric(spell, &SpellDataStruct::help, false, lg), true);
+				WriteSteamText(ffbin, 1, false, false, lg);
 			}
 		}
-		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
+		HWSWriteChar(ffbin, STEAM_LANGUAGE_NONE);
 	}
-	MACRO_SPELL_IOFUNCTIONPERFNAME(HWSWrite,HWSSeek,false,false)
-	MACRO_SPELL_IOFUNCTIONSTATUS(HWSWrite,HWSSeek,false,false)
+	MACRO_SPELL_IOFUNCTIONPERFNAME(HWSWrite, HWSSeek, false, false)
+	MACRO_SPELL_IOFUNCTIONSTATUS(HWSWrite, HWSSeek, false, false)
 	name_space_total = namesize;
 	help_space_total = helpsize;
 }
@@ -616,9 +681,9 @@ void SpellDataSet::WriteHWS(fstream& ffbin) {
 void SpellDataSet::UpdateOffset() {
 	if (GetGameType() != GAME_TYPE_PSX)
 		return;
-	uint16_t j=0,k=0;
-	unsigned int i;
-	for (i=0;i<SPELL_AMOUNT;i++) {
+	uint16_t j = 0, k = 0;
+	int i;
+	for (i = 0; i < SPELL_AMOUNT; i++) {
 		spell[i].name_offset = j;
 		j += spell[i].name.length;
 		spell[i].help_offset = k;
@@ -626,4 +691,24 @@ void SpellDataSet::UpdateOffset() {
 	}
 	name_space_used = j;
 	help_space_used = k;
+}
+
+int SpellDataSet::GetSpellIndexById(int spellid) {
+	if (spellid < SPELL_AMOUNT)
+		return spellid;
+	for (unsigned int i = SPELL_AMOUNT; i < spell.size(); i++)
+		if (spell[i].id == spellid)
+			return i;
+	return -1;
+}
+
+SpellDataStruct dummyspell;
+SpellDataStruct& SpellDataSet::GetSpellById(int spellid) {
+	int index = GetSpellIndexById(spellid);
+	if (index >= 0)
+		return spell[index];
+	dummyspell.id = -1;
+	dummyspell.name.CreateEmpty();
+	dummyspell.name.SetValue(L"[Invalid]");
+	return dummyspell;
 }

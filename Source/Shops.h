@@ -17,36 +17,36 @@ struct ShopDataSet;
 using namespace std;
 
 struct SynthesisDataStruct {
-	uint16_t price;
-	uint8_t recipe1;
-	uint8_t recipe2;
-	uint8_t synthesized;
-	uint8_t shops;
+public:
+	int id;
+	int price;
+	vector<int> recipe;
+	int synthesized;
+	vector<int> shops;
+
+	uint8_t ShopsAsBitFlags();
 };
 
 struct ShopDataStruct {
 public:
-	// Quite a simple struct ; list can be edited directly.
-	// Just make sure either item_amount==SHOP_ITEM_AMOUNT
-	// either item_list is 0xFF-terminated.
-	uint8_t item_amount;
-	uint8_t item_list[SHOP_ITEM_AMOUNT];
-	
-private:
-	ShopDataSet* parent;
-	friend ShopDataSet;
+	int id;
+	int item_amount;
+	vector<int> item_list;
 };
 
 struct ShopDataSet {
 public:
-	ShopDataStruct shop[SHOP_AMOUNT];
-	SynthesisDataStruct synthesis[SYNTHESIS_AMOUNT];
+	vector<ShopDataStruct> shop;
+	vector<SynthesisDataStruct> synthesis;
 	
 //	uint32_t steam_method_position_shop;
 //	uint32_t steam_method_base_length_shop;
 	uint32_t steam_method_base_length_shop[SHOP_AMOUNT];
 	uint32_t steam_method_position_synthesis;
 	uint32_t steam_method_base_length_synthesis;
+
+	int GetShopIndexById(int shopid);
+	ShopDataStruct& GetShopById(int shopid);
 	
 	void Load(fstream& ffbin, ConfigurationSet& config);
 	void Write(fstream& ffbin, ConfigurationSet& config);

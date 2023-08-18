@@ -2170,7 +2170,7 @@ int FieldDataSet::SetFieldName(unsigned int fieldid, FF9String& newvalue) {
 }
 
 void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textset) {
-	unsigned int i,j,k,l;
+	unsigned int i, j, k, l;
 	int relatedtxtid;
 	amount = clusset.field_amount;
 	struct_id.resize(amount);
@@ -2181,17 +2181,17 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 	tim_data.resize(amount);
 	role.resize(amount);
 	related_text.resize(amount);
-	tile_size = GetGameType()==GAME_TYPE_PSX ? FIELD_TILE_BASE_SIZE : hades::FIELD_BACKGROUND_RESOLUTION;
-	tile_gap = GetGameType()==GAME_TYPE_PSX ? 0 : 2;
+	tile_size = GetGameType() == GAME_TYPE_PSX ? FIELD_TILE_BASE_SIZE : hades::FIELD_BACKGROUND_RESOLUTION;
+	tile_gap = GetGameType() == GAME_TYPE_PSX ? 0 : 2;
 	j = 0;
-	LoadingDialogInit(amount,_(L"Reading fields..."));
-	if (GetGameType()==GAME_TYPE_PSX) {
+	LoadingDialogInit(amount, _(L"Reading fields..."));
+	if (GetGameType() == GAME_TYPE_PSX) {
 		cluster_id.resize(amount);
-		for (i=0;i<clusset.amount;i++) {
-			if (clusset.clus_type[i]==CLUSTER_TYPE_FIELD) {
+		for (i = 0; i < clusset.amount; i++) {
+			if (clusset.clus_type[i] == CLUSTER_TYPE_FIELD) {
 				clusset.clus[i].CreateChildren(ffbin);
-				for (k=0;k<clusset.clus[i].chunk_amount;k++) {
-					for (l=0;l<clusset.clus[i].chunk[k].object_amount;l++) {
+				for (k = 0; k < clusset.clus[i].chunk_amount; k++) {
+					for (l = 0; l < clusset.clus[i].chunk[k].object_amount; l++) {
 						ffbin.seekg(clusset.clus[i].chunk[k].object_offset[l]);
 						clusset.clus[i].chunk[k].GetObject(l).Read(ffbin);
 					}
@@ -2199,16 +2199,16 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 				cluster_id[j] = i;
 				ClusterData& clustim = (ClusterData&)clusset.clus[i].chunk[clusset.clus[i].SearchChunkType(CHUNK_TYPE_CLUSTER_DATA)].GetObject(0);
 				clustim.CreateChildren(ffbin);
-				for (k=0;k<clustim.chunk_amount;k++) {
-					for (l=0;l<clustim.chunk[k].object_amount;l++) {
+				for (k = 0; k < clustim.chunk_amount; k++) {
+					for (l = 0; l < clustim.chunk[k].object_amount; l++) {
 						ffbin.seekg(clustim.chunk[k].object_offset[l]);
 						clustim.chunk[k].GetObject(l).Read(ffbin);
 					}
 				}
 				ClusterData& clus = (ClusterData&)clusset.clus[i].chunk[clusset.clus[i].SearchChunkType(CHUNK_TYPE_CLUSTER_DATA)].GetObject(1);
 				clus.CreateChildren(ffbin);
-				for (k=0;k<clus.chunk_amount;k++) {
-					for (l=0;l<clus.chunk[k].object_amount;l++) {
+				for (k = 0; k < clus.chunk_amount; k++) {
+					for (l = 0; l < clus.chunk[k].object_amount; l++) {
 						ffbin.seekg(clus.chunk[k].object_offset[l]);
 						clus.chunk[k].GetObject(l).Read(ffbin);
 					}
@@ -2230,14 +2230,14 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 				struct_id[j] = script_data[j]->object_id;
 				GlobalMapCommonDirStruct& mapdir = clusset.global_map.common_dir[GLOBAL_MAP_DIR_FIELD];
 				relatedtxtid = -1;
-				for (k=0;k<mapdir.file_amount;k++)
-					if (mapdir.file_id[k]==script_data[j]->object_id) {
+				for (k = 0; k < mapdir.file_amount; k++)
+					if (mapdir.file_id[k] == script_data[j]->object_id) {
 						relatedtxtid = mapdir.file_related_id[k];
 						break;
 					}
-				if (relatedtxtid>=0) {
-					related_text[j] = (TextDataStruct*)clusset.FindObjectById(CHUNK_TYPE_TEXT,relatedtxtid);
-					if (related_text[j]->parent_cluster->SearchChunkType(CHUNK_TYPE_CHARMAP)>=0)
+				if (relatedtxtid >= 0) {
+					related_text[j] = (TextDataStruct*)clusset.FindObjectById(CHUNK_TYPE_TEXT, relatedtxtid);
+					if (related_text[j]->parent_cluster->SearchChunkType(CHUNK_TYPE_CHARMAP) >= 0)
 						script_data[j]->related_charmap_id = related_text[j]->parent_cluster->chunk[related_text[j]->parent_cluster->SearchChunkType(CHUNK_TYPE_CHARMAP)].object_id[0];
 					else
 						script_data[j]->related_charmap_id = 0;
@@ -2262,36 +2262,36 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 		uint8_t strbuffer[10];
 		SteamLanguage lang;
 		fname += "resources.assets";
-		ffbin.open(fname.c_str(),ios::in | ios::binary);
-		for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
-			if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+		ffbin.open(fname.c_str(), ios::in | ios::binary);
+		for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+			if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang != GetSteamLanguage())
 				continue;
 			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.field_text_file[lang]));
 			name_space_used = config.meta_res.GetFileSizeByIndex(config.field_text_file[lang]);
-			for (i=0;i<amount;i++) {
+			for (i = 0; i < amount; i++) {
 				j = 0;
-				do SteamReadChar(ffbin,strbuffer[j]);
-				while (strbuffer[j++]!=':');
-				strbuffer[j-1] = 0;
+				do SteamReadChar(ffbin, strbuffer[j]);
+				while (strbuffer[j++] != ':');
+				strbuffer[j - 1] = 0;
 				fieldnameidtmp = atoi((const char*)strbuffer);
-				if (fieldnameidtmp==1805) { // DEBUG: Registered field lacking data
+				if (fieldnameidtmp == 1805) { // DEBUG: Registered field lacking data
 					FF9String dumpedstr;
-					SteamReadFF9String(ffbin,dumpedstr);
+					SteamReadFF9String(ffbin, dumpedstr);
 					i--;
 				} else if (!fieldnameinit) {
 					fieldnameid[i] = fieldnameidtmp;
-					SteamReadFF9String(ffbin,fieldname[i],lang);
-				} else if (fieldnameid[i]==fieldnameidtmp) {
-					SteamReadFF9String(ffbin,fieldname[i],lang);
+					SteamReadFF9String(ffbin, fieldname[i], lang);
+				} else if (fieldnameid[i] == fieldnameidtmp) {
+					SteamReadFF9String(ffbin, fieldname[i], lang);
 				} else {
-					for (k=0;k<amount;k++)
-						if (fieldnameid[k]==fieldnameidtmp) {
-							SteamReadFF9String(ffbin,fieldname[k],lang);
+					for (k = 0; k < amount; k++)
+						if (fieldnameid[k] == fieldnameidtmp) {
+							SteamReadFF9String(ffbin, fieldname[k], lang);
 							break;
 						}
-					if (k>=amount) {
+					if (k >= amount) {
 						FF9String dumpedstr;
-						SteamReadFF9String(ffbin,dumpedstr);
+						SteamReadFF9String(ffbin, dumpedstr);
 					}
 				}
 			}
@@ -2303,61 +2303,68 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 		title_info->Read(ffbin);
 		ffbin.close();
 		fname = config.steam_dir_assets + "p0data7.bin";
-		ffbin.open(fname.c_str(),ios::in | ios::binary);
-		string fieldfilename, txtfilename;
-		for (i=0;i<amount;i++) {
+		ffbin.open(fname.c_str(), ios::in | ios::binary);
+		int scriptfileamount = G_N_ELEMENTS(SteamFieldScript);
+		int txtfileamount = G_N_ELEMENTS(SteamTextFile);
+		vector<string> steamtxtfile;
+		string fieldfilename;
+		steamtxtfile.reserve(txtfileamount);
+		for (i = 0; i < txtfileamount; i++)
+			steamtxtfile.push_back(SteamTextFile[j].name.substr(4)); // remove "MES_"
+		for (i = 0; i < amount; i++) {
 			struct_id[i] = config.field_id[i];
 			related_text[i] = NULL;
 			relatedtxtid = -1;
 			fieldfilename = "";
-			for (j=0;j<G_N_ELEMENTS(SteamFieldScript);j++)
-				if (SteamFieldScript[j].script_id==struct_id[i]) {
+			for (j = 0; j < scriptfileamount; j++)
+				if (SteamFieldScript[j].script_id == struct_id[i]) {
 					fieldfilename = SteamFieldScript[j].script_name.substr(4); // remove "EVT_"
 					break;
 				}
-			for (j=0;j<G_N_ELEMENTS(SteamTextFile);j++) {
-				txtfilename = SteamTextFile[j].name.substr(4); // remove "MES_"
-				if (txtfilename.length()<fieldfilename.length() && fieldfilename[txtfilename.length()]=='_' && txtfilename.compare(fieldfilename.substr(0,txtfilename.length()))==0) {
+			for (j = 0; j < txtfileamount; j++) {
+				string& txtfilename = steamtxtfile[j];
+				if (txtfilename.length() < fieldfilename.length() && fieldfilename[txtfilename.length()] == '_' && txtfilename.compare(fieldfilename.substr(0, txtfilename.length())) == 0) {
 					relatedtxtid = SteamTextFile[j].id;
 					break;
 				}
 			}
-			if (relatedtxtid>=0 && textset)
-				for (j=0;j<textset->amount;j++)
-					if (textset->struct_id[j]==relatedtxtid) {
+			if (relatedtxtid >= 0 && textset)
+				for (j = 0; j < textset->amount; j++)
+					if (textset->struct_id[j] == relatedtxtid) {
 						related_text[i] = textset->text_data[j];
 						break;
 					}
 			script_data[i] = new ScriptDataStruct[1];
 			script_data[i]->related_charmap_id = 0;
-			script_data[i]->Init(true,CHUNK_TYPE_SCRIPT,config.field_id[i],&dummyclus[i],CLUSTER_TYPE_FIELD);
-			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
-				if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+			script_data[i]->Init(true, CHUNK_TYPE_SCRIPT, config.field_id[i], &dummyclus[i], CLUSTER_TYPE_FIELD);
+			for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+				if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang != GetSteamLanguage())
 					continue;
 				ffbin.seekg(config.meta_script.GetFileOffsetByIndex(config.field_script_file[lang][i]));
-				script_data[i]->Read(ffbin,lang);
+				script_data[i]->Read(ffbin, lang);
 			}
 			script_data[i]->ChangeSteamLanguage(GetSteamLanguage());
 			script_data[i]->size = config.meta_script.GetFileSizeByIndex(config.field_script_file[GetSteamLanguage()][i]);
-			for (j=0;j<amount;j++)
-				if (fieldnameid[j]==script_data[i]->object_id) {
+			for (j = 0; j < amount; j++)
+				if (fieldnameid[j] == script_data[i]->object_id) {
 					script_data[i]->name = fieldname[j];
 					break;
 				}
 			script_data[i]->LinkSimilarLanguageScripts();
 			ffbin.seekg(config.meta_script.GetFileOffsetByIndex(config.field_role_file[i]));
 			role[i] = new FieldRoleDataStruct[1];
-			role[i]->Init(false,CHUNK_TYPE_FIELD_ROLE,config.field_id[i],&dummyclus[i]);
+			role[i]->Init(false, CHUNK_TYPE_FIELD_ROLE, config.field_id[i], &dummyclus[i]);
 			role[i]->size = config.meta_script.GetFileSizeByIndex(config.field_role_file[i]);
 			role[i]->Read(ffbin);
-			if (config.field_preload_file[i]>=0) {
+			if (config.field_preload_file[i] >= 0) {
 				ffbin.seekg(config.meta_script.GetFileOffsetByIndex(config.field_preload_file[i]));
 				preload[i] = new ImageMapDataStruct[1];
-				preload[i]->Init(false,CHUNK_TYPE_IMAGE_MAP,config.field_id[i],&dummyclus[i]);
+				preload[i]->Init(false, CHUNK_TYPE_IMAGE_MAP, config.field_id[i], &dummyclus[i]);
 				preload[i]->size = config.meta_script.GetFileSizeByIndex(config.field_preload_file[i]);
 				preload[i]->Read(ffbin);
-			} else
+			} else {
 				preload[i] = NULL;
+			}
 			LoadingDialogUpdate(i, wxString::Format(wxT("%u / %u (1/2)"), i, amount));
 		}
 		ffbin.close();
@@ -2398,12 +2405,12 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 			if (sharedtimfile >= 0) {
 				tim_data[i] = tim_data[sharedtimfile];
 			} else {
-//				ffbin.seekg(config.meta_field[config.field_file_id[i]-1].GetFileOffsetByIndex(config.field_image_file[i]));
+				//ffbin.seekg(config.meta_field[config.field_file_id[i]-1].GetFileOffsetByIndex(config.field_image_file[i]));
 				tim_data[i] = new TIMImageDataStruct[1];
 				tim_data[i]->Init(false, CHUNK_TYPE_TIM, config.field_id[i], &dummyclus[i]);
 				tim_data[i]->data_file_name = fname;
 				tim_data[i]->data_file_offset = config.meta_field[config.field_file_id[i] - 1].GetFileOffsetByIndex(config.field_image_file[i]);
-//				tim_data[i]->Read(ffbin);
+				//tim_data[i]->Read(ffbin);
 			}
 			if (sharedtilefile >= 0) {
 				background_data[i] = background_data[sharedtilefile];

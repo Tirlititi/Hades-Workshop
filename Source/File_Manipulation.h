@@ -106,7 +106,7 @@ public:
 	FF9String();
 	FF9String(const FF9String& cp);
 	~FF9String();
-	void CreateEmpty();
+	void CreateEmpty(bool forceinitall = false);
 	void Read(fstream& ffbin, void (*ReadCharFunc)(fstream& fs,uint8_t& ch));
 	void ReadFromChar(uint8_t* rawvalue);
 	void SetValue(wstring value, SteamLanguage = GetSteamLanguage()); // If there are more µ than "code_amount", the latest ones are ignored
@@ -155,6 +155,10 @@ uint16_t FFIXReadShort(fstream& f, uint16_t& destvalue);
 void FFIXWriteShort(fstream& f, uint16_t value);
 uint8_t FFIXReadChar(fstream& f, uint8_t& destvalue);
 void FFIXWriteChar(fstream& f, uint8_t value);
+int FFIXReadFlexibleShort(fstream& f, int& destvalue, bool asint);
+void FFIXWriteFlexibleShort(fstream& f, int value, bool asint);
+int FFIXReadFlexibleChar(fstream& f, int& destvalue, bool asint);
+void FFIXWriteFlexibleChar(fstream& f, int value, bool asint);
 void FFIXSeek(fstream& f, uint32_t abspos, uint32_t offset);
 void FFIXSeekBack(fstream &f, uint32_t abspos, uint32_t minusoffset);
 uint32_t GetFFIXOffsetSub(uint32_t beg, uint32_t end);
@@ -171,10 +175,16 @@ uint16_t SteamReadShort(fstream& f, uint16_t& destvalue);
 void SteamWriteShort(fstream& f, uint16_t value);
 uint8_t SteamReadChar(fstream& f, uint8_t& destvalue);
 void SteamWriteChar(fstream& f, uint8_t value);
+int SteamReadFlexibleShort(fstream& f, int& destvalue, bool asint);
+void SteamWriteFlexibleShort(fstream& f, int value, bool asint);
+int SteamReadFlexibleChar(fstream& f, int& destvalue, bool asint);
+void SteamWriteFlexibleChar(fstream& f, int value, bool asint);
 void SteamSeek(fstream& f, uint32_t abspos, uint32_t offset);
 
 // For PPF conversion
 void PPFInitScanStep(fstream& f, bool datastring = false, uint16_t len = 0); // len is only used for strings
+void PPFStepAddFlexibleChar(fstream& f, int value, bool asint);
+void PPFStepAddFlexibleShort(fstream& f, int value, bool asint);
 void PPFStepAddChar(fstream& f, uint8_t value);
 void PPFStepAddShort(fstream& f, uint16_t value);
 void PPFStepAddLong3(fstream& f, uint32_t value);
@@ -183,7 +193,7 @@ int PPFEndScanStep();
 // Should never be used with another data type in a scan step
 void PPFStepAddFF9String(fstream& f, FF9String& value);
 
-// For HWS manipulation
+// For HWS / raw binary manipulation
 void HWSReadFF9String(fstream& f, FF9String& deststr);
 void HWSWriteFF9String(fstream& f, FF9String& str);
 uint32_t HWSReadLong(fstream& f, uint32_t& destvalue);
@@ -194,6 +204,12 @@ uint16_t HWSReadShort(fstream& f, uint16_t& destvalue);
 void HWSWriteShort(fstream& f, uint16_t value);
 uint8_t HWSReadChar(fstream& f, uint8_t& destvalue);
 void HWSWriteChar(fstream& f, uint8_t value);
+int HWSReadFlexibleShort(fstream& f, int& destvalue, bool asint);
+void HWSWriteFlexibleShort(fstream& f, int value, bool asint);
+int HWSReadFlexibleChar(fstream& f, int& destvalue, bool asint);
+void HWSWriteFlexibleChar(fstream& f, int value, bool asint);
 void HWSSeek(fstream& f, uint32_t abspos, uint32_t offset);
+void HWSReadWString(fstream& f, wstring& str);
+void HWSWriteWString(fstream& f, wstring str);
 
 #endif

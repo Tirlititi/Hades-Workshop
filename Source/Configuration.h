@@ -349,4 +349,7 @@ void SetGameType(GameType gt);
 GameType GetHWSGameType();
 void SetHWSGameType(GameType gt);
 
+ConfigurationSet* GetGameConfiguration();
+void SetGameConfiguration(ConfigurationSet* config);
+
 #endif

@@ -2,6 +2,7 @@
 #define _PARTY_SPECIALS_H
 
 #define MAGIC_SWORD_AMOUNT	13
+struct MagicSwordDataStruct;
 struct PartySpecialDataSet;
 
 #include <inttypes.h>
@@ -11,10 +12,19 @@ struct PartySpecialDataSet;
 #include "DllEditor.h"
 using namespace std;
 
+struct MagicSwordDataStruct {
+	int id;
+	int supporter;
+	int beneficiary;
+	vector<int> requirement;
+	vector<int> unlocked;
+
+	void InitDefault();
+};
+
 struct PartySpecialDataSet {
 public:
-	uint8_t magic_sword[MAGIC_SWORD_AMOUNT];
-	uint8_t magic_sword_requirement[MAGIC_SWORD_AMOUNT];
+	vector<MagicSwordDataStruct> magic_sword;
 	
 	void Load(fstream& ffbin, ConfigurationSet& config);
 	void Write(fstream& ffbin, ConfigurationSet& config);

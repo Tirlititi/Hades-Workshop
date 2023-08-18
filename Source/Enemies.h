@@ -73,7 +73,7 @@ public:
 
 	EnemyStatDataStruct* GetAssociatedStat();
 	
-	uint8_t id;
+	int id;
 	EnemyDataStruct* parent;
 };
 
@@ -150,7 +150,7 @@ public:
 	int SetName(wstring newvalue, SteamLanguage lang = GetSteamLanguage());
 	int SetName(FF9String& newvalue);
 	
-	uint8_t id;
+	int id;
 	EnemyDataStruct* parent;
 };
 
@@ -167,7 +167,7 @@ public:
 	int16_t enemy_posy[4];
 	int16_t enemy_angle[4]; // 360° = 0x1000
 	
-	uint8_t id;
+	int id;
 	EnemyDataStruct* parent;
 };
 

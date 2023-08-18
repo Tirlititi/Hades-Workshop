@@ -39,6 +39,7 @@ using namespace std;
 
 struct SupportDataStruct {
 public:
+	int id;
 	FF9String name; // readonly
 	FF9String help; // readonly
 	uint16_t help_size_x;
@@ -60,7 +61,7 @@ private:
 
 struct SupportDataSet {
 public:
-	SupportDataStruct support[SUPPORT_AMOUNT];
+	vector<SupportDataStruct> support;
 	uint16_t name_space_total;
 	uint16_t help_space_total;
 	uint16_t name_space_used;
@@ -68,6 +69,9 @@ public:
 	
 	uint32_t steam_method_position;
 	uint32_t steam_method_base_length;
+
+	int GetSupportIndexById(int supportid);
+	SupportDataStruct& GetSupportById(int supportid);
 	
 	void Load(fstream& ffbin, ConfigurationSet& config);
 	void Write(fstream& ffbin, ConfigurationSet& config);
@@ -80,8 +84,7 @@ public:
 	void GenerateCSharp(vector<string>& buffer);
 	bool GenerateCSV(string basefolder);
 	// texttype: 0 for name, 1 for help
-	void WriteSteamText(fstream& ffbin, unsigned int texttype, SteamLanguage lang = GetSteamLanguage());
-	int GetSteamTextSize(unsigned int texttype, SteamLanguage lang = GetSteamLanguage());
+	void WriteSteamText(fstream& ffbin, unsigned int texttype, bool onlymodified, bool asmes, SteamLanguage lang = GetSteamLanguage());
 	void UpdateOffset();
 };
 

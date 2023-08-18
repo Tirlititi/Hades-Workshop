@@ -3,6 +3,10 @@
 
 #include "Database_Common.h"
 
+#define HADES_STRING_SPELL_EFFECT_COUNT 128
+#define HADES_STRING_SPELL_EFFECT_UNUSED_NAME "Unused %d"
+#define HADES_STRING_SPELL_EFFECT_UNUSED_DESCRIPTION L"No effect."
+
 static SortedChoiceItemWithHelp HADES_STRING_SPELL_EFFECT[] = {
 	{ 0, L"No Effect", L"No effect." },
 	{ 1, L"Attack Standard", L"Standard weapons attack.\nDamage = (Attack - Defence) * Random[Strength, Strength + (Level + Strength) / 8]\nHit Rate = 100\nCritical Rate = (Spirit / 4 - 1) / 200\n\nDamage Modifiers\n Caster : Killer Abilities, MP Attack, Healer, Berserk, Trance, Mini, Back Row and Elemental Boost (Weapon)\n Target : Defend, Protect, Sleep, Mini, Back Attack, Back Row, Gamble Defence and Elemental Affinity (Weapon)\n Other : Ipsen's Curse\nHit Rate Modifiers\n Caster : Accuracy+, Confuse, Blind, Trance and Vanish\n Target : Distract, Defend, Vanish, Petrify, Venom, Virus, Blind, Confuse, Stop, Sleep and Freeze\nUse physical evasion.\nKill Frozen targets.\nSpread damage if the target is under Trouble.\nAdd weapon's status with Add Status (use weapon's status accuracy)." },
@@ -26,12 +30,12 @@ static SortedChoiceItemWithHelp HADES_STRING_SPELL_EFFECT[] = {
 	{ 19, L"Physical Strike", L"Physical attack that can also add status.\nDamage = (Attack * Power / 10 - Defence) * Random[Strength, Strength + (Level + Strength) / 8]\nStatus Hit Rate = SpellAccuracy\n\nDamage Modifiers\n Caster : Berserk, Trance, Mini and Elemental Boost (Spell)\n Target : Defend, Protect, Sleep, Mini and Elemental Affinity (Weapon)" },
 	{ 20, L"Magic Weapon", L"Magic attack using strength that can also add status.\nDamage = (Attack * Power / 10 - MagicDefence) * Random[Strength, Strength + (Level + Strength) / 8]\nStatus Hit Rate = SpellAccuracy\n\nDamage Modifiers : Mini (half), Shell, Elemental Affinity and Boost (Spell)\nMiss on flying targets if the spell is Earth-elemental." },
 	{ 21, L"Goblin Punch", L"Magic attack improved if target and caster are same level.\nBase Damage = (Power - MagicDefence) * Random[Magic, Magic + (Level + Magic) / 8]\nImproved Damage = (Power + Level) * Random[Magic, Magic + (Level + Magic) / 8]\n\nDamage Modifiers : Mini (half) and Shell" },
-	{ 22, L"LV? Death", L"Bring HP to « Power » if target's level is a multiple of « Accuracy ».\nPass through any status immunity but miss if the target is under Petrify." },
-	{ 23, L"LV? Attack", L"Magic attack if target's level is a multiple of « Accuracy ».\nDamage = (Power - MagicDefence) * Random[Magic, Magic + (Level + Magic) / 8]\n\nDamage Modifiers : Mini (Caster), Shell, Petrify (miss), Elemental Affinity and Boost" },
-	{ 24, L"LV? Defless", L"Reduce both defence and magic defence if target's level is a multiple of « Accuracy » and not under Petrify.\nNew Defences = Random[0, Old Defences - 1]" },
-	{ 25, L"Roulette", L"Bring HP to « Power » but fail if the target is under Easy Kill or Petrify.\nThe base Roulette spell slot randomizes the target but the others have a determinist target (see btl_cmd::CheckCommandCondition)." },
+	{ 22, L"LV? Death", L"Bring HP to \"Power\" if target's level is a multiple of \"Accuracy\".\nPass through any status immunity but miss if the target is under Petrify." },
+	{ 23, L"LV? Attack", L"Magic attack if target's level is a multiple of \"Accuracy\".\nDamage = (Power - MagicDefence) * Random[Magic, Magic + (Level + Magic) / 8]\n\nDamage Modifiers : Mini (Caster), Shell, Petrify (miss), Elemental Affinity and Boost" },
+	{ 24, L"LV? Defless", L"Reduce both defence and magic defence if target's level is a multiple of \"Accuracy\" and not under Petrify.\nNew Defences = Random[0, Old Defences - 1]" },
+	{ 25, L"Roulette", L"Bring HP to \"Power\" but fail if the target is under Easy Kill or Petrify.\nThe base Roulette spell slot randomizes the target but the others have a determinist target (see btl_cmd::CheckCommandCondition)." },
 	{ 26, L"Pure Damage", L"Type free attack.\nDamage = Power * 100 + Accuracy" },
-	{ 27, L"Matra Magic", L"Bring HP to « Power » but fail if the target is under Easy Kill or Petrify.\nHit Rate = Accuracy + Magic / 4 + Level - TargetLevel\n\nHit Rate Modifier : Shell\nUse magical evasion." },
+	{ 27, L"Matra Magic", L"Bring HP to \"Power\" but fail if the target is under Easy Kill or Petrify.\nHit Rate = Accuracy + Magic / 4 + Level - TargetLevel\n\nHit Rate Modifier : Shell\nUse magical evasion." },
 	{ 28, L"Limit Glove", L"Pure damage if caster's HP are exactly 1 but miss otherwise.\nDamage = Power * 100 + Accuracy" },
 	{ 29, L"Minus Strike", L"Type free attack.\nDamage = CasterMaxHP - CasterHP" },
 	{ 30, L"White Wind", L"Heal depending on caster's max HP. Damage Zombie instead of healing them.\nHeal = CasterMaxHP / 3" },
@@ -56,9 +60,9 @@ static SortedChoiceItemWithHelp HADES_STRING_SPELL_EFFECT[] = {
 	{ 49, L"Eidolon Phoenix", L"Magic Attack on target enemies and Life on target allies.\nDamage = Magic Attack formula using Phoenix's spell datas\nHeal = Life formula using Rebirth Flame's spell datas" },
 	{ 50, L"Six Dragons", L"Randomly change target's HP and/or MP but fail if the target is under Petrify.\nRestore both HP and MP : 10%\nRestore HP : 20%\nRestore MP : 20%\nReduce HP to 1 : 15%\nReduce MP to 1 : 15%\nReduce both HP and MP to 1 : 20%" },
 	{ 51, L"Curse", L"Add an elemental weakness.\nThe base Curse spell slots randomize the element but the others have a determinist element (see btl_cmd::CheckCommandCondition)." },
-	{ 52, L"Angel's Snack", L"Use an item specified by « Power » on each target." },
+	{ 52, L"Angel's Snack", L"Use an item specified by \"Power\" on each target." },
 	{ 53, L"Lucky Seven", L"Type free attack improved if the last figure of caster's HP is 7.\nBase Damage = 1\nImproved Damage = Random{7, 77, 777, 7777}" },
-	{ 54, L"What's That!?", L"Place the target enemies in a back attack state but fail if the « Scripted Start » flag of the battle is on.\nAlso put the target allies back to their usual row position." },
+	{ 54, L"What's That!?", L"Place the target enemies in a back attack state but fail if the \"Scripted Start\" flag of the battle is on.\nAlso put the target allies back to their usual row position." },
 	{ 55, L"Change", L"Toggle between front row and back row." },
 	{ 56, L"Flee", L"Escape from battle. Always miss during an enemy attack.\nSuccess Rate Per Second = 200 * TeamMeanLevel / EnemiesMeanLevel / 16" },
 	{ 57, L"Flee Skill", L"Escape from battle but lose 10% of enemies carried gil." },
@@ -84,7 +88,7 @@ static SortedChoiceItemWithHelp HADES_STRING_SPELL_EFFECT[] = {
 	{ 77, L"Item : Dark Matter", L"Type free attack dealing max damage but fail if the target is under Petrify.\nDamage = 9999" },
 	{ 78, L"Unused 78", L"No effect." },
 	{ 79, L"Unused 79", L"No effect." },
-	{ 80, L"Unused 80", L"No effect." },
+	{ 80, L"Double Cast", L"[Memoria only]\nCast the spell specified by \"Power\", then the spell specified by \"Accuracy\"." },
 	{ 81, L"Unused 81", L"No effect." },
 	{ 82, L"Unused 82", L"No effect." },
 	{ 83, L"Trance Spear", L"Physical attack.\nDamage = 1.5 * (Attack - Defence) * (Random[0, Strength - 1] + Random[0, (Level + Strength) / 8])\n\nDamage Modifiers : High Jump (factor changed from 1.5 to 2), Mini (Caster - half), Defend, Protect, Sleep and Mini (Target)\nDamage is spread between the targets" },
@@ -96,7 +100,7 @@ static SortedChoiceItemWithHelp HADES_STRING_SPELL_EFFECT[] = {
 	{ 89, L"HP Switching", L"Switch caster's and target's current HP but fail if the target is under Easy Kill or Petrify." },
 	{ 90, L"Defless", L"Divide target's defence and magic defence by 2." },
 	{ 91, L"Cannon", L"Magic attack depending on target's current HP.\nDamage = Power * HP / 100\nHit Rate = Accuracy + Magic / 4 + Level - TargetLevel\n\nDamage Modifiers : Elemental Affinity and Boost\nHit Rate Modifiers : Multi-targeting and Shell\nMiss on flying targets if the spell is Earth-elemental." },
-	{ 92, L"Add Item", L"Give an item specified by « Power » to the player." },
+	{ 92, L"Add Item", L"Give an item specified by \"Power\" to the player." },
 	{ 93, L"Maelstrom", L"Bring HP to a random number between 1 and 10 and add status but fail if the target is under Easy Kill or Petrify." },
 	{ 94, L"Absorb Magic", L"Divide by 2 the target's magic and multiply by 2 the caster's.\nCan break the magic limit up to 255." },
 	{ 95, L"Absorb Strength", L"Divide by 2 the target's strength and multiply by 2 the caster's.\nCan break the strength limit up to 255." },
@@ -105,8 +109,8 @@ static SortedChoiceItemWithHelp HADES_STRING_SPELL_EFFECT[] = {
 	{ 98, L"Terran Strike", L"Physical attack that misses on terran people.\nDamage = (Power - Defence) * Random[Strength, Strength + (Level + Strength) / 4]" },
 	{ 99, L"Flare Star", L"Type free attack depending on target's level.\nDamage = Power * TargetLevel\nHit Rate = Accuracy + Magic / 4 + Level - TargetLevel\n\nHit Rate Modifiers : Multi-targeting and Shell\nUse magical evasion." },
 	{ 100, L"Enemy Accurate Attack", L"Physical attack used by enemies that never misses and can also add status.\nDamage = (Power - Defence) * Random[Strength, Strength + (Level + Strength) / 4]\n\nDamage Modifiers\n Caster : Berserk, Trance, Mini, Back Row and Elemental Boost\n Target : Defend, Protect, Sleep, Mini, Back Attack, Back Row, Gamble Defence and Elemental Affinity\nKill Frozen targets." },
-	{ 101, L"Inventory Steal", L"Remove an item from the player's inventory specified by « Accuracy ».\nHit Rate = 100\n\nUse physical evasion." },
-	{ 102, L"Inventory Mug", L"Physical attack.\nAlso Remove an item from the player's inventory specified by « Accuracy ».\nDamage = (Power - Defence) * Random[Strength, Strength + (Level + Strength) / 4]\n\nDamage Modifiers : Berserk, Trance, Mini (Caster and Target), Defend, Protect, Sleep, Back Attack, Back Row, Gamble Defence" },
+	{ 101, L"Inventory Steal", L"Remove an item from the player's inventory specified by \"Accuracy\".\nHit Rate = 100\n\nUse physical evasion." },
+	{ 102, L"Inventory Mug", L"Physical attack.\nAlso Remove an item from the player's inventory specified by \"Accuracy\".\nDamage = (Power - Defence) * Random[Strength, Strength + (Level + Strength) / 4]\n\nDamage Modifiers : Berserk, Trance, Mini (Caster and Target), Defend, Protect, Sleep, Back Attack, Back Row, Gamble Defence" },
 	{ 103, L"Good Status", L"Add status with a 100% hit rate if the target is not immune." },
 	{ 104, L"Grudge", L"Type free attack depending on Tonberry killed.\nDamage = 4 ^ NbTonberry" },
 	{ 105, L"Grand Cross", L"Add random statuses among the following, but fail if the target is under Petrify :\nPetrify, Silence, Darkness, Trouble, Zombie, Instant Death, Confuse, Berserk, Stop, Poison, Sleep, Heat, Freeze, Doom, Mini and HP reduce to 1-10.\nHit Rate (each status) = 1 / 8" },
@@ -114,24 +118,6 @@ static SortedChoiceItemWithHelp HADES_STRING_SPELL_EFFECT[] = {
 	{ 107, L"Beat Back", L"Physical attack that can change the target's row (after damage) and can also add status.\nIf the target is a player character, he is moved to back row. Else, the target moves forward, preventing further front/back row modifiers.\nDamage = (Power - Defence) * Random[Strength, Strength + (Level + Strength) / 4]\n\nDamage Modifiers\n Caster : Berserk, Trance, Mini, Back Row and Elemental Boost\n Target : Defend, Protect, Sleep, Mini, Back Attack, Back Row, Gamble Defence and Elemental Affinity" },
 	{ 108, L"Iai Strike", L"Add status but fail if the target is under Easy Kill.\nHit Rate = Accuracy + Magic / 4 + Level - TargetLevel\n\nHit Rate Modifiers : Multi-targeting and Shell\nUse magical evasion." },
 	{ 109, L"Mini", L"Add status. Has a 100% hit rate if target is under Mini.\nHit Rate = Accuracy + Magic / 4 + Level - TargetLevel\n\nHit Rate Modifiers : Multi-targeting and Shell\nUse magical evasion." },
-	{ 110, L"Unused 110", L"No effect." },
-	{ 111, L"Unused 111", L"No effect." },
-	{ 112, L"Unused 112", L"No effect." },
-	{ 113, L"Unused 113", L"No effect." },
-	{ 114, L"Unused 114", L"No effect." },
-	{ 115, L"Unused 115", L"No effect." },
-	{ 116, L"Unused 116", L"No effect." },
-	{ 117, L"Unused 117", L"No effect." },
-	{ 118, L"Unused 118", L"No effect." },
-	{ 119, L"Unused 119", L"No effect." },
-	{ 120, L"Unused 120", L"No effect." },
-	{ 121, L"Unused 121", L"No effect." },
-	{ 122, L"Unused 122", L"No effect." },
-	{ 123, L"Unused 123", L"No effect." },
-	{ 124, L"Unused 124", L"No effect." },
-	{ 125, L"Unused 125", L"No effect." },
-	{ 126, L"Unused 126", L"No effect." },
-	{ 127, L"Unused 127", L"No effect." }
 };
 
 #define HADES_STRING_STATUS_NONE	L"No Status"

@@ -102,6 +102,10 @@ void WriteDouble(fstream& f, double value) {
 	WriteLongLong(f,*reinterpret_cast<uint64_t*>(&value));
 }
 
+void WriteString(fstream& f, string value) {
+	f.write(value.c_str(), value.length());
+}
+
 uint32_t GetAlignOffset(uint32_t baseoffset, uint32_t align) {
 	align--;
 	return (((baseoffset+align) & ~align)-baseoffset);
