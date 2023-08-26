@@ -225,6 +225,39 @@
     <ClCompile Include="Source\CommonUtility.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Database_Script.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Database_Steam.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Database_Animation.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Database_Resource.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Database_Assembly.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Hades_Strings.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Database_Text.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Database_SpellAnimation.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Database_Spell.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Database_CSV.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Database_Item.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\BattleScenes.h">

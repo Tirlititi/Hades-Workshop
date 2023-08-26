@@ -37,9 +37,9 @@ namespace hades {
 	wxFont TEXT_DISPLAY_FONT = wxFont(wxNORMAL_FONT->GetPointSize(), wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("Arial"));
 	int TEXT_PREVIEW_TYPE = 0;
 	int FIELD_BACKGROUND_RESOLUTION = 32;
-	wchar_t* SPECIAL_STRING_CHARMAP_DEFAULT = DEFAULT_CHARMAP;
-	wchar_t* SPECIAL_STRING_CHARMAP_A = DEFAULT_SECONDARY_CHARMAP;
-	wchar_t* SPECIAL_STRING_CHARMAP_B = DEFAULT_SECONDARY_CHARMAP;
+	wchar_t* SPECIAL_STRING_CHARMAP_DEFAULT = DEFAULT_CHARMAP.data();
+	wchar_t* SPECIAL_STRING_CHARMAP_A = DEFAULT_SECONDARY_CHARMAP.data();
+	wchar_t* SPECIAL_STRING_CHARMAP_B = DEFAULT_SECONDARY_CHARMAP.data();
 	ExtendedCharmap SPECIAL_STRING_CHARMAP_EXT = ExtendedCharmap::CreateEmpty();
 	wchar_t SPECIAL_STRING_OPCODE_WCHAR = OPCODE_WCHAR;
 	SteamLanguage CURRENT_STEAM_LANGUAGE = STEAM_LANGUAGE_US;
@@ -297,6 +297,7 @@ void MainFrame::OnOpenClick(wxCommandEvent& event) {
 			CDName[CDPanelAmount] = HADES_STRING_OPEN_STEAM_DEFAULT;
 			SteamSaveDir = CDPanel[CDPanelAmount]->filename + _(HADES_STRING_STEAM_SAVE_DEFAULT);
 		}
+		SetGameSaveSet(&CDPanel[CDPanelAmount]->saveset);
 		CDModifiedState[CDPanelAmount] = false;
 		m_cdbook->AddPage(CDPanel[CDPanelAmount], _(CDName[CDPanelAmount].c_str()), true, wxNullBitmap);
 		m_openhws->Enable();
@@ -606,31 +607,31 @@ void MainFrame::OnSortSpellAnimationClick( wxCommandEvent& event ) {
 			CDPanel[i]->SpellAnimationDisplayNames();
 }
 
-wchar_t PrefCharmapDefault[256];
-wchar_t PrefCharmapA[256];
-wchar_t PrefCharmapB[256];
+wchar_t PrefCharmapDefault[CHARMAP_TABLE_SIZE];
+wchar_t PrefCharmapA[CHARMAP_TABLE_SIZE];
+wchar_t PrefCharmapB[CHARMAP_TABLE_SIZE];
 
 void MainFrame::PreferencesUpdate() {
-	unsigned int i,j,k;
+	unsigned int i, j, k;
 	bool changechmap = false;
-	if (PreferenceWindow->m_gamealphabet->GetSelection()==0) {
-		if (hades::SPECIAL_STRING_CHARMAP_DEFAULT!=DEFAULT_CHARMAP) {
-			hades::SPECIAL_STRING_CHARMAP_DEFAULT = DEFAULT_CHARMAP;
-			hades::SPECIAL_STRING_CHARMAP_A = DEFAULT_SECONDARY_CHARMAP;
-			hades::SPECIAL_STRING_CHARMAP_B = DEFAULT_SECONDARY_CHARMAP;
+	if (PreferenceWindow->m_gamealphabet->GetSelection() == 0) {
+		if (hades::SPECIAL_STRING_CHARMAP_DEFAULT != DEFAULT_CHARMAP.data()) {
+			hades::SPECIAL_STRING_CHARMAP_DEFAULT = DEFAULT_CHARMAP.data();
+			hades::SPECIAL_STRING_CHARMAP_A = DEFAULT_SECONDARY_CHARMAP.data();
+			hades::SPECIAL_STRING_CHARMAP_B = DEFAULT_SECONDARY_CHARMAP.data();
 			hades::SPECIAL_STRING_CHARMAP_EXT.Delete();
 			changechmap = true;
 		}
 	} else {
-		for (i=0;i<256;i++)
-			if (hades::SPECIAL_STRING_CHARMAP_DEFAULT[i]!=PreferenceWindow->charmap_default[i]) {
+		for (i = 0; i < CHARMAP_TABLE_SIZE; i++)
+			if (hades::SPECIAL_STRING_CHARMAP_DEFAULT[i] != PreferenceWindow->charmap_default[i]) {
 				changechmap = true;
 				break;
 			}
 		if (changechmap) {
-			memcpy(PrefCharmapDefault,PreferenceWindow->charmap_default,256*sizeof(wchar_t));
-			memcpy(PrefCharmapA,PreferenceWindow->charmap_a,256*sizeof(wchar_t));
-			memcpy(PrefCharmapB,PreferenceWindow->charmap_b,256*sizeof(wchar_t));
+			memcpy(PrefCharmapDefault, PreferenceWindow->charmap_default, CHARMAP_TABLE_SIZE * sizeof(wchar_t));
+			memcpy(PrefCharmapA, PreferenceWindow->charmap_a, CHARMAP_TABLE_SIZE * sizeof(wchar_t));
+			memcpy(PrefCharmapB, PreferenceWindow->charmap_b, CHARMAP_TABLE_SIZE * sizeof(wchar_t));
 			hades::SPECIAL_STRING_CHARMAP_DEFAULT = PrefCharmapDefault;
 			hades::SPECIAL_STRING_CHARMAP_A = PrefCharmapA;
 			hades::SPECIAL_STRING_CHARMAP_B = PrefCharmapB;
@@ -638,36 +639,36 @@ void MainFrame::PreferencesUpdate() {
 		}
 	}
 	if (changechmap) {
-		for (i=0;i<CDPanelAmount;i++)
-			CDPanel[i]->ChangeFF9StringCharmap(hades::SPECIAL_STRING_CHARMAP_DEFAULT,hades::SPECIAL_STRING_CHARMAP_A,hades::SPECIAL_STRING_CHARMAP_B,hades::SPECIAL_STRING_CHARMAP_EXT);
+		for (i = 0; i < CDPanelAmount; i++)
+			CDPanel[i]->ChangeFF9StringCharmap(hades::SPECIAL_STRING_CHARMAP_DEFAULT, hades::SPECIAL_STRING_CHARMAP_A, hades::SPECIAL_STRING_CHARMAP_B, hades::SPECIAL_STRING_CHARMAP_EXT);
 	}
 	hades::STEAM_SINGLE_LANGUAGE_MODE = PreferenceWindow->steam_single_lang_mode;
-	if (hades::SPECIAL_STRING_OPCODE_WCHAR!=PreferenceWindow->charmap_opchar) {
+	if (hades::SPECIAL_STRING_OPCODE_WCHAR != PreferenceWindow->charmap_opchar) {
 		hades::SPECIAL_STRING_OPCODE_WCHAR = PreferenceWindow->charmap_opchar;
-		for (i=0;i<CDPanelAmount;i++)
+		for (i = 0; i < CDPanelAmount; i++)
 			CDPanel[i]->ChangeFF9StringOpcodeChar(hades::SPECIAL_STRING_OPCODE_WCHAR);
 	}
-	if (PreferenceWindow->menu_color==0)
-		hades::TEXT_WINDOW_COLOR.Set(90,90,90);
+	if (PreferenceWindow->menu_color == 0)
+		hades::TEXT_WINDOW_COLOR.Set(90, 90, 90);
 	else
-		hades::TEXT_WINDOW_COLOR.Set(40,60,130);
+		hades::TEXT_WINDOW_COLOR.Set(40, 60, 130);
 	hades::TEXT_PREVIEW_TYPE = PreferenceWindow->text_preview_type;
-	if (hades::CURRENT_STEAM_LANGUAGE!=PreferenceWindow->steam_language) {
+	if (hades::CURRENT_STEAM_LANGUAGE != PreferenceWindow->steam_language) {
 		hades::CURRENT_STEAM_LANGUAGE = PreferenceWindow->steam_language;
 		SetSteamLanguage(hades::CURRENT_STEAM_LANGUAGE);
-		for (i=0;i<CDPanelAmount;i++)
+		for (i = 0; i < CDPanelAmount; i++)
 			CDPanel[i]->ChangeFF9StringSteamLanguage(hades::CURRENT_STEAM_LANGUAGE);
 	}
-	for (i=0;i<STEAM_LANGUAGE_AMOUNT;i++)
+	for (i = 0; i < STEAM_LANGUAGE_AMOUNT; i++)
 		hades::STEAM_LANGUAGE_SAVE_LIST[i] = PreferenceWindow->save_lang[i];
-	if (hades::FIELD_BACKGROUND_RESOLUTION!=PreferenceWindow->background_resolution) {
+	if (hades::FIELD_BACKGROUND_RESOLUTION != PreferenceWindow->background_resolution) {
 		hades::FIELD_BACKGROUND_RESOLUTION = PreferenceWindow->background_resolution;
-		for (i=0;i<CDPanelAmount;i++)
-			if (CDPanel[i]->gametype!=GAME_TYPE_PSX && CDPanel[i]->saveset.sectionloaded[DATA_SECTION_FIELD]) {
+		for (i = 0; i < CDPanelAmount; i++)
+			if (CDPanel[i]->gametype != GAME_TYPE_PSX && CDPanel[i]->saveset.sectionloaded[DATA_SECTION_FIELD]) {
 				CDPanel[i]->fieldset.tile_size = hades::FIELD_BACKGROUND_RESOLUTION;
-				for (j=0;j<CDPanel[i]->fieldset.amount;j++)
-					if (CDPanel[i]->fieldset.background_data[j]!=NULL)
-						for (k=0;k<CDPanel[i]->fieldset.background_data[j]->camera_amount;k++)
+				for (j = 0; j < CDPanel[i]->fieldset.amount; j++)
+					if (CDPanel[i]->fieldset.background_data[j] != NULL)
+						for (k = 0; k < CDPanel[i]->fieldset.background_data[j]->camera_amount; k++)
 							CDPanel[i]->fieldset.background_data[j]->camera[k].UpdateSize();
 			}
 	}
@@ -940,6 +941,7 @@ void MainFrame::UpdateMenuAvailability(int panel) {
 	}
 	SetGameType(CDPanel[panel]->gametype);
 	SetGameConfiguration(&CDPanel[panel]->config);
+	SetGameSaveSet(&CDPanel[panel]->saveset);
 	m_openhws->Enable(true);
 	m_close->Enable(true);
 	m_closeall->Enable(true);

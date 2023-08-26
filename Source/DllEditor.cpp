@@ -1930,61 +1930,61 @@ void ILStoreValueToRawData(uint8_t* raw, unsigned int pos, Word& value, unsigned
 }
 
 bool debug_il_integer_is_string;
-int64_t DllMetaData::ScriptGetNextIntegerValue(bool includestr, uint32_t* integercodepos, SteamWDictionary* strdico) {
+int64_t DllMetaData::ScriptGetNextIntegerValue(bool includestr, uint32_t* integercodepos, vector<SteamWDictionary>* strdico) {
 	uint8_t code;
 	int64_t argvalue;
 	debug_il_integer_is_string = false;
 	do {
-		if (integercodepos!=NULL)
+		if (integercodepos != NULL)
 			*integercodepos = dll_file.tellg();
 		code = dll_file.get();
-		if (code==0x15) {
+		if (code == 0x15) {
 			return -1;
-		} else if (code==0x16 || code==0x14) {
-			debug_il_integer_is_string = code==0x14;
+		} else if (code == 0x16 || code == 0x14) {
+			debug_il_integer_is_string = code == 0x14;
 			return 0;
-		} else if (code==0x17) {
+		} else if (code == 0x17) {
 			return 1;
-		} else if (code==0x18) {
+		} else if (code == 0x18) {
 			return 2;
-		} else if (code==0x19) {
+		} else if (code == 0x19) {
 			return 3;
-		} else if (code==0x1A) {
+		} else if (code == 0x1A) {
 			return 4;
-		} else if (code==0x1B) {
+		} else if (code == 0x1B) {
 			return 5;
-		} else if (code==0x1C) {
+		} else if (code == 0x1C) {
 			return 6;
-		} else if (code==0x1D) {
+		} else if (code == 0x1D) {
 			return 7;
-		} else if (code==0x1E) {
+		} else if (code == 0x1E) {
 			return 8;
-		} else if (code==0x1F) {
+		} else if (code == 0x1F) {
 			argvalue = dll_file.get();
-			if (argvalue>=0x80) // negative (ToDo: handle negative for ldc.i4 (0x20) as well? Only important when reading long long)
+			if (argvalue >= 0x80) // negative (ToDo: handle negative for ldc.i4 (0x20) as well? Only important when reading long long)
 				argvalue |= 0xFFFFFFFFFFFFFF00LL;
 			return argvalue;
-		} else if (code==0x20) {
+		} else if (code == 0x20) {
 			argvalue = dll_file.get();
 			argvalue |= (dll_file.get() << 8);
 			argvalue |= (dll_file.get() << 16);
 			argvalue |= (dll_file.get() << 24);
 			return argvalue;
-		} else if (code==0x72) {
+		} else if (code == 0x72) {
 			argvalue = dll_file.get();
 			argvalue |= (dll_file.get() << 8);
 			argvalue |= (dll_file.get() << 16);
 			argvalue |= (dll_file.get() << 24);
 			debug_il_integer_is_string = true;
-			if (!strdico || (argvalue >> 24)!=0x70)
+			if (strdico == NULL || (argvalue >> 24) != 0x70)
 				return 1;
 			wstring strval = GetUserStringAtPos(argvalue & 0xFFFFFF);
-			for (unsigned int i=0;i<G_N_ELEMENTS(SteamWeaponModel);i++) // Debug
-				if (strval.compare(strdico[i].name)==0)
-					return strdico[i].id;
+			for (unsigned int i = 0; i < strdico->size(); i++)
+				if (strval.compare((*strdico)[i].name) == 0)
+					return (*strdico)[i].id;
 			return 1;
 		}
-		dll_file.seekg(GetILCode(code).size,ios::cur);
+		dll_file.seekg(GetILCode(code).size, ios::cur);
 	} while (true);
 }
 
@@ -1999,41 +1999,41 @@ uint8_t* DllMetaData::ConvertScriptToRaw_Object(unsigned int objamount, unsigned
 	j = 0;
 	for (i=0;i<objamount*objsize;i+=8)
 		res[j++] = 0;
-	for (i=0;i<objamount;i++) {
+	for (i = 0; i < objamount; i++) {
 		arrindex = ScriptGetNextIntegerValue(true);
 		curobjpos = 0;
-		for (j=0;j<fieldamount;j++) {
-			if (array==NULL || array[j]==0) {
-				argvalue = ScriptGetNextIntegerValue(true,NULL,SteamWeaponModel); // Debug : handle string <-> ID conversion
-				ILStoreValueToRawData(res,arrindex*objsize+curobjpos,argvalue,fieldsize[j]);
+		for (j = 0; j < fieldamount; j++) {
+			if (array == NULL || array[j] == 0) {
+				argvalue = ScriptGetNextIntegerValue(true, NULL, &SteamWeaponModel); // Debug : handle string <-> ID conversion
+				ILStoreValueToRawData(res, arrindex * objsize + curobjpos, argvalue, fieldsize[j]);
 				curobjpos += fieldsize[j];
 			} else {
 				do {
 					code = dll_file.get();
-					dll_file.seekg(GetILCode(code).size,ios::cur);
-				} while (code!=IL_CODE_NEWARR);
+					dll_file.seekg(GetILCode(code).size, ios::cur);
+				} while (code != IL_CODE_NEWARR);
 				code = dll_file.get();
-				while (code==IL_CODE_DUP) {
+				while (code == IL_CODE_DUP) {
 					arrindexsub = ScriptGetNextIntegerValue(true);
 					argvalue = ScriptGetNextIntegerValue(true);
 					curobjpossub = 0;
-					for (k=0;k<arrindexsub;k++)
-						curobjpossub += fieldsize[j+k];
-					ILStoreValueToRawData(res,arrindex*objsize+curobjpos+curobjpossub,argvalue,fieldsize[j+arrindexsub]);
+					for (k = 0; k < arrindexsub; k++)
+						curobjpossub += fieldsize[j + k];
+					ILStoreValueToRawData(res, arrindex * objsize + curobjpos + curobjpossub, argvalue, fieldsize[j + arrindexsub]);
 					code = dll_file.get(); // stelem
-					dll_file.seekg(GetILCode(code).size,ios::cur);
+					dll_file.seekg(GetILCode(code).size, ios::cur);
 					code = dll_file.get();
 				}
-				dll_file.seekg(-1,ios::cur);
-				for (k=0;k<array[j];k++)
-					curobjpos += fieldsize[j+k];
-				j += array[j]-1;
+				dll_file.seekg(-1, ios::cur);
+				for (k = 0; k < array[j]; k++)
+					curobjpos += fieldsize[j + k];
+				j += array[j] - 1;
 			}
 		}
 		do {
 			code = dll_file.get();
-			dll_file.seekg(GetILCode(code).size,ios::cur);
-		} while (code!=IL_CODE_STELEMREF);
+			dll_file.seekg(GetILCode(code).size, ios::cur);
+		} while (code != IL_CODE_STELEMREF);
 	}
 	return res;
 }
@@ -2121,13 +2121,13 @@ DllMetaDataModification DllMetaData::ConvertRawToScript_Object(uint32_t** newfie
 	dll_file.seekg(pos);
 	for (i=0;i<objamount;i++) {
 		copystart = dll_file.tellg();
-		ScriptGetNextIntegerValue(true,&copyend);
+		ScriptGetNextIntegerValue(true, &copyend);
 		MACRO_ILSCRIPT_COPY(copystart,copyend)
 		MACRO_ILSCRIPT_WRITE_INTEGER(i,minusone32)
 		for (j=0;j<fieldamount;j++) {
 			if (array==NULL || array[j]==0) {
 				copystart = dll_file.tellg();
-				k = ScriptGetNextIntegerValue(true,&copyend,SteamWeaponModel); // Debug : handle string <-> ID conversion
+				k = ScriptGetNextIntegerValue(true, &copyend, &SteamWeaponModel); // Debug : handle string <-> ID conversion
 				MACRO_ILSCRIPT_COPY(copystart,copyend)
 				if (debug_il_integer_is_string) {
 					if (k==0) {

@@ -52,7 +52,7 @@ SaveCustomBattleDialog::SaveCustomBattleDialog(wxWindow* parent, wxString defaul
 		choicelist.Add(wxString::Format(wxT("%04u: %s"), svset->enemyset->battle_data[i]->object_id, svset->enemyset->battle_name[i]));
 	m_basebattle->Append(choicelist);
 	choicelist.Clear();
-	for (i = 0; i < G_N_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME); i++)
+	for (i = 0; i < G_V_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME); i++)
 		choicelist.Add(HADES_STRING_BATTLE_SCENE_NAME[i].label);
 	m_backgroundidchoice->Append(choicelist);
 	m_basebattle->SetSelection(0);

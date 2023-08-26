@@ -366,6 +366,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer5 = new wxBoxSizer( wxHORIZONTAL );
 
 	m_spelllist = new wxListBox( m_panel21, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, 0|wxVSCROLL );
+	m_spelllist->SetMinSize( wxSize( 130,-1 ) );
+
 	bSizer5->Add( m_spelllist, 0, wxALL|wxEXPAND, 5 );
 
 	m_spellscrolledwindow = new wxScrolledWindow( m_panel21, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
@@ -760,12 +762,15 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer63 = new wxBoxSizer( wxHORIZONTAL );
 
 	m_supportlist = new wxListBox( m_panel24, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, 0|wxVSCROLL );
+	m_supportlist->SetMinSize( wxSize( 130,-1 ) );
+
 	bSizer63->Add( m_supportlist, 0, wxALL|wxEXPAND, 5 );
 
 	m_supportscrolledwindow = new wxScrolledWindow( m_panel24, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	m_supportscrolledwindow->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* fgSizer22;
 	fgSizer22 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer22->AddGrowableCol( 1 );
 	fgSizer22->SetFlexibleDirection( wxBOTH );
 	fgSizer22->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -825,6 +830,58 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_supportcost = new wxSpinCtrl( m_supportscrolledwindow, wxID_MAGICSTONE, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
 	fgSizer22->Add( m_supportcost, 0, wxALL, 2 );
 
+	m_supportboostedlabel = new wxStaticText( m_supportscrolledwindow, wxID_ANY, _("Boost hierarchy"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_supportboostedlabel->Wrap( -1 );
+	fgSizer22->Add( m_supportboostedlabel, 0, wxALL, 5 );
+
+	m_supportboostedpanel = new wxPanel( m_supportscrolledwindow, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxFlexGridSizer* fgSizer153;
+	fgSizer153 = new wxFlexGridSizer( 1, 0, 0, 0 );
+	fgSizer153->SetFlexibleDirection( wxBOTH );
+	fgSizer153->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	wxBoxSizer* bSizer316;
+	bSizer316 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText524 = new wxStaticText( m_supportboostedpanel, wxID_ANY, _("Base support"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText524->Wrap( -1 );
+	bSizer316->Add( m_staticText524, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 0 );
+
+	wxArrayString m_supportboostedbaseChoices;
+	m_supportboostedbase = new wxChoice( m_supportboostedpanel, wxID_BOOST, wxDefaultPosition, wxDefaultSize, m_supportboostedbaseChoices, 0 );
+	m_supportboostedbase->SetSelection( 0 );
+	bSizer316->Add( m_supportboostedbase, 0, wxALL, 5 );
+
+
+	fgSizer153->Add( bSizer316, 1, 0, 5 );
+
+	m_supportboostedlist = new wxListBox( m_supportboostedpanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
+	fgSizer153->Add( m_supportboostedlist, 0, wxALL, 5 );
+
+	wxBoxSizer* bSizer891111;
+	bSizer891111 = new wxBoxSizer( wxVERTICAL );
+
+	m_supportboostedup = new wxBitmapButton( m_supportboostedpanel, wxID_UP, wxNullBitmap, wxDefaultPosition, wxDefaultSize, wxBU_AUTODRAW|0 );
+
+	m_supportboostedup->SetBitmap( wxICON( moveup_icon ) );
+	m_supportboostedup->SetBitmapDisabled( wxICON( moveup_disicon ) );
+	bSizer891111->Add( m_supportboostedup, 0, wxALL, 5 );
+
+	m_supportboosteddown = new wxBitmapButton( m_supportboostedpanel, wxID_DOWN, wxNullBitmap, wxDefaultPosition, wxDefaultSize, wxBU_AUTODRAW|0 );
+
+	m_supportboosteddown->SetBitmap( wxICON( movedown_icon ) );
+	m_supportboosteddown->SetBitmapDisabled( wxICON( movedown_disicon ) );
+	bSizer891111->Add( m_supportboosteddown, 0, wxALL, 5 );
+
+
+	fgSizer153->Add( bSizer891111, 1, wxEXPAND, 5 );
+
+
+	m_supportboostedpanel->SetSizer( fgSizer153 );
+	m_supportboostedpanel->Layout();
+	fgSizer153->Fit( m_supportboostedpanel );
+	fgSizer22->Add( m_supportboostedpanel, 1, wxEXPAND | wxALL, 2 );
+
 
 	m_supportscrolledwindow->SetSizer( fgSizer22 );
 	m_supportscrolledwindow->Layout();
@@ -841,12 +898,15 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer8 = new wxBoxSizer( wxHORIZONTAL );
 
 	m_cmdlist = new wxListBox( m_panel22, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
+	m_cmdlist->SetMinSize( wxSize( 130,-1 ) );
+
 	bSizer8->Add( m_cmdlist, 0, wxALL|wxEXPAND, 5 );
 
 	m_cmdscrolledwindow = new wxScrolledWindow( m_panel22, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	m_cmdscrolledwindow->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* fgSizer2;
 	fgSizer2 = new wxFlexGridSizer( 6, 2, 0, 0 );
+	fgSizer2->AddGrowableCol( 1 );
 	fgSizer2->SetFlexibleDirection( wxBOTH );
 	fgSizer2->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -987,12 +1047,15 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer64 = new wxBoxSizer( wxHORIZONTAL );
 
 	m_statlist = new wxListBox( m_panel25, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, 0|wxVSCROLL );
+	m_statlist->SetMinSize( wxSize( 130,-1 ) );
+
 	bSizer64->Add( m_statlist, 0, wxALL|wxEXPAND, 5 );
 
 	m_statcharscrolledwindow = new wxScrolledWindow( m_panel25, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	m_statcharscrolledwindow->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* fgSizer23;
 	fgSizer23 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer23->AddGrowableCol( 1 );
 	fgSizer23->SetFlexibleDirection( wxBOTH );
 	fgSizer23->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -1094,7 +1157,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	wxBoxSizer* bSizer75;
 	bSizer75 = new wxBoxSizer( wxHORIZONTAL );
 
-	m_statcharabilitylist = new wxListBox( m_statcharscrolledwindow, wxID_ABILITY, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
+	m_statcharabilitylist = new wxListBox( m_statcharscrolledwindow, wxID_ABILITY, wxDefaultPosition, wxSize( -1,-1 ), 0, NULL, 0 );
 	m_statcharabilitylist->SetToolTip( _("Both active and supporting abilities\ndisplayed in the Ability menu") );
 
 	bSizer75->Add( m_statcharabilitylist, 0, wxALL, 5 );
@@ -1209,7 +1272,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	fgSizer23->Add( fgSizer43, 1, wxEXPAND, 5 );
 
-	m_staticText202 = new wxStaticText( m_statcharscrolledwindow, wxID_ANY, _("Equipment Sets"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText202 = new wxStaticText( m_statcharscrolledwindow, wxID_ANY, _("Initial equipments"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText202->Wrap( -1 );
 	fgSizer23->Add( m_staticText202, 0, wxALL, 5 );
 
@@ -1285,6 +1348,38 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	fgSizer23->Add( bSizer115, 1, wxEXPAND, 5 );
 
+	m_staticText526 = new wxStaticText( m_statcharscrolledwindow, wxID_ANY, _("Equipments"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText526->Wrap( -1 );
+	fgSizer23->Add( m_staticText526, 0, wxALL, 5 );
+
+	m_statcharequippanel = new wxPanel( m_statcharscrolledwindow, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxFlexGridSizer* fgSizer31;
+	fgSizer31 = new wxFlexGridSizer( 2, 3, 0, 0 );
+	fgSizer31->SetFlexibleDirection( wxBOTH );
+	fgSizer31->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_statcharequipadd = new wxButton( m_statcharequippanel, wxID_EQUIPADD, _("Add Equip"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer31->Add( m_statcharequipadd, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
+
+	m_statcharequipremove = new wxButton( m_statcharequippanel, wxID_EQUIPREMOVE, _("Remove Equip"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer31->Add( m_statcharequipremove, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
+
+	m_staticText271 = new wxStaticText( m_statcharequippanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText271->Wrap( -1 );
+	fgSizer31->Add( m_staticText271, 0, wxALL, 5 );
+
+	m_statcharequipfulllist = new wxListBox( m_statcharequippanel, wxID_EQUIPADD, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
+	fgSizer31->Add( m_statcharequipfulllist, 0, wxALL, 5 );
+
+	m_statcharequiplist = new wxListBox( m_statcharequippanel, wxID_EQUIPREMOVE, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
+	fgSizer31->Add( m_statcharequiplist, 0, wxALL, 5 );
+
+
+	m_statcharequippanel->SetSizer( fgSizer31 );
+	m_statcharequippanel->Layout();
+	fgSizer31->Fit( m_statcharequippanel );
+	fgSizer23->Add( m_statcharequippanel, 1, wxEXPAND | wxALL, 5 );
+
 
 	m_statcharscrolledwindow->SetSizer( fgSizer23 );
 	m_statcharscrolledwindow->Layout();
@@ -1297,6 +1392,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	wxFlexGridSizer* fgSizer231;
 	fgSizer231 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer231->AddGrowableCol( 1 );
 	fgSizer231->SetFlexibleDirection( wxBOTH );
 	fgSizer231->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -1397,12 +1493,15 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer161 = new wxBoxSizer( wxHORIZONTAL );
 
 	m_partyspeciallist = new wxListBox( m_panel68, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
+	m_partyspeciallist->SetMinSize( wxSize( 130,-1 ) );
+
 	bSizer161->Add( m_partyspeciallist, 0, wxALL|wxEXPAND, 5 );
 
 	m_partyspecialavailabilityscrolledwindow = new wxScrolledWindow( m_panel68, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	m_partyspecialavailabilityscrolledwindow->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* fgSizer74;
 	fgSizer74 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer74->AddGrowableCol( 1 );
 	fgSizer74->SetFlexibleDirection( wxBOTH );
 	fgSizer74->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -1505,13 +1604,16 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	wxBoxSizer* bSizer111;
 	bSizer111 = new wxBoxSizer( wxHORIZONTAL );
 
-	m_itemlist = new wxListBox( m_panel27, wxID_ANY, wxDefaultPosition, wxSize( 130,-1 ), 0, NULL, wxLB_HSCROLL );
+	m_itemlist = new wxListBox( m_panel27, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), 0, NULL, wxLB_HSCROLL );
+	m_itemlist->SetMinSize( wxSize( 130,-1 ) );
+
 	bSizer111->Add( m_itemlist, 0, wxALL|wxEXPAND, 5 );
 
 	m_itemscrolledwindow = new wxScrolledWindow( m_panel27, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	m_itemscrolledwindow->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* fgSizer511;
 	fgSizer511 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer511->AddGrowableCol( 1 );
 	fgSizer511->SetFlexibleDirection( wxBOTH );
 	fgSizer511->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -1870,9 +1972,9 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	wxBoxSizer* bSizer3061;
 	bSizer3061 = new wxBoxSizer( wxHORIZONTAL );
 
-	m_itemequipposlist = new wxListBox( m_itemequipposnormalpanel, wxID_ANY, wxDefaultPosition, wxSize( 300,-1 ), 0, NULL, wxLB_HSCROLL );
-	m_itemequipposlist->SetToolTip( _("Position inside the equip menu\nAffects the \"Equip best stuff\" command") );
-	m_itemequipposlist->SetMaxSize( wxSize( 300,-1 ) );
+	m_itemequipposlist = new wxListBox( m_itemequipposnormalpanel, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), 0, NULL, wxLB_HSCROLL );
+	m_itemequipposlist->SetToolTip( _("Position inside the equip menu\nAffects the \"Optimize\" command") );
+	m_itemequipposlist->SetMinSize( wxSize( 500,-1 ) );
 
 	bSizer3061->Add( m_itemequipposlist, 0, wxALL, 2 );
 
@@ -2364,6 +2466,13 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	fgSizer29->Add( bSizer297, 1, wxEXPAND, 5 );
 
+	m_staticText529 = new wxStaticText( m_itemweaponpanel, wxID_ANY, _("Custom texture"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText529->Wrap( -1 );
+	fgSizer29->Add( m_staticText529, 0, wxALL, 5 );
+
+	m_itemweapontexture = new wxTextCtrl( m_itemweaponpanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 270,-1 ), 0 );
+	fgSizer29->Add( m_itemweapontexture, 0, wxALL, 2 );
+
 	m_staticText490 = new wxStaticText( m_itemweaponpanel, wxID_ANY, _("Hit SFX"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText490->Wrap( -1 );
 	fgSizer29->Add( m_staticText490, 0, wxALL, 5 );
@@ -2438,13 +2547,16 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	wxBoxSizer* bSizer112;
 	bSizer112 = new wxBoxSizer( wxHORIZONTAL );
 
-	m_keyitemlist = new wxListBox( m_panel28, wxID_ANY, wxDefaultPosition, wxSize( 130,-1 ), 0, NULL, wxLB_HSCROLL );
+	m_keyitemlist = new wxListBox( m_panel28, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), 0, NULL, wxLB_HSCROLL );
+	m_keyitemlist->SetMinSize( wxSize( 130,-1 ) );
+
 	bSizer112->Add( m_keyitemlist, 0, wxALL|wxEXPAND, 5 );
 
 	m_keyitemscrolledwindow = new wxScrolledWindow( m_panel28, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	m_keyitemscrolledwindow->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* fgSizer512;
 	fgSizer512 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer512->AddGrowableCol( 1 );
 	fgSizer512->SetFlexibleDirection( wxBOTH );
 	fgSizer512->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -2546,13 +2658,16 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	wxBoxSizer* bSizer93;
 	bSizer93 = new wxBoxSizer( wxHORIZONTAL );
 
-	m_shoplist = new wxListBox( m_panel32, wxID_ANY, wxDefaultPosition, wxSize( 130,-1 ), 0, NULL, wxLB_HSCROLL );
+	m_shoplist = new wxListBox( m_panel32, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), 0, NULL, wxLB_HSCROLL );
+	m_shoplist->SetMinSize( wxSize( 130,-1 ) );
+
 	bSizer93->Add( m_shoplist, 0, wxALL|wxEXPAND, 5 );
 
 	m_shopscrolledwindow = new wxScrolledWindow( m_panel32, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	m_shopscrolledwindow->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* fgSizer513;
 	fgSizer513 = new wxFlexGridSizer( 1, 2, 0, 0 );
+	fgSizer513->AddGrowableCol( 1 );
 	fgSizer513->SetFlexibleDirection( wxBOTH );
 	fgSizer513->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -2629,12 +2744,15 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer95 = new wxBoxSizer( wxHORIZONTAL );
 
 	m_synthshoplist = new wxListBox( m_panel34, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), 0, NULL, 0 );
+	m_synthshoplist->SetMinSize( wxSize( 130,-1 ) );
+
 	bSizer95->Add( m_synthshoplist, 0, wxALL|wxEXPAND, 5 );
 
 	m_synthshopscrolledwindow = new wxScrolledWindow( m_panel34, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	m_synthshopscrolledwindow->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* fgSizer5141;
 	fgSizer5141 = new wxFlexGridSizer( 1, 2, 0, 0 );
+	fgSizer5141->AddGrowableCol( 1 );
 	fgSizer5141->SetFlexibleDirection( wxBOTH );
 	fgSizer5141->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -2794,16 +2912,23 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer105->Fit( m_panelinventory );
 	m_notebookmain->AddPage( m_panelinventory, _("Inventory"), false );
 	m_panelbattle = new wxPanel( m_notebookmain, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	wxBoxSizer* bSizer10;
-	bSizer10 = new wxBoxSizer( wxHORIZONTAL );
+	wxFlexGridSizer* fgSizer146;
+	fgSizer146 = new wxFlexGridSizer( 1, 0, 0, 0 );
+	fgSizer146->AddGrowableCol( 3 );
+	fgSizer146->AddGrowableCol( 4 );
+	fgSizer146->AddGrowableCol( 5 );
+	fgSizer146->AddGrowableRow( 0 );
+	fgSizer146->SetFlexibleDirection( wxBOTH );
+	fgSizer146->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
-	m_enemylist = new wxListBox( m_panelbattle, wxID_ANY, wxDefaultPosition, wxSize( 130,-1 ), 0, NULL, wxLB_HSCROLL );
-	bSizer10->Add( m_enemylist, 0, wxALL|wxEXPAND, 5 );
+	m_enemylist = new wxListBox( m_panelbattle, wxID_ANY, wxDefaultPosition, wxSize( 150,-1 ), 0, NULL, wxLB_HSCROLL );
+	fgSizer146->Add( m_enemylist, 0, wxALL|wxEXPAND, 5 );
 
-	m_enemyscrolledwindow = new wxScrolledWindow( m_panelbattle, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	m_enemyscrolledwindow = new wxScrolledWindow( m_panelbattle, wxID_ANY, wxDefaultPosition, wxSize( 425,-1 ), wxHSCROLL|wxVSCROLL );
 	m_enemyscrolledwindow->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* fgSizer8;
 	fgSizer8 = new wxFlexGridSizer( 5, 2, 0, 0 );
+	fgSizer8->AddGrowableCol( 1 );
 	fgSizer8->SetFlexibleDirection( wxBOTH );
 	fgSizer8->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -2942,8 +3067,10 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	m_enemyscrolledwindow->SetSizer( fgSizer8 );
 	m_enemyscrolledwindow->Layout();
-	fgSizer8->Fit( m_enemyscrolledwindow );
-	bSizer10->Add( m_enemyscrolledwindow, 1, wxEXPAND | wxALL, 5 );
+	fgSizer146->Add( m_enemyscrolledwindow, 1, wxALL|wxEXPAND, 5 );
+
+	m_staticline11 = new wxStaticLine( m_panelbattle, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
+	fgSizer146->Add( m_staticline11, 0, wxEXPAND | wxALL, 5 );
 
 	m_enemystatscrolledwindow = new wxScrolledWindow( m_panelbattle, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	m_enemystatscrolledwindow->SetScrollRate( 5, 5 );
@@ -2951,6 +3078,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	wxFlexGridSizer* fgSizer12;
 	fgSizer12 = new wxFlexGridSizer( 2, 2, 0, 0 );
+	fgSizer12->AddGrowableCol( 0 );
 	fgSizer12->SetFlexibleDirection( wxBOTH );
 	fgSizer12->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -2968,7 +3096,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	wxBoxSizer* bSizer26;
 	bSizer26 = new wxBoxSizer( wxHORIZONTAL );
 
-	m_enemystatname = new wxTextCtrl( m_enemystatpanel1, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_enemystatname = new wxTextCtrl( m_enemystatpanel1, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 170,-1 ), 0 );
 	bSizer26->Add( m_enemystatname, 0, wxALL, 2 );
 
 	m_enemystatnamebutton = new wxButton( m_enemystatpanel1, wxID_STATNAME, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
@@ -3801,7 +3929,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemystatscrolledwindow->SetSizer( fgSizer12 );
 	m_enemystatscrolledwindow->Layout();
 	fgSizer12->Fit( m_enemystatscrolledwindow );
-	bSizer10->Add( m_enemystatscrolledwindow, 1, wxEXPAND | wxALL, 5 );
+	fgSizer146->Add( m_enemystatscrolledwindow, 1, wxEXPAND | wxALL, 5 );
 
 	m_enemyspellscrolledwindow = new wxScrolledWindow( m_panelbattle, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	m_enemyspellscrolledwindow->SetScrollRate( 5, 5 );
@@ -3809,6 +3937,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	wxFlexGridSizer* fgSizer10;
 	fgSizer10 = new wxFlexGridSizer( 9, 2, 0, 0 );
+	fgSizer10->AddGrowableCol( 1 );
 	fgSizer10->SetFlexibleDirection( wxBOTH );
 	fgSizer10->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -3819,7 +3948,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	wxBoxSizer* bSizer27;
 	bSizer27 = new wxBoxSizer( wxHORIZONTAL );
 
-	m_enemyspellname = new wxTextCtrl( m_enemyspellscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
+	m_enemyspellname = new wxTextCtrl( m_enemyspellscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 170,-1 ), 0 );
 	bSizer27->Add( m_enemyspellname, 0, wxALL, 2 );
 
 	m_enemyspellnamebutton = new wxButton( m_enemyspellscrolledwindow, wxID_SPELLNAME, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
@@ -4144,12 +4273,15 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemyspellscrolledwindow->SetSizer( fgSizer10 );
 	m_enemyspellscrolledwindow->Layout();
 	fgSizer10->Fit( m_enemyspellscrolledwindow );
-	bSizer10->Add( m_enemyspellscrolledwindow, 1, wxEXPAND | wxALL, 5 );
+	fgSizer146->Add( m_enemyspellscrolledwindow, 1, wxEXPAND | wxALL, 5 );
 
 	m_enemygroupscrolledwindow = new wxScrolledWindow( m_panelbattle, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	m_enemygroupscrolledwindow->SetScrollRate( 5, 5 );
+	m_enemygroupscrolledwindow->Hide();
+
 	wxFlexGridSizer* fgSizer91;
 	fgSizer91 = new wxFlexGridSizer( 4, 2, 0, 0 );
+	fgSizer91->AddGrowableCol( 1 );
 	fgSizer91->SetFlexibleDirection( wxBOTH );
 	fgSizer91->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -4415,12 +4547,12 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemygroupscrolledwindow->SetSizer( fgSizer91 );
 	m_enemygroupscrolledwindow->Layout();
 	fgSizer91->Fit( m_enemygroupscrolledwindow );
-	bSizer10->Add( m_enemygroupscrolledwindow, 1, wxEXPAND | wxALL, 5 );
+	fgSizer146->Add( m_enemygroupscrolledwindow, 1, wxEXPAND | wxALL, 5 );
 
 
-	m_panelbattle->SetSizer( bSizer10 );
+	m_panelbattle->SetSizer( fgSizer146 );
 	m_panelbattle->Layout();
-	bSizer10->Fit( m_panelbattle );
+	fgSizer146->Fit( m_panelbattle );
 	m_notebookmain->AddPage( m_panelbattle, _("Enemies"), false );
 	m_paneltetramaster = new wxPanel( m_notebookmain, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* bSizer101;
@@ -4432,6 +4564,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer150 = new wxBoxSizer( wxHORIZONTAL );
 
 	m_cardlist = new wxListBox( m_panel63, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), 0, NULL, wxLB_HSCROLL );
+	m_cardlist->SetMinSize( wxSize( 130,-1 ) );
+
 	bSizer150->Add( m_cardlist, 0, wxALL|wxEXPAND, 5 );
 
 	m_cardscrolledwindow = new wxScrolledWindow( m_panel63, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
@@ -4679,12 +4813,15 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer151 = new wxBoxSizer( wxHORIZONTAL );
 
 	m_carddecklist = new wxListBox( m_panel64, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), 0, NULL, wxLB_HSCROLL );
+	m_carddecklist->SetMinSize( wxSize( 130,-1 ) );
+
 	bSizer151->Add( m_carddecklist, 0, wxALL|wxEXPAND, 5 );
 
 	m_carddeckscrolledwindow = new wxScrolledWindow( m_panel64, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	m_carddeckscrolledwindow->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* fgSizer691;
 	fgSizer691 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer691->AddGrowableCol( 1 );
 	fgSizer691->SetFlexibleDirection( wxBOTH );
 	fgSizer691->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -4761,13 +4898,16 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	wxBoxSizer* bSizer17;
 	bSizer17 = new wxBoxSizer( wxHORIZONTAL );
 
-	m_textlist = new wxListBox( m_panel131, wxID_ANY, wxDefaultPosition, wxSize( 150,-1 ), 0, NULL, wxLB_HSCROLL );
+	m_textlist = new wxListBox( m_panel131, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), 0, NULL, wxLB_HSCROLL );
+	m_textlist->SetMinSize( wxSize( 130,-1 ) );
+
 	bSizer17->Add( m_textlist, 0, wxALL|wxEXPAND, 5 );
 
 	m_textscrolledwindow = new wxScrolledWindow( m_panel131, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	m_textscrolledwindow->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* fgSizer14;
 	fgSizer14 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer14->AddGrowableCol( 1 );
 	fgSizer14->SetFlexibleDirection( wxBOTH );
 	fgSizer14->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -4851,13 +4991,16 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	wxBoxSizer* bSizer1501;
 	bSizer1501 = new wxBoxSizer( wxHORIZONTAL );
 
-	m_worldlist = new wxListBox( m_panel67, wxID_ANY, wxDefaultPosition, wxSize( 150,-1 ), 0, NULL, wxLB_HSCROLL );
+	m_worldlist = new wxListBox( m_panel67, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), 0, NULL, wxLB_HSCROLL );
+	m_worldlist->SetMinSize( wxSize( 130,-1 ) );
+
 	bSizer1501->Add( m_worldlist, 0, wxALL|wxEXPAND, 5 );
 
 	m_worldscrolledwindow = new wxScrolledWindow( m_panel67, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	m_worldscrolledwindow->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* fgSizer142;
 	fgSizer142 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer142->AddGrowableCol( 1 );
 	fgSizer142->SetFlexibleDirection( wxBOTH );
 	fgSizer142->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -4962,13 +5105,16 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	wxBoxSizer* bSizer1511;
 	bSizer1511 = new wxBoxSizer( wxHORIZONTAL );
 
-	m_worldplacelist = new wxListBox( m_panel681, wxID_ANY, wxDefaultPosition, wxSize( 150,-1 ), 0, NULL, wxLB_HSCROLL );
+	m_worldplacelist = new wxListBox( m_panel681, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), 0, NULL, wxLB_HSCROLL );
+	m_worldplacelist->SetMinSize( wxSize( 130,-1 ) );
+
 	bSizer1511->Add( m_worldplacelist, 0, wxALL|wxEXPAND, 5 );
 
 	m_worldplacescrolledwindow = new wxScrolledWindow( m_panel681, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	m_worldplacescrolledwindow->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* fgSizer1421;
 	fgSizer1421 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer1421->AddGrowableCol( 1 );
 	fgSizer1421->SetFlexibleDirection( wxBOTH );
 	fgSizer1421->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -4979,7 +5125,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	wxBoxSizer* bSizer221221;
 	bSizer221221 = new wxBoxSizer( wxHORIZONTAL );
 
-	m_worldplacename = new wxTextCtrl( m_worldplacescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
+	m_worldplacename = new wxTextCtrl( m_worldplacescrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 170,-1 ), 0 );
 	bSizer221221->Add( m_worldplacename, 0, wxALL, 2 );
 
 	m_worldplacenamebutton = new wxButton( m_worldplacescrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
@@ -5006,6 +5152,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer1521 = new wxBoxSizer( wxHORIZONTAL );
 
 	m_worldbattlelist = new wxListBox( m_panel69, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), 0, NULL, 0 );
+	m_worldbattlelist->SetMinSize( wxSize( 130,-1 ) );
+
 	bSizer1521->Add( m_worldbattlelist, 0, wxALL|wxEXPAND, 5 );
 
 	m_worldbattlescrolledwindow = new wxScrolledWindow( m_panel69, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
@@ -5399,13 +5547,16 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	wxBoxSizer* bSizer108;
 	bSizer108 = new wxBoxSizer( wxHORIZONTAL );
 
-	m_fieldlist = new wxListBox( m_panel41, wxID_ANY, wxDefaultPosition, wxSize( 150,-1 ), 0, NULL, wxLB_HSCROLL );
+	m_fieldlist = new wxListBox( m_panel41, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), 0, NULL, wxLB_HSCROLL );
+	m_fieldlist->SetMinSize( wxSize( 130,-1 ) );
+
 	bSizer108->Add( m_fieldlist, 0, wxALL|wxEXPAND, 5 );
 
 	m_fieldscrolledwindow = new wxScrolledWindow( m_panel41, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	m_fieldscrolledwindow->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* fgSizer39;
 	fgSizer39 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer39->AddGrowableCol( 1 );
 	fgSizer39->SetFlexibleDirection( wxBOTH );
 	fgSizer39->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -5416,7 +5567,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	wxBoxSizer* bSizer22122;
 	bSizer22122 = new wxBoxSizer( wxHORIZONTAL );
 
-	m_fieldname = new wxTextCtrl( m_fieldscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), 0 );
+	m_fieldname = new wxTextCtrl( m_fieldscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 230,-1 ), 0 );
 	bSizer22122->Add( m_fieldname, 0, wxALL, 2 );
 
 	m_fieldnamebutton = new wxButton( m_fieldscrolledwindow, wxID_NAME, _("..."), wxDefaultPosition, wxSize( 25,25 ), wxBU_EXACTFIT );
@@ -5515,13 +5666,16 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	wxBoxSizer* bSizer171;
 	bSizer171 = new wxBoxSizer( wxHORIZONTAL );
 
-	m_battlescenelist = new wxListBox( m_panel17, wxID_ANY, wxDefaultPosition, wxSize( 150,-1 ), 0, NULL, wxLB_HSCROLL );
+	m_battlescenelist = new wxListBox( m_panel17, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), 0, NULL, wxLB_HSCROLL );
+	m_battlescenelist->SetMinSize( wxSize( 130,-1 ) );
+
 	bSizer171->Add( m_battlescenelist, 0, wxALL|wxEXPAND, 5 );
 
 	m_battlescenescrolledwindow = new wxScrolledWindow( m_panel17, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	m_battlescenescrolledwindow->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* fgSizer141;
 	fgSizer141 = new wxFlexGridSizer( 4, 2, 0, 0 );
+	fgSizer141->AddGrowableCol( 1 );
 	fgSizer141->SetFlexibleDirection( wxBOTH );
 	fgSizer141->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -5606,13 +5760,16 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	wxBoxSizer* bSizer1711;
 	bSizer1711 = new wxBoxSizer( wxHORIZONTAL );
 
-	m_spellanimlist = new wxListBox( m_panel171, wxID_ANY, wxDefaultPosition, wxSize( 150,-1 ), 0, NULL, wxLB_HSCROLL );
+	m_spellanimlist = new wxListBox( m_panel171, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), 0, NULL, wxLB_HSCROLL );
+	m_spellanimlist->SetMinSize( wxSize( 130,-1 ) );
+
 	bSizer1711->Add( m_spellanimlist, 0, wxALL|wxEXPAND, 5 );
 
 	m_spellanimscrolledwindow = new wxScrolledWindow( m_panel171, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	m_spellanimscrolledwindow->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* fgSizer1411;
 	fgSizer1411 = new wxFlexGridSizer( 4, 2, 0, 0 );
+	fgSizer1411->AddGrowableCol( 1 );
 	fgSizer1411->SetFlexibleDirection( wxBOTH );
 	fgSizer1411->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -5652,12 +5809,15 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer160 = new wxBoxSizer( wxHORIZONTAL );
 
 	m_specialtextlist = new wxListBox( m_panel66, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
+	m_specialtextlist->SetMinSize( wxSize( 130,-1 ) );
+
 	bSizer160->Add( m_specialtextlist, 0, wxALL|wxEXPAND, 5 );
 
 	m_specialtextscrolledwindow = new wxScrolledWindow( m_panel66, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	m_specialtextscrolledwindow->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* fgSizer73;
 	fgSizer73 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer73->AddGrowableCol( 1 );
 	fgSizer73->SetFlexibleDirection( wxBOTH );
 	fgSizer73->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -5697,6 +5857,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer1601 = new wxBoxSizer( wxHORIZONTAL );
 
 	m_mipsbattlelist = new wxListBox( m_panel661, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
+	m_mipsbattlelist->SetMinSize( wxSize( 130,-1 ) );
+
 	bSizer1601->Add( m_mipsbattlelist, 0, wxALL|wxEXPAND, 5 );
 
 	m_mipsbattlegenscrolledwindow = new wxScrolledWindow( m_panel661, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
@@ -5790,16 +5952,17 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	wxBoxSizer* bSizer15911;
 	bSizer15911 = new wxBoxSizer( wxHORIZONTAL );
 
-	m_ciltypelist = new wxListBox( m_panel6611, wxID_ANY, wxDefaultPosition, wxSize( 130,-1 ), 0, NULL, wxLB_HSCROLL );
+	m_ciltypelist = new wxListBox( m_panel6611, wxID_ANY, wxDefaultPosition, wxSize( 160,-1 ), 0, NULL, wxLB_HSCROLL );
 	bSizer15911->Add( m_ciltypelist, 0, wxALL|wxEXPAND, 5 );
 
-	m_cilmethodlist = new wxListBox( m_panel6611, wxID_ANY, wxDefaultPosition, wxSize( 130,-1 ), 0, NULL, wxLB_HSCROLL );
+	m_cilmethodlist = new wxListBox( m_panel6611, wxID_ANY, wxDefaultPosition, wxSize( 160,-1 ), 0, NULL, wxLB_HSCROLL );
 	bSizer15911->Add( m_cilmethodlist, 0, wxALL|wxEXPAND, 5 );
 
 	m_cilmethodscrolledwindow = new wxScrolledWindow( m_panel6611, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	m_cilmethodscrolledwindow->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* fgSizer733;
 	fgSizer733 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer733->AddGrowableCol( 1 );
 	fgSizer733->SetFlexibleDirection( wxBOTH );
 	fgSizer733->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -5826,6 +5989,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer1591111 = new wxBoxSizer( wxHORIZONTAL );
 
 	m_cilmacrolist = new wxListBox( m_panel92, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), 0, NULL, 0 );
+	m_cilmacrolist->SetMinSize( wxSize( 130,-1 ) );
+
 	bSizer1591111->Add( m_cilmacrolist, 0, wxALL|wxEXPAND, 5 );
 
 	m_cilmacroscrolledwindow = new wxScrolledWindow( m_panel92, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
@@ -5956,6 +6121,9 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_supporthelp->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnSupportChangeHelp ), NULL, this );
 	m_supporthelpbutton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnSupportChangeButton ), NULL, this );
 	m_supportcost->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnSupportChangeSpin ), NULL, this );
+	m_supportboostedbase->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnSupportChangeChoice ), NULL, this );
+	m_supportboostedup->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnSupportChangeButton ), NULL, this );
+	m_supportboosteddown->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnSupportChangeButton ), NULL, this );
 	m_cmdlist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxCommand ), NULL, this );
 	m_cmdlist->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnCommandRightClick ), NULL, this );
 	m_cmdname->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnCommandChangeName ), NULL, this );
@@ -6000,6 +6168,10 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_statcharwrist->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statchararmor->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharaccessory->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
+	m_statcharequipadd->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
+	m_statcharequipremove->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
+	m_statcharequipfulllist->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
+	m_statcharequiplist->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
 	m_statlvlexpmanage->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
 	m_statlvlexplist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeList ), NULL, this );
 	m_statlvlexpspin->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnStatChangeSpin ), NULL, this );
@@ -6147,6 +6319,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_itemweaponunk2->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
 	m_itemweaponmodel->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
 	m_itemweaponmodelname->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnItemChangeModelName ), NULL, this );
+	m_itemweapontexture->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnItemChangeTextureName ), NULL, this );
 	m_itemweaponsfx->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnItemChangeChoice ), NULL, this );
 	m_itemarmordefence->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
 	m_itemarmorevade->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
@@ -6656,6 +6829,9 @@ CDPanel::~CDPanel()
 	m_supporthelp->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnSupportChangeHelp ), NULL, this );
 	m_supporthelpbutton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnSupportChangeButton ), NULL, this );
 	m_supportcost->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnSupportChangeSpin ), NULL, this );
+	m_supportboostedbase->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnSupportChangeChoice ), NULL, this );
+	m_supportboostedup->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnSupportChangeButton ), NULL, this );
+	m_supportboosteddown->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnSupportChangeButton ), NULL, this );
 	m_cmdlist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxCommand ), NULL, this );
 	m_cmdlist->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnCommandRightClick ), NULL, this );
 	m_cmdname->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnCommandChangeName ), NULL, this );
@@ -6700,6 +6876,10 @@ CDPanel::~CDPanel()
 	m_statcharwrist->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statchararmor->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharaccessory->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
+	m_statcharequipadd->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
+	m_statcharequipremove->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
+	m_statcharequipfulllist->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
+	m_statcharequiplist->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
 	m_statlvlexpmanage->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
 	m_statlvlexplist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeList ), NULL, this );
 	m_statlvlexpspin->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnStatChangeSpin ), NULL, this );
@@ -6847,6 +7027,7 @@ CDPanel::~CDPanel()
 	m_itemweaponunk2->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
 	m_itemweaponmodel->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
 	m_itemweaponmodelname->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnItemChangeModelName ), NULL, this );
+	m_itemweapontexture->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnItemChangeTextureName ), NULL, this );
 	m_itemweaponsfx->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnItemChangeChoice ), NULL, this );
 	m_itemarmordefence->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
 	m_itemarmorevade->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
@@ -9757,7 +9938,7 @@ AboutWindow::AboutWindow( wxWindow* parent, wxWindowID id, const wxString& title
 	wxBoxSizer* bSizer16;
 	bSizer16 = new wxBoxSizer( wxVERTICAL );
 
-	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.44\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for PSX model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\n - Satoh -\n - Ze_PilOt -\n\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_MULTILINE|wxTE_READONLY|wxTE_CENTER|wxBORDER_SIMPLE );
+	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.50\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for PSX model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\n - Satoh -\n - Ze_PilOt -\n\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_MULTILINE|wxTE_READONLY|wxTE_CENTER|wxBORDER_SIMPLE );
 	m_textCtrl13->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 	m_textCtrl13->SetMinSize( wxSize( -1,330 ) );
 
@@ -9789,7 +9970,7 @@ HelpWindow::HelpWindow( wxWindow* parent, wxWindowID id, const wxString& title, 
 	wxBoxSizer* bSizer45321;
 	bSizer45321 = new wxBoxSizer( wxVERTICAL );
 
-	m_textCtrl174 = new wxTextCtrl( m_panel171, wxID_ANY, _("Hades Workshop is a tool that allows you to edit a Final Fantasy IX Playstation CD image and Steam files. Playstation CD images can be retrieved with an ISO extractor but the manipulation for this won't be explained here.\n\nNote that the edition of Steam files is recent. Several features don't work with them and this help has not been updated. Several facts presented here only apply to the PSX version of the game.\n\nTo edit a file, select \"Open\" in the \"File\" menu and choose a Final Fantasy IX file. If you open that file for the first time, the program will ask you to perform a scan : it will make sure the file is correct and create another file with the same name and the extension \".hwf\" containing informations on the Final Fantasy IX file.\nThis scan takes some time, usually less than 1 minute.\n\nOnce the scan has been done, the file datas are read and displayed in several sections. Note that everytime you get to a new section, the Final Fantasy IX file is read (some sections take quite a bit of time). It is extremely dangerous to edit the file with another program at the same time.\n\nTo save the file, you have 3 different options :\n1) You can save a mod file (\"Save Mod\"). This file, with the extension \".hws\" contains every modifications you made with the program. They are not version-dependant and can be used to transfer modification from a disc to another disc. This is the most prefered way of saving modifications when you don't want to apply them at once.\n2) Create a Playstation Patch (\"Export as PPF\"). This file, with the extension \".ppf\" also contains the modifications you made with the program. The difference is that patches are more standard and can be applied on the Final Fantasy IX file by programs like ppf-o-matic. This is the most prefered way of saving when you want to share your modifications.\n3) Directly overwrite the file (\"Overwrite Binary File\"). The file you opened is overwritten with the changes you made. It allows you to directly apply the modifications to your game, but the process can't be undone. This is the most prefered way of saving when you want to test your modifications and have a backup of the original file.\n\nNote that, depending on what you edited, emulators' save states may not work properly."), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY|wxTE_WORDWRAP );
+	m_textCtrl174 = new wxTextCtrl( m_panel171, wxID_ANY, _("Hades Workshop is a tool that allows you to edit a Final Fantasy IX Playstation CD image and Steam files. Playstation CD images can be retrieved with an ISO extractor but the manipulation for this won't be explained here.\n\nWhile the tool works for both the PSX versions and the Steam version of the game roughly the same, there are a couple of differences.\n\nFor the PSX version:\n--------------------\nTo edit a file, select \"Open\" in the \"File\" menu and choose a Final Fantasy IX file. If you open that file for the first time, the program will ask you to perform a scan : it will make sure the file is correct and create another file with the same name and the extension \".hwf\" containing informations on the Final Fantasy IX file.\nThis scan takes some time, usually less than 1 minute.\n\nOnce the scan has been done, the file datas are read and displayed in several sections. Note that everytime you get to a new section, the Final Fantasy IX file is read (some sections take quite a bit of time). It is extremely dangerous to edit the file with another program at the same time.\n\nTo save the file, you have 3 different options :\n1) You can save a mod file (\"Save Mod\"). This file, with the extension \".hws\" contains every modifications you made with the program. They are not version-dependant and can be used to transfer modification from a disc to another disc. This is the most prefered way of saving modifications when you don't want to apply them at once.\n2) Create a Playstation Patch (\"Export as PPF\"). This file, with the extension \".ppf\" also contains the modifications you made with the program. The difference is that patches are more standard and can be applied on the Final Fantasy IX file by programs like ppf-o-matic. This is the most prefered way of saving when you want to share your modifications.\n3) Directly overwrite the file (\"Overwrite Binary File\"). The file you opened is overwritten with the changes you made. It allows you to directly apply the modifications to your game, but the process can't be undone. This is the most prefered way of saving when you want to test your modifications and have a backup of the original file.\n\nNote that, depending on what you edited, emulators' save states may not work properly.\n\nFor the Steam version:\n-----------------------\nUse \"File -> Open\" and select the game's FF9_Launcher.exe. It's actually not really the launcher that matters for Hades Workshop, but it informs the tool of the game's root directory.\n\nIf the Steam version is modded with the Memoria Engine Mod, a part of the game's database is retrieved from the non-modded backup DLL (a message about that is displayed if that's the case). It is perfectly fine: it only means that eg. party spell datas are loaded from the non-modded DLL instead of the Memoria CSV external files.\nThe presence of Memoria also enables a couple of features that cannot work without it.\n\nSave your mods with both a .hws file (\"Save Mod\") for loading it back in the editor the next time, and with \"Save Steam Mod\" for generating the modded files.\nWhen Memoria is not installed, the modded files are the archives and DLLs that have to replace the existing game files.\nWhen Memoria is installed, the modded files are placed in a \"Mod Folder\" that can be detected by Memoria's Mod Manager and be used without replacing any other file.\n\nHades Workshop not only is compatible with the Memoria for the Steam version of the game but also it is advised to have it. You can retrieve Memoria's latest version on Albeoris's Github page:\nhttps://github.com/Albeoris/Memoria/releases/latest"), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY|wxTE_WORDWRAP );
 	m_textCtrl174->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 
 	bSizer45321->Add( m_textCtrl174, 1, wxALL|wxEXPAND, 5 );
@@ -9803,7 +9984,7 @@ HelpWindow::HelpWindow( wxWindow* parent, wxWindowID id, const wxString& title, 
 	wxBoxSizer* bSizer4532;
 	bSizer4532 = new wxBoxSizer( wxVERTICAL );
 
-	m_textCtrl17 = new wxTextCtrl( m_panel17, wxID_ANY, _("\"Animation\" is the name of a set used for spells.\nThis set includes :\n- the spell's special effects,\n- a sequence of animations for the caster and the targets,\n- a sequence of camera movements,\n- the \"damage point\", the moment the target is dealt damage or status alteration,\n- the \"number point\", the moment the damage are displayed by numbers floating over the target,\n- the \"return point\", the moment when the battle resumes so the next action may happen.\n\nDepending on what the animation is intended to do, some of the previous properties may be incomplete or missing.\n\nMost of the boss' ending moves are meant to be the final moves of a battle. Thus there is no \"return point\" for most of them (that unfortunatly includes Kuja's Ultima). When these animations are run under normal circumstances, the battle never resumes and the player will be stuck.\n\nSome of the enemies' animations are only meant to be used by enemies. Thus there may be camera movements or special effects not displayed properly. For instance, Trolls are moving in front of their target and give it an attack when doing their Solution spell, but that won't be executed if it's not a Troll using that animation.\n\nAnd last but not least, animations are usually meant for either 1, multiple target or global targeting. Those meant for global targeting (such as Night) may be used for anything else, even though the target won't always be identified by the special effect. However, animations made for 1 target cannot be used for more of them. They'll just won't affect more than 1 of the spell's target. About multi-targeting animations, they all may be used for a single-targeting use and some may be used for a global use, but the others are limited to up to 4 targets at a time. It is the case, for instance, of Amarant's No Mercy (the Trance version) : the caster will only fire up to 4 projectils. Note that Reflect refreshes this countdown."), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY|wxTE_WORDWRAP );
+	m_textCtrl17 = new wxTextCtrl( m_panel17, wxID_ANY, _("\"Animation\" is the name of a set used for spells.\nThis set includes :\n- the spell's special effects,\n- a sequence of animations for the caster and the targets,\n- a sequence of camera movements,\n- the \"damage point\", the moment the target is dealt damage or status alteration,\n- the \"number point\", the moment the damage are displayed by numbers floating over the target,\n- the \"return point\", the moment when the battle resumes so the next action may happen,\n- etc...\n\nSpell animations are sometimes called \"SFX\".\n\nDepending on what the animation is intended to do, some of the previous properties may be incomplete or missing.\n\nMost of the boss' ending moves are meant to be the final moves of a battle. Thus there is no \"return point\" for most of them (that unfortunatly includes Kuja's Ultima). When these animations are run under normal circumstances, the battle never resumes and the player will be stuck.\n\nSome of the enemies' animations are only meant to be used by enemies. Thus there may be camera movements or special effects not displayed properly. For instance, Trolls are moving in front of their target and give it an attack when doing their Solution spell, but that won't be executed if it's not a Troll using that animation.\n\nAnd last but not least, animations are usually meant for either 1, multiple target or global targeting. Those meant for global targeting (such as Night) may be used for anything else, even though the target won't always be identified by the special effect. However, animations made for 1 target cannot be used for more of them. They'll just won't affect more than 1 of the spell's target. About multi-targeting animations, they all may be used for a single-targeting use and some may be used for a global use, but the others are limited to up to 4 targets at a time. It is the case, for instance, of Amarant's No Mercy (the Trance version) : the caster will only fire up to 4 projectils. Note that Reflect refreshes this countdown.\n\nWhen using the Memoria mod, a lot of the above restrictions don't apply anymore. The Memoria mod also provides a text-based format for spell animation sequences. More infos can be found on its wiki:\nhttps://github.com/Albeoris/Memoria/wiki/Battle-SFX-Sequence"), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY|wxTE_WORDWRAP );
 	m_textCtrl17->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 
 	bSizer4532->Add( m_textCtrl17, 1, wxALL|wxEXPAND, 5 );
@@ -9813,25 +9994,11 @@ HelpWindow::HelpWindow( wxWindow* parent, wxWindowID id, const wxString& title, 
 	m_panel17->Layout();
 	bSizer4532->Fit( m_panel17 );
 	m_helpbook->AddPage( m_panel17, _("Spell Animations"), false );
-	m_panel18 = new wxPanel( m_helpbook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	wxBoxSizer* bSizer45312;
-	bSizer45312 = new wxBoxSizer( wxVERTICAL );
-
-	m_textCtrl171 = new wxTextCtrl( m_panel18, wxID_ANY, _("The \"Effect\" is a spell's or attack's action made on its target.\nIt is also the field that determines how some of the other fields are handled.\n\nA list of effects that support elemental attacks and status alteration will be available here as soon as possible."), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY|wxTE_WORDWRAP );
-	m_textCtrl171->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
-
-	bSizer45312->Add( m_textCtrl171, 1, wxALL|wxEXPAND, 5 );
-
-
-	m_panel18->SetSizer( bSizer45312 );
-	m_panel18->Layout();
-	bSizer45312->Fit( m_panel18 );
-	m_helpbook->AddPage( m_panel18, _("Spell Effects"), false );
 	m_panel19 = new wxPanel( m_helpbook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* bSizer453112;
 	bSizer453112 = new wxBoxSizer( wxVERTICAL );
 
-	m_textCtrl172 = new wxTextCtrl( m_panel19, wxID_ANY, _("Initial and Auto statuses are not used extensively on enemies in the normal version of the game. There are some weird things happening when enemies are given one.\n\n[General]\nWith the exceptions of \"Doom\" and \"Gradual Petrify\", the battles are not won because of an auto/initial status.\nWhen a status can't be cured, it means it can't be cured by any way (spells, items, time, physical attacks...). They might be cured when the enemy dies but I didn't investigate it (Sand Golem is the only enemy I know that can actually be revived).\nColor changing is quiet bugged. It doesn't change in the right color most of the time.\n\n[Blind - Reflect - Silence]\nInit : status is applied at the beginning, works fine and can be cured.\nAuto : status is applied at the beginning, works fine and can't be cured.\n\n[Trouble - Confuse - Stop - Defend - Zombie - Virus (remove Evasion)]\nInit : status is applied at the beginning, works fine and can be cured.\nInit + Auto : status is applied at the beginning, works fine and can't be cured.\n\n[Shell - Protect]\nInit + Auto : status is applied at the beginning, works fine and can't be cured.\n\n[Haste - Slow]\nAuto : displays the SFX but doesn't do anything else.\n\n[Sleep - Float]\nInit : status applied but cured immediately.\nAuto : status is applied at the beginning, works fine and can't be cured.\n\n[Berserk]\nInit : status is applied at the beginning, works fine and can be cured.\nAuto : status is applied at the beginning, works fine, can't be cured but doesn't change the color.\nInit + Auto : status is applied at the beginning, works fine and can't be cured.\n\n[Regen]\nInit : status applied but cured immediately (regen HP once).\nAuto : status is applied at the beginning, works fine and can't be cured.\n\n[Poison]\nInit : status applied but cured immediately (deals damage once).\nAuto : displays the SFX but doesn't do anything else.\nInit + Auto : status is applied at the beginning, deals damage faster than usual and can't be cured.\n\n[Venom]\nInit : status is applied at the beginning, works fine and can be cured.\nAuto : status can't be cured but only disables the attacks.\nInit + Auto : status is applied at the beginning, deals damage faster than usual and can't be cured.\n\n[Vanish]\nInit + Auto : status is applied at the beginning, works fine, can't be cured but doesn't make invisible.\n\n[Mini]\nInit : status is applied at the beginning, works fine and can be cured. The enemy is however still normal-sized until it is hit.\nInit + Auto : status is applied at the beginning, works fine and can't be cured. The enemy is however still normal-sized until it is hit.\n\n[Doom]\nInit or Auto : does instant death (with \"Death\" message displayed).\n\n[Gradual Petrify]\nInit : status is applied with a very fast countdown. Petrify in less than 5 seconds with any spirit value.\n\n[Trance]\nInit : makes the enemy shine and uses an attack countdown. The enemy stops shining and the battle bugs when the trance ends (the fighter who should attack next is stucked and can't do anything until he dies but the others keep fighting).\nInit + Auto : makes the enemy shine and can't be cured.\n\n[Heat]\nInit : status applied (color change) but cured immediately.\nAuto : displays the SFX without changing the color but doesn't do anything else.\nInit + Auto : status is applied at the beginning, works fine and can't be cured.\n\n[Freeze]\nInit : status applied (color change) but cured immediately.\nAuto : displays the SFX without changing the color and only disables the attacks.\nInit + Auto : status is applied at the beginning, works fine and can't be cured.\n\n[Death]\nInit : the enemy has greyed name and can't be targeted (or cancel the spells targeting it). Game crashs if the battle ends (if you run away...).\nAuto : the enemy has greyed name and stops attacking when its HP reach 0 (and keep displaying its death animation everytime it's dealt damage) until it's healed.\n\n[Unknown (may be KO)]\nSimilar to \"Death\" but doesn't grey the name and disables the enemy's animations when it's hitted."), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY|wxTE_WORDWRAP );
+	m_textCtrl172 = new wxTextCtrl( m_panel19, wxID_ANY, _("The following informations apply to the PSX versions of the game.\n\nInitial and Auto statuses are not used extensively on enemies in the normal version of the game. There are some weird things happening when enemies are given one.\n\n[General]\nWith the exceptions of \"Doom\" and \"Gradual Petrify\", the battles are not won because of an auto/initial status.\nWhen a status can't be cured, it means it can't be cured by any way (spells, items, time, physical attacks...). They might be cured when the enemy dies but I didn't investigate it (Sand Golem is the only enemy I know that can actually be revived).\nColor changing is quiet bugged. It doesn't change in the right color most of the time.\n\n[Blind - Reflect - Silence]\nInit : status is applied at the beginning, works fine and can be cured.\nAuto : status is applied at the beginning, works fine and can't be cured.\n\n[Trouble - Confuse - Stop - Defend - Zombie - Virus (remove Evasion)]\nInit : status is applied at the beginning, works fine and can be cured.\nInit + Auto : status is applied at the beginning, works fine and can't be cured.\n\n[Shell - Protect]\nInit + Auto : status is applied at the beginning, works fine and can't be cured.\n\n[Haste - Slow]\nAuto : displays the SFX but doesn't do anything else.\n\n[Sleep - Float]\nInit : status applied but cured immediately.\nAuto : status is applied at the beginning, works fine and can't be cured.\n\n[Berserk]\nInit : status is applied at the beginning, works fine and can be cured.\nAuto : status is applied at the beginning, works fine, can't be cured but doesn't change the color.\nInit + Auto : status is applied at the beginning, works fine and can't be cured.\n\n[Regen]\nInit : status applied but cured immediately (regen HP once).\nAuto : status is applied at the beginning, works fine and can't be cured.\n\n[Poison]\nInit : status applied but cured immediately (deals damage once).\nAuto : displays the SFX but doesn't do anything else.\nInit + Auto : status is applied at the beginning, deals damage faster than usual and can't be cured.\n\n[Venom]\nInit : status is applied at the beginning, works fine and can be cured.\nAuto : status can't be cured but only disables the attacks.\nInit + Auto : status is applied at the beginning, deals damage faster than usual and can't be cured.\n\n[Vanish]\nInit + Auto : status is applied at the beginning, works fine, can't be cured but doesn't make invisible.\n\n[Mini]\nInit : status is applied at the beginning, works fine and can be cured. The enemy is however still normal-sized until it is hit.\nInit + Auto : status is applied at the beginning, works fine and can't be cured. The enemy is however still normal-sized until it is hit.\n\n[Doom]\nInit or Auto : does instant death (with \"Death\" message displayed).\n\n[Gradual Petrify]\nInit : status is applied with a very fast countdown. Petrify in less than 5 seconds with any spirit value.\n\n[Trance]\nInit : makes the enemy shine and uses an attack countdown. The enemy stops shining and the battle bugs when the trance ends (the fighter who should attack next is stucked and can't do anything until he dies but the others keep fighting).\nInit + Auto : makes the enemy shine and can't be cured.\n\n[Heat]\nInit : status applied (color change) but cured immediately.\nAuto : displays the SFX without changing the color but doesn't do anything else.\nInit + Auto : status is applied at the beginning, works fine and can't be cured.\n\n[Freeze]\nInit : status applied (color change) but cured immediately.\nAuto : displays the SFX without changing the color and only disables the attacks.\nInit + Auto : status is applied at the beginning, works fine and can't be cured.\n\n[Death]\nInit : the enemy has greyed name and can't be targeted (or cancel the spells targeting it). Game crashs if the battle ends (if you run away...).\nAuto : the enemy has greyed name and stops attacking when its HP reach 0 (and keep displaying its death animation everytime it's dealt damage) until it's healed.\n\n[Unknown (may be KO)]\nSimilar to \"Death\" but doesn't grey the name and disables the enemy's animations when it's hitted."), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY|wxTE_WORDWRAP );
 	m_textCtrl172->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 
 	bSizer453112->Add( m_textCtrl172, 1, wxALL|wxEXPAND, 5 );
@@ -9845,7 +10012,7 @@ HelpWindow::HelpWindow( wxWindow* parent, wxWindowID id, const wxString& title, 
 	wxBoxSizer* bSizer71;
 	bSizer71 = new wxBoxSizer( wxVERTICAL );
 
-	m_textCtrl28 = new wxTextCtrl( m_panel26, wxID_ANY, _("Battle Scene's models can be exported and replaced by new models. It is, however, not that simple.\n\nExporting a model creates a Wavefront .obj geometry, several Targa .tga textures and a material library .mtl. External programs like Blender can be used to edit those.\n\nImporting a model is more complex. I recommand you to follow these steps :\n1) When you create/edit your model, only use 256x256 textures (merge them if needed ; you'll be limited to 3 of those textures),\n2) In Hades Workshop, select the scene you want to replace with your custom model,\n3) Click on the \"Manage Textures\" button,\n4) Browse for a texture your custom model uses,\n5) Place it at the left of the picture,\n6) Click on the \"Import\" button,\n7) Do steps 4 to 6 for each textures you need, placing them on the middle and on the right of the picture,\n8) Delete the palettes you don't use (right-click on them then \"Remove\"),\n9) Click on the \"Ok\" button,\n10) Edit the textures such as you end up with as many as you use for your custom model, with the right palette associated to the right painting (right-click on them to add or remove some),\n11) Click on the \"Import Battle Scene\" button and choose your geometry file .obj,\n12) Once it is imported, link the model texture's identifiers to the textures you just set up,\n13) You are done, congrats !\n\nNote that, due to the format limitation, models you import may not be far more bigger than the standart model."), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY|wxTE_WORDWRAP );
+	m_textCtrl28 = new wxTextCtrl( m_panel26, wxID_ANY, _("PSX version:\n------------\nBattle Scene's models can be exported and replaced by new models. It is, however, not that simple.\n\nExporting a model creates a Wavefront .obj geometry, several Targa .tga textures and a material library .mtl. External programs like Blender can be used to edit those.\n\nImporting a model is more complex. I recommand you to follow these steps :\n1) When you create/edit your model, only use 256x256 textures (merge them if needed ; you'll be limited to 3 of those textures),\n2) In Hades Workshop, select the scene you want to replace with your custom model,\n3) Click on the \"Manage Textures\" button,\n4) Browse for a texture your custom model uses,\n5) Place it at the left of the picture,\n6) Click on the \"Import\" button,\n7) Do steps 4 to 6 for each textures you need, placing them on the middle and on the right of the picture,\n8) Delete the palettes you don't use (right-click on them then \"Remove\"),\n9) Click on the \"Ok\" button,\n10) Edit the textures such as you end up with as many as you use for your custom model, with the right palette associated to the right painting (right-click on them to add or remove some),\n11) Click on the \"Import Battle Scene\" button and choose your geometry file .obj,\n12) Once it is imported, link the model texture's identifiers to the textures you just set up,\n13) You are done, congrats !\n\nNote that, due to the format limitation, models you import may not be far more bigger than the standart model.\n\nSteam version:\n---------------\n3D models can be exported using the embedded tool \"Unity Assets Viewer\". Most of the 3D models are found in the archive p0data4 but some of them are found in the archive p0data2 (Battle archive) and in the archive p0data3 (World Map archive). The animations are separate assets that can be found mostly in the archive p0data5."), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY|wxTE_WORDWRAP );
 	m_textCtrl28->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 
 	bSizer71->Add( m_textCtrl28, 1, wxALL|wxEXPAND, 5 );
@@ -9859,7 +10026,7 @@ HelpWindow::HelpWindow( wxWindow* parent, wxWindowID id, const wxString& title, 
 	wxBoxSizer* bSizer45311111;
 	bSizer45311111 = new wxBoxSizer( wxVERTICAL );
 
-	m_textCtrl1731 = new wxTextCtrl( m_panel201, wxID_ANY, _("The script in this section is the game's code, that handles scripted events, enemy AIs and other related stuffs.\n\nThe script is presented with a kind of C-like syntax. There are several differences though.\n\n[General]\nThe language accepts only one instruction per line.\nLines are not terminated by any punctuation character.\nFor flow control statements, the braces are mandatory.\nYou can't use braces out of a flow control statement.\nThere is no such thing as real values. Everything is done using integers (sometimes signed).\n\nOnce you have modified a function's script, you must parse it to check eventual errors.\n\n[Flow Control]\nThe different keywords for controlling the script's flow are described here.\n\nif : usual If/Then statement with an optional Else. The syntax is\n\nif ( CONDITION ) {\n    CODE\n}\n\nor\n\nif ( CONDITION ) {\n    CODE_A\n} else {\n    CODE_B\n}\n\nNote that the opening braces must be on the same line as the keywords \"if\" and \"else\".\n\nifnot : opposite control of if. It works similarly though. The syntax is\n\nifnot ( CONDITION ) {\n    CODE\n}\n\nwhile : usual While statement. You can use the keyword \"break\" to leave the control but there is no such thing as a \"continue\" instruction. The syntax is\n\nwhile ( CONDITION ) {\n    CODE\n}\n\ndo/while : usual Do/While statement. You can also use the keyword \"break\" to leave the control. The syntax is\n\ndo {\n    CODE\n} while ( CONDITION )\n\nswitch : a Switch statement with consecutive cases only. The first case's value is specified in the control, as well as the maximal amount of cases. The syntax is\n\nswitch NB ( VALUE ) from FIRST {\ncase +INC:\n    CODE_A\ncase +INC ; +INC:\n    CODE_B\ndefault:\n    CODE_C\n}\n\nwhere\nNB is the maximal amount of cases,\nVALUE is the control expression,\nFIRST is the \"+0\" case,\nINC are numbers strictly lower than NB.\nNote that, like in C, you have to use the keyword \"break\" if you want only one branch to be run and that the \"default\" case is optional.\nThe semicolon allows to make several values lead to the same code branch.\n\nswitchex : a more usual Switch statement. The exact amount of cases (default case excluded) must be provided in the control. The syntax is\n\nswitchex NB ( VALUE ) {\ncase X:\n    CODE_A\ncase Y ; Z:\n    CODE_B\ndefault:\n    CODE_C\n}\n\nNB being the amount of cases and X, Y and Z representing numbers. The keywords \"break\", \"default\" and the semicolon have the same purpose than for the \"switch\" statement.\n\nloop : rerun the whole function. It works as an alternative to a last \"return\" instruction and can only be used out of any other control block.\n\n[Variables]\nVariables are splitted into 3 categories (locals, globals and generals) and can be of 9 different types (Bool, SBool, Int8, UInt8, Int16, UInt16, Int24, UInt24 and Null).\n1) Local variables must be allocated for each entry of the script codes. They are local to that entry and are initialized to 0 when the script is executed (at the start of a battle or when the player enters a field),\n2) Global variables are shared by all the entries of a single script. They are thus not shared between several fields' scripts or battles. They are also initialized to 0 when the script is executed.\n3) General variables are permanent and can be referred in any script of the game. In adition, several of them (maybe all of them) are saved in memory card saves.\n\nThose three categories of variables each use their own RAM allocated space, and two variables of the same category use the same RAM space. The offset (or adress) of the variables are appended to their name.\nSo \"VAR_LocInt8_10\" and \"VAR_LocUInt8_10\" are the same variable (typecasted into an int of size 1 byte or an unsigned int of size 1 byte).\nHowever, \"VAR_LocInt8_10\", \"VAR_LocInt8_11\" and \"VAR_GlobInt8_10\" are all different variables.\nAlso, VAR_LocUInt16_10 == VAR_LocUInt8_10 | (VAR_LocUInt16_11 << 8).\nFinally, the offsets of boolean variables are their bit-offset and not byte-offset. For instance, VAR_LocBool_80 == VAR_LocUInt8_10 & 1.\n\nVariables are renamed with more suitable names when it's possible.\nMod files (.hws) can also save the names of local and global variables.\n\nAbout the types, note that SBool and Bool are synonyms, as well as UInt24 and Int24 (they both are signed because of an oversight from the developpers).\nAccessing to a Null type variables always return 0 and setting a Null type variable does nothing.\n\nAdditionally, some variables belong to special categories, used by the deep game's mechanics. \"SV\" variables, for instance, are extensively used by the battle mechanics.\nTo finish, there are also Getters to retrieve values from the other game's mechanics and those can't be directly modified (such as the player's gils amount).\n\nIn order to manipulate variables, you must use the instruction \"set\" followed by a series of operations over the variables. A few of those operations are still unknown. Informations about them can be found in the script's help window.\nThe brackets allow to access a structure's field. The result they send is a list (see the list operators in the function list).\n\nWARNINGS :\n1) At the moment, the operation priorities are not respected. By default, the operations will be executed from right to left. It is advised to write all the parentheses,\n2) Note that the minus operator can't be read as an unary operator yet,\n3) Only positive integers can be used in variable manipulation codes,\n4) When dealing with numbers larger than 32767 in variable manipulation codes, you must append 'L' to it ; otherwise it will be converted to a negative integer.\n\nVariable manipulation codes can also be used in most of instructions's arguments."), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY|wxTE_WORDWRAP );
+	m_textCtrl1731 = new wxTextCtrl( m_panel201, wxID_ANY, _("The script in this section is the game's code, that handles scripted events, enemy AIs and other related stuffs.\n\nThe script is presented with a kind of C-like syntax. There are several differences though.\n\n[General]\nThe language accepts only one instruction per line.\nLines are not terminated by any punctuation character.\nFor flow control statements, the braces are mandatory.\nYou can't use braces out of a flow control statement.\nThere is no such thing as real values. Everything is done using integers (sometimes signed).\nThere is no such thing as a string type either: texts are refered to by their text numerical IDs.\n\nOnce you have modified a function's script, you must parse it to check eventual errors.\n\n[Flow Control]\nThe different keywords for controlling the script's flow are described here.\n\nif : usual If/Then statement with an optional Else. The syntax is\n\nif ( CONDITION ) {\n    CODE\n}\n\nor\n\nif ( CONDITION ) {\n    CODE_A\n} else {\n    CODE_B\n}\n\nNote that the opening braces must be on the same line as the keywords \"if\" and \"else\".\n\nifnot : opposite control of if. It works similarly though. The syntax is\n\nifnot ( CONDITION ) {\n    CODE\n}\n\nwhile : usual While statement. You can use the keyword \"break\" to leave the control but there is no such thing as a \"continue\" instruction. The syntax is\n\nwhile ( CONDITION ) {\n    CODE\n}\n\ndo/while : usual Do/While statement. You can also use the keyword \"break\" to leave the control. The syntax is\n\ndo {\n    CODE\n} while ( CONDITION )\n\nswitch : a Switch statement with consecutive cases only. The first case's value is specified in the control, as well as the maximal amount of cases. The syntax is\n\nswitch NB ( VALUE ) from FIRST {\ncase +INC:\n    CODE_A\ncase +INC ; +INC:\n    CODE_B\ndefault:\n    CODE_C\n}\n\nwhere\nNB is the maximal amount of cases,\nVALUE is the control expression,\nFIRST is the \"+0\" case,\nINC are numbers strictly lower than NB.\nNote that, like in C, you have to use the keyword \"break\" if you want only one branch to be run and that the \"default\" case is optional.\nThe semicolon allows to make several values lead to the same code branch.\n\nswitchex : a more usual Switch statement. The exact amount of cases (default case excluded) must be provided in the control. The syntax is\n\nswitchex NB ( VALUE ) {\ncase X:\n    CODE_A\ncase Y ; Z:\n    CODE_B\ndefault:\n    CODE_C\n}\n\nNB being the amount of cases and X, Y and Z representing numbers. The keywords \"break\", \"default\" and the semicolon have the same purpose than for the \"switch\" statement.\n\nloop : rerun the whole function. It works as an alternative to a terminating \"return\" instruction and can only be used out of any other control block.\n\n[Variables]\nVariables are splitted into 3 categories (locals, globals and generals) and can be of 9 different types (Bool, SBool, Int8, UInt8, Int16, UInt16, Int24, UInt24 and Null).\n1) Local variables must be allocated for each entry of the script codes. They are local to that entry and are initialized to 0 when the script is executed (at the start of a battle or when the player enters a field),\n2) Global variables are shared by all the entries of a single script. They are thus not shared between several fields' scripts or battles. They are also initialized to 0 when the script is executed.\n3) General variables are permanent and can be referred in any script of the game. In adition, they are saved in memory card saves and are thus permanent through the game.\n\nThose three categories of variables each use their own RAM allocated space, and two variables of the same category use the same RAM space. The offset (or adress) of the variables are appended to their name.\nSo \"VAR_LocInt8_10\" and \"VAR_LocUInt8_10\" are the same variable (typecasted into an int of size 1 byte or an unsigned int of size 1 byte).\nAlso, VAR_LocUInt16_10 == VAR_LocUInt8_10 | (VAR_LocUInt16_11 << 8).\nHowever, \"VAR_LocInt8_10\", \"VAR_LocInt8_11\" and \"VAR_GlobInt8_10\" are all different variables.\nFinally, the offsets of boolean variables are their bit-offset and not byte-offset. For instance, VAR_LocBool_80 == VAR_LocUInt8_10 & 1.\n\nVariables are renamed with more suitable names when it's possible.\nMod files (.hws) can also save the names of local and global variables.\n\nAbout the types, note that SBool and Bool are synonyms, as well as UInt24 and Int24 (they both are signed because of an oversight from the developpers).\nAccessing to a Null type variables always return 0 and setting a Null type variable does nothing.\n\nAdditionally, some variables belong to special categories, used by the deep game's mechanics. \"SV\" variables, for instance, are extensively used by the battle mechanics.\nTo finish, there are also Getters to retrieve values from the other game's mechanics and those can't be directly modified (such as the player's gils amount).\n\nIn order to manipulate variables, you must use the instruction \"set\" followed by a series of operations over the variables. A few of those operations are still unknown. Informations about them can be found in the script's help window.\nThe brackets allow to access a structure's field. The result they send is a list (see the list operators in the function list).\n\nWARNINGS :\n1) Note that the minus operator can't be read as an unary operator yet: the allowed syntax is \"Minus(10)\" in place of \"-10\",\n2) When dealing with numbers larger than 32767 in variable manipulation codes, you must append 'L' to it ; otherwise they will be converted to negative integers.\n\nVariable manipulation codes can also be used in most of instructions's arguments."), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY|wxTE_WORDWRAP );
 	m_textCtrl1731->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 
 	bSizer45311111->Add( m_textCtrl1731, 1, wxALL|wxEXPAND, 5 );
@@ -9873,7 +10040,7 @@ HelpWindow::HelpWindow( wxWindow* parent, wxWindowID id, const wxString& title, 
 	wxBoxSizer* bSizer4531111;
 	bSizer4531111 = new wxBoxSizer( wxVERTICAL );
 
-	m_textCtrl173 = new wxTextCtrl( m_panel20, wxID_ANY, _("Editing the binary file is limited in many ways. Here is an overview of these limitations.\n\n[Texts]\nTexts are usually limited to a certain amount of characters. This amount is shared by all the texts of the same kind, meaning you can shorten some texts in order to make others longer.\n\nAbility, Command, Stat and Item texts : there are really few free characters for them (up to 3 depending on the version you have). If you're lucky, you've got a version with non-empty names for the dummy spells and these can be erased to gain space. Note that names and helps use different limitations and you can't clear text in names to add some other text in helps.\n\nEnemies texts : all the datas related to a single battle use the same limitation. If you write a longer name for an enemy's attack, its name character limit will decrease by the same amount. Fortunatly, there is much more initial free characters for them by default (from 0 to 2044 by battle).\n\nDialogs and such : same as enemies. There is one limit per text block with a random amount of initial free characters.\n\n[Supporting Abilities]\nYou can't change the effects of the supporting abilities for now.\n\n[Commands]\nCommand is surely the less working panel at the moment. There are 192 slots in total for spell sets and you can't add more spells to a command once the limit is reached.\nHowever :\n- you may link two commands together. They'll share the same spell set but that will only count half in that limitation,\n- only commands using the \"Spell\" panel have their spells count in this limit.\nSo, in order to add spells to a command, you must first either remove spells from other commands either use links. You can link Dagger's Eidolon and Summon commands as well as Beatrix's Seiken commands to have 12 slots by default.\nNote that if a character is given an ability s/he doesn't have in his/her ability list (in the \"Stats\" panel), s/he won't need AP nor equipments and can use it directly.\n\nAlso, there are a lot of special commands. Trying to edit \"Defend\" or \"Attack\", for instance, will end up with strange results. Most of the time, only names and helps can be edited safely. Editing \"Item\" and \"Throw\" object range will have no effect for now, as the list displayed there is wrongly-ordered.\n\nFinally, editing the spell list of a command won't change the spell list displayed in the game menu, only those available in battle. You have to change the ability list in the stats panel for that.\n\n[Stats]\nYou can not change the name of temporary characters.\n\n[Items]\nType of items is kind of forced. The first 88 items are meant to be weapons, then there are 136 armors and finally 32 usable items. The items have statistics set to 0 for the datas not related to their type.\n\n[Shops]\nYou can add up to 32 items at each shop and synthesis shop.\n\n[Enemies]\nThe \"Model ID\" should never be edited as modifying an enemy's model is not working yet.\nYou can't change the enemies groups (or \"Battle formations\") apart from the AP gain and the group frequency (in pourcentage). Note that the frequency is cumulative starting from \"Group 1\" to the last. For example, if the \"Group 1\" has a 80% appearance frequency and the \"Group 2\" has 50%, the \"Group 1\" has priority and will only let to the \"Group 2\" the remaining 20% chances to appear. The next groups will never appear in this configuration.\nFinally, enemies attack animations can't be edited as they are mixed within a more complex structure than for party's spells.\n\n[Scripts]\nYou can't edit the World Maps' scripts in the Japanese version of the game."), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY|wxTE_WORDWRAP );
+	m_textCtrl173 = new wxTextCtrl( m_panel20, wxID_ANY, _("The limitations presented here apply to the PSX version of the game. Many of these are bypassed for the Steam version and even more are bypassed when using the Memoria Engine Mod.\n\nEditing the binary file is limited in many ways. Here is an overview of these limitations.\n\n[Texts]\nTexts are usually limited to a certain amount of characters. This amount is shared by all the texts of the same kind, meaning you can shorten some texts in order to make others longer.\n\nAbility, Command, Stat and Item texts : there are really few free characters for them (up to 3 depending on the version you have). If you're lucky, you've got a version with non-empty names for the dummy spells and these can be erased to gain space. Note that names and helps use different limitations and you can't clear text in names to add some other text in helps.\n\nEnemies texts : all the datas related to a single battle use the same limitation. If you write a longer name for an enemy's attack, its name character limit will decrease by the same amount. Fortunatly, there is much more initial free characters for them by default (from 0 to 2044 by battle).\n\nDialogs and such : same as enemies. There is one limit per text block with a random amount of initial free characters.\n\n[Supporting Abilities]\nYou can't change the effects of the supporting abilities for now.\n\n[Commands]\nCommand is surely the less working panel at the moment. There are 192 slots in total for spell sets and you can't add more spells to a command once the limit is reached.\nHowever :\n- you may link two commands together. They'll share the same spell set but that will only count half in that limitation,\n- only commands using the \"Spell\" panel have their spells count in this limit.\nSo, in order to add spells to a command, you must first either remove spells from other commands either use links. You can link Dagger's Eidolon and Summon commands as well as Beatrix's Seiken commands to have 12 slots by default.\nNote that if a character is given an ability s/he doesn't have in his/her ability list (in the \"Stats\" panel), s/he won't need AP nor equipments and can use it directly.\n\nAlso, there are a lot of special commands. Trying to edit \"Defend\" or \"Attack\", for instance, will end up with strange results. Most of the time, only names and helps can be edited safely. Editing \"Item\" and \"Throw\" object range will have no effect for now, as the list displayed there is wrongly-ordered.\n\nFinally, editing the spell list of a command won't change the spell list displayed in the game menu, only those available in battle. You have to change the ability list in the stats panel for that.\n\n[Stats]\nYou can not change the name of temporary characters.\n\n[Items]\nType of items is kind of forced. The first 88 items are meant to be weapons, then there are 136 armors and finally 32 usable items. The items have statistics set to 0 for the datas not related to their type.\n\n[Shops]\nYou can add up to 32 items at each shop and synthesis shop.\n\n[Enemies]\nThe \"Model ID\" should never be edited as modifying an enemy's model is not working yet.\nYou can't change the enemies groups (or \"Battle formations\") apart from the AP gain and the group frequency (in pourcentage). Note that the frequency is cumulative starting from \"Group 1\" to the last. For example, if the \"Group 1\" has a 80% appearance frequency and the \"Group 2\" has 50%, the \"Group 1\" has priority and will only let to the \"Group 2\" the remaining 20% chances to appear. The next groups will never appear in this configuration.\nFinally, enemies attack animations can't be edited as they are mixed within a more complex structure than for party's spells.\n\n[Scripts]\nYou can't edit the World Maps' scripts in the Japanese version of the game."), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY|wxTE_WORDWRAP );
 	m_textCtrl173->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 
 	bSizer4531111->Add( m_textCtrl173, 1, wxALL|wxEXPAND, 5 );
@@ -9887,7 +10054,7 @@ HelpWindow::HelpWindow( wxWindow* parent, wxWindowID id, const wxString& title, 
 	wxBoxSizer* bSizer45311112;
 	bSizer45311112 = new wxBoxSizer( wxVERTICAL );
 
-	m_textCtrl1732 = new wxTextCtrl( m_panel202, wxID_ANY, _("In this section, you'll find informations about how modding a game can mess up with your saves.\n\n[Memory Card Saves]\n- Modifying the stats given by the items or the attacks of the weapons matters if you have a character equiped with it. It goes back to normal (to the newest version) when you un-equip then re-equip them.\n- Modifying the party's stats, both the \"Level Progression\" and the individual stats bug. The party's stats are only used as an initial value so it will have no impact on saved games (at least once the characters have join your team).\n- Abilities learned are replaced by the new ones and it has the same amount of AP than for the previous one. Let's say I have a save with Zidane's Thievery at 80/100 and I modify the game so he needs 200 to learn Flare instead of Thievery, then he will have 80/200 AP for learning flare. Also, you keep gaining AP once you're done learning an ability (but you can't see it).\n- If you modify the Magic Stones requirement of supporting abilities and if a character has it activated when you saved, it will totally mess up with the total amount of magic stones available for that character.\n\n[Save States]\nIn addition, for save states, some modifications don't take effect until they are re-loaded in the RAM (which may be never for some of them).\n\n- Spells : the spell datas are loaded at the beginning of each battles or when the player access to his menu.\n- Commands : the command datas are loaded in the RAM once when the game starts and are never reloaded.\n- Enemies : the enemy datas and AI are loaded at the beginning of each encounters.\n- Fields : the script's field is loaded in the RAM everytime you enter the field. Its text, however, is loaded once when the game needs it and is never reloaded.\n\nThese informations will be completed eventually."), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY|wxTE_WORDWRAP );
+	m_textCtrl1732 = new wxTextCtrl( m_panel202, wxID_ANY, _("The following informations apply to the PSX versions only.\n\nIn this section, you'll find informations about how modding a game can mess up with your saves.\n\n[Memory Card Saves]\n- Modifying the stats given by the items or the attacks of the weapons matters if you have a character equiped with it. It goes back to normal (to the newest version) when you un-equip then re-equip them.\n- Modifying the party's stats, both the \"Level Progression\" and the individual stats bug. The party's stats are only used as an initial value so it will have no impact on saved games (at least once the characters have join your team).\n- Abilities learned are replaced by the new ones and it has the same amount of AP than for the previous one. Let's say I have a save with Zidane's Thievery at 80/100 and I modify the game so he needs 200 to learn Flare instead of Thievery, then he will have 80/200 AP for learning flare. Also, you keep gaining AP once you're done learning an ability (but you can't see it).\n- If you modify the Magic Stones requirement of supporting abilities and if a character has it activated when you saved, it will totally mess up with the total amount of magic stones available for that character.\n\n[Save States]\nIn addition, for save states, some modifications don't take effect until they are re-loaded in the RAM (which may be never for some of them).\n\n- Spells : the spell datas are loaded at the beginning of each battles or when the player access to his menu.\n- Commands : the command datas are loaded in the RAM once when the game starts and are never reloaded.\n- Enemies : the enemy datas and AI are loaded at the beginning of each encounters.\n- Fields : the script's field is loaded in the RAM everytime you enter the field. Its text, however, is loaded once when the game needs it and is never reloaded."), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY|wxTE_WORDWRAP );
 	m_textCtrl1732->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 
 	bSizer45311112->Add( m_textCtrl1732, 1, wxALL|wxEXPAND, 5 );

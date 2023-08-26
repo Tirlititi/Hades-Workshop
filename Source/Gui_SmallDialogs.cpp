@@ -74,11 +74,11 @@ ImageMapEditDialog::ImageMapEditDialog(wxWindow* parent, ImageMapDataStruct* img
 		}
 
 	MACRO_IMAGE_MAP_INITFILELIST(MAP_OBJECT_ENEMY, GLOBAL_MAP_DIR_ENEMY, enemyset, enemyset->battle_amount, enemyset->battle_data[j]->object_id, _(enemyset->battle_name[objectnameindex]))
-	MACRO_IMAGE_MAP_INITFILELIST(MAP_OBJECT_SCENE, GLOBAL_MAP_DIR_BATTLE_SCENE, true, G_N_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME), HADES_STRING_BATTLE_SCENE_NAME[j].id, _(HADES_STRING_BATTLE_SCENE_NAME[objectnameindex].label))
-	MACRO_IMAGE_MAP_INITFILELIST(MAP_OBJECT_MUSIC, GLOBAL_MAP_DIR_MUSIC, true, G_N_ELEMENTS(HADES_STRING_MUSIC_NAME), HADES_STRING_MUSIC_NAME[j].id, _(HADES_STRING_MUSIC_NAME[objectnameindex].label))
-	MACRO_IMAGE_MAP_INITFILELIST(MAP_OBJECT_AUDIO, GLOBAL_MAP_DIR_AUDIO, true, G_N_ELEMENTS(HADES_STRING_AUDIO_NAME), HADES_STRING_AUDIO_NAME[j].id, _(HADES_STRING_AUDIO_NAME[objectnameindex].label))
+	MACRO_IMAGE_MAP_INITFILELIST(MAP_OBJECT_SCENE, GLOBAL_MAP_DIR_BATTLE_SCENE, true, G_V_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME), HADES_STRING_BATTLE_SCENE_NAME[j].id, _(HADES_STRING_BATTLE_SCENE_NAME[objectnameindex].label))
+	MACRO_IMAGE_MAP_INITFILELIST(MAP_OBJECT_MUSIC, GLOBAL_MAP_DIR_MUSIC, true, G_V_ELEMENTS(HADES_STRING_MUSIC_NAME), HADES_STRING_MUSIC_NAME[j].id, _(HADES_STRING_MUSIC_NAME[objectnameindex].label))
+	MACRO_IMAGE_MAP_INITFILELIST(MAP_OBJECT_AUDIO, GLOBAL_MAP_DIR_AUDIO, true, G_V_ELEMENTS(HADES_STRING_AUDIO_NAME), HADES_STRING_AUDIO_NAME[j].id, _(HADES_STRING_AUDIO_NAME[objectnameindex].label))
 	MACRO_IMAGE_MAP_INITFILELIST(MAP_OBJECT_FIELD, GLOBAL_MAP_DIR_FIELD, fieldset, fieldset->amount, fieldset->script_data[j]->object_id, _(fieldset->script_data[objectnameindex]->name.GetStr(hades::TEXT_PREVIEW_TYPE)))
-	MACRO_IMAGE_MAP_INITFILELIST(MAP_OBJECT_WORLD, GLOBAL_MAP_DIR_WORLD_MAP, true, G_N_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME), HADES_STRING_WORLD_BLOCK_NAME[j].id, _(HADES_STRING_WORLD_BLOCK_NAME[objectnameindex].label))
+	MACRO_IMAGE_MAP_INITFILELIST(MAP_OBJECT_WORLD, GLOBAL_MAP_DIR_WORLD_MAP, true, G_V_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME), HADES_STRING_WORLD_BLOCK_NAME[j].id, _(HADES_STRING_WORLD_BLOCK_NAME[objectnameindex].label))
 	unsigned int mdlamount1 = globalmap->common_dir[GLOBAL_MAP_DIR_MODEL_PARTY].file_amount;
 	unsigned int mdlamount2 = globalmap->common_dir[GLOBAL_MAP_DIR_MODEL_WEAPON].file_amount;
 	unsigned int mdlamount3 = globalmap->common_dir[GLOBAL_MAP_DIR_MODEL_ENEMY].file_amount;
@@ -94,7 +94,7 @@ ImageMapEditDialog::ImageMapEditDialog(wxWindow* parent, ImageMapDataStruct* img
 			objid = globalmap->common_dir[GLOBAL_MAP_DIR_MODEL_WEAPON].file_id[i - mdlamount1];
 		else
 			objid = globalmap->common_dir[GLOBAL_MAP_DIR_MODEL_ENEMY].file_id[i - mdlamount1 - mdlamount2];
-		for (j = 0; j < G_N_ELEMENTS(HADES_STRING_MODEL_NAME); j++)
+		for (j = 0; j < G_V_ELEMENTS(HADES_STRING_MODEL_NAME); j++)
 			if (HADES_STRING_MODEL_NAME[j].id == objid) {
 				objectnameindex = j;
 				break;
@@ -153,19 +153,19 @@ void ImageMapEditDialog::RefreshMapList() {
 	case MAP_OBJECT_SCENE:
 		for (i = 0; i < map.amount; i++)
 			if (map.data_type[i] == chunktype) {
-				MACRO_IMAGE_MAP_REFRESHMAPLIST(true, G_N_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME), HADES_STRING_BATTLE_SCENE_NAME[j].id, _(HADES_STRING_BATTLE_SCENE_NAME[objectnameindex].label))
+				MACRO_IMAGE_MAP_REFRESHMAPLIST(true, G_V_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME), HADES_STRING_BATTLE_SCENE_NAME[j].id, _(HADES_STRING_BATTLE_SCENE_NAME[objectnameindex].label))
 			}
 		break;
 	case MAP_OBJECT_MUSIC:
 		for (i = 0; i < map.amount; i++)
 			if (map.data_type[i] == chunktype) {
-				MACRO_IMAGE_MAP_REFRESHMAPLIST(true, G_N_ELEMENTS(HADES_STRING_MUSIC_NAME), HADES_STRING_MUSIC_NAME[j].id, _(HADES_STRING_MUSIC_NAME[objectnameindex].label))
+				MACRO_IMAGE_MAP_REFRESHMAPLIST(true, G_V_ELEMENTS(HADES_STRING_MUSIC_NAME), HADES_STRING_MUSIC_NAME[j].id, _(HADES_STRING_MUSIC_NAME[objectnameindex].label))
 			}
 		break;
 	case MAP_OBJECT_AUDIO:
 		for (i = 0; i < map.amount; i++)
 			if (map.data_type[i] == chunktype) {
-				MACRO_IMAGE_MAP_REFRESHMAPLIST(true, G_N_ELEMENTS(HADES_STRING_AUDIO_NAME), HADES_STRING_AUDIO_NAME[j].id, _(HADES_STRING_AUDIO_NAME[objectnameindex].label))
+				MACRO_IMAGE_MAP_REFRESHMAPLIST(true, G_V_ELEMENTS(HADES_STRING_AUDIO_NAME), HADES_STRING_AUDIO_NAME[j].id, _(HADES_STRING_AUDIO_NAME[objectnameindex].label))
 			}
 		break;
 	case MAP_OBJECT_FIELD:
@@ -177,13 +177,13 @@ void ImageMapEditDialog::RefreshMapList() {
 	case MAP_OBJECT_WORLD:
 		for (i = 0; i < map.amount; i++)
 			if (map.data_type[i] == chunktype && map.data_id[i] >= 9000) {
-				MACRO_IMAGE_MAP_REFRESHMAPLIST(true, G_N_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME), HADES_STRING_WORLD_BLOCK_NAME[j].id, _(HADES_STRING_WORLD_BLOCK_NAME[objectnameindex].label))
+				MACRO_IMAGE_MAP_REFRESHMAPLIST(true, G_V_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME), HADES_STRING_WORLD_BLOCK_NAME[j].id, _(HADES_STRING_WORLD_BLOCK_NAME[objectnameindex].label))
 			}
 		break;
 	case MAP_OBJECT_MODEL:
 		for (i = 0; i < map.amount; i++)
 			if (map.data_type[i] == chunktype) {
-				MACRO_IMAGE_MAP_REFRESHMAPLIST(true, G_N_ELEMENTS(HADES_STRING_MODEL_NAME), HADES_STRING_MODEL_NAME[j].id, _(HADES_STRING_MODEL_NAME[objectnameindex].label))
+				MACRO_IMAGE_MAP_REFRESHMAPLIST(true, G_V_ELEMENTS(HADES_STRING_MODEL_NAME), HADES_STRING_MODEL_NAME[j].id, _(HADES_STRING_MODEL_NAME[objectnameindex].label))
 			}
 		break;
 	}
@@ -337,7 +337,7 @@ int SpellModelWindow::ShowModal(Spell_Target_Type tt, Spell_Target_Amount ta, ui
 		tt = SPELL_TARGET_TYPE_ANY;
 	uint16_t model = alt ? currentmodelalt : currentmodel;
 	m_modelmain->Clear();
-	for (i = 0; i < G_N_ELEMENTS(HADES_STRING_SPELL_MODEL); i++) {
+	for (i = 0; i < HADES_STRING_SPELL_MODEL.size(); i++) {
 		if (model == HADES_STRING_SPELL_MODEL[i].id)
 			allsel = i;
 		if (HADES_STRING_SPELL_MODEL[i].bug_rate == 0) {
@@ -375,7 +375,7 @@ int SpellModelWindow::ShowModal(Spell_Target_Type tt, Spell_Target_Amount ta, ui
 
 void SpellModelWindow::OnSpin(wxSpinEvent& event) {
 	int newmodel = event.GetPosition();
-	for (unsigned int i = 0; i < G_N_ELEMENTS(HADES_STRING_SPELL_MODEL); i++)
+	for (unsigned int i = 0; i < HADES_STRING_SPELL_MODEL.size(); i++)
 		if (newmodel == HADES_STRING_SPELL_MODEL[i].id) {
 			m_modelall->SetSelection(i);
 			break;
@@ -494,7 +494,7 @@ CharacterParameterDialog::CharacterParameterDialog(wxWindow* parent) : Character
 }
 
 int CharacterParameterDialog::ShowModal(CharBattleParameterStruct& btl, InitialStatDataStruct& stat) {
-	int i;
+	unsigned int i;
 
 	#define MACRO_DISPLAY_STATUS_PARAM(NUM) \
 		m_statusbone ## NUM->SetValue(btl.status_bone[NUM]); \
@@ -536,8 +536,8 @@ int CharacterParameterDialog::ShowModal(CharBattleParameterStruct& btl, InitialS
 	wxArrayString modellabel;
 	int modelsel = 0;
 	int trancemodelsel = 0;
-	modellabel.Alloc(G_N_ELEMENTS(HADES_STRING_MODEL_NAME));
-	for (i = 0; i < G_N_ELEMENTS(HADES_STRING_MODEL_NAME); i++) {
+	modellabel.Alloc(G_V_ELEMENTS(HADES_STRING_MODEL_NAME));
+	for (i = 0; i < G_V_ELEMENTS(HADES_STRING_MODEL_NAME); i++) {
 		modellabel.Add(HADES_STRING_MODEL_NAME[i].label);
 		if (HADES_STRING_MODEL_NAME[i].steamid.IsSameAs(_(btl.model)))
 			modelsel = i;
@@ -551,7 +551,7 @@ int CharacterParameterDialog::ShowModal(CharBattleParameterStruct& btl, InitialS
 	wxArrayString animlabel;
 	wxArrayString animname;
 	int saatindex = 0;
-	for (i = 0; i < G_N_ELEMENTS(SPELLANIM_ARGUMENT_STRING); i++)
+	for (i = 0; i < SPELLANIM_ARGUMENT_STRING.size(); i++)
 		if (SPELLANIM_ARGUMENT_STRING[i].type == SAAT_ANIMATION) {
 			saatindex = i;
 			break;
@@ -636,7 +636,7 @@ void CharacterParameterDialog::ModelSelection() {
 	animname.Clear();
 	animlabel.Clear();
 	uint32_t modelid = HADES_STRING_MODEL_NAME[modelsel].id;
-	int animcount = G_N_ELEMENTS(DATABASE_ANIMATION_SINGLEID);
+	int animcount = G_V_ELEMENTS(DATABASE_ANIMATION_SINGLEID);
 	int i, j;
 	for (i = 0; i < animcount; i++) {
 		if (DATABASE_ANIMATION_SINGLEID[i].model_id == modelid) {
@@ -644,7 +644,7 @@ void CharacterParameterDialog::ModelSelection() {
 			animlabel.Add(DATABASE_ANIMATION_SINGLEID[i].label);
 		}
 	}
-	animcount = G_N_ELEMENTS(DATABASE_ANIMATION_DOUBLEID);
+	animcount = G_V_ELEMENTS(DATABASE_ANIMATION_DOUBLEID);
 	for (i = 0; i < animcount; i++) {
 		if (DATABASE_ANIMATION_DOUBLEID[i].model_id == modelid) {
 			animname.Add(DATABASE_ANIMATION_DOUBLEID[i].steam_id);

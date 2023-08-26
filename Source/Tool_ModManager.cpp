@@ -84,12 +84,12 @@ int ToolModManager::ShowModal(CDDataStruct* data) {
 		m_listtree->SetItemData(curitem, new ModManagerClientData(1, DATA_SECTION_SPELL_ANIM));
 		for (i = 0; i < cddata->spellanimset.amount; i++)
 			if (!cddata->spellanimset.spell[i].is_empty) {
-				for (j = 0; j < G_N_ELEMENTS(HADES_STRING_SPELL_MODEL); j++)
+				for (j = 0; j < HADES_STRING_SPELL_MODEL.size(); j++)
 					if (HADES_STRING_SPELL_MODEL[j].id == i) {
 						lowitem = m_listtree->AppendItem(curitem, _(HADES_STRING_SPELL_MODEL[j].label));
 						break;
 					}
-				if (j == G_N_ELEMENTS(HADES_STRING_SPELL_MODEL))
+				if (j == HADES_STRING_SPELL_MODEL.size())
 					lowitem = m_listtree->AppendItem(curitem, wxString::Format(wxT("Spell Animation %u"), i));
 				m_listtree->SetItemData(lowitem, new ModManagerClientData(2, DATA_SECTION_SPELL_ANIM, i));
 				if (cddata->spellanimset.spell[i].modified_data != 0) m_listtree->CheckItem(lowitem);

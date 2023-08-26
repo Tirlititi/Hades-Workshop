@@ -59,6 +59,7 @@ public:
 	uint8_t default_row;
 	uint8_t default_winpose;
 	uint8_t default_category;
+	vector<int> equip_patch;
 	
 	// Return 0 if success ; 1 if the value is too long
 	void GenerateDefaultName();

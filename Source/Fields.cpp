@@ -2093,8 +2093,8 @@ void FieldSteamTitleInfo::Read(fstream& f) {
 		char c;
 		linestr << line;
 		while (!linestr.eof() && (c=linestr.get())!=',') {fieldname.push_back(c);}
-		for (j=0;j<G_N_ELEMENTS(SteamFieldScript);j++)
-			if (fieldname.compare(SteamFieldScript[j].background_name)==0) {
+		for (j = 0; j < G_V_ELEMENTS(SteamFieldScript); j++)
+			if (fieldname.compare(SteamFieldScript[j].background_name) == 0) {
 				field_id[i] = SteamFieldScript[j].script_id;
 				break;
 			}
@@ -2304,13 +2304,13 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 		ffbin.close();
 		fname = config.steam_dir_assets + "p0data7.bin";
 		ffbin.open(fname.c_str(), ios::in | ios::binary);
-		int scriptfileamount = G_N_ELEMENTS(SteamFieldScript);
-		int txtfileamount = G_N_ELEMENTS(SteamTextFile);
+		int scriptfileamount = G_V_ELEMENTS(SteamFieldScript);
+		int txtfileamount = G_V_ELEMENTS(SteamTextFile);
 		vector<string> steamtxtfile;
 		string fieldfilename;
 		steamtxtfile.reserve(txtfileamount);
 		for (i = 0; i < txtfileamount; i++)
-			steamtxtfile.push_back(SteamTextFile[j].name.substr(4)); // remove "MES_"
+			steamtxtfile.push_back(SteamTextFile[i].name.substr(4)); // remove "MES_"
 		for (i = 0; i < amount; i++) {
 			struct_id[i] = config.field_id[i];
 			related_text[i] = NULL;

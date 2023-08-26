@@ -55,9 +55,9 @@ inline bool IsSpellSummon(SpellDataStruct& sp) {
 }
 
 inline Spell_Target_Amount GetEnemySpellTargetAmountFromModel(uint16_t modelid) {
-	for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_SPELL_MODEL);i++)
-		if (HADES_STRING_SPELL_MODEL[i].id==modelid) {
-			if (HADES_STRING_SPELL_MODEL[i].target_amount==SPELL_TARGET_AMOUNT_ONE || HADES_STRING_SPELL_MODEL[i].target_amount==SPELL_TARGET_AMOUNT_GROUP)
+	for (unsigned int i = 0; i < HADES_STRING_SPELL_MODEL.size(); i++)
+		if (HADES_STRING_SPELL_MODEL[i].id == modelid) {
+			if (HADES_STRING_SPELL_MODEL[i].target_amount == SPELL_TARGET_AMOUNT_ONE || HADES_STRING_SPELL_MODEL[i].target_amount == SPELL_TARGET_AMOUNT_GROUP)
 				return HADES_STRING_SPELL_MODEL[i].target_amount;
 			return SPELL_TARGET_AMOUNT_ZERO;
 		}

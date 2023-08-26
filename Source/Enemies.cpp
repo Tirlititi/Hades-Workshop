@@ -919,10 +919,10 @@ fout.close();*/
 		ILInstruction ilinst;
 		wstring tmpstr,curscenename = L"";
 		uint16_t curbattleid = 0xFFFF;
-		wstring battlenameid[G_N_ELEMENTS(SteamBattleScript)];
-		for (i=0;i<G_N_ELEMENTS(SteamBattleScript);i++) {
+		vector<wstring> battlenameid(G_V_ELEMENTS(SteamBattleScript));
+		for (i = 0; i < G_V_ELEMENTS(SteamBattleScript); i++) {
 			battlenameid[i] = L"";
-			for (j=11;j<SteamBattleScript[i].name.length();j++)
+			for (j = 11; j < SteamBattleScript[i].name.length(); j++)
 				battlenameid[i] += SteamBattleScript[i].name[j];
 		}
 		dlldata.dll_file.seekg(dlldata.GetMethodOffset(clusset.config->dll_battledb_method_id));
@@ -938,22 +938,22 @@ fout.close();*/
 				tmpstr = dlldata.GetStringTokenDescription(ilinst.param);
 				if (tmpstr.substr(0,4).compare(L"BSC_")==0) {
 					tmpstr = tmpstr.substr(4);
-					for (i=0;i<G_N_ELEMENTS(SteamBattleScript);i++)
-						if (tmpstr.compare(battlenameid[i])==0) {
-							for (j=0;j<battle_amount;j++)
-								if (SteamBattleScript[i].battle_id==battle[j]->object_id) {
+					for (i = 0; i < G_V_ELEMENTS(SteamBattleScript); i++)
+						if (tmpstr.compare(battlenameid[i]) == 0) {
+							for (j = 0; j < battle_amount; j++)
+								if (SteamBattleScript[i].battle_id == battle[j]->object_id) {
 									curbattleid = j;
 									break;
 								}
 							break;
 						}
-				} else if (tmpstr.substr(0,4).compare(L"BBG_")==0) {
+				} else if (tmpstr.substr(0, 4).compare(L"BBG_") == 0) {
 					curscenename = tmpstr.substr(4);
 				}
 			} else if (ilinst.opcode==0x6F) { // callvirt Dictionary::Add
-				if (curbattleid!=0xFFFF && curscenename.length()>0) {
-					for (i=0;i<G_N_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME);i++)
-						if (HADES_STRING_BATTLE_SCENE_NAME[i].steamid.compare(curscenename)==0) {
+				if (curbattleid != 0xFFFF && curscenename.length() > 0) {
+					for (i = 0; i < G_V_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME); i++)
+						if (HADES_STRING_BATTLE_SCENE_NAME[i].steamid.compare(curscenename) == 0) {
 							battle[curbattleid]->scene_id = HADES_STRING_BATTLE_SCENE_NAME[i].id;
 							break;
 						}
@@ -979,10 +979,10 @@ DllMetaDataModification* EnemyDataSet::ComputeSteamMod(ConfigurationSet& config,
 	wstring tmpstr;
 	unsigned int i,j;
 	uint16_t curbattleid = 0xFFFF;
-	wstring battlenameid[G_N_ELEMENTS(SteamBattleScript)];
-	for (i=0;i<G_N_ELEMENTS(SteamBattleScript);i++) {
+	vector<wstring> battlenameid(G_V_ELEMENTS(SteamBattleScript));
+	for (i = 0; i < G_V_ELEMENTS(SteamBattleScript); i++) {
 		battlenameid[i] = L"";
-		for (j=11;j<SteamBattleScript[i].name.length();j++)
+		for (j = 11; j < SteamBattleScript[i].name.length(); j++)
 			battlenameid[i] += SteamBattleScript[i].name[j];
 	}
 	res[0].position = steam_method_position;
@@ -997,17 +997,17 @@ DllMetaDataModification* EnemyDataSet::ComputeSteamMod(ConfigurationSet& config,
 			tmpstr = dlldata.GetStringTokenDescription(ilinst.param);
 			if (tmpstr.substr(0,4).compare(L"BSC_")==0) {
 				tmpstr = tmpstr.substr(4);
-				for (i=0;i<G_N_ELEMENTS(SteamBattleScript);i++)
-					if (tmpstr.compare(battlenameid[i])==0) {
+				for (i = 0; i < G_V_ELEMENTS(SteamBattleScript); i++)
+					if (tmpstr.compare(battlenameid[i]) == 0) {
 						curbattleid = SteamBattleScript[i].battle_id;
 						break;
 					}
-			} else if (tmpstr.substr(0,4).compare(L"BBG_")==0 && curbattleid!=0xFFFF) {
-				for (i=0;i<modified_battle_scene_amount;i++)
-					if (modified_battle_id[i]==curbattleid) {
+			} else if (tmpstr.substr(0, 4).compare(L"BBG_") == 0 && curbattleid != 0xFFFF) {
+				for (i = 0; i < modified_battle_scene_amount; i++)
+					if (modified_battle_id[i] == curbattleid) {
 						tmpstr = L"BBG_";
-						for (j=0;j<G_N_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME);j++)
-							if (HADES_STRING_BATTLE_SCENE_NAME[j].id==modified_scene_id[i]) {
+						for (j = 0; j < G_V_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME); j++)
+							if (HADES_STRING_BATTLE_SCENE_NAME[j].id == modified_scene_id[i]) {
 								tmpstr += HADES_STRING_BATTLE_SCENE_NAME[j].steamid;
 								break;
 							}
@@ -1041,8 +1041,8 @@ void EnemyDataSet::GenerateCSharp(vector<string>& buffer) {
 				battleindex = j;
 				break;
 			}
-		for (j = 0; j < G_N_ELEMENTS(SteamBattleScript); j++)
-			if (modified_battle_id[i]==SteamBattleScript[j].battle_id) {
+		for (j = 0; j < G_V_ELEMENTS(SteamBattleScript); j++)
+			if (modified_battle_id[i] == SteamBattleScript[j].battle_id) {
 				bscindex = j;
 				break;
 			}
@@ -1050,8 +1050,8 @@ void EnemyDataSet::GenerateCSharp(vector<string>& buffer) {
 			bscenedb << "\t\t// Error: unexpected Battle ID " << (int)modified_battle_id[i] << "\n";
 			continue;
 		}
-		for (j = 0; j < G_N_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME); j++)
-			if (modified_scene_id[i]==HADES_STRING_BATTLE_SCENE_NAME[j].id) {
+		for (j = 0; j < G_V_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME); j++)
+			if (modified_scene_id[i] == HADES_STRING_BATTLE_SCENE_NAME[j].id) {
 				bbgindex = j;
 				break;
 			}
@@ -1107,7 +1107,7 @@ bool EnemyDataSet::GenerateCSV(string basefolder) {
 				battleindex = j;
 				break;
 			}
-		for (j = 0; j < G_N_ELEMENTS(SteamBattleScript); j++)
+		for (j = 0; j < G_V_ELEMENTS(SteamBattleScript); j++)
 			if (modified_battle_id[i]==SteamBattleScript[j].battle_id) {
 				bscindex = j;
 				break;
@@ -1116,8 +1116,8 @@ bool EnemyDataSet::GenerateCSV(string basefolder) {
 			patchfile << "// [Hades Workshop] Error: unexpected Battle ID " << (int)modified_battle_id[i] << "\n";
 			continue;
 		}
-		for (j = 0; j < G_N_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME); j++)
-			if (modified_scene_id[i]==HADES_STRING_BATTLE_SCENE_NAME[j].id) {
+		for (j = 0; j < G_V_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME); j++)
+			if (modified_scene_id[i] == HADES_STRING_BATTLE_SCENE_NAME[j].id) {
 				bbgindex = j;
 				break;
 			}
@@ -1190,15 +1190,15 @@ int* EnemyDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 		objectpos = ffhws.tellg();
 		HWSReadShort(ffhws,objectid);
 		HWSReadLong(ffhws,clustersize);
-		if (GetHWSGameType()==GAME_TYPE_PSX && GetGameType()!=GAME_TYPE_PSX) {
-			for (j=0;j<G_N_ELEMENTS(SteamBattleScript);j++)
-				if (SteamBattleScript[j].psx_id==objectid) {
+		if (GetHWSGameType() == GAME_TYPE_PSX && GetGameType() != GAME_TYPE_PSX) {
+			for (j = 0; j < G_V_ELEMENTS(SteamBattleScript); j++)
+				if (SteamBattleScript[j].psx_id == objectid) {
 					objectid = SteamBattleScript[j].battle_id;
 					break;
 				}
-		} else if (GetHWSGameType()!=GAME_TYPE_PSX && GetGameType()==GAME_TYPE_PSX) {
-			for (j=0;j<G_N_ELEMENTS(SteamBattleScript);j++)
-				if (SteamBattleScript[j].battle_id==objectid) {
+		} else if (GetHWSGameType() != GAME_TYPE_PSX && GetGameType() == GAME_TYPE_PSX) {
+			for (j = 0; j < G_V_ELEMENTS(SteamBattleScript); j++)
+				if (SteamBattleScript[j].battle_id == objectid) {
 					objectid = SteamBattleScript[j].psx_id;
 					break;
 				}

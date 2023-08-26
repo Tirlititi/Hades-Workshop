@@ -161,7 +161,7 @@ DllMetaDataModification* SupportDataSet::ComputeSteamMod(ConfigurationSet& confi
 	DllMetaData& dlldata = config.meta_dll;
 	uint32_t** argvalue = new uint32_t*[SUPPORT_AMOUNT];
 	unsigned int i;
-	for (i=0;i<SUPPORT_AMOUNT;i++) {
+	for (i = 0; i < SUPPORT_AMOUNT; i++) {
 		argvalue[i] = new uint32_t[5];
 		argvalue[i][0] = support[i].category;
 		argvalue[i][1] = support[i].cost;
@@ -169,8 +169,8 @@ DllMetaDataModification* SupportDataSet::ComputeSteamMod(ConfigurationSet& confi
 		argvalue[i][3] = support[i].help_offset;
 		argvalue[i][4] = support[i].help_size_x;
 	}
-	res[0] = dlldata.ConvertRawToScript_Object(argvalue,steam_method_position,steam_method_base_length,SUPPORT_AMOUNT,5,steam_support_field_size);
-	for (i=0;i<SUPPORT_AMOUNT;i++)
+	res[0] = dlldata.ConvertRawToScript_Object(argvalue, steam_method_position, steam_method_base_length, SUPPORT_AMOUNT, 5, steam_support_field_size);
+	for (i = 0; i < SUPPORT_AMOUNT; i++)
 		delete[] argvalue[i];
 	delete[] argvalue;
 	*modifamount = 1;
@@ -189,7 +189,11 @@ void SupportDataSet::GenerateCSharp(vector<string>& buffer) {
 }
 
 wxString CSV_SupportConstructor(SupportDataStruct& sp, int index) {
-	return wxString::Format(wxT("%s;%d;%d;"), sp.name.str_nice, sp.id, sp.cost);
+	return wxString::Format(wxT("%s;%d;%d;%s"),
+		sp.name.str_nice,
+		sp.id,
+		sp.cost,
+		ConcatenateStrings<int>(", ", sp.boosted_support, static_cast<string(*)(int)>(&to_string)));
 }
 
 bool SupportDataSet::GenerateCSV(string basefolder) {
@@ -349,6 +353,15 @@ int SupportDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 		if (usetext)
 			res |= 2;
 	}
+	if (version >= 2) {
+		for (i = 0; i < supportamount; i++) {
+			int boostedsize;
+			HWSReadFlexibleChar(ffbin, boostedsize, true);
+			support[i].boosted_support.resize(boostedsize);
+			for (unsigned int j = 0; j < support[i].boosted_support.size(); j++)
+				HWSReadFlexibleChar(ffbin, support[i].boosted_support[j], true);
+		}
+	}
 	for (i = 0; i < (int)nonmodified.size(); i++)
 		InsertAtId(support, nonmodified[i], nonmodified[i].id);
 	name_space_total = namesize;
@@ -393,6 +406,11 @@ void SupportDataSet::WriteHWS(fstream& ffbin) {
 			}
 		}
 		HWSWriteChar(ffbin, STEAM_LANGUAGE_NONE);
+	}
+	for (i = 0; i < supportamount; i++) {
+		HWSWriteFlexibleChar(ffbin, support[i].boosted_support.size(), true);
+		for (unsigned int j = 0; j < support[i].boosted_support.size(); j++)
+			HWSWriteFlexibleChar(ffbin, support[i].boosted_support[j], true);
 	}
 	name_space_total = namesize;
 	help_space_total = helpsize;

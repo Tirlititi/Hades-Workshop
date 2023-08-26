@@ -442,7 +442,7 @@ struct DamageCalculation {
 	int jewel_count = 0;
 	uint16_t battle_flag = 0;
 	wxString spell_name = _(L"???");
-	uint8_t spell_effect = 0;
+	int spell_effect = 0;
 	int spell_command = -1;
 	int spell_index = -1;
 	int spell_power = 0;
@@ -2294,7 +2294,7 @@ void ToolDamageCalculator::UpdateInformation() {
 		calc.defender_element_absorb = player_panel[1]->equip.element_absorb | player_panel[1]->stat->buff.element_absorb;
 		calc.defender_element_immune = player_panel[1]->equip.element_immune | player_panel[1]->stat->buff.element_immune;
 		calc.defender_element_half = player_panel[1]->equip.element_half | player_panel[1]->stat->buff.element_half;
-		calc.defender_element_weak = player_panel[1]->equip.element_absorb | player_panel[1]->stat->buff.element_weak;
+		calc.defender_element_weak = player_panel[1]->equip.element_weak | player_panel[1]->stat->buff.element_weak;
 		calc.defender_row = player_panel[1]->stat->buff.back_row ? 0 : 1;
 		calc.defender_status = player_panel[1]->stat->buff.status;
 	} else {
@@ -2705,7 +2705,8 @@ ToolDamageCalculatorPlayer::ToolDamageCalculatorPlayer(wxWindow* p) : DamageCalc
 
 void ToolDamageCalculatorPlayer::Init(CDDataStruct* data, bool initializeprofile) {
 	wxArrayString choicelist;
-	int pchar, i;
+	unsigned int i;
+	int pchar;
 	for (i = 0; i < ITEM_WEAPON_AMOUNT; i++)
 		choicelist.Add(_(data->itemset.item[i].name.str_nice));
 	m_weapon->Append(choicelist);
@@ -2730,7 +2731,7 @@ void ToolDamageCalculatorPlayer::Init(CDDataStruct* data, bool initializeprofile
 		choicelist.Add(_(data->spellset.spell[i].name.str_nice));
 	m_basespell->Append(choicelist);
 	choicelist.Clear();
-	for (i = 0; i < G_N_ELEMENTS(HADES_STRING_SPELL_EFFECT); i++)
+	for (i = 0; i < HADES_STRING_SPELL_EFFECT.size(); i++)
 		m_effect->Append(HADES_STRING_SPELL_EFFECT[i].label, (void*)&HADES_STRING_SPELL_EFFECT[i]);
 	for (i = 0; i < STATUS_SET_AMOUNT; i++)
 		choicelist.Add(data->spellset.status_set[i].name);
@@ -3021,7 +3022,7 @@ void ToolDamageCalculatorPlayer::SelectBaseSpell(int sel) {
 		int weapid = itset.item[m_weapon->GetSelection()].weapon_id;
 		if (weapid >= 0) {
 			ItemWeaponDataStruct& weap = itset.GetWeaponById(weapid);
-			for (int i = 0; i < G_N_ELEMENTS(HADES_STRING_SPELL_EFFECT); i++)
+			for (unsigned int i = 0; i < HADES_STRING_SPELL_EFFECT.size(); i++)
 				if (HADES_STRING_SPELL_EFFECT[i].id == weap.damage_formula) {
 					m_effect->SetSelection(i);
 					break;
@@ -3036,7 +3037,7 @@ void ToolDamageCalculatorPlayer::SelectBaseSpell(int sel) {
 		}
 	}
 	SpellDataStruct& spell = parent->cddata->spellset.spell[sel];
-	for (int i = 0; i < G_N_ELEMENTS(HADES_STRING_SPELL_EFFECT); i++)
+	for (unsigned int i = 0; i < HADES_STRING_SPELL_EFFECT.size(); i++)
 		if (HADES_STRING_SPELL_EFFECT[i].id == spell.effect) {
 			m_effect->SetSelection(i);
 			break;
@@ -3176,7 +3177,7 @@ ToolDamageCalculatorEnemy::ToolDamageCalculatorEnemy(wxWindow* p) : DamageCalcul
 
 void ToolDamageCalculatorEnemy::Init(CDDataStruct* data) {
 	wxArrayString choicelist;
-	int i;
+	unsigned int i;
 	for (i = 0; i < parent->enemy_list_battle.size(); i++)
 		choicelist.Add(_(data->enemyset.battle[parent->enemy_list_battle[i]]->stat[parent->enemy_list_stat[i]].name.str_nice));
 	m_baseenemy->Append(choicelist);
@@ -3185,7 +3186,7 @@ void ToolDamageCalculatorEnemy::Init(CDDataStruct* data) {
 		choicelist.Add(_(data->enemyset.battle[parent->enemy_list_battle[0]]->spell[i].name.str_nice));
 	m_basespell->Append(choicelist);
 	choicelist.Clear();
-	for (i = 0; i < G_N_ELEMENTS(HADES_STRING_SPELL_EFFECT); i++)
+	for (i = 0; i < HADES_STRING_SPELL_EFFECT.size(); i++)
 		m_effect->Append(HADES_STRING_SPELL_EFFECT[i].label, (void*)&HADES_STRING_SPELL_EFFECT[i]);
 	for (i = 0; i < STATUS_SET_AMOUNT; i++)
 		choicelist.Add(data->spellset.status_set[i].name);
@@ -3246,7 +3247,7 @@ void ToolDamageCalculatorEnemy::SelectBaseEnemy(int sel) {
 
 void ToolDamageCalculatorEnemy::SelectBaseSpell(int sel) {
 	EnemySpellDataStruct& spell = parent->cddata->enemyset.battle[parent->enemy_list_battle[m_baseenemy->GetSelection()]]->spell[sel];
-	for (int i = 0; i < G_N_ELEMENTS(HADES_STRING_SPELL_EFFECT); i++)
+	for (unsigned int i = 0; i < HADES_STRING_SPELL_EFFECT.size(); i++)
 		if (HADES_STRING_SPELL_EFFECT[i].id == spell.effect) {
 			m_effect->SetSelection(i);
 			break;

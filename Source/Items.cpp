@@ -676,7 +676,7 @@ void ItemDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 DllMetaDataModification* ItemDataSet::ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount) {
 	DllMetaDataModification* res = new DllMetaDataModification[5];
 	DllMetaData& dlldata = config.meta_dll;
-	uint32_t** argvalue = new uint32_t * [ITEM_AMOUNT];
+	uint32_t** argvalue = new uint32_t*[ITEM_AMOUNT];
 	unsigned int i;
 	for (i = 0; i < ITEM_AMOUNT; i++) {
 		argvalue[i] = new uint32_t[14];
@@ -699,7 +699,7 @@ DllMetaDataModification* ItemDataSet::ComputeSteamMod(ConfigurationSet& config, 
 	for (i = 0; i < ITEM_AMOUNT; i++)
 		delete[] argvalue[i];
 	delete[] argvalue;
-	argvalue = new uint32_t * [ITEM_USABLE_AMOUNT];
+	argvalue = new uint32_t*[ITEM_USABLE_AMOUNT];
 	for (i = 0; i < ITEM_USABLE_AMOUNT; i++) {
 		argvalue[i] = new uint32_t[13];
 		argvalue[i][0] = usable[i].target_type & 0xF;
@@ -720,7 +720,7 @@ DllMetaDataModification* ItemDataSet::ComputeSteamMod(ConfigurationSet& config, 
 	for (i = 0; i < ITEM_USABLE_AMOUNT; i++)
 		delete[] argvalue[i];
 	delete[] argvalue;
-	argvalue = new uint32_t * [ITEM_ARMOR_AMOUNT];
+	argvalue = new uint32_t*[ITEM_ARMOR_AMOUNT];
 	for (i = 0; i < ITEM_ARMOR_AMOUNT; i++) {
 		argvalue[i] = new uint32_t[4];
 		argvalue[i][0] = armor[i].defence;
@@ -732,7 +732,7 @@ DllMetaDataModification* ItemDataSet::ComputeSteamMod(ConfigurationSet& config, 
 	for (i = 0; i < ITEM_ARMOR_AMOUNT; i++)
 		delete[] argvalue[i];
 	delete[] argvalue;
-	argvalue = new uint32_t * [ITEM_STAT_AMOUNT];
+	argvalue = new uint32_t*[ITEM_STAT_AMOUNT];
 	for (i = 0; i < ITEM_STAT_AMOUNT; i++) {
 		argvalue[i] = new uint32_t[9];
 		argvalue[i][0] = stat[i].speed;
@@ -749,7 +749,7 @@ DllMetaDataModification* ItemDataSet::ComputeSteamMod(ConfigurationSet& config, 
 	for (i = 0; i < ITEM_STAT_AMOUNT; i++)
 		delete[] argvalue[i];
 	delete[] argvalue;
-	argvalue = new uint32_t * [ITEM_WEAPON_AMOUNT];
+	argvalue = new uint32_t*[ITEM_WEAPON_AMOUNT];
 	for (i = 0; i < ITEM_WEAPON_AMOUNT; i++) {
 		argvalue[i] = new uint32_t[9];
 		argvalue[i][0] = weapon[i].flag;
@@ -917,7 +917,7 @@ wxString CSV_WeaponConstructor(ItemWeaponDataStruct& iw, int index, unordered_ma
 	auto it = usagemap.find(iw.id);
 	if (it == usagemap.end())
 		return wxEmptyString;
-	return wxString::Format(wxT("%s;%d;%d;%d;%s;%d;%d;%d;%d;%d;%d;%d;"),
+	return wxString::Format(wxT("%s;%d;%d;%d;%s;%d;%d;%d;%d;%d;%d;%d;%s"),
 		it->second.name.str_nice,
 		iw.id,
 		iw.flag,
@@ -929,7 +929,8 @@ wxString CSV_WeaponConstructor(ItemWeaponDataStruct& iw, int index, unordered_ma
 		iw.status_accuracy,
 		iw.offset1,
 		iw.offset2,
-		iw.hit_sfx);
+		iw.hit_sfx,
+		ConcatenateStrings<wstring>(", ", iw.texture_names, [](wstring str) { return ConvertWStrToStr(str); }, true));
 }
 
 wxString CSV_ArmorConstructor(ItemArmorDataStruct& ia, int index, unordered_map<int, ItemDataStruct&>& usagemap) {
@@ -1225,8 +1226,13 @@ int ItemDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 	}
 	if (version >= 2) {
 		for (i = 0; i < weaponamount; i++) {
+			int texturecount;
 			HWSReadWString(ffbin, weapon[i].model_name);
 			HWSReadFlexibleChar(ffbin, weapon[i].hit_sfx, true);
+			HWSReadFlexibleChar(ffbin, texturecount, true);
+			weapon[i].texture_names.resize(texturecount);
+			for (j = 0; j < texturecount; j++)
+				HWSReadWString(ffbin, weapon[i].texture_names[j]);
 		}
 	}
 	for (i = 0; i < (int)nonmodifieditem.size(); i++)
@@ -1347,6 +1353,9 @@ void ItemDataSet::WriteHWS(fstream& ffbin) {
 	for (i = 0; i < (int)weapon.size(); i++) {
 		HWSWriteWString(ffbin, weapon[i].model_name);
 		HWSWriteFlexibleChar(ffbin, weapon[i].hit_sfx, true);
+		HWSWriteFlexibleChar(ffbin, weapon[i].texture_names.size(), true);
+		for (j = 0; j < weapon[i].texture_names.size(); j++)
+			HWSWriteWString(ffbin, weapon[i].texture_names[j]);
 	}
 	name_space_total = namesize;
 	help_space_total = helpsize;
@@ -1542,7 +1551,7 @@ void ItemWeaponDataStruct::InitializeDefault(int dataid) {
 
 void ItemWeaponDataStruct::UpdateModelName() {
 	unsigned int i;
-	for (i = 0; i < G_N_ELEMENTS(SteamWeaponModel); i++)
+	for (i = 0; i < G_V_ELEMENTS(SteamWeaponModel); i++)
 		if (model == SteamWeaponModel[i].id) {
 			model_name = SteamWeaponModel[i].name;
 			return;
@@ -1552,7 +1561,7 @@ void ItemWeaponDataStruct::UpdateModelName() {
 
 void ItemWeaponDataStruct::UpdateModelId() {
 	unsigned int i;
-	for (i = 0; i < G_N_ELEMENTS(SteamWeaponModel); i++)
+	for (i = 0; i < G_V_ELEMENTS(SteamWeaponModel); i++)
 		if (model_name.compare(SteamWeaponModel[i].name) == 0) {
 			model = SteamWeaponModel[i].id;
 			return;

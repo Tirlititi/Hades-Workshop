@@ -1,5 +1,6 @@
 #include "File_Batching.h"
 
+#include <set>
 #include "Gui_Manipulation.h"
 #include "Gui_LoadingDialog.h"
 #include "Gui_ScriptEditor.h"
@@ -8,25 +9,33 @@
 #include "Database_Resource.h"
 #include "main.h"
 
-#define TXTBATCH_MAX_STRUCT G_N_ELEMENTS(HADES_STRING_TEXT_BLOCK_NAME)
+#define TXTBATCH_MAX_STRUCT 68
 
 inline wxString FB_GetWxStringLine(wxString& str) {
-	wxString tmpstr;
-	wxString res = str.BeforeFirst(L'\n', &tmpstr);
-	str = tmpstr;
-	return res;
-}
-
-inline wxString FB_GetNextWord(wxString& str) {
-	size_t pos = str.find_first_of(L" \n");
-	if (pos == wxString::npos)
-	{
+	size_t pos = str.find_first_of(L"\r\n");
+	if (pos == wxString::npos) {
 		wxString strcpy = str;
 		str = _(L"");
 		return strcpy;
 	}
 	wxString res = str.Mid(0, pos);
+	if (pos + 1 < str.Len() && str[pos] == L'\r' && str[pos + 1] == L'\n')
+		pos++;
 	str = str.Mid(pos + 1);
+	return res;
+}
+
+inline wxString FB_GetNextWord(wxString& str) {
+	size_t pos = str.find_first_of(L" \t\r\n");
+	if (pos == wxString::npos) {
+		wxString strcpy = str;
+		str = _(L"");
+		return strcpy;
+	}
+	wxString res = str.Mid(0, pos);
+	while (pos < str.Len() && (str[pos] == L' ' || str[pos] == L'\t' || str[pos] == L'\r' || str[pos] == L'\n'))
+		pos++;
+	str = str.Mid(pos);
 	return res;
 }
 
@@ -199,7 +208,7 @@ LogStruct BatchImportDialog::ImportText(TextDataSet& data, wxString filetext, bo
 							errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_WRONG_ID), linenum, tmptextstructid[currenttextstruct], value);
 							res.AddError(errstr.ToStdWstring());
 						} else {
-							for (i = 0; i < nexttext; i++)
+							for (i = 0; (int)i < nexttext; i++)
 								if (tmptextid[currenttextstruct][i] == value) {
 									errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_REDEFINITION), linenum, value);
 									res.AddWarning(errstr.ToStdWstring());
@@ -269,7 +278,7 @@ LogStruct BatchImportDialog::ImportText(TextDataSet& data, wxString filetext, bo
 				data.text_data[tmptextstructid[currenttextstruct]]->SetText(tmptextid[currenttextstruct][currenttext], nullstr);
 			for (currenttext = 0; tmptextid[currenttextstruct][currenttext] >= 0; currenttext++) {
 				data.text_data[tmptextstructid[currenttextstruct]]->SetText(tmptextid[currenttextstruct][currenttext], tmptextstr[currenttextstruct][currenttext]);
-				if (adjustsize && GetGameType() == GAME_TYPE_PSX) { // ToDo: implement the feature in Steam
+				if (adjustsize && GetGameType() == GAME_TYPE_PSX) { // TODO: implement the feature in Steam
 					chmap->CalculateTextSize(&data.text_data[tmptextstructid[currenttextstruct]]->text[tmptextid[currenttextstruct][currenttext]], chmapext, &sizex, &sizey);
 					data.text_data[tmptextstructid[currenttextstruct]]->SetDialogBoxSize(tmptextid[currenttextstruct][currenttext], sizex, sizey, !isjapan);
 				}
@@ -429,7 +438,7 @@ LogStruct BatchImportDialog::ImportSpecialText(SpecialTextDataSet& data, wxStrin
 							errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_WRONG_ID), linenum, tmptextstructid[currenttextstruct], value);
 							res.AddError(errstr.ToStdWstring());
 						} else {
-							for (i = 0; i < nexttext; i++)
+							for (i = 0; (int)i < nexttext; i++)
 								if (tmptextid[currenttextstruct][i] == value) {
 									errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_REDEFINITION), linenum, value);
 									res.AddWarning(errstr.ToStdWstring());
@@ -626,7 +635,7 @@ int BatchExportDialog::ExportWorldScript(SaveSet* dataset, wxString path, bool* 
 			}
 			output.Write(_(L"#HW fileid ") + wxString::Format(wxT("%u"), data.script[i]->object_id));
 			if (addedinfo & BATCHING_SCRIPT_INFO_FILENAME)
-				for (j = 0; j < G_N_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME); j++)
+				for (j = 0; j < G_V_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME); j++)
 					if (HADES_STRING_WORLD_BLOCK_NAME[j].id == data.script[i]->object_id) {
 						output.Write(_(L" // ") + HADES_STRING_WORLD_BLOCK_NAME[j].label);
 						break;
@@ -712,6 +721,7 @@ int BatchExportDialog::ExportFieldScript(SaveSet* dataset, wxString path, bool* 
 	SteamLanguage lang, sublang, curlang;
 	wxString line, tmprest, localstr;
 	unsigned int i, j, k;
+	set<uint16_t> functypecheck;
 	wxFile output;
 	if (!splitfile) {
 		output.Open(path, wxFile::write);
@@ -788,9 +798,15 @@ int BatchExportDialog::ExportFieldScript(SaveSet* dataset, wxString path, bool* 
 							}
 							output.Write(_(L"#HW endlocals\n\n"));
 						}
+						functypecheck.clear();
 						for (k = 0; k < scpthand.script.entry_function_amount[j]; k++) {
-							output.Write(_(L"#HW newfunction ") + wxString::Format(wxT("%u"), scpthand.script.function_type[j][k]) + _(L"\n"));
-							output.Write(_(scpthand.func_str[j][k]) + _(L"\n\n"));
+							if (functypecheck.count(scpthand.script.function_type[j][k]) > 0) {
+								output.Write(wxString::Format(wxT("// Duplicated function %u is discarded\n\n"), scpthand.script.function_type[j][k]));
+							} else {
+								output.Write(_(L"#HW newfunction ") + wxString::Format(wxT("%u"), scpthand.script.function_type[j][k]) + _(L"\n"));
+								output.Write(_(scpthand.func_str[j][k]) + _(L"\n\n"));
+								functypecheck.insert(scpthand.script.function_type[j][k]);
+							}
 						}
 					}
 				}

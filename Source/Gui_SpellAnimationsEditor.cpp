@@ -116,29 +116,29 @@ void AnimSequenceCodeSizer::CreateArgumentControls() {
 
 AnimSequenceEditDialog::AnimSequenceEditDialog(wxWindow* parent, SpellAnimationDataStruct& a) :
 	AnimSequenceEditWindow(parent) {
-	unsigned int i,j;
+	unsigned int i, j;
 	anim.Copy(a);
 	code_list.Alloc(0x100);
-	for (i=0;i<0x100;i++) {
-		for (j=0;j<G_N_ELEMENTS(SPELLANIM_OPCODE);j++)
-			if (SPELLANIM_OPCODE[j].id==i) {
+	for (i = 0; i < 0x100; i++) {
+		for (j = 0; j < SPELLANIM_OPCODE.size(); j++)
+			if (SPELLANIM_OPCODE[j].id == i) {
 				code_list.Add(_(SPELLANIM_OPCODE[j].label));
 				break;
 			}
-		if (j==G_N_ELEMENTS(SPELLANIM_OPCODE))
-			code_list.Add(wxString::Format(wxT("Unused code 0x%.2X"),i));
+		if (j == SPELLANIM_OPCODE.size())
+			code_list.Add(wxString::Format(wxT("Unused code 0x%.2X"), i));
 	}
 	unsigned int achamount = 0, aefamount = 0, aanamount = 0, afdamount = 0;
-	for (i=0;i<G_N_ELEMENTS(SPELLANIM_ARGUMENT_STRING);i++) {
-		if (SPELLANIM_ARGUMENT_STRING[i].type==SAAT_CHARACTER) achamount++;
-		if (SPELLANIM_ARGUMENT_STRING[i].type==SAAT_EFFECT) aefamount++;
-		if (SPELLANIM_ARGUMENT_STRING[i].type==SAAT_ANIMATION) aanamount++;
-		if (SPELLANIM_ARGUMENT_STRING[i].type==SAAT_FADE_INOUT) afdamount++;
+	for (i = 0; i < SPELLANIM_ARGUMENT_STRING.size(); i++) {
+		if (SPELLANIM_ARGUMENT_STRING[i].type == SAAT_CHARACTER) achamount++;
+		if (SPELLANIM_ARGUMENT_STRING[i].type == SAAT_EFFECT) aefamount++;
+		if (SPELLANIM_ARGUMENT_STRING[i].type == SAAT_ANIMATION) aanamount++;
+		if (SPELLANIM_ARGUMENT_STRING[i].type == SAAT_FADE_INOUT) afdamount++;
 	}
-	arg_character_id = new uint8_t*[achamount];
-	arg_effect_id = new uint8_t*[aefamount];
-	arg_animation_id = new uint8_t*[aanamount];
-	arg_fadeinout_id = new uint8_t*[afdamount];
+	arg_character_id = new uint8_t * [achamount];
+	arg_effect_id = new uint8_t * [aefamount];
+	arg_animation_id = new uint8_t * [aanamount];
+	arg_fadeinout_id = new uint8_t * [afdamount];
 	arg_character.Alloc(achamount);
 	arg_effect.Alloc(aefamount);
 	arg_animation.Alloc(aanamount);
@@ -147,37 +147,37 @@ AnimSequenceEditDialog::AnimSequenceEditDialog(wxWindow* parent, SpellAnimationD
 	aefamount = 0;
 	aanamount = 0;
 	afdamount = 0;
-	for (i=0;i<G_N_ELEMENTS(SPELLANIM_ARGUMENT_STRING);i++) {
-		if (SPELLANIM_ARGUMENT_STRING[i].type==SAAT_CHARACTER) {
+	for (i = 0; i < SPELLANIM_ARGUMENT_STRING.size(); i++) {
+		if (SPELLANIM_ARGUMENT_STRING[i].type == SAAT_CHARACTER) {
 			arg_character_id[achamount++] = new uint8_t(SPELLANIM_ARGUMENT_STRING[i].arg);
 			arg_character.Add(_(SPELLANIM_ARGUMENT_STRING[i].label));
 		}
-		if (SPELLANIM_ARGUMENT_STRING[i].type==SAAT_EFFECT) {
+		if (SPELLANIM_ARGUMENT_STRING[i].type == SAAT_EFFECT) {
 			arg_effect_id[aefamount++] = new uint8_t(SPELLANIM_ARGUMENT_STRING[i].arg);
 			arg_effect.Add(_(SPELLANIM_ARGUMENT_STRING[i].label));
 		}
-		if (SPELLANIM_ARGUMENT_STRING[i].type==SAAT_ANIMATION) {
+		if (SPELLANIM_ARGUMENT_STRING[i].type == SAAT_ANIMATION) {
 			arg_animation_id[aanamount++] = new uint8_t(SPELLANIM_ARGUMENT_STRING[i].arg);
 			arg_animation.Add(_(SPELLANIM_ARGUMENT_STRING[i].label));
 		}
-		if (SPELLANIM_ARGUMENT_STRING[i].type==SAAT_FADE_INOUT) {
+		if (SPELLANIM_ARGUMENT_STRING[i].type == SAAT_FADE_INOUT) {
 			arg_fadeinout_id[afdamount++] = new uint8_t(SPELLANIM_ARGUMENT_STRING[i].arg);
 			arg_fadeinout.Add(_(SPELLANIM_ARGUMENT_STRING[i].label));
 		}
 	}
-/*	arg_spellanim_id = new uint16_t*[G_N_ELEMENTS(HADES_STRING_SPELL_MODEL)];
-	arg_spellanim.Alloc(G_N_ELEMENTS(HADES_STRING_SPELL_MODEL));
-	for (i=0;i<G_N_ELEMENTS(HADES_STRING_SPELL_MODEL);i++) {
+/*	arg_spellanim_id = new uint16_t*[HADES_STRING_SPELL_MODEL.size()];
+	arg_spellanim.Alloc(HADES_STRING_SPELL_MODEL.size());
+	for (i=0;i<HADES_STRING_SPELL_MODEL.size();i++) {
 		arg_spellanim_id[i] = new uint16_t(HADES_STRING_SPELL_MODEL[i].id);
 		arg_spellanim.Add(_(HADES_STRING_SPELL_MODEL[i].label));
 	}*/
-	m_sequencesizer = new wxFlexGridSizer(0,1,0,0);
+	m_sequencesizer = new wxFlexGridSizer(0, 1, 0, 0);
 	m_sequencesizer->SetFlexibleDirection(wxBOTH);
 	m_sequencesizer->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
-	sequence_code_sizer = new AnimSequenceCodeSizer*[anim.seq_code_amount];
-	for (i=0;i<anim.seq_code_amount;i++) {
-		sequence_code_sizer[i] = new AnimSequenceCodeSizer(this,i,&anim.seq_code[i]);
-		m_sequencesizer->Add(sequence_code_sizer[i],1,wxEXPAND);
+	sequence_code_sizer = new AnimSequenceCodeSizer * [anim.seq_code_amount];
+	for (i = 0; i < anim.seq_code_amount; i++) {
+		sequence_code_sizer[i] = new AnimSequenceCodeSizer(this, i, &anim.seq_code[i]);
+		m_sequencesizer->Add(sequence_code_sizer[i], 1, wxEXPAND);
 	}
 	m_sequencewindow->SetSizer(m_sequencesizer);
 	m_sequencewindow->Layout();
@@ -304,38 +304,38 @@ EnemyAnimSequenceCodeSizer::EnemyAnimSequenceCodeSizer(EnemyAnimSequenceEditDial
 	codeline(c),
 	line_nb(l) {
 	unsigned int i;
-	m_add = new wxButton(parent->m_sequencewindow,ENEMY_SEQUENCE_CODE_MAX_ARG*line_nb,_(L"+"),wxDefaultPosition,wxSize(20,20),wxBU_EXACTFIT);
+	m_add = new wxButton(parent->m_sequencewindow, ENEMY_SEQUENCE_CODE_MAX_ARG * line_nb, _(L"+"), wxDefaultPosition, wxSize(20, 20), wxBU_EXACTFIT);
 	m_add->SetToolTip(_(ADD_CODE_LINE_TOOLTIP));
-	this->Add(m_add,0,wxALIGN_CENTER|wxALL,2);
-	m_remove = new wxButton(parent->m_sequencewindow,ENEMY_SEQUENCE_CODE_MAX_ARG*line_nb,_(L"-"),wxDefaultPosition,wxSize(20,20),wxBU_EXACTFIT);
+	this->Add(m_add, 0, wxALIGN_CENTER | wxALL, 2);
+	m_remove = new wxButton(parent->m_sequencewindow, ENEMY_SEQUENCE_CODE_MAX_ARG * line_nb, _(L"-"), wxDefaultPosition, wxSize(20, 20), wxBU_EXACTFIT);
 	m_remove->SetToolTip(_(REMOVE_CODE_LINE_TOOLTIP));
-	this->Add(m_remove,0,wxALIGN_CENTER|wxALL,2);
-	m_code = new wxChoice(parent->m_sequencewindow,ENEMY_SEQUENCE_CODE_MAX_ARG*line_nb,wxDefaultPosition,wxDefaultSize,parent->code_list,0);
-	for (i=0;i<G_N_ELEMENTS(ENEMYANIM_OPCODE);i++)
-		if (ENEMYANIM_OPCODE[i].id==codeline->code) {
+	this->Add(m_remove, 0, wxALIGN_CENTER | wxALL, 2);
+	m_code = new wxChoice(parent->m_sequencewindow, ENEMY_SEQUENCE_CODE_MAX_ARG * line_nb, wxDefaultPosition, wxDefaultSize, parent->code_list, 0);
+	for (i = 0; i < ENEMYANIM_OPCODE.size(); i++)
+		if (ENEMYANIM_OPCODE[i].id == codeline->code) {
 			m_code->SetSelection(i);
 			break;
 		}
-	this->Add(m_code,0,wxALL,5);
+	this->Add(m_code, 0, wxALL, 5);
 	CreateArgumentControls();
-	m_add->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( EnemyAnimSequenceEditDialog::OnAddCode ), NULL, parent );
-	m_remove->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( EnemyAnimSequenceEditDialog::OnDeleteCode ), NULL, parent );
-	m_code->Connect( wxEVT_CHOICE, wxCommandEventHandler( EnemyAnimSequenceEditDialog::OnChangeCode ), NULL, parent );
-	m_code->Connect( wxEVT_ENTER_WINDOW, wxMouseEventHandler( EnemyAnimSequenceEditDialog::OnMouseMoveOver ), NULL, parent );
+	m_add->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(EnemyAnimSequenceEditDialog::OnAddCode), NULL, parent);
+	m_remove->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(EnemyAnimSequenceEditDialog::OnDeleteCode), NULL, parent);
+	m_code->Connect(wxEVT_CHOICE, wxCommandEventHandler(EnemyAnimSequenceEditDialog::OnChangeCode), NULL, parent);
+	m_code->Connect(wxEVT_ENTER_WINDOW, wxMouseEventHandler(EnemyAnimSequenceEditDialog::OnMouseMoveOver), NULL, parent);
 }
 
 void EnemyAnimSequenceCodeSizer::DestroyLine() {
 	EnemySequenceCode& seq = GetEnemySequenceCode(codeline->code);
-	unsigned int i;
+	int i;
 	m_add->Destroy();
 	m_remove->Destroy();
 	m_code->Destroy();
-	for (i=0;i<seq.arg_amount;i++) {
-		m_arg[i]->Disconnect( wxEVT_ENTER_WINDOW, wxMouseEventHandler( EnemyAnimSequenceEditDialog::OnMouseMoveOver ), NULL, parent );
+	for (i = 0; i < seq.arg_amount; i++) {
+		m_arg[i]->Disconnect(wxEVT_ENTER_WINDOW, wxMouseEventHandler(EnemyAnimSequenceEditDialog::OnMouseMoveOver), NULL, parent);
 		if (IsEAATChoice(seq.arg_type[i]))
-			m_arg[i]->Disconnect( wxEVT_CHOICE, wxCommandEventHandler( EnemyAnimSequenceEditDialog::OnChangeArgChoice ), NULL, parent );
+			m_arg[i]->Disconnect(wxEVT_CHOICE, wxCommandEventHandler(EnemyAnimSequenceEditDialog::OnChangeArgChoice), NULL, parent);
 		else
-			m_arg[i]->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( EnemyAnimSequenceEditDialog::OnChangeArgSpin ), NULL, parent );
+			m_arg[i]->Disconnect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(EnemyAnimSequenceEditDialog::OnChangeArgSpin), NULL, parent);
 		m_arg[i]->Destroy();
 	}
 	delete[] m_arg;
@@ -343,52 +343,53 @@ void EnemyAnimSequenceCodeSizer::DestroyLine() {
 }
 
 void EnemyAnimSequenceCodeSizer::CreateArgumentControls() {
-	unsigned int i,j;
+	unsigned int j;
+	int i;
 	EnemySequenceCode& seqcode = GetEnemySequenceCode(codeline->code);
 	m_arg = new wxControl*[seqcode.arg_amount];
-	for (i=0;i<seqcode.arg_amount;i++) {
+	for (i = 0; i < seqcode.arg_amount; i++) {
 		if (IsEAATChoice(seqcode.arg_type[i])) {
-			m_arg[i] = new wxChoice(parent->m_sequencewindow,ENEMY_SEQUENCE_CODE_MAX_ARG*line_nb+i,wxDefaultPosition,wxSize(seqcode.arg_type[i]==EAAT_SOUND ? 220 : 150,-1));
-			if (seqcode.arg_type[i]==EAAT_ANIMATION) {
-				((wxChoice*)m_arg[i])->Append(parent->arg_animation,(void**)parent->arg_animation_id);
-				for (j=0;j<parent->arg_animation.GetCount();j++)
-					if (*parent->arg_animation_id[j]==codeline->arg[i]) {
+			m_arg[i] = new wxChoice(parent->m_sequencewindow, ENEMY_SEQUENCE_CODE_MAX_ARG * line_nb + i, wxDefaultPosition, wxSize(seqcode.arg_type[i] == EAAT_SOUND ? 220 : 150, -1));
+			if (seqcode.arg_type[i] == EAAT_ANIMATION) {
+				((wxChoice*)m_arg[i])->Append(parent->arg_animation, (void**)parent->arg_animation_id);
+				for (j = 0; j < parent->arg_animation.GetCount(); j++)
+					if (*parent->arg_animation_id[j] == codeline->arg[i]) {
 						((wxChoice*)m_arg[i])->SetSelection(j);
 						break;
 					}
-			} else if (seqcode.arg_type[i]==EAAT_TEXT) {
-				((wxChoice*)m_arg[i])->Append(parent->arg_battletext,(void**)parent->arg_battletext_id);
-				for (j=0;j<parent->arg_battletext.GetCount();j++)
-					if (*parent->arg_battletext_id[j]==codeline->arg[i]) {
+			} else if (seqcode.arg_type[i] == EAAT_TEXT) {
+				((wxChoice*)m_arg[i])->Append(parent->arg_battletext, (void**)parent->arg_battletext_id);
+				for (j = 0; j < parent->arg_battletext.GetCount(); j++)
+					if (*parent->arg_battletext_id[j] == codeline->arg[i]) {
 						((wxChoice*)m_arg[i])->SetSelection(j);
 						break;
 					}
-			} else if (seqcode.arg_type[i]==EAAT_SPELL_ANIM) {
-				((wxChoice*)m_arg[i])->Append(parent->arg_spellanim,(void**)parent->arg_spellanim_id);
-				for (j=0;j<parent->arg_spellanim.GetCount();j++)
-					if (*parent->arg_spellanim_id[j]==codeline->arg[i]) {
+			} else if (seqcode.arg_type[i] == EAAT_SPELL_ANIM) {
+				((wxChoice*)m_arg[i])->Append(parent->arg_spellanim, (void**)parent->arg_spellanim_id);
+				for (j = 0; j < parent->arg_spellanim.GetCount(); j++)
+					if (*parent->arg_spellanim_id[j] == codeline->arg[i]) {
 						((wxChoice*)m_arg[i])->SetSelection(j);
 						break;
 					}
-			} else if (seqcode.arg_type[i]==EAAT_SOUND) {
-				((wxChoice*)m_arg[i])->Append(parent->arg_sound,(void**)parent->arg_sound_id);
-				for (j=0;j<parent->arg_sound.GetCount();j++)
-					if (*parent->arg_sound_id[j]==codeline->arg[i]) {
+			} else if (seqcode.arg_type[i] == EAAT_SOUND) {
+				((wxChoice*)m_arg[i])->Append(parent->arg_sound, (void**)parent->arg_sound_id);
+				for (j = 0; j < parent->arg_sound.GetCount(); j++)
+					if (*parent->arg_sound_id[j] == codeline->arg[i]) {
 						((wxChoice*)m_arg[i])->SetSelection(j);
 						break;
 					}
 			}
-			this->Add(m_arg[i],0,wxALIGN_CENTER|wxALL,2);
-			m_arg[i]->Connect( wxEVT_CHOICE, wxCommandEventHandler( EnemyAnimSequenceEditDialog::OnChangeArgChoice ), NULL, parent );
+			this->Add(m_arg[i], 0, wxALIGN_CENTER | wxALL, 2);
+			m_arg[i]->Connect(wxEVT_CHOICE, wxCommandEventHandler(EnemyAnimSequenceEditDialog::OnChangeArgChoice), NULL, parent);
 		} else {
-			if (seqcode.arg_type[i]==EAAT_COORDINATE)
-				m_arg[i] = new wxSpinCtrl(parent->m_sequencewindow,ENEMY_SEQUENCE_CODE_MAX_ARG*line_nb+i,wxEmptyString,wxDefaultPosition,wxSize(150,-1),wxSP_ARROW_KEYS,-0x8000,0x7FFF,codeline->arg[i]>=0x8000 ? codeline->arg[i]-0x10000 : codeline->arg[i]);
+			if (seqcode.arg_type[i] == EAAT_COORDINATE)
+				m_arg[i] = new wxSpinCtrl(parent->m_sequencewindow, ENEMY_SEQUENCE_CODE_MAX_ARG * line_nb + i, wxEmptyString, wxDefaultPosition, wxSize(150, -1), wxSP_ARROW_KEYS, -0x8000, 0x7FFF, codeline->arg[i] >= 0x8000 ? codeline->arg[i] - 0x10000 : codeline->arg[i]);
 			else
-				m_arg[i] = new wxSpinCtrl(parent->m_sequencewindow,ENEMY_SEQUENCE_CODE_MAX_ARG*line_nb+i,wxEmptyString,wxDefaultPosition,wxSize(150,-1),wxSP_ARROW_KEYS,seqcode.arg_type[i]==EAAT_TIME ? 1 : 0,(1 << min(seqcode.arg_length[i]*8,31))-1,codeline->arg[i]);
-			this->Add(m_arg[i],0,wxALIGN_CENTER|wxALL,2);
-			m_arg[i]->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( EnemyAnimSequenceEditDialog::OnChangeArgSpin ), NULL, parent );
+				m_arg[i] = new wxSpinCtrl(parent->m_sequencewindow, ENEMY_SEQUENCE_CODE_MAX_ARG * line_nb + i, wxEmptyString, wxDefaultPosition, wxSize(150, -1), wxSP_ARROW_KEYS, seqcode.arg_type[i] == EAAT_TIME ? 1 : 0, (1 << min(seqcode.arg_length[i] * 8, 31)) - 1, codeline->arg[i]);
+			this->Add(m_arg[i], 0, wxALIGN_CENTER | wxALL, 2);
+			m_arg[i]->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(EnemyAnimSequenceEditDialog::OnChangeArgSpin), NULL, parent);
 		}
-		m_arg[i]->Connect( wxEVT_ENTER_WINDOW, wxMouseEventHandler( EnemyAnimSequenceEditDialog::OnMouseMoveOver ), NULL, parent );
+		m_arg[i]->Connect(wxEVT_ENTER_WINDOW, wxMouseEventHandler(EnemyAnimSequenceEditDialog::OnMouseMoveOver), NULL, parent);
 	}
 }
 
@@ -396,63 +397,63 @@ EnemyAnimSequenceEditDialog::EnemyAnimSequenceEditDialog(wxWindow* parent, Battl
 	AnimSequenceEditWindow(parent),
 	battle(b),
 	anim_id(animid) {
-	unsigned int i,j;
+	unsigned int i, j;
 	sequence_code_amount = battle.sequence_code_amount[anim_id];
 	sequence_code = battle.sequence_code[anim_id];
-	for (i=0;i<sequence_code_amount;i++) {
+	for (i = 0; i < sequence_code_amount; i++) {
 		EnemySequenceCode& seqcode = GetEnemySequenceCode(sequence_code[i].code);
 		sequence_code[i].arg = new uint32_t[seqcode.arg_amount];
-		memcpy(sequence_code[i].arg,battle.sequence_code[anim_id][i].arg,seqcode.arg_amount*sizeof(uint32_t));
+		memcpy(sequence_code[i].arg, battle.sequence_code[anim_id][i].arg, seqcode.arg_amount * sizeof(uint32_t));
 	}
-	code_list.Alloc(G_N_ELEMENTS(ENEMYANIM_OPCODE));
-	for (i=0;i<G_N_ELEMENTS(ENEMYANIM_OPCODE);i++)
+	code_list.Alloc(ENEMYANIM_OPCODE.size());
+	for (i = 0; i < ENEMYANIM_OPCODE.size(); i++)
 		code_list.Add(_(ENEMYANIM_OPCODE[i].label));
-	unsigned int animamount = battle.animation_amount-battle.sequence_base_anim[anim_id];
+	unsigned int animamount = battle.animation_amount - battle.sequence_base_anim[anim_id];
 	int32_t animdbindex;
-	for (i=0;i<battle.sequence_amount;i++)
-		if (battle.sequence_base_anim[i]>battle.sequence_base_anim[anim_id] && battle.sequence_base_anim[i]-battle.sequence_base_anim[anim_id]<animamount)
-			animamount = battle.sequence_base_anim[i]-battle.sequence_base_anim[anim_id];
-	arg_animation_id = new uint32_t*[animamount+1];
-	arg_animation.Alloc(animamount+1);
-	for (i=0;i<animamount;i++) {
-		animdbindex = AnimationDatabase::GetIndex(battle.animation_id[battle.sequence_base_anim[anim_id]+i],DATABASE_MODEL_CATEGORY_TO_LIST(DATABASE_MODEL_CATEGORY_ENEMY));
+	for (i = 0; i < battle.sequence_amount; i++)
+		if (battle.sequence_base_anim[i] > battle.sequence_base_anim[anim_id] && battle.sequence_base_anim[i] - battle.sequence_base_anim[anim_id] < animamount)
+			animamount = battle.sequence_base_anim[i] - battle.sequence_base_anim[anim_id];
+	arg_animation_id = new uint32_t*[animamount + 1];
+	arg_animation.Alloc(animamount + 1);
+	for (i = 0; i < animamount; i++) {
+		animdbindex = AnimationDatabase::GetIndex(battle.animation_id[battle.sequence_base_anim[anim_id] + i], DATABASE_MODEL_CATEGORY_TO_LIST(DATABASE_MODEL_CATEGORY_ENEMY));
 		arg_animation_id[i] = new uint32_t(i);
 		arg_animation.Add(AnimationDatabase::GetDescription(animdbindex));
 	}
 	arg_animation_id[animamount] = new uint32_t(0xFF);
 	arg_animation.Add(_(L"Stand Animation"));
-	unsigned int texti = battle.parent->battle[battle.id]->spell_amount+battle.parent->battle[battle.id]->stat_amount;
-	for (i=0;i<battle.parent->battle[battle.id]->stat_amount;i++)
-		if (battle.parent->battle[battle.id]->stat[i].sequence_anim_base==battle.sequence_base_anim[anim_id]) {
-			for (j=0;j<i;j++)
+	unsigned int texti = battle.parent->battle[battle.id]->spell_amount + battle.parent->battle[battle.id]->stat_amount;
+	for (i = 0; i < battle.parent->battle[battle.id]->stat_amount; i++)
+		if (battle.parent->battle[battle.id]->stat[i].sequence_anim_base == battle.sequence_base_anim[anim_id]) {
+			for (j = 0; j < i; j++)
 				texti += battle.parent->battle[battle.id]->stat[j].text_amount;
 			break;
 		}
-	unsigned int textamount = battle.parent->text[battle.id]->amount-texti+1;
+	unsigned int textamount = battle.parent->text[battle.id]->amount - texti + 1;
 	arg_battletext_id = new uint32_t*[textamount];
 	arg_battletext.Alloc(textamount);
-	for (i=0;i+1<textamount;i++) {
+	for (i = 0; i + 1 < textamount; i++) {
 		arg_battletext_id[i] = new uint32_t(i);
 		arg_battletext.Add(_(battle.parent->text[battle.id]->text[texti++].GetStr(hades::TEXT_PREVIEW_TYPE)));
 	}
-	arg_battletext_id[textamount-1] = new uint32_t(0x81);
-	arg_battletext.Add(_(battle.parent->text[battle.id]->text[battle.parent->battle[battle.id]->stat_amount+anim_id].GetStr(hades::TEXT_PREVIEW_TYPE)));
-	arg_spellanim_id = new uint32_t*[G_N_ELEMENTS(HADES_STRING_SPELL_MODEL)];
-	arg_spellanim.Alloc(G_N_ELEMENTS(HADES_STRING_SPELL_MODEL));
-	for (i=0;i<G_N_ELEMENTS(HADES_STRING_SPELL_MODEL);i++) {
+	arg_battletext_id[textamount - 1] = new uint32_t(0x81);
+	arg_battletext.Add(_(battle.parent->text[battle.id]->text[battle.parent->battle[battle.id]->stat_amount + anim_id].GetStr(hades::TEXT_PREVIEW_TYPE)));
+	arg_spellanim_id = new uint32_t*[HADES_STRING_SPELL_MODEL.size()];
+	arg_spellanim.Alloc(HADES_STRING_SPELL_MODEL.size());
+	for (i = 0; i < HADES_STRING_SPELL_MODEL.size(); i++) {
 		arg_spellanim_id[i] = new uint32_t(HADES_STRING_SPELL_MODEL[i].id);
 		arg_spellanim.Add(_(HADES_STRING_SPELL_MODEL[i].label));
 	}
-	if (GetGameType()==GAME_TYPE_PSX) {
-		if (battle.parent_cluster->SearchChunkType(CHUNK_TYPE_SOUND)>=0) {
+	if (GetGameType() == GAME_TYPE_PSX) {
+		if (battle.parent_cluster->SearchChunkType(CHUNK_TYPE_SOUND) >= 0) {
 			ChunkData* soundchunk = &battle.parent_cluster->chunk[battle.parent_cluster->SearchChunkType(CHUNK_TYPE_SOUND)];
 			arg_sound_id = new uint32_t*[soundchunk->object_amount];
 			arg_sound.Alloc(soundchunk->object_amount);
-			for (i=0;i<soundchunk->object_amount;i++) {
+			for (i = 0; i < soundchunk->object_amount; i++) {
 				wxString sndlabel;
-				sndlabel.Printf(wxT("Sound %d"),i+1);
-				for (j=0;j<G_N_ELEMENTS(HADES_STRING_AUDIO_NAME);j++)
-					if (soundchunk->object_id[i]==HADES_STRING_AUDIO_NAME[j].id) {
+				sndlabel.Printf(wxT("Sound %d"), i + 1);
+				for (j = 0; j < G_V_ELEMENTS(HADES_STRING_AUDIO_NAME); j++)
+					if (soundchunk->object_id[i] == HADES_STRING_AUDIO_NAME[j].id) {
 						sndlabel = HADES_STRING_AUDIO_NAME[j].label;
 						break;
 					}
@@ -461,20 +462,20 @@ EnemyAnimSequenceEditDialog::EnemyAnimSequenceEditDialog(wxWindow* parent, Battl
 			}
 		}
 	} else {
-		arg_sound_id = new uint32_t*[G_N_ELEMENTS(HADES_STRING_AUDIO_NAME)];
-		arg_sound.Alloc(G_N_ELEMENTS(HADES_STRING_AUDIO_NAME));
-		for (i=0;i<G_N_ELEMENTS(HADES_STRING_AUDIO_NAME);i++) {
+		arg_sound_id = new uint32_t*[G_V_ELEMENTS(HADES_STRING_AUDIO_NAME)];
+		arg_sound.Alloc(G_V_ELEMENTS(HADES_STRING_AUDIO_NAME));
+		for (i = 0; i < G_V_ELEMENTS(HADES_STRING_AUDIO_NAME); i++) {
 			arg_sound_id[i] = new uint32_t(HADES_STRING_AUDIO_NAME[i].id);
 			arg_sound.Add(_(HADES_STRING_AUDIO_NAME[i].label));
 		}
 	}
-	m_sequencesizer = new wxFlexGridSizer(0,1,0,0);
+	m_sequencesizer = new wxFlexGridSizer(0, 1, 0, 0);
 	m_sequencesizer->SetFlexibleDirection(wxBOTH);
 	m_sequencesizer->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 	sequence_code_sizer.resize(sequence_code_amount);
-	for (i=0;i<sequence_code_amount;i++) {
-		sequence_code_sizer[i] = new EnemyAnimSequenceCodeSizer(this,i,&sequence_code[i]);
-		m_sequencesizer->Add(sequence_code_sizer[i],1,wxEXPAND);
+	for (i = 0; i < sequence_code_amount; i++) {
+		sequence_code_sizer[i] = new EnemyAnimSequenceCodeSizer(this, i, &sequence_code[i]);
+		m_sequencesizer->Add(sequence_code_sizer[i], 1, wxEXPAND);
 	}
 	m_sequencewindow->SetSizer(m_sequencesizer);
 	m_sequencewindow->Layout();
@@ -489,25 +490,25 @@ void EnemyAnimSequenceEditDialog::OnMouseMoveOver(wxMouseEvent& event) {
 
 void EnemyAnimSequenceEditDialog::OnAddCode(wxCommandEvent& event) {
 	uint8_t newcode = 1;
-	unsigned int i,j,l = event.GetId()/ENEMY_SEQUENCE_CODE_MAX_ARG;
+	unsigned int i, j, l = event.GetId() / ENEMY_SEQUENCE_CODE_MAX_ARG;
 	EnemySequenceCode& oldseq = GetEnemySequenceCode(sequence_code[l].code);
 	EnemySequenceCode& newseq = GetEnemySequenceCode(newcode);
 	uint16_t newlen = 1;
-	for (i=0;i<newseq.arg_amount;i++)
+	for (i = 0; (int)i < newseq.arg_amount; i++)
 		newlen += newseq.arg_length[i];
-	if (newlen+3>battle.GetExtraSize()) { // Secure 3 bytes for padding...
-		wxMessageDialog popup(NULL,HADES_STRING_SPELL_ANIMATION_SEQUENCE_FULL,HADES_STRING_ERROR,wxOK|wxCENTRE);
+	if (newlen + 3 > (int)battle.GetExtraSize()) { // Secure 3 bytes for padding...
+		wxMessageDialog popup(NULL, HADES_STRING_SPELL_ANIMATION_SEQUENCE_FULL, HADES_STRING_ERROR, wxOK | wxCENTRE);
 		popup.ShowModal();
 		return;
 	}
-	for (i=l;i<sequence_code_amount;i++) {
+	for (i = l; i < sequence_code_amount; i++) {
 		EnemySequenceCode& seq = GetEnemySequenceCode(sequence_code[i].code);
-		for (j=0;j<seq.arg_amount;j++) {
-			sequence_code_sizer[i]->m_arg[j]->Disconnect( wxEVT_ENTER_WINDOW, wxMouseEventHandler( EnemyAnimSequenceEditDialog::OnMouseMoveOver ), NULL, this );
+		for (j = 0; (int)j < seq.arg_amount; j++) {
+			sequence_code_sizer[i]->m_arg[j]->Disconnect(wxEVT_ENTER_WINDOW, wxMouseEventHandler(EnemyAnimSequenceEditDialog::OnMouseMoveOver), NULL, this);
 			if (IsEAATChoice(seq.arg_type[j]))
-				sequence_code_sizer[i]->m_arg[j]->Disconnect( wxEVT_CHOICE, wxCommandEventHandler( EnemyAnimSequenceEditDialog::OnChangeArgChoice ), NULL, this );
+				sequence_code_sizer[i]->m_arg[j]->Disconnect(wxEVT_CHOICE, wxCommandEventHandler(EnemyAnimSequenceEditDialog::OnChangeArgChoice), NULL, this);
 			else
-				sequence_code_sizer[i]->m_arg[j]->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( EnemyAnimSequenceEditDialog::OnChangeArgSpin ), NULL, this );
+				sequence_code_sizer[i]->m_arg[j]->Disconnect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(EnemyAnimSequenceEditDialog::OnChangeArgSpin), NULL, this);
 			sequence_code_sizer[i]->m_arg[j]->Destroy();
 		}
 	}
@@ -515,65 +516,65 @@ void EnemyAnimSequenceEditDialog::OnAddCode(wxCommandEvent& event) {
 	newseqcodeline.parent = &battle;
 	newseqcodeline.code = newcode;
 	newseqcodeline.arg = new uint32_t[newseq.arg_amount];
-	for (i=0;i<newseq.arg_amount;i++) {
-		if (newseq.arg_type[i]==EAAT_TIME)
+	for (i = 0; (int)i < newseq.arg_amount; i++) {
+		if (newseq.arg_type[i] == EAAT_TIME)
 			newseqcodeline.arg[i] = 1;
 		else
 			newseqcodeline.arg[i] = 0;
 	}
 	sequence_code_amount++;
-	sequence_code.insert(sequence_code.begin()+l,newseqcodeline);
-	battle.SetSize(battle.size+newlen);
+	sequence_code.insert(sequence_code.begin() + l, newseqcodeline);
+	battle.SetSize(battle.size + newlen);
 	sequence_code_sizer.resize(sequence_code_amount);
-	for (i=0;i<l;i++)
+	for (i = 0; i < l; i++)
 		sequence_code_sizer[i]->codeline = &sequence_code[i];
-	for (i=l;i+1<sequence_code_amount;i++) {
+	for (i = l; i + 1 < sequence_code_amount; i++) {
 		sequence_code_sizer[i]->codeline = &sequence_code[i];
-		for (j=0;j<G_N_ELEMENTS(ENEMYANIM_OPCODE);j++)
-			if (ENEMYANIM_OPCODE[j].id==sequence_code[i].code) {
+		for (j = 0; j < ENEMYANIM_OPCODE.size(); j++)
+			if (ENEMYANIM_OPCODE[j].id == sequence_code[i].code) {
 				sequence_code_sizer[i]->m_code->SetSelection(j);
 				break;
 			}
 		sequence_code_sizer[i]->CreateArgumentControls();
 	}
-	sequence_code_sizer[sequence_code_amount-1] = new EnemyAnimSequenceCodeSizer(this,sequence_code_amount-1,&sequence_code[sequence_code_amount-1]);
-	m_sequencesizer->Add(sequence_code_sizer[sequence_code_amount-1],1,wxEXPAND);
+	sequence_code_sizer[sequence_code_amount - 1] = new EnemyAnimSequenceCodeSizer(this, sequence_code_amount - 1, &sequence_code[sequence_code_amount - 1]);
+	m_sequencesizer->Add(sequence_code_sizer[sequence_code_amount - 1], 1, wxEXPAND);
 	m_sequencewindow->FitInside();
 	m_sequencewindow->Layout();
 	m_sequencewindow->Refresh();
 }
 
 void EnemyAnimSequenceEditDialog::OnDeleteCode(wxCommandEvent& event) {
-	unsigned int i,j,l = event.GetId()/ENEMY_SEQUENCE_CODE_MAX_ARG;
+	unsigned int i, j, l = event.GetId() / ENEMY_SEQUENCE_CODE_MAX_ARG;
 	EnemySequenceCode& oldseq = GetEnemySequenceCode(sequence_code[l].code);
 	Enemy_Animation_Argument_Type argtype[ENEMY_SEQUENCE_CODE_MAX_ARG];
-	for (i=0;i<oldseq.arg_amount;i++)
+	for (i = 0; (int)i < oldseq.arg_amount; i++)
 		argtype[i] = oldseq.arg_type[i];
 	uint16_t oldlen = 1;
-	for (i=0;i<oldseq.arg_amount;i++)
+	for (i = 0; (int)i < oldseq.arg_amount; i++)
 		oldlen += oldseq.arg_length[i];
-	for (i=l;i+1<sequence_code_amount;i++) {
+	for (i = l; i + 1 < sequence_code_amount; i++) {
 		EnemySequenceCode& seq = GetEnemySequenceCode(sequence_code[i].code);
-		for (j=0;j<seq.arg_amount;j++) {
-			sequence_code_sizer[i]->m_arg[j]->Disconnect( wxEVT_ENTER_WINDOW, wxMouseEventHandler( EnemyAnimSequenceEditDialog::OnMouseMoveOver ), NULL, this );
+		for (j = 0; (int)j < seq.arg_amount; j++) {
+			sequence_code_sizer[i]->m_arg[j]->Disconnect(wxEVT_ENTER_WINDOW, wxMouseEventHandler(EnemyAnimSequenceEditDialog::OnMouseMoveOver), NULL, this);
 			if (IsEAATChoice(seq.arg_type[j]))
-				sequence_code_sizer[i]->m_arg[j]->Disconnect( wxEVT_CHOICE, wxCommandEventHandler( EnemyAnimSequenceEditDialog::OnChangeArgChoice ), NULL, this );
+				sequence_code_sizer[i]->m_arg[j]->Disconnect(wxEVT_CHOICE, wxCommandEventHandler(EnemyAnimSequenceEditDialog::OnChangeArgChoice), NULL, this);
 			else
-				sequence_code_sizer[i]->m_arg[j]->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( EnemyAnimSequenceEditDialog::OnChangeArgSpin ), NULL, this );
+				sequence_code_sizer[i]->m_arg[j]->Disconnect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(EnemyAnimSequenceEditDialog::OnChangeArgSpin), NULL, this);
 			sequence_code_sizer[i]->m_arg[j]->Destroy();
 		}
 	}
 	sequence_code_amount--;
-	sequence_code.erase(sequence_code.begin()+l);
-	battle.SetSize(battle.size-oldlen);
+	sequence_code.erase(sequence_code.begin() + l);
+	battle.SetSize(battle.size - oldlen);
 	sequence_code_sizer[sequence_code_amount]->DestroyLine();
 	sequence_code_sizer.resize(sequence_code_amount);
-	for (i=0;i<l;i++)
+	for (i = 0; i < l; i++)
 		sequence_code_sizer[i]->codeline = &sequence_code[i];
-	for (i=l;i<sequence_code_amount;i++) {
+	for (i = l; i < sequence_code_amount; i++) {
 		sequence_code_sizer[i]->codeline = &sequence_code[i];
-		for (j=0;j<G_N_ELEMENTS(ENEMYANIM_OPCODE);j++)
-			if (ENEMYANIM_OPCODE[j].id==sequence_code[i].code) {
+		for (j = 0; j < ENEMYANIM_OPCODE.size(); j++)
+			if (ENEMYANIM_OPCODE[j].id == sequence_code[i].code) {
 				sequence_code_sizer[i]->m_code->SetSelection(j);
 				break;
 			}
@@ -585,45 +586,45 @@ void EnemyAnimSequenceEditDialog::OnDeleteCode(wxCommandEvent& event) {
 }
 
 void EnemyAnimSequenceEditDialog::OnChangeCode(wxCommandEvent& event) {
-	EnemyAnimSequenceCodeSizer* sizer = sequence_code_sizer[event.GetId()/ENEMY_SEQUENCE_CODE_MAX_ARG];
+	EnemyAnimSequenceCodeSizer* sizer = sequence_code_sizer[event.GetId() / ENEMY_SEQUENCE_CODE_MAX_ARG];
 	uint8_t newcode = ENEMYANIM_OPCODE[event.GetSelection()].id;
 	EnemySequenceCode& oldseq = GetEnemySequenceCode(sizer->codeline->code);
 	EnemySequenceCode& newseq = GetEnemySequenceCode(newcode);
 	uint16_t oldlen = 1;
 	uint16_t newlen = 1;
-	unsigned int i;
-	for (i=0;i<oldseq.arg_amount;i++)
+	int i;
+	for (i = 0; i < oldseq.arg_amount; i++)
 		oldlen += oldseq.arg_length[i];
-	for (i=0;i<newseq.arg_amount;i++)
+	for (i = 0; i < newseq.arg_amount; i++)
 		newlen += newseq.arg_length[i];
-	if (newlen+3>battle.GetExtraSize()+oldlen) { // Secure 3 bytes for padding...
-		for (i=0;i<G_N_ELEMENTS(ENEMYANIM_OPCODE);i++)
-			if (ENEMYANIM_OPCODE[i].id==oldseq.id) {
+	if (newlen + 3 > battle.GetExtraSize() + oldlen) { // Secure 3 bytes for padding...
+		for (i = 0; i < (int)ENEMYANIM_OPCODE.size(); i++)
+			if (ENEMYANIM_OPCODE[i].id == oldseq.id) {
 				sizer->m_code->SetSelection(i);
 				break;
 			}
-		wxMessageDialog popup(NULL,HADES_STRING_SPELL_ANIMATION_SEQUENCE_FULL,HADES_STRING_ERROR,wxOK|wxCENTRE);
+		wxMessageDialog popup(NULL, HADES_STRING_SPELL_ANIMATION_SEQUENCE_FULL, HADES_STRING_ERROR, wxOK | wxCENTRE);
 		popup.ShowModal();
 		return;
 	}
-	for (i=0;i<oldseq.arg_amount;i++) {
-		sizer->m_arg[i]->Disconnect( wxEVT_ENTER_WINDOW, wxMouseEventHandler( EnemyAnimSequenceEditDialog::OnMouseMoveOver ), NULL, this );
+	for (i = 0; i < oldseq.arg_amount; i++) {
+		sizer->m_arg[i]->Disconnect(wxEVT_ENTER_WINDOW, wxMouseEventHandler(EnemyAnimSequenceEditDialog::OnMouseMoveOver), NULL, this);
 		if (IsEAATChoice(oldseq.arg_type[i]))
-			sizer->m_arg[i]->Disconnect( wxEVT_CHOICE, wxCommandEventHandler( EnemyAnimSequenceEditDialog::OnChangeArgChoice ), NULL, this );
+			sizer->m_arg[i]->Disconnect(wxEVT_CHOICE, wxCommandEventHandler(EnemyAnimSequenceEditDialog::OnChangeArgChoice), NULL, this);
 		else
-			sizer->m_arg[i]->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( EnemyAnimSequenceEditDialog::OnChangeArgSpin ), NULL, this );
+			sizer->m_arg[i]->Disconnect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(EnemyAnimSequenceEditDialog::OnChangeArgSpin), NULL, this);
 		delete sizer->m_arg[i];
 	}
 	sequence_code[sizer->line_nb].code = newcode;
 	delete[] sequence_code[sizer->line_nb].arg;
 	sequence_code[sizer->line_nb].arg = new uint32_t[newseq.arg_amount];
-	for (i=0;i<newseq.arg_amount;i++) {
-		if (newseq.arg_type[i]==EAAT_TIME)
+	for (i = 0; i < newseq.arg_amount; i++) {
+		if (newseq.arg_type[i] == EAAT_TIME)
 			sequence_code[sizer->line_nb].arg[i] = 1;
 		else
 			sequence_code[sizer->line_nb].arg[i] = 0;
 	}
-	battle.SetSize(battle.size+newlen-oldlen);
+	battle.SetSize(battle.size + newlen - oldlen);
 	sizer->CreateArgumentControls();
 	m_sequencewindow->Layout();
 	m_sequencewindow->Refresh();

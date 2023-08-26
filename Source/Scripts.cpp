@@ -1,30 +1,125 @@
 #include "Scripts.h"
 
-#include <sstream>
 #include "Hades_Strings.h"
 #include "Database_Script.h"
 
+inline wxString CS_GetNextWord(wxString& str) {
+	size_t pos = str.find_first_of(L" \t\r\n");
+	if (pos == wxString::npos) {
+		wxString strcpy = str;
+		str = _(L"");
+		return strcpy;
+	}
+	wxString res = str.Mid(0, pos);
+	while (pos < str.Len() && (str[pos] == L' ' || str[pos] == L'\t' || str[pos] == L'\r' || str[pos] == L'\n'))
+		pos++;
+	str = str.Mid(pos);
+	return res;
+}
+
+inline wxString CS_GetQuotedString(wxString& str) {
+	if (str.IsEmpty() || str[0] != L'\"')
+		return CS_GetNextWord(str);
+	size_t pos = str.find_first_of(L"\"", 1);
+	if (pos == wxString::npos) {
+		wxString strcpy = str;
+		str = _(L"");
+		return strcpy;
+	}
+	wxString res = str.Mid(1, pos - 1);
+	pos++;
+	while (pos < str.Len() && (str[pos] == L' ' || str[pos] == L'\t' || str[pos] == L'\r' || str[pos] == L'\n'))
+		pos++;
+	str = str.Mid(pos);
+	return res;
+}
+
+// Custom script utility externalizes to "ScriptAPI.txt" different functions and variables to be used in scripts
+// It should only be updated according to EventEngine API additions made in the Memoria mod
+bool CustomScriptsAreLoaded = false;
+void LoadCustomScriptUtility() {
+	if (CustomScriptsAreLoaded)
+		return;
+	wxFile apifile(SCRIPT_CUSTOM_API_FILENAME);
+	if (!apifile.IsOpened())
+		return;
+	wxString apistr, token;
+	int i, helpi;
+	apifile.ReadAll(&apistr);
+	apifile.Close();
+	while (!apistr.IsEmpty()) {
+		token = CS_GetNextWord(apistr);
+		if (token.IsSameAs(_(L"Function"))) {
+			SortedChoiceItemScriptOpcode newopcode;
+			newopcode.use_vararg = true;
+			newopcode.jump_pos = 0;
+			newopcode.id = wxAtoi(CS_GetNextWord(apistr));
+			newopcode.label = CS_GetNextWord(apistr).ToStdWstring();
+			newopcode.help = CS_GetQuotedString(apistr).ToStdWstring();
+			newopcode.arg_amount = wxAtoi(CS_GetNextWord(apistr));
+			newopcode.arg_length = new uint8_t[newopcode.arg_amount];
+			newopcode.arg_help = new wstring[newopcode.arg_amount];
+			newopcode.arg_type = new uint8_t[newopcode.arg_amount];
+			helpi = 0;
+			for (i = 0; i < newopcode.arg_amount; i++) {
+				newopcode.arg_length[i] = 2;
+				newopcode.arg_type[i] = SCRIPT_ARG_TYPE_MAP[CS_GetNextWord(apistr).ToStdWstring()];
+				if (newopcode.arg_type[i] == AT_NONE)
+					newopcode.arg_type[i] = AT_USPIN;
+				if (newopcode.arg_type[i] != AT_NONE && /*
+				 */ newopcode.arg_type[i] != AT_POSITION_Y && newopcode.arg_type[i] != AT_POSITION_Z && /*
+				 */ newopcode.arg_type[i] != AT_COLOR_MAGENTA && newopcode.arg_type[i] != AT_COLOR_YELLOW && /*
+				 */ newopcode.arg_type[i] != AT_COLOR_GREEN && newopcode.arg_type[i] != AT_COLOR_BLUE)
+						newopcode.arg_help[helpi++] = CS_GetQuotedString(apistr).ToStdWstring();
+			}
+			HADES_STRING_SCRIPT_OPCODE[newopcode.id] = newopcode;
+		} else if (token.IsSameAs(_(L"Variable"))) {
+			VariableName newvar;
+			token = CS_GetNextWord(apistr);
+			if (token.IsSameAs(L"GETTER"))
+				newvar.cat = VARCODE_CUSTOM_GETTER;
+			else if (token.IsSameAs(L"ENGINE"))
+				newvar.cat = VARCODE_ENGINE;
+			else
+				newvar.cat = wxAtoi(token);
+			newvar.id = wxAtoi(CS_GetNextWord(apistr));
+			newvar.name = CS_GetNextWord(apistr).ToStdWstring();
+			newvar.description = CS_GetQuotedString(apistr).ToStdWstring();
+			VarNameList.push_back(newvar);
+		} else if (token.IsSameAs(_(L"VarCode"))) {
+			FlexibleFunctionName newcode;
+			newcode.id = wxAtoi(CS_GetNextWord(apistr));
+			newcode.name = CS_GetNextWord(apistr).ToStdWstring();
+			newcode.description = CS_GetQuotedString(apistr).ToStdWstring();
+			newcode.argcount = wxAtoi(CS_GetNextWord(apistr));
+			FlexibleFunctionNameList[newcode.id] = newcode;
+		}
+	}
+	CustomScriptsAreLoaded = true;
+}
+
 bool ScriptArgument::SetValue(long long newvalue) {
-	if (typesize==2 && !is_signed) {
+	if (typesize == 2 && !is_signed) {
 		SteamLanguage curlang = parent->parent->parent->current_language;
-		if (curlang!=STEAM_LANGUAGE_NONE && parent->parent->parent->multi_lang_script!=NULL && parent->parent->parent->multi_lang_script->base_script_lang[curlang]!=curlang)
-			for (unsigned int i=0;i<parent->arg_amount;i++)
-				if (this==&parent->arg[i] && (int)i<HADES_STRING_SCRIPT_OPCODE[parent->opcode].arg_amount && HADES_STRING_SCRIPT_OPCODE[parent->opcode].arg_type[i]==AT_TEXT) {
+		if (curlang != STEAM_LANGUAGE_NONE && parent->parent->parent->multi_lang_script != NULL && parent->parent->parent->multi_lang_script->base_script_lang[curlang] != curlang)
+			for (unsigned int i = 0; i < parent->arg_amount; i++)
+				if (this == &parent->arg[i] && (int)i < HADES_STRING_SCRIPT_OPCODE[parent->opcode].arg_amount && HADES_STRING_SCRIPT_OPCODE[parent->opcode].arg_type[i] == AT_TEXT) {
 					MultiLanguageScriptDataStruct* multilangdata = parent->parent->parent->multi_lang_script;
 					SteamLanguage baselang = multilangdata->base_script_lang[curlang];
-					for (unsigned int j=0;j<multilangdata->lang_script_text_id[curlang].size();j++)
-						if (newvalue==multilangdata->lang_script_text_id[curlang][j]) {
+					for (unsigned int j = 0; j < multilangdata->lang_script_text_id[curlang].size(); j++)
+						if (newvalue == multilangdata->lang_script_text_id[curlang][j]) {
 							newvalue = multilangdata->base_script_text_id[curlang][j];
 							break;
 						}
 					break;
 				}
 	}
-	if (newvalue<0) {
-		uint32_t sign = 0x1 << (typesize*8-1);
-		value = ~(-newvalue-1 & ~sign) | sign;
-	} else
+	if (newvalue < 0) {
+		uint32_t sign = 0x1 << (typesize * 8 - 1);
+		value = ~(-newvalue - 1 & ~sign) | sign;
+	} else {
 		value = newvalue;
+	}
 	size = typesize;
 	is_var = false;
 	var.clear();
@@ -39,29 +134,29 @@ void ScriptArgument::SetValueVar(vector<uint8_t> newvaluevar) {
 
 int64_t ScriptArgument::GetValue() {
 	if (is_signed) {
-		if (typesize==1) {
+		if (typesize == 1) {
 			int8_t* num = (int8_t*)&value;
 			return *num;
-		} else if (typesize==2) {
+		} else if (typesize == 2) {
 			int16_t* num = (int16_t*)&value;
 			return *num;
 		}
 		int32_t* num = (int32_t*)&value;
 		return *num;
 	} else {
-		if (typesize==1) {
+		if (typesize == 1) {
 			uint8_t* num = (uint8_t*)&value;
 			return *num;
-		} else if (typesize==2) {
+		} else if (typesize == 2) {
 			uint16_t num = *(uint16_t*)&value;
 			SteamLanguage curlang = parent->parent->parent->current_language;
-			if (curlang!=STEAM_LANGUAGE_NONE && parent->parent->parent->multi_lang_script!=NULL && parent->parent->parent->multi_lang_script->base_script_lang[curlang]!=curlang)
-				for (unsigned int i=0;i<parent->arg_amount;i++)
-					if (this==&parent->arg[i] && (int)i<HADES_STRING_SCRIPT_OPCODE[parent->opcode].arg_amount && HADES_STRING_SCRIPT_OPCODE[parent->opcode].arg_type[i]==AT_TEXT) {
+			if (curlang != STEAM_LANGUAGE_NONE && parent->parent->parent->multi_lang_script != NULL && parent->parent->parent->multi_lang_script->base_script_lang[curlang] != curlang)
+				for (unsigned int i = 0; i < parent->arg_amount; i++)
+					if (this == &parent->arg[i] && (int)i < HADES_STRING_SCRIPT_OPCODE[parent->opcode].arg_amount && HADES_STRING_SCRIPT_OPCODE[parent->opcode].arg_type[i] == AT_TEXT) {
 						MultiLanguageScriptDataStruct* multilangdata = parent->parent->parent->multi_lang_script;
 						SteamLanguage baselang = multilangdata->base_script_lang[curlang];
-						for (unsigned int j=0;j<multilangdata->base_script_text_id[curlang].size();j++)
-							if (num==multilangdata->base_script_text_id[curlang][j]) {
+						for (unsigned int j = 0; j < multilangdata->base_script_text_id[curlang].size(); j++)
+							if (num == multilangdata->base_script_text_id[curlang][j]) {
 								num = multilangdata->lang_script_text_id[curlang][j];
 								break;
 							}
@@ -82,26 +177,30 @@ int64_t ScriptArgument::GetValue() {
 		size = 0; \
 		IO ## Char(f,varbyte); var.push_back(varbyte); \
 		vartype = VarOpList[varbyte].type; \
-		while (vartype!=-1) { \
-			if (vartype==2) { \
-			} else if (vartype==3) { \
+		while (vartype != -1) { \
+			if (vartype == 2) { \
+			} else if (vartype == 3) { \
 				IO ## Char(f,varbyte); var.push_back(varbyte); \
-			} else if (vartype==5) { \
+			} else if (vartype == 5) { \
 				IO ## Char(f,varbyte); var.push_back(varbyte); \
-			} else if (vartype==6) { \
-				IO ## Char(f,varbyte); var.push_back(varbyte); \
-				IO ## Char(f,varbyte); var.push_back(varbyte); \
-			} else if (vartype==7) { \
+			} else if (vartype == 6) { \
 				IO ## Char(f,varbyte); var.push_back(varbyte); \
 				IO ## Char(f,varbyte); var.push_back(varbyte); \
+			} else if (vartype == 7) { \
 				IO ## Char(f,varbyte); var.push_back(varbyte); \
 				IO ## Char(f,varbyte); var.push_back(varbyte); \
-			} else if (vartype>=10 && vartype<20) { \
-				IO ## Char(f,varbyte); var.push_back(varbyte); \
-			} else if (vartype>=20 && vartype<30) { \
 				IO ## Char(f,varbyte); var.push_back(varbyte); \
 				IO ## Char(f,varbyte); var.push_back(varbyte); \
-			} else if (vartype==55) { \
+			} else if (vartype >= 10 && vartype < 20) { \
+				IO ## Char(f,varbyte); var.push_back(varbyte); \
+			} else if (vartype >= 20 && vartype < 30) { \
+				IO ## Char(f,varbyte); var.push_back(varbyte); \
+				IO ## Char(f,varbyte); var.push_back(varbyte); \
+			} else if (vartype == 55) { \
+				IO ## Char(f,varbyte); var.push_back(varbyte); \
+				IO ## Char(f,varbyte); var.push_back(varbyte); \
+			} else if (vartype == 60) { \
+				IO ## Char(f,varbyte); var.push_back(varbyte); \
 				IO ## Char(f,varbyte); var.push_back(varbyte); \
 				IO ## Char(f,varbyte); var.push_back(varbyte); \
 			} \
@@ -221,20 +320,21 @@ bool IsScriptArgTypeSigned(uint8_t argtype) {
 			flag *= 2; \
 		} \
 	} else { \
-		arg_amount = HADES_STRING_SCRIPT_OPCODE[opcode].arg_amount; \
+		SortedChoiceItemScriptOpcode& scriptop = HADES_STRING_SCRIPT_OPCODE[opcode]; \
+		arg_amount = scriptop.arg_amount; \
 		arg = NewScriptArgumentArray(arg_amount,this); \
-		if (HADES_STRING_SCRIPT_OPCODE[opcode].use_vararg) { \
+		if (scriptop.use_vararg) { \
 			uint8_t flag = 1; \
 			IO ## Char(f,vararg_flag); \
 			size += 1; \
 			for (i=0;i<arg_amount;i++) { \
-				arg[i].FUNC(f,HADES_STRING_SCRIPT_OPCODE[opcode].arg_length[i],flag & vararg_flag,IsScriptArgTypeSigned(HADES_STRING_SCRIPT_OPCODE[opcode].arg_type[i])); \
+				arg[i].FUNC(f, scriptop.arg_length[i], flag & vararg_flag, IsScriptArgTypeSigned(scriptop.arg_type[i])); \
 				size += arg[i].size; \
 				flag *= 2; \
 			} \
 		} else { \
 			for (i=0;i<arg_amount;i++) { \
-				arg[i].FUNC(f,HADES_STRING_SCRIPT_OPCODE[opcode].arg_length[i],opcode==0x05,IsScriptArgTypeSigned(HADES_STRING_SCRIPT_OPCODE[opcode].arg_type[i])); \
+				arg[i].FUNC(f, scriptop.arg_length[i], opcode==0x05, IsScriptArgTypeSigned(scriptop.arg_type[i])); \
 				size += arg[i].size; \
 			} \
 		} \
@@ -327,7 +427,7 @@ ScriptOperation::ScriptOperation(const ScriptOperation& from) :
 	arg_amount(from.arg_amount),
 	size(from.size),
 	arg(from.arg) {
-	for (unsigned int i=0;i<arg_amount;i++)
+	for (unsigned int i = 0; i < arg_amount; i++)
 		arg[i].parent = this;
 }
 
@@ -335,8 +435,8 @@ void ScriptFunction::Read(fstream& f) {
 	unsigned int len = 0;
 	op_amount = 0;
 	op.clear();
-	while (len<length) {
-		op.resize(op_amount+1);
+	while (len < length) {
+		op.resize(op_amount + 1);
 		op[op_amount].parent = this;
 		op[op_amount].Read(f);
 		len += op[op_amount++].size;
@@ -428,106 +528,109 @@ int ScriptDataStruct::RemoveFunction(int entryid, int funcid) {
 }
 
 void ScriptDataStruct::AddEntry(int entrypos, uint8_t entrytype) {
-	unsigned int i,j,k,l,m;
+	unsigned int i, j, k, l, m;
 	bool isargentry;
 	int varargtype;
-	for (i=0;i<entry_amount;i++)
-		for (j=0;j<entry_function_amount[i];j++)
-			for (k=0;k<func[i][j].op_amount;k++)
-				if (func[i][j].op[k].opcode!=0x06 && func[i][j].op[k].opcode!=0x0B && func[i][j].op[k].opcode!=0x29)
-					for (l=0;l<func[i][j].op[k].arg_amount;l++) {
-						isargentry = !func[i][j].op[k].arg[l].is_var && HADES_STRING_SCRIPT_OPCODE[func[i][j].op[k].opcode].arg_type[l]==AT_ENTRY;
-						isargentry = isargentry || (func[i][j].op[k].opcode==0xB3 || func[i][j].op[k].opcode==0xDA) && l==2 && !func[i][j].op[k].arg[l].is_var && !func[i][j].op[k].arg[1].is_var && func[i][j].op[k].arg[1].value==150;
-						if (isargentry && func[i][j].op[k].arg[l].value>=entrypos && func[i][j].op[k].arg[l].value<entry_amount) {
+	for (i = 0; i < entry_amount; i++)
+		for (j = 0; j < entry_function_amount[i]; j++)
+			for (k = 0; k < func[i][j].op_amount; k++)
+				if (func[i][j].op[k].opcode != 0x06 && func[i][j].op[k].opcode != 0x0B && func[i][j].op[k].opcode != 0x29)
+					for (l = 0; l < func[i][j].op[k].arg_amount; l++) {
+						isargentry = !func[i][j].op[k].arg[l].is_var && HADES_STRING_SCRIPT_OPCODE[func[i][j].op[k].opcode].arg_type[l] == AT_ENTRY;
+						isargentry = isargentry || (func[i][j].op[k].opcode == 0xB3 || func[i][j].op[k].opcode == 0xDA) && l == 2 && !func[i][j].op[k].arg[l].is_var && !func[i][j].op[k].arg[1].is_var && func[i][j].op[k].arg[1].value == 150;
+						if (isargentry && (int)func[i][j].op[k].arg[l].value >= entrypos && func[i][j].op[k].arg[l].value < entry_amount) {
 							func[i][j].op[k].arg[l].value++;
 						} else if (func[i][j].op[k].arg[l].is_var) {
-							for (m=0;m<func[i][j].op[k].arg[l].size;m++) {
+							for (m = 0; m < func[i][j].op[k].arg[l].size; m++) {
 								varargtype = VarOpList[func[i][j].op[k].arg[l].var[m]].type;
-								if (varargtype==55) {
-									if (func[i][j].op[k].arg[l].var[m+1]>=entrypos && func[i][j].op[k].arg[l].var[m+1]<entry_amount) {
-										func[i][j].op[k].arg[l].var[m+1]++;
-									}
-								} else if (varargtype==3 || varargtype==5 || (varargtype>=10 && varargtype<20)) {
+								if (varargtype == 55) {
+									if (func[i][j].op[k].arg[l].var[m + 1] >= entrypos && func[i][j].op[k].arg[l].var[m + 1] < entry_amount)
+										func[i][j].op[k].arg[l].var[m + 1]++;
+								} else if (varargtype == 3 || varargtype == 5 || (varargtype >= 10 && varargtype < 20)) {
 									m++;
-								} else if (varargtype==6 || (varargtype>=20 && varargtype<30)) {
+								} else if (varargtype == 6 || (varargtype >= 20 && varargtype < 30)) {
 									m += 2;
-								} else if (varargtype==7) {
+								} else if (varargtype == 7) {
 									m += 4;
+								} else if (varargtype == 60) {
+									m += 3;
 								}
 							}
 						}
 					}
 	entry_amount++;
-	func.insert(func.begin()+entrypos,vector<ScriptFunction>());
-	function_type.insert(function_type.begin()+entrypos,vector<uint16_t>());
-	function_point.insert(function_point.begin()+entrypos,vector<uint16_t>());
-	entry_offset.insert(entry_offset.begin()+entrypos,0);
-	entry_size.insert(entry_size.begin()+entrypos,0);
-	entry_local_var.insert(entry_local_var.begin()+entrypos,0);
-	entry_flag.insert(entry_flag.begin()+entrypos,0);
-	entry_type.insert(entry_type.begin()+entrypos,entrytype);
-	entry_function_amount.insert(entry_function_amount.begin()+entrypos,0);
-	local_data.insert(local_data.begin()+entrypos,ScriptLocalVariableSet());
+	func.insert(func.begin() + entrypos, vector<ScriptFunction>());
+	function_type.insert(function_type.begin() + entrypos, vector<uint16_t>());
+	function_point.insert(function_point.begin() + entrypos, vector<uint16_t>());
+	entry_offset.insert(entry_offset.begin() + entrypos, 0);
+	entry_size.insert(entry_size.begin() + entrypos, 0);
+	entry_local_var.insert(entry_local_var.begin() + entrypos, 0);
+	entry_flag.insert(entry_flag.begin() + entrypos, 0);
+	entry_type.insert(entry_type.begin() + entrypos, entrytype);
+	entry_function_amount.insert(entry_function_amount.begin() + entrypos, 0);
+	local_data.insert(local_data.begin() + entrypos, ScriptLocalVariableSet());
 	local_data[entrypos].allocate_amount = 0;
 	local_data[entrypos].amount = 0;
 }
 
 int ScriptDataStruct::RemoveEntry(int entrypos, int* modifiedargamount) {
-	unsigned int i,j,k,l,m;
+	unsigned int i, j, k, l, m;
 	bool isargentry;
 	int varargtype;
 	int res = 0;
-	for (i=0;i<entry_amount;i++)
-		if (i!=entrypos)
-			for (j=0;j<entry_function_amount[i];j++)
-				for (k=0;k<func[i][j].op_amount;k++)
-					if (func[i][j].op[k].opcode!=0x06 && func[i][j].op[k].opcode!=0x0B && func[i][j].op[k].opcode!=0x29)
-						for (l=0;l<func[i][j].op[k].arg_amount;l++) {
-							isargentry = !func[i][j].op[k].arg[l].is_var && HADES_STRING_SCRIPT_OPCODE[func[i][j].op[k].opcode].arg_type[l]==AT_ENTRY;
-							isargentry = isargentry || (func[i][j].op[k].opcode==0xB3 || func[i][j].op[k].opcode==0xDA) && l==2 && !func[i][j].op[k].arg[l].is_var && !func[i][j].op[k].arg[1].is_var && func[i][j].op[k].arg[1].value==150;
+	for (i = 0; i < entry_amount; i++)
+		if (i != entrypos)
+			for (j = 0; j < entry_function_amount[i]; j++)
+				for (k = 0; k < func[i][j].op_amount; k++)
+					if (func[i][j].op[k].opcode != 0x06 && func[i][j].op[k].opcode != 0x0B && func[i][j].op[k].opcode != 0x29)
+						for (l = 0; l < func[i][j].op[k].arg_amount; l++) {
+							isargentry = !func[i][j].op[k].arg[l].is_var && HADES_STRING_SCRIPT_OPCODE[func[i][j].op[k].opcode].arg_type[l] == AT_ENTRY;
+							isargentry = isargentry || (func[i][j].op[k].opcode == 0xB3 || func[i][j].op[k].opcode == 0xDA) && l == 2 && !func[i][j].op[k].arg[l].is_var && !func[i][j].op[k].arg[1].is_var && func[i][j].op[k].arg[1].value == 150;
 							if (isargentry) {
-								if (func[i][j].op[k].arg[l].value==entrypos) {
+								if (func[i][j].op[k].arg[l].value == entrypos) {
 									func[i][j].op[k].arg[l].value = 0;
 									if (modifiedargamount)
 										(*modifiedargamount)++;
-								} else if (func[i][j].op[k].arg[l].value>entrypos && func[i][j].op[k].arg[l].value<entry_amount) {
+								} else if ((int)func[i][j].op[k].arg[l].value > entrypos && func[i][j].op[k].arg[l].value < entry_amount) {
 									func[i][j].op[k].arg[l].value--;
 								}
 							} else if (func[i][j].op[k].arg[l].is_var) {
-								for (m=0;m<func[i][j].op[k].arg[l].size;m++) {
+								for (m = 0; m < func[i][j].op[k].arg[l].size; m++) {
 									varargtype = VarOpList[func[i][j].op[k].arg[l].var[m]].type;
-									if (varargtype==55) {
-										if (func[i][j].op[k].arg[l].var[m+1]==entrypos) {
-											func[i][j].op[k].arg[l].var[m+1] = 0;
+									if (varargtype == 55) {
+										if (func[i][j].op[k].arg[l].var[m + 1] == entrypos) {
+											func[i][j].op[k].arg[l].var[m + 1] = 0;
 											if (modifiedargamount)
 												(*modifiedargamount)++;
-										} else if (func[i][j].op[k].arg[l].var[m+1]>entrypos && func[i][j].op[k].arg[l].var[m+1]<entry_amount) {
-											func[i][j].op[k].arg[l].var[m+1]--;
+										} else if (func[i][j].op[k].arg[l].var[m + 1] > entrypos && func[i][j].op[k].arg[l].var[m + 1] < entry_amount) {
+											func[i][j].op[k].arg[l].var[m + 1]--;
 										}
-									} else if (varargtype==3 || varargtype==5 || (varargtype>=10 && varargtype<20)) {
+									} else if (varargtype == 3 || varargtype == 5 || (varargtype >= 10 && varargtype < 20)) {
 										m++;
-									} else if (varargtype==6 || (varargtype>=20 && varargtype<30)) {
+									} else if (varargtype == 6 || (varargtype >= 20 && varargtype < 30)) {
 										m += 2;
-									} else if (varargtype==7) {
+									} else if (varargtype == 7) {
 										m += 4;
+									} else if (varargtype == 60) {
+										m += 3;
 									}
 								}
 							}
 						}
-	for (i=0;i<entry_function_amount[entrypos];i++)
-		res += max((unsigned int)4,func[entrypos][i].length);
+	for (i = 0; i < entry_function_amount[entrypos]; i++)
+		res += max((unsigned int)4, func[entrypos][i].length);
 	res += 0x10;
 	entry_amount--;
-	func.erase(func.begin()+entrypos);
-	function_type.erase(function_type.begin()+entrypos);
-	function_point.erase(function_point.begin()+entrypos);
-	entry_offset.erase(entry_offset.begin()+entrypos);
-	entry_size.erase(entry_size.begin()+entrypos);
-	entry_local_var.erase(entry_local_var.begin()+entrypos);
-	entry_flag.erase(entry_flag.begin()+entrypos);
-	entry_type.erase(entry_type.begin()+entrypos);
-	entry_function_amount.erase(entry_function_amount.begin()+entrypos);
-	local_data.erase(local_data.begin()+entrypos);
+	func.erase(func.begin() + entrypos);
+	function_type.erase(function_type.begin() + entrypos);
+	function_point.erase(function_point.begin() + entrypos);
+	entry_offset.erase(entry_offset.begin() + entrypos);
+	entry_size.erase(entry_size.begin() + entrypos);
+	entry_local_var.erase(entry_local_var.begin() + entrypos);
+	entry_flag.erase(entry_flag.begin() + entrypos);
+	entry_type.erase(entry_type.begin() + entrypos);
+	entry_function_amount.erase(entry_function_amount.begin() + entrypos);
+	local_data.erase(local_data.begin() + entrypos);
 	return res;
 }
 
@@ -541,13 +644,14 @@ int ScriptDataStruct::ShiftArgument(int argtype, vector<pair<int, int>> shift) {
 		int c = 0;
 		for (k = 0; k < f.op_amount; k++) {
 			ScriptOperation& op = f.op[k];
+			SortedChoiceItemScriptOpcode& scriptop = HADES_STRING_SCRIPT_OPCODE[op.opcode];
 			for (m = 0; m < op.arg_amount; m++) {
 				if (op.arg[m].is_var)
 					continue;
-				if ((int)m < HADES_STRING_SCRIPT_OPCODE[op.opcode].arg_amount && HADES_STRING_SCRIPT_OPCODE[op.opcode].arg_type[m] == argtype) {
+				if ((int)m < scriptop.arg_amount && scriptop.arg_type[m] == argtype) {
 					change = false;
 					for (n = 0; n < sh.size(); n++)
-						if (op.arg[m].value >= sh[n].first) {
+						if ((int)op.arg[m].value >= sh[n].first) {
 							change = true;
 							op.arg[m].value += sh[n].second;
 						}
@@ -829,15 +933,15 @@ void ScriptDataStruct::LinkSimilarLanguageScripts() {
 }
 
 void ScriptDataStruct::ApplyDialogLink(vector<uint16_t> langtextid, vector<uint16_t> baselangtextid) {
-	unsigned int i,j,k,l,m;
-	for (i=0;i<entry_amount;i++)
-		for (j=0;j<entry_function_amount[i];j++)
-			for (k=0;k<func[i][j].op_amount;k++)
-				for (l=0;l<func[i][j].op[k].arg_amount;l++) {
+	unsigned int i, j, k, l, m;
+	for (i = 0; i < entry_amount; i++)
+		for (j = 0; j < entry_function_amount[i]; j++)
+			for (k = 0; k < func[i][j].op_amount; k++)
+				for (l = 0; l < func[i][j].op[k].arg_amount; l++) {
 					ScriptArgument& arg = func[i][j].op[k].arg[l];
-					if (arg.typesize==2 && !arg.is_signed && !arg.is_var && l<HADES_STRING_SCRIPT_OPCODE[arg.parent->opcode].arg_amount && HADES_STRING_SCRIPT_OPCODE[arg.parent->opcode].arg_type[l]==AT_TEXT)
-						for (m=0;m<baselangtextid.size();m++)
-							if (arg.value==baselangtextid[m]) {
+					if (arg.typesize == 2 && !arg.is_signed && !arg.is_var && (int)l < HADES_STRING_SCRIPT_OPCODE[arg.parent->opcode].arg_amount && HADES_STRING_SCRIPT_OPCODE[arg.parent->opcode].arg_type[l] == AT_TEXT)
+						for (m = 0; m < baselangtextid.size(); m++)
+							if (arg.value == baselangtextid[m]) {
 								arg.value = langtextid[m];
 								break;
 							}
@@ -921,29 +1025,30 @@ void ScriptDataStruct::ApplyDialogLink(vector<uint16_t> langtextid, vector<uint1
 
 
 void ScriptDataStruct::Read(fstream& f, SteamLanguage lang) {
-	if (loaded && lang==STEAM_LANGUAGE_NONE)
+	if (loaded && lang == STEAM_LANGUAGE_NONE)
 		return;
-	if (lang!=STEAM_LANGUAGE_NONE && multi_lang_script==NULL) {
+	LoadCustomScriptUtility();
+	if (lang != STEAM_LANGUAGE_NONE && multi_lang_script == NULL) {
 		multi_lang_script = new MultiLanguageScriptDataStruct();
-		for (SteamLanguage lg=0;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
+		for (SteamLanguage lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++) {
 			multi_lang_script->is_loaded[lg] = false;
 			multi_lang_script->is_modified[lg] = false;
 			multi_lang_script->base_script_lang[lg] = lg;
 		}
 	}
-	if (GetGameType()==GAME_TYPE_PSX && parent_cluster->parent_cluster && parent_cluster->parent_cluster->clus_type==CLUSTER_TYPE_WORLD_MAP && object_id>=9100) {
+	if (GetGameType() == GAME_TYPE_PSX && parent_cluster->parent_cluster && parent_cluster->parent_cluster->clus_type == CLUSTER_TYPE_WORLD_MAP && object_id >= 9100) {
 		ChunkChild::Read(f);
 	} else {
-		if (GetGameType()==GAME_TYPE_PSX) {
-			MACRO_SCRIPT_IOFUNCTION(FFIXRead,FFIXSeek,true,false,Read)
+		if (GetGameType() == GAME_TYPE_PSX) {
+			MACRO_SCRIPT_IOFUNCTION(FFIXRead, FFIXSeek, true, false, Read)
 			name.ReadFromChar(header_name);
 		} else {
-			MACRO_SCRIPT_IOFUNCTION(SteamRead,SteamSeek,true,false,Read)
+			MACRO_SCRIPT_IOFUNCTION(SteamRead, SteamSeek, true, false, Read)
 			if (!name.created)
 				name.CreateEmpty();
 		}
 		local_data.resize(entry_amount);
-		for (unsigned int i=0;i<entry_amount;i++) {
+		for (unsigned int i = 0; i < entry_amount; i++) {
 			local_data[i].allocate_amount = entry_local_var[i];
 			local_data[i].amount = 0;
 		}
@@ -951,7 +1056,7 @@ void ScriptDataStruct::Read(fstream& f, SteamLanguage lang) {
 		global_data.amount = 0;
 		current_language = lang;
 		loaded = true;
-		if (lang!=STEAM_LANGUAGE_NONE)
+		if (lang != STEAM_LANGUAGE_NONE)
 			ChangeSteamLanguage(lang); // Setup the values and pointers of multi_lang_script's language
 	}
 	loaded = true;

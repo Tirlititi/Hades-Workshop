@@ -351,5 +351,7 @@ void SetHWSGameType(GameType gt);
 
 ConfigurationSet* GetGameConfiguration();
 void SetGameConfiguration(ConfigurationSet* config);
+SaveSet* GetGameSaveSet();
+void SetGameSaveSet(SaveSet* saveset);
 
 #endif

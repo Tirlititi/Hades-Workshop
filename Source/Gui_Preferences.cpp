@@ -41,12 +41,12 @@ PreferencesDialog::PreferencesDialog(wxWindow* parent) :
 	save_lang_box[STEAM_LANGUAGE_FR] = m_steamsavefr;
 	save_lang_box[STEAM_LANGUAGE_IT] = m_steamsaveit;
 	save_lang_box[STEAM_LANGUAGE_SP] = m_steamsavesp;
-	for (i=0;i<STEAM_LANGUAGE_AMOUNT;i++)
+	for (i = 0; i < STEAM_LANGUAGE_AMOUNT; i++)
 		save_lang[i] = false;
 	save_lang[STEAM_LANGUAGE_US] = true;
-	charmap_ext.id = new uint16_t[G_N_ELEMENTS(HADES_STRING_TEXT_BLOCK_NAME)];
-	charmap_ext.letter = new wchar_t*[G_N_ELEMENTS(HADES_STRING_TEXT_BLOCK_NAME)];
-	for (i=0;i<G_N_ELEMENTS(HADES_STRING_TEXT_BLOCK_NAME);i++)
+	charmap_ext.id = new uint16_t[G_V_ELEMENTS(HADES_STRING_TEXT_BLOCK_NAME)];
+	charmap_ext.letter = new wchar_t* [G_V_ELEMENTS(HADES_STRING_TEXT_BLOCK_NAME)];
+	for (i = 0; i < G_V_ELEMENTS(HADES_STRING_TEXT_BLOCK_NAME); i++)
 		charmap_ext.letter[i] = new wchar_t[256];
 	ReadConfiguration();
 	ReadCharmaps();
@@ -893,8 +893,8 @@ bool PreferencesDialog::SaveToolCalculatorProfile(DamageCalculatorWindow* config
 		after = _(L"\n");
 	}
 	wxFile configfileout(_(PREFERENCE_FILE_NAME), wxFile::write);
-	unsigned int pchar, i;
 	wxString line;
+	int pchar, i;
 	configfileout.Write(before);
 	line = profileid + _(L"[") + profilename + _(L"]=1,");
 	for (pchar = 0; pchar < PLAYABLE_CHAR_AMOUNT; pchar++) {
@@ -991,15 +991,15 @@ bool PreferencesDialog::LoadToolCalculatorProfile(DamageCalculatorWindow* config
 		return false;
 	int basecountperchar = 27;
 	int pchar, lvl, index = 1;
-	unsigned int i;
-	while (valuelist.GetCount() > index) {
+	int i;
+	while (index < (int)valuelist.GetCount()) {
 		pchar = wxAtoi(valuelist[index++]);
 		if (pchar < 0 || pchar >= PLAYABLE_CHAR_AMOUNT)
 			return false;
-		if (valuelist.GetCount() < index + 1)
+		if ((int)valuelist.GetCount() < index + 1)
 			return false;
 		lvl = wxAtoi(valuelist[index++]);
-		if (lvl < 1 || lvl > 99 || valuelist.GetCount() < index + basecountperchar + 4 * lvl)
+		if (lvl < 1 || lvl > 99 || (int)valuelist.GetCount() < index + basecountperchar + 4 * lvl)
 			return false;
 		CalculatorPlayerStat& ps = configwindow->player_profile[pchar];
 		ps.level = lvl;
@@ -1059,7 +1059,7 @@ bool PreferencesDialog::GetToolCalculatorProfileList(wxArrayString* id, wxArrayS
 		return false;
 	cfgfield = cfgstr;
 	wxArrayString fieldlist = EnumerateFields(cfgfield);
-	for (int i = 0; i < fieldlist.GetCount(); i++) {
+	for (unsigned int i = 0; i < fieldlist.GetCount(); i++) {
 		cfgfield = cfgstr;
 		if (!SearchField(cfgfield, fieldlist[i], TmpArgs, argcount))
 			continue;

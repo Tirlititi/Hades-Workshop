@@ -310,16 +310,16 @@ void TextEditDialog::OnButtonClick(wxCommandEvent& event) {
 				if (pos>=0)
 					m_textctrl->Remove(pos,pos+1);
 			} else {
-				unsigned int i,j = 0;
-				for (i=0;j<sel || format_removed[i];i++) {
+				int i, j = 0;
+				for (i = 0; j < sel || format_removed[i]; i++) {
 					if (!format_removed[i])
 						j++;
 				}
 				format_removed[i] = true;
 				m_opcodelist->Delete(sel);
 				format_amount--;
-				if (text.code_amount+format_amount>0)
-					m_opcodelist->SetSelection(sel!=text.code_amount+format_amount ? sel : sel-1);
+				if (text.code_amount + format_amount > 0)
+					m_opcodelist->SetSelection(sel != text.code_amount + format_amount ? sel : sel - 1);
 			}
 		}
 	} else {
@@ -350,9 +350,9 @@ void TextEditDialog::OnTimer(wxTimerEvent& event) {
 TextOpcodeDialog::TextOpcodeDialog(TextEditDialog* parent) :
 	TextOpcodeWindow(parent),
 	parent_dialog(parent) {
-	for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_TEXT_OPCODE);i++)
-		if (HADES_STRING_TEXT_OPCODE[i].type>=0)
-			m_opcode->Append(_(HADES_STRING_TEXT_OPCODE[i].label),(void*)&HADES_STRING_TEXT_OPCODE[i]);
+	for (unsigned int i = 0; i < HADES_STRING_TEXT_OPCODE.size(); i++)
+		if (HADES_STRING_TEXT_OPCODE[i].type >= 0)
+			m_opcode->Append(_(HADES_STRING_TEXT_OPCODE[i].label), (void*)&HADES_STRING_TEXT_OPCODE[i]);
 }
 
 TextOpcodeDialog::~TextOpcodeDialog() {
@@ -365,18 +365,18 @@ int TextOpcodeDialog::ShowModal(int codeindex) {
 	str = _(text.str);
 	token_str = _(text.str);
 	token_str.Replace(_(L"\n"), _(TOKENIZE_SHOW_SEPARATOR));
-	token_str.Replace(_(text.opcode_wchar),_(L""));
-	if (codeindex==0) {
+	token_str.Replace(_(text.opcode_wchar), _(L""));
+	if (codeindex == 0) {
 		code[0] = 0;
 		length = 1;
 		code_pos = 0;
-		max_length = parent_dialog->max_length-text.length;
-	} else if (codeindex>0) {
+		max_length = parent_dialog->max_length - text.length;
+	} else if (codeindex > 0) {
 		codeindex--;
-		memcpy(code,text.code_arg[codeindex],text.code_arg_length[codeindex]);
+		memcpy(code, text.code_arg[codeindex], text.code_arg_length[codeindex]);
 		length = text.code_arg_length[codeindex];
-		code_pos = StrFindN(str,text.opcode_wchar,codeindex)-codeindex;
-		max_length = parent_dialog->max_length+length-text.length;
+		code_pos = StrFindN(str, text.opcode_wchar, codeindex) - codeindex;
+		max_length = parent_dialog->max_length + length - text.length;
 	} else {
 		/* TODO
 		codeindex = -codeindex-1;
@@ -385,43 +385,43 @@ int TextOpcodeDialog::ShowModal(int codeindex) {
 		code_pos = 0;
 		max_length = parent_dialog->max_length+length-text.length;*/
 	}
-	str.Replace(_(text.opcode_wchar),_(L""));
-	for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_TEXT_OPCODE);i++)
-		if (code[0]==HADES_STRING_TEXT_OPCODE[i].id) {
+	str.Replace(_(text.opcode_wchar), _(L""));
+	for (unsigned int i = 0; i < HADES_STRING_TEXT_OPCODE.size(); i++)
+		if (code[0] == HADES_STRING_TEXT_OPCODE[i].id) {
 			m_opcode->SetSelection(i);
 			SetOpcodeSelection();
-			if (HADES_STRING_TEXT_OPCODE[i].type==1) {
+			if (HADES_STRING_TEXT_OPCODE[i].type == 1) {
 				m_defaultarg11->SetValue(code[1]);
 				m_defaultarglabel11->SetLabel(HADES_STRING_TEXT_OPCODE[i].arg_help[0]);
-			} else if (HADES_STRING_TEXT_OPCODE[i].type==2) {
+			} else if (HADES_STRING_TEXT_OPCODE[i].type == 2) {
 				m_defaultarg21->SetValue(code[1]);
 				m_defaultarg22->SetValue(code[2]);
 				m_defaultarglabel21->SetLabel(HADES_STRING_TEXT_OPCODE[i].arg_help[0]);
 				m_defaultarglabel22->SetLabel(HADES_STRING_TEXT_OPCODE[i].arg_help[1]);
-			} else if (HADES_STRING_TEXT_OPCODE[i].type==3) {
+			} else if (HADES_STRING_TEXT_OPCODE[i].type == 3) {
 				m_defaultarg31->SetValue(code[1]);
 				m_defaultarg32->SetValue(code[2]);
 				m_defaultarg33->SetValue(code[3]);
 				m_defaultarglabel31->SetLabel(HADES_STRING_TEXT_OPCODE[i].arg_help[0]);
 				m_defaultarglabel32->SetLabel(HADES_STRING_TEXT_OPCODE[i].arg_help[1]);
 				m_defaultarglabel33->SetLabel(HADES_STRING_TEXT_OPCODE[i].arg_help[2]);
-			} else if (HADES_STRING_TEXT_OPCODE[i].type==4) {
+			} else if (HADES_STRING_TEXT_OPCODE[i].type == 4) {
 				m_tokenizearg->SetValue(code[1]);
 				m_tokenizearglabel->SetLabel(HADES_STRING_TEXT_OPCODE[i].arg_help[0]);
 				token_sel = 0;
 				wxClientDC dc(m_tokenizetextpanel);
 				DisplayTokens(dc);
-			} else if (HADES_STRING_TEXT_OPCODE[i].type==5) {
-				m_0x48arg1->SetValue(length-2);
+			} else if (HADES_STRING_TEXT_OPCODE[i].type == 5) {
+				m_0x48arg1->SetValue(length - 2);
 				m_0x48arglabel1->SetLabel(HADES_STRING_TEXT_OPCODE[i].arg_help[0]);
 				m_0x48sizer->Clear(true);
-				for (unsigned int j=1;j+1<length;j++) {
-					var_spin[j-1] = new wxSpinCtrl(m_opcodepanel0x48,wxID_ANY,wxEmptyString,wxDefaultPosition,wxDefaultSize,wxSP_ARROW_KEYS,0,255,0);
-					var_spin[j-1]->SetValue(code[j]);
-					m_0x48sizer->Add(var_spin[j-1],0,wxALL,1);
+				for (unsigned int j = 1; j + 1 < length; j++) {
+					var_spin[j - 1] = new wxSpinCtrl(m_opcodepanel0x48, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0);
+					var_spin[j - 1]->SetValue(code[j]);
+					m_0x48sizer->Add(var_spin[j - 1], 0, wxALL, 1);
 				}
 				init0x48 = false;
-			}/* else if (HADES_STRING_TEXT_OPCODE[i].type==TEXT_OPCODE_FORMAT_TYPE+1) {
+			}/* else if (HADES_STRING_TEXT_OPCODE[i].type == TEXT_OPCODE_FORMAT_TYPE + 1) {
 			 m_formatarg31->SetValue(code[1]);
 			 m_formatarg32->SetValue(code[2]);
 			 m_formatarg33->SetValue(code[3]);
@@ -434,9 +434,9 @@ int TextOpcodeDialog::ShowModal(int codeindex) {
 	if (init0x48) {
 		m_0x48arg1->SetValue(1);
 		m_0x48sizer->Clear(true);
-		var_spin[0] = new wxSpinCtrl(m_opcodepanel0x48,wxID_ANY,wxEmptyString,wxDefaultPosition,wxDefaultSize,wxSP_ARROW_KEYS,0,255,0);
+		var_spin[0] = new wxSpinCtrl(m_opcodepanel0x48, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0);
 		var_spin[0]->SetValue(0);
-		m_0x48sizer->Add(var_spin[0],0,wxALL,1);
+		m_0x48sizer->Add(var_spin[0], 0, wxALL, 1);
 	}
 	Layout();
 	Refresh();
@@ -460,11 +460,10 @@ void TextOpcodeDialog::DisplayTokens(wxDC& dc) {
 	static wxBitmap selectorred = InitButton(wxBITMAP(textcaretred_image));
 	dc.Clear();
 	m_tokenizetextpanel->DoPrepareDC(dc);
-	m_tokenizetextpanel->SetVirtualSize(dc.GetTextExtent(token_str)+wxSize(20,5));
-	for (unsigned int i=0;i<code[1];i++) {
-		unsigned int strp = 0, codep = 0;
-		int stri = 0;
-		while (strp<code[2*i+2]+0x100*code[2*i+3]) {
+	m_tokenizetextpanel->SetVirtualSize(dc.GetTextExtent(token_str) + wxSize(20, 5));
+	for (unsigned int i = 0; i < code[1]; i++) {
+		int stri = 0, strp = 0, codep = 0;
+		while ((int)strp < code[2 * i + 2] + 0x100 * code[2 * i + 3]) {
 			if (parent_dialog->text.raw[strp] == OPCODE_CHAR) {
 				if (code_index > 0 && codep + 1 == code_index)
 					strp += 2 * code[1];
@@ -479,36 +478,36 @@ void TextOpcodeDialog::DisplayTokens(wxDC& dc) {
 				stri++;
 			}
 		}
-		int x = 6+dc.GetTextExtent(token_str.Mid(0,stri)).GetWidth();
-		if (i==token_sel) {
-			int selw = dc.GetTextExtent(token_str.Mid(stri,token_str.find(_(TOKENIZE_SHOW_SEPARATOR),stri)-stri)).GetWidth();
-			dc.SetBrush(wxBrush(wxColour(255,0,0)));
-			dc.SetPen(wxPen(wxColour(255,0,0),0));
-			dc.DrawRectangle(x+4,7,selw,13);
-			dc.SetBrush(wxBrush(wxColour(255,255,255)));
-			dc.SetPen(wxPen(wxColour(255,255,255)));
-			dc.DrawBitmap(selectorred,x,0);
+		int x = 6 + dc.GetTextExtent(token_str.Mid(0, stri)).GetWidth();
+		if (i == token_sel) {
+			int selw = dc.GetTextExtent(token_str.Mid(stri, token_str.find(_(TOKENIZE_SHOW_SEPARATOR), stri) - stri)).GetWidth();
+			dc.SetBrush(wxBrush(wxColour(255, 0, 0)));
+			dc.SetPen(wxPen(wxColour(255, 0, 0), 0));
+			dc.DrawRectangle(x + 4, 7, selw, 13);
+			dc.SetBrush(wxBrush(wxColour(255, 255, 255)));
+			dc.SetPen(wxPen(wxColour(255, 255, 255)));
+			dc.DrawBitmap(selectorred, x, 0);
 		} else
-			dc.DrawBitmap(selectorpurple,x,0);
+			dc.DrawBitmap(selectorpurple, x, 0);
 	}
-	dc.DrawText(token_str,10,5);
+	dc.DrawText(token_str, 10, 5);
 }
 
 void TextOpcodeDialog::OnOpcodeChange(wxCommandEvent& event) {
 	int newsel = event.GetInt();
 	SetOpcodeSelection();
 	code[0] = HADES_STRING_TEXT_OPCODE[newsel].id;
-	if (HADES_STRING_TEXT_OPCODE[newsel].length>=0) {
-		length = HADES_STRING_TEXT_OPCODE[newsel].length+1;
-		if (HADES_STRING_TEXT_OPCODE[newsel].type==1) {
+	if (HADES_STRING_TEXT_OPCODE[newsel].length >= 0) {
+		length = HADES_STRING_TEXT_OPCODE[newsel].length + 1;
+		if (HADES_STRING_TEXT_OPCODE[newsel].type == 1) {
 			code[1] = m_defaultarg11->GetValue();
 			m_defaultarglabel11->SetLabel(HADES_STRING_TEXT_OPCODE[newsel].arg_help[0]);
-		} else if (HADES_STRING_TEXT_OPCODE[newsel].type==2) {
+		} else if (HADES_STRING_TEXT_OPCODE[newsel].type == 2) {
 			code[1] = m_defaultarg21->GetValue();
 			code[2] = m_defaultarg22->GetValue();
 			m_defaultarglabel21->SetLabel(HADES_STRING_TEXT_OPCODE[newsel].arg_help[0]);
 			m_defaultarglabel22->SetLabel(HADES_STRING_TEXT_OPCODE[newsel].arg_help[1]);
-		} else if (HADES_STRING_TEXT_OPCODE[newsel].type==3) {
+		} else if (HADES_STRING_TEXT_OPCODE[newsel].type == 3) {
 			code[1] = m_defaultarg31->GetValue();
 			code[2] = m_defaultarg32->GetValue();
 			code[3] = m_defaultarg33->GetValue();
@@ -516,20 +515,20 @@ void TextOpcodeDialog::OnOpcodeChange(wxCommandEvent& event) {
 			m_defaultarglabel32->SetLabel(HADES_STRING_TEXT_OPCODE[newsel].arg_help[1]);
 			m_defaultarglabel33->SetLabel(HADES_STRING_TEXT_OPCODE[newsel].arg_help[2]);
 		}
-	} else if (code[0]==0x04) {
-		length = 2+2*m_tokenizearg->GetValue();
+	} else if (code[0] == 0x04) {
+		length = 2 + 2 * m_tokenizearg->GetValue();
 		m_tokenizearglabel->SetLabel(HADES_STRING_TEXT_OPCODE[newsel].arg_help[0]);
 		token_sel = 0;
 		wxClientDC dc(m_tokenizetextpanel);
 		DisplayTokens(dc);
-	} else if (code[0]==0x48) {
-		length = 2+m_0x48arg1->GetValue();
+	} else if (code[0] == 0x48) {
+		length = 2 + m_0x48arg1->GetValue();
 		m_0x48arglabel1->SetLabel(HADES_STRING_TEXT_OPCODE[newsel].arg_help[0]);
-		for (unsigned int j=1;j+1<length;j++)
-			code[j] = var_spin[j-1]->GetValue();
-		code[length-1] = 0xFF;
+		for (unsigned int j = 1; j + 1 < length; j++)
+			code[j] = var_spin[j - 1]->GetValue();
+		code[length - 1] = 0xFF;
 	}
-	m_buttonok->Enable(length<max_length && HADES_STRING_TEXT_OPCODE[newsel].type<TEXT_OPCODE_FORMAT_TYPE);
+	m_buttonok->Enable(length < max_length&& HADES_STRING_TEXT_OPCODE[newsel].type < TEXT_OPCODE_FORMAT_TYPE);
 	Layout();
 	Refresh();
 	Fit();
@@ -621,11 +620,10 @@ void TextOpcodeDialog::OnTokenMouse(wxMouseEvent& event) {
 		m_tokenizetextpanel->DoPrepareDC(dc);
 		wxPoint mpos = event.GetLogicalPosition(dc);
 		bool movecaret = true;
-		if (event.LeftDown() && abs(mpos.y-3)<=4) {
-			for (unsigned int i=0;i<code[1];i++) {
-				unsigned int strp = 0, codep = 0;
-				int stri = 0;
-				while (strp<code[2*i+2]+0x100*code[2*i+3]) {
+		if (event.LeftDown() && abs(mpos.y - 3) <= 4) {
+			for (unsigned int i = 0; i < code[1]; i++) {
+				int stri = 0, strp = 0, codep = 0;
+				while (strp < code[2 * i + 2] + 0x100 * code[2 * i + 3]) {
 					if (parent_dialog->text.raw[strp] == OPCODE_CHAR) {
 						if (code_index > 0 && codep + 1 == code_index)
 							strp += 2 * code[1];
@@ -640,8 +638,8 @@ void TextOpcodeDialog::OnTokenMouse(wxMouseEvent& event) {
 						stri++;
 					}
 				}
-				int caretx = 10+dc.GetTextExtent(token_str.Mid(0,stri)).GetWidth();
-				if (abs(mpos.x-caretx)<=5) {
+				int caretx = 10 + dc.GetTextExtent(token_str.Mid(0, stri)).GetWidth();
+				if (abs(mpos.x - caretx) <= 5) {
 					token_sel = i;
 					movecaret = false;
 					break;
@@ -649,12 +647,12 @@ void TextOpcodeDialog::OnTokenMouse(wxMouseEvent& event) {
 			}
 		}
 		if (movecaret) {
-			unsigned int strp = 0, codep = 0;
+			int strp = 0, codep = 0;
 			unsigned int newpos;
 			int caretx = 10;
-			int minerr = abs(mpos.x-caretx);
+			int minerr = abs(mpos.x - caretx);
 			int minerrtmp;
-			for (newpos=0;newpos+1<token_str.length();newpos++) {
+			for (newpos = 0; newpos + 1 < token_str.length(); newpos++) {
 				if (parent_dialog->text.raw[strp] == OPCODE_CHAR) {
 					if (code_index > 0 && codep + 1 == code_index)
 						strp += 2 * code[1];
@@ -662,20 +660,20 @@ void TextOpcodeDialog::OnTokenMouse(wxMouseEvent& event) {
 						strp += parent_dialog->text.code_arg_length[codep];
 					codep++;
 				}
-				caretx += dc.GetTextExtent(token_str.Mid(newpos,1)).GetWidth();
-				minerrtmp = abs(mpos.x-caretx);
-				if (minerrtmp<minerr)
+				caretx += dc.GetTextExtent(token_str.Mid(newpos, 1)).GetWidth();
+				minerrtmp = abs(mpos.x - caretx);
+				if (minerrtmp < minerr)
 					minerr = minerrtmp;
 				else
 					break;
-				if (parent_dialog->text.raw[strp]==CHARMAP_A_CODECHAR || parent_dialog->text.raw[strp]==CHARMAP_B_CODECHAR || parent_dialog->text.raw[strp]==CHARMAP_EXT_CODECHAR)
+				if (parent_dialog->text.raw[strp] == CHARMAP_A_CODECHAR || parent_dialog->text.raw[strp] == CHARMAP_B_CODECHAR || parent_dialog->text.raw[strp] == CHARMAP_EXT_CODECHAR)
 					strp += 2;
 				else
 					strp++;
 			}
-			newpos = max(2 * code[1], (int)strp);
-			code[2*token_sel+2] = newpos & 0xFF;
-			code[2*token_sel+3] = (newpos >> 8) & 0xFF;
+			newpos = max(2 * code[1], strp);
+			code[2 * token_sel + 2] = newpos & 0xFF;
+			code[2 * token_sel + 3] = (newpos >> 8) & 0xFF;
 		}
 		wxClientDC dcp(m_tokenizetextpanel);
 		DisplayTokens(dcp);
@@ -798,27 +796,27 @@ void DbtnOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
 	}
 }
 void IconOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
-	if (op==26) {
-		dialog->preview_ctrl->WriteImage(InitButton(dialog->menuui->steam_atlas[0].sprite[_(L"icon_new_exclamation")],true));
-		dialog->preview_ctrl->WriteImage(InitButton(dialog->menuui->steam_atlas[0].sprite[_(L"icon_new_text")],true));
-	} else if (op==38) {
+	if (op == 26) {
+		dialog->preview_ctrl->WriteImage(InitButton(dialog->menuui->steam_atlas[0].sprite[_(L"icon_new_exclamation")], true));
+		dialog->preview_ctrl->WriteImage(InitButton(dialog->menuui->steam_atlas[0].sprite[_(L"icon_new_text")], true));
+	} else if (op == 38) {
 		int iconid = wxAtoi(args.GetNextToken());
-		unsigned int i;
-		for (i=0;i<G_N_ELEMENTS(SteamIconAtlas);i++)
-			if (iconid==SteamIconAtlas[i].id) {
-				dialog->preview_ctrl->WriteImage(InitButton(dialog->menuui->steam_atlas[0].sprite[_(SteamIconAtlas[i].name)],true));
+		int i;
+		for (i = 0; i < G_V_ELEMENTS(SteamIconAtlas); i++)
+			if (iconid == SteamIconAtlas[i].id) {
+				dialog->preview_ctrl->WriteImage(InitButton(dialog->menuui->steam_atlas[0].sprite[_(SteamIconAtlas[i].name)], true));
 				break;
 			}
-		if (i>=G_N_ELEMENTS(SteamIconAtlas)) {
+		if (i >= G_V_ELEMENTS(SteamIconAtlas)) {
 			auto it = GTE_ICONSPECIALTEXT.find(iconid);
-			if (it!=GTE_ICONSPECIALTEXT.end())
+			if (it != GTE_ICONSPECIALTEXT.end())
 				dialog->preview_ctrl->WriteText(it->second);
 		}
-	} else if (op==48) {
+	} else if (op == 48) {
 		int iconid = wxAtoi(args.GetNextToken());
-		for (unsigned int i=0;i<G_N_ELEMENTS(SteamIconAtlas);i++)
-			if (iconid==SteamIconAtlas[i].id) {
-				dialog->preview_ctrl->WriteImage(InitButton(dialog->menuui->steam_atlas[0].sprite[_(SteamIconAtlas[i].name)],true));
+		for (int i = 0; i < G_V_ELEMENTS(SteamIconAtlas); i++)
+			if (iconid == SteamIconAtlas[i].id) {
+				dialog->preview_ctrl->WriteImage(InitButton(dialog->menuui->steam_atlas[0].sprite[_(SteamIconAtlas[i].name)], true));
 				break;
 			}
 	}
@@ -1008,67 +1006,67 @@ bool TextSteamEditDialog::ProcessPreviewText() {
 	preview_ctrl->SetInsertionPointEnd();
 	UpdatePreviewStyle();
 	preview_ctrl->BeginStyle(preview_style);
-	while (str_pos<len && text.str[str_pos]==L'[') {
+	while (str_pos < len && text.str[str_pos] == L'[') {
 		wstring::size_type opcodelen;
 		str_pos++;
-		for (opcodelen=0;str_pos+opcodelen<len && text.str[str_pos+opcodelen]!=L'\n';opcodelen++)
-			if (text.str[str_pos+opcodelen]==L']')
+		for (opcodelen = 0; str_pos + opcodelen < len && text.str[str_pos + opcodelen] != L'\n'; opcodelen++)
+			if (text.str[str_pos + opcodelen] == L']')
 				break;
-		if (str_pos+opcodelen<len && text.str[str_pos+opcodelen]!=L'\n') {
-			wxStringTokenizer opcodeargs(_(text.str.substr(str_pos,opcodelen)),_(L"=,"));
+		if (str_pos + opcodelen < len && text.str[str_pos + opcodelen] != L'\n') {
+			wxStringTokenizer opcodeargs(_(text.str.substr(str_pos, opcodelen)), _(L"=,"));
 			wxString opcode = opcodeargs.GetNextToken();
 			bool iscolor = false;
 			unsigned int i;
-			str_pos += opcodelen+1;
-			if (opcodeargs.CountTokens()==0) {
-				if (opcode.Len()==6 || opcode.Len()==8) {
-					for (i=0;i<opcode.Len();i++)
-						if (!(opcode[i]>=L'0' && opcode[i]<=L'9') && !(opcode[i]>=L'A' && opcode[i]<=L'F') && !(opcode[i]>=L'a' && opcode[i]<=L'f'))
+			str_pos += opcodelen + 1;
+			if (opcodeargs.CountTokens() == 0) {
+				if (opcode.Len() == 6 || opcode.Len() == 8) {
+					for (i = 0; i < opcode.Len(); i++)
+						if (!(opcode[i] >= L'0' && opcode[i] <= L'9') && !(opcode[i] >= L'A' && opcode[i] <= L'F') && !(opcode[i] >= L'a' && opcode[i] <= L'f'))
 							break;
-					iscolor = i>=opcode.Len();
+					iscolor = i >= opcode.Len();
 					if (iscolor) {
 						stringstream hexa;
-						unsigned char r,g,b;
+						unsigned char r, g, b;
 						unsigned char a = 0xFF;
-						r = wxHexToDec(opcode.Mid(0,2));
-						g = wxHexToDec(opcode.Mid(2,2));
-						b = wxHexToDec(opcode.Mid(4,2));
-						if (opcode.Len()==8)
-							a = wxHexToDec(opcode.Mid(6,2));
-						preview_style.SetTextColour(wxColour(r,g,b,a));
+						r = wxHexToDec(opcode.Mid(0, 2));
+						g = wxHexToDec(opcode.Mid(2, 2));
+						b = wxHexToDec(opcode.Mid(4, 2));
+						if (opcode.Len() == 8)
+							a = wxHexToDec(opcode.Mid(6, 2));
+						preview_style.SetTextColour(wxColour(r, g, b, a));
 						preview_ctrl->BeginStyle(preview_style);
 					}
 				}
 			}
 			if (!iscolor)
-				for (i=0;i<G_N_ELEMENTS(HADES_STRING_TEXT_STEAM_OPCODE);i++)
+				for (i = 0; i < HADES_STRING_TEXT_STEAM_OPCODE.size(); i++)
 					if (opcode.IsSameAs(_(HADES_STRING_TEXT_STEAM_OPCODE[i].id))) {
-						TextSteamOp[i](this,i,opcodeargs);
+						TextSteamOp[i](this, i, opcodeargs);
 						break;
-					} else if (i>=TEXT_STEAM_OPCODE_CLOSING_TAG && opcode.IsSameAs(_(L"/")+_(HADES_STRING_TEXT_STEAM_OPCODE[i].id))) {
-						TextSteamOp[i](this,i-TEXT_STEAM_OPCODE_CLOSING_TAG+G_N_ELEMENTS(HADES_STRING_TEXT_STEAM_OPCODE),opcodeargs);
+					} else if (i >= TEXT_STEAM_OPCODE_CLOSING_TAG && opcode.IsSameAs(_(L"/") + _(HADES_STRING_TEXT_STEAM_OPCODE[i].id))) {
+						TextSteamOp[i](this, i - TEXT_STEAM_OPCODE_CLOSING_TAG + G_N_ELEMENTS(HADES_STRING_TEXT_STEAM_OPCODE), opcodeargs);
 						break;
 					}
-			printnextchar = !must_reset_timer;
+					printnextchar = !must_reset_timer;
 		} else
-			preview_ctrl->WriteText(_(text.str[str_pos-1]));
+			preview_ctrl->WriteText(_(text.str[str_pos - 1]));
 	}
-	if (str_pos>=len) {
+	if (str_pos >= len) {
 		if (!must_reset_timer)
 			timer->Stop();
 		return false;
 	}
 	if (printnextchar) {
 		preview_ctrl->WriteText(_(text.str[str_pos++]));
-		if (text.str[str_pos-1]==L'\n') {
+		if (text.str[str_pos - 1] == L'\n') {
 			preview_align = wxTEXT_ALIGNMENT_LEFT;
 			line_num++;
 		}
 	}
 	preview_ctrl->EndAllStyles();
-	if (str_pos>=len && !must_reset_timer)
+	if (str_pos >= len && !must_reset_timer)
 		timer->Stop();
-	return str_pos<len;
+	return str_pos < len;
 }
 
 void TextSteamEditDialog::PreviewText() {
@@ -1110,78 +1108,78 @@ void TextSteamEditDialog::CalculateBestSize(SteamLanguage lang) {
 	unsigned int i, j, multilangindex;
 	bool addwdth = false;
 	wxString textstr;
-	if (lang==GetSteamLanguage()) {
+	if (lang == GetSteamLanguage()) {
 		textstr = m_textctrl->GetValue();
 	} else {
-		for (i=0;i+1<STEAM_LANGUAGE_AMOUNT;i++)
-			if (multilang[i]==lang) {
+		for (i = 0; i + 1 < STEAM_LANGUAGE_AMOUNT; i++)
+			if (multilang[i] == lang) {
 				multilangindex = i;
 				break;
 			}
-		if (i+1>=STEAM_LANGUAGE_AMOUNT)
+		if (i + 1 >= STEAM_LANGUAGE_AMOUNT)
 			return;
 		textstr = multilangctrl[multilangindex]->GetValue();
 	}
 	unsigned int linenum = 0, linecount = 0;
-	vector<uint16_t> sizex(1,0);
+	vector<uint16_t> sizex(1, 0);
 	vector< vector<int> > sizedop(1);
 	uint16_t currentsizex = 0;
 	size_t opcodelen;
 	// DEBUG: Arial font size is not a very good approximation of FF9 font, especially for japanese characters
-	wxFont textfont( 10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, _(L"Arial") );
+	wxFont textfont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, _(L"Arial"));
 	wxClientDC dc(this);
 	dc.SetFont(textfont);
-	for (i=0;i<textstr.Len();i++) {
-		if (textstr[i]==L'[') {
+	for (i = 0; i < textstr.Len(); i++) {
+		if (textstr[i] == L'[') {
 			i++;
-			for (opcodelen=0;i+opcodelen<textstr.Len();opcodelen++)
-				if (textstr[i+opcodelen]==L']' || textstr[i+opcodelen]==L'\n')
+			for (opcodelen = 0; i + opcodelen < textstr.Len(); opcodelen++)
+				if (textstr[i + opcodelen] == L']' || textstr[i + opcodelen] == L'\n')
 					break;
-			if (i+opcodelen<textstr.Len() && textstr[i+opcodelen]==L']') {
-				wxStringTokenizer opcodeargs(textstr.Mid(i,opcodelen),_(L"=,"));
+			if (i + opcodelen < textstr.Len() && textstr[i + opcodelen] == L']') {
+				wxStringTokenizer opcodeargs(textstr.Mid(i, opcodelen), _(L"=,"));
 				wxString opcode = opcodeargs.GetNextToken();
 				i += opcodelen;
-				for (j=0;j<G_N_ELEMENTS(HADES_STRING_TEXT_STEAM_OPCODE);j++)
+				for (j = 0; j < HADES_STRING_TEXT_STEAM_OPCODE.size(); j++)
 					if (opcode.IsSameAs(_(HADES_STRING_TEXT_STEAM_OPCODE[j].id))) {
-						if (j>=8 && j<=19) {
-							sizedop[linenum].push_back(8+j);
-						} else if (j==22 || j==25 || j==50 || j==51) {
-							// ToDo: BTN
-						} else if (j==26) {
+						if (j >= 8 && j <= 19) {
+							sizedop[linenum].push_back(8 + j);
+						} else if (j == 22 || j == 25 || j == 50 || j == 51) {
+							// TODO: BTN
+						} else if (j == 26) {
 							sizedop[linenum].push_back(112);
-						} else if (j==27 || j==34) {
+						} else if (j == 27 || j == 34) {
 							currentsizex += wxAtoi(opcodeargs.GetNextToken());
-						} else if (j==29) {
+						} else if (j == 29) {
 							opcodeargs.GetNextToken();
 							sizedop[linenum].push_back(6);
 							sizedop[linenum].push_back(wxAtoi(opcodeargs.GetNextToken()));
-						} else if (j==30) {
+						} else if (j == 30) {
 							sizedop[linenum].push_back(14);
 							sizedop[linenum].push_back(wxAtoi(opcodeargs.GetNextToken()));
-						} else if (j==32) {
+						} else if (j == 32) {
 							sizedop[linenum].push_back(64);
 							sizedop[linenum].push_back(wxAtoi(opcodeargs.GetNextToken()));
-						} else if (j==35) {
-							sizex[linenum] = max(sizex[linenum],currentsizex);
+						} else if (j == 35) {
+							sizex[linenum] = max(sizex[linenum], currentsizex);
 							currentsizex = wxAtoi(opcodeargs.GetNextToken());
-						} else if (j==38 || j==48) {
-							// ToDo: ICON/MOBI
-						} else if (j==45) {
+						} else if (j == 38 || j == 48) {
+							// TODO: ICON/MOBI
+						} else if (j == 45) {
 							addwdth = true;
-						} else if (j==47) {
-							sizex[linenum] = max(sizex[linenum],currentsizex);
+						} else if (j == 47) {
+							sizex[linenum] = max(sizex[linenum], currentsizex);
 							currentsizex = 0;
 							linenum = 0;
-						} else if (j==53) {
+						} else if (j == 53) {
 							textfont.SetWeight(wxFONTWEIGHT_BOLD);
-						} else if (j==54) {
+						} else if (j == 54) {
 							textfont.SetStyle(wxFONTSTYLE_ITALIC);
 						}
 						break;
-					} else if (j>=TEXT_STEAM_OPCODE_CLOSING_TAG && opcode.IsSameAs(_(L"/")+_(HADES_STRING_TEXT_STEAM_OPCODE[j].id))) {
-						if (j==53)
+					} else if (j >= TEXT_STEAM_OPCODE_CLOSING_TAG && opcode.IsSameAs(_(L"/") + _(HADES_STRING_TEXT_STEAM_OPCODE[j].id))) {
+						if (j == 53)
 							textfont.SetWeight(wxFONTWEIGHT_NORMAL);
-						else if (j==54)
+						else if (j == 54)
 							textfont.SetStyle(wxFONTSTYLE_NORMAL);
 						break;
 					}
@@ -1189,61 +1187,61 @@ void TextSteamEditDialog::CalculateBestSize(SteamLanguage lang) {
 				i--;
 				currentsizex += dc.GetTextExtent(textstr[i]).GetWidth();
 			}
-		} else if (textstr[i]==L'\n') {
-			sizex[linenum] = max(sizex[linenum],currentsizex);
+		} else if (textstr[i] == L'\n') {
+			sizex[linenum] = max(sizex[linenum], currentsizex);
 			currentsizex = 0;
 			linenum++;
-			linecount = max(linenum,linecount);
-			sizex.resize(linecount+1,0);
-			sizedop.resize(linecount+1);
+			linecount = max(linenum, linecount);
+			sizex.resize(linecount + 1, 0);
+			sizedop.resize(linecount + 1);
 		} else {
 			currentsizex += dc.GetTextExtent(textstr[i]).GetWidth();
 		}
 	}
-	sizex[linenum] = max(sizex[linenum],currentsizex);
-	linecount = max(linenum+1,linecount);
+	sizex[linenum] = max(sizex[linenum], currentsizex);
+	linecount = max(linenum + 1, linecount);
 	size_t posstr;
-	if (textstr.Len()>=5 && textstr.Mid(0,5).IsSameAs(_(L"[STRT"))) {
+	if (textstr.Len() >= 5 && textstr.Mid(0, 5).IsSameAs(_(L"[STRT"))) {
 		size_t endofsizeop = 5;
-		for (posstr=5;posstr<textstr.Len();posstr++)
-			if (textstr[posstr]==L']') {
-				endofsizeop = posstr+1;
+		for (posstr = 5; posstr < textstr.Len(); posstr++)
+			if (textstr[posstr] == L']') {
+				endofsizeop = posstr + 1;
 				break;
 			}
 		textstr = textstr.Mid(endofsizeop);
 	}
 	if (addwdth) {
-		for (i=0;i+5<textstr.Len();i++)
-			if (textstr.Mid(i,5).IsSameAs(_(L"[WDTH"))) {
+		for (i = 0; i + 5 < textstr.Len(); i++)
+			if (textstr.Mid(i, 5).IsSameAs(_(L"[WDTH"))) {
 				size_t endofsizeop = 5;
-				for (posstr=i+5;posstr<textstr.Len();posstr++)
-					if (textstr[posstr]==L']') {
-						endofsizeop = posstr+1;
+				for (posstr = i + 5; posstr < textstr.Len(); posstr++)
+					if (textstr[posstr] == L']') {
+						endofsizeop = posstr + 1;
 						break;
 					}
-				textstr = textstr.Mid(0,i)+textstr.Mid(endofsizeop);
+				textstr = textstr.Mid(0, i) + textstr.Mid(endofsizeop);
 				break;
 			}
 		wxString wdthcode = _(L"[WDTH=");
 		bool emptywdth = true;
-		for (linenum=0;linenum<linecount;linenum++)
-			if (sizedop[linenum].size()>0) {
+		for (linenum = 0; linenum < linecount; linenum++)
+			if (sizedop[linenum].size() > 0) {
 				if (emptywdth)
 					emptywdth = false;
 				else
 					wdthcode += _(L",");
-				wdthcode += wxString::Format(wxT("%d,%d,"),linenum,sizex[linenum]);
-				for (i=0;i<sizedop[linenum].size();i++)
-					wdthcode += wxString::Format(wxT("%d,"),sizedop[linenum][i]);
+				wdthcode += wxString::Format(wxT("%d,%d,"), linenum, sizex[linenum]);
+				for (i = 0; i < sizedop[linenum].size(); i++)
+					wdthcode += wxString::Format(wxT("%d,"), sizedop[linenum][i]);
 				wdthcode += _(L"-1");
 			}
 		if (!emptywdth)
-			textstr = wdthcode+_(L"]")+textstr;
+			textstr = wdthcode + _(L"]") + textstr;
 	}
-	for (linenum=0;linenum<linecount;linenum++)
-		currentsizex = max(currentsizex,sizex[linenum]);
-	textstr.Printf(wxT("[STRT=%d,%d]%s"),currentsizex,linecount,textstr); // DEBUG: If the x size is too small, the game computes the right size anyway...
-	if (lang==GetSteamLanguage())
+	for (linenum = 0; linenum < linecount; linenum++)
+		currentsizex = max(currentsizex, sizex[linenum]);
+	textstr.Printf(wxT("[STRT=%d,%d]%s"), currentsizex, linecount, textstr); // DEBUG: If the x size is too small, the game computes the right size anyway...
+	if (lang == GetSteamLanguage())
 		m_textctrl->SetValue(textstr);
 	else
 		multilangctrl[multilangindex]->SetValue(textstr);
@@ -1337,12 +1335,12 @@ void TextSteamEditDialog::OnTimer(wxTimerEvent& event) {
 	ProcessPreviewText();
 }
 
-TextSteamHelpDialog::TextSteamHelpDialog(TextSteamEditDialog * p) :
+TextSteamHelpDialog::TextSteamHelpDialog(TextSteamEditDialog* p) :
 	TextSteamHelpWindow(p),
 	parent(p) {
 	wxArrayString funclist;
-	funclist.Alloc(G_N_ELEMENTS(HADES_STRING_TEXT_STEAM_OPCODE));
-	for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_TEXT_STEAM_OPCODE);i++)
+	funclist.Alloc(HADES_STRING_TEXT_STEAM_OPCODE.size());
+	for (unsigned int i = 0; i < HADES_STRING_TEXT_STEAM_OPCODE.size(); i++)
 		funclist.Add(_(HADES_STRING_TEXT_STEAM_OPCODE[i].id));
 	m_listfunction->Append(funclist);
 }
@@ -1357,13 +1355,13 @@ void TextSteamHelpDialog::OnListClick(wxCommandEvent& event) {
 
 void TextSteamHelpDialog::OnListDoubleClick(wxCommandEvent& event) {
 	SortedChoiceItemTextSteamOpcode& opitem = HADES_STRING_TEXT_STEAM_OPCODE[event.GetSelection()];
-	wxString opstr = _(L"[")+_(opitem.id);
-	if (opitem.arg_amount==-1) {
+	wxString opstr = _(L"[") + _(opitem.id);
+	if (opitem.arg_amount == -1) {
 		if (_(L"WDTH").IsSameAs(opitem.id))
 			opstr += _(L"=0,0,-1]");
 		else
 			opstr += _(L"]");
-	} else if (opitem.arg_amount==0) {
+	} else if (opitem.arg_amount == 0) {
 		opstr += _(L"]");
 	} else {
 		opstr += _(L"=");
@@ -1374,12 +1372,12 @@ void TextSteamHelpDialog::OnListDoubleClick(wxCommandEvent& event) {
 		else if (_(L"url").IsSameAs(opitem.id))
 			opstr += _(L"http://www.example.com");
 		else
-			for (unsigned int i=0;i<opitem.arg_amount;i++)
-				opstr += (i>0 ? _(L",0") : _(L"0"));
+			for (int i = 0; i < opitem.arg_amount; i++)
+				opstr += (i > 0 ? _(L",0") : _(L"0"));
 		opstr += _(L"]");
 	}
-	if (event.GetSelection()>=TEXT_STEAM_OPCODE_CLOSING_TAG) {
-		opstr += _(L"[/")+_(opitem.id)+_(L"]");
+	if (event.GetSelection() >= TEXT_STEAM_OPCODE_CLOSING_TAG) {
+		opstr += _(L"[/") + _(opitem.id) + _(L"]");
 	}
 	parent->m_textctrl->WriteText(opstr);
 }

@@ -318,6 +318,10 @@ void CommandDataSet::GenerateCSharp(vector<string>& buffer) {
 }
 
 wxString CSV_CommandConstructor(CommandDataStruct& cm, int index) {
+	if ((cm.id == 35 || cm.id == 37 || cm.id == 39) && cm.panel == COMMAND_PANEL_SPELL && cm.spell_amount == 0)
+		return wxEmptyString;
+	if (cm.id == 47 && cm.panel == COMMAND_PANEL_NONE && (cm.spell_list.size() == 0 || cm.spell_list[0] == 0))
+		return wxEmptyString;
 	wxString csventry = wxString::Format(wxT("%d;%d;%d;"), cm.id, cm.panel, cm.spell_list.size() > 0 ? cm.spell_list[0] : 0);
 	if (cm.panel == COMMAND_PANEL_SPELL)
 		csventry += ConcatenateStrings<int>(", ", cm.spell_list, static_cast<string(*)(int)>(&to_string));

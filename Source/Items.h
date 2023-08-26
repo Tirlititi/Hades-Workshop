@@ -28,6 +28,7 @@ using namespace std;
 #define ITEM_TYPE_HEAD			0x20
 #define ITEM_TYPE_WRIST			0x40
 #define ITEM_TYPE_WEAPON		0x80
+#define ITEM_TYPE_ANY_EQUIP		0xF8
 
 #define ITEM_POSITION_ABSOLUTE	0
 #define ITEM_POSITION_BEFORE	1
@@ -129,6 +130,8 @@ public:
 	int16_t offset1;
 	int16_t offset2;
 	int hit_sfx;
+
+	vector<wstring> texture_names;
 
 	void InitializeDefault(int dataid);
 

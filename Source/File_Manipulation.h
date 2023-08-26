@@ -7,6 +7,7 @@ struct FF9String;
 #include <inttypes.h>
 #include <fstream>
 #include <string>
+#include <vector>
 using namespace std;
 
 #define FILE_IGNORE_DATA_FIRST -0x118
@@ -35,39 +36,9 @@ void SetSteamLanguage(SteamLanguage sl);
 SteamLanguage GetHWSSteamLanguage();
 void SetHWSSteamLanguage(SteamLanguage gt);
 
-static wchar_t DEFAULT_CHARMAP[256] = {	L'0',L'1',L'2',L'3',L'4',L'5',L'6',L'7',L'8',L'9',L'+',L'-',L'=',L'*',L'%',L' ',
-										L'A',L'B',L'C',L'D',L'E',L'F',L'G',L'H',L'I',L'J',L'K',L'L',L'M',L'N',L'O',L'P',
-										L'Q',L'R',L'S',L'T',L'U',L'V',L'W',L'X',L'Y',L'Z',L'(',L'!',L'?',L'“',L':',L'.',
-										L'a',L'b',L'c',L'd',L'e',L'f',L'g',L'h',L'i',L'j',L'k',L'l',L'm',L'n',L'o',L'p',
-										L'q',L'r',L's',L't',L'u',L'v',L'w',L'x',L'y',L'z',L')',L',',L'/',L'+',L'~',L'&',
-										L'Á',L'À',L'Â',L'Ä',L'É',L'È',L'Ê',L'Ë',L'Í',L'Ì',L'Î',L'Ï',L'Ó',L'Ò',L'Ô',L'Ö',
-										L'Ú',L'Ù',L'Û',L'Ü',L'á',L'à',L'â',L'ä',L'é',L'è',L'ê',L'ë',L'í',L'ì',L'î',L'ï',
-										L'ó',L'ò',L'ô',L'ö',L'ú',L'ù',L'û',L'ü',L'Ç',L'Ñ',L'ç',L'ñ',L'Œ',L'ß',L'\'',L'”',
-										L'_',L'}',L'{',L'∴',L'∵',L'♪',L'→',L'∈',L'×',L'♦',L'§',L'<',L'>',L'←',L'∋',L'↑',
-										L'△',L'□',L'∞',L'♥',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
-										L'?',L'«',L'»',L'↓',L'―',L'°',L'★',L'♂',L'♀',L'☺',L'?',L'„',L'‘',L'#',L'※',L';',
-										L'¡',L'¿',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
-										L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
-										L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
-										L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
-										L'?',L'?',L'?',L'?',L'?',L'?',L' ',L'\n',L'\t',L'µ',L' ',L'?',L' ',L' ',L'¶',L'\0' };
-
-static wchar_t DEFAULT_SECONDARY_CHARMAP[256] = {	L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
-													L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
-													L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
-													L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
-													L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
-													L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
-													L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
-													L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
-													L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
-													L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
-													L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
-													L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
-													L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
-													L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
-													L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
-													L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?' };
+#define CHARMAP_TABLE_SIZE 256
+extern vector<wchar_t> DEFAULT_CHARMAP;
+extern vector<wchar_t> DEFAULT_SECONDARY_CHARMAP;
 
 struct ExtendedCharmap {
 	uint16_t amount;

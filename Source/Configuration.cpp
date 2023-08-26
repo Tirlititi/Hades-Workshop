@@ -45,6 +45,7 @@ SaveSet::SaveSet(SpellDataSet* sp, CommandDataSet* cmd, EnemyDataSet* enmy, Shop
 GameType TheGameType;
 GameType TheHWSGameType;
 ConfigurationSet* TheGameConfiguration = NULL;
+SaveSet* TheGameSaveSet = NULL;
 
 GameType GetGameType() {
 	return TheGameType;
@@ -63,6 +64,12 @@ ConfigurationSet* GetGameConfiguration() {
 }
 void SetGameConfiguration(ConfigurationSet* config) {
 	TheGameConfiguration = config;
+}
+SaveSet* GetGameSaveSet() {
+	return TheGameSaveSet;
+}
+void SetGameSaveSet(SaveSet* saveset) {
+	TheGameSaveSet = saveset;
 }
 
 //==================================================//
@@ -593,9 +600,9 @@ int FindConfiguration(string filepath, ConfigurationSet& dest) {
 	// (SPECIAL TEXTS)
 	//-- Find special text offsets all accross both the SLES and the IMG files
 	f.seekg(SLES_HEADER);
-	maxpos = IMG_HEADER_OFFSET+metafirstdatasector[1]*FILE_IGNORE_DATA_PERIOD;
-	uint16_t stspacearray[G_N_ELEMENTS(HADES_STRING_SPECIAL_TEXT_BLOCK)];
-	uint32_t stoffarray[G_N_ELEMENTS(HADES_STRING_SPECIAL_TEXT_BLOCK)];
+	maxpos = IMG_HEADER_OFFSET + metafirstdatasector[1] * FILE_IGNORE_DATA_PERIOD;
+	vector<uint16_t> stspacearray(G_V_ELEMENTS(HADES_STRING_SPECIAL_TEXT_BLOCK));
+	vector<uint32_t> stoffarray(G_V_ELEMENTS(HADES_STRING_SPECIAL_TEXT_BLOCK));
 	unsigned int textfoundcounter = 0, stcounter = 0;
 	uint32_t sttxtoff;
 	while (f.tellg()<maxpos) {
@@ -641,7 +648,7 @@ int FindConfiguration(string filepath, ConfigurationSet& dest) {
 			}
 		}
 	}
-	if (stcounter!=G_N_ELEMENTS(HADES_STRING_SPECIAL_TEXT_BLOCK))
+	if (stcounter != G_V_ELEMENTS(HADES_STRING_SPECIAL_TEXT_BLOCK))
 		return -2;
 	dest.spetext_amount = stcounter;
 	dest.spetext_offset = new uint32_t[stcounter];
@@ -1099,11 +1106,11 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	unityarchive.seekg(dest.meta_script.GetFileOffset("",142));
 	dest.bundle_script.Load(unityarchive);
 	unityarchive.close();
-	dest.enmy_amount = G_N_ELEMENTS(SteamBattleScript);
+	dest.enmy_amount = G_V_ELEMENTS(SteamBattleScript);
 	dest.enmy_stat_file = new int32_t[dest.enmy_amount];
 	dest.enmy_battle_file = new int32_t[dest.enmy_amount];
 	dest.enmy_id = new uint16_t[dest.enmy_amount];
-	dest.field_amount = G_N_ELEMENTS(SteamFieldScript);
+	dest.field_amount = G_V_ELEMENTS(SteamFieldScript);
 	dest.field_role_file = new int32_t[dest.field_amount];
 	dest.field_preload_file = new int32_t[dest.field_amount];
 	dest.field_walkmesh_file = new int32_t[dest.field_amount];
@@ -1170,11 +1177,11 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	}
 	
 	// Battles
-	string battlenamelower[G_N_ELEMENTS(SteamBattleScript)];
-	for (i=0;i<G_N_ELEMENTS(SteamBattleScript);i++) {
+	vector<string> battlenamelower(G_V_ELEMENTS(SteamBattleScript));
+	for (i = 0; i < G_V_ELEMENTS(SteamBattleScript); i++) {
 		dest.enmy_id[i] = SteamBattleScript[i].battle_id;
 		battlenamelower[i] = SteamBattleScript[i].name;
-		transform(battlenamelower[i].begin(),battlenamelower[i].end(),battlenamelower[i].begin(),::tolower);
+		transform(battlenamelower[i].begin(), battlenamelower[i].end(), battlenamelower[i].begin(), ::tolower);
 	}
 	for (i=0;i<dest.enmy_amount;i++) {
 		
@@ -1201,13 +1208,13 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	
 	// Fields
 	dest.field_title_info = dest.meta_res.GetFileIndex("mapLocalizeAreaTitle.txt");
-	string fieldnamelower[G_N_ELEMENTS(SteamFieldScript)];
-	string fieldbacknamelower[G_N_ELEMENTS(SteamFieldScript)];
-	for (i=0;i<G_N_ELEMENTS(SteamFieldScript);i++) {
+	vector<string> fieldnamelower(G_V_ELEMENTS(SteamFieldScript));
+	vector<string> fieldbacknamelower(G_V_ELEMENTS(SteamFieldScript));
+	for (i = 0; i < G_V_ELEMENTS(SteamFieldScript); i++) {
 		fieldnamelower[i] = SteamFieldScript[i].script_name;
 		fieldbacknamelower[i] = SteamFieldScript[i].background_name;
-		transform(fieldnamelower[i].begin(),fieldnamelower[i].end(),fieldnamelower[i].begin(),::tolower);
-		transform(fieldbacknamelower[i].begin(),fieldbacknamelower[i].end(),fieldbacknamelower[i].begin(),::tolower);
+		transform(fieldnamelower[i].begin(), fieldnamelower[i].end(), fieldnamelower[i].begin(), ::tolower);
+		transform(fieldbacknamelower[i].begin(), fieldbacknamelower[i].end(), fieldbacknamelower[i].begin(), ::tolower);
 	}
 	for (i=0;i<dest.field_amount;i++) {
 		dest.field_id[i] = SteamFieldScript[i].script_id;
@@ -1341,15 +1348,15 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 		MACRO_CONFIG_SEARCHOFFTXT_STEAM("/etc/ff9choco.mes",spetext_chocomenu_file[i])
 		MACRO_CONFIG_SEARCHOFFTXT_STEAM("/etc/card.mes",spetext_cardrank_file[i])
 		MACRO_CONFIG_SEARCHOFFTXT_STEAM("/etc/minigame.mes",spetext_tetramaster_file[i])
-		for (j=0;j<G_N_ELEMENTS(SteamBattleScript);j++) {
+		for (j = 0; j < G_V_ELEMENTS(SteamBattleScript); j++) {
 			stringstream bnamestr;
 			bnamestr << "/battle/" << (unsigned int)SteamBattleScript[j].battle_id << ".mes";
-			MACRO_CONFIG_SEARCHOFFTXT_STEAM(bnamestr.str(),enmy_text_file[i][j])
+			MACRO_CONFIG_SEARCHOFFTXT_STEAM(bnamestr.str(), enmy_text_file[i][j])
 		}
-		for (j=0;j<dest.text_amount;j++) {
+		for (j = 0; j < dest.text_amount; j++) {
 			stringstream fnamestr;
 			fnamestr << "/field/" << textfilenametmp[j] << ".mes";
-			MACRO_CONFIG_SEARCHOFFTXT_STEAM(fnamestr.str(),text_file[i][j])
+			MACRO_CONFIG_SEARCHOFFTXT_STEAM(fnamestr.str(), text_file[i][j])
 		}
 	}
 	dest.card_stat_file = dest.meta_res.GetFileIndex("MINIGAME_CARD_DATA_ADDRESS");
@@ -1591,7 +1598,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			remove(fname.c_str());
 			fname = dirassets + HADES_STRING_CSV_SUPPORT_FILE;
 			remove(fname.c_str());
-			for (i = 0; i < G_N_ELEMENTS(HADES_STRING_CSV_STATABIL_FILE); i++) {
+			for (i = 0; i < HADES_STRING_CSV_STATABIL_FILE.size(); i++) {
 				fname = dirassets + HADES_STRING_CSV_STATABIL_FILE[i];
 				remove(fname.c_str());
 			}
@@ -1616,6 +1623,8 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			fname = dirassets + HADES_STRING_CSV_SYNTHESIS_FILE;
 			remove(fname.c_str());
 			fname = dirassets + HADES_STRING_CSV_WEAPON_FILE;
+			remove(fname.c_str());
+			fname = dirassets + HADES_STRING_EQUIP_PATCH_FILE;
 			remove(fname.c_str());
 			// Keep the old file and let EnemyDataSet::GenerateCSV patch its content by modifying the "BattleMapModel" lines only
 //			fname = destfolder + HADES_STRING_DICTIONARY_PATCH_FILE;
@@ -2302,7 +2311,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			MainFrame::MakeDirForFile(fname);
 			fname = dirassets + HADES_STRING_CSV_STATLEVEL_FILE;
 			MainFrame::MakeDirForFile(fname);
-			for (i=0; i<G_N_ELEMENTS(HADES_STRING_CSV_STATABIL_FILE); i++) {
+			for (i = 0; i < HADES_STRING_CSV_STATABIL_FILE.size(); i++) {
 				fname = dirassets + HADES_STRING_CSV_STATABIL_FILE[i];
 				MainFrame::MakeDirForFile(fname);
 			}
@@ -2313,7 +2322,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			MainFrame::MakeDirForFile(fname);
 			if (!saveset.partyspecialset->GenerateCSV(dirassets)) return 3;
 		}
-		if (section[DATA_SECTION_ENMY] && saveset.enemyset->modified_battle_scene_amount>0) {
+		if (section[DATA_SECTION_ENMY] && saveset.enemyset->modified_battle_scene_amount > 0) {
 //			fname = destfolder + HADES_STRING_DICTIONARY_PATCH_FILE;
 //			MainFrame::MakeDirForFile(fname);
 			if (!saveset.enemyset->GenerateCSV(destfolder)) return 3;

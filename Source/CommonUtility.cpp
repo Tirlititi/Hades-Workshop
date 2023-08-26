@@ -112,6 +112,23 @@ int InsertAtId(vector<T>& base, T& newobj, int newobjid) {
 	return 0;
 }
 
+template<>
+int InsertAtId<int>(vector<int>& base, int& newobj, int newobjid) {
+	int index;
+	for (index = base.size() - 1; index >= 0; index--) {
+		if (base[index] == newobjid) {
+			return -1;
+		} else if (base[index] < newobjid) {
+			base.insert(base.begin() + index + 1, newobj);
+			base[index + 1] = newobjid;
+			return index + 1;
+		}
+	}
+	base.insert(base.begin(), newobj);
+	base[0] = newobjid;
+	return 0;
+}
+
 template<typename T>
 int PrepareHWSFlexibleList(fstream& ffbin, vector<T>& objlist, vector<T>& nonmodifiedlist, vector<int>& insertedindices) {
 	vector<int> objid;
@@ -336,6 +353,7 @@ MACRO_INSTANTIATE_GetModifiedSteamTexts(KeyItemDataStruct)
 MACRO_INSTANTIATE_GetModifiedSteamTexts(SupportDataStruct)
 MACRO_INSTANTIATE_ConcatenateStrings(int)
 MACRO_INSTANTIATE_ConcatenateStrings(float)
+MACRO_INSTANTIATE_ConcatenateStrings(wstring)
 MACRO_INSTANTIATE_ConcatenateStrings(AnyAbilityStruct)
 MACRO_INSTANTIATE_GenerateCSVGeneric(SpellDataStruct)
 MACRO_INSTANTIATE_GenerateCSVGeneric(StatusSetStruct)

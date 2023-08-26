@@ -176,7 +176,7 @@ public:
 	int64_t** ConvertScriptToRaw_Array2(unsigned int objamount, unsigned int arrayamount);
 	DllMetaDataModification ConvertRawToScript_Object(uint32_t** newfieldvalues, uint32_t pos, uint32_t baselen, unsigned int objamount, unsigned int fieldamount, const unsigned int fieldsize[], const unsigned int array[] = NULL);
 	DllMetaDataModification ConvertRawToScript_Array2(uint32_t** newfieldvalues, uint32_t pos, uint32_t baselen, unsigned int objamount, unsigned int arrayamount, uint32_t arraysettoken);
-	int64_t ScriptGetNextIntegerValue(bool includestr, uint32_t* integercodepos = NULL, SteamWDictionary* strdico = NULL);
+	int64_t ScriptGetNextIntegerValue(bool includestr, uint32_t* integercodepos = NULL, vector<SteamWDictionary>* strdico = NULL);
 	
 	int Duplicate(fstream& fdest, unsigned int modifamount, DllMetaDataModification* modif); // Change dll_file stream
 

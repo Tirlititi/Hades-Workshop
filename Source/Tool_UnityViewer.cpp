@@ -324,9 +324,9 @@ wxString ToolUnityViewer::GetInfoString(wxString filename, uint32_t filetype, Un
 		if (patharray.Count()>=5 && patharray[2].IsSameAs(L"fieldmaps",false)) {
 			wxString fldid = patharray[3];
 			wxString partstr = _(L"[Unknown Field]");
-			for (unsigned int i=0;i<G_N_ELEMENTS(SteamFieldScript);i++)
-				if (fldid.IsSameAs(SteamFieldScript[i].background_name,false)) {
-					partstr = _(SteamFieldScript[i].default_name)+_(L" (")+_(ConvertToString(SteamFieldScript[i].script_id))+_(L")");
+			for (int i = 0; i < G_V_ELEMENTS(SteamFieldScript); i++)
+				if (fldid.IsSameAs(SteamFieldScript[i].background_name, false)) {
+					partstr = _(SteamFieldScript[i].default_name) + _(L" (") + _(ConvertToString(SteamFieldScript[i].script_id)) + _(L")");
 					break;
 				}
 			if (ext.IsSameAs(L"bgs.bytes",false)) return _(L"Tileset (BG_SCENE) of the field ")+partstr;
@@ -340,8 +340,8 @@ wxString ToolUnityViewer::GetInfoString(wxString filename, uint32_t filetype, Un
 		if (patharray.Count()>=7 && patharray[2].IsSameAs(L"battlemap",false) && patharray[3].IsSameAs(L"battlemodel",false) && patharray[4].IsSameAs(L"6",false)) {
 			unsigned int id = wxAtoi(patharray[5]);
 			wxString partstr = _(L"[Unknown Model]");
-			for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_MODEL_NAME);i++)
-				if (HADES_STRING_MODEL_NAME[i].id==id) {
+			for (int i = 0; i < G_V_ELEMENTS(HADES_STRING_MODEL_NAME); i++)
+				if (HADES_STRING_MODEL_NAME[i].id == id) {
 					partstr = HADES_STRING_MODEL_NAME[i].label;
 					break;
 				}
@@ -351,8 +351,8 @@ wxString ToolUnityViewer::GetInfoString(wxString filename, uint32_t filetype, Un
 				*/ (patharray.Count()>=7 && patharray[2].IsSameAs(L"battlemap",false) && patharray[3].IsSameAs(L"battlemodel",false) && patharray[4].IsSameAs(L"battlemap_all",false))) {
 			wxString btlid = patharray.Count()==5 ? name.Mid(4).BeforeFirst(L'.') : patharray[5].Mid(4);
 			wxString partstr = _(L"[Unknown Battle Scene]");
-			for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME);i++)
-				if (btlid.IsSameAs(HADES_STRING_BATTLE_SCENE_NAME[i].steamid,false)) {
+			for (int i = 0; i < G_V_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME); i++)
+				if (btlid.IsSameAs(HADES_STRING_BATTLE_SCENE_NAME[i].steamid, false)) {
 					partstr = HADES_STRING_BATTLE_SCENE_NAME[i].label;
 					break;
 				}
@@ -362,8 +362,8 @@ wxString ToolUnityViewer::GetInfoString(wxString filename, uint32_t filetype, Un
 		} else if (patharray.Count()==6 && patharray[2].IsSameAs(L"battlemap",false) && patharray[3].IsSameAs(L"battlescene",false)) {
 			wxString btlid = patharray[4];
 			wxString partstr = _(L"[Unknown Battle]");
-			for (unsigned int i=0;i<G_N_ELEMENTS(SteamBattleScript);i++)
-				if (btlid.IsSameAs(SteamBattleScript[i].name,false)) {
+			for (int i = 0; i < G_V_ELEMENTS(SteamBattleScript); i++)
+				if (btlid.IsSameAs(SteamBattleScript[i].name, false)) {
 					partstr = _(ConvertToString(SteamBattleScript[i].battle_id));
 					break;
 				}
@@ -371,17 +371,17 @@ wxString ToolUnityViewer::GetInfoString(wxString filename, uint32_t filetype, Un
 			return _(L"Enemy Stats, Attacks and Groups for the battle ")+partstr;
 		}
 	} else if (archive==UNITY_ARCHIVE_DATA4) {
-		if (patharray.Count()>=6 && patharray[2].IsSameAs(L"models",false) && wxAtoi(patharray[3])>0) {
-			unsigned int modeltype = wxAtoi(patharray[3])<G_N_ELEMENTS(DATABASE_MODEL_TYPE) ? wxAtoi(patharray[3]) : 0;
+		if (patharray.Count() >= 6 && patharray[2].IsSameAs(L"models", false) && wxAtoi(patharray[3]) > 0) {
+			unsigned int modeltype = wxAtoi(patharray[3]) < G_V_ELEMENTS(DATABASE_MODEL_TYPE) ? wxAtoi(patharray[3]) : 0;
 			unsigned int id = wxAtoi(patharray[4]);
 			wxString partstr = _(L"[Unknown Model]");
-			for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_MODEL_NAME);i++)
-				if (HADES_STRING_MODEL_NAME[i].id==id) {
+			for (int i = 0; i < G_V_ELEMENTS(HADES_STRING_MODEL_NAME); i++)
+				if (HADES_STRING_MODEL_NAME[i].id == id) {
 					partstr = HADES_STRING_MODEL_NAME[i].label;
 					break;
 				}
-			return _(UnityArchiveMetaData::GetTypeName(filetype))+_(L" for the ")+DATABASE_MODEL_TYPE[modeltype]+_(L" model ")+partstr;
-		} else if (patharray.Count()==5 && patharray[2].IsSameAs(L"models",false) && patharray[3].IsSameAs(L"geotexanim",false)) {
+			return _(UnityArchiveMetaData::GetTypeName(filetype)) + _(L" for the ") + DATABASE_MODEL_TYPE[modeltype] + _(L" model ") + partstr;
+		} else if (patharray.Count() == 5 && patharray[2].IsSameAs(L"models", false) && patharray[3].IsSameAs(L"geotexanim", false)) {
 			if (name.Mid(0,4).IsSameAs(L"geo_",false)) {
 				wxString partstr = _(L"[Unknown Model]");
 				// ToDo
@@ -389,8 +389,8 @@ wxString ToolUnityViewer::GetInfoString(wxString filename, uint32_t filetype, Un
 			} else if (name.Mid(0,4).IsSameAs(L"tam_",false)) {
 				wxString btlid = name.Mid(4).BeforeFirst(L'_').BeforeFirst(L'.');
 				wxString partstr = _(L"[Unknown Battle Scene]");
-				for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME);i++)
-					if (btlid.IsSameAs(HADES_STRING_BATTLE_SCENE_NAME[i].steamid,false)) {
+				for (int i = 0; i < G_V_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME); i++)
+					if (btlid.IsSameAs(HADES_STRING_BATTLE_SCENE_NAME[i].steamid, false)) {
 						partstr = HADES_STRING_BATTLE_SCENE_NAME[i].label;
 						break;
 					}
@@ -404,8 +404,8 @@ wxString ToolUnityViewer::GetInfoString(wxString filename, uint32_t filetype, Un
 			unsigned int modelcat = DATABASE_MODEL_CATEGORY_LIST_ALL;
 			wxString partstrmodel = _(L"[Unknown Model]");
 			wxString partstranim = _(L"[Unknown Animation]");
-			for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_MODEL_NAME);i++)
-				if (HADES_STRING_MODEL_NAME[i].id==modelid) {
+			for (int i = 0; i < G_V_ELEMENTS(HADES_STRING_MODEL_NAME); i++)
+				if (HADES_STRING_MODEL_NAME[i].id == modelid) {
 					partstrmodel = HADES_STRING_MODEL_NAME[i].label;
 					modelcat = DATABASE_MODEL_CATEGORY_TO_LIST(HADES_STRING_MODEL_NAME[i].category);
 					break;
@@ -425,15 +425,15 @@ wxString ToolUnityViewer::GetInfoString(wxString filename, uint32_t filetype, Un
 			if (soundid<0) return _(L"[Unknown Sound]");
 			string soundtype = audio_data.GetObjectValue("type",soundid);
 			int soundindex = atoi(audio_data.GetObjectValue("soundIndex",soundid).c_str());
-			if (soundtype==HADES_STRING_AUDIO_TYPE[AUDIO_TYPE_MUSIC])
-				for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_MUSIC_NAME);i++)
-					if (HADES_STRING_MUSIC_NAME[i].id==soundindex)
-						return _(soundtype)+_(L" ")+HADES_STRING_MUSIC_NAME[i].label;
-			if (soundtype==HADES_STRING_AUDIO_TYPE[AUDIO_TYPE_SFX])
-				for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_AUDIO_NAME);i++)
-					if (HADES_STRING_AUDIO_NAME[i].id==soundindex)
-						return _(soundtype)+_(L" ")+HADES_STRING_AUDIO_NAME[i].label;
-			return _(soundtype)+_(L" of index ")+_(audio_data.GetObjectValue("soundIndex",soundid));
+			if (soundtype == HADES_STRING_AUDIO_TYPE[AUDIO_TYPE_MUSIC])
+				for (int i = 0; i < G_V_ELEMENTS(HADES_STRING_MUSIC_NAME); i++)
+					if (HADES_STRING_MUSIC_NAME[i].id == soundindex)
+						return _(soundtype) + _(L" ") + HADES_STRING_MUSIC_NAME[i].label;
+			if (soundtype == HADES_STRING_AUDIO_TYPE[AUDIO_TYPE_SFX])
+				for (int i = 0; i < G_V_ELEMENTS(HADES_STRING_AUDIO_NAME); i++)
+					if (HADES_STRING_AUDIO_NAME[i].id == soundindex)
+						return _(soundtype) + _(L" ") + HADES_STRING_AUDIO_NAME[i].label;
+			return _(soundtype) + _(L" of index ") + _(audio_data.GetObjectValue("soundIndex", soundid));
 		}
 	} else if (archive==UNITY_ARCHIVE_DATA7) {
 		if (patharray.Count()>=4 && patharray[2].IsSameAs(L"commonasset",false) && /*
@@ -443,9 +443,9 @@ wxString ToolUnityViewer::GetInfoString(wxString filename, uint32_t filetype, Un
 		*/ (patharray.Count()==8 && patharray[3].IsSameAs(L"eventengine",false) && patharray[4].IsSameAs(L"eventbinary",false) && patharray[5].IsSameAs(L"field",false)))) {
 			wxString fldid = name.BeforeFirst(L'.');
 			wxString partstr = _(L"[Unknown Field]");
-			for (unsigned int i=0;i<G_N_ELEMENTS(SteamFieldScript);i++)
-				if (fldid.IsSameAs(SteamFieldScript[i].script_name,false)) {
-					partstr = _(SteamFieldScript[i].default_name)+_(L" (")+_(ConvertToString(SteamFieldScript[i].script_id))+_(L")");
+			for (int i = 0; i < G_V_ELEMENTS(SteamFieldScript); i++)
+				if (fldid.IsSameAs(SteamFieldScript[i].script_name, false)) {
+					partstr = _(SteamFieldScript[i].default_name) + _(L" (") + _(ConvertToString(SteamFieldScript[i].script_id)) + _(L")");
 					break;
 				}
 			if (patharray.Count()==8) return _(L"Script of the field ")+partstr;
@@ -455,8 +455,8 @@ wxString ToolUnityViewer::GetInfoString(wxString filename, uint32_t filetype, Un
 		} else if (patharray.Count()==8 && patharray[3].IsSameAs(L"eventengine",false) && patharray[4].IsSameAs(L"eventbinary",false) && patharray[5].IsSameAs(L"battle",false)) {
 			wxString btlid = name.BeforeFirst(L'.');
 			wxString partstr = _(L"[Unknown Battle]");
-			for (unsigned int i=0;i<G_N_ELEMENTS(SteamBattleScript);i++)
-				if (btlid.IsSameAs(SteamBattleScript[i].name,false)) {
+			for (int i = 0; i < G_V_ELEMENTS(SteamBattleScript); i++)
+				if (btlid.IsSameAs(SteamBattleScript[i].name, false)) {
 					partstr = _(ConvertToString(SteamBattleScript[i].battle_id));
 					break;
 				}
@@ -464,8 +464,8 @@ wxString ToolUnityViewer::GetInfoString(wxString filename, uint32_t filetype, Un
 		} else if (patharray.Count()==8 && patharray[3].IsSameAs(L"eventengine",false) && patharray[4].IsSameAs(L"eventbinary",false) && patharray[5].IsSameAs(L"world",false)) {
 			wxString wldid = name.BeforeFirst(L'.');
 			wxString partstr = _(L"[Unknown World Map]");
-			for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME);i++)
-				if (wldid.IsSameAs(HADES_STRING_WORLD_BLOCK_NAME[i].steamid,false)) {
+			for (int i = 0; i < G_V_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME); i++)
+				if (wldid.IsSameAs(HADES_STRING_WORLD_BLOCK_NAME[i].steamid, false)) {
 					partstr = HADES_STRING_WORLD_BLOCK_NAME[i].label;
 					break;
 				}
@@ -530,28 +530,28 @@ wxString ToolUnityViewer::GetInfoString(wxString filename, uint32_t filetype, Un
 			if (name.IsSameAs(L"imp_help.mes",false)) return _(L"Helps of the key items");
 			if (name.IsSameAs(L"imp_skin.mes",false)) return _(L"Descriptions of the key items");
 			if (name.IsSameAs(L"loc_name.mes",false)) return _(L"Names of the different fields");
-			if (patharray[3].IsSameAs(L"field",false)) {
+			if (patharray[3].IsSameAs(L"field", false)) {
 				unsigned int id = wxAtoi(name.BeforeFirst(L'.'));
 				wxString partstr = _(L"[Unknown Text Block]");
-				for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_TEXT_BLOCK_NAME);i++)
-					if (HADES_STRING_TEXT_BLOCK_NAME[i].id==id) {
+				for (unsigned int i = 0; i < G_V_ELEMENTS(HADES_STRING_TEXT_BLOCK_NAME); i++)
+					if (HADES_STRING_TEXT_BLOCK_NAME[i].id == id) {
 						partstr = HADES_STRING_TEXT_BLOCK_NAME[i].label;
 						break;
 					}
-				return _(L"Dialogs and Texts of ")+partstr;
-			} else if (patharray[3].IsSameAs(L"battle",false)) {
+				return _(L"Dialogs and Texts of ") + partstr;
+			} else if (patharray[3].IsSameAs(L"battle", false)) {
 				unsigned int id = wxAtoi(name.BeforeFirst(L'.'));
 				return _(L"Texts from the battle ")+_(ConvertToString(id));
 			}
-		} else if (patharray.Count()==2 && patharray[0].IsSameAs(L"specialeffects",false) && name.Mid(0,2).IsSameAs(L"ef",false)) {
+		} else if (patharray.Count() == 2 && patharray[0].IsSameAs(L"specialeffects", false) && name.Mid(0, 2).IsSameAs(L"ef", false)) {
 			unsigned int id = wxAtoi(name.Mid(2));
 			wxString partstr = _(L"[Unknown Spell Animation]");
-			for (unsigned int i=0;i<G_N_ELEMENTS(HADES_STRING_SPELL_MODEL);i++)
-				if (HADES_STRING_SPELL_MODEL[i].id==id) {
+			for (unsigned int i = 0; i < HADES_STRING_SPELL_MODEL.size(); i++)
+				if (HADES_STRING_SPELL_MODEL[i].id == id) {
 					partstr = HADES_STRING_SPELL_MODEL[i].label;
 					break;
 				}
-			return _(L"Special Effect of the spell animation ")+partstr;
+			return _(L"Special Effect of the spell animation ") + partstr;
 		}
 	}
 	

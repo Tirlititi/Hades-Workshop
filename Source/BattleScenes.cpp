@@ -680,36 +680,37 @@ LogStruct BattleSceneDataStruct::Import(const char* inputfile, unsigned int* num
 }
 
 void BattleSceneDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
-	unsigned int i,j,k,l;
+	unsigned int i, j, k, l;
 	scene_amount = clusset.battle_scene_amount;
 	cluster_id.resize(scene_amount);
 	scene_name.resize(scene_amount);
 	scene.resize(scene_amount);
 	image.resize(scene_amount);
 	j = 0;
-	LoadingDialogInit(scene_amount,_(L"Reading battle scenes..."));
-	for (i=0;i<clusset.amount;i++) {
-		if (clusset.clus_type[i]==CLUSTER_TYPE_BATTLE_SCENE) {
+	LoadingDialogInit(scene_amount, _(L"Reading battle scenes..."));
+	for (i = 0; i < clusset.amount; i++) {
+		if (clusset.clus_type[i] == CLUSTER_TYPE_BATTLE_SCENE) {
 			ClusterData& clus = clusset.clus[i];
 			cluster_id[j] = i;
 			clus.CreateChildren(ffbin);
-			for (k=0;k<clus.chunk_amount;k++) {
-				for (l=0;l<clus.chunk[k].object_amount;l++) {
+			for (k = 0; k < clus.chunk_amount; k++) {
+				for (l = 0; l < clus.chunk[k].object_amount; l++) {
 					ffbin.seekg(clus.chunk[k].object_offset[l]);
 					clus.chunk[k].GetObject(l).Read(ffbin);
 				}
 			}
 			ChunkData& chunkscene = clus.chunk[clus.SearchChunkType(CHUNK_TYPE_BATTLE_SCENE)];
 			scene[j] = (BattleSceneDataStruct*)&chunkscene.GetObject(0);
-			if (clus.SearchChunkType(CHUNK_TYPE_TIM)>=0) {
+			if (clus.SearchChunkType(CHUNK_TYPE_TIM) >= 0) {
 				ChunkData& chunktim = clus.chunk[clus.SearchChunkType(CHUNK_TYPE_TIM)];
 				image[j] = (TIMImageDataStruct*)&chunktim.GetObject(0);
-			} else
+			} else {
 				image[j] = NULL;
+			}
 			scene[j]->parent = this;
 			scene[j]->id = j;
-			for (k=0;k<G_N_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME);k++)
-				if (scene[j]->object_id==HADES_STRING_BATTLE_SCENE_NAME[k].id) {
+			for (k = 0; k < G_V_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME); k++)
+				if (scene[j]->object_id == HADES_STRING_BATTLE_SCENE_NAME[k].id) {
 					scene_name[j] = HADES_STRING_BATTLE_SCENE_NAME[k].label;
 					break;
 				}

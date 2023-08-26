@@ -205,6 +205,16 @@
     <ClCompile Include="Source\Commands.cpp" />
     <ClCompile Include="Source\CommonUtility.cpp" />
     <ClCompile Include="Source\Configuration.cpp" />
+    <ClCompile Include="Source\Database_Animation.cpp" />
+    <ClCompile Include="Source\Database_Assembly.cpp" />
+    <ClCompile Include="Source\Database_CSV.cpp" />
+    <ClCompile Include="Source\Database_Item.cpp" />
+    <ClCompile Include="Source\Database_Resource.cpp" />
+    <ClCompile Include="Source\Database_Script.cpp" />
+    <ClCompile Include="Source\Database_Spell.cpp" />
+    <ClCompile Include="Source\Database_SpellAnimation.cpp" />
+    <ClCompile Include="Source\Database_Steam.cpp" />
+    <ClCompile Include="Source\Database_Text.cpp" />
     <ClCompile Include="Source\DllCilMacro.cpp" />
     <ClCompile Include="Source\DllEditor.cpp" />
     <ClCompile Include="Source\Enemies.cpp" />
@@ -228,6 +238,7 @@
     <ClCompile Include="Source\Gui_TextEditor.cpp" />
     <ClCompile Include="Source\Gui_TextureEditor.cpp" />
     <ClCompile Include="Source\Gui_WalkmeshEditor.cpp" />
+    <ClCompile Include="Source\Hades_Strings.cpp" />
     <ClCompile Include="Source\ImageMaps.cpp" />
     <ClCompile Include="Source\Items.cpp" />
     <ClCompile Include="Source\main.cpp" />

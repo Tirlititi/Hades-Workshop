@@ -77,6 +77,7 @@ public:
 	void RegisterSpellAdded(unsigned int spellid);
 	void RegisterSpellRemoved(unsigned int spellid);
 	void InitSupport(void);
+	void DisplaySupportBoostedList(int supportindex);
 	void DisplaySupport(int supportid);
 	void UpdateSupportName(unsigned int supportid);
 	void RegisterSupportAdded(unsigned int supportid);
@@ -223,6 +224,7 @@ private:
 	void OnSupportChangeName(wxCommandEvent& event);
 	void OnSupportChangeHelp(wxCommandEvent& event);
 	void OnSupportChangeSpin(wxSpinEvent& event);
+	void OnSupportChangeChoice(wxCommandEvent& event);
 	void OnSupportChangeButton(wxCommandEvent& event);
 	void OnListBoxCommand(wxCommandEvent& event);
 	void OnCommandRightClick(wxMouseEvent& event);
@@ -274,6 +276,7 @@ private:
 	void OnKeyItemChangeHelp(wxCommandEvent& event);
 	void OnKeyItemChangeDescription(wxCommandEvent& event);
 	void OnItemChangeModelName(wxCommandEvent& event);
+	void OnItemChangeTextureName(wxCommandEvent& event);
 	void OnItemChangeSpin(wxSpinEvent& event);
 	void OnItemChangeChoice(wxCommandEvent& event);
 	void OnItemChangeFlags(wxCommandEvent& event);

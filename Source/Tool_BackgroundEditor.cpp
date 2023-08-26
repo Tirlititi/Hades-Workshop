@@ -39,7 +39,7 @@ int ToolBackgroundEditor::ShowModal(CDDataStruct* data) {
 		for (i = 0; i < cddata->fieldset.amount; i++)
 			choicelist.Add(cddata->fieldset.script_data[i]->name.GetStr(hades::TEXT_PREVIEW_TYPE));
 	} else {
-		for (i=0;i<G_N_ELEMENTS(SteamFieldScript);i++)
+		for (i = 0; i < SteamFieldScript.size(); i++)
 			choicelist.Add(_(SteamFieldScript[i].default_name));
 		m_usegametilebtn->Enable(false);
 	}
@@ -741,12 +741,12 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 			else if (m_convertformat->GetSelection()==3)	textureformat = 0x0A;
 			else											textureformat = 0x0C;
 			wxString destfilebase = m_exportdir->GetPath()+_(L"\\");
-			for (i=0;i<G_N_ELEMENTS(SteamFieldScript);i++)
-				if (SteamFieldScript[i].script_id==cddata->fieldset.struct_id[m_fieldchoice->GetSelection()]) {
+			for (i = 0; i < G_V_ELEMENTS(SteamFieldScript); i++)
+				if (SteamFieldScript[i].script_id == cddata->fieldset.struct_id[m_fieldchoice->GetSelection()]) {
 					destfilebase += _(SteamFieldScript[i].background_name);
 					break;
 				}
-			if (i==G_N_ELEMENTS(SteamFieldScript))
+			if (i == G_V_ELEMENTS(SteamFieldScript))
 				destfilebase += _(HADES_STRING_UNKNOWN_FIELD);
 			FieldTilesDataStruct* tileset = cddata->fieldset.background_data[m_fieldchoice->GetSelection()];
 			unsigned int tilesizebackup = tileset->parent->tile_size;
@@ -930,36 +930,36 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 				return;
 			}
 			LoadingDialogInit(11,_(L"Updating Unity Archives..."));
-			int32_t fieldimagefile[G_N_ELEMENTS(SteamFieldScript)];
+			vector<int32_t> fieldimagefile(G_V_ELEMENTS(SteamFieldScript));
 			string fieldbacknamelower;
-			for (i=0;i<G_N_ELEMENTS(SteamFieldScript);i++) {
+			for (i = 0; i < G_V_ELEMENTS(SteamFieldScript); i++) {
 				fieldbacknamelower = SteamFieldScript[i].background_name;
-				transform(fieldbacknamelower.begin(),fieldbacknamelower.end(),fieldbacknamelower.begin(),::tolower);
-				filename = "assets/resources/fieldmaps/"+fieldbacknamelower+"/atlas.png";
-				if (SteamFieldScript[i].file_id==0)
+				transform(fieldbacknamelower.begin(), fieldbacknamelower.end(), fieldbacknamelower.begin(), ::tolower);
+				filename = "assets/resources/fieldmaps/" + fieldbacknamelower + "/atlas.png";
+				if (SteamFieldScript[i].file_id == 0)
 					fieldimagefile[i] = 0;
 				else
-					fieldimagefile[i] = metafield[SteamFieldScript[i].file_id-1].GetFileIndexByInfo(fieldindexlist[SteamFieldScript[i].file_id-1].GetFileInfo(filename.ToStdString()),28);
+					fieldimagefile[i] = metafield[SteamFieldScript[i].file_id - 1].GetFileIndexByInfo(fieldindexlist[SteamFieldScript[i].file_id - 1].GetFileInfo(filename.ToStdString()), 28);
 			}
 			unsigned int importsuccess = 0;
 			unsigned int importfail = 0;
-			for (i=0;i<9;i++)
-				for (j=0;j<metafield[i].header_file_amount;j++) {
+			for (i = 0; i < 9; i++)
+				for (j = 0; j < metafield[i].header_file_amount; j++) {
 					copylist[i][j] = true;
 					filenewsize[i][j] = metafield[i].file_size[j];
 				}
-			for (i=0;i<G_N_ELEMENTS(SteamFieldScript);i++) {
-				importfilename = importdirname+_(SteamFieldScript[i].background_name);
-				if (wxFile::Exists(importfilename+_(L".tex")) && SteamFieldScript[i].file_id>0) {
-					fstream importatlas((const char*)(importfilename+_(L".tex")).mb_str(),ios::in | ios::binary);
+			for (i = 0; i < G_V_ELEMENTS(SteamFieldScript); i++) {
+				importfilename = importdirname + _(SteamFieldScript[i].background_name);
+				if (wxFile::Exists(importfilename + _(L".tex")) && SteamFieldScript[i].file_id > 0) {
+					fstream importatlas((const char*)(importfilename + _(L".tex")).mb_str(), ios::in | ios::binary);
 					if (!importatlas.is_open()) {
 						importfail++;
 						continue;
 					}
-					importatlas.seekg(0,ios::end);
+					importatlas.seekg(0, ios::end);
 					size_t importatlassize = importatlas.tellg();
-					copylist[SteamFieldScript[i].file_id-1][fieldimagefile[i]] = false;
-					filenewsize[SteamFieldScript[i].file_id-1][fieldimagefile[i]] = importatlassize;
+					copylist[SteamFieldScript[i].file_id - 1][fieldimagefile[i]] = false;
+					filenewsize[SteamFieldScript[i].file_id - 1][fieldimagefile[i]] = importatlassize;
 					importatlas.close();
 				}
 				// ToDo : Tileset with .bgs
@@ -971,18 +971,18 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 				unitydataoff[i] = metafield[i].Duplicate(filebase[i],filedest[i],copylist[i],filenewsize[i]);
 				LoadingDialogUpdate(2+i);
 			}
-			for (i=0;i<G_N_ELEMENTS(SteamFieldScript);i++) {
-				importfilename = importdirname+_(SteamFieldScript[i].background_name);
-				if (wxFile::Exists(importfilename+_(L".tex")) && SteamFieldScript[i].file_id>0) {
-					fstream importatlas((const char*)(importfilename+_(L".tex")).mb_str(),ios::in | ios::binary);
+			for (i = 0; i < G_V_ELEMENTS(SteamFieldScript); i++) {
+				importfilename = importdirname + _(SteamFieldScript[i].background_name);
+				if (wxFile::Exists(importfilename + _(L".tex")) && SteamFieldScript[i].file_id > 0) {
+					fstream importatlas((const char*)(importfilename + _(L".tex")).mb_str(), ios::in | ios::binary);
 					if (!importatlas.is_open()) {
 						importfail++;
 						continue;
 					}
-					filedest[SteamFieldScript[i].file_id-1].seekg(unitydataoff[SteamFieldScript[i].file_id-1][fieldimagefile[i]]);
-					char* buffer = new char[filenewsize[SteamFieldScript[i].file_id-1][fieldimagefile[i]]];
-					importatlas.read(buffer,filenewsize[SteamFieldScript[i].file_id-1][fieldimagefile[i]]);
-					filedest[SteamFieldScript[i].file_id-1].write(buffer,filenewsize[SteamFieldScript[i].file_id-1][fieldimagefile[i]]);
+					filedest[SteamFieldScript[i].file_id - 1].seekg(unitydataoff[SteamFieldScript[i].file_id - 1][fieldimagefile[i]]);
+					char* buffer = new char[filenewsize[SteamFieldScript[i].file_id - 1][fieldimagefile[i]]];
+					importatlas.read(buffer, filenewsize[SteamFieldScript[i].file_id - 1][fieldimagefile[i]]);
+					filedest[SteamFieldScript[i].file_id - 1].write(buffer, filenewsize[SteamFieldScript[i].file_id - 1][fieldimagefile[i]]);
 					importatlas.close();
 					delete[] buffer;
 					importsuccess++;

@@ -226,40 +226,40 @@ void SpellDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 	}
 	for (i = 0; i < STATUS_SET_AMOUNT; i++)
 		status_set[i].id = i;
-	if (GetGameType()==GAME_TYPE_PSX) {
+	if (GetGameType() == GAME_TYPE_PSX) {
 		ffbin.seekg(config.spell_data_offset[0]);
-		MACRO_SPELL_IOFUNCTIONDATA(FFIXRead,FFIXSeek,true,false)
-		MACRO_SPELL_IOFUNCTIONNAME(FFIXRead,FFIXSeek,ffbin.tellg(),true,false)
-		MACRO_SPELL_IOFUNCTIONHELP(FFIXRead,FFIXSeek,true,false)
+		MACRO_SPELL_IOFUNCTIONDATA(FFIXRead, FFIXSeek, true, false)
+		MACRO_SPELL_IOFUNCTIONNAME(FFIXRead, FFIXSeek, ffbin.tellg(), true, false)
+		MACRO_SPELL_IOFUNCTIONHELP(FFIXRead, FFIXSeek, true, false)
 		ffbin.seekg(config.spell_naming_rules_offset);
-		MACRO_SPELL_IOFUNCTIONPERFNAME(FFIXRead,FFIXSeek,true,false)
-		FFIXSeek(ffbin,config.spell_data_offset[4],0x10*SPELL_AMOUNT); // ToDo : Should go to the .hwf
-		MACRO_SPELL_IOFUNCTIONSTATUS(FFIXRead,FFIXSeek,true,false)
+		MACRO_SPELL_IOFUNCTIONPERFNAME(FFIXRead, FFIXSeek, true, false)
+		FFIXSeek(ffbin, config.spell_data_offset[4], 0x10 * SPELL_AMOUNT); // ToDo : Should go to the .hwf
+		MACRO_SPELL_IOFUNCTIONSTATUS(FFIXRead, FFIXSeek, true, false)
 	} else {
 		DllMetaData& dlldata = config.meta_dll;
 		DllMethodInfo methinfo;
 		string fname = config.steam_dir_data;
 		fname += "resources.assets";
-		ffbin.open(fname.c_str(),ios::in | ios::binary);
-		for (SteamLanguage lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
-			if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+		ffbin.open(fname.c_str(), ios::in | ios::binary);
+		for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+			if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang != GetSteamLanguage())
 				continue;
 			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.spell_name_file[lang]));
 			name_space_used = config.meta_res.GetFileSizeByIndex(config.spell_name_file[lang]);
-			for (i=0;i<SPELL_AMOUNT;i++)
-				SteamReadFF9String(ffbin,spell[i].name,lang);
+			for (i = 0; i < SPELL_AMOUNT; i++)
+				SteamReadFF9String(ffbin, spell[i].name, lang);
 			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.spell_help_file[lang]));
 			help_space_used = config.meta_res.GetFileSizeByIndex(config.spell_help_file[lang]);
-			for (i=0;i<SPELL_AMOUNT;i++)
-				SteamReadFF9String(ffbin,spell[i].help,lang);
+			for (i = 0; i < SPELL_AMOUNT; i++)
+				SteamReadFF9String(ffbin, spell[i].help, lang);
 		}
 		ffbin.close();
 		dlldata.dll_file.seekg(dlldata.GetStaticFieldOffset(config.dll_spellnaming_field_id));
-		for (i=0;i<SPELL_AMOUNT;i++)
-			SteamReadChar(dlldata.dll_file,spell[i].perform_name);
+		for (i = 0; i < SPELL_AMOUNT; i++)
+			SteamReadChar(dlldata.dll_file, spell[i].perform_name);
 		dlldata.dll_file.seekg(dlldata.GetStaticFieldOffset(config.dll_statusset_field_id));
-		for (i=0;i<STATUS_SET_AMOUNT;i++)
-			SteamReadLong(dlldata.dll_file,status_set[i].status);
+		for (i = 0; i < STATUS_SET_AMOUNT; i++)
+			SteamReadLong(dlldata.dll_file, status_set[i].status);
 		dlldata.dll_file.seekg(dlldata.GetMethodOffset(config.dll_battledb_method_id));
 		methinfo.ReadMethodInfo(dlldata.dll_file);
 		ILInstruction initinst[3] = {
@@ -267,19 +267,25 @@ void SpellDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 			{ 0x8D, dlldata.GetTypeTokenIdentifier("AA_DATA") },
 			{ 0x25 }
 		};
-		methinfo.JumpToInstructions(dlldata.dll_file,3,initinst);
+		methinfo.JumpToInstructions(dlldata.dll_file, 3, initinst);
 		steam_method_position = dlldata.dll_file.tellg();
-		uint8_t* rawspelldata = dlldata.ConvertScriptToRaw_Object(SPELL_AMOUNT,18,steam_spell_field_size);
-		steam_method_base_length = (unsigned int)dlldata.dll_file.tellg()-steam_method_position;
+		uint8_t* rawspelldata = dlldata.ConvertScriptToRaw_Object(SPELL_AMOUNT, 18, steam_spell_field_size);
+		steam_method_base_length = (unsigned int)dlldata.dll_file.tellg() - steam_method_position;
 		fname = tmpnam(NULL);
-		ffbin.open(fname.c_str(),ios::out | ios::binary);
-		ffbin.write((const char*)rawspelldata,0x10*SPELL_AMOUNT);
+		ffbin.open(fname.c_str(), ios::out | ios::binary);
+		ffbin.write((const char*)rawspelldata, 0x10 * SPELL_AMOUNT);
 		ffbin.close();
-		ffbin.open(fname.c_str(),ios::in | ios::binary);
-		MACRO_SPELL_IOFUNCTIONDATA(SteamRead,SteamSeek,true,false)
+		ffbin.open(fname.c_str(), ios::in | ios::binary);
+		MACRO_SPELL_IOFUNCTIONDATA(SteamRead, SteamSeek, true, false)
 		ffbin.close();
 		remove(fname.c_str());
 		delete[] rawspelldata;
+		if (config.dll_usage != 0) {
+			// Apply Memoria's default fixes for Life, Full-Life and Thunder Slash
+			spell[5].target_flag |= TARGET_FLAG_CAMERA;
+			spell[6].target_flag |= TARGET_FLAG_CAMERA;
+			spell[149].effect = 20;
+		}
 	}
 }
 
@@ -288,7 +294,7 @@ DllMetaDataModification* SpellDataSet::ComputeSteamMod(ConfigurationSet& config,
 	DllMetaData& dlldata = config.meta_dll;
 	uint32_t** argvalue = new uint32_t*[SPELL_AMOUNT];
 	int i;
-	for (i=0;i<SPELL_AMOUNT;i++) {
+	for (i = 0; i < SPELL_AMOUNT; i++) {
 		argvalue[i] = new uint32_t[18];
 		argvalue[i][0] = spell[i].target_type & 0xF;
 		argvalue[i][1] = (spell[i].target_type >> 4) & 0x1;
@@ -309,24 +315,24 @@ DllMetaDataModification* SpellDataSet::ComputeSteamMod(ConfigurationSet& config,
 		argvalue[i][16] = spell[i].model_alt;
 		argvalue[i][17] = spell[i].name_offset;
 	}
-	res[0] = dlldata.ConvertRawToScript_Object(argvalue,steam_method_position,steam_method_base_length,SPELL_AMOUNT,18,steam_spell_field_size);
-	for (i=0;i<SPELL_AMOUNT;i++)
+	res[0] = dlldata.ConvertRawToScript_Object(argvalue, steam_method_position, steam_method_base_length, SPELL_AMOUNT, 18, steam_spell_field_size);
+	for (i = 0; i < SPELL_AMOUNT; i++)
 		delete[] argvalue[i];
 	delete[] argvalue;
 	res[1].position = config.meta_dll.GetStaticFieldOffset(config.dll_spellnaming_field_id);
 	res[1].base_length = SPELL_AMOUNT; // config.meta_dll.GetStaticFieldRange(config.dll_spellnaming_field_id);
 	res[1].new_length = SPELL_AMOUNT;
 	res[1].value = new uint8_t[res[1].new_length];
-	for (i=0;i<SPELL_AMOUNT;i++)
+	for (i = 0; i < SPELL_AMOUNT; i++)
 		res[1].value[i] = spell[i].perform_name;
 	res[2].position = config.meta_dll.GetStaticFieldOffset(config.dll_statusset_field_id);
-	res[2].base_length = 8*STATUS_SET_AMOUNT; // config.meta_dll.GetStaticFieldRange(config.dll_statusset_field_id);
-	res[2].new_length = 8*STATUS_SET_AMOUNT;
+	res[2].base_length = 8 * STATUS_SET_AMOUNT; // config.meta_dll.GetStaticFieldRange(config.dll_statusset_field_id);
+	res[2].new_length = 8 * STATUS_SET_AMOUNT;
 	res[2].value = new uint8_t[res[2].new_length];
 	BufferInitPosition();
-	for (i = 0; i<STATUS_SET_AMOUNT; i++)
+	for (i = 0; i < STATUS_SET_AMOUNT; i++)
 		BufferWriteLong(res[2].value, status_set[i].status);
-	for (i = 0; i<STATUS_SET_AMOUNT; i++) // DEBUG: Steam version has 2x more status sets...
+	for (i = 0; i < STATUS_SET_AMOUNT; i++) // DEBUG: Steam version has 2x more status sets...
 		BufferWriteLong(res[2].value, 0);
 	*modifamount = 3;
 	return res;
@@ -398,6 +404,8 @@ wxString CSV_StatusSetConstructor(StatusSetStruct& st, int index) {
 		L"Poison",	L"Sleep",	L"Regen",	L"Haste",	L"Slow",	L"Float",		L"Shell",	L"Protect",
 		L"Heat",	L"Freeze",	L"Vanish",	L"Doom",	L"Mini",	L"Reflect",		L"Jump",	L"GradualPetrify"
 	};
+	if (st.status == 0 && index >= 39 && index < 64)
+		return wxEmptyString;
 	wxString csventry = wxString::Format(wxT("Set %d;%d;"), index, index);
 	if (st.status == 0) {
 		csventry += _(L"None(0)");

@@ -199,7 +199,7 @@ void ShopDataSet::GenerateCSharp(vector<string>& buffer) {
 }
 
 wxString CSV_ShopConstructor(ShopDataStruct& sh, int index) {
-	wxString shopname = sh.id < G_N_ELEMENTS(HADES_STRING_SHOP_NAME) ? HADES_STRING_SHOP_NAME[sh.id].label : (_("Custom shop ") + to_string(sh.id));
+	wxString shopname = sh.id < G_V_ELEMENTS(HADES_STRING_SHOP_NAME) ? HADES_STRING_SHOP_NAME[sh.id].label : (_("Custom shop ") + to_string(sh.id));
 	bool reachedend = false;
 	return wxString::Format(wxT("%s;%d;%s;# %s"),
 		shopname,
@@ -212,8 +212,12 @@ wxString CSV_ShopConstructor(ShopDataStruct& sh, int index) {
 }
 
 wxString CSV_SynthesisConstructor(SynthesisDataStruct& sy, int index) {
-	return wxString::Format(wxT("Synthesis %d;%d;%s;%d;%d;%s"),
-		sy.id,
+	wxString entry;
+	if (GetGameSaveSet() != NULL && GetGameSaveSet()->sectionloaded[DATA_SECTION_ITEM])
+		entry = _(GetGameSaveSet()->itemset->GetItemById(sy.synthesized).name.str_nice) + _(L";");
+	else
+		entry = wxString::Format(wxT("Synthesis %d;"), sy.id);
+	return entry + wxString::Format(wxT("%d;%s;%d;%d;%s"),
 		sy.id,
 		ConcatenateStrings<int>(", ", sy.shops, static_cast<string(*)(int)>(&to_string)),
 		sy.price,

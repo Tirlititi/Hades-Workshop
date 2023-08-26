@@ -306,8 +306,8 @@ void WorldMapDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 				}
 				ChunkData& chunkimgmap = clusset.clus[i].chunk[clusset.clus[i].SearchChunkType(CHUNK_TYPE_IMAGE_MAP)];
 				preload[j] = (ImageMapDataStruct*)&chunkimgmap.GetObject(0);
-				for (k=0;k<G_N_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME);k++)
-					if (script[j]->object_id==HADES_STRING_WORLD_BLOCK_NAME[k].id) {
+				for (k = 0; k < G_V_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME); k++)
+					if (script[j]->object_id == HADES_STRING_WORLD_BLOCK_NAME[k].id) {
 						name[j] = HADES_STRING_WORLD_BLOCK_NAME[k].label;
 						break;
 					}
@@ -397,8 +397,8 @@ void WorldMapDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 			script[i]->ChangeSteamLanguage(GetSteamLanguage());
 			script[i]->size = config.meta_script.GetFileSizeByIndex(config.world_script_file[GetSteamLanguage()][i]);
 			script[i]->related_charmap_id = 0;
-			for (j=0;j<G_N_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME);j++)
-				if (script[i]->object_id==HADES_STRING_WORLD_BLOCK_NAME[j].id) {
+			for (j = 0; j < G_V_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME); j++)
+				if (script[i]->object_id == HADES_STRING_WORLD_BLOCK_NAME[j].id) {
 					name[i] = HADES_STRING_WORLD_BLOCK_NAME[j].label;
 					break;
 				}

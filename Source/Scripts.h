@@ -19,6 +19,8 @@
 #define SCRIPT_VARIABLE_TYPE_BOOL		2
 #define SCRIPT_VARIABLE_TYPE_SBOOL		3
 
+#define SCRIPT_CUSTOM_API_FILENAME	"ScriptAPI.txt"
+
 struct ScriptLocalVariableSet;
 struct ScriptArgument;
 struct ScriptOperation;
@@ -47,7 +49,7 @@ struct ScriptLocalVariableSet {
 struct ScriptArgument {
 	ScriptOperation* parent;
 	uint8_t typesize;
-	uint8_t size;
+	unsigned int size;
 	uint32_t value;
 	vector<uint8_t> var;
 	bool is_var;

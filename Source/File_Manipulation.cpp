@@ -1,4 +1,4 @@
-#include "File_Manipulation.h"
+﻿#include "File_Manipulation.h"
 
 #include <algorithm>
 #include <sstream>
@@ -29,6 +29,40 @@ SteamLanguage GetHWSSteamLanguage() {
 void SetHWSSteamLanguage(SteamLanguage sl) {
 	TheHWSSteamLanguage = sl;
 }
+
+vector<wchar_t> DEFAULT_CHARMAP = { L'0',L'1',L'2',L'3',L'4',L'5',L'6',L'7',L'8',L'9',L'+',L'-',L'=',L'*',L'%',L' ',
+									L'A',L'B',L'C',L'D',L'E',L'F',L'G',L'H',L'I',L'J',L'K',L'L',L'M',L'N',L'O',L'P',
+									L'Q',L'R',L'S',L'T',L'U',L'V',L'W',L'X',L'Y',L'Z',L'(',L'!',L'?',L'“',L':',L'.',
+									L'a',L'b',L'c',L'd',L'e',L'f',L'g',L'h',L'i',L'j',L'k',L'l',L'm',L'n',L'o',L'p',
+									L'q',L'r',L's',L't',L'u',L'v',L'w',L'x',L'y',L'z',L')',L',',L'/',L'+',L'~',L'&',
+									L'Á',L'À',L'Â',L'Ä',L'É',L'È',L'Ê',L'Ë',L'Í',L'Ì',L'Î',L'Ï',L'Ó',L'Ò',L'Ô',L'Ö',
+									L'Ú',L'Ù',L'Û',L'Ü',L'á',L'à',L'â',L'ä',L'é',L'è',L'ê',L'ë',L'í',L'ì',L'î',L'ï',
+									L'ó',L'ò',L'ô',L'ö',L'ú',L'ù',L'û',L'ü',L'Ç',L'Ñ',L'ç',L'ñ',L'Œ',L'ß',L'\'',L'”',
+									L'_',L'}',L'{',L'∴',L'∵',L'♪',L'→',L'∈',L'×',L'♦',L'§',L'<',L'>',L'←',L'∋',L'↑',
+									L'△',L'□',L'∞',L'♥',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
+									L'?',L'«',L'»',L'↓',L'―',L'°',L'★',L'♂',L'♀',L'☺',L'?',L'„',L'‘',L'#',L'※',L';',
+									L'¡',L'¿',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
+									L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
+									L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
+									L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
+									L'?',L'?',L'?',L'?',L'?',L'?',L' ',L'\n',L'\t',L'µ',L' ',L'?',L' ',L' ',L'¶',L'\0' };
+
+vector<wchar_t> DEFAULT_SECONDARY_CHARMAP = { L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
+											  L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
+											  L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
+											  L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
+											  L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
+											  L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
+											  L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
+											  L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
+											  L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
+											  L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
+											  L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
+											  L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
+											  L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
+											  L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
+											  L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',
+											  L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?',L'?' };
 
 ExtendedCharmap ExtendedCharmap::CreateEmpty() {
 	ExtendedCharmap res;
@@ -207,66 +241,66 @@ void FF9String::CreateEmpty(bool forceinitall) {
 uint8_t tmparg[SPECIAL_STRING_MAX_OPCODE][SPECIAL_STRING_MAX_ARGUMENT];
 uint8_t tmparglen[SPECIAL_STRING_MAX_OPCODE];
 uint8_t tmpstr[SPECIAL_STRING_MAX_LENGTH];
-void FF9String::Read(fstream& ffbin,void (*ReadCharFunc)(fstream& fs,uint8_t& ch)) {
+void FF9String::Read(fstream& ffbin, void (*ReadCharFunc)(fstream& fs, uint8_t& ch)) {
 	unsigned int i;
 	uint8_t opcode;
 	length = 0;
 	str = L"";
 	code_amount = 0;
 	null_terminated = 1;
-	ReadCharFunc(ffbin,tmpstr[length++]);
-	while (tmpstr[length-1]!=0xFF) {
-		if (tmpstr[length-1]==OPCODE_CHAR) {
-			ReadCharFunc(ffbin,tmpstr[length++]);
-			if (tmpstr[length-1]<G_N_ELEMENTS(HADES_STRING_TEXT_OPCODE)) {
+	ReadCharFunc(ffbin, tmpstr[length++]);
+	while (tmpstr[length - 1] != 0xFF) {
+		if (tmpstr[length - 1] == OPCODE_CHAR) {
+			ReadCharFunc(ffbin, tmpstr[length++]);
+			if (tmpstr[length - 1] < HADES_STRING_TEXT_OPCODE.size()) {
 				str += opcode_wchar;
 				i = 0;
-				tmparg[code_amount][i++] = tmpstr[length-1];
-				opcode = tmpstr[length-1];
-				if (HADES_STRING_TEXT_OPCODE[opcode].length!=-1) {
-					tmparglen[code_amount] = HADES_STRING_TEXT_OPCODE[opcode].length+1;
-				} else if (opcode==0x04) { // TOKENIZE
-					ReadCharFunc(ffbin,tmpstr[length++]);
-					tmparg[code_amount][i++] = tmpstr[length-1];
-					tmparglen[code_amount] = 2+tmpstr[length-1]*2;
-				} else if (opcode==0x48) { // 0x48
-					ReadCharFunc(ffbin,tmpstr[length++]);
-					tmparg[code_amount][i++] = tmpstr[length-1];
-					ReadCharFunc(ffbin,tmpstr[length++]);
+				tmparg[code_amount][i++] = tmpstr[length - 1];
+				opcode = tmpstr[length - 1];
+				if (HADES_STRING_TEXT_OPCODE[opcode].length != -1) {
+					tmparglen[code_amount] = HADES_STRING_TEXT_OPCODE[opcode].length + 1;
+				} else if (opcode == 0x04) { // TOKENIZE
+					ReadCharFunc(ffbin, tmpstr[length++]);
+					tmparg[code_amount][i++] = tmpstr[length - 1];
+					tmparglen[code_amount] = 2 + tmpstr[length - 1] * 2;
+				} else if (opcode == 0x48) { // 0x48
+					ReadCharFunc(ffbin, tmpstr[length++]);
+					tmparg[code_amount][i++] = tmpstr[length - 1];
+					ReadCharFunc(ffbin, tmpstr[length++]);
 					tmparglen[code_amount] = 3;
-					while (tmpstr[length-1]!=0xFF) {
-						tmparg[code_amount][i++] = tmpstr[length-1];
+					while (tmpstr[length - 1] != 0xFF) {
+						tmparg[code_amount][i++] = tmpstr[length - 1];
 						tmparglen[code_amount]++;
-						ReadCharFunc(ffbin,tmpstr[length++]);
+						ReadCharFunc(ffbin, tmpstr[length++]);
 					}
-					tmparg[code_amount][i++] = tmpstr[length-1];
+					tmparg[code_amount][i++] = tmpstr[length - 1];
 				}
-				while (i<tmparglen[code_amount]) {
-					ReadCharFunc(ffbin,tmpstr[length++]);
-					tmparg[code_amount][i++] = tmpstr[length-1];
+				while (i < tmparglen[code_amount]) {
+					ReadCharFunc(ffbin, tmpstr[length++]);
+					tmparg[code_amount][i++] = tmpstr[length - 1];
 				}
 				code_amount++;
-				if (opcode==0x01 || opcode==0x09) {
+				if (opcode == 0x01 || opcode == 0x09) {
 					null_terminated = 0;
 					break;
 				}
 			}
-		} else if (tmpstr[length-1]==CHARMAP_A_CODECHAR) {
-			ReadCharFunc(ffbin,tmpstr[length++]);
-			str += charmap_A[tmpstr[length-1]];
-		} else if (tmpstr[length-1]==CHARMAP_B_CODECHAR) {
-			ReadCharFunc(ffbin,tmpstr[length++]);
-			str += charmap_B[tmpstr[length-1]];
-		} else if (tmpstr[length-1]==CHARMAP_EXT_CODECHAR) {
-			ReadCharFunc(ffbin,tmpstr[length++]);
+		} else if (tmpstr[length - 1] == CHARMAP_A_CODECHAR) {
+			ReadCharFunc(ffbin, tmpstr[length++]);
+			str += charmap_A[tmpstr[length - 1]];
+		} else if (tmpstr[length - 1] == CHARMAP_B_CODECHAR) {
+			ReadCharFunc(ffbin, tmpstr[length++]);
+			str += charmap_B[tmpstr[length - 1]];
+		} else if (tmpstr[length - 1] == CHARMAP_EXT_CODECHAR) {
+			ReadCharFunc(ffbin, tmpstr[length++]);
 			if (charmap_Ext)
-				str += charmap_Ext[tmpstr[length-1]];
+				str += charmap_Ext[tmpstr[length - 1]];
 			else
 				str += UNKNOWN_CHAR;
 		} else {
-			str += charmap[tmpstr[length-1]];
+			str += charmap[tmpstr[length - 1]];
 		}
-		ReadCharFunc(ffbin,tmpstr[length++]);
+		ReadCharFunc(ffbin, tmpstr[length++]);
 	}
 	if (raw) {
 		delete[] raw;
@@ -275,14 +309,14 @@ void FF9String::Read(fstream& ffbin,void (*ReadCharFunc)(fstream& fs,uint8_t& ch
 	}
 	raw = new uint8_t[length];
 	code_arg_length = new uint8_t[code_amount];
-	code_arg = new uint8_t*[code_amount];
-	copy(tmpstr,tmpstr+length,raw);
-	copy(tmparglen,tmparglen+code_amount,code_arg_length);
-	for (i=0;i<code_amount;i++) {
+	code_arg = new uint8_t * [code_amount];
+	copy(tmpstr, tmpstr + length, raw);
+	copy(tmparglen, tmparglen + code_amount, code_arg_length);
+	for (i = 0; i < code_amount; i++) {
 		code_arg[i] = new uint8_t[code_arg_length[i]];
-		copy(tmparg[i],tmparg[i]+code_arg_length[i],code_arg[i]);
+		copy(tmparg[i], tmparg[i] + code_arg_length[i], code_arg[i]);
 	}
-	for (i=0;i<STEAM_LANGUAGE_AMOUNT;i++) {
+	for (i = 0; i < STEAM_LANGUAGE_AMOUNT; i++) {
 		multi_lang_init[i] = false;
 		multi_lang_str[i] = L"";
 	}

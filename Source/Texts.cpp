@@ -468,40 +468,40 @@ void TextDataStruct::UpdateOffset() {
 }
 
 void TextDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
-	unsigned int i,j,k,l;
+	unsigned int i, j, k, l;
 	amount = clusset.text_amount;
 	struct_id.resize(amount);
 	name.resize(amount);
 	text_data.resize(amount);
 	tim_amount.resize(amount);
 	j = 0;
-	LoadingDialogInit(amount,_(L"Reading text blocks..."));
-	if (GetGameType()==GAME_TYPE_PSX) {
+	LoadingDialogInit(amount, _(L"Reading text blocks..."));
+	if (GetGameType() == GAME_TYPE_PSX) {
 		cluster_id.resize(amount);
 		charmap.resize(amount);
 		chartim.resize(amount);
 		uint16_t numchmap = 0;
-		for (i=0;i<clusset.amount;i++) {
-			if (clusset.clus_type[i]==CLUSTER_TYPE_FIELD_TEXT) {
+		for (i = 0; i < clusset.amount; i++) {
+			if (clusset.clus_type[i] == CLUSTER_TYPE_FIELD_TEXT) {
 				ClusterData& clus = clusset.clus[i];
 				cluster_id[j] = i;
 				clus.CreateChildren(ffbin);
-				for (k=0;k<clus.chunk_amount;k++) {
-					for (l=0;l<clus.chunk[k].object_amount;l++) {
+				for (k = 0; k < clus.chunk_amount; k++) {
+					for (l = 0; l < clus.chunk[k].object_amount; l++) {
 						ffbin.seekg(clus.chunk[k].object_offset[l]);
 						clus.chunk[k].GetObject(l).Read(ffbin);
 					}
 				}
-				if (clus.SearchChunkType(CHUNK_TYPE_TEXT)>=0) {
+				if (clus.SearchChunkType(CHUNK_TYPE_TEXT) >= 0) {
 					ChunkData& chunktxt = clus.chunk[clus.SearchChunkType(CHUNK_TYPE_TEXT)];
 					text_data[j] = (TextDataStruct*)&chunktxt.GetObject(0);
 					struct_id[j] = chunktxt.object_id[0];
 				} else {
 					text_data[j] = NULL;
-					struct_id[j] = 0x1000+numchmap++;
+					struct_id[j] = 0x1000 + numchmap++;
 					main_charmap_index = j;
 				}
-				if (clus.SearchChunkType(CHUNK_TYPE_CHARMAP)>=0) {
+				if (clus.SearchChunkType(CHUNK_TYPE_CHARMAP) >= 0) {
 					ChunkData& chmap = clus.chunk[clus.SearchChunkType(CHUNK_TYPE_CHARMAP)];
 					charmap[j] = (CharmapDataStruct*)&chmap.GetObject(0);
 					ChunkData& chtim = clus.chunk[clus.SearchChunkType(CHUNK_TYPE_TIM)];
@@ -512,8 +512,8 @@ void TextDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 					charmap[j] = NULL;
 					chartim[j] = NULL;
 				}
-				for (k=0;k<G_N_ELEMENTS(HADES_STRING_TEXT_BLOCK_NAME);k++)
-					if (struct_id[j]==HADES_STRING_TEXT_BLOCK_NAME[k].id) {
+				for (k = 0; k < G_V_ELEMENTS(HADES_STRING_TEXT_BLOCK_NAME); k++)
+					if (struct_id[j] == HADES_STRING_TEXT_BLOCK_NAME[k].id) {
 						name[j] = HADES_STRING_TEXT_BLOCK_NAME[k].label;
 						break;
 					}
@@ -527,25 +527,25 @@ void TextDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 		uint32_t fsize;
 		char* buffer;
 		fname += "resources.assets";
-		ffbin.open(fname.c_str(),ios::in | ios::binary);
-		for (i=0;i<amount;i++) {
+		ffbin.open(fname.c_str(), ios::in | ios::binary);
+		for (i = 0; i < amount; i++) {
 			ClusterData* dummyclus;
 			SteamLanguage lang;
 			uint16_t text_lang_amount[STEAM_LANGUAGE_AMOUNT];
 			tim_amount[i] = 0;
 			struct_id[i] = config.text_id[i];
 			text_data[i] = new TextDataStruct[1];
-			text_data[i]->Init(true,CHUNK_TYPE_TEXT,config.text_id[i],&dummyclus,CLUSTER_TYPE_FIELD_TEXT);
+			text_data[i]->Init(true, CHUNK_TYPE_TEXT, config.text_id[i], &dummyclus, CLUSTER_TYPE_FIELD_TEXT);
 			text_data[i]->amount = 0;
-			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
-				if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+			for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+				if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang != GetSteamLanguage())
 					continue;
 				ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.text_file[lang][i]));
 				fsize = config.meta_res.GetFileSizeByIndex(config.text_file[lang][i]);
 				buffer = new char[fsize];
-				ffbin.read(buffer,fsize);
-				text_lang_amount[lang] = FF9String::CountSteamTextAmount(buffer,fsize);
-				text_data[i]->amount = max(text_data[i]->amount,text_lang_amount[lang]);
+				ffbin.read(buffer, fsize);
+				text_lang_amount[lang] = FF9String::CountSteamTextAmount(buffer, fsize);
+				text_data[i]->amount = max(text_data[i]->amount, text_lang_amount[lang]);
 				delete[] buffer;
 			}
 			text_data[i]->text = new FF9String[text_data[i]->amount];
@@ -558,13 +558,13 @@ void TextDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 			text_data[i]->format_data = new TextFormatStruct*[text_data[i]->amount];
 			text_data[i]->has_format = true;*/
 			text_data[i]->loaded = true;
-			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
-				if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+			for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+				if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang != GetSteamLanguage())
 					continue;
 				ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.text_file[lang][i]));
 				text_data[i]->size = config.meta_res.GetFileSizeByIndex(config.text_file[lang][i]);
-				for (j=0;j<text_lang_amount[lang];j++) { // ToDo: handle the sizes etc...
-					SteamReadFF9String(ffbin,text_data[i]->text[j],lang);
+				for (j = 0; j < text_lang_amount[lang]; j++) { // TODO: handle the sizes etc...
+					SteamReadFF9String(ffbin, text_data[i]->text[j], lang);
 /*					text_data[i]->size_y[j] = 0;
 					text_data[i]->flag[j] = 0;
 					text_data[i]->offset[j] = 0;
@@ -574,8 +574,8 @@ void TextDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 					text_data[i]->format_data[j] = new TextFormatStruct[0];*/
 				}
 			}
-			for (j=0;j<G_N_ELEMENTS(HADES_STRING_TEXT_BLOCK_NAME);j++)
-				if (struct_id[i]==HADES_STRING_TEXT_BLOCK_NAME[j].id) {
+			for (j = 0; j < G_V_ELEMENTS(HADES_STRING_TEXT_BLOCK_NAME); j++)
+				if (struct_id[i] == HADES_STRING_TEXT_BLOCK_NAME[j].id) {
 					name[i] = HADES_STRING_TEXT_BLOCK_NAME[j].label;
 					break;
 				}
@@ -1255,10 +1255,10 @@ void SpecialTextDataSet::WriteHWS(fstream& ffbin, UnusedSaveBackupPart& backup) 
 	uint16_t size,i,spacetmp;
 	unsigned int j;
 	SteamLanguage lang;
-	if (GetGameType()==GAME_TYPE_PSX)
-		HWSWriteShort(ffbin,G_N_ELEMENTS(HADES_STRING_SPECIAL_TEXT_BLOCK)+backup.save_amount);
+	if (GetGameType() == GAME_TYPE_PSX)
+		HWSWriteShort(ffbin, HADES_STRING_SPECIAL_TEXT_BLOCK.size() + backup.save_amount);
 	else
-		HWSWriteShort(ffbin,G_N_ELEMENTS(HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM)+backup.save_amount);
+		HWSWriteShort(ffbin, HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM.size() + backup.save_amount);
 	for (i=0;i<amount;i++) {
 		text_block[i].UpdateOffset();
 		HWSWriteShort(ffbin,i);

@@ -1249,38 +1249,38 @@ void ModelDataStruct::SetupPostImportData(fstream& filebase, vector<unsigned int
 	string animsearchname;
 	uint8_t modelcat = DATABASE_MODEL_CATEGORY_LIST_ALL;
 	uint32_t modelid = atoi(steam_name.c_str());
-	if (modelid>0 || steam_name=="0")
-		for (i=0;i<G_N_ELEMENTS(HADES_STRING_MODEL_NAME);i++)
-			if (modelid==HADES_STRING_MODEL_NAME[i].id)
+	if (modelid > 0 || steam_name == "0")
+		for (i = 0; i < G_V_ELEMENTS(HADES_STRING_MODEL_NAME); i++)
+			if (modelid == HADES_STRING_MODEL_NAME[i].id)
 				modelcat = DATABASE_MODEL_CATEGORY_TO_LIST(HADES_STRING_MODEL_NAME[i].category);
-	for (i=0;i<animation.size();i++) {
+	for (i = 0; i < animation.size(); i++) {
 		animation[i].anim_id = 0xFFFFFFFF;
 		animation[i].file_id = -1;
-		if (mergepolicy==2 || basehierarchy==NULL) // DEBUG: "Take" animations are imported in UNITY_ARCHIVE_DATA5 in these cases
+		if (mergepolicy == 2 || basehierarchy == NULL) // DEBUG: "Take" animations are imported in UNITY_ARCHIVE_DATA5 in these cases
 			continue;
-		if (animation[i].name.substr(0,4)=="Take") { // DEBUG: assuming there's only 1 such animation
-			for (j=0;j<hierarchy->node_list.size();j++)
-				if (hierarchy->node_list[j]->node_type==111) {
+		if (animation[i].name.substr(0, 4) == "Take") { // DEBUG: assuming there's only 1 such animation
+			for (j = 0; j < hierarchy->node_list.size(); j++)
+				if (hierarchy->node_list[j]->node_type == 111) {
 					AnimationStruct& nodeanim = *static_cast<AnimationStruct*>(hierarchy->node_list[j]);
-					if (nodeanim.child_clip1!=NULL) {
+					if (nodeanim.child_clip1 != NULL) {
 						animation[i].anim_id = 0xFFFFFFFF;
 						animation[i].file_id = nodeanim.child_clip1->file_index;
 						break;
 					}
 				}
 		}
-		if (animation[i].file_id>=0)
+		if (animation[i].file_id >= 0)
 			continue;
 		if (animbundle) {
-			int32_t animsearchindex = AnimationDatabase::GetIndexFromSteam(animation[i].name,modelcat);
-			if (animsearchindex<0)
+			int32_t animsearchindex = AnimationDatabase::GetIndexFromSteam(animation[i].name, modelcat);
+			if (animsearchindex < 0)
 				continue;
-			animsearchname = animsearchpath+to_string(AnimationDatabase::GetId(animsearchindex))+".anim";
+			animsearchname = animsearchpath + to_string(AnimationDatabase::GetId(animsearchindex)) + ".anim";
 			animation[i].anim_id = AnimationDatabase::GetId(animsearchindex);
-			for (j=0;j<animbundle->amount;j++)
-				if (animbundle->path[j]==animsearchname) {
-					for (k=0;k<archivelist[UNITY_ARCHIVE_DATA5].header_file_amount;k++)
-						if (animbundle->info[j]==archivelist[UNITY_ARCHIVE_DATA5].file_info[k]) {
+			for (j = 0; j < animbundle->amount; j++)
+				if (animbundle->path[j] == animsearchname) {
+					for (k = 0; k < archivelist[UNITY_ARCHIVE_DATA5].header_file_amount; k++)
+						if (animbundle->info[j] == archivelist[UNITY_ARCHIVE_DATA5].file_info[k]) {
 							animation[i].file_id = k;
 							j = animbundle->amount;
 							break;
@@ -1701,24 +1701,24 @@ bool ConvertModelToFBX(ModelDataStruct& model, FbxManager*& sdkmanager, FbxScene
 
 template<typename Tvect, typename Tgeoelement>
 Tvect GetVertexGeometryElement(FbxMesh* lMesh, Tgeoelement* lGeometryElement, unsigned int vertindex) {
-	if (lGeometryElement==NULL)
+	if (lGeometryElement == NULL)
 		return Tvect();
 	int mappingid = vertindex;
 	switch (lGeometryElement->GetMappingMode()) {
 	case FbxLayerElement::eByControlPoint:
-		if (lGeometryElement->GetReferenceMode()==FbxLayerElement::eIndex || lGeometryElement->GetReferenceMode()==FbxLayerElement::eIndexToDirect) {
+		if (lGeometryElement->GetReferenceMode() == FbxLayerElement::eIndex || lGeometryElement->GetReferenceMode() == FbxLayerElement::eIndexToDirect) {
 			mappingid = lGeometryElement->GetIndexArray()[vertindex];
-			if (mappingid<0)
+			if (mappingid < 0)
 				return Tvect();
 		}
 		return lGeometryElement->FbxLayerElementTemplate::GetDirectArray()[mappingid];
 		break;
 	case FbxLayerElement::eByPolygonVertex: {
-		unsigned int i,j;
-		for (i=0;i<lMesh->GetPolygonCount();i++)
-			for (j=0;j<lMesh->GetPolygonSize(i);j++)
-				if (lMesh->GetPolygonVertex(i,j)==vertindex)
-					return lGeometryElement->FbxLayerElementTemplate::GetDirectArray()[lMesh->GetTextureUVIndex(i,j)];
+		int i, j;
+		for (i = 0; i < lMesh->GetPolygonCount(); i++)
+			for (j = 0; j < lMesh->GetPolygonSize(i); j++)
+				if (lMesh->GetPolygonVertex(i, j) == vertindex)
+					return lGeometryElement->FbxLayerElementTemplate::GetDirectArray()[lMesh->GetTextureUVIndex(i, j)];
 		return Tvect();
 		break;
 	}

@@ -45,6 +45,9 @@ public:
 	uint16_t help_size_x;
 	uint8_t category;
 	uint8_t cost;
+
+	// Memoria custom feature
+	vector<int> boosted_support;
 	
 	// Return 0 if success ; 1 if the value is too long
 	int SetName(wstring newvalue);

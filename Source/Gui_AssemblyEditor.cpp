@@ -29,8 +29,8 @@ MipsScriptHelpDialog::MipsScriptHelpDialog(MipsScriptEditDialog* p) :
 	MipsScriptHelpWindow(p),
 	parent(p) {
 	wxArrayString choicelist;
-	unsigned int i;
-	for (i = 0; i < G_N_ELEMENTS(MIPS_HELP); i++)
+	choicelist.Alloc(MIPS_HELP.size());
+	for (unsigned int i = 0; i < MIPS_HELP.size(); i++)
 		choicelist.Add(MIPS_HELP[i].label);
 	m_listfunction->Append(choicelist);
 	m_listfunction->SetSelection(0);
@@ -43,16 +43,16 @@ MipsScriptHelpDialog::~MipsScriptHelpDialog() {
 void MipsScriptHelpDialog::DisplayHelp(unsigned int helpid) {
 	wxString help = MIPS_HELP[helpid].help;
 	wxString effectname;
-	int i,j;
-	if (helpid==1) { // Battle - Function Dependency
-		for (i=SPELL_EFFECT_AMOUNT-1;i>=0;i--) {
+	int i, j;
+	if (helpid == 1) { // Battle - Function Dependency
+		for (i = SPELL_EFFECT_AMOUNT - 1; i >= 0; i--) {
 			effectname = _(L"");
-			for (j=0;j<G_N_ELEMENTS(HADES_STRING_SPELL_EFFECT);j++)
-				if (HADES_STRING_SPELL_EFFECT[j].id==i) {
+			for (j = 0; j < (int)HADES_STRING_SPELL_EFFECT.size(); j++)
+				if (HADES_STRING_SPELL_EFFECT[j].id == i) {
 					effectname = HADES_STRING_SPELL_EFFECT[j].label;
 					break;
 				}
-			help.Replace(_(L"%")+wxString::Format(wxT("%d"),i),effectname);
+			help.Replace(_(L"%") + wxString::Format(wxT("%d"), i), effectname);
 		}
 	}
 	m_helptextctrl->SetValue(help);
@@ -198,25 +198,25 @@ void MipsScriptSizer::CreateArgumentControls() {
 MipsScriptEditDialog::MipsScriptEditDialog(wxWindow* parent, MipsFunction* func) :
 	MipsScriptEditWindow(parent),
 	help_dial(NULL) {
-	unsigned int i,sizeramount;
+	unsigned int i, sizeramount;
 	function.amount = func->amount;
-	function.instruction = new MipsInstruction*[function.amount];
-	for (i=0;i<function.amount;i++) {
+	function.instruction = new MipsInstruction * [function.amount];
+	for (i = 0; i < function.amount; i++) {
 		function.instruction[i] = new MipsInstruction[1];
 		function.instruction[i]->CopyValue(*func->instruction[i]);
 	}
-	code_list.Alloc(G_N_ELEMENTS(MIPS_CODE_LIST)-1);
-	for (i=0;i+1<G_N_ELEMENTS(MIPS_CODE_LIST);i++)
+	code_list.Alloc(MIPS_CODE_LIST.size() - 1);
+	for (i = 0; i + 1 < MIPS_CODE_LIST.size(); i++)
 		code_list.Add(_(MIPS_CODE_LIST[i].name));
-	m_mipsscroll->SetScrollbar(0,MIPS_MAX_INSTRUCTION_DISPLAY,function.amount,MIPS_MAX_INSTRUCTION_DISPLAY-1);
-	m_parentsizer = new wxFlexGridSizer(0,1,0,0);
+	m_mipsscroll->SetScrollbar(0, MIPS_MAX_INSTRUCTION_DISPLAY, function.amount, MIPS_MAX_INSTRUCTION_DISPLAY - 1);
+	m_parentsizer = new wxFlexGridSizer(0, 1, 0, 0);
 	m_parentsizer->SetFlexibleDirection(wxBOTH);
 	m_parentsizer->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
-	sizeramount = min((int)function.amount,MIPS_MAX_INSTRUCTION_DISPLAY);
-	code_sizer = new MipsScriptSizer*[sizeramount];
-	for (i=0;i<sizeramount;i++) {
-		code_sizer[i] = new MipsScriptSizer(this,i,function.instruction[i]);
-		m_parentsizer->Add(code_sizer[i],1,wxEXPAND);
+	sizeramount = min((int)function.amount, MIPS_MAX_INSTRUCTION_DISPLAY);
+	code_sizer = new MipsScriptSizer * [sizeramount];
+	for (i = 0; i < sizeramount; i++) {
+		code_sizer[i] = new MipsScriptSizer(this, i, function.instruction[i]);
+		m_parentsizer->Add(code_sizer[i], 1, wxEXPAND);
 	}
 	m_mipswindow->SetSizer(m_parentsizer);
 	m_mipswindow->Layout();
@@ -563,21 +563,21 @@ DllMetaDataModification* CilScriptEditDialog::ComputeModification() { // ToDo: c
 void CilScriptEditDialog::UpdateScriptPositions() {
 	wxString newscriptpos = _(L"");
 	wxString scriptstr = m_scriptctrl->GetValue();
-	wxString instrstr,sposline;
+	wxString instrstr, sposline;
 	size_t cilpos = 0;
 	unsigned int i;
 	while (!scriptstr.IsEmpty()) {
 		instrstr = GetNextCILWord(scriptstr);
-		sposline.Printf(wxT("IL_%.4X:\n"),cilpos);
+		sposline.Printf(wxT("IL_%.4X:\n"), cilpos);
 		newscriptpos += sposline;
-		for (i=0;i+1<G_N_ELEMENTS(ILCodeList);i++)
+		for (i = 0; i + 1 < ILCodeList.size(); i++)
 			if (instrstr.IsSameAs(ILCodeList[i].name)) {
-				if (ILCodeList[i].size>=0)
-					cilpos += ILCodeList[i].size+(ILCodeList[i].code>0xFF ? 2 : 1);
+				if (ILCodeList[i].size >= 0)
+					cilpos += ILCodeList[i].size + (ILCodeList[i].code > 0xFF ? 2 : 1);
 				else {
 					cilpos += 5;
 					instrstr = GetNextCILWord(scriptstr);
-					while (!scriptstr.IsEmpty() && !instrstr.IsSameAs(L"\n") && !(instrstr.SubString(0,2).IsSameAs(L"//"))) {
+					while (!scriptstr.IsEmpty() && !instrstr.IsSameAs(L"\n") && !(instrstr.SubString(0, 2).IsSameAs(L"//"))) {
 						cilpos += 4;
 						instrstr = GetNextCILWord(scriptstr);
 					}
@@ -591,30 +591,30 @@ void CilScriptEditDialog::UpdateScriptPositions() {
 		int linediff, curscroll = m_scriptctrl->GetScrollPos(wxVERTICAL);
 		wxTextPos curselstart, curselend, curpos = m_scriptctrl->GetInsertionPoint();
 		unsigned int linediffpos = 0;
-		size_t scriptilpos,ilposline;
-		linediff = newscriptpos.Len()-script_pos_string.Len();
-		if (linediff!=0 && current_insertion_point_line>=0) {
-			if (linediff>0)
-				linediffpos = (current_insertion_point_line+1)*9;
+		size_t scriptilpos, ilposline;
+		linediff = newscriptpos.Len() - script_pos_string.Len();
+		if (linediff != 0 && current_insertion_point_line >= 0) {
+			if (linediff > 0)
+				linediffpos = (current_insertion_point_line + 1) * 9;
 			else
-				linediffpos = current_insertion_point_line*9;
+				linediffpos = current_insertion_point_line * 9;
 		}
 		scriptstr = m_scriptctrl->GetValue();
 		scriptilpos = scriptstr.find(L"IL_");
-		while (scriptilpos!=string::npos) {
-			instrstr = scriptstr.Mid(scriptilpos,7);
+		while (scriptilpos != string::npos) {
+			instrstr = scriptstr.Mid(scriptilpos, 7);
 			ilposline = script_pos_string.find(instrstr);
-			if (ilposline!=string::npos) {
-				if (ilposline>=linediffpos)
+			if (ilposline != string::npos) {
+				if (ilposline >= linediffpos)
 					ilposline += linediff;
-				scriptstr.replace(scriptilpos,7,newscriptpos.Mid(ilposline,7));
+				scriptstr.replace(scriptilpos, 7, newscriptpos.Mid(ilposline, 7));
 			}
-			scriptilpos = scriptstr.find(L"IL_",scriptilpos+3);
+			scriptilpos = scriptstr.find(L"IL_", scriptilpos + 3);
 		}
-		m_scriptctrl->GetSelection(&curselstart,&curselend);
+		m_scriptctrl->GetSelection(&curselstart, &curselend);
 		m_scriptctrl->ChangeValue(scriptstr);
 		m_scriptctrl->ScrollLines(curscroll);
-		m_scriptctrl->SetSelection(curselstart,curselend);
+		m_scriptctrl->SetSelection(curselstart, curselend);
 		m_scriptctrl->SetInsertionPoint(curpos);
 		script_pos_string = newscriptpos;
 	}
@@ -728,39 +728,39 @@ LogStruct CilScriptEditDialog::ParseMethod(wxString scriptstr) {
 	BufferInitPosition();
 	while (!scriptstr.IsEmpty()) {
 		scriptword = GetNextCILWord(scriptstr);
-		for (i=0;i+1<G_N_ELEMENTS(ILCodeList);i++)
+		for (i = 0; i + 1 < ILCodeList.size(); i++)
 			if (scriptword.IsSameAs(ILCodeList[i].name)) {
-				if (ILCodeList[i].code>0xFF) {
-					BufferWriteChar(newraw,0xFE);
-					BufferWriteChar(newraw,ILCodeList[i].code & 0xFF);
+				if (ILCodeList[i].code > 0xFF) {
+					BufferWriteChar(newraw, 0xFE);
+					BufferWriteChar(newraw, ILCodeList[i].code & 0xFF);
 				} else
-					BufferWriteChar(newraw,ILCodeList[i].code);
-				if (ILCodeList[i].size>0) {
+					BufferWriteChar(newraw, ILCodeList[i].code);
+				if (ILCodeList[i].size > 0) {
 					scriptword = GetNextCILWord(scriptstr);
-					if (!WriteArgumentToRawCode(res,i,scriptword,newraw,BufferGetPosition()+ILCodeList[i].size)) {
-						BufferInitPosition(BufferGetPosition()+ILCodeList[i].size);
+					if (!WriteArgumentToRawCode(res, i, scriptword, newraw, BufferGetPosition() + ILCodeList[i].size)) {
+						BufferInitPosition(BufferGetPosition() + ILCodeList[i].size);
 					}
-				} else if (ILCodeList[i].size==-1) {
+				} else if (ILCodeList[i].size == -1) {
 					wxString tmpline = scriptstr;
-					uint32_t rampos,swam = 0;
+					uint32_t rampos, swam = 0;
 					scriptword = GetNextCILWord(tmpline);
-					while (!tmpline.IsEmpty() && !scriptword.IsSameAs(L"\n") && !scriptword.Mid(0,2).IsSameAs(L"//")) {
+					while (!tmpline.IsEmpty() && !scriptword.IsSameAs(L"\n") && !scriptword.Mid(0, 2).IsSameAs(L"//")) {
 						scriptword = GetNextCILWord(tmpline);
 						swam++;
 					}
-					BufferWriteLong(newraw,swam);
-					rampos = BufferGetPosition()+4*swam;
-					for (i=0;i<swam;i++) {
+					BufferWriteLong(newraw, swam);
+					rampos = BufferGetPosition() + 4 * swam;
+					for (i = 0; i < swam; i++) {
 						scriptword = GetNextCILWord(scriptstr);
-						if (!WriteArgumentToRawCode(res,i,scriptword,newraw,rampos)) {
-							BufferInitPosition(BufferGetPosition()+4);
+						if (!WriteArgumentToRawCode(res, i, scriptword, newraw, rampos)) {
+							BufferInitPosition(BufferGetPosition() + 4);
 						}
 					}
 				}
 				break;
 			}
-		if (i+1==G_N_ELEMENTS(ILCodeList) && !scriptword.IsSameAs(L"\n")) {
-			errstr.Printf(wxT(HADES_STRING_CILSCRIPT_NOTINST),BufferGetPosition(),scriptword);
+		if (i + 1 == ILCodeList.size() && !scriptword.IsSameAs(L"\n")) {
+			errstr.Printf(wxT(HADES_STRING_CILSCRIPT_NOTINST), BufferGetPosition(), scriptword);
 			res.AddWarning(errstr.ToStdWstring());
 		}
 		while (!scriptstr.IsEmpty() && !scriptword.IsSameAs(L"\n"))
@@ -770,7 +770,7 @@ LogStruct CilScriptEditDialog::ParseMethod(wxString scriptstr) {
 		method_raw_length = BufferGetPosition();
 		delete[] method_raw;
 		method_raw = new uint8_t[method_raw_length];
-		memcpy(method_raw,newraw,method_raw_length*sizeof(uint8_t));
+		memcpy(method_raw, newraw, method_raw_length * sizeof(uint8_t));
 	}
 	return res;
 }

@@ -14,7 +14,7 @@ const unsigned int steam_stat_field_size[] = { 8, 8, 8, 8, 16 };
 const unsigned int steam_lvlhpmp_field_size[] = { 16, 16 };
 
 void InitialStatDataStruct::GenerateDefaultName() {
-	wstring name = id < PLAYABLE_CHAR_AMOUNT ? HADES_STRING_CHARACTER_DEFAULT_NAME[id] : (L"PC n°" + to_string(id));
+	wstring name = id < PLAYABLE_CHAR_AMOUNT ? HADES_STRING_CHARACTER_DEFAULT_NAME[id].ToStdWstring() : (L"PC n°" + to_string(id));
 	default_name.CreateEmpty();
 	if (GetGameType() == GAME_TYPE_PSX || hades::STEAM_SINGLE_LANGUAGE_MODE) {
 		default_name.SetValue(name);
@@ -761,7 +761,7 @@ wxString CSV_BattleParamConstructor(CharBattleParameterStruct& bp, int index) {
 		ConcatenateStrings<int>(", ", arraystatus, [&bp](int index) { return to_string((int)bp.status_offz[index]); }),
 		bp.attack_sound[0],
 		bp.attack_sound[1],
-		bp.id < G_N_ELEMENTS(BattleParamName) ? BattleParamName[bp.id] : (L"Custom battle parameters " + to_string(bp.id)));
+		bp.id < G_V_ELEMENTS(BattleParamName) ? BattleParamName[bp.id] : (L"Custom battle parameters " + to_string(bp.id)));
 	return entry;
 }
 
@@ -798,13 +798,20 @@ wxString CSV_BaseStatConstructor(InitialStatDataStruct& is, int index) {
 }
 
 wxString CSV_CommandSetConstructor(CommandSetDataStruct& cs, int index) {
-	return wxString::Format(wxT("%d;%d;%d;%d;%d;# %s"),
+	wxString entry = wxString::Format(wxT("%d;%d;%d;%d;%d;# %s"),
 		cs.id,
 		cs.first_command,
 		cs.second_command,
 		cs.first_command_trance,
 		cs.second_command_trance,
-		cs.id < G_N_ELEMENTS(AbilitySetName) ? AbilitySetName[cs.id] : L"Command set " + to_string(cs.id));
+		cs.id < G_V_ELEMENTS(AbilitySetName) ? AbilitySetName[cs.id] : L"Command set " + to_string(cs.id));
+	if (GetGameSaveSet() != NULL && GetGameSaveSet()->sectionloaded[DATA_SECTION_CMD]) {
+		entry += _(L": ") + _(GetGameSaveSet()->cmdset->GetCommandById(cs.first_command).name.str_nice);
+		entry += _(L", ") + _(GetGameSaveSet()->cmdset->GetCommandById(cs.second_command).name.str_nice);
+		entry += _(L", ") + _(GetGameSaveSet()->cmdset->GetCommandById(cs.first_command_trance).name.str_nice);
+		entry += _(L", ") + _(GetGameSaveSet()->cmdset->GetCommandById(cs.second_command_trance).name.str_nice);
+	}
+	return entry;
 }
 
 wxString CSV_EquipSetConstructor(InitialEquipDataStruct& ie, int index) {
@@ -816,10 +823,22 @@ wxString CSV_EquipSetConstructor(InitialEquipDataStruct& ie, int index) {
 		ie.wrist == 0xFF ? -1 : ie.wrist,
 		ie.armor == 0xFF ? -1 : ie.armor,
 		ie.accessory == 0xFF ? -1 : ie.accessory);
-	for (int i = 0; i < G_N_ELEMENTS(EquipSetName); i++)
+	wxString itemnames = wxEmptyString;
+	if (GetGameSaveSet() != NULL && GetGameSaveSet()->sectionloaded[DATA_SECTION_ITEM]) {
+		vector<int> equipvec;
+		equipvec.push_back(ie.weapon);
+		equipvec.push_back(ie.head);
+		equipvec.push_back(ie.wrist);
+		equipvec.push_back(ie.armor);
+		equipvec.push_back(ie.accessory);
+		wxString concat = ConcatenateStrings<int>(", ", equipvec, [](int itemid) { return itemid != 0xFF ? ConvertWStrToStr(GetGameSaveSet()->itemset->GetItemById(itemid).name.str_nice) : ""; }, true);
+		if (!concat.IsEmpty())
+			itemnames = _(L" (") + concat + _(L")");
+	}
+	for (int i = 0; i < G_V_ELEMENTS(EquipSetName); i++)
 		if (EquipSetName[i].id == ie.id)
-			return entry + wxString::Format(wxT(";# %s"), EquipSetName[i].name);
-	return entry + wxString::Format(wxT(";# Equip Set %d"), ie.id);
+			return entry + wxString::Format(wxT(";# %s"), EquipSetName[i].name) + itemnames;
+	return entry + wxString::Format(wxT(";# Equip Set %d"), ie.id) + itemnames;
 }
 
 bool CSV_AbilitySetGenerator(wxString modfolder, wxString csvpath, wxString csvheader, AbilitySetDataStruct& as) {
@@ -840,8 +859,15 @@ bool CSV_AbilitySetGenerator(wxString modfolder, wxString csvpath, wxString csvh
 			return true;
 	}
 	wxString content = csvheader;
-	for (i = 0; i < as.ability.size(); i++)
-		content += wxString::Format(wxT("%s;%d\n"), as.ability[i].GetStringId(), as.ap_cost[i]);
+	for (i = 0; i < as.ability.size(); i++) {
+		content += wxString::Format(wxT("%s;%d"), as.ability[i].GetStringId(), as.ap_cost[i]);
+		if (as.ability[i].is_active && GetGameSaveSet() != NULL && GetGameSaveSet()->sectionloaded[DATA_SECTION_SPELL])
+			content += wxString::Format(wxT(";# %s\n"), GetGameSaveSet()->spellset->GetSpellById(as.ability[i].id).name.str_nice);
+		else if (!as.ability[i].is_active && GetGameSaveSet() != NULL && GetGameSaveSet()->sectionloaded[DATA_SECTION_SUPPORT])
+			content += wxString::Format(wxT(";# %s\n"), GetGameSaveSet()->supportset->GetSupportById(as.ability[i].id).name.str_nice);
+		else
+			content += _(L"\n");
+	}
 	wxFile csvfile;
 	if (!csvfile.Open(modfolder + csvpath, wxFile::write))
 		return false;
@@ -860,6 +886,7 @@ wxString CSV_LevelConstructor(LevelDataStruct& lv, int index) {
 }
 
 bool StatDataSet::GenerateCSV(string basefolder) {
+	unsigned int i, j;
 	if (!MemoriaUtility::GenerateCSVGeneric<CharBattleParameterStruct>(_(basefolder), _(HADES_STRING_CSV_BATTLEPARAM_FILE), _(HADES_STRING_CSV_BATTLEPARAM_HEADER), battle_param, &CSV_BattleParamConstructor, &MemoriaUtility::CSV_ComparerWithoutEnd, true))
 		return false;
 	if (!MemoriaUtility::GenerateCSVGeneric<InitialStatDataStruct>(_(basefolder), _(HADES_STRING_CSV_CHARPARAM_FILE), _(HADES_STRING_CSV_CHARPARAM_HEADER), initial_stat, &CSV_CharParamConstructor, &MemoriaUtility::CSV_ComparerWithoutEnd, true))
@@ -873,7 +900,7 @@ bool StatDataSet::GenerateCSV(string basefolder) {
 	for (unsigned int i = 0; i < ability_list.size(); i++) {
 		if (ability_list[i].ability.size() == 0) // Theater sets
 			continue;
-		if (ability_list[i].id < G_N_ELEMENTS(HADES_STRING_CSV_STATABIL_FILE)) {
+		if (ability_list[i].id < (int)HADES_STRING_CSV_STATABIL_FILE.size()) {
 			if (!CSV_AbilitySetGenerator(_(basefolder), _(HADES_STRING_CSV_STATABIL_FILE[ability_list[i].id]), _(HADES_STRING_CSV_STATABIL_HEADER[ability_list[i].id]), ability_list[i]))
 				return false;
 		} else {
@@ -881,12 +908,50 @@ bool StatDataSet::GenerateCSV(string basefolder) {
 				return false;
 		}
 	}
+	wxString equippatchstr = _(L"");
+	for (i = 0; i < initial_stat.size(); i++) {
+		if (initial_stat[i].equip_patch.size() > 0) {
+			vector<vector<int>> equipbytype(6);
+			equippatchstr += wxString::Format(wxT("// %s:\n"), initial_stat[i].default_name.str);
+			for (j = 0; j < initial_stat[i].equip_patch.size(); j++) {
+				if (GetGameSaveSet() == NULL || !GetGameSaveSet()->sectionloaded[DATA_SECTION_ITEM]) {
+					equipbytype[5].push_back(initial_stat[i].equip_patch[j]);
+					continue;
+				}
+				ItemDataStruct& it = GetGameSaveSet()->itemset->GetItemById(initial_stat[i].equip_patch[j]);
+				if ((it.type & ITEM_TYPE_ANY_EQUIP) == ITEM_TYPE_WEAPON)
+					equipbytype[0].push_back(initial_stat[i].equip_patch[j]);
+				else if ((it.type & ITEM_TYPE_ANY_EQUIP) == ITEM_TYPE_WRIST)
+					equipbytype[1].push_back(initial_stat[i].equip_patch[j]);
+				else if ((it.type & ITEM_TYPE_ANY_EQUIP) == ITEM_TYPE_HEAD)
+					equipbytype[2].push_back(initial_stat[i].equip_patch[j]);
+				else if ((it.type & ITEM_TYPE_ANY_EQUIP) == ITEM_TYPE_ARMOR)
+					equipbytype[3].push_back(initial_stat[i].equip_patch[j]);
+				else if ((it.type & ITEM_TYPE_ANY_EQUIP) == ITEM_TYPE_ACCESSORY)
+					equipbytype[4].push_back(initial_stat[i].equip_patch[j]);
+				else
+					equipbytype[5].push_back(initial_stat[i].equip_patch[j]);
+			}
+			for (j = 0; j < 6; j++)
+				if (!equipbytype[j].empty())
+					equippatchstr += wxString::Format(wxT("%d Add %s\n"), initial_stat[i].id, ConcatenateStrings<int>(" ", equipbytype[j], static_cast<string(*)(int)>(&to_string)));
+			equippatchstr += _(L"\n");
+		}
+	}
+	if (!equippatchstr.IsEmpty()) {
+		wxFile equiptxtfile;
+		if (!equiptxtfile.Open(_(basefolder) + _(HADES_STRING_EQUIP_PATCH_FILE), wxFile::write))
+			return false;
+		if (!equiptxtfile.Write(equippatchstr))
+			return false;
+		equiptxtfile.Close();
+	}
 	wxArrayString levelbasecsv;
 	if (GetGameConfiguration() != NULL)
 		levelbasecsv = MemoriaUtility::LoadCSVLines(_(GetGameConfiguration()->steam_dir_assets) + _(HADES_STRING_CSV_STATLEVEL_FILE));
 	bool generatelevels = levelbasecsv.GetCount() != level.size();
 	if (!generatelevels) {
-		for (unsigned int i = 0; i < levelbasecsv.GetCount(); i++) {
+		for (i = 0; i < levelbasecsv.GetCount(); i++) {
 			wxArrayString levelentry = MemoriaUtility::LoadCSVEntry(levelbasecsv[i]);
 			if (levelentry.GetCount() < 3 || wxAtol(levelentry[0]) != level[i].exp_table || wxAtoi(levelentry[1]) != level[i].hp_table || wxAtoi(levelentry[2]) != level[i].mp_table) {
 				generatelevels = true;
@@ -1063,10 +1128,15 @@ int StatDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 			HWSReadChar(ffbin, battle_param[i].trance_color[2]);
 		}
 		for (i = 0; i < charamount; i++) {
+			int equipcount;
 			HWSReadWString(ffbin, initial_stat[i].name_keyword);
 			HWSReadChar(ffbin, initial_stat[i].default_row);
 			HWSReadChar(ffbin, initial_stat[i].default_winpose);
 			HWSReadChar(ffbin, initial_stat[i].default_category);
+			HWSReadFlexibleChar(ffbin, equipcount, true);
+			initial_stat[i].equip_patch.resize(equipcount);
+			for (j = 0; j < equipcount; j++)
+				HWSReadFlexibleChar(ffbin, initial_stat[i].equip_patch[j], true);
 		}
 	}
 	for (i = 0; i < (int)nonmodifiedbtl.size(); i++)
@@ -1162,6 +1232,9 @@ void StatDataSet::WriteHWS(fstream& ffbin) {
 		HWSWriteChar(ffbin, initial_stat[i].default_row);
 		HWSWriteChar(ffbin, initial_stat[i].default_winpose);
 		HWSWriteChar(ffbin, initial_stat[i].default_category);
+		HWSWriteFlexibleChar(ffbin, initial_stat[i].equip_patch.size(), true);
+		for (j = 0; j < (int)initial_stat[i].equip_patch.size(); j++)
+			HWSWriteFlexibleChar(ffbin, initial_stat[i].equip_patch[j], true);
 	}
 	default_name_space_total = defnamesize;
 }
