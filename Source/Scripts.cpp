@@ -40,6 +40,10 @@ bool CustomScriptsAreLoaded = false;
 void LoadCustomScriptUtility() {
 	if (CustomScriptsAreLoaded)
 		return;
+	if (!wxFile::Exists(SCRIPT_CUSTOM_API_FILENAME)) {
+		CustomScriptsAreLoaded = true;
+		return;
+	}
 	wxFile apifile(SCRIPT_CUSTOM_API_FILENAME);
 	if (!apifile.IsOpened())
 		return;
