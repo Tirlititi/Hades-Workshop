@@ -2167,7 +2167,9 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 				filedest.open(fname.c_str(), ios::out | ios::binary); \
 				if (!filedest.is_open()) return 3; \
 				saveset.SAVEFUNC; \
+				bool isempty = filedest.tellp() == 0; \
 				filedest.close(); \
+				if (isempty) remove(fname.c_str()); \
 			}
 
 		for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {

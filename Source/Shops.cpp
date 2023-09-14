@@ -200,13 +200,14 @@ void ShopDataSet::GenerateCSharp(vector<string>& buffer) {
 
 wxString CSV_ShopConstructor(ShopDataStruct& sh, int index) {
 	wxString shopname = sh.id < G_V_ELEMENTS(HADES_STRING_SHOP_NAME) ? HADES_STRING_SHOP_NAME[sh.id].label : (_("Custom shop ") + to_string(sh.id));
-	bool reachedend = false;
+	vector<int> short_item_list(sh.item_amount);
+	for (int i = 0; i < sh.item_amount; i++)
+		short_item_list[i] = sh.item_list[i];
 	return wxString::Format(wxT("%s;%d;%s;# %s"),
 		shopname,
 		sh.id,
-		ConcatenateStrings<int>(", ", sh.item_list, [&reachedend](int itid) {
-			if (itid == 0xFF) reachedend = true;
-			return reachedend ? "" : to_string(itid);
+		ConcatenateStrings<int>(", ", short_item_list, [](int itid) {
+			return itid == 0xFF ? "" : to_string(itid);
 		}, true),
 		shopname);
 }

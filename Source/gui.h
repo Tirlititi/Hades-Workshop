@@ -1323,6 +1323,8 @@ class CDPanel : public wxPanel
 		wxStaticText* m_enemystatnamelabel;
 		wxTextCtrl* m_enemystatname;
 		wxButton* m_enemystatnamebutton;
+		wxStaticText* m_staticText4851;
+		wxSpinCtrl* m_enemystatid;
 		wxStaticText* m_enemystatlvllabel;
 		wxSpinCtrl* m_enemystatlvl;
 		wxStaticText* m_enemystathplabel;
@@ -1537,6 +1539,8 @@ class CDPanel : public wxPanel
 		wxScrolledWindow* m_enemyspellscrolledwindow;
 		wxStaticText* m_staticText74;
 		wxButton* m_enemyspellnamebutton;
+		wxStaticText* m_staticText48511;
+		wxSpinCtrl* m_enemyspellid;
 		wxStaticText* m_enemyspelleffectlabel;
 		wxSpinCtrl* m_enemyspelleffectint;
 		wxScrolledWindow* m_enemyspelleffecthelpwindow;
@@ -1601,6 +1605,8 @@ class CDPanel : public wxPanel
 		wxScrolledWindow* m_enemygroupscrolledwindow;
 		wxStaticText* m_enemygroupfrequencelabel;
 		wxSpinCtrl* m_enemygroupfrequence;
+		wxStaticText* m_staticText48512;
+		wxSpinCtrl* m_enemygroupid;
 		wxStaticText* m_enemygroupamountlabel;
 		wxSpinCtrl* m_enemygroupamount;
 		wxStaticText* m_enemygroupaplabel;

@@ -3105,6 +3105,16 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer26->Add( m_enemystatnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
 
 
+	bSizer26->Add( 0, 0, 1, wxEXPAND, 5 );
+
+	m_staticText4851 = new wxStaticText( m_enemystatpanel1, wxID_ANY, _("ID"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4851->Wrap( -1 );
+	bSizer26->Add( m_staticText4851, 0, wxALL, 5 );
+
+	m_enemystatid = new wxSpinCtrl( m_enemystatpanel1, wxID_ID, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 2147483647, 0 );
+	bSizer26->Add( m_enemystatid, 0, wxALL, 2 );
+
+
 	fgSizer9->Add( bSizer26, 1, wxEXPAND, 5 );
 
 	m_enemystatlvllabel = new wxStaticText( m_enemystatpanel1, wxID_ANY, _("Level"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -3957,6 +3967,16 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer27->Add( m_enemyspellnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
 
 
+	bSizer27->Add( 0, 0, 1, wxEXPAND, 5 );
+
+	m_staticText48511 = new wxStaticText( m_enemyspellscrolledwindow, wxID_ANY, _("ID"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText48511->Wrap( -1 );
+	bSizer27->Add( m_staticText48511, 0, wxALL, 5 );
+
+	m_enemyspellid = new wxSpinCtrl( m_enemyspellscrolledwindow, wxID_ID, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 2147483647, 0 );
+	bSizer27->Add( m_enemyspellid, 0, wxALL, 2 );
+
+
 	fgSizer10->Add( bSizer27, 1, wxEXPAND, 5 );
 
 	m_enemyspelleffectlabel = new wxStaticText( m_enemyspellscrolledwindow, wxID_ANY, _("Effect"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -4289,10 +4309,26 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemygroupfrequencelabel->Wrap( -1 );
 	fgSizer91->Add( m_enemygroupfrequencelabel, 0, wxALL, 5 );
 
+	wxBoxSizer* bSizer310;
+	bSizer310 = new wxBoxSizer( wxHORIZONTAL );
+
 	m_enemygroupfrequence = new wxSpinCtrl( m_enemygroupscrolledwindow, wxID_FREQUENCE, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
 	m_enemygroupfrequence->SetToolTip( _("Chances for the group to appear in pourcentage") );
 
-	fgSizer91->Add( m_enemygroupfrequence, 0, wxALL, 2 );
+	bSizer310->Add( m_enemygroupfrequence, 0, wxALL, 2 );
+
+
+	bSizer310->Add( 0, 0, 1, wxEXPAND, 5 );
+
+	m_staticText48512 = new wxStaticText( m_enemygroupscrolledwindow, wxID_ANY, _("ID"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText48512->Wrap( -1 );
+	bSizer310->Add( m_staticText48512, 0, wxALL, 5 );
+
+	m_enemygroupid = new wxSpinCtrl( m_enemygroupscrolledwindow, wxID_ID, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 2147483647, 0 );
+	bSizer310->Add( m_enemygroupid, 0, wxALL, 2 );
+
+
+	fgSizer91->Add( bSizer310, 1, wxEXPAND, 5 );
 
 	m_enemygroupamountlabel = new wxStaticText( m_enemygroupscrolledwindow, wxID_ANY, _("Enemy Amount"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_enemygroupamountlabel->Wrap( -1 );
@@ -9938,7 +9974,7 @@ AboutWindow::AboutWindow( wxWindow* parent, wxWindowID id, const wxString& title
 	wxBoxSizer* bSizer16;
 	bSizer16 = new wxBoxSizer( wxVERTICAL );
 
-	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.50\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for PSX model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\n - Satoh -\n - Ze_PilOt -\n\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_MULTILINE|wxTE_READONLY|wxTE_CENTER|wxBORDER_SIMPLE );
+	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.50b\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for PSX model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\n - Satoh -\n - Ze_PilOt -\n\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_MULTILINE|wxTE_READONLY|wxTE_CENTER|wxBORDER_SIMPLE );
 	m_textCtrl13->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 	m_textCtrl13->SetMinSize( wxSize( -1,330 ) );
 

@@ -72,8 +72,6 @@ struct ScriptOperation {
 public:
 	ScriptFunction* parent;
 	uint16_t opcode;
-	uint8_t base_code;
-	uint8_t ext_code;		// Only used for the base_code 0xFF
 	uint8_t vararg_flag;	// Only used for some opcodes
 	uint8_t size_byte;		// Only used for some opcodes
 	uint8_t arg_amount;

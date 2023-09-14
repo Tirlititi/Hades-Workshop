@@ -268,6 +268,7 @@ extern vector<wxString> HADES_STRING_SYNTH_NAME;
 #define HADES_STRING_SCRIPT_UNEXPECT			" - Line %u: Unexpected '%s'\n"
 #define HADES_STRING_SCRIPT_NUMBER				" - Line %u: Expected a number\n"
 #define HADES_STRING_SCRIPT_EMPTY				" - Line %u: Empty argument\n"
+#define HADES_STRING_SCRIPT_NOT_AN_OPCODE		" - Line %u: The code '%s' cannot be an opcode because its ID 0x%x ends with 0xff\n"
 #define HADES_STRING_SCRIPT_ARGAMOUNT			" - Line %u: Opcode '%s' takes %u arguments; got %u\n"
 #define HADES_STRING_SCRIPT_NOVARARG			" - Line %u: Opcode '%s' accepts numerical arguments only\n"
 #define HADES_STRING_SCRIPT_UNKNOWN				" - Line %u: Unknown word '%s'\n"

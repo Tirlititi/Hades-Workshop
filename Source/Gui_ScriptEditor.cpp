@@ -554,8 +554,8 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 		for (i = 0; i < text->amount; i++)
 			text_str.Add(_(text->text[i].str_nice.substr(0, 30)));
 	}
-	defaultbool_str.Alloc(16);
-	for (i = 0; i < 16; i++)
+	defaultbool_str.Alloc(SS_ARGBOX_MAXID);
+	for (i = 0; i < SS_ARGBOX_MAXID; i++)
 		defaultbool_str.Add(_(wxString::Format(wxT("%u"), i + 1)));
 	disc_str.Alloc(G_V_ELEMENTS(DiscName));
 	for (i = 0; i < G_V_ELEMENTS(DiscName); i++)
@@ -2313,11 +2313,6 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 	#define MACRO_NEW_OPCODE(OPCODE) \
 		parseop[opi].parent = &script.func[entry_selection][function_selection]; \
 		parseop[opi].opcode = OPCODE; \
-		if (OPCODE>=0xFF) { \
-			parseop[opi].base_code = 0xFF; \
-			parseop[opi].ext_code = OPCODE-0x100; \
-		} else \
-			parseop[opi].base_code = OPCODE; \
 		parseop[opi].arg_amount = HADES_STRING_SCRIPT_OPCODE[OPCODE].arg_amount; \
 		if (parseop[opi].arg_amount>=0) { \
 			parseop[opi].arg = NewScriptArgumentArray(parseop[opi].arg_amount,&parseop[opi]); \
@@ -2327,7 +2322,7 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 			} \
 		}
 	#define MACRO_OPCODE_SIZE_DONE() \
-		parseop[opi].size = parseop[opi].base_code==0xFF ? 2 : 1; \
+		parseop[opi].size = 1 + (parseop[opi].opcode >> 8); \
 		if (HADES_STRING_SCRIPT_OPCODE[parseop[opi].opcode].use_vararg) \
 			parseop[opi].size += 1; \
 		if (parseop[opi].opcode==0x06 || parseop[opi].opcode==0x0B || parseop[opi].opcode==0x29) \
@@ -2730,7 +2725,7 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 			}
 			MACRO_CHECK_TRAILING_WARNING()
 		}
-		if (tokentype<0) {
+		if (tokentype < 0) {
 			for (auto it = HADES_STRING_SCRIPT_OPCODE.begin(); it != HADES_STRING_SCRIPT_OPCODE.end(); it++) {
 				if (token.IsSameAs(it->second.label)) {
 					tokentype = 0x100 + it->second.id;
@@ -2845,6 +2840,11 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 						} else {
 							token = GetNextPunc(linestr);
 							MACRO_CHECK_PUNC_ERROR(L")")
+						}
+						if ((it->second.id & 0xFF) == 0xFF) {
+							errstr.Printf(wxT(HADES_STRING_SCRIPT_NOT_AN_OPCODE), line, it->second.label, it->second.id);
+							res.AddError(errstr.ToStdWstring());
+							break;
 						}
 						MACRO_NEW_OPCODE(it->second.id)
 						if (it->second.use_vararg)

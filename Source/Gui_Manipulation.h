@@ -77,7 +77,7 @@ public:
 	void RegisterSpellAdded(unsigned int spellid);
 	void RegisterSpellRemoved(unsigned int spellid);
 	void InitSupport(void);
-	void DisplaySupportBoostedList(int supportindex);
+	void DisplaySupportBoostedList(int supportindex, bool selectinboostlist = false);
 	void DisplaySupport(int supportid);
 	void UpdateSupportName(unsigned int supportid);
 	void RegisterSupportAdded(unsigned int supportid);
@@ -178,6 +178,7 @@ private:
 	int copyenemystat_statid;
 	int copyenemyspell_battleid;
 	int copyenemyspell_spellid;
+	FF9String* copystring;
 	BattleSceneImportLinkTextureWindow* scenetexturelink;
 	wxBitmap chartexpreview;
 	wxBitmap worldchartexpreview;
@@ -189,14 +190,16 @@ private:
 	wxMenu* enemystatmenu;
 	wxMenu* enemyspellmenu;
 	wxMenu* enemygroupmenu;
-	wxMenu* enemytextmenu;
-	wxMenu* worldtextmenu;
 	wxMenu* textmenu;
 	wxMenu* specialtextmenu;
 	wxMenuItem* sharedmenuadd;
 	wxMenuItem* sharedmenuremove;
 	wxMenuItem* enemystatmenupaste;
 	wxMenuItem* enemyspellmenupaste;
+	wxMenuItem* textmenuadd;
+	wxMenuItem* textmenuremove;
+	wxMenuItem* textmenucopy;
+	wxMenuItem* textmenupaste;
 
 	void TextReachLimit();
 	void OnNotebookMain(wxNotebookEvent& event);
@@ -209,6 +212,7 @@ private:
 	void OnNotebookCil(wxNotebookEvent& event);
 	void OnNotebookNone(wxNotebookEvent& event) {} // Without this, wxNotebookEvent are passed to children notebooks for some reason
 	void OnSharedRightClickMenu(wxCommandEvent& event);
+	void OnGenericTextRightClickMenu(wxCommandEvent& event);
 	void OnListBoxSpell(wxCommandEvent& event);
 	void OnSpellRightClick(wxMouseEvent& event);
 	void OnSpellChangeName(wxCommandEvent& event);
