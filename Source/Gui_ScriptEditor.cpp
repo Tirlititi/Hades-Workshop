@@ -153,7 +153,7 @@ wxString GetNextWord(wxString& line) {
 wxString GetNextArg(wxString& line) {
 	wxString res;
 	size_t pos = line.find_first_not_of(" \t");
-	if (pos==string::npos)
+	if (pos == string::npos)
 		return wxEmptyString;
 	res = line.Mid(pos);
 	unsigned int parlvl = 0;
@@ -163,29 +163,30 @@ wxString GetNextArg(wxString& line) {
 	while (!ok) {
 		pos = tmp.find_first_of(L",()");
 		arglen += pos;
-		if (pos==string::npos) {
+		if (pos == string::npos) {
 			line = wxEmptyString;
 			return wxEmptyString;
-		} else if (tmp[pos]==L'(') {
+		} else if (tmp[pos] == L'(') {
 			parlvl++;
-			tmp = tmp.Mid(pos+1);
+			tmp = tmp.Mid(pos + 1);
 			arglen++;
-			while (parlvl>0) {
+			while (parlvl > 0) {
 				pos = tmp.find_first_of(L"()");
-				if (pos==string::npos) {
+				if (pos == string::npos) {
 					line = wxEmptyString;
 					return wxEmptyString;
-				} else if (tmp[pos]==L'(')
+				} else if (tmp[pos] == L'(')
 					parlvl++;
 				else
 					parlvl--;
-				tmp = tmp.Mid(pos+1);
-				arglen += pos+1;
+				tmp = tmp.Mid(pos + 1);
+				arglen += pos + 1;
 			}
-		} else
+		} else {
 			ok = true;
+		}
 	}
-	res = res.Mid(0,arglen);
+	res = res.Mid(0, arglen);
 	res.Trim();
 	lineshift += arglen;
 	line = line.Mid(lineshift);
@@ -195,23 +196,23 @@ wxString GetNextArg(wxString& line) {
 wxString GetNextPunc(wxString& line) {
 	wxString res;
 	size_t pos = line.find_first_not_of(" \t");
-	if (pos==string::npos)
+	if (pos == string::npos)
 		return wxEmptyString;
 	size_t lineshift = pos;
 	res = line.Mid(pos);
 	pos = res.find_first_not_of(L",():;{}");
-	if (pos!=string::npos) {
-		if (pos>1)
+	if (pos != string::npos) {
+		if (pos > 1)
 			pos = 1;
-		res = res.Mid(0,pos);
+		res = res.Mid(0, pos);
 		lineshift += pos;
 		line = line.Mid(lineshift);
-	} else if (res.Length()>1) {
-		res = res.Mid(0,1);
-		line = line.Mid(lineshift+1);
+	} else if (res.Length() > 1) {
+		res = res.Mid(0, 1);
+		line = line.Mid(lineshift + 1);
 	} else {
-		if (res.Length()>0)
-			res = res.Mid(0,1);
+		if (res.Length() > 0)
+			res = res.Mid(0, 1);
 		line = wxEmptyString;
 	}
 	return res;
@@ -543,7 +544,7 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 	m_intvaluecmd->Enable(use_command);
 	m_intvaluecmdlabel->Enable(use_command);
 	if (use_command) {
-		command_str.Alloc(COMMAND_AMOUNT + G_V_ELEMENTS(CommandAddendaName));
+		command_str.Alloc(COMMAND_AMOUNT + G_V_ELEMENTS(CommandAddendaName) + 1);
 		for (i = 0; i + 1 < COMMAND_AMOUNT; i++)
 			command_str.Add(_(datas->cmdset->cmd[i].name.str_nice));
 		for (i = 0; i < G_V_ELEMENTS(CommandAddendaName); i++)
@@ -635,46 +636,46 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 
 ScriptEditDialog::~ScriptEditDialog() {
 	unsigned int i;
-	for (i=0;i<modellist_id.size();i++)
+	for (i = 0; i < modellist_id.size(); i++)
 		delete modellist_id[i];
-	for (i=0;i<entrylist_id.size();i++)
+	for (i = 0; i < entrylist_id.size(); i++)
 		delete entrylist_id[i];
 	if (use_character) {
-		for (i=0;i<character_id.size();i++)
+		for (i = 0; i < character_id.size(); i++)
 			delete character_id[i];
 	}
 	if (use_battle) {
-		for (i=0;i<battle_id.size();i++)
+		for (i = 0; i < battle_id.size(); i++)
 			delete battle_id[i];
 	}
 	if (use_field) {
-		for (i=0;i<field_id.size();i++)
+		for (i = 0; i < field_id.size(); i++)
 			delete field_id[i];
 	}
 	if (use_item) {
-		for (i=0;i<item_id.size();i++)
+		for (i = 0; i < item_id.size(); i++)
 			delete item_id[i];
 	}
-	for (i=0;i<equipset_id.size();i++)
+	for (i = 0; i < equipset_id.size(); i++)
 		delete equipset_id[i];
-	for (i=0;i<fmv_id.size();i++)
+	for (i = 0; i < fmv_id.size(); i++)
 		delete fmv_id[i];
-	for (i=0;i<battlecode_id.size();i++)
+	for (i = 0; i < battlecode_id.size(); i++)
 		delete battlecode_id[i];
-	for (i=0;i<modelcode_id.size();i++)
+	for (i = 0; i < modelcode_id.size(); i++)
 		delete modelcode_id[i];
-	for (i=0;i<worldcode_id.size();i++)
+	for (i = 0; i < worldcode_id.size(); i++)
 		delete worldcode_id[i];
-	for (i=0;i<soundcode_id.size();i++)
+	for (i = 0; i < soundcode_id.size(); i++)
 		delete soundcode_id[i];
-	for (i=0;i<spscode_id.size();i++)
+	for (i = 0; i < spscode_id.size(); i++)
 		delete spscode_id[i];
-	for (i=0;i<worldmap_id.size();i++)
+	for (i = 0; i < worldmap_id.size(); i++)
 		delete worldmap_id[i];
-	for (i=0;i<animlist_id.size();i++)
+	for (i = 0; i < animlist_id.size(); i++)
 		delete animlist_id[i];
-	func_popup_menu->Disconnect(wxEVT_COMMAND_MENU_SELECTED,wxCommandEventHandler(ScriptEditDialog::OnFunctionRightClickMenu),NULL,this);
-	Disconnect(wxEVT_TIMER,wxTimerEventHandler(ScriptEditDialog::OnTimer),NULL,this);
+	func_popup_menu->Disconnect(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(ScriptEditDialog::OnFunctionRightClickMenu), NULL, this);
+	Disconnect(wxEVT_TIMER, wxTimerEventHandler(ScriptEditDialog::OnTimer), NULL, this);
 	if (script_type == SCRIPT_TYPE_FIELD)
 		gl_window->Disconnect(wxEVT_LEFT_DCLICK, wxMouseEventHandler(ScriptEditDialog::OnPickWalkmesh), NULL, this);
 	delete timer;
@@ -3156,9 +3157,9 @@ struct PositionStruct {
 	int32_t x;
 	int32_t y;
 	int32_t z;
-	
+
 	wxPoint GetAsTranslation() {
-		return wxPoint(drawpt.x-POSITION_PANEL_SIZE/2,-drawpt.y+POSITION_PANEL_SIZE/2)*2*zoom/POSITION_PANEL_SIZE;
+		return wxPoint(drawpt.x - POSITION_PANEL_SIZE / 2, -drawpt.y + POSITION_PANEL_SIZE / 2) * 2 * zoom / POSITION_PANEL_SIZE;
 	}
 };
 
@@ -3284,7 +3285,7 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 	if (!tmpstr.IsSameAs(L"("))
 		cleanarg = false;
 	argi = 0;
-	if (current_opcode==0x29 && script_type==SCRIPT_TYPE_FIELD) {
+	if (current_opcode == 0x29 && script_type == SCRIPT_TYPE_FIELD) {
 		vector<int16_t> regionpts;
 		bool islastarg = false;
 		while (!islastarg && cleanarg) {
@@ -3640,8 +3641,9 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 				if (usez) {
 					posctrl->z = wxAtoi(arrarg[1]);
 					posctrl->y = wxAtoi(arrarg[2]);
-				} else
+				} else {
 					posctrl->y = wxAtoi(arrarg[1]);
+				}
 			}
 			if (script_type == SCRIPT_TYPE_FIELD) {
 				if (usez)
@@ -3748,15 +3750,16 @@ void ScriptEditDialog::UpdateLineHelp(long x, long y) {
 	base64str << _(L" ]");
 	m_intvaluebase64->ChangeValue(base64str);
 	if (use_item && selectedint >= 0) {
-		for (i = 0; i < item_str.Count(); i++)
+		for (i = 0; i < item_str.GetCount(); i++)
 			if (*item_id[i] == selectedint) {
 				m_intvalueitem->ChangeValue(item_str[i]);
 				break;
 			}
-		if (i == item_str.Count())
+		if (i == item_str.GetCount())
 			m_intvalueitem->ChangeValue(_(HADES_STRING_VOID));
-	} else
+	} else {
 		m_intvalueitem->ChangeValue(_(HADES_STRING_VOID));
+	}
 	if (use_attack && selectedint >= 0) {
 		wxString attackstr = _(L"[ ");
 		for (i = 0; i <= 3; i++) {
@@ -3770,13 +3773,14 @@ void ScriptEditDialog::UpdateLineHelp(long x, long y) {
 		}
 		attackstr << _(L" ]");
 		m_intvalueattack->ChangeValue(attackstr);
-	} else
+	} else {
 		m_intvalueattack->ChangeValue(_(HADES_STRING_VOID));
-	if (use_ability && selectedint < SPELL_AMOUNT && selectedint >= 0)
+	}
+	if (use_ability && selectedint >= 0 && selectedint < SPELL_AMOUNT)
 		m_intvaluespell->ChangeValue(ability_str[selectedint]);
 	else
 		m_intvaluespell->ChangeValue(_(HADES_STRING_VOID));
-	if (use_command && (int)selectedint + 1 < COMMAND_AMOUNT + G_V_ELEMENTS(CommandAddendaName) && selectedint >= 0)
+	if (use_command && selectedint >= 0 && selectedint < command_str.GetCount())
 		m_intvaluecmd->ChangeValue(command_str[selectedint]);
 	else
 		m_intvaluecmd->ChangeValue(_(HADES_STRING_VOID));
@@ -4077,24 +4081,25 @@ void ArgPositionDraw(wxDC& dc, PositionStruct* posdata) {
 }
 
 wxPanel* ScriptEditDialog::ArgCreatePosition(wxArrayString& arg, unsigned int id) {
-	wxPanel* res = new wxPanel(m_argpanel,SS_ARG_ID+id,wxDefaultPosition,wxSize(POSITION_PANEL_SIZE,POSITION_PANEL_SIZE));
+	wxPanel* res = new wxPanel(m_argpanel, SS_ARG_ID + id, wxDefaultPosition, wxSize(POSITION_PANEL_SIZE, POSITION_PANEL_SIZE));
 	PositionStruct* posdata = new PositionStruct;
-	posdata->zoom = script_type==SCRIPT_TYPE_WORLD ? 2400 : 150;
-	posdata->drawpt = wxPoint(POSITION_PANEL_SIZE/2,POSITION_PANEL_SIZE/2);
-	posdata->use_z = arg.Count()==3;
+	posdata->zoom = script_type == SCRIPT_TYPE_WORLD ? 2400 : 150;
+	posdata->drawpt = wxPoint(POSITION_PANEL_SIZE / 2, POSITION_PANEL_SIZE / 2);
+	posdata->use_z = arg.Count() == 3;
 	posdata->x = wxAtoi(arg[0]);
 	if (posdata->use_z) {
 		posdata->y = wxAtoi(arg[2]);
 		posdata->z = wxAtoi(arg[1]);
-	} else
+	} else {
 		posdata->y = wxAtoi(arg[1]);
+	}
 	res->SetClientData((void*)posdata);
-	res->Connect(wxEVT_PAINT,wxPaintEventHandler(ScriptEditDialog::OnArgPositionPaint),NULL,this);
-	res->Connect(wxEVT_MOTION,wxMouseEventHandler(ScriptEditDialog::OnArgPositionMouseMove),NULL,this);
-	res->Connect(wxEVT_LEFT_DOWN,wxMouseEventHandler(ScriptEditDialog::OnArgPositionMouseMove),NULL,this);
-	res->Connect(wxEVT_LEFT_UP,wxMouseEventHandler(ScriptEditDialog::OnArgPositionMouseUp),NULL,this);
-	res->Connect(wxEVT_MOUSEWHEEL,wxMouseEventHandler(ScriptEditDialog::OnArgPositionMouseWheel),NULL,this);
-	res->Connect(wxEVT_CHAR_HOOK,wxKeyEventHandler(ScriptEditDialog::OnArgPositionKeyboard),NULL,this);
+	res->Connect(wxEVT_PAINT, wxPaintEventHandler(ScriptEditDialog::OnArgPositionPaint), NULL, this);
+	res->Connect(wxEVT_MOTION, wxMouseEventHandler(ScriptEditDialog::OnArgPositionMouseMove), NULL, this);
+	res->Connect(wxEVT_LEFT_DOWN, wxMouseEventHandler(ScriptEditDialog::OnArgPositionMouseMove), NULL, this);
+	res->Connect(wxEVT_LEFT_UP, wxMouseEventHandler(ScriptEditDialog::OnArgPositionMouseUp), NULL, this);
+	res->Connect(wxEVT_MOUSEWHEEL, wxMouseEventHandler(ScriptEditDialog::OnArgPositionMouseWheel), NULL, this);
+	res->Connect(wxEVT_CHAR_HOOK, wxKeyEventHandler(ScriptEditDialog::OnArgPositionKeyboard), NULL, this);
 	arg_control_type[id] = ARG_CONTROL_POSITION;
 	return res;
 }
@@ -4135,7 +4140,7 @@ void ScriptEditDialog::ScriptChangeArg(int argi, int64_t value, int argshift) {
 					shiftedargi++;
 		}
 	}
-	for (i=0;i<argshift;i++) {
+	for (i = 0; i < argshift; i++) {
 		GetNextArg(scripttxt);
 		token = GetNextPunc(scripttxt);
 		if (!token.IsSameAs(L','))
@@ -4144,14 +4149,14 @@ void ScriptEditDialog::ScriptChangeArg(int argi, int64_t value, int argshift) {
 	scripttxt.Trim(false);
 	argpos -= scripttxt.Length();
 	GetNextArg(scripttxt);
-	newtxt = newtxt.Mid(0,argpos);
+	newtxt = newtxt.Mid(0, argpos);
 	newtxt << value;
-	if (argi+1==arg_amount)
+	if (argi + 1 == arg_amount)
 		newtxt += _(L" ");
 	newtxt += scripttxt;
-	long from = m_scripttext->XYToPosition(0,line_selection);
-	long to = from+m_scripttext->GetLineLength(line_selection);
-	m_scripttext->Replace(from,to,newtxt);
+	long from = m_scripttext->XYToPosition(0, line_selection);
+	long to = from + m_scripttext->GetLineLength(line_selection);
+	m_scripttext->Replace(from, to, newtxt);
 	refresh_help_force = true;
 }
 
@@ -4179,111 +4184,111 @@ void ScriptEditDialog::OnIntValueText(wxCommandEvent& event) {
 	int id = event.GetId();
 	wxString intvalue = _(L"");
 	wxString txtvalue = event.GetString();
-	unsigned int i,j;
-	if (id==wxID_INT) {
+	unsigned int i, j;
+	if (id == wxID_INT) {
 		uint16_t val = wxAtoi(txtvalue);
-		intvalue = wxString::Format(wxT("%u"),val);
-	} else if (id==wxID_LONG) {
+		intvalue = wxString::Format(wxT("%u"), val);
+	} else if (id == wxID_LONG) {
 		uint32_t val = wxAtoi(txtvalue);
-		intvalue = wxString::Format(wxT("%uL"),wxAtoi(txtvalue));
-	} else if (id==wxID_HEXA) {
+		intvalue = wxString::Format(wxT("%uL"), wxAtoi(txtvalue));
+	} else if (id == wxID_HEXA) {
 		uint32_t val;
-		txtvalue.ToULong((unsigned long*)&val,16);
-		if (val>0x7FFF)
-			intvalue = wxString::Format(wxT("%uL"),val);
+		txtvalue.ToULong((unsigned long*)&val, 16);
+		if (val > 0x7FFF)
+			intvalue = wxString::Format(wxT("%uL"), val);
 		else
-			intvalue = wxString::Format(wxT("%u"),val);
-	} else if (id==wxID_ITEM) {
-		for (i=0;i<item_str.Count();i++)
-			if (item_str[i].IsSameAs(txtvalue,false)) {
-				intvalue = wxString::Format(wxT("%u"),*item_id[i]);
+			intvalue = wxString::Format(wxT("%u"), val);
+	} else if (id == wxID_ITEM) {
+		for (i = 0; i < item_str.Count(); i++)
+			if (item_str[i].IsSameAs(txtvalue, false)) {
+				intvalue = wxString::Format(wxT("%u"), *item_id[i]);
 				break;
 			}
-	} else if (id==wxID_BUTTON) {
-		wxArrayString tokens = wxStringTokenize(txtvalue,L"|",wxTOKEN_STRTOK);
+	} else if (id == wxID_BUTTON) {
+		wxArrayString tokens = wxStringTokenize(txtvalue, L"|", wxTOKEN_STRTOK);
 		long val = 0;
-		for (i=0;i<tokens.Count();i++) {
+		for (i = 0; i < tokens.Count(); i++) {
 			RemoveSurroundingSpaces(tokens[i]);
-			for (j=0;j<G_V_ELEMENTS(PlaystationButton);j++) {
-				if (tokens[i].IsSameAs(PlaystationButton[j],false)) {
+			for (j = 0; j < G_V_ELEMENTS(PlaystationButton); j++) {
+				if (tokens[i].IsSameAs(PlaystationButton[j], false)) {
 					val |= (1 << j);
 					break;
 				}
 			}
 		}
-		if (val>0x7FFF)
-			intvalue = wxString::Format(wxT("%uL"),val);
-		else if (val>0)
-			intvalue = wxString::Format(wxT("%u"),val);
-	} else if (id==wxID_STATUSA || id==wxID_STATUSB) {
-		wxArrayString tokens = wxStringTokenize(txtvalue,L"|",wxTOKEN_STRTOK);
+		if (val > 0x7FFF)
+			intvalue = wxString::Format(wxT("%uL"), val);
+		else if (val > 0)
+			intvalue = wxString::Format(wxT("%u"), val);
+	} else if (id == wxID_STATUSA || id == wxID_STATUSB) {
+		wxArrayString tokens = wxStringTokenize(txtvalue, L"|", wxTOKEN_STRTOK);
 		long val = 0;
-		unsigned int min = id==wxID_STATUSA ? 0 : 24;
-		unsigned int max = id==wxID_STATUSA ? 24 : HADES_STRING_STATUS.size();
-		for (i=0;i<tokens.Count();i++) {
+		unsigned int min = id == wxID_STATUSA ? 0 : 24;
+		unsigned int max = id == wxID_STATUSA ? 24 : HADES_STRING_STATUS.size();
+		for (i = 0; i < tokens.Count(); i++) {
 			RemoveSurroundingSpaces(tokens[i]);
-			for (j=min;j<max;j++) {
-				if (tokens[i].IsSameAs(HADES_STRING_STATUS[j],false)) {
-					val |= (1 << (j-min));
+			for (j = min; j < max; j++) {
+				if (tokens[i].IsSameAs(HADES_STRING_STATUS[j], false)) {
+					val |= (1 << (j - min));
 					break;
 				}
 			}
 		}
-		if (val>0x7FFF)
-			intvalue = wxString::Format(wxT("%uL"),val);
-		else if (val>0)
-			intvalue = wxString::Format(wxT("%u"),val);
-	} else if (id==wxID_LIST) {
-		wxArrayString tokens = wxStringTokenize(txtvalue,L";");
+		if (val > 0x7FFF)
+			intvalue = wxString::Format(wxT("%uL"), val);
+		else if (val > 0)
+			intvalue = wxString::Format(wxT("%u"), val);
+	} else if (id == wxID_LIST) {
+		wxArrayString tokens = wxStringTokenize(txtvalue, L";");
 		long val = 0;
-		for (i=0;i<tokens.Count();i++) {
-			if (tokens[i][0]==L'[')
+		for (i = 0; i < tokens.Count(); i++) {
+			if (tokens[i][0] == L'[')
 				tokens[i] = tokens[i].Mid(1);
-			if (tokens[i].Last()==L']')
-				tokens[i] = tokens[i].Mid(0,tokens[i].Len()-1);
+			if (tokens[i].Last() == L']')
+				tokens[i] = tokens[i].Mid(0, tokens[i].Len() - 1);
 			RemoveSurroundingSpaces(tokens[i]);
-			val |= ((wxAtoi(tokens[i]) & 0x3F) << (i*6));
+			val |= ((wxAtoi(tokens[i]) & 0x3F) << (i * 6));
 		}
-		if (val>0x7FFF)
-			intvalue = wxString::Format(wxT("%uL"),val);
+		if (val > 0x7FFF)
+			intvalue = wxString::Format(wxT("%uL"), val);
 		else
-			intvalue = wxString::Format(wxT("%u"),val);
-	} else if (id==wxID_SPLIST) {
-		wxArrayString tokens = wxStringTokenize(txtvalue,L";");
+			intvalue = wxString::Format(wxT("%u"), val);
+	} else if (id == wxID_SPLIST) {
+		wxArrayString tokens = wxStringTokenize(txtvalue, L";");
 		long val = 0;
-		for (i=0;i<tokens.Count();i++) {
-			if (tokens[i][0]==L'[')
+		for (i = 0; i < tokens.Count(); i++) {
+			if (tokens[i][0] == L'[')
 				tokens[i] = tokens[i].Mid(1);
-			if (tokens[i].Last()==L']')
-				tokens[i] = tokens[i].Mid(0,tokens[i].Len()-1);
+			if (tokens[i].Last() == L']')
+				tokens[i] = tokens[i].Mid(0, tokens[i].Len() - 1);
 			RemoveSurroundingSpaces(tokens[i]);
-			for (j=0;j<enemy->spell_amount;j++) {
-				if (tokens[i].IsSameAs(attack_str[j],false)) {
-					val |= (j << (i*6));
+			for (j = 0; j < enemy->spell_amount; j++) {
+				if (tokens[i].IsSameAs(attack_str[j], false)) {
+					val |= (j << (i * 6));
 					break;
 				}
 			}
 		}
-		if (val>0x7FFF)
-			intvalue = wxString::Format(wxT("%uL"),val);
+		if (val > 0x7FFF)
+			intvalue = wxString::Format(wxT("%uL"), val);
 		else
-			intvalue = wxString::Format(wxT("%u"),val);
-	} else if (id==wxID_SPELL) {
-		for (i=0;i<ability_str.Count();i++)
-			if (ability_str[i].IsSameAs(txtvalue,false)) {
-				intvalue = wxString::Format(wxT("%u"),i);
+			intvalue = wxString::Format(wxT("%u"), val);
+	} else if (id == wxID_SPELL) {
+		for (i = 0; i < ability_str.Count(); i++)
+			if (ability_str[i].IsSameAs(txtvalue, false)) {
+				intvalue = wxString::Format(wxT("%u"), i);
 				break;
 			}
-	} else if (id==wxID_CMD) {
-		for (i=0;i<command_str.Count();i++)
-			if (command_str[i].IsSameAs(txtvalue,false)) {
-				intvalue = wxString::Format(wxT("%u"),i);
+	} else if (id == wxID_CMD) {
+		for (i = 0; i < command_str.Count(); i++)
+			if (command_str[i].IsSameAs(txtvalue, false)) {
+				intvalue = wxString::Format(wxT("%u"), i);
 				break;
 			}
 	}
 	m_scripttext->WriteText(intvalue);
-	if (intvalue.Last()==L'L')
-		m_scripttext->SetInsertionPoint(m_scripttext->GetInsertionPoint()-1);
+	if (intvalue.Last() == L'L')
+		m_scripttext->SetInsertionPoint(m_scripttext->GetInsertionPoint() - 1);
 }
 
 void ScriptEditDialog::OnFunctionRightClick(wxListEvent& event) {
@@ -4578,82 +4583,82 @@ void ScriptEditDialog::OnButtonClick(wxCommandEvent& event) {
 }
 
 void ScriptEditDialog::OnTimer(wxTimerEvent& event) {
-	if (m_functionlist->GetSelectedItemCount()==0)
-		m_functionlist->SetItemState(0,wxLIST_STATE_SELECTED,wxLIST_STATE_SELECTED);
-	long x,y;
-	if (!m_scripttext->PositionToXY(m_scripttext->GetInsertionPoint(),&x,&y))
+	if (m_functionlist->GetSelectedItemCount() == 0)
+		m_functionlist->SetItemState(0, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
+	long x, y;
+	if (!m_scripttext->PositionToXY(m_scripttext->GetInsertionPoint(), &x, &y))
 		return;
 	if (!wxGetMouseState().LeftIsDown())
 		refresh_control_disable = false;
-	if (x==text_x_selection && y==line_selection && !refresh_help_force)
+	if (x == text_x_selection && y == line_selection && !refresh_help_force)
 		return;
 	refresh_help_force = false;
 	wxString line = m_scripttext->GetLineText(y);
-	bool refreshctrl = y!=line_selection;
-	UpdateLineHelp(x,y);
+	bool refreshctrl = y != line_selection;
+	UpdateLineHelp(x, y);
 	text_x_selection = x;
 	line_selection = y;
 	if (!refresh_control_disable)
-		DisplayOperation(line,refreshctrl);
+		DisplayOperation(line, refreshctrl);
 }
 
 void ScriptEditDialog::OnArgFlag(wxCommandEvent& event) {
-	int argi = event.GetId()-SS_ARG_ID;
-	ScriptChangeArg(argi,event.IsChecked() ? 1 : 0);
+	int argi = event.GetId() - SS_ARG_ID;
+	ScriptChangeArg(argi, event.IsChecked() ? 1 : 0);
 }
 
 void ScriptEditDialog::OnArgSpin(wxSpinEvent& event) {
-	int argi = event.GetId()-SS_ARG_ID;
-	ScriptChangeArg(argi,event.GetPosition());
+	int argi = event.GetId() - SS_ARG_ID;
+	ScriptChangeArg(argi, event.GetPosition());
 }
 
 void ScriptEditDialog::OnArgChoice(wxCommandEvent& event) {
-	int argi = event.GetId()-SS_ARG_ID;
-	if (arg_control_type[argi]==ARG_CONTROL_LINKED_DIAL) {
+	int argi = event.GetId() - SS_ARG_ID;
+	if (arg_control_type[argi] == ARG_CONTROL_LINKED_DIAL) {
 		LinkedDialogStruct* datagroup = static_cast<LinkedDialogStruct*>(static_cast<wxChoice*>(event.GetEventObject())->GetClientData());
 		uint16_t* objid = (uint16_t*)datagroup->dialog->GetClientData(event.GetInt());
 		if (objid)
-			ScriptChangeArg(argi,*objid);
+			ScriptChangeArg(argi, *objid);
 		else
-			ScriptChangeArg(argi,event.GetInt());
+			ScriptChangeArg(argi, event.GetInt());
 		UpdateMultiLangDialogHelp(static_cast<wxChoice*>(event.GetEventObject()));
 	} else {
 		uint16_t* objid = (uint16_t*)event.GetClientData();
 		if (objid)
-			ScriptChangeArg(argi,*objid);
+			ScriptChangeArg(argi, *objid);
 		else
-			ScriptChangeArg(argi,event.GetInt());
+			ScriptChangeArg(argi, event.GetInt());
 	}
 }
 
 void ScriptEditDialog::OnArgFlags(wxCommandEvent& event) {
-	int argi = (event.GetId()-SS_ARG_ID)/SS_ARGBOX_MAXID;
+	int argi = (event.GetId() - SS_ARG_ID) / SS_ARGBOX_MAXID;
 	FlagsStruct* datagroup = static_cast<FlagsStruct*>(static_cast<wxCheckBox*>(event.GetEventObject())->GetClientData());
 	int64_t value = 0;
 	unsigned int i;
-	for (i=0;i<datagroup->amount;i++)
+	for (i = 0; i < datagroup->amount; i++)
 		value |= (datagroup->box[i]->IsChecked() ? 1 : 0) << i;
-	ScriptChangeArg(argi,value);
+	ScriptChangeArg(argi, value);
 }
 
 void ScriptEditDialog::OnArgField(wxCommandEvent& event) {
-	int argi = event.GetId()-SS_ARG_ID;
+	int argi = event.GetId() - SS_ARG_ID;
 	DiscFieldStruct* datagroup = static_cast<DiscFieldStruct*>(static_cast<wxChoice*>(event.GetEventObject())->GetClientData());
 	uint16_t* objid = (uint16_t*)datagroup->field->GetClientData(event.GetInt());
 	if (objid)
-		ScriptChangeArg(argi,(datagroup->disc->GetSelection() << 14) | *objid);
+		ScriptChangeArg(argi, (datagroup->disc->GetSelection() << 14) | *objid);
 	else
-		ScriptChangeArg(argi,(datagroup->disc->GetSelection() << 14) | event.GetInt());
+		ScriptChangeArg(argi, (datagroup->disc->GetSelection() << 14) | event.GetInt());
 }
 
 void ScriptEditDialog::OnArgDisc(wxCommandEvent& event) {
-	int argi = event.GetId()-SS_ARG_ID;
+	int argi = event.GetId() - SS_ARG_ID;
 	DiscFieldStruct* datagroup = static_cast<DiscFieldStruct*>(static_cast<wxChoice*>(event.GetEventObject())->GetClientData());
 	uint16_t* objid = (uint16_t*)datagroup->field->GetClientData(datagroup->field->GetSelection());
 	if (objid)
-		ScriptChangeArg(argi,(event.GetInt() << 14) | *objid);
+		ScriptChangeArg(argi, (event.GetInt() << 14) | *objid);
 	else
-		ScriptChangeArg(argi,(event.GetInt() << 14) | datagroup->field->GetSelection());
+		ScriptChangeArg(argi, (event.GetInt() << 14) | datagroup->field->GetSelection());
 }
 
 void ScriptEditDialog::OnArgDialogLink(wxCommandEvent& event) {
@@ -4712,25 +4717,25 @@ void ScriptEditDialog::OnArgDialogLink(wxCommandEvent& event) {
 void ScriptEditDialog::OnArgPositionPaint(wxPaintEvent& event) {
 	PositionStruct* posdata = static_cast<PositionStruct*>(static_cast<wxPanel*>(event.GetEventObject())->GetClientData());
 	wxPaintDC dc((wxWindow*)event.GetEventObject());
-	ArgPositionDraw(dc,posdata);
+	ArgPositionDraw(dc, posdata);
 }
 
 void ScriptEditDialog::OnArgPositionMouseMove(wxMouseEvent& event) {
 	if (!event.LeftIsDown())
 		return;
 	refresh_control_disable = true;
-	int argi = event.GetId()-SS_ARG_ID;
+	int argi = event.GetId() - SS_ARG_ID;
 	PositionStruct* posdata = static_cast<PositionStruct*>(static_cast<wxPanel*>(event.GetEventObject())->GetClientData());
 	posdata->drawpt = wxPoint(event.GetPosition());
-	ScriptChangeArg(argi,posdata->x+posdata->GetAsTranslation().x);
+	ScriptChangeArg(argi, posdata->x + posdata->GetAsTranslation().x);
 	if (posdata->use_z)
-		ScriptChangeArg(argi,posdata->y+posdata->GetAsTranslation().y,2);
+		ScriptChangeArg(argi, posdata->y + posdata->GetAsTranslation().y, 2);
 	else
-		ScriptChangeArg(argi,posdata->y+posdata->GetAsTranslation().y,1);
+		ScriptChangeArg(argi, posdata->y + posdata->GetAsTranslation().y, 1);
 	wxString line = m_scripttext->GetLineText(line_selection);
-	DisplayOperation(line,false,false);
+	DisplayOperation(line, false, false);
 	wxClientDC dc((wxWindow*)event.GetEventObject());
-	ArgPositionDraw(dc,posdata);
+	ArgPositionDraw(dc, posdata);
 	event.Skip();
 }
 
@@ -4759,20 +4764,21 @@ void ScriptEditDialog::OnArgPositionMouseWheel(wxMouseEvent& event) {
 
 void ScriptEditDialog::OnArgPositionKeyboard(wxKeyEvent& event) {
 	PositionStruct* posdata = static_cast<PositionStruct*>(static_cast<wxPanel*>(event.GetEventObject())->GetClientData());
-	int argi = event.GetId()-SS_ARG_ID;
+	int argi = event.GetId() - SS_ARG_ID;
 	int key = event.GetKeyCode();
-	if (key==WXK_UP && posdata->use_z) {
-		posdata->z -= posdata->zoom/6;
-		ScriptChangeArg(argi,posdata->z,1);
+	if (key == WXK_UP && posdata->use_z) {
+		posdata->z -= posdata->zoom / 6;
+		ScriptChangeArg(argi, posdata->z, 1);
 		wxString line = m_scripttext->GetLineText(line_selection);
-		DisplayOperation(line,false,false);
-	} else if (key==WXK_DOWN && posdata->use_z) {
-		posdata->z += posdata->zoom/6;
-		ScriptChangeArg(argi,posdata->z,1);
+		DisplayOperation(line, false, false);
+	} else if (key == WXK_DOWN && posdata->use_z) {
+		posdata->z += posdata->zoom / 6;
+		ScriptChangeArg(argi, posdata->z, 1);
 		wxString line = m_scripttext->GetLineText(line_selection);
-		DisplayOperation(line,false,false);
-	} else
+		DisplayOperation(line, false, false);
+	} else {
 		event.Skip();
+	}
 }
 
 void ScriptEditDialog::OnArgColorPicker(wxColourPickerEvent& event) {

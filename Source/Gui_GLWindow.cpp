@@ -136,34 +136,35 @@ void GLWindow::DisplayFieldPoint3D(int16_t x, int16_t y, int16_t z) {
 }
 
 void GLWindow::DisplayFieldPoint2D(int16_t x, int16_t y) {
-	if (display_type!=DISPLAY_GL_TYPE_FIELD)
+	if (display_type != DISPLAY_GL_TYPE_FIELD)
 		return;
 	vector<GLdouble> barpos;
 	GLdouble minbarpos, maxbarpos = DOUBLE_MIN_VALUE;
 	unsigned int i;
 	field_showpoint = 0;
-	for (i=0;i<field_walk_triangle_amount;i++) {
-		barpos = GetPointBarycenterCoef(x,y,field_walk_triangle_pos[3*i][0],field_walk_triangle_pos[3*i][1],field_walk_triangle_pos[3*i+1][0],field_walk_triangle_pos[3*i+1][1],field_walk_triangle_pos[3*i+2][0],field_walk_triangle_pos[3*i+2][1]);
+	for (i = 0; i < field_walk_triangle_amount; i++) {
+		barpos = GetPointBarycenterCoef(x, y, field_walk_triangle_pos[3 * i][0], field_walk_triangle_pos[3 * i][1], field_walk_triangle_pos[3 * i + 1][0], field_walk_triangle_pos[3 * i + 1][1], field_walk_triangle_pos[3 * i + 2][0], field_walk_triangle_pos[3 * i + 2][1]);
 		if (barpos.size() == 3) {
-			minbarpos = min(min(barpos[0],barpos[1]),barpos[2]);
-			if (minbarpos>=0 && field_showpoint<GL_WINDOW_FIELD_MAX_POINTS) {
-				field_pointz[field_showpoint++] = barpos[0]*field_walk_triangle_pos[3*i][2]+barpos[1]*field_walk_triangle_pos[3*i+1][2]+barpos[2]*field_walk_triangle_pos[3*i+2][2]+DRAW_OVER_OFFSET;
-			} else if (minbarpos>maxbarpos && field_showpoint==0) {
-				if (max(max(barpos[0],barpos[1]),barpos[2])==barpos[0])
-					field_pointz[0] = field_walk_triangle_pos[3*i][2]+DRAW_OVER_OFFSET;
-				else if (max(max(barpos[0],barpos[1]),barpos[2])==barpos[1])
-					field_pointz[0] = field_walk_triangle_pos[3*i+1][2]+DRAW_OVER_OFFSET;
+			minbarpos = min(min(barpos[0], barpos[1]), barpos[2]);
+			if (minbarpos >= 0 && field_showpoint < GL_WINDOW_FIELD_MAX_POINTS) {
+				field_pointz[field_showpoint++] = barpos[0] * field_walk_triangle_pos[3 * i][2] + barpos[1] * field_walk_triangle_pos[3 * i + 1][2] + barpos[2] * field_walk_triangle_pos[3 * i + 2][2] + DRAW_OVER_OFFSET;
+			} else if (minbarpos > maxbarpos && field_showpoint == 0) {
+				if (max(max(barpos[0], barpos[1]), barpos[2]) == barpos[0])
+					field_pointz[0] = field_walk_triangle_pos[3 * i][2] + DRAW_OVER_OFFSET;
+				else if (max(max(barpos[0], barpos[1]), barpos[2]) == barpos[1])
+					field_pointz[0] = field_walk_triangle_pos[3 * i + 1][2] + DRAW_OVER_OFFSET;
 				else
-					field_pointz[0] = field_walk_triangle_pos[3*i+2][2]+DRAW_OVER_OFFSET;
+					field_pointz[0] = field_walk_triangle_pos[3 * i + 2][2] + DRAW_OVER_OFFSET;
 				maxbarpos = minbarpos;
 			}
 		}
 	}
-	if (field_showpoint==0) {
+	if (field_showpoint == 0) {
 		field_showpoint = 1;
-		field_pointz[0] = 0.0f;
+		if (maxbarpos == DOUBLE_MIN_VALUE)
+			field_pointz[0] = 0.0f;
 	}
-	for (i=0;i<field_showpoint;i++) {
+	for (i = 0; i < field_showpoint; i++) {
 		field_pointx[i] = x;
 		field_pointy[i] = y;
 	}
@@ -662,23 +663,23 @@ EVT_LEAVE_WINDOW(GLWindow::OnMouseLeaveWindow)
 EVT_KEY_DOWN(GLWindow::OnKeyPress)
 END_EVENT_TABLE()
 
-bool IsPointInTriangle2D(GLdouble x,GLdouble y,GLdouble tx1,GLdouble ty1,GLdouble tx2,GLdouble ty2,GLdouble tx3,GLdouble ty3) {
-	GLdouble det = (tx2-tx1)*(ty3-ty1)-(tx3-tx1)*(ty2-ty1);
-	GLdouble s = (ty3-ty1)*(x-tx1)+(tx1-tx3)*(y-ty1);
-	GLdouble t = (ty1-ty2)*(x-tx1)+(tx2-tx1)*(y-ty1);
-	if (det<0)
-		return s<=0 && s>=det && t<=0 && t>=det && s+t>=det;
-	return s>=0 && s<=det && t>=0 && t<=det && s+t<=det;
+bool IsPointInTriangle2D(GLdouble x, GLdouble y, GLdouble tx1, GLdouble ty1, GLdouble tx2, GLdouble ty2, GLdouble tx3, GLdouble ty3) {
+	GLdouble det = (tx2 - tx1) * (ty3 - ty1) - (tx3 - tx1) * (ty2 - ty1);
+	GLdouble s = (ty3 - ty1) * (x - tx1) + (tx1 - tx3) * (y - ty1);
+	GLdouble t = (ty1 - ty2) * (x - tx1) + (tx2 - tx1) * (y - ty1);
+	if (det < 0)
+		return s <= 0 && s >= det && t <= 0 && t >= det && s + t >= det;
+	return s >= 0 && s <= det && t >= 0 && t <= det && s + t <= det;
 }
 
-vector<GLdouble> GetPointBarycenterCoef(GLdouble x,GLdouble y,GLdouble tx1,GLdouble ty1,GLdouble tx2,GLdouble ty2,GLdouble tx3,GLdouble ty3) {
-	GLdouble det = (tx2-tx1)*(ty3-ty1)-(tx3-tx1)*(ty2-ty1);
-	if (det==0.0) // flat triangle
+vector<GLdouble> GetPointBarycenterCoef(GLdouble x, GLdouble y, GLdouble tx1, GLdouble ty1, GLdouble tx2, GLdouble ty2, GLdouble tx3, GLdouble ty3) {
+	GLdouble det = (tx2 - tx1) * (ty3 - ty1) - (tx3 - tx1) * (ty2 - ty1);
+	if (det == 0.0) // flat triangle
 		return vector<GLdouble>();
 	vector<GLdouble> res(3);
-	res[1] = ((ty3-ty1)*(x-tx1)+(tx1-tx3)*(y-ty1))/det;
-	res[2] = ((ty1-ty2)*(x-tx1)+(tx2-tx1)*(y-ty1))/det;
-	res[0] = 1- res[1]- res[2];
+	res[1] = ((ty3 - ty1) * (x - tx1) + (tx1 - tx3) * (y - ty1)) / det;
+	res[2] = ((ty1 - ty2) * (x - tx1) + (tx2 - tx1) * (y - ty1)) / det;
+	res[0] = 1 - res[1] - res[2];
 	return res;
 }
 

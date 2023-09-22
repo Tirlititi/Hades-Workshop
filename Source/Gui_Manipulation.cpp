@@ -601,13 +601,10 @@ void CDDataStruct::ChangeFF9StringOpcodeChar(wchar_t newchar) {
 		DisplayCard(m_cardlist->GetSelection());
 	}
 	if (saveset.sectionloaded[DATA_SECTION_TEXT]) {
-		for (i = 0; i < textset.amount; i++) {
-			if (textset.text_data[i]) {
-				for (j = 0; j < textset.text_data[i]->amount; j++) {
+		for (i = 0; i < textset.amount; i++)
+			if (textset.text_data[i] != NULL)
+				for (j = 0; j < textset.text_data[i]->amount; j++)
 					textset.text_data[i]->text[j].SetOpcodeChar(newchar);
-				}
-			}
-		}
 		DisplayText(m_textlist->GetSelection());
 	}
 	if (saveset.sectionloaded[DATA_SECTION_WORLD_MAP]) {
@@ -621,9 +618,8 @@ void CDDataStruct::ChangeFF9StringOpcodeChar(wchar_t newchar) {
 		DisplayWorldMap(m_worldlist->GetSelection());
 	}
 	if (saveset.sectionloaded[DATA_SECTION_FIELD]) {
-		for (i = 0; i < fieldset.amount; i++) {
+		for (i = 0; i < fieldset.amount; i++)
 			fieldset.script_data[i]->name.SetOpcodeChar(newchar);
-		}
 		FieldDisplayNames();
 		DisplayField(m_fieldlist->GetSelection());
 	}
@@ -712,13 +708,10 @@ void CDDataStruct::ChangeFF9StringSteamLanguage(SteamLanguage newlang) {
 		DisplayCard(m_cardlist->GetSelection());
 	}
 	if (saveset.sectionloaded[DATA_SECTION_TEXT]) {
-		for (i = 0; i < textset.amount; i++) {
-			if (textset.text_data[i]) {
-				for (j = 0; j < textset.text_data[i]->amount; j++) {
+		for (i = 0; i < textset.amount; i++)
+			if (textset.text_data[i] != NULL)
+				for (j = 0; j < textset.text_data[i]->amount; j++)
 					textset.text_data[i]->text[j].ChangeSteamLanguage(newlang);
-				}
-			}
-		}
 		DisplayText(m_textlist->GetSelection());
 	}
 	if (saveset.sectionloaded[DATA_SECTION_WORLD_MAP]) {
