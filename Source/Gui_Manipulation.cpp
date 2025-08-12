@@ -22,6 +22,7 @@
 #include "Database_SpellAnimation.h"
 #include "Database_Resource.h"
 #include "Database_Animation.h"
+#include "Database_CSV.h"
 
 //=============================//
 //          Strings            //
@@ -219,92 +220,92 @@ wxString CDDataStruct::GetMagicSwordName(FF9String& spellname) {
 wxString CDDataStruct::GetEnemyBattleName(int battleid) {
 	wxString groupname;
 	if (GetTopWindow()->m_enemyshowid->IsChecked())
-		groupname.Printf(wxT("%03u : %s"),enemyset.battle_data[battleid]->object_id,enemyset.battle_name[battleid]);
+		groupname.Printf(wxT("%03u : %s"), enemyset.battle_data[battleid]->object_id, enemyset.battle_name[battleid]);
 	else
 		groupname = _(enemyset.battle_name[battleid]);
 	return groupname;
 }
 
 void CDDataStruct::EnemyDisplayNames(bool create) {
-	unsigned int i,prev = enemysorted[m_enemylist->GetSelection()];
+	unsigned int i, prev = enemysorted[m_enemylist->GetSelection()];
 	if (!create)
 		m_enemylist->Clear();
 	wxArrayString names;
 	names.Alloc(enemyset.battle_amount);
-	for (i=0;i<enemyset.battle_amount;i++)
+	for (i = 0; i < enemyset.battle_amount; i++)
 		names.Add(_(enemyset.battle_name[i]));
-	if (enemysorted!=OrderedIndex)
+	if (enemysorted != OrderedIndex)
 		delete[] enemysorted;
 	if (GetTopWindow()->m_sortenemy->IsChecked())
 		enemysorted = SortStrings(names);
 	else
 		enemysorted = OrderedIndex;
-	for (i=0;i<enemyset.battle_amount;i++) {
-		m_enemylist->Append(GetEnemyBattleName(enemysorted[i]),(void*)&enemysorted[i]);
-		if (!create && enemysorted[i]==prev)
+	for (i = 0; i < enemyset.battle_amount; i++) {
+		m_enemylist->Append(GetEnemyBattleName(enemysorted[i]), (void*)&enemysorted[i]);
+		if (!create && enemysorted[i] == prev)
 			m_enemylist->SetSelection(i);
 	}
 }
 
 void CDDataStruct::CardDisplayNames(bool create) {
-	unsigned int i,prev = cardsorted[m_cardlist->GetSelection()];
+	unsigned int i, prev = cardsorted[m_cardlist->GetSelection()];
 	if (!create)
 		m_cardlist->Clear();
 	wxArrayString names;
 	names.Alloc(CARD_AMOUNT);
-	for (i=0;i<CARD_AMOUNT;i++)
+	for (i = 0; i < CARD_AMOUNT; i++)
 		names.Add(_(cardset.card[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
-	if (cardsorted!=OrderedIndex)
+	if (cardsorted != OrderedIndex)
 		delete[] cardsorted;
 	if (GetTopWindow()->m_sortcard->IsChecked())
 		cardsorted = SortStrings(names);
 	else
 		cardsorted = OrderedIndex;
-	for (i=0;i<CARD_AMOUNT;i++) {
-		m_cardlist->Append(names[cardsorted[i]],(void*)&cardsorted[i]);
-		if (!create && cardsorted[i]==prev)
+	for (i = 0; i < CARD_AMOUNT; i++) {
+		m_cardlist->Append(names[cardsorted[i]], (void*)&cardsorted[i]);
+		if (!create && cardsorted[i] == prev)
 			m_cardlist->SetSelection(i);
 	}
 }
 
 void CDDataStruct::TextDisplayNames(bool create) {
-	unsigned int i,prev = textsorted[m_textlist->GetSelection()];
+	unsigned int i, prev = textsorted[m_textlist->GetSelection()];
 	if (!create)
 		m_textlist->Clear();
 	wxArrayString names;
 	names.Alloc(textset.amount);
-	for (i=0;i<textset.amount;i++)
+	for (i = 0; i < textset.amount; i++)
 		names.Add(_(textset.name[i]));
-	if (textsorted!=OrderedIndex)
+	if (textsorted != OrderedIndex)
 		delete[] textsorted;
 	if (GetTopWindow()->m_sorttext->IsChecked())
 		textsorted = SortStrings(names);
 	else
 		textsorted = OrderedIndex;
-	for (i=0;i<textset.amount;i++) {
-		m_textlist->Append(textset.name[textsorted[i]],(void*)&textsorted[i]);
-		if (!create && textsorted[i]==prev)
+	for (i = 0; i < textset.amount; i++) {
+		m_textlist->Append(textset.name[textsorted[i]], (void*)&textsorted[i]);
+		if (!create && textsorted[i] == prev)
 			m_textlist->SetSelection(i);
 	}
 }
 
 void CDDataStruct::WorldMapDisplayNames(bool create) {
-	unsigned int i,prev = textsorted[m_worldlist->GetSelection()];
+	unsigned int i, prev = worldsorted[m_worldlist->GetSelection()];
 	if (!create)
 		m_worldlist->Clear();
 	wxArrayString names;
 	names.Alloc(worldset.amount);
-	for (i=0;i<worldset.amount;i++)
+	for (i = 0; i < worldset.amount; i++)
 		names.Add(_(worldset.name[i]));
-	if (worldsorted!=OrderedIndex)
+	if (worldsorted != OrderedIndex)
 		delete[] worldsorted;
 	if (GetTopWindow()->m_sortworld->IsChecked())
 		worldsorted = SortStrings(names);
 	else
 		worldsorted = OrderedIndex;
-	for (i=0;i<worldset.amount;i++) {
-		m_worldlist->Append(worldset.name[worldsorted[i]],(void*)&worldsorted[i]);
-		if (!create && worldsorted[i]==prev)
+	for (i = 0; i < worldset.amount; i++) {
+		m_worldlist->Append(worldset.name[worldsorted[i]], (void*)&worldsorted[i]);
+		if (!create && worldsorted[i] == prev)
 			m_worldlist->SetSelection(i);
 	}
 }
@@ -312,56 +313,56 @@ void CDDataStruct::WorldMapDisplayNames(bool create) {
 wxString CDDataStruct::GetFieldName(int fieldid) {
 	wxString fieldname;
 	if (GetTopWindow()->m_fieldshowid->IsChecked())
-		fieldname.Printf(wxT("%04u : %s"),fieldset.script_data[fieldid]->object_id,fieldset.script_data[fieldid]->name.GetStr(hades::TEXT_PREVIEW_TYPE));
+		fieldname.Printf(wxT("%04u : %s"), fieldset.script_data[fieldid]->object_id, fieldset.script_data[fieldid]->name.GetStr(hades::TEXT_PREVIEW_TYPE));
 	else
 		fieldname = _(fieldset.script_data[fieldid]->name.GetStr(hades::TEXT_PREVIEW_TYPE));
 	return fieldname;
 }
 
 void CDDataStruct::FieldDisplayNames(bool create) {
-	unsigned int i,prev = fieldsorted[m_fieldlist->GetSelection()];
+	unsigned int i, prev = fieldsorted[m_fieldlist->GetSelection()];
 	if (!create)
 		m_fieldlist->Clear();
 	wxArrayString names;
 	names.Alloc(fieldset.amount);
-	for (i=0;i<fieldset.amount;i++)
+	for (i = 0; i < fieldset.amount; i++)
 		names.Add(_(fieldset.script_data[i]->name.GetStr(hades::TEXT_PREVIEW_TYPE)));
-	if (fieldsorted!=OrderedIndex)
+	if (fieldsorted != OrderedIndex)
 		delete[] fieldsorted;
 	if (GetTopWindow()->m_sortfield->IsChecked())
 		fieldsorted = SortStrings(names);
 	else
 		fieldsorted = OrderedIndex;
-	for (i=0;i<fieldset.amount;i++) {
-		m_fieldlist->Append(GetFieldName(fieldsorted[i]),(void*)&fieldsorted[i]);
-		if (!create && fieldsorted[i]==prev)
+	for (i = 0; i < fieldset.amount; i++) {
+		m_fieldlist->Append(GetFieldName(fieldsorted[i]), (void*)&fieldsorted[i]);
+		if (!create && fieldsorted[i] == prev)
 			m_fieldlist->SetSelection(i);
 	}
 }
 
 void CDDataStruct::BattleSceneDisplayNames(bool create) {
-	unsigned int i,prev = scenesorted[m_battlescenelist->GetSelection()];
+	unsigned int i, prev = scenesorted[m_battlescenelist->GetSelection()];
 	if (!create)
 		m_battlescenelist->Clear();
 	wxArrayString names;
 	names.Alloc(sceneset.scene_amount);
-	for (i=0;i<sceneset.scene_amount;i++)
+	for (i = 0; i < sceneset.scene_amount; i++)
 		names.Add(_(sceneset.scene_name[i]));
-	if (scenesorted!=OrderedIndex)
+	if (scenesorted != OrderedIndex)
 		delete[] scenesorted;
 	if (GetTopWindow()->m_sortbattlescene->IsChecked())
 		scenesorted = SortStrings(names);
 	else
 		scenesorted = OrderedIndex;
-	for (i=0;i<sceneset.scene_amount;i++) {
-		m_battlescenelist->Append(sceneset.scene_name[scenesorted[i]],(void*)&scenesorted[i]);
-		if (!create && scenesorted[i]==prev)
+	for (i = 0; i < sceneset.scene_amount; i++) {
+		m_battlescenelist->Append(sceneset.scene_name[scenesorted[i]], (void*)&scenesorted[i]);
+		if (!create && scenesorted[i] == prev)
 			m_battlescenelist->SetSelection(i);
 	}
 }
 
 void CDDataStruct::SpellAnimationDisplayNames(bool create) {
-	unsigned int i,j,prev = spellanimsorted[m_spellanimlist->GetSelection()];
+	unsigned int i, j, prev = spellanimsorted[m_spellanimlist->GetSelection()];
 	if (!create)
 		m_spellanimlist->Clear();
 	wxArrayString names;
@@ -375,33 +376,33 @@ void CDDataStruct::SpellAnimationDisplayNames(bool create) {
 		if (j == HADES_STRING_SPELL_MODEL.size())
 			names.Add(wxString::Format(wxT("Spell Animation %u"), i));
 	}
-	if (spellanimsorted!=OrderedIndex)
+	if (spellanimsorted != OrderedIndex)
 		delete[] spellanimsorted;
 	if (GetTopWindow()->m_sortspellanim->IsChecked())
 		spellanimsorted = SortStrings(names);
 	else
 		spellanimsorted = OrderedIndex;
-	for (i=0;i<spellanimset.amount;i++) {
-		m_spellanimlist->Append(names[spellanimsorted[i]],(void*)&spellanimsorted[i]);
-		if (!create && spellanimsorted[i]==prev)
+	for (i = 0; i < spellanimset.amount; i++) {
+		m_spellanimlist->Append(names[spellanimsorted[i]], (void*)&spellanimsorted[i]);
+		if (!create && spellanimsorted[i] == prev)
 			m_spellanimlist->SetSelection(i);
 	}
 }
 
 void CDDataStruct::CilDisplayNames(bool create) {
-	unsigned int i,prev = cilsorted[m_ciltypelist->GetSelection()];
+	unsigned int i, prev = cilsorted[m_ciltypelist->GetSelection()];
 	if (!create)
 		m_ciltypelist->Clear();
 	wxArrayString names;
 	names.Alloc(cilset.data->GetTypeAmount());
-	for (i=0;i<cilset.data->GetTypeAmount();i++)
+	for (i = 0; i < cilset.data->GetTypeAmount(); i++)
 		names.Add(_(cilset.data->GetTypeName(i)));
-	if (cilsorted!=OrderedIndex)
+	if (cilsorted != OrderedIndex)
 		delete[] cilsorted;
 	cilsorted = SortStrings(names);
-	for (i=0;i<cilset.data->GetTypeAmount();i++) {
-		m_ciltypelist->Append(cilset.data->GetTypeName(cilsorted[i]),(void*)&cilsorted[i]);
-		if (!create && cilsorted[i]==prev)
+	for (i = 0; i < cilset.data->GetTypeAmount(); i++) {
+		m_ciltypelist->Append(cilset.data->GetTypeName(cilsorted[i]), (void*)&cilsorted[i]);
+		if (!create && cilsorted[i] == prev)
 			m_ciltypelist->SetSelection(i);
 	}
 }
@@ -819,15 +820,15 @@ void IOHWSMessage::OnChangeFile(wxFileDirPickerEvent& event) {
 void IOHWSMessage::OnCheckSection(wxCommandEvent& event) {
 	if (!save) {
 		int id = event.GetId();
-		unsigned int boxid =	id==wxID_SPELL ? DATA_SECTION_SPELL :
-								id==wxID_SUPPORT ? DATA_SECTION_SUPPORT :
-								id==wxID_CMD ? DATA_SECTION_CMD :
-								id==wxID_STAT ? DATA_SECTION_STAT :
-								id==wxID_ENMY ? DATA_SECTION_ENMY :
-								id==wxID_ITEM ? DATA_SECTION_ITEM :
-								id==wxID_CARD ? DATA_SECTION_CARD :
-								id==wxID_FIELD ? DATA_SECTION_FIELD :
-								id==wxID_WORLD ? DATA_SECTION_WORLD_MAP : DATA_SECTION_SHOP;
+		unsigned int boxid =	id == wxID_SPELL ? DATA_SECTION_SPELL :
+								id == wxID_SUPPORT ? DATA_SECTION_SUPPORT :
+								id == wxID_CMD ? DATA_SECTION_CMD :
+								id == wxID_STAT ? DATA_SECTION_STAT :
+								id == wxID_ENMY ? DATA_SECTION_ENMY :
+								id == wxID_ITEM ? DATA_SECTION_ITEM :
+								id == wxID_CARD ? DATA_SECTION_CARD :
+								id == wxID_FIELD ? DATA_SECTION_FIELD :
+								id == wxID_WORLD ? DATA_SECTION_WORLD_MAP : DATA_SECTION_SHOP;
 		section_text_box[boxid]->Enable(event.IsChecked());
 		section_text_box[boxid]->SetValue(event.IsChecked());
 	}
@@ -971,7 +972,7 @@ wstring* CDDataStruct::ReadHWS(const char* fname, bool* section, bool* sectext, 
 				RegisterSpellAdded(i);
 		}
 		for (i = 0; i < STATUS_SET_AMOUNT; i++)
-			UpdateSpellStatusName(i);
+			UpdateSpellStatusName(spellset.status_set[i]);
 	}
 	if (section[DATA_SECTION_SUPPORT]) {
 		MarkDataSupportModified();
@@ -1313,7 +1314,7 @@ void CDDataStruct::OnSharedRightClickMenu(wxCommandEvent& event) {
 			dialog.m_newobjectid->SetRange(PLAYABLE_CHAR_AMOUNT, INT32_MAX);
 			MACRO_ADD_NEW_OBJECT_SHARED_PART1(Stat, statset.initial_stat, statset.initial_stat[i].default_name.GetStr(hades::TEXT_PREVIEW_TYPE))
 			MarkDataStatModified();
-			InsertAtId(statset.battle_param, statset.battle_param[StatDataSet::GetCharacterBattleParametersIndices(baseid)[0]], newid + 7);
+			InsertAtId(statset.battle_param, statset.battle_param[StatDataSet::GetCharacterBattleParametersIndices(baseid)[max(0, m_statcharadvancedkind->GetSelection())]], newid + 7);
 			statset.InitializeNewCharacter(addindex);
 			UpdateStatName(addindex);
 			m_statlist->SetString(1 + addindex, _(statset.initial_stat[addindex].default_name.GetStr(hades::TEXT_PREVIEW_TYPE)));
@@ -1379,8 +1380,7 @@ void CDDataStruct::OnSharedRightClickMenu(wxCommandEvent& event) {
 		} else if (SharedMenuType == 1000) {
 			int* cmdset = statset.GetCharacterCommandsIndices(m_statlist->GetSelection() - 1, NULL);
 			AbilitySetDataStruct& ab = statset.ability_list[cmdset[m_statcharabilityset->GetSelection()]];
-			ab.ability.insert(ab.ability.begin() + SharedMenuSelection, ab.ability[SharedMenuSelection]);
-			ab.ap_cost.insert(ab.ap_cost.begin() + SharedMenuSelection, ab.ap_cost[SharedMenuSelection]);
+			ab.entry.insert(ab.entry.begin() + SharedMenuSelection, ab.entry[SharedMenuSelection]);
 			DisplayStatAbilityList(cmdset[m_statcharabilityset->GetSelection()]);
 			m_statcharabilitylist->SetSelection(SharedMenuSelection);
 			DisplayStatSelectedAbility();
@@ -1424,8 +1424,7 @@ void CDDataStruct::OnSharedRightClickMenu(wxCommandEvent& event) {
 		} else if (SharedMenuType == 1000) {
 			int* cmdset = statset.GetCharacterCommandsIndices(m_statlist->GetSelection() - 1, NULL);
 			AbilitySetDataStruct& ab = statset.ability_list[cmdset[m_statcharabilityset->GetSelection()]];
-			ab.ability.erase(ab.ability.begin() + SharedMenuSelection);
-			ab.ap_cost.erase(ab.ap_cost.begin() + SharedMenuSelection);
+			ab.entry.erase(ab.entry.begin() + SharedMenuSelection);
 			DisplayStatAbilityList(cmdset[m_statcharabilityset->GetSelection()]);
 			m_statcharabilitylist->SetSelection(min(SharedMenuSelection, (int)m_statcharabilitylist->GetCount() - 1));
 			DisplayStatSelectedAbility();
@@ -1518,8 +1517,11 @@ void CDDataStruct::DisplaySpell(int spellid) {
 	SpellDataStruct& sp = spellset.spell[*sortid];
 	unsigned int i;
 	m_spellid->Enable(false);
+	m_spellcustomformat->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_spellcustomfields->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 	m_spelleffectint->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
 	m_spellpower->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+	m_spellstatusint->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : STATUS_SET_AMOUNT - 1);
 	m_spellaccuracy->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
 	m_spellmp->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
 	m_spellid->SetValue(sp.id);
@@ -1559,7 +1561,9 @@ void CDDataStruct::DisplaySpell(int spellid) {
 	m_spelleffecthelpwindow->SetScrollbars(20, 5, x / 20, y / 5);
 	m_spellpower->SetValue(sp.power);
 	MACRO_FLAG_DISPLAY8(sp.element, m_spellelement)
-	m_spellstatus->SetSelection(sp.status);
+	if (sp.status < STATUS_SET_AMOUNT)
+		m_spellstatus->SetSelection(sp.status);
+	m_spellstatusint->SetValue(sp.status);
 	m_spellaccuracy->SetValue(sp.accuracy);
 	m_spellmp->SetValue(sp.mp);
 	MACRO_FLAG_DISPLAY8(sp.menu_flag, m_spellmenuflag)
@@ -1663,11 +1667,15 @@ void CDDataStruct::OnSpellChangeSpin(wxSpinEvent& event) {
 		int x, y;
 		m_spelleffecthelp->GetSize(&x, &y);
 		m_spelleffecthelpwindow->SetScrollbars(20, 5, x / 20, y / 5);
+	} else if (id == wxID_STATUS) {
+		sp.status = event.GetPosition();
+		if (sp.status < STATUS_SET_AMOUNT)
+			m_spellstatus->SetSelection(sp.status);
 	} else if (id == wxID_POWER) {
 		sp.power = event.GetPosition();
-	} else if (id==wxID_ACCURACY) {
+	} else if (id == wxID_ACCURACY) {
 		sp.accuracy = event.GetPosition();
-	} else if (id==wxID_MP) {
+	} else if (id == wxID_MP) {
 		sp.mp = event.GetPosition();
 	}
 	MarkDataSpellModified();
@@ -1693,6 +1701,7 @@ void CDDataStruct::OnSpellChangeChoice(wxCommandEvent& event) {
 		m_spelleffecthelpwindow->SetScrollbars(20, 5, x / 20, y / 5);
 	} else if (id == wxID_STATUS) {
 		sp.status = event.GetSelection();
+		m_spellstatusint->SetValue(sp.status);
 	} else if (id == wxID_TARGETTYPE) {
 		Spell_Target_Type tt = event.GetSelection();
 		sp.SetTargetType(tt);
@@ -1729,44 +1738,58 @@ void CDDataStruct::OnSpellChangeButton(wxCommandEvent& event) {
 	unsigned int* sortid = (unsigned int*)m_spelllist->GetClientData(m_spelllist->GetSelection());
 	SpellDataStruct& sp = spellset.spell[*sortid];
 	int id = event.GetId();
-	if (id==wxID_NAME) {
-		if (gametype==GAME_TYPE_PSX) {
-			TextEditDialog ted(this,sp.name,spellset.name_space_total-spellset.name_space_used);
-			if (ted.ShowModal()==wxID_OK) {
+	if (id == wxID_NAME) {
+		if (gametype == GAME_TYPE_PSX) {
+			TextEditDialog ted(this, sp.name, spellset.name_space_total - spellset.name_space_used);
+			if (ted.ShowModal() == wxID_OK) {
 				sp.SetName(ted.text);
 				m_spellname->SetValue(sp.name.str);
 			}
 		} else {
-			TextSteamEditDialog ted(this,&ffuiset,sp.name);
-			if (ted.ShowModal()==wxID_OK) {
+			TextSteamEditDialog ted(this, &ffuiset, sp.name);
+			if (ted.ShowModal() == wxID_OK) {
 				sp.SetName(ted.text);
 				m_spellname->SetValue(sp.name.str);
 			}
 		}
-	} else if (id==wxID_HELP) {
-		if (gametype==GAME_TYPE_PSX) {
+	} else if (id == wxID_HELP) {
+		if (gametype == GAME_TYPE_PSX) {
 			CharmapDataStruct* chmap = NULL;
 			if (saveset.sectionloaded[DATA_SECTION_TEXT])
 				chmap = textset.charmap[textset.main_charmap_index];
-			TextEditDialog ted(this,sp.help,spellset.help_space_total-spellset.help_space_used,TEXT_STYLE_HELP,chmap);
-			if (ted.ShowModal()==wxID_OK) {
+			TextEditDialog ted(this, sp.help, spellset.help_space_total - spellset.help_space_used, TEXT_STYLE_HELP, chmap);
+			if (ted.ShowModal() == wxID_OK) {
 				sp.SetHelp(ted.text);
 				m_spellhelp->SetValue(sp.help.str);
 			}
 		} else {
-			TextSteamEditDialog ted(this,&ffuiset,sp.help,TEXT_STYLE_HELP);
-			if (ted.ShowModal()==wxID_OK) {
+			TextSteamEditDialog ted(this, &ffuiset, sp.help, TEXT_STYLE_HELP);
+			if (ted.ShowModal() == wxID_OK) {
 				sp.SetHelp(ted.text);
 				m_spellhelp->SetValue(sp.help.str);
 			}
 		}
-	} else if (id==wxID_STATUS) {
+	} else if (id == wxID_STATUS) {
 		SpellStatusDialog spstat(this);
-		if (spstat.ShowModal(spellset.status_set[sp.status].status)==wxID_OK) {
-			spellset.status_set[sp.status].status = spstat.flags;
-			UpdateSpellStatusName(sp.status);
+		if (spellset.GetStatusSetIndexById(sp.status) < 0)
+			InsertAtId(spellset.status_set, spellset.status_set[0], sp.status);
+		StatusSetStruct& statusset = spellset.GetStatusSetById(sp.status);
+		if (spstat.ShowModal(this, statusset) == wxID_OK) {
+			statusset.status_list = spstat.status_list;
+			UpdateSpellStatusName(statusset);
 			MarkDataSpellModified();
 		}
+	} else if (id == wxID_CFGROUP) {
+		DatabaseFormatDialog dial(this, &spellset.csv_header, &spellset.csv_format, &spellset.custom_field);
+		if (dial.ShowModal() == wxID_OK) {
+			for (unsigned int i = 0; i < spellset.spell.size(); i++)
+				UpdateCustomFieldMap(spellset.spell[i].custom_field, spellset.custom_field);
+			MarkDataSpellModified();
+		}
+	} else if (id == wxID_CFENTRY) {
+		DatabaseFieldDialog dial(this, &sp.custom_field, spellset.custom_field);
+		if (dial.ShowModal() == wxID_OK)
+			MarkDataSpellModified();
 	}
 }
 
@@ -1851,6 +1874,9 @@ void CDDataStruct::DisplaySupport(int supportid) {
 	SupportDataStruct& sp = supportset.support[*sortid];
 	m_supportid->Enable(false);
 	m_supportid->SetValue(sp.id);
+	m_supportcustomformat->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_supportcustomfields->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_supportcost->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
 	m_supportname->ChangeValue(_(sp.name.str));
 	m_supporthelp->ChangeValue(_(sp.help.str));
 	m_supportcost->SetValue(sp.cost);
@@ -1992,6 +2018,17 @@ void CDDataStruct::OnSupportChangeButton(wxCommandEvent& event) {
 				m_supporthelp->SetValue(sp.help.str);
 			}
 		}
+	} else if (id == wxID_CFGROUP) {
+		DatabaseFormatDialog dial(this, &supportset.csv_header, &supportset.csv_format, &supportset.custom_field);
+		if (dial.ShowModal() == wxID_OK) {
+			for (unsigned int i = 0; i < supportset.support.size(); i++)
+				UpdateCustomFieldMap(supportset.support[i].custom_field, supportset.custom_field);
+			MarkDataSupportModified();
+		}
+	} else if (id == wxID_CFENTRY) {
+		DatabaseFieldDialog dial(this, &sp.custom_field, supportset.custom_field);
+		if (dial.ShowModal() == wxID_OK)
+			MarkDataSupportModified();
 	} else {
 		int basesupport = sp.boosted_support.size() > 0 ? *sortid : -1;
 		int listsel = m_supportboostedlist->GetSelection();
@@ -2054,6 +2091,8 @@ void CDDataStruct::DisplayCommand(int cmdid) {
 	int i;
 	m_cmdid->Enable(false);
 	m_cmdid->SetValue(cmd.id);
+	m_cmdcustomformat->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_cmdcustomfields->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 	m_cmdname->ChangeValue(_(cmd.name.str));
 	m_cmdhelp->ChangeValue(_(cmd.help.str));
 	m_cmdpanel->SetSelection(cmd.panel);
@@ -2070,7 +2109,7 @@ void CDDataStruct::DisplayCommand(int cmdid) {
 		m_cmdmovespelldown->Enable(true);
 		for (i = 0; i < cmd.spell_amount; i++)
 			m_cmdspelllist->Append(spellset.GetSpellById(cmd.spell_list[i]).name.GetStr(hades::TEXT_PREVIEW_TYPE));
-	} else if (cmd.panel == COMMAND_PANEL_NONE) {
+	} else {
 		m_cmdlink->Enable(false);
 		m_cmdaddspell->Enable(true);
 		m_cmdaddspell->SetLabel(HADES_STRING_COMMAND_ADD_SPELL_EDIT);
@@ -2080,15 +2119,9 @@ void CDDataStruct::DisplayCommand(int cmdid) {
 		m_cmdmovespellup->Enable(false);
 		m_cmdmovespelldown->Enable(false);
 		m_cmdspelllist->Append(spellset.GetSpellById(cmd.spell_list[0]).name.GetStr(hades::TEXT_PREVIEW_TYPE));
-	} else {
-		m_cmdlink->Enable(false);
-		m_cmdaddspell->Enable(false);
-		m_cmdremovespell->Enable(false);
-		m_cmdspellfulllist->Enable(false);
-		m_cmdspelllist->Enable(false);
-		m_cmdmovespellup->Enable(false);
-		m_cmdmovespelldown->Enable(false);
 	}
+	m_cmdspecificitems->Enable((cmd.panel == COMMAND_PANEL_ITEM || cmd.panel == COMMAND_PANEL_WEAPON) && gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_cmdspecificitems->SetValue((cmd.panel == COMMAND_PANEL_ITEM || cmd.panel == COMMAND_PANEL_WEAPON) && cmd.spell_amount == -1);
 	m_cmdscrolledwindow->Layout();
 	m_cmdscrolledwindow->GetParent()->GetSizer()->Layout();
 	m_cmdscrolledwindow->Refresh();
@@ -2178,6 +2211,18 @@ void CDDataStruct::OnCommandChangeChoice(wxCommandEvent& event) {
 	MarkDataCommandModified();
 }
 
+void CDDataStruct::OnCommandChangeFlags(wxCommandEvent& event) {
+	int sel = m_cmdlist->GetSelection();
+	unsigned int* sortid = (unsigned int*)m_cmdlist->GetClientData(sel);
+	CommandDataStruct& cmd = cmdset.cmd[*sortid];
+	int id = event.GetId();
+	bool on = event.GetInt();
+	if (id == wxID_ITEM && (cmd.panel == COMMAND_PANEL_ITEM || cmd.panel == COMMAND_PANEL_WEAPON)) {
+		cmd.spell_amount = on ? -1 : 0;
+	}
+	MarkDataCommandModified();
+}
+
 bool DiscardCmdSpellLimit = false;
 void CDDataStruct::OnCommandChangeButton(wxCommandEvent& event) {
 	unsigned int* sortid = (unsigned int*)m_cmdlist->GetClientData(m_cmdlist->GetSelection());
@@ -2204,6 +2249,8 @@ void CDDataStruct::OnCommandChangeButton(wxCommandEvent& event) {
 					m_cmdspelllist->Append(spellset.GetSpellById(cmd.spell_list[cmd.spell_amount - 1]).name.GetStr(hades::TEXT_PREVIEW_TYPE));
 					for (i = listsel; i < cmd.spell_amount - 1; i++)
 						m_cmdspelllist->SetString(i, spellset.GetSpellById(cmd.spell_list[i]).name.GetStr(hades::TEXT_PREVIEW_TYPE));
+					if (event.GetEventType() == wxEVT_BUTTON && fulllistsel + 1 < (int)m_cmdspellfulllist->GetCount())
+						m_cmdspellfulllist->SetSelection(fulllistsel + 1);
 				}
 			} else {
 				cmd.spell_list[0] = spellset.spell[fulllistsel].id;
@@ -2271,6 +2318,19 @@ void CDDataStruct::OnCommandChangeButton(wxCommandEvent& event) {
 				m_cmdhelp->SetValue(cmd.help.str);
 			}
 		}
+	} else if (id == wxID_CFGROUP) {
+		DatabaseFormatDialog dial(this, &cmdset.csv_header, &cmdset.csv_format, &cmdset.custom_field);
+		if (dial.ShowModal() == wxID_OK) {
+			for (unsigned int i = 0; i < cmdset.cmd.size(); i++)
+				UpdateCustomFieldMap(cmdset.cmd[i].custom_field, cmdset.custom_field);
+			MarkDataCommandModified();
+		}
+		return;
+	} else if (id == wxID_CFENTRY) {
+		DatabaseFieldDialog dial(this, &cmd.custom_field, cmdset.custom_field);
+		if (dial.ShowModal() == wxID_OK)
+			MarkDataCommandModified();
+		return;
 	}
 	MarkDataCommandModified();
 }
@@ -2281,18 +2341,22 @@ void CDDataStruct::OnCommandChangeButton(wxCommandEvent& event) {
 
 void CDDataStruct::DisplayLevelStat(void) {
 	unsigned int i;
+	m_statlvlhpspin->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : (int)UINT16_MAX);
+	m_statlvlmpspin->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : (int)UINT16_MAX);
+	m_statlvlcustomformat->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_statlvlcustomfields->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 	m_statlvlexplist->Clear();
 	m_statlvlhplist->Clear();
 	m_statlvlmplist->Clear();
-	for (i=0;i<MAX_LEVEL;i++) {
+	for (i = 0; i < MAX_LEVEL; i++) {
 		stringstream explabel;
-		explabel << "Level " << i+1 << " : " << statset.level[i].exp_table << ends;
+		explabel << "Level " << i + 1 << " : " << statset.level[i].exp_table << ends;
 		m_statlvlexplist->Append(_(explabel.str()));
 		stringstream hplabel;
-		hplabel << "Level " << i+1 << " : " << statset.level[i].hp_table << ends;
+		hplabel << "Level " << i + 1 << " : " << statset.level[i].hp_table << ends;
 		m_statlvlhplist->Append(_(hplabel.str()));
 		stringstream mplabel;
-		mplabel << "Level " << i+1 << " : " << statset.level[i].mp_table << ends;
+		mplabel << "Level " << i + 1 << " : " << statset.level[i].mp_table << ends;
 		m_statlvlmplist->Append(_(mplabel.str()));
 	}
 	m_statlvlexplist->SetSelection(0);
@@ -2306,27 +2370,51 @@ void CDDataStruct::DisplayLevelStat(void) {
 	m_statlvlscrolledwindow->Refresh();
 }
 
+void CDDataStruct::DisplayStatSelectedAbilityInfo(AbilitySetDataStruct& ab, int absel, int charindex) {
+	if (ab.entry[absel].ability.IsVoid()) {
+		m_statcharabilitylearninfo->SetLabelText(wxEmptyString);
+		return;
+	}
+	InitialStatDataStruct& is = statset.initial_stat[charindex];
+	wxString learninfo = m_statcharabilitychoice->GetStringSelection() + _(L" can be learned from:\n");
+	for (unsigned int i = 0; i < itemset.item.size(); i++) {
+		if (find(itemset.item[i].skill.begin(), itemset.item[i].skill.end(), ab.entry[absel].ability) == itemset.item[i].skill.end())
+			continue;
+		bool canequip;
+		if (is.id >= PLAYABLE_CHAR_AMOUNT)
+			canequip = find(is.equip_patch.begin(), is.equip_patch.end(), itemset.item[i].id) != is.equip_patch.end();
+		else
+			canequip = ((itemset.item[i].char_availability >> (PLAYABLE_CHAR_AMOUNT - is.id - 1)) & 1) != 0;
+		if (canequip)
+			learninfo += _(L" - ") + itemset.item[i].name.GetStr(hades::TEXT_PREVIEW_TYPE) + _(L" " HADES_STRING_SPECIAL_CHAR_VALIDATE L"\n");
+		else
+			learninfo += _(L" - ") + itemset.item[i].name.GetStr(hades::TEXT_PREVIEW_TYPE) + _(L" " HADES_STRING_SPECIAL_CHAR_INVALIDATE L"\n");
+	}
+	m_statcharabilitylearninfo->SetLabelText(learninfo);
+}
+
 void CDDataStruct::DisplayStatSelectedAbility() {
 	int* cmdset = statset.GetCharacterCommandsIndices(m_statlist->GetSelection() - 1, NULL);
 	AbilitySetDataStruct& ab = statset.ability_list[cmdset[m_statcharabilityset->GetSelection()]];
 	int absel = m_statcharabilitylist->GetSelection();
-	if (ab.ability[absel].is_active)
-		m_statcharabilitychoice->SetSelection(spellset.GetSpellIndexById(ab.ability[absel].id));
+	if (ab.entry[absel].ability.is_active)
+		m_statcharabilitychoice->SetSelection(spellset.GetSpellIndexById(ab.entry[absel].ability.id));
 	else
-		m_statcharabilitychoice->SetSelection(spellset.spell.size() + supportset.GetSupportIndexById(ab.ability[absel].id));
-	m_statcharabilitycost->SetValue(ab.ap_cost[absel]);
+		m_statcharabilitychoice->SetSelection(spellset.spell.size() + supportset.GetSupportIndexById(ab.entry[absel].ability.id));
+	m_statcharabilitycost->SetValue(ab.entry[absel].ap_cost);
+	DisplayStatSelectedAbilityInfo(ab, absel, m_statlist->GetSelection() - 1);
 }
 
 void CDDataStruct::DisplayStatAbilityList(int abilsetid) {
 	AbilitySetDataStruct& ab = statset.ability_list[abilsetid];
 	CommandSetDataStruct& cmd = statset.command_list[abilsetid];
 	m_statcharabilitylist->Clear();
-	if (ab.ability.size() > 0) {
-		for (unsigned int i = 0; i < ab.ability.size(); i++) {
-			if (ab.ability[i].is_active)
-				m_statcharabilitylist->Append(_(spellset.GetSpellById(ab.ability[i].id).name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+	if (ab.entry.size() > 0) {
+		for (unsigned int i = 0; i < ab.entry.size(); i++) {
+			if (ab.entry[i].ability.is_active)
+				m_statcharabilitylist->Append(_(spellset.GetSpellById(ab.entry[i].ability.id).name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 			else
-				m_statcharabilitylist->Append(_(supportset.GetSupportById(ab.ability[i].id).name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+				m_statcharabilitylist->Append(_(supportset.GetSupportById(ab.entry[i].ability.id).name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 		}
 		m_statcharabilitylist->SetSelection(0);
 		DisplayStatSelectedAbility();
@@ -2340,10 +2428,18 @@ void CDDataStruct::DisplayStatAbilityList(int abilsetid) {
 		m_statcharabilitychoice->Enable(false);
 		m_statcharabilitycost->Enable(false);
 	}
+	m_statcharcommandattack->SetSelection(cmdset.GetCommandIndexById(cmd.attack_command));
+	m_statcharcommanddefend->SetSelection(cmdset.GetCommandIndexById(cmd.defend_command));
 	m_statcharcommand1->SetSelection(cmdset.GetCommandIndexById(cmd.first_command));
 	m_statcharcommand2->SetSelection(cmdset.GetCommandIndexById(cmd.second_command));
+	m_statcharcommanditem->SetSelection(cmdset.GetCommandIndexById(cmd.item_command));
+	m_statcharcommandchange->SetSelection(cmdset.GetCommandIndexById(cmd.change_command));
+	m_statcharcommandtranceattack->SetSelection(cmdset.GetCommandIndexById(cmd.attack_command_trance));
+	m_statcharcommandtrancedefend->SetSelection(cmdset.GetCommandIndexById(cmd.defend_command_trance));
 	m_statcharcommandtrance1->SetSelection(cmdset.GetCommandIndexById(cmd.first_command_trance));
 	m_statcharcommandtrance2->SetSelection(cmdset.GetCommandIndexById(cmd.second_command_trance));
+	m_statcharcommandtranceitem->SetSelection(cmdset.GetCommandIndexById(cmd.item_command_trance));
+	m_statcharcommandtrancechange->SetSelection(cmdset.GetCommandIndexById(cmd.change_command_trance));
 	m_statchartranceattack->SetSelection(cmd.trance_attack != 0xFF ? cmd.trance_attack + 1 : 0);
 }
 
@@ -2358,19 +2454,45 @@ void CDDataStruct::DisplayStat(int statid) {
 	m_statlvlscrolledwindow->Show(false);
 	m_statcharscrolledwindow->Show(true);
 	InitialStatDataStruct& is = statset.initial_stat[statid];
-	unsigned int i, cmdamount, equipamount;
+	unsigned int i, cmdamount, equipamount, paramcount;
 	m_statcharid->Enable(false);
 	m_statcharid->SetValue(is.id);
+	m_statcustomformat->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_statcustomfields->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_statcustomkind->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 	m_statchardefaultname->ChangeValue(_(is.default_name.str));
 	m_statchardefaultname->Enable(gametype == GAME_TYPE_PSX || is.id >= PLAYABLE_CHAR_AMOUNT);
 	m_statchardefaultname->SetToolTip(is.id >= PLAYABLE_CHAR_AMOUNT ? _(L"Only cosmetic for now\nSetup custom character names\nin your mod's \"DictionaryPatch.txt\"") : wxEmptyString); // TODO: externalise names automatically
 	m_statchardefaultnamebutton->Enable(gametype == GAME_TYPE_PSX || is.id >= PLAYABLE_CHAR_AMOUNT);
 	m_statcharadvanced->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_statcharadvancedkind->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_statcharcommandattack->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_statcharcommanddefend->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_statcharcommanditem->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_statcharcommandchange->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_statcharcommandtranceattack->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_statcharcommandtrancedefend->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_statcharcommandtranceitem->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_statcharcommandtrancechange->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_statcharabilitycost->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+	m_statcharspeed->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+	m_statcharstrength->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+	m_statcharmagic->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+	m_statcharspirit->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+	m_statcharmagicstone->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
 	m_statcharspeed->SetValue(is.speed);
 	m_statcharstrength->SetValue(is.strength);
 	m_statcharmagic->SetValue(is.magic);
 	m_statcharspirit->SetValue(is.spirit);
 	m_statcharmagicstone->SetValue(is.magic_stone);
+	int* paramids = StatDataSet::GetCharacterBattleParametersIndices(statid, &paramcount);
+	m_statcharadvancedkind->Clear();
+	for (i = 0; i < paramcount; i++) {
+		stringstream paramlabel;
+		paramlabel << "Battle Parameters " << statset.battle_param[paramids[i]].id << ends;
+		m_statcharadvancedkind->Append(_(paramlabel.str()));
+	}
+	m_statcharadvancedkind->SetSelection(0);
 	int* cmdset = statset.GetCharacterCommandsIndices(statid, &cmdamount);
 	m_statcharabilityset->Clear();
 	for (i = 0; i < cmdamount; i++) {
@@ -2436,9 +2558,37 @@ void CDDataStruct::OnStatAbilityRightClick(wxMouseEvent& event) {
 		SharedMenuSelection = newsel;
 		SharedMenuType = 1000;
 		sharedmenuadd->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
-		sharedmenuremove->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0 && ab.ability.size() > ABILITY_SET_CAPACITY);
+		sharedmenuremove->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0 && ab.entry.size() > ABILITY_SET_CAPACITY);
 		m_statlist->PopupMenu(sharedmenu);
 	}
+}
+
+AbilityEntryDataStruct StatAbilityEntryCopy;
+void CDDataStruct::OnStatKeyDown(wxKeyEvent& event) {
+	int sel = m_statlist->GetSelection();
+	int setsel = m_statcharabilityset->GetSelection();
+	int abilsel = m_statcharabilitylist->GetSelection();
+	if (sel != wxNOT_FOUND && sel > 0 && setsel != wxNOT_FOUND && abilsel != wxNOT_FOUND) {
+		if (event.GetModifiers() == wxMOD_CONTROL && event.GetKeyCode() == 'C') {
+			int* cmdset = statset.GetCharacterCommandsIndices(sel - 1, NULL);
+			StatAbilityEntryCopy = statset.ability_list[cmdset[setsel]].entry[abilsel];
+			return;
+		} else if (event.GetModifiers() == wxMOD_CONTROL && event.GetKeyCode() == 'V') {
+			int* cmdset = statset.GetCharacterCommandsIndices(sel - 1, NULL);
+			AbilityEntryDataStruct& entry = statset.ability_list[cmdset[setsel]].entry[abilsel];
+			entry.ability = StatAbilityEntryCopy.ability;
+			entry.ap_cost = StatAbilityEntryCopy.ap_cost;
+			entry.custom_field = StatAbilityEntryCopy.custom_field;
+			DisplayStatSelectedAbility();
+			if (entry.ability.is_active)
+				m_statcharabilitylist->SetString(abilsel, _(spellset.GetSpellById(entry.ability.id).name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+			else
+				m_statcharabilitylist->SetString(abilsel, _(supportset.GetSupportById(entry.ability.id).name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+			MarkDataStatModified();
+			return;
+		}
+	}
+	event.Skip();
 }
 
 void CDDataStruct::OnStatChangeDefaultName(wxCommandEvent& event) {
@@ -2480,7 +2630,7 @@ void CDDataStruct::OnStatChangeSpin(wxSpinEvent& event) {
 	} else if (id == wxID_ABILITYCOST) {
 		int* cmdset = statset.GetCharacterCommandsIndices(sel - 1, NULL);
 		AbilitySetDataStruct& ab = statset.ability_list[cmdset[m_statcharabilityset->GetSelection()]];
-		ab.ap_cost[m_statcharabilitylist->GetSelection()] = event.GetPosition();
+		ab.entry[m_statcharabilitylist->GetSelection()].ap_cost = event.GetPosition();
 	} else if (id == wxID_EXP) {
 		int lvlsel = m_statlvlexplist->GetSelection();
 		LevelDataStruct& lv = statset.level[lvlsel];
@@ -2509,6 +2659,13 @@ void CDDataStruct::OnStatChangeSpin(wxSpinEvent& event) {
 void CDDataStruct::OnStatChangeChoice(wxCommandEvent& event) {
 	int sel = m_statlist->GetSelection() - 1;
 	int id = event.GetId();
+
+#define MACRO_HANDLE_COMMAND_EVENT(ID, FIELD) \
+	} else if (id == ID) { \
+		int* cmdarray = statset.GetCharacterCommandsIndices(sel, NULL); \
+		CommandSetDataStruct& cmd = statset.command_list[cmdarray[m_statcharabilityset->GetSelection()]]; \
+		cmd.FIELD = cmdset.cmd[event.GetSelection()].id;
+
 	if (id == wxID_ABILITYSET) {
 		int* cmdarray = statset.GetCharacterCommandsIndices(sel, NULL);
 		DisplayStatAbilityList(cmdarray[event.GetSelection()]);
@@ -2519,32 +2676,29 @@ void CDDataStruct::OnStatChangeChoice(wxCommandEvent& event) {
 		int absel = m_statcharabilitylist->GetSelection();
 		if (event.GetSelection() < (int)spellset.spell.size()) {
 			SpellDataStruct& sp = spellset.spell[event.GetSelection()];
-			ab.ability[absel].Setup(sp.id, true);
+			ab.entry[absel].ability.Setup(sp.id, true);
 			m_statcharabilitylist->SetString(absel, _(sp.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 		} else {
 			SupportDataStruct& sp = supportset.support[event.GetSelection() - spellset.spell.size()];
-			ab.ability[absel].Setup(sp.id, false);
+			ab.entry[absel].ability.Setup(sp.id, false);
 			m_statcharabilitylist->SetString(absel, _(sp.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 		}
+		DisplayStatSelectedAbilityInfo(ab, absel, sel);
 		m_statcharscrolledwindow->Layout();
 		m_statcharscrolledwindow->GetParent()->GetSizer()->Layout();
 		m_statcharscrolledwindow->Refresh();
-	} else if (id == wxID_COMMAND1) {
-		int* cmdarray = statset.GetCharacterCommandsIndices(sel, NULL);
-		CommandSetDataStruct& cmd = statset.command_list[cmdarray[m_statcharabilityset->GetSelection()]];
-		cmd.first_command = cmdset.cmd[event.GetSelection()].id;
-	} else if (id == wxID_COMMAND2) {
-		int* cmdarray = statset.GetCharacterCommandsIndices(sel, NULL);
-		CommandSetDataStruct& cmd = statset.command_list[cmdarray[m_statcharabilityset->GetSelection()]];
-		cmd.second_command = cmdset.cmd[event.GetSelection()].id;
-	} else if (id == wxID_TRANCE_COMMAND1) {
-		int* cmdarray = statset.GetCharacterCommandsIndices(sel, NULL);
-		CommandSetDataStruct& cmd = statset.command_list[cmdarray[m_statcharabilityset->GetSelection()]];
-		cmd.first_command_trance = cmdset.cmd[event.GetSelection()].id;
-	} else if (id == wxID_TRANCE_COMMAND2) {
-		int* cmdarray = statset.GetCharacterCommandsIndices(sel, NULL);
-		CommandSetDataStruct& cmd = statset.command_list[cmdarray[m_statcharabilityset->GetSelection()]];
-		cmd.second_command_trance = cmdset.cmd[event.GetSelection()].id;
+	MACRO_HANDLE_COMMAND_EVENT(wxID_COMMANDATK, attack_command)
+	MACRO_HANDLE_COMMAND_EVENT(wxID_COMMANDDEF, defend_command)
+	MACRO_HANDLE_COMMAND_EVENT(wxID_COMMAND1, first_command)
+	MACRO_HANDLE_COMMAND_EVENT(wxID_COMMAND2, second_command)
+	MACRO_HANDLE_COMMAND_EVENT(wxID_COMMANDITEM, item_command)
+	MACRO_HANDLE_COMMAND_EVENT(wxID_COMMANDCHANGE, change_command)
+	MACRO_HANDLE_COMMAND_EVENT(wxID_TRANCE_COMMANDATK, attack_command_trance)
+	MACRO_HANDLE_COMMAND_EVENT(wxID_TRANCE_COMMANDDEF, defend_command_trance)
+	MACRO_HANDLE_COMMAND_EVENT(wxID_TRANCE_COMMAND1, first_command_trance)
+	MACRO_HANDLE_COMMAND_EVENT(wxID_TRANCE_COMMAND2, second_command_trance)
+	MACRO_HANDLE_COMMAND_EVENT(wxID_TRANCE_COMMANDITEM, item_command_trance)
+	MACRO_HANDLE_COMMAND_EVENT(wxID_TRANCE_COMMANDCHANGE, change_command_trance)
 	} else if (id == wxID_TRANCE_ATTACK) {
 		int* cmdarray = statset.GetCharacterCommandsIndices(sel, NULL);
 		CommandSetDataStruct& cmd = statset.command_list[cmdarray[m_statcharabilityset->GetSelection()]];
@@ -2602,8 +2756,10 @@ void CDDataStruct::OnStatChangeButton(wxCommandEvent& event) {
 			}
 		}
 	} else if (id == wxID_PARAM) {
+		unsigned int paramcount = 0;
 		InitialStatDataStruct& is = statset.initial_stat[sel];
-		CharBattleParameterStruct& bp = statset.battle_param[StatDataSet::GetCharacterBattleParametersIndices(sel)[0]];
+		int* paramids = StatDataSet::GetCharacterBattleParametersIndices(sel, &paramcount);
+		CharBattleParameterStruct& bp = statset.battle_param[paramids[max(0, min((int)paramcount - 1, m_statcharadvancedkind->GetSelection()))]];
 		CharacterParameterDialog dial(this);
 		if (dial.ShowModal(bp, is) == wxID_OK) {
 			dial.ApplyModifications(bp, is);
@@ -2615,92 +2771,100 @@ void CDDataStruct::OnStatChangeButton(wxCommandEvent& event) {
 			int* cmdset = statset.GetCharacterCommandsIndices(sel, NULL);
 			AbilitySetDataStruct& ab = statset.ability_list[cmdset[m_statcharabilityset->GetSelection()]];
 			wxString tmplabel = m_statcharabilitylist->GetString(abilsel);
-			AnyAbilityStruct tmpabil = ab.ability[abilsel];
-			uint8_t tmpcost = ab.ap_cost[abilsel];
-			ab.ability[abilsel] = ab.ability[abilsel - 1];
-			ab.ap_cost[abilsel] = ab.ap_cost[abilsel - 1];
-			ab.ability[abilsel - 1] = tmpabil;
-			ab.ap_cost[abilsel - 1] = tmpcost;
+			AbilityEntryDataStruct tmpabil = ab.entry[abilsel];
+			ab.entry[abilsel] = ab.entry[abilsel - 1];
+			ab.entry[abilsel - 1] = tmpabil;
 			m_statcharabilitylist->SetString(abilsel, m_statcharabilitylist->GetString(abilsel - 1));
 			m_statcharabilitylist->SetString(abilsel - 1, tmplabel);
 			m_statcharabilitylist->SetSelection(abilsel - 1);
 			MarkDataStatModified();
 		}
 	} else if (id == wxID_MENUPOSDOWN) {
+		int* cmdset = statset.GetCharacterCommandsIndices(sel, NULL);
+		AbilitySetDataStruct& ab = statset.ability_list[cmdset[m_statcharabilityset->GetSelection()]];
 		int abilsel = m_statcharabilitylist->GetSelection();
-		if (abilsel != wxNOT_FOUND && abilsel + 1 < ABILITY_SET_CAPACITY) {
-			int* cmdset = statset.GetCharacterCommandsIndices(sel, NULL);
-			AbilitySetDataStruct& ab = statset.ability_list[cmdset[m_statcharabilityset->GetSelection()]];
+		if (abilsel != wxNOT_FOUND && abilsel + 1 < (int)ab.entry.size()) {
 			wxString tmplabel = m_statcharabilitylist->GetString(abilsel);
-			AnyAbilityStruct tmpabil = ab.ability[abilsel];
-			uint8_t tmpcost = ab.ap_cost[abilsel];
-			ab.ability[abilsel] = ab.ability[abilsel + 1];
-			ab.ap_cost[abilsel] = ab.ap_cost[abilsel + 1];
-			ab.ability[abilsel + 1] = tmpabil;
-			ab.ap_cost[abilsel + 1] = tmpcost;
+			AbilityEntryDataStruct tmpabil = ab.entry[abilsel];
+			ab.entry[abilsel] = ab.entry[abilsel + 1];
+			ab.entry[abilsel + 1] = tmpabil;
 			m_statcharabilitylist->SetString(abilsel, m_statcharabilitylist->GetString(abilsel + 1));
 			m_statcharabilitylist->SetString(abilsel + 1, tmplabel);
 			m_statcharabilitylist->SetSelection(abilsel + 1);
 			MarkDataStatModified();
 		}
 	} else if (id == wxID_EQUIPADD) {
-		int itemsel = m_statcharequipfulllist->GetSelection();
-		if (itemsel == wxNOT_FOUND)
-			return;
-		InitialStatDataStruct& is = statset.initial_stat[sel];
-		ItemDataStruct& it = itemset.item[itemsel];
-		if (it.id == 0xFF)
-			return;
-		int addindex = 0;
-		if (is.id >= PLAYABLE_CHAR_AMOUNT) {
-			addindex = InsertAtId(is.equip_patch, it.id, it.id);
-			if (addindex < 0)
+		wxArrayInt itemsels;
+		int itemselcount = m_statcharequipfulllist->GetSelections(itemsels);
+		for (int selindex = 0; selindex < itemselcount; selindex++) {
+			int itemsel = itemsels[selindex];
+			InitialStatDataStruct& is = statset.initial_stat[sel];
+			ItemDataStruct& it = itemset.item[itemsel];
+			if (it.id == 0xFF)
 				return;
-			MarkDataStatModified();
-		} else {
-			for (i = 0; i < itemset.item.size(); i++) {
-				if (itemset.item[i].id > it.id)
-					break;
-				if ((itemset.item[i].char_availability >> (PLAYABLE_CHAR_AMOUNT - is.id - 1)) & 1) {
-					if (itemset.item[i].id == it.id)
-						return;
-					addindex++;
+			int addindex = 0;
+			if (is.id >= PLAYABLE_CHAR_AMOUNT) {
+				addindex = InsertAtId(is.equip_patch, it.id, it.id);
+				if (addindex < 0)
+					return;
+				MarkDataStatModified();
+			} else {
+				for (i = 0; i < itemset.item.size(); i++) {
+					if (itemset.item[i].id > it.id)
+						break;
+					if ((itemset.item[i].char_availability >> (PLAYABLE_CHAR_AMOUNT - is.id - 1)) & 1) {
+						if (itemset.item[i].id == it.id)
+							return;
+						addindex++;
+					}
 				}
+				it.char_availability |= 1 << (PLAYABLE_CHAR_AMOUNT - is.id - 1);
+				if (itemsel == *(unsigned int*)m_itemlist->GetClientData(m_itemlist->GetSelection()))
+					DisplayItem(m_itemlist->GetSelection());
+				MarkDataItemModified();
 			}
-			it.char_availability |= 1 << (PLAYABLE_CHAR_AMOUNT - is.id - 1);
-			if (itemsel == *(unsigned int*)m_itemlist->GetClientData(m_itemlist->GetSelection()))
-				DisplayItem(m_itemlist->GetSelection());
-			MarkDataItemModified();
+			m_statcharequiplist->Insert(_(it.name.GetStr(hades::TEXT_PREVIEW_TYPE)), addindex);
+			m_statcharequiplist->SetSelection(wxNOT_FOUND);
+			m_statcharequiplist->SetSelection(addindex);
 		}
-		m_statcharequiplist->Insert(_(it.name.GetStr(hades::TEXT_PREVIEW_TYPE)), addindex);
-		m_statcharequiplist->SetSelection(addindex);
+		if (event.GetEventType() == wxEVT_BUTTON && itemselcount == 1) {
+			m_statcharequipfulllist->SetSelection(wxNOT_FOUND);
+			m_statcharequipfulllist->SetSelection(min(itemsels[0] + 1, (int)m_statcharequipfulllist->GetCount() - 1));
+		}
 		m_statcharscrolledwindow->Layout();
 		m_statcharscrolledwindow->GetParent()->GetSizer()->Layout();
 		m_statcharscrolledwindow->Refresh();
 	} else if (id == wxID_EQUIPREMOVE) {
-		int itemsel = m_statcharequiplist->GetSelection();
-		if (itemsel == wxNOT_FOUND)
-			return;
-		InitialStatDataStruct& is = statset.initial_stat[sel];
-		if (is.id >= PLAYABLE_CHAR_AMOUNT) {
-			is.equip_patch.erase(is.equip_patch.begin() + itemsel);
-			MarkDataStatModified();
-		} else {
-			int itindex = -1;
-			for (i = 0; i < itemset.item.size(); i++)
-				if ((itemset.item[i].char_availability >> (PLAYABLE_CHAR_AMOUNT - is.id - 1)) & 1)
-					if (itemsel == ++itindex)
-						break;
-			if (itemsel != itindex)
-				return;
-			itemset.item[i].char_availability &= ~(1 << (PLAYABLE_CHAR_AMOUNT - is.id - 1));
-			if (i == *(unsigned int*)m_itemlist->GetClientData(m_itemlist->GetSelection()))
-				DisplayItem(m_itemlist->GetSelection());
-			MarkDataItemModified();
+		wxArrayInt itemsels;
+		int itemselcount = m_statcharequiplist->GetSelections(itemsels);
+		for (int selindex = 0; selindex < itemselcount; selindex++) {
+			int itemsel = itemsels[selindex];
+			InitialStatDataStruct& is = statset.initial_stat[sel];
+			if (is.id >= PLAYABLE_CHAR_AMOUNT) {
+				is.equip_patch.erase(is.equip_patch.begin() + itemsel);
+				MarkDataStatModified();
+			} else {
+				int itindex = -1;
+				for (i = 0; i < itemset.item.size(); i++)
+					if ((itemset.item[i].char_availability >> (PLAYABLE_CHAR_AMOUNT - is.id - 1)) & 1)
+						if (itemsel == ++itindex)
+							break;
+				if (itemsel != itindex)
+					return;
+				itemset.item[i].char_availability &= ~(1 << (PLAYABLE_CHAR_AMOUNT - is.id - 1));
+				if (i == *(unsigned int*)m_itemlist->GetClientData(m_itemlist->GetSelection()))
+					DisplayItem(m_itemlist->GetSelection());
+				MarkDataItemModified();
+			}
+			m_statcharequiplist->Delete(itemsel);
+			for (int selcnt = selindex + 1; selcnt < itemselcount; selcnt++)
+				if (itemsels[selcnt] >= itemsel)
+					itemsels[selcnt]--;
 		}
-		m_statcharequiplist->Delete(itemsel);
-		if (m_statcharequiplist->GetCount() > 0)
-			m_statcharequiplist->SetSelection(min(itemsel, (int)m_statcharequiplist->GetCount() - 1));
+		if (itemselcount > 0 && m_statcharequiplist->GetCount() > 0) {
+			m_statcharequiplist->SetSelection(wxNOT_FOUND);
+			m_statcharequiplist->SetSelection(min(itemsels[itemselcount - 1], (int)m_statcharequiplist->GetCount() - 1));
+		}
 	} else if (id == wxID_EXP) {
 		CurveEditorDialog statdial(this);
 		uint32_t lvl[MAX_LEVEL];
@@ -2743,6 +2907,87 @@ void CDDataStruct::OnStatChangeButton(wxCommandEvent& event) {
 			DisplayStat(m_statlist->GetSelection());
 			MarkDataStatModified();
 		}
+	} else if (id == wxID_CFGROUP || id == wxID_CFENTRY) {
+		wxString* header;
+		wxString* format;
+		map<wxString, wxString>* parentfields;
+		map<wxString, wxString>* fields;
+		int kind = 0;
+		if (m_statlist->GetSelection() == 0) {
+			header = &statset.csv_header_level;
+			format = &statset.csv_format_level;
+			parentfields = &statset.custom_field_level;
+			fields = &statset.level[m_statlvlexplist->GetSelection()].custom_field;
+		} else {
+			kind = max(0, m_statcustomkind->GetSelection()) + 1;
+			if (kind == 1) {
+				header = &statset.csv_header_initial_stat;
+				format = &statset.csv_format_initial_stat;
+				parentfields = &statset.custom_field_initial_stat;
+				fields = &statset.initial_stat[sel].custom_field;
+			} else if (kind == 2) {
+				header = &statset.csv_header_character_param;
+				format = &statset.csv_format_character_param;
+				parentfields = &statset.custom_field_initial_stat;
+				fields = &statset.initial_stat[sel].custom_field;
+			} else if (kind == 3) {
+				header = &statset.csv_header_battle_param;
+				format = &statset.csv_format_battle_param;
+				parentfields = &statset.custom_field_battle_param;
+				fields = &statset.battle_param[StatDataSet::GetCharacterBattleParametersIndices(sel)[max(0, m_statcharadvancedkind->GetSelection())]].custom_field;
+			} else if (kind == 4) {
+				if (m_statcharabilitylist->GetSelection() == wxNOT_FOUND)
+					return;
+				int* cmdset = statset.GetCharacterCommandsIndices(sel, NULL);
+				header = &statset.csv_header_ability_list;
+				format = &statset.csv_format_ability_list;
+				parentfields = &statset.custom_field_ability_list;
+				fields = &statset.ability_list[cmdset[m_statcharabilityset->GetSelection()]].entry[m_statcharabilitylist->GetSelection()].custom_field;
+			} else if (kind == 5) {
+				int* cmdset = statset.GetCharacterCommandsIndices(sel, NULL);
+				header = &statset.csv_header_command_list;
+				format = &statset.csv_format_command_list;
+				parentfields = &statset.custom_field_command_list;
+				fields = &statset.command_list[cmdset[m_statcharabilityset->GetSelection()]].custom_field;
+			} else if (kind == 6) {
+				int* equipset = statset.GetCharacterEquipmentsIndices(sel, NULL);
+				header = &statset.csv_header_initial_equip;
+				format = &statset.csv_format_initial_equip;
+				parentfields = &statset.custom_field_initial_equip;
+				fields = &statset.initial_equip[equipset[m_statcharequipset->GetSelection()]].custom_field;
+			} else {
+				return;
+			}
+		}
+		if (id == wxID_CFGROUP) {
+			DatabaseFormatDialog dial(this, header, format, parentfields);
+			if (dial.ShowModal() == wxID_OK) {
+				if (kind == 0)
+					for (unsigned int i = 0; i < statset.level.size(); i++)
+						UpdateCustomFieldMap(statset.level[i].custom_field, *parentfields);
+				else if (kind == 1 || kind == 2)
+					for (unsigned int i = 0; i < statset.initial_stat.size(); i++)
+						UpdateCustomFieldMap(statset.initial_stat[i].custom_field, *parentfields);
+				else if (kind == 3)
+					for (unsigned int i = 0; i < statset.battle_param.size(); i++)
+						UpdateCustomFieldMap(statset.battle_param[i].custom_field, *parentfields);
+				else if (kind == 4)
+					for (unsigned int i = 0; i < statset.ability_list.size(); i++)
+						for (unsigned int j = 0; j < statset.ability_list[i].entry.size(); j++)
+							UpdateCustomFieldMap(statset.ability_list[i].entry[j].custom_field, *parentfields);
+				else if (kind == 5)
+					for (unsigned int i = 0; i < statset.command_list.size(); i++)
+						UpdateCustomFieldMap(statset.command_list[i].custom_field, *parentfields);
+				else if (kind == 6)
+					for (unsigned int i = 0; i < statset.initial_equip.size(); i++)
+						UpdateCustomFieldMap(statset.initial_equip[i].custom_field, *parentfields);
+				MarkDataStatModified();
+			}
+		} else {
+			DatabaseFieldDialog dial(this, fields, *parentfields);
+			if (dial.ShowModal() == wxID_OK)
+				MarkDataStatModified();
+		}
 	}
 }
 
@@ -2750,14 +2995,14 @@ void CDDataStruct::OnStatChangeList(wxCommandEvent& event) {
 	int id = event.GetId();
 	if (id == wxID_ABILITY) {
 		DisplayStatSelectedAbility();
-	} else if (id == wxID_EXP) {
-		LevelDataStruct& lv = statset.level[m_statlvlexplist->GetSelection()];
+	} else if (id == wxID_EXP || id == wxID_HP || id == wxID_MP) {
+		int sel = max(0, event.GetSelection());
+		LevelDataStruct& lv = statset.level[sel];
+		if (id != wxID_EXP) m_statlvlexplist->SetSelection(sel);
+		if (id != wxID_HP)  m_statlvlhplist->SetSelection(sel);
+		if (id != wxID_MP)  m_statlvlmplist->SetSelection(sel);
 		m_statlvlexpspin->SetValue(lv.exp_table);
-	} else if (id == wxID_HP) {
-		LevelDataStruct& lv = statset.level[m_statlvlhplist->GetSelection()];
 		m_statlvlhpspin->SetValue(lv.hp_table);
-	} else if (id == wxID_MP) {
-		LevelDataStruct& lv = statset.level[m_statlvlmplist->GetSelection()];
 		m_statlvlmpspin->SetValue(lv.mp_table);
 	}
 }
@@ -2768,11 +3013,15 @@ void CDDataStruct::OnStatChangeList(wxCommandEvent& event) {
 
 void CDDataStruct::DisplayPartySpecial(int specialid) {
 	if (specialid == 0) {
+		m_partyspecialcustomformat->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+		m_partyspecialcustomfields->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 		m_partyspecialmagicswordadd->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 		m_partyspecialmagicswordremove->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0 && partyspecialset.magic_sword.size() > 0);
 		m_partyspecialmagicswordcaster->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 		m_partyspecialmagicswordwielder->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 		m_partyspecialmagicswordspell->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+		m_partyspecialmagicswordcasterstatusbaseint->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 31);
+		m_partyspecialmagicswordknightstatusbaseint->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 31);
 		if (partyspecialset.magic_sword.size() == 0 || m_partyspecialmagicswordset->GetSelection() == wxNOT_FOUND)
 			return;
 		MagicSwordDataStruct& mgswd = partyspecialset.magic_sword[m_partyspecialmagicswordset->GetSelection()];
@@ -2784,11 +3033,27 @@ void CDDataStruct::DisplayPartySpecial(int specialid) {
 		m_partyspecialmagicswordlist->SetSelection(0);
 		m_partyspecialmagicswordrequirement->SetSelection(spellset.GetSpellIndexById(mgswd.requirement[0]));
 		m_partyspecialmagicswordspell->SetSelection(spellset.GetSpellIndexById(mgswd.unlocked[0]));
+		m_partyspecialmagicswordcasterstatuslist->Clear();
+		m_partyspecialmagicswordknightstatuslist->Clear();
+		for (auto st = mgswd.supporter_status_blocker.begin(); st != mgswd.supporter_status_blocker.end(); st++)
+			m_partyspecialmagicswordcasterstatuslist->Append(SpellStatusDialog::StatusDisplayName(*st), new int[1]{ *st });
+		for (auto st = mgswd.beneficiary_status_blocker.begin(); st != mgswd.beneficiary_status_blocker.end(); st++)
+			m_partyspecialmagicswordknightstatuslist->Append(SpellStatusDialog::StatusDisplayName(*st), new int[1]{ *st });
 	}
 }
 
 void CDDataStruct::OnListBoxPartySpecial(wxCommandEvent& event) {
 	DisplayPartySpecial(m_partyspeciallist->GetSelection());
+}
+
+void CDDataStruct::OnPartySpecialChangeSpin(wxSpinEvent& event) {
+	int id = event.GetId();
+	int status = event.GetPosition();
+	if (id == wxID_STATUSCASTER) {
+		m_partyspecialmagicswordcasterstatusbaselist->SetSelection(status < STATUS_AMOUNT ? status : -1);
+	} else if (id == wxID_STATUSKNIGHT) {
+		m_partyspecialmagicswordknightstatusbaselist->SetSelection(status < STATUS_AMOUNT ? status : -1);
+	}
 }
 
 void CDDataStruct::OnPartySpecialChangeChoice(wxCommandEvent& event) {
@@ -2833,8 +3098,11 @@ void CDDataStruct::OnPartySpecialChangeButton(wxCommandEvent& event) {
 		int swdset = partyspecialset.magic_sword.size();
 		partyspecialset.magic_sword.emplace_back();
 		partyspecialset.magic_sword[swdset].id = swdset;
+		partyspecialset.magic_sword[swdset].parent = &partyspecialset;
 		partyspecialset.magic_sword[swdset].requirement.resize(8);
 		partyspecialset.magic_sword[swdset].unlocked.resize(8);
+		partyspecialset.magic_sword[swdset].supporter_status_blocker.clear();
+		partyspecialset.magic_sword[swdset].beneficiary_status_blocker.clear();
 		m_partyspecialmagicswordset->Append(wxString::Format(wxT(HADES_STRING_PARTY_SPECIAL_SWORD_MAGIC_SET), swdset));
 		m_partyspecialmagicswordset->SetSelection(swdset);
 		DisplayPartySpecial(0);
@@ -2853,8 +3121,71 @@ void CDDataStruct::OnPartySpecialChangeButton(wxCommandEvent& event) {
 			m_partyspecialmagicswordlist->Clear();
 		}
 		DisplayPartySpecial(0);
+	} else if (id == wxID_ADDCASTER) {
+		int swdset = m_partyspecialmagicswordset->GetSelection();
+		if (swdset < 0 || swdset >= (int)partyspecialset.magic_sword.size())
+			return;
+		MagicSwordDataStruct& swd = partyspecialset.magic_sword[swdset];
+		int status = m_partyspecialmagicswordcasterstatusbaseint->GetValue();
+		if (swd.supporter_status_blocker.find(status) != swd.supporter_status_blocker.end())
+			return;
+		swd.supporter_status_blocker.insert(status);
+		m_partyspecialmagicswordcasterstatuslist->Append(SpellStatusDialog::StatusDisplayName(status), new int[1]{ status });
+	} else if (id == wxID_REMOVECASTER) {
+		int swdset = m_partyspecialmagicswordset->GetSelection();
+		if (swdset < 0 || swdset >= (int)partyspecialset.magic_sword.size())
+			return;
+		if (m_partyspecialmagicswordcasterstatuslist->GetSelection() == wxNOT_FOUND)
+			return;
+		int status = *(int*)m_partyspecialmagicswordcasterstatuslist->GetClientData(m_partyspecialmagicswordcasterstatuslist->GetSelection());
+		if (partyspecialset.magic_sword[swdset].supporter_status_blocker.erase(status) > 0)
+			m_partyspecialmagicswordcasterstatuslist->Delete(m_partyspecialmagicswordcasterstatuslist->GetSelection());
+	} else if (id == wxID_ADDKNIGHT) {
+		int swdset = m_partyspecialmagicswordset->GetSelection();
+		if (swdset < 0 || swdset >= (int)partyspecialset.magic_sword.size())
+			return;
+		MagicSwordDataStruct& swd = partyspecialset.magic_sword[swdset];
+		int status = m_partyspecialmagicswordknightstatusbaseint->GetValue();
+		if (swd.beneficiary_status_blocker.find(status) != swd.beneficiary_status_blocker.end())
+			return;
+		swd.beneficiary_status_blocker.insert(status);
+		m_partyspecialmagicswordknightstatuslist->Append(SpellStatusDialog::StatusDisplayName(status), new int[1]{ status });
+	} else if (id == wxID_REMOVEKNIGHT) {
+		int swdset = m_partyspecialmagicswordset->GetSelection();
+		if (swdset < 0 || swdset >= (int)partyspecialset.magic_sword.size())
+			return;
+		if (m_partyspecialmagicswordknightstatuslist->GetSelection() == wxNOT_FOUND)
+			return;
+		int status = *(int*)m_partyspecialmagicswordknightstatuslist->GetClientData(m_partyspecialmagicswordknightstatuslist->GetSelection());
+		if (partyspecialset.magic_sword[swdset].beneficiary_status_blocker.erase(status) > 0)
+			m_partyspecialmagicswordknightstatuslist->Delete(m_partyspecialmagicswordknightstatuslist->GetSelection());
+	} else if (id == wxID_CFGROUP) {
+		DatabaseFormatDialog dial(this, &partyspecialset.csv_header, &partyspecialset.csv_format, &partyspecialset.custom_field);
+		if (dial.ShowModal() == wxID_OK) {
+			for (unsigned int i = 0; i < partyspecialset.magic_sword.size(); i++)
+				UpdateCustomFieldMap(partyspecialset.magic_sword[i].custom_field, partyspecialset.custom_field);
+			MarkDataPartySpecialModified();
+		}
+		return;
+	} else if (id == wxID_CFENTRY) {
+		int swdset = m_partyspecialmagicswordset->GetSelection();
+		if (swdset < 0 || swdset >= (int)partyspecialset.magic_sword.size())
+			return;
+		DatabaseFieldDialog dial(this, &partyspecialset.magic_sword[swdset].custom_field, partyspecialset.custom_field);
+		if (dial.ShowModal() == wxID_OK)
+			MarkDataPartySpecialModified();
+		return;
 	}
 	MarkDataPartySpecialModified();
+}
+
+void CDDataStruct::OnPartySpecialChangeListBox(wxCommandEvent& event) {
+	int id = event.GetId();
+	if (id == wxID_ADDCASTER) {
+		m_partyspecialmagicswordcasterstatusbaseint->SetValue(m_partyspecialmagicswordcasterstatusbaselist->GetSelection());
+	} else if (id == wxID_ADDKNIGHT) {
+		m_partyspecialmagicswordknightstatusbaseint->SetValue(m_partyspecialmagicswordknightstatusbaselist->GetSelection());
+	}
 }
 
 void CDDataStruct::OnPartySpecialMagicSwordRightClick(wxMouseEvent& event) {
@@ -2994,10 +3325,15 @@ void CDDataStruct::DisplayItem(int itemid) {
 	bool isarmor = it.armor_id >= 0;
 	unsigned int i;
 	m_itemid->Enable(false);
+	m_itemcustomformat->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_itemcustomfields->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_itemcustomkind->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 	m_itemhasusable->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 	m_itemhasweapon->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 	m_itemhasarmor->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_itemsellprice->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 	m_itemprice->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : (int)UINT16_MAX);
+	m_itemsellprice->SetRange(-1, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : (int)UINT16_MAX);
 	m_itemicon->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 35);
 	m_itemiconcolor->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? UINT8_MAX : 15);
 	m_itemid->SetValue(it.id);
@@ -3009,6 +3345,7 @@ void CDDataStruct::DisplayItem(int itemid) {
 	m_itemhasarmor->SetValue(isarmor);
 	MACRO_FLAG_DISPLAY8(it.type, m_itemtype)
 	m_itemprice->SetValue(it.price);
+	m_itemsellprice->SetValue(it.sell_price);
 	MACRO_FLAG_DISPLAY16(it.char_availability, m_itemcharavailability)
 	m_itemstatid->SetSelection(min(ITEM_STAT_AMOUNT, itemset.GetStatIndexById(it.stat_id)));
 	DisplayItemStatIdHelp();
@@ -3057,6 +3394,8 @@ void CDDataStruct::DisplayItem(int itemid) {
 		ItemUsableDataStruct& ic = itemset.GetUsableById(it.usable_id);
 		m_itemusableeffectint->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
 		m_itemusablepower->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+		m_itemusablestatusbaseint->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 31);
+		m_itemusableaccuracy->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
 		if (ic.effect < HADES_STRING_SPELL_EFFECT_COUNT)
 			m_itemusableeffect->SetSelection(ic.effect);
 		m_itemusableeffectint->SetValue(ic.effect);
@@ -3068,7 +3407,11 @@ void CDDataStruct::DisplayItem(int itemid) {
 		m_itemusableeffecthelp->GetSize(&x, &y);
 		m_itemusableeffecthelpwindow->SetScrollbars(20, 5, x / 20, y / 5);
 		m_itemusablepower->SetValue(ic.power);
-		MACRO_FLAG_DISPLAY32(ic.status, m_itemusablestatus)
+		MACRO_FLAG_DISPLAY8(ic.element, m_itemusableelement)
+		m_itemusablestatuslist->Clear();
+		for (auto st = ic.status.begin(); st != ic.status.end(); st++)
+			m_itemusablestatuslist->Append(SpellStatusDialog::StatusDisplayName(*st), new int[1]{ *st });
+		m_itemusableaccuracy->SetValue(ic.accuracy);
 		m_itemusablemodel->SetLabel(wxString::Format(wxT("SFX %d"), ic.model));
 		for (i = 0; i < HADES_STRING_SPELL_MODEL.size(); i++)
 			if (HADES_STRING_SPELL_MODEL[i].id == ic.model) {
@@ -3093,6 +3436,7 @@ void CDDataStruct::DisplayItem(int itemid) {
 		ItemWeaponDataStruct& iw = itemset.GetWeaponById(it.weapon_id);
 		m_itemweaponformulaint->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
 		m_itemweaponpower->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+		m_itemweaponstatusint->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : STATUS_SET_AMOUNT - 1);
 		m_itemweaponaccuracy->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
 		m_itemweaponmodel->Enable(gametype == GAME_TYPE_PSX);
 		m_itemweaponmodelname->Enable(gametype != GAME_TYPE_PSX);
@@ -3102,7 +3446,9 @@ void CDDataStruct::DisplayItem(int itemid) {
 		m_itemweaponformulaint->SetValue(iw.damage_formula);
 		m_itemweaponpower->SetValue(iw.power);
 		MACRO_FLAG_DISPLAY8(iw.element, m_itemweaponelement)
-		m_itemweaponstatus->SetSelection(iw.status);
+		if (iw.status < STATUS_SET_AMOUNT)
+			m_itemweaponstatus->SetSelection(iw.status);
+		m_itemweaponstatusint->SetValue(iw.status);
 		m_itemweaponaccuracy->SetValue(iw.status_accuracy);
 		MACRO_FLAG_DISPLAY8(iw.flag, m_itemweaponflag)
 		m_itemweaponunk1->SetValue(iw.offset1);
@@ -3117,6 +3463,10 @@ void CDDataStruct::DisplayItem(int itemid) {
 	m_itemarmorpanel->Show(isarmor);
 	if (isarmor) {
 		ItemArmorDataStruct& ia = itemset.GetArmorById(it.armor_id);
+		m_itemarmordefence->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+		m_itemarmorevade->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+		m_itemarmormagicdefence->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+		m_itemarmormagicevade->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
 		m_itemarmordefence->SetValue(ia.defence);
 		m_itemarmorevade->SetValue(ia.evade);
 		m_itemarmormagicdefence->SetValue(ia.magic_defence);
@@ -3294,15 +3644,19 @@ void CDDataStruct::OnItemChangeSpin(wxSpinEvent& event) {
 	int id = event.GetId();
 	if (id == wxID_ID) {
 		it.id = event.GetPosition();
-	} else if (id==wxID_PRICE) {
+	} else if (id == wxID_PRICE) {
 		it.price = event.GetPosition();
-	} else if (id==wxID_ICON) {
+		it.sell_price = it.price / 2;
+		m_itemsellprice->SetValue(it.sell_price);
+	} else if (id == wxID_SELLPRICE) {
+		it.sell_price = event.GetPosition();
+	} else if (id == wxID_ICON) {
 		it.icon = event.GetPosition();
 		DisplayItemIcon();
-	} else if (id==wxID_ICONCOLOR) {
+	} else if (id == wxID_ICONCOLOR) {
 		it.icon_color = event.GetPosition();
 		DisplayItemIcon();
-	} else if (id==wxID_ZERO) {
+	} else if (id == wxID_ZERO) {
 		it.zero = event.GetPosition();
 	} else if (id == wxID_EFFECT) {
 		ItemUsableDataStruct& ic = itemset.GetUsableById(it.usable_id);
@@ -3316,33 +3670,42 @@ void CDDataStruct::OnItemChangeSpin(wxSpinEvent& event) {
 		int x, y;
 		m_itemusableeffecthelp->GetSize(&x, &y);
 		m_itemusableeffecthelpwindow->SetScrollbars(20, 5, x / 20, y / 5);
-	} else if (id==wxID_POWER) {
+	} else if (id == wxID_POWER) {
 		itemset.GetUsableById(it.usable_id).power = event.GetPosition();
+	} else if (id == wxID_STATUSINT) {
+		int status = event.GetPosition();
+		m_itemusablestatusbaselist->SetSelection(status < STATUS_AMOUNT ? status : -1);
+	} else if (id == wxID_ACCURACY) {
+		itemset.GetUsableById(it.usable_id).accuracy = event.GetPosition();
 	} else if (id == wxID_WEAPONFORMULA) {
 		ItemWeaponDataStruct& iw = itemset.GetWeaponById(it.weapon_id);
 		iw.damage_formula = event.GetPosition();
 		if (iw.damage_formula < (int)m_itemweaponformula->GetCount())
 			m_itemweaponformula->SetSelection(iw.damage_formula);
-	} else if (id==wxID_WEAPONPOWER) {
+	} else if (id == wxID_WEAPONPOWER) {
 		itemset.GetWeaponById(it.weapon_id).power = event.GetPosition();
-	} else if (id==wxID_WEAPONACC) {
+	} else if (id == wxID_WEAPONACC) {
 		itemset.GetWeaponById(it.weapon_id).status_accuracy = event.GetPosition();
-	} else if (id==wxID_WEAPONUNK1) {
+	} else if (id == wxID_WEAPONSTATUS) {
+		itemset.GetWeaponById(it.weapon_id).status = event.GetSelection();
+		if (event.GetSelection() < STATUS_SET_AMOUNT)
+			m_itemweaponstatus->SetSelection(event.GetSelection());
+	} else if (id == wxID_WEAPONUNK1) {
 		itemset.GetWeaponById(it.weapon_id).offset1 = event.GetPosition();
-	} else if (id==wxID_WEAPONUNK2) {
+	} else if (id == wxID_WEAPONUNK2) {
 		itemset.GetWeaponById(it.weapon_id).offset2 = event.GetPosition();
-	} else if (id==wxID_WEAPONMODEL) {
+	} else if (id == wxID_WEAPONMODEL) {
 		ItemWeaponDataStruct& iw = itemset.GetWeaponById(it.weapon_id);
 		iw.model = event.GetPosition();
 		iw.UpdateModelName();
 		m_itemweaponmodelname->ChangeValue(iw.model_name);
-	} else if (id==wxID_DEFENCE) {
+	} else if (id == wxID_DEFENCE) {
 		itemset.GetArmorById(it.armor_id).defence = event.GetPosition();
-	} else if (id==wxID_EVADE) {
+	} else if (id == wxID_EVADE) {
 		itemset.GetArmorById(it.armor_id).evade = event.GetPosition();
-	} else if (id==wxID_MDEFENCE) {
+	} else if (id == wxID_MDEFENCE) {
 		itemset.GetArmorById(it.armor_id).magic_defence = event.GetPosition();
-	} else if (id==wxID_MEVADE) {
+	} else if (id == wxID_MEVADE) {
 		itemset.GetArmorById(it.armor_id).magic_evade = event.GetPosition();
 	}
 	MarkDataItemModified();
@@ -3397,6 +3760,7 @@ void CDDataStruct::OnItemChangeChoice(wxCommandEvent& event) {
 		m_itemweaponformulaint->SetValue(event.GetSelection());
 	} else if (id == wxID_WEAPONSTATUS) {
 		itemset.GetWeaponById(it.weapon_id).status = event.GetSelection();
+		m_itemweaponstatusint->SetValue(event.GetSelection());
 	} else if (id == wxID_WEAPONSFX) {
 		itemset.GetWeaponById(it.weapon_id).hit_sfx = event.GetSelection();
 	}
@@ -3472,7 +3836,7 @@ void CDDataStruct::OnItemChangeFlags(wxCommandEvent& event) {
 		MACRO_FLAG_SET16(it.char_availability, wxID_IA)
 		if (it.usable_id >= 0) {
 			ItemUsableDataStruct& ic = itemset.GetUsableById(it.usable_id);
-			MACRO_FLAG_SET32(ic.status, wxID_IS)
+			MACRO_FLAG_SET8(ic.element, wxID_UE)
 			MACRO_FLAG_SET(ic.target_flag, wxID_CAN_TARGET_DEAD, TARGET_FLAG_CAN_TARGET_DEAD)
 			MACRO_FLAG_SET(ic.target_flag, wxID_TARGET_CAMERA, TARGET_FLAG_CAMERA)
 			MACRO_FLAG_SET(ic.target_flag, wxID_TARGET_DEAD_FIRST, TARGET_FLAG_TARGET_DEAD_FIRST)
@@ -3641,6 +4005,8 @@ void CDDataStruct::OnItemChangeButton(wxCommandEvent& event) {
 				}
 				if (listsel + 1 < (int)m_itemskilllist->GetCount())
 					m_itemskilllist->SetSelection(listsel);
+				if (event.GetEventType() == wxEVT_BUTTON && fulllistsel + 1 < (int)m_itemskillfulllist->GetCount())
+					m_itemskillfulllist->SetSelection(fulllistsel + 1);
 				m_itemscrolledwindow->Layout();
 				m_itemscrolledwindow->GetParent()->GetSizer()->Layout();
 				m_itemscrolledwindow->Refresh();
@@ -3762,7 +4128,76 @@ void CDDataStruct::OnItemChangeButton(wxCommandEvent& event) {
 				m_itemequipposlist->SetSelection(it.equip_position);
 				MarkDataItemModified();
 			}
+		} else if (id == wxID_ADDSTATUS) {
+			ItemUsableDataStruct& ic = itemset.GetUsableById(it.usable_id);
+			int status = m_itemusablestatusbaseint->GetValue();
+			if (ic.status.find(status) != ic.status.end())
+				return;
+			ic.status.insert(status);
+			m_itemusablestatuslist->Append(SpellStatusDialog::StatusDisplayName(status), new int[1]{ status });
+			MarkDataItemModified();
+		} else if (id == wxID_REMOVESTATUS) {
+			ItemUsableDataStruct& ic = itemset.GetUsableById(it.usable_id);
+			if (m_itemusablestatuslist->GetSelection() == wxNOT_FOUND)
+				return;
+			int status = *(int*)m_itemusablestatuslist->GetClientData(m_itemusablestatuslist->GetSelection());
+			if (ic.status.erase(status) == 0)
+				return;
+			m_itemusablestatuslist->Delete(m_itemusablestatuslist->GetSelection());
+			MarkDataItemModified();
+		} else if (id == wxID_WEAPONSTATUS) {
+			SpellStatusDialog spstat(this);
+			ItemWeaponDataStruct& iw = itemset.GetWeaponById(it.weapon_id);
+			if (spellset.GetStatusSetIndexById(iw.status) < 0)
+				InsertAtId(spellset.status_set, spellset.status_set[0], iw.status);
+			StatusSetStruct& statusset = spellset.GetStatusSetById(iw.status);
+			if (spstat.ShowModal(this, statusset) == wxID_OK) {
+				statusset.status_list = spstat.status_list;
+				UpdateSpellStatusName(statusset);
+				MarkDataItemModified();
+			}
+		} else if (id == wxID_CFGROUP || id == wxID_CFENTRY) {
+			wxString* header;
+			wxString* format;
+			int kind = max(0, m_itemcustomkind->GetSelection());
+			if (kind == 0) {
+				header = &itemset.csv_header;
+				format = &itemset.csv_format;
+			} else if (kind == 1) {
+				header = &itemset.csv_header_stat;
+				format = &itemset.csv_format_stat;
+			} else if (kind == 2) {
+				header = &itemset.csv_header_weapon;
+				format = &itemset.csv_format_weapon;
+			} else if (kind == 3) {
+				header = &itemset.csv_header_armor;
+				format = &itemset.csv_format_armor;
+			} else if (kind == 4) {
+				header = &itemset.csv_header_usable;
+				format = &itemset.csv_format_usable;
+			} else {
+				return;
+			}
+			if (id == wxID_CFGROUP) {
+				DatabaseFormatDialog dial(this, header, format, &itemset.custom_field);
+				if (dial.ShowModal() == wxID_OK) {
+					for (unsigned int i = 0; i < itemset.item.size(); i++)
+						UpdateCustomFieldMap(itemset.item[i].custom_field, itemset.custom_field);
+					MarkDataItemModified();
+				}
+			} else {
+				DatabaseFieldDialog dial(this, &it.custom_field, itemset.custom_field);
+				if (dial.ShowModal() == wxID_OK)
+					MarkDataItemModified();
+			}
 		}
+	}
+}
+
+void CDDataStruct::OnItemChangeListBox(wxCommandEvent& event) {
+	int id = event.GetId();
+	if (id == wxID_ADDSTATUS) {
+		m_itemusablestatusbaseint->SetValue(m_itemusablestatusbaselist->GetSelection());
 	}
 }
 
@@ -3813,6 +4248,8 @@ void CDDataStruct::DisplayShop(int shopid) {
 	int i;
 	m_shopid->Enable(false);
 	m_shopid->SetValue(sh.id);
+	m_shopcustomformat->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_shopcustomfields->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 	m_shopitemlist->Clear();
 	for (i = 0; i < sh.item_amount; i++)
 		m_shopitemlist->Append(_(itemset.GetItemById(sh.item_list[i]).name.GetStr(hades::TEXT_PREVIEW_TYPE)));
@@ -3825,6 +4262,8 @@ void CDDataStruct::DisplaySynthesisShop(int synthshopid) {
 	SynthesisDataStruct& sy = shopset.synthesis[synthshopid];
 	unsigned int i;
 	m_synthshopid->Enable(false);
+	m_synthshopcustomformat->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_synthshopcustomfields->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 	m_synthshoprecipeflex->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 	m_synthshopprice->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : (int)UINT16_MAX);
 	m_synthshopid->SetValue(sy.id);
@@ -3951,7 +4390,7 @@ bool DiscardShopItemLimit = false;
 void CDDataStruct::OnShopChangeButton(wxCommandEvent& event) {
 	int id = event.GetId();
 	unsigned int i;
-	if (id == wxID_RECIPEADD || id == wxID_RECIPEREMOVE || id == wxID_RECIPEUP || id == wxID_RECIPEDOWN || id == wxID_SYNTHADD || id == wxID_SYNTHREMOVE || id == wxID_SYNTHUP || id == wxID_SYNTHDOWN) {
+	if (m_notebookshop->GetSelection() == 1) {
 		SynthesisDataStruct& sy = shopset.synthesis[m_synthshoplist->GetSelection()];
 		if (id == wxID_RECIPEADD) {
 			int fulllistsel = m_synthshoprecipefulllist->GetSelection();
@@ -4098,6 +4537,19 @@ void CDDataStruct::OnShopChangeButton(wxCommandEvent& event) {
 			} else {
 				return;
 			}
+		} else if (id == wxID_CFGROUP) {
+			DatabaseFormatDialog dial(this, &shopset.csv_header_synthesis, &shopset.csv_format_synthesis, &shopset.custom_field_synthesis);
+			if (dial.ShowModal() == wxID_OK) {
+				for (unsigned int i = 0; i < shopset.synthesis.size(); i++)
+					UpdateCustomFieldMap(shopset.synthesis[i].custom_field, shopset.custom_field_synthesis);
+				MarkDataShopModified();
+			}
+			return;
+		} else if (id == wxID_CFENTRY) {
+			DatabaseFieldDialog dial(this, &sy.custom_field, shopset.custom_field_synthesis);
+			if (dial.ShowModal() == wxID_OK)
+				MarkDataShopModified();
+			return;
 		}
 	} else {
 		ShopDataStruct& sh = shopset.shop[m_shoplist->GetSelection()];
@@ -4123,6 +4575,8 @@ void CDDataStruct::OnShopChangeButton(wxCommandEvent& event) {
 					sh.item_amount++;
 					if (listsel + 1 < sh.item_amount)
 						m_shopitemlist->SetSelection(listsel);
+					if (event.GetEventType() == wxEVT_BUTTON && fulllistsel + 1 < (int)m_shopitemfulllist->GetCount())
+						m_shopitemfulllist->SetSelection(fulllistsel + 1);
 					if (sh.item_amount < SHOP_ITEM_AMOUNT)
 						sh.item_list[sh.item_amount] = 0xFF;
 				}
@@ -4170,6 +4624,19 @@ void CDDataStruct::OnShopChangeButton(wxCommandEvent& event) {
 			} else {
 				return;
 			}
+		} else if (id == wxID_CFGROUP) {
+			DatabaseFormatDialog dial(this, &shopset.csv_header_shop, &shopset.csv_format_shop, &shopset.custom_field_shop);
+			if (dial.ShowModal() == wxID_OK) {
+				for (unsigned int i = 0; i < shopset.shop.size(); i++)
+					UpdateCustomFieldMap(shopset.shop[i].custom_field, shopset.custom_field_shop);
+				MarkDataShopModified();
+			}
+			return;
+		} else if (id == wxID_CFENTRY) {
+			DatabaseFieldDialog dial(this, &sh.custom_field, shopset.custom_field_shop);
+			if (dial.ShowModal() == wxID_OK)
+				MarkDataShopModified();
+			return;
 		}
 	}
 	MarkDataShopModified();
@@ -4288,7 +4755,7 @@ void CDDataStruct::OnCardChangeButton(wxCommandEvent& event) {
 	CardDataStruct& cd = cardset.card[*sortid];
 	CardSetDataStruct& cs = cardset.set[cardset.deck[m_carddecklist->GetSelection()].set];
 	int id = event.GetId();
-	if (id==wxID_NAME) {
+	if (id == wxID_NAME) {
 		if (gametype==GAME_TYPE_PSX) {
 			TextEditDialog ted(this,cd.name,cardset.name_space_total-cardset.name_space_used);
 			if (ted.ShowModal()==wxID_OK) {
@@ -4302,7 +4769,7 @@ void CDDataStruct::OnCardChangeButton(wxCommandEvent& event) {
 				m_cardname->SetValue(cd.name.str);
 			}
 		}
-	} else if (id==wxID_DECKSET) {
+	} else if (id == wxID_DECKSET) {
 		CardSetDialog dial(this);
 		if (dial.ShowModal(cardset,m_carddeckset->GetSelection())==wxID_OK) {
 			cs.card[0] = dial.m_choicecard1->GetSelection();	cs.card[1] = dial.m_choicecard2->GetSelection();
@@ -4325,13 +4792,13 @@ void CDDataStruct::OnCardChangeChoice(wxCommandEvent& event) {
 	CardDataStruct& cs = cardset.card[*sortid];
 	CardDeckDataStruct& cd = cardset.deck[m_carddecklist->GetSelection()];
 	int id = event.GetId();
-	if (id==wxID_TYPEPLY) {
+	if (id == wxID_TYPEPLY) {
 		cs.player_type = event.GetSelection();
 		DisplayCardPowerHelp();
-	} else if (id==wxID_TYPENPC) {
+	} else if (id == wxID_TYPENPC) {
 		cs.npc_type = event.GetSelection();
 		DisplayCardPowerHelp();
-	} else if (id==wxID_DECKSET) {
+	} else if (id == wxID_DECKSET) {
 		cd.set = event.GetSelection();
 		DisplayCardSetHelp();
 	}
@@ -4344,36 +4811,36 @@ void CDDataStruct::OnCardChangeSpin(wxSpinEvent& event) {
 	CardDataStruct& cs = cardset.card[*sortid];
 	CardDeckDataStruct& cd = cardset.deck[m_carddecklist->GetSelection()];
 	int id = event.GetId();
-	if (id==wxID_ATTPLY) { // Keep the parity of the stats
+	if (id == wxID_ATTPLY) { // Keep the parity of the stats
 		if (gametype==GAME_TYPE_PSX)
 			cs.player_attack = (cs.player_attack & 1) | (m_cardplayerattack->GetValue() << 1);
 		else
 			cs.player_attack = (cs.player_attack & 1) | (m_cardattack->GetValue() << 1);
 		DisplayCardPowerHelp();
-	} else if (id==wxID_DEFPLY) {
+	} else if (id == wxID_DEFPLY) {
 		if (gametype==GAME_TYPE_PSX)
 			cs.player_defence = (cs.player_defence & 1) | (m_cardplayerdefence->GetValue() << 1);
 		else
 			cs.player_defence = (cs.player_defence & 1) | (m_carddefence->GetValue() << 1);
 		DisplayCardPowerHelp();
-	} else if (id==wxID_MDEFPLY) {
+	} else if (id == wxID_MDEFPLY) {
 		if (gametype==GAME_TYPE_PSX)
 			cs.player_magicdefence = (cs.player_magicdefence & 1) | (m_cardplayermagicdefence->GetValue() << 1);
 		else
 			cs.player_magicdefence = (cs.player_magicdefence & 1) | (m_cardmagicdefence->GetValue() << 1);
 		DisplayCardPowerHelp();
-	} else if (id==wxID_ATTNPC) {
+	} else if (id == wxID_ATTNPC) {
 		cs.npc_attack = (cs.npc_attack & 1) | (m_cardnpcattack->GetValue() << 1);
 		DisplayCardPowerHelp();
-	} else if (id==wxID_DEFNPC) {
+	} else if (id == wxID_DEFNPC) {
 		cs.npc_defence = (cs.npc_defence & 1) | (m_cardnpcdefence->GetValue() << 1);
 		DisplayCardPowerHelp();
-	} else if (id==wxID_MDEFNPC) {
+	} else if (id == wxID_MDEFNPC) {
 		cs.npc_magicdefence = (cs.npc_magicdefence & 1) | (m_cardnpcmagicdefence->GetValue() << 1);
 		DisplayCardPowerHelp();
-	} else if (id==wxID_POINTS) {
+	} else if (id == wxID_POINTS) {
 		cs.points = m_cardpoints->GetValue();
-	} else if (id==wxID_DIFFICULTY) {
+	} else if (id == wxID_DIFFICULTY) {
 		cd.difficulty = m_carddeckdifficulty->GetValue();
 	}
 	MarkDataCardModified();
@@ -4393,6 +4860,33 @@ void CDDataStruct::DisplayEnemyStat(int battleid, int statid) {
 	m_enemystatid->Enable(false);
 	m_enemystatmodel->Enable(gametype != GAME_TYPE_PSX);
 	m_enemystatmodelid->Enable(gametype != GAME_TYPE_PSX);
+	m_enemystatitemstealrate1->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_enemystatitemstealrate2->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_enemystatitemstealrate3->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_enemystatitemstealrate4->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_enemystatitemdroprate1->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_enemystatitemdroprate2->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_enemystatitemdroprate3->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_enemystatitemdroprate4->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_enemystatdropcardrate->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_enemystatlvl->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+	m_enemystathp->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : (int)UINT16_MAX);
+	m_enemystatmp->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : (int)UINT16_MAX);
+	m_enemystatgils->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : (int)UINT16_MAX);
+	m_enemystatexp->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : (int)UINT16_MAX);
+	m_enemystatattack->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : (int)UINT16_MAX);
+	m_enemystataccuracy->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+	m_enemystatspeed->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+	m_enemystatstrength->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+	m_enemystatmagic->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+	m_enemystatspirit->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+	m_enemystatdefence->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+	m_enemystatevade->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+	m_enemystatmagicdefence->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+	m_enemystatmagicevade->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+	m_enemystatimmunebaseint->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 31);
+	m_enemystatautobaseint->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 31);
+	m_enemystatinitialbaseint->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 31);
 	m_enemystatid->SetValue(statid);
 	m_enemyspelllist->SetSelection(wxNOT_FOUND);
 	m_enemygrouplist->SetSelection(wxNOT_FOUND);
@@ -4401,6 +4895,7 @@ void CDDataStruct::DisplayEnemyStat(int battleid, int statid) {
 	m_enemystathp->SetValue(es.hp);
 	m_enemystatmp->SetValue(es.mp);
 	m_enemystatattack->SetValue(es.attack);
+	m_enemystataccuracy->SetValue(es.accuracy);
 	m_enemystatspeed->SetValue(es.speed);
 	m_enemystatstrength->SetValue(es.strength);
 	m_enemystatmagic->SetValue(es.magic);
@@ -4409,18 +4904,27 @@ void CDDataStruct::DisplayEnemyStat(int battleid, int statid) {
 	m_enemystatevade->SetValue(es.evade);
 	m_enemystatmagicdefence->SetValue(es.magic_defence);
 	m_enemystatmagicevade->SetValue(es.magic_evade);
-	m_enemystatitemsteal1->SetSelection(es.item_steal[0]);
-	m_enemystatitemsteal2->SetSelection(es.item_steal[1]);
-	m_enemystatitemsteal3->SetSelection(es.item_steal[2]);
-	m_enemystatitemsteal4->SetSelection(es.item_steal[3]);
-	m_enemystatitemdrop1->SetSelection(es.item_drop[0]);
-	m_enemystatitemdrop2->SetSelection(es.item_drop[1]);
-	m_enemystatitemdrop3->SetSelection(es.item_drop[2]);
-	m_enemystatitemdrop4->SetSelection(es.item_drop[3]);
+	m_enemystatitemsteal1->SetSelection(itemset.GetItemIndexById(es.item_steal[0]));
+	m_enemystatitemsteal2->SetSelection(itemset.GetItemIndexById(es.item_steal[1]));
+	m_enemystatitemsteal3->SetSelection(itemset.GetItemIndexById(es.item_steal[2]));
+	m_enemystatitemsteal4->SetSelection(itemset.GetItemIndexById(es.item_steal[3]));
+	m_enemystatitemstealrate1->SetValue(es.item_steal_rate[0]);
+	m_enemystatitemstealrate2->SetValue(es.item_steal_rate[1]);
+	m_enemystatitemstealrate3->SetValue(es.item_steal_rate[2]);
+	m_enemystatitemstealrate4->SetValue(es.item_steal_rate[3]);
+	m_enemystatitemdrop1->SetSelection(itemset.GetItemIndexById(es.item_drop[0]));
+	m_enemystatitemdrop2->SetSelection(itemset.GetItemIndexById(es.item_drop[1]));
+	m_enemystatitemdrop3->SetSelection(itemset.GetItemIndexById(es.item_drop[2]));
+	m_enemystatitemdrop4->SetSelection(itemset.GetItemIndexById(es.item_drop[3]));
+	m_enemystatitemdroprate1->SetValue(es.item_drop_rate[0]);
+	m_enemystatitemdroprate2->SetValue(es.item_drop_rate[1]);
+	m_enemystatitemdroprate3->SetValue(es.item_drop_rate[2]);
+	m_enemystatitemdroprate4->SetValue(es.item_drop_rate[3]);
 	if (es.card_drop >= CARD_AMOUNT)
 		m_enemystatdropcard->SetSelection(0);
 	else
 		m_enemystatdropcard->SetSelection(es.card_drop + 1);
+	m_enemystatdropcardrate->SetValue(es.card_drop_rate);
 	m_enemystatexp->SetValue(es.exp);
 	m_enemystatgils->SetValue(es.gils);
 	m_enemystatdefaultattack->SetSelection(es.default_attack);
@@ -4443,10 +4947,21 @@ void CDDataStruct::DisplayEnemyStat(int battleid, int statid) {
 	MACRO_FLAG_DISPLAY8(es.element_half, m_enemystatelementhalf)
 	MACRO_FLAG_DISPLAY8(es.element_weak, m_enemystatelementweak)
 	MACRO_FLAG_DISPLAY8(es.classification, m_enemystatclass)
-	MACRO_FLAG_DISPLAY32(es.status_immune, m_enemystatstatusimmune)
-	MACRO_FLAG_DISPLAY32(es.status_auto, m_enemystatstatusauto)
-	MACRO_FLAG_DISPLAY32(es.status_initial, m_enemystatstatusinitial)
-	m_enemystatbluemagic->SetSelection(es.blue_magic);
+	m_enemystatimmunelist->Clear();
+	m_enemystatautolist->Clear();
+	m_enemystatinitiallist->Clear();
+	for (auto st = es.status_immune.begin(); st != es.status_immune.end(); st++)
+		m_enemystatimmunelist->Append(SpellStatusDialog::StatusDisplayName(*st), new int[1]{ *st });
+	for (auto st = es.status_auto.begin(); st != es.status_auto.end(); st++)
+		m_enemystatautolist->Append(SpellStatusDialog::StatusDisplayName(*st), new int[1]{ *st });
+	for (auto st = es.status_initial.begin(); st != es.status_initial.end(); st++)
+		m_enemystatinitiallist->Append(SpellStatusDialog::StatusDisplayName(*st), new int[1]{ *st });
+	int bluemagicspellid = AnyAbilityStruct::ConvertIdToSpellId(es.blue_magic);
+	int bluemagicsupportid = AnyAbilityStruct::ConvertIdToSupportId(es.blue_magic);
+	if (bluemagicspellid >= 0)
+		m_enemystatbluemagic->SetSelection(spellset.GetSpellIndexById(bluemagicspellid));
+	else if (bluemagicsupportid >= 0)
+		m_enemystatbluemagic->SetSelection(spellset.spell.size() + supportset.GetSupportIndexById(bluemagicsupportid));
 	m_enemystatscrolledwindow->Layout();
 	m_enemystatscrolledwindow->GetParent()->GetSizer()->Layout();
 	m_enemystatscrolledwindow->Refresh();
@@ -4462,6 +4977,13 @@ void CDDataStruct::DisplayEnemySpell(int battleid, int spellid) {
 	m_enemygroupscrolledwindow->Show(false);
 	m_enemyspellscrolledwindow->Show(true);
 	m_enemyspellid->Enable(false);
+	m_enemyspellstatusint->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : STATUS_SET_AMOUNT - 1);
+	m_enemyspellanimreflect->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 511);
+	m_enemyspellmodelalt->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : (int)UINT16_MAX);
+	m_enemyspelleffectint->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+	m_enemyspellpower->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+	m_enemyspellaccuracy->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+	m_enemyspellmp->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
 	m_enemyspellid->SetValue(spellid);
 	m_enemystatlist->SetSelection(wxNOT_FOUND);
 	m_enemygrouplist->SetSelection(wxNOT_FOUND);
@@ -4469,7 +4991,7 @@ void CDDataStruct::DisplayEnemySpell(int battleid, int spellid) {
 	if (ep.effect < HADES_STRING_SPELL_EFFECT_COUNT)
 		m_enemyspelleffect->SetSelection(ep.effect);
 	m_enemyspelleffectint->SetValue(ep.effect);
-	if (ep.effect < HADES_STRING_SPELL_EFFECT.size())
+	if (ep.effect < (int)HADES_STRING_SPELL_EFFECT.size())
 		m_enemyspelleffecthelp->SetLabel(HADES_STRING_SPELL_EFFECT[ep.effect].help);
 	else
 		m_enemyspelleffecthelp->SetLabel(_(HADES_STRING_SPELL_EFFECT_UNUSED_DESCRIPTION));
@@ -4479,13 +5001,18 @@ void CDDataStruct::DisplayEnemySpell(int battleid, int spellid) {
 	m_enemyspellpower->SetValue(ep.power);
 	MACRO_FLAG_DISPLAY8(ep.element, m_enemyspellelement)
 	m_enemyspellaccuracy->SetValue(ep.accuracy);
-	m_enemyspellstatus->SetSelection(ep.status);
+	if (ep.status < STATUS_SET_AMOUNT)
+		m_enemyspellstatus->SetSelection(ep.status);
+	m_enemyspellstatusint->SetValue(ep.status);
 	m_enemyspellmp->SetValue(ep.mp);
+	m_enemyspellanimreflect->SetValue(ep.model);
+	wxString modeltooltip = wxString::Format(wxT("SFX %d"), ep.model);
 	for (i = 0; i < HADES_STRING_SPELL_MODEL.size(); i++)
 		if (HADES_STRING_SPELL_MODEL[i].id == ep.model) {
-			m_enemyspellanimreflect->SetSelection(i);
+			modeltooltip = HADES_STRING_SPELL_MODEL[i].label;
 			break;
 		}
+	m_enemyspellanimreflectlabel->SetLabel(modeltooltip);
 	m_enemyspellbaseanim->SetSelection(bd.sequence_stat_id[spellid]);
 	m_enemyspelltargetflagdead->SetValue(ep.target_flag & TARGET_FLAG_CAN_TARGET_DEAD);
 	m_enemyspelltargetflagcamera->SetValue(ep.target_flag & TARGET_FLAG_CAMERA);
@@ -4508,7 +5035,8 @@ void CDDataStruct::DisplayEnemySpell(int battleid, int spellid) {
 
 void CDDataStruct::DisplayEnemyGroup(int battleid, int groupid) {
 	unsigned int* sortid = (unsigned int*)m_enemylist->GetClientData(battleid);
-	EnemyGroupDataStruct& eg = enemyset.battle[*sortid]->group[groupid];
+	EnemyDataStruct& eb = *enemyset.battle[*sortid];
+	EnemyGroupDataStruct& eg = eb.group[groupid];
 	unsigned int i;
 	m_enemystatscrolledwindow->Show(false);
 	m_enemygroupscrolledwindow->Show(true);
@@ -4518,6 +5046,7 @@ void CDDataStruct::DisplayEnemyGroup(int battleid, int groupid) {
 	m_enemystatlist->SetSelection(wxNOT_FOUND);
 	m_enemyspelllist->SetSelection(wxNOT_FOUND);
 	m_enemygroupfrequence->SetValue(eg.frequence);
+	m_enemygroupfrequence->Enable(groupid + 1 < eb.group_amount);
 	m_enemygroupamount->SetValue(eg.enemy_amount);
 	m_enemygroupap->SetValue(eg.ap);
 	m_enemygroupcamera->SetValue(eg.camera_engage);
@@ -4525,11 +5054,11 @@ void CDDataStruct::DisplayEnemyGroup(int battleid, int groupid) {
 	m_enemygroupid2->Clear();
 	m_enemygroupid3->Clear();
 	m_enemygroupid4->Clear();
-	for (i=0;i<enemyset.battle[*sortid]->stat_amount;i++) {
-		m_enemygroupid1->Append(_(enemyset.battle[*sortid]->stat[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
-		m_enemygroupid2->Append(_(enemyset.battle[*sortid]->stat[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
-		m_enemygroupid3->Append(_(enemyset.battle[*sortid]->stat[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
-		m_enemygroupid4->Append(_(enemyset.battle[*sortid]->stat[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+	for (i=0;i<eb.stat_amount;i++) {
+		m_enemygroupid1->Append(_(eb.stat[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+		m_enemygroupid2->Append(_(eb.stat[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+		m_enemygroupid3->Append(_(eb.stat[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+		m_enemygroupid4->Append(_(eb.stat[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 	}
 	m_enemygroupid1->SetSelection(eg.enemy_id[0]);
 	m_enemygroupid1->Enable(eg.enemy_amount>0);
@@ -4780,6 +5309,8 @@ void CDDataStruct::OnEnemyChangeSpin(wxSpinEvent& event) {
 			MACRO_ENEMY_CHANGE_DATA(Stat, mp, event.GetPosition())
 		} else if (id == wxID_ATTACK) {
 			MACRO_ENEMY_CHANGE_DATA(Stat, attack, event.GetPosition())
+		} else if (id == wxID_ACCURACY) {
+			MACRO_ENEMY_CHANGE_DATA(Stat, accuracy, event.GetPosition())
 		} else if (id == wxID_SPEED) {
 			if (event.GetPosition() >= 60 && !DiscardStatTooHigh) {
 				DiscardableMessageWindow popup(wxGetApp().GetTopWindow(), HADES_STRING_STAT_TOO_HIGH);
@@ -4810,6 +5341,24 @@ void CDDataStruct::OnEnemyChangeSpin(wxSpinEvent& event) {
 			MACRO_ENEMY_CHANGE_DATA(Stat, exp, event.GetPosition())
 		} else if (id == wxID_GILS) {
 			MACRO_ENEMY_CHANGE_DATA(Stat, gils, event.GetPosition())
+		} else if (id == wxID_STEALRATE1) {
+			MACRO_ENEMY_CHANGE_DATA(Stat, item_steal_rate[0], event.GetPosition())
+		} else if (id == wxID_STEALRATE2) {
+			MACRO_ENEMY_CHANGE_DATA(Stat, item_steal_rate[1], event.GetPosition())
+		} else if (id == wxID_STEALRATE3) {
+			MACRO_ENEMY_CHANGE_DATA(Stat, item_steal_rate[2], event.GetPosition())
+		} else if (id == wxID_STEALRATE4) {
+			MACRO_ENEMY_CHANGE_DATA(Stat, item_steal_rate[3], event.GetPosition())
+		} else if (id == wxID_DROPRATE1) {
+			MACRO_ENEMY_CHANGE_DATA(Stat, item_drop_rate[0], event.GetPosition())
+		} else if (id == wxID_DROPRATE2) {
+			MACRO_ENEMY_CHANGE_DATA(Stat, item_drop_rate[1], event.GetPosition())
+		} else if (id == wxID_DROPRATE3) {
+			MACRO_ENEMY_CHANGE_DATA(Stat, item_drop_rate[2], event.GetPosition())
+		} else if (id == wxID_DROPRATE4) {
+			MACRO_ENEMY_CHANGE_DATA(Stat, item_drop_rate[3], event.GetPosition())
+		} else if (id == wxID_CARDRATE) {
+			MACRO_ENEMY_CHANGE_DATA(Stat, card_drop_rate, event.GetPosition())
 		} else if (id == wxID_ZERO0) {
 			MACRO_ENEMY_CHANGE_DATA(Stat, zerostat, event.GetPosition())
 		} else if (id == wxID_ZERO1) {
@@ -4820,13 +5369,12 @@ void CDDataStruct::OnEnemyChangeSpin(wxSpinEvent& event) {
 			MACRO_ENEMY_CHANGE_DATA(Stat, zero3, event.GetPosition())
 		} else if (id == wxID_MODEL) {
 			BattleModelLinks& linkeddata = BattleModelLinks::GetLinksByModel(event.GetPosition());
-			unsigned int i;
 			// Due to the need to change the spell sequences, it is not a good idea to use the "Edit Similar Enemies" feature
 			enemyset.ChangeBattleModel(*sortid, m_enemystatlist->GetSelection(), linkeddata);
 			enmydata.model = event.GetPosition();
 			MarkDataEnemyModified(*sortid, CHUNK_TYPE_BATTLE_DATA);
 			if (linkeddata.model != 0xFFFF)
-				for (i = 0; i < m_enemystatmodel->GetCount(); i++)
+				for (unsigned int i = 0; i < m_enemystatmodel->GetCount(); i++)
 					if (((SortedChoiceItem*)m_enemystatmodel->GetClientData(i))->id == event.GetPosition()) {
 						m_enemystatmodel->SetSelection(i);
 						break;
@@ -4836,6 +5384,15 @@ void CDDataStruct::OnEnemyChangeSpin(wxSpinEvent& event) {
 				if (popup.ShowModal() == wxID_DISCARD)
 					DiscardSimilarEnemyUnaffected = true;
 			}
+		} else if (id == wxID_IMMUNESTATUS) {
+			int status = event.GetPosition();
+			m_enemystatimmunebaselist->SetSelection(status < STATUS_AMOUNT ? status : -1);
+		} else if (id == wxID_AUTOSTATUS) {
+			int status = event.GetPosition();
+			m_enemystatautobaselist->SetSelection(status < STATUS_AMOUNT ? status : -1);
+		} else if (id == wxID_INITIALSTATUS) {
+			int status = event.GetPosition();
+			m_enemystatinitialbaselist->SetSelection(status < STATUS_AMOUNT ? status : -1);
 		}
 	} else if (m_enemyspelllist->GetSelection() != wxNOT_FOUND) {
 		EnemySpellDataStruct& enmydata = eb.spell[m_enemyspelllist->GetSelection()];
@@ -4843,7 +5400,7 @@ void CDDataStruct::OnEnemyChangeSpin(wxSpinEvent& event) {
 			MACRO_ENEMY_CHANGE_DATA(Spell, effect, event.GetPosition())
 			if (enmydata.effect < HADES_STRING_SPELL_EFFECT_COUNT)
 				m_enemyspelleffect->SetSelection(enmydata.effect);
-			if (enmydata.effect < HADES_STRING_SPELL_EFFECT.size())
+			if (enmydata.effect < (int)HADES_STRING_SPELL_EFFECT.size())
 				m_enemyspelleffecthelp->SetLabel(HADES_STRING_SPELL_EFFECT[enmydata.effect].help);
 			else
 				m_enemyspelleffecthelp->SetLabel(_(HADES_STRING_SPELL_EFFECT_UNUSED_DESCRIPTION));
@@ -4854,8 +5411,21 @@ void CDDataStruct::OnEnemyChangeSpin(wxSpinEvent& event) {
 			MACRO_ENEMY_CHANGE_DATA(Spell, power, event.GetPosition())
 		} else if (id == wxID_ACCURACY) {
 			MACRO_ENEMY_CHANGE_DATA(Spell, accuracy, event.GetPosition())
+		} else if (id == wxID_STATUS) {
+			MACRO_ENEMY_CHANGE_DATA(Spell, status, event.GetPosition())
+			if (enmydata.status < STATUS_SET_AMOUNT)
+				m_enemyspellstatus->SetSelection(enmydata.status);
 		} else if (id == wxID_SPELLMP) {
 			MACRO_ENEMY_CHANGE_DATA(Spell, mp, event.GetPosition())
+		} else if (id == wxID_ANIM) {
+			MACRO_ENEMY_CHANGE_DATA(Spell, model, event.GetPosition())
+			wxString modeltooltip = wxString::Format(wxT("SFX %d"), enmydata.model);
+			for (unsigned int i = 0; i < HADES_STRING_SPELL_MODEL.size(); i++)
+				if (HADES_STRING_SPELL_MODEL[i].id == enmydata.model) {
+					modeltooltip = HADES_STRING_SPELL_MODEL[i].label;
+					break;
+				}
+			m_enemyspellanimreflectlabel->SetLabel(modeltooltip);
 		} else if (id == wxID_MODELALT) {
 			MACRO_ENEMY_CHANGE_DATA(Spell, model_alt, event.GetPosition())
 		} else if (id == wxID_SPELLNO) {
@@ -4916,7 +5486,7 @@ void CDDataStruct::OnEnemyChangeChoice(wxCommandEvent& event) {
 	unsigned int* sortid = (unsigned int*)m_enemylist->GetClientData(m_enemylist->GetSelection());
 	EnemyDataStruct& eb = *enemyset.battle[*sortid];
 	int id = event.GetId();
-	if (id==wxID_SCENE) {
+	if (id == wxID_SCENE) {
 		unsigned int* newscene = (unsigned int*)event.GetClientData();
 		if (gametype==GAME_TYPE_PSX) {
 			ImageMapDataStruct& em = *enemyset.preload[*sortid];
@@ -4929,31 +5499,31 @@ void CDDataStruct::OnEnemyChangeChoice(wxCommandEvent& event) {
 		return;
 	} else if (m_enemystatlist->GetSelection()!=wxNOT_FOUND) {
 		EnemyStatDataStruct& enmydata = eb.stat[m_enemystatlist->GetSelection()];
-		if (id==wxID_STEAL1) {
-			MACRO_ENEMY_CHANGE_DATA(Stat,item_steal[0],event.GetSelection())
-		} else if (id==wxID_STEAL2) {
-			MACRO_ENEMY_CHANGE_DATA(Stat,item_steal[1],event.GetSelection())
-		} else if (id==wxID_STEAL3) {
-			MACRO_ENEMY_CHANGE_DATA(Stat,item_steal[2],event.GetSelection())
-		} else if (id==wxID_STEAL4) {
-			MACRO_ENEMY_CHANGE_DATA(Stat,item_steal[3],event.GetSelection())
-		} else if (id==wxID_DROP1) {
-			MACRO_ENEMY_CHANGE_DATA(Stat,item_drop[0],event.GetSelection())
-		} else if (id==wxID_DROP2) {
-			MACRO_ENEMY_CHANGE_DATA(Stat,item_drop[1],event.GetSelection())
-		} else if (id==wxID_DROP3) {
-			MACRO_ENEMY_CHANGE_DATA(Stat,item_drop[2],event.GetSelection())
-		} else if (id==wxID_DROP4) {
-			MACRO_ENEMY_CHANGE_DATA(Stat,item_drop[3],event.GetSelection())
-		} else if (id==wxID_CARD) {
-			if (event.GetSelection()==0) {
-				MACRO_ENEMY_CHANGE_DATA(Stat,card_drop,255)
+		if (id == wxID_STEAL1) {
+			MACRO_ENEMY_CHANGE_DATA(Stat, item_steal[0], itemset.item[event.GetSelection()].id)
+		} else if (id == wxID_STEAL2) {
+			MACRO_ENEMY_CHANGE_DATA(Stat, item_steal[1], itemset.item[event.GetSelection()].id)
+		} else if (id == wxID_STEAL3) {
+			MACRO_ENEMY_CHANGE_DATA(Stat, item_steal[2], itemset.item[event.GetSelection()].id)
+		} else if (id == wxID_STEAL4) {
+			MACRO_ENEMY_CHANGE_DATA(Stat, item_steal[3], itemset.item[event.GetSelection()].id)
+		} else if (id == wxID_DROP1) {
+			MACRO_ENEMY_CHANGE_DATA(Stat, item_drop[0], itemset.item[event.GetSelection()].id)
+		} else if (id == wxID_DROP2) {
+			MACRO_ENEMY_CHANGE_DATA(Stat, item_drop[1], itemset.item[event.GetSelection()].id)
+		} else if (id == wxID_DROP3) {
+			MACRO_ENEMY_CHANGE_DATA(Stat, item_drop[2], itemset.item[event.GetSelection()].id)
+		} else if (id == wxID_DROP4) {
+			MACRO_ENEMY_CHANGE_DATA(Stat, item_drop[3], itemset.item[event.GetSelection()].id)
+		} else if (id == wxID_CARD) {
+			if (event.GetSelection() == 0) {
+				MACRO_ENEMY_CHANGE_DATA(Stat, card_drop, 255)
 			} else {
-				MACRO_ENEMY_CHANGE_DATA(Stat,card_drop,event.GetSelection()-1)
+				MACRO_ENEMY_CHANGE_DATA(Stat, card_drop, event.GetSelection() - 1)
 			}
-		} else if (id==wxID_DEFATTACK) {
+		} else if (id == wxID_DEFATTACK) {
 			MACRO_ENEMY_CHANGE_DATA(Stat,default_attack,event.GetSelection())
-		} else if (id==wxID_MODEL) {
+		} else if (id == wxID_MODEL) {
 			SortedChoiceItem* item = (SortedChoiceItem*)event.GetClientData();
 			BattleModelLinks& linkeddata = BattleModelLinks::GetLinksByModel(item->id);
 			// Due to the need to change the spell sequences, it is not a good idea to use the "Edit Similar Enemies" feature
@@ -4965,27 +5535,30 @@ void CDDataStruct::OnEnemyChangeChoice(wxCommandEvent& event) {
 				if (popup.ShowModal()==wxID_DISCARD)
 					DiscardSimilarEnemyUnaffected = true;
 			}
-		} else if (id==wxID_BLUEMAGIC) {
-			MACRO_ENEMY_CHANGE_DATA(Stat,blue_magic,event.GetSelection())
+		} else if (id == wxID_BLUEMAGIC) {
+			int blueid;
+			if (event.GetSelection() < (int)spellset.spell.size())
+				blueid = AnyAbilityStruct::ConvertSpellIdToId(spellset.spell[event.GetSelection()].id);
+			else
+				blueid = AnyAbilityStruct::ConvertSupportIdToId(supportset.support[event.GetSelection() - spellset.spell.size()].id);
+			MACRO_ENEMY_CHANGE_DATA(Stat, blue_magic, blueid)
 		}
 	} else if (m_enemyspelllist->GetSelection()!=wxNOT_FOUND) {
 		EnemySpellDataStruct& enmydata = eb.spell[m_enemyspelllist->GetSelection()];
-		if (id==wxID_EFFECT) {
+		if (id == wxID_EFFECT) {
 			MACRO_ENEMY_CHANGE_DATA(Spell, effect, event.GetSelection())
 			m_enemyspelleffectint->SetValue(enmydata.effect);
-			if (enmydata.effect < HADES_STRING_SPELL_EFFECT.size())
+			if (enmydata.effect < (int)HADES_STRING_SPELL_EFFECT.size())
 				m_enemyspelleffecthelp->SetLabel(HADES_STRING_SPELL_EFFECT[enmydata.effect].help);
 			else
 				m_enemyspelleffecthelp->SetLabel(_(HADES_STRING_SPELL_EFFECT_UNUSED_DESCRIPTION));
 			int x,y;
 			m_enemyspelleffecthelp->GetSize(&x,&y);
 			m_enemyspelleffecthelpwindow->SetScrollbars(20,5,x/20,y/5);
-		} else if (id==wxID_STATUS) {
+		} else if (id == wxID_STATUS) {
 			MACRO_ENEMY_CHANGE_DATA(Spell,status,event.GetSelection())
-		} else if (id==wxID_ANIM) {
-			SortedChoiceItemModel* item = (SortedChoiceItemModel*)event.GetClientData();
-			MACRO_ENEMY_CHANGE_DATA(Spell,model,item->id)
-		} else if (id==wxID_SEQANIM) {
+			m_enemyspellstatusint->SetValue(enmydata.status);
+		} else if (id == wxID_SEQANIM) {
 			enemyset.battle_data[*sortid]->sequence_stat_id[m_enemyspelllist->GetSelection()] = event.GetSelection();
 			enemyset.battle_data[*sortid]->sequence_base_anim[m_enemyspelllist->GetSelection()] = enemyset.battle[*sortid]->stat[event.GetSelection()].sequence_anim_base;
 			MarkDataEnemyModified(*sortid,CHUNK_TYPE_BATTLE_DATA);
@@ -4995,7 +5568,7 @@ void CDDataStruct::OnEnemyChangeChoice(wxCommandEvent& event) {
 					DiscardSimilarEnemyUnaffected = true;
 			}
 			return;
-		} else if (id==wxID_TARGETTYPE) {
+		} else if (id == wxID_TARGETTYPE) {
 			Spell_Target_Type tt = event.GetSelection();
 			enmydata.SetTargetType(tt);
 			m_enemyspelltargetamount->SetSelection(enmydata.GetTargetAmount());
@@ -5003,25 +5576,25 @@ void CDDataStruct::OnEnemyChangeChoice(wxCommandEvent& event) {
 			m_enemyspelltargetamount->Enable(tt != SPELL_TARGET_TYPE_EVERYONE && tt != SPELL_TARGET_TYPE_SELF && tt != SPELL_TARGET_TYPE_IRRELEVANT);
 			m_enemyspelltargetpriority->Enable(tt == SPELL_TARGET_TYPE_ANY);
 			MACRO_ENEMY_CHANGE_DATA(Spell,target_type,enmydata.target_type)
-		} else if (id==wxID_TARGETAMOUNT) {
+		} else if (id == wxID_TARGETAMOUNT) {
 			enmydata.SetTargetAmount(event.GetSelection());
 			MACRO_ENEMY_CHANGE_DATA(Spell,target_type,enmydata.target_type)
-		} else if (id==wxID_TARGETPRIORITY) {
+		} else if (id == wxID_TARGETPRIORITY) {
 			enmydata.SetTargetPriority(event.GetSelection());
 			MACRO_ENEMY_CHANGE_DATA(Spell,target_type,enmydata.target_type)
-		} else if (id==wxID_TARGETPANEL) {
+		} else if (id == wxID_TARGETPANEL) {
 			enmydata.SetPanel(event.GetSelection());
 			MACRO_ENEMY_CHANGE_DATA(Spell,target_type,enmydata.target_type)
 		}
 	} else if (m_enemygrouplist->GetSelection()!=wxNOT_FOUND) {
 		EnemyGroupDataStruct& eg = eb.group[m_enemygrouplist->GetSelection()];
-		if (id==wxID_ENEMY1) {
+		if (id == wxID_ENEMY1) {
 			eg.enemy_id[0] = event.GetSelection();
-		} else if (id==wxID_ENEMY2) {
+		} else if (id == wxID_ENEMY2) {
 			eg.enemy_id[1] = event.GetSelection();
-		} else if (id==wxID_ENEMY3) {
+		} else if (id == wxID_ENEMY3) {
 			eg.enemy_id[2] = event.GetSelection();
-		} else if (id==wxID_ENEMY4) {
+		} else if (id == wxID_ENEMY4) {
 			eg.enemy_id[3] = event.GetSelection();
 		}
 	}
@@ -5037,15 +5610,12 @@ void CDDataStruct::OnEnemyChangeFlags(wxCommandEvent& event) {
 		EnemyStatDataStruct& enmydata = eb.stat[m_enemystatlist->GetSelection()];
 
 		#define MACRO_ENEMY_CHECK_STAT_FLAG(STAT) \
-			MACRO_FLAG_SET8(STAT ## .death_flag,wxID_ED) \
-			MACRO_FLAG_SET8(STAT ## .element_absorb,wxID_EA) \
-			MACRO_FLAG_SET8(STAT ## .element_immune,wxID_EI) \
-			MACRO_FLAG_SET8(STAT ## .element_half,wxID_EH) \
-			MACRO_FLAG_SET8(STAT ## .element_weak,wxID_EW) \
-			MACRO_FLAG_SET8(STAT ## .classification,wxID_EC) \
-			MACRO_FLAG_SET32(STAT ## .status_immune,wxID_SI) \
-			MACRO_FLAG_SET32(STAT ## .status_auto,wxID_SA) \
-			MACRO_FLAG_SET32(STAT ## .status_initial,wxID_ST)
+			MACRO_FLAG_SET8(STAT ## .death_flag, wxID_ED) \
+			MACRO_FLAG_SET8(STAT ## .element_absorb, wxID_EA) \
+			MACRO_FLAG_SET8(STAT ## .element_immune, wxID_EI) \
+			MACRO_FLAG_SET8(STAT ## .element_half, wxID_EH) \
+			MACRO_FLAG_SET8(STAT ## .element_weak, wxID_EW) \
+			MACRO_FLAG_SET8(STAT ## .classification, wxID_EC)
 
 		if (GetTopWindow()->m_editsimilarenemy->IsChecked()) {
 			unsigned int macroi,macronb,*macrobattleid;
@@ -5062,12 +5632,12 @@ void CDDataStruct::OnEnemyChangeFlags(wxCommandEvent& event) {
 		EnemySpellDataStruct& enmydata = eb.spell[m_enemyspelllist->GetSelection()];
 
 		#define MACRO_ENEMY_CHECK_SPELL_FLAG(SPELL) \
-			MACRO_FLAG_SET8(SPELL ## .element,wxID_SE) \
-			MACRO_FLAG_SET8(SPELL ## .flag,wxID_SF) \
-			MACRO_FLAG_SET8(SPELL ## .menu_flag,wxID_SM) \
-			MACRO_FLAG_SET(SPELL ## .target_flag,wxID_CAN_TARGET_DEAD,TARGET_FLAG_CAN_TARGET_DEAD) \
-			MACRO_FLAG_SET(SPELL ## .target_flag,wxID_TARGET_CAMERA,TARGET_FLAG_CAMERA) \
-			MACRO_FLAG_SET(SPELL ## .target_flag,wxID_TARGET_DEAD_FIRST,TARGET_FLAG_TARGET_DEAD_FIRST)
+			MACRO_FLAG_SET8(SPELL ## .element, wxID_SE) \
+			MACRO_FLAG_SET8(SPELL ## .flag, wxID_SF) \
+			MACRO_FLAG_SET8(SPELL ## .menu_flag, wxID_SM) \
+			MACRO_FLAG_SET(SPELL ## .target_flag, wxID_CAN_TARGET_DEAD, TARGET_FLAG_CAN_TARGET_DEAD) \
+			MACRO_FLAG_SET(SPELL ## .target_flag, wxID_TARGET_CAMERA, TARGET_FLAG_CAMERA) \
+			MACRO_FLAG_SET(SPELL ## .target_flag, wxID_TARGET_DEAD_FIRST, TARGET_FLAG_TARGET_DEAD_FIRST)
 
 		if (GetTopWindow()->m_editsimilarenemy->IsChecked()) {
 			unsigned int macroi,macronb,*macrobattleid;
@@ -5082,21 +5652,21 @@ void CDDataStruct::OnEnemyChangeFlags(wxCommandEvent& event) {
 		}
 	} else if (m_enemygrouplist->GetSelection()!=wxNOT_FOUND) {
 		EnemyGroupDataStruct& eg = eb.group[m_enemygrouplist->GetSelection()];
-		if (id==wxID_TARGETABLE1) {
+		if (id == wxID_TARGETABLE1) {
 			eg.targetable[0] = (eg.targetable[0] & 0xFE) | (event.IsChecked() ? 1 : 0);
-		} else if (id==wxID_TARGETABLE2) {
+		} else if (id == wxID_TARGETABLE2) {
 			eg.targetable[1] = (eg.targetable[1] & 0xFE) | (event.IsChecked() ? 1 : 0);
-		} else if (id==wxID_TARGETABLE3) {
+		} else if (id == wxID_TARGETABLE3) {
 			eg.targetable[2] = (eg.targetable[2] & 0xFE) | (event.IsChecked() ? 1 : 0);
-		} else if (id==wxID_TARGETABLE4) {
+		} else if (id == wxID_TARGETABLE4) {
 			eg.targetable[3] = (eg.targetable[3] & 0xFE) | (event.IsChecked() ? 1 : 0);
-		} else if (id==wxID_LINK1) {
+		} else if (id == wxID_LINK1) {
 			eg.targetable[0] = (eg.targetable[0] & 0xFD) | (event.IsChecked() << 1);
-		} else if (id==wxID_LINK2) {
+		} else if (id == wxID_LINK2) {
 			eg.targetable[1] = (eg.targetable[1] & 0xFD) | (event.IsChecked() << 1);
-		} else if (id==wxID_LINK3) {
+		} else if (id == wxID_LINK3) {
 			eg.targetable[2] = (eg.targetable[2] & 0xFD) | (event.IsChecked() << 1);
-		} else if (id==wxID_LINK4) {
+		} else if (id == wxID_LINK4) {
 			eg.targetable[3] = (eg.targetable[3] & 0xFD) | (event.IsChecked() << 1);
 		}
 	}
@@ -5109,115 +5679,167 @@ void CDDataStruct::OnEnemyChangeButton(wxCommandEvent& event) {
 	unsigned int* sortid = (unsigned int*)m_enemylist->GetClientData(sel);
 	EnemyDataStruct& eb = *enemyset.battle[*sortid];
 	int id = event.GetId();
-	if (id==wxID_STATNAME) {
+
+	#define MACRO_ENEMY_CHANGE_STATUS(TYPEUPPER, TYPELOWER) \
+		} else if (id == wxID_ADD ## TYPEUPPER) { \
+			int status = m_enemystat ## TYPELOWER ## baseint->GetValue(); \
+			int statsel = m_enemystatlist->GetSelection(); \
+			EnemyStatDataStruct& es = eb.stat[statsel]; \
+			vector<pair<EnemyStatDataStruct*, int>> similares; \
+			if (GetTopWindow()->m_editsimilarenemy->IsChecked()) { \
+				unsigned int i, nb, * similarbattleid; \
+				EnemyStatDataStruct** similarstats = enemyset.GetSimilarEnemyStats(es, &nb, &similarbattleid); \
+				for (i = 0; i < nb; i++) \
+					similares.push_back({ similarstats[i], similarbattleid[i] }); \
+			} else { \
+				similares.push_back({ &es, *sortid }); \
+			} \
+			for (auto it = similares.begin(); it != similares.end(); it++) { \
+				if (it->first->status_ ## TYPELOWER.find(status) != it->first->status_ ## TYPELOWER.end()) \
+					continue; \
+				it->first->status_ ## TYPELOWER.insert(status); \
+				if (it->first == &es) \
+					m_enemystat ## TYPELOWER ## list->Append(SpellStatusDialog::StatusDisplayName(status), new int[1]{ status }); \
+				MarkDataEnemyModified(it->second, CHUNK_TYPE_ENEMY_STATS); \
+			} \
+		} else if (id == wxID_REMOVE ## TYPEUPPER) { \
+			if (m_enemystat ## TYPELOWER ## list->GetSelection() == wxNOT_FOUND) \
+				return; \
+			int status = *(int*)m_enemystat ## TYPELOWER ## list->GetClientData(m_enemystat ## TYPELOWER ## list->GetSelection()); \
+			int statsel = m_enemystatlist->GetSelection(); \
+			EnemyStatDataStruct& es = eb.stat[statsel]; \
+			vector<pair<EnemyStatDataStruct*, int>> similares; \
+			if (GetTopWindow()->m_editsimilarenemy->IsChecked()) { \
+				unsigned int i, nb, * similarbattleid; \
+				EnemyStatDataStruct** similarstats = enemyset.GetSimilarEnemyStats(es, &nb, &similarbattleid); \
+				for (i = 0; i < nb; i++) \
+					similares.push_back({ similarstats[i], similarbattleid[i] }); \
+			} else { \
+				similares.push_back({ &es, *sortid }); \
+			} \
+			for (auto it = similares.begin(); it != similares.end(); it++) { \
+				if (it->first->status_ ## TYPELOWER.erase(status) > 0) { \
+					if (it->first == &es) \
+						m_enemystat ## TYPELOWER ## list->Delete(m_enemystat ## TYPELOWER ## list->GetSelection()); \
+					MarkDataEnemyModified(it->second, CHUNK_TYPE_ENEMY_STATS); \
+				} \
+			}
+
+	if (id == wxID_STATNAME) {
 		int statsel = m_enemystatlist->GetSelection();
 		EnemyStatDataStruct& es = eb.stat[statsel];
 		FF9String newstr;
 		bool confirmed = false;
-		if (gametype==GAME_TYPE_PSX) {
-			TextEditDialog ted(this,es.name,eb.GetExtraSize());
-			if (ted.ShowModal()==wxID_OK) {
+		if (gametype == GAME_TYPE_PSX) {
+			TextEditDialog ted(this, es.name, eb.GetExtraSize());
+			if (ted.ShowModal() == wxID_OK) {
 				newstr = ted.text;
 				confirmed = true;
 			}
 		} else {
-			TextSteamEditDialog ted(this,&ffuiset,es.name);
-			if (ted.ShowModal()==wxID_OK) {
+			TextSteamEditDialog ted(this, &ffuiset, es.name);
+			if (ted.ShowModal() == wxID_OK) {
 				newstr = ted.text;
 				confirmed = true;
 			}
 		}
 		if (confirmed) {
 			if (GetTopWindow()->m_editsimilarenemy->IsChecked()) {
-				unsigned int i,j,nb,*battleid;
-				EnemyStatDataStruct** stats = enemyset.GetSimilarEnemyStats(es,&nb,&battleid);
-				for (i=0;i<nb;i++) {
+				unsigned int i, j, nb, * battleid;
+				EnemyStatDataStruct** stats = enemyset.GetSimilarEnemyStats(es, &nb, &battleid);
+				for (i = 0; i < nb; i++) {
 					if (stats[i]->SetName(newstr)) {
-						wxMessageDialog popup(this,HADES_STRING_GROUPEDIT_ERROR_TEXT,HADES_STRING_WARNING,wxOK|wxSTAY_ON_TOP|wxCENTRE);
+						wxMessageDialog popup(this, HADES_STRING_GROUPEDIT_ERROR_TEXT, HADES_STRING_WARNING, wxOK | wxSTAY_ON_TOP | wxCENTRE);
 						popup.ShowModal();
 					} else {
 						if (GetTopWindow()->m_sortenemy->IsChecked()) {
-							for (j=0;j<enemyset.battle_amount;j++)
-								if (*(unsigned int*)m_enemylist->GetClientData(j)==battleid[i])
-									m_enemylist->SetString(j,GetEnemyBattleName(battleid[i]));
+							for (j = 0; j < enemyset.battle_amount; j++)
+								if (*(unsigned int*)m_enemylist->GetClientData(j) == battleid[i])
+									m_enemylist->SetString(j, GetEnemyBattleName(battleid[i]));
 						} else
-							m_enemylist->SetString(battleid[i],GetEnemyBattleName(battleid[i]));
-						MarkDataEnemyModified(battleid[i],CHUNK_TYPE_TEXT);
+							m_enemylist->SetString(battleid[i], GetEnemyBattleName(battleid[i]));
+						MarkDataEnemyModified(battleid[i], CHUNK_TYPE_TEXT);
 					}
 				}
 			} else {
 				es.SetName(newstr);
-				m_enemylist->SetString(sel,GetEnemyBattleName(*sortid));
-				MarkDataEnemyModified(*sortid,CHUNK_TYPE_TEXT);
+				m_enemylist->SetString(sel, GetEnemyBattleName(*sortid));
+				MarkDataEnemyModified(*sortid, CHUNK_TYPE_TEXT);
 			}
 			m_enemystatname->ChangeValue(_(es.name.str));
-			m_enemystatlist->SetString(statsel,_(es.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+			m_enemystatlist->SetString(statsel, _(es.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 		}
-	} else if (id==wxID_SPELLNAME) {
+	MACRO_ENEMY_CHANGE_STATUS(IMMUNE, immune)
+	MACRO_ENEMY_CHANGE_STATUS(AUTO, auto)
+	MACRO_ENEMY_CHANGE_STATUS(INITIAL, initial)
+	} else if (id == wxID_SPELLNAME) {
 		unsigned int spellsel = m_enemyspelllist->GetSelection();
 		EnemySpellDataStruct& ep = eb.spell[spellsel];
 		FF9String newstr;
 		bool confirmed = false;
-		if (gametype==GAME_TYPE_PSX) {
-			TextEditDialog ted(this,ep.name,eb.GetExtraSize());
-			if (ted.ShowModal()==wxID_OK) {
+		if (gametype == GAME_TYPE_PSX) {
+			TextEditDialog ted(this, ep.name, eb.GetExtraSize());
+			if (ted.ShowModal() == wxID_OK) {
 				newstr = ted.text;
 				confirmed = true;
 			}
 		} else {
-			TextSteamEditDialog ted(this,&ffuiset,ep.name);
-			if (ted.ShowModal()==wxID_OK) {
+			TextSteamEditDialog ted(this, &ffuiset, ep.name);
+			if (ted.ShowModal() == wxID_OK) {
 				newstr = ted.text;
 				confirmed = true;
 			}
 		}
 		if (confirmed) {
 			if (GetTopWindow()->m_editsimilarenemy->IsChecked()) {
-				unsigned int i,nb,*similarbattleid;
-				EnemySpellDataStruct** similarspells = enemyset.GetSimilarEnemySpells(ep,&nb,&similarbattleid);
-				for (i=0;i<nb;i++) {
+				unsigned int i, nb, * similarbattleid;
+				EnemySpellDataStruct** similarspells = enemyset.GetSimilarEnemySpells(ep, &nb, &similarbattleid);
+				for (i = 0; i < nb; i++) {
 					if (similarspells[i]->SetName(newstr)) {
-						wxMessageDialog popup(this,HADES_STRING_GROUPEDIT_ERROR_TEXT,HADES_STRING_WARNING,wxOK|wxSTAY_ON_TOP|wxCENTRE);
+						wxMessageDialog popup(this, HADES_STRING_GROUPEDIT_ERROR_TEXT, HADES_STRING_WARNING, wxOK | wxSTAY_ON_TOP | wxCENTRE);
 						popup.ShowModal();
 					} else {
-						MarkDataEnemyModified(similarbattleid[i],CHUNK_TYPE_TEXT);
+						MarkDataEnemyModified(similarbattleid[i], CHUNK_TYPE_TEXT);
 					}
 				}
 			} else {
 				ep.SetName(newstr);
-				MarkDataEnemyModified(*sortid,CHUNK_TYPE_TEXT);
+				MarkDataEnemyModified(*sortid, CHUNK_TYPE_TEXT);
 			}
 			m_enemyspellname->ChangeValue(ep.name.str);
-			m_enemyspelllist->SetString(spellsel,_(ep.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
-			m_enemystatdefaultattack->SetString(spellsel,_(ep.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+			m_enemyspelllist->SetString(spellsel, _(ep.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+			m_enemystatdefaultattack->SetString(spellsel, _(ep.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 		}
-	} else if (id==wxID_STATUS) {
+	} else if (id == wxID_STATUS) {
 		EnemySpellDataStruct& ep = eb.spell[m_enemyspelllist->GetSelection()];
 		SpellStatusDialog spstat(this);
-		if (spstat.ShowModal(spellset.status_set[ep.status].status)==wxID_OK) {
-			spellset.status_set[ep.status].status = spstat.flags;
-			UpdateSpellStatusName(ep.status);
+		if (spellset.GetStatusSetIndexById(ep.status) < 0)
+			InsertAtId(spellset.status_set, spellset.status_set[0], ep.status);
+		StatusSetStruct& statusset = spellset.GetStatusSetById(ep.status);
+		if (spstat.ShowModal(this, statusset) == wxID_OK) {
+			statusset.status_list = spstat.status_list;
+			UpdateSpellStatusName(statusset);
 			MarkDataSpellModified();
 		}
-	} else if (id==wxID_SCRIPT) {
-		ScriptEditDialog dial(this,*enemyset.script[*sortid],SCRIPT_TYPE_BATTLE,&saveset,&eb,enemyset.text[*sortid]);
-		if (dial.ShowModal()==wxID_OK) {
+	} else if (id == wxID_SCRIPT) {
+		ScriptEditDialog dial(this, *enemyset.script[*sortid], SCRIPT_TYPE_BATTLE, &saveset, &eb, enemyset.text[*sortid]);
+		if (dial.ShowModal() == wxID_OK) {
 			*enemyset.script[*sortid] = dial.script;
-			MarkDataEnemyModified(*sortid,CHUNK_TYPE_SCRIPT);
+			MarkDataEnemyModified(*sortid, CHUNK_TYPE_SCRIPT);
 		}
-	} else if (id==wxID_ENTRY) {
-		ScriptEditEntryDialog dial(this,*enemyset.script[*sortid],SCRIPT_TYPE_BATTLE);
-		if (dial.ShowModal()==wxID_OK) {
+	} else if (id == wxID_ENTRY) {
+		ScriptEditEntryDialog dial(this, *enemyset.script[*sortid], SCRIPT_TYPE_BATTLE);
+		if (dial.ShowModal() == wxID_OK) {
 			dial.ApplyModifications(*enemyset.script[*sortid]);
-			MarkDataEnemyModified(*sortid,CHUNK_TYPE_SCRIPT);
+			MarkDataEnemyModified(*sortid, CHUNK_TYPE_SCRIPT);
 		}
-	} else if (id==wxID_SCRIPTLINK) {
-		ScriptEditLinkDialog dial(this,*enemyset.script[*sortid],*enemyset.text[*sortid]);
-		if (dial.ShowModal()==wxID_OK) {
+	} else if (id == wxID_SCRIPTLINK) {
+		ScriptEditLinkDialog dial(this, *enemyset.script[*sortid], *enemyset.text[*sortid]);
+		if (dial.ShowModal() == wxID_OK) {
 			dial.ApplyModifications(*enemyset.script[*sortid]);
-			MarkDataEnemyModified(*sortid,CHUNK_TYPE_SCRIPT,true);
+			MarkDataEnemyModified(*sortid, CHUNK_TYPE_SCRIPT, true);
 		}
-/*	} else if (id==wxID_PRELOAD) {
+/*	} else if (id == wxID_PRELOAD) {
 		uint16_t battlescene = 0xFFFF, newscene = 0xFFFF;
 		unsigned int i;
 		for (i=0;i<enemyset.preload[*sortid]->amount;i++)
@@ -5238,55 +5860,66 @@ void CDDataStruct::OnEnemyChangeButton(wxCommandEvent& event) {
 			if (battlescene!=newscene)
 				enemyset.ChangeBattleScene(enemyset.battle_data[*sortid]->object_id,newscene);
 		}*/
-	} else if (id==wxID_ANIM) {
+	} else if (id == wxID_ANIM) {
 		int spellsel = m_enemyspelllist->GetSelection();
-		EnemyAnimSequenceEditDialog dial(this,*enemyset.battle_data[*sortid],spellsel);
+		EnemyAnimSequenceEditDialog dial(this, *enemyset.battle_data[*sortid], spellsel);
 		uint32_t battlesize = enemyset.battle_data[*sortid]->size;
-		if (dial.ShowModal()==wxID_OK) {
-			for (unsigned int i=0;i<enemyset.battle_data[*sortid]->sequence_code_amount[spellsel];i++)
+		if (dial.ShowModal() == wxID_OK) {
+			for (unsigned int i = 0; i < enemyset.battle_data[*sortid]->sequence_code_amount[spellsel]; i++)
 				delete[] enemyset.battle_data[*sortid]->sequence_code[spellsel][i].arg;
 			enemyset.battle_data[*sortid]->sequence_code[spellsel] = dial.sequence_code;
 			enemyset.battle_data[*sortid]->sequence_code_amount[spellsel] = dial.sequence_code_amount;
-			MarkDataEnemyModified(*sortid,CHUNK_TYPE_BATTLE_DATA);
+			MarkDataEnemyModified(*sortid, CHUNK_TYPE_BATTLE_DATA);
 			if (GetTopWindow()->m_editsimilarenemy->IsChecked() && !DiscardSimilarEnemyUnaffected) {
-				DiscardableMessageWindow popup(wxGetApp().GetTopWindow(),HADES_STRING_NOGROUPEDIT);
-				if (popup.ShowModal()==wxID_DISCARD)
+				DiscardableMessageWindow popup(wxGetApp().GetTopWindow(), HADES_STRING_NOGROUPEDIT);
+				if (popup.ShowModal() == wxID_DISCARD)
 					DiscardSimilarEnemyUnaffected = true;
 			}
 		} else
 			enemyset.battle_data[*sortid]->SetSize(battlesize);
-	} else if (id==wxID_RESOURCES) {
+	} else if (id == wxID_RESOURCES) {
 		int statsel = m_enemystatlist->GetSelection();
 		EnemyStatDataStruct& es = eb.stat[statsel];
 		BattleDataStruct& bd = *enemyset.battle_data[*sortid];
 		EnemyResourceDialog dial(this);
-		if (dial.ShowModal(es,bd)==wxID_OK) {
+		if (dial.ShowModal(es, bd) == wxID_OK) {
 			if (GetTopWindow()->m_editsimilarenemy->IsChecked()) {
-				unsigned int i,nb,*similarbattleid;
-				EnemyStatDataStruct** similarstats = enemyset.GetSimilarEnemyStats(es,&nb,&similarbattleid);
-				for (i=0;i<nb;i++) {
-					if (es.model!=similarstats[i]->model)
+				unsigned int i, nb, * similarbattleid;
+				EnemyStatDataStruct** similarstats = enemyset.GetSimilarEnemyStats(es, &nb, &similarbattleid);
+				for (i = 0; i < nb; i++) {
+					if (es.model != similarstats[i]->model)
 						continue;
-					if (dial.ApplyModifications(*similarstats[i],*similarstats[i]->parent->parent->battle_data[similarstats[i]->parent->id])) {
-						if (gametype!=GAME_TYPE_PSX)
-							MarkDataEnemyModified(similarbattleid[i],CHUNK_TYPE_BATTLE_DATA);
+					if (dial.ApplyModifications(*similarstats[i], *similarstats[i]->parent->parent->battle_data[similarstats[i]->parent->id])) {
+						if (gametype != GAME_TYPE_PSX)
+							MarkDataEnemyModified(similarbattleid[i], CHUNK_TYPE_BATTLE_DATA);
 					} else {
-						wxMessageDialog popup(this,HADES_STRING_GROUPEDIT_ERROR_DATA,HADES_STRING_WARNING,wxOK|wxSTAY_ON_TOP|wxCENTRE);
+						wxMessageDialog popup(this, HADES_STRING_GROUPEDIT_ERROR_DATA, HADES_STRING_WARNING, wxOK | wxSTAY_ON_TOP | wxCENTRE);
 						popup.ShowModal();
 					}
-					MarkDataEnemyModified(similarbattleid[i],CHUNK_TYPE_ENEMY_STATS);
+					MarkDataEnemyModified(similarbattleid[i], CHUNK_TYPE_ENEMY_STATS);
 				}
 			} else {
-				if (dial.ApplyModifications(es,bd)) {
-					if (gametype!=GAME_TYPE_PSX)
-						MarkDataEnemyModified(*sortid,CHUNK_TYPE_BATTLE_DATA);
+				if (dial.ApplyModifications(es, bd)) {
+					if (gametype != GAME_TYPE_PSX)
+						MarkDataEnemyModified(*sortid, CHUNK_TYPE_BATTLE_DATA);
 				} else {
-					wxMessageDialog popup(this,HADES_STRING_DATA_REACH_LIMIT,HADES_STRING_ERROR,wxOK|wxSTAY_ON_TOP|wxCENTRE);
+					wxMessageDialog popup(this, HADES_STRING_DATA_REACH_LIMIT, HADES_STRING_ERROR, wxOK | wxSTAY_ON_TOP | wxCENTRE);
 					popup.ShowModal();
 				}
-				MarkDataEnemyModified(*sortid,CHUNK_TYPE_ENEMY_STATS);
+				MarkDataEnemyModified(*sortid, CHUNK_TYPE_ENEMY_STATS);
 			}
 		}
+	}
+}
+
+void CDDataStruct::OnEnemyChangeListBox(wxCommandEvent& event) {
+	int id = event.GetId();
+	if (id == wxID_ADDIMMUNE) {
+		m_enemystatimmunebaseint->SetValue(m_enemystatimmunebaselist->GetSelection());
+	} else if (id == wxID_ADDAUTO) {
+		m_enemystatautobaseint->SetValue(m_enemystatautobaselist->GetSelection());
+	} else if (id == wxID_ADDINITIAL) {
+		m_enemystatinitialbaseint->SetValue(m_enemystatinitialbaselist->GetSelection());
 	}
 }
 
@@ -5405,6 +6038,8 @@ void CDDataStruct::OnEnemySpellRightClickMenu(wxCommandEvent& event) {
 		return;
 	} else if (id == wxID_PASTE) {
 		newsel = eb.spell_amount;
+		if (copyenemyspell_battleid >= (int)enemyset.battle.size() || copyenemyspell_spellid >= (int)enemyset.battle[copyenemyspell_battleid]->spell.size())
+			return; // Something changed, cancel pasting
 		if (eb.AddSpell(&enemyset.battle[copyenemyspell_battleid]->spell[copyenemyspell_spellid])) {
 			newsel = -1;
 			if (!DiscardEnemySizeLimit) {
@@ -5804,7 +6439,7 @@ void CDDataStruct::OnTextManageCharmap(wxCommandEvent& event) {
 		uint32_t newsize = dial.tex_amount*4;
 		uint32_t oldsize = texcount*4;
 		int id = wxID_OK;
-		while (id==wxID_OK && newsize>oldsize+tdtex.GetExtraSize()) {
+		while (id == wxID_OK && newsize>oldsize+tdtex.GetExtraSize()) {
 			LogStruct log;
 			wstringstream buffer;
 			buffer << L" - Not enough space : the new charmap takes " << newsize << L" bytes for " << oldsize+tdtex.GetExtraSize() << L" bytes available." << endl;
@@ -5814,7 +6449,7 @@ void CDDataStruct::OnTextManageCharmap(wxCommandEvent& event) {
 			id = dial.ShowModal();
 			newsize = dial.tex_amount*4;
 		}
-		if (id==wxID_OK) {
+		if (id == wxID_OK) {
 			if (tdtex.img_size!=dial.tim.img_size) {
 				tdtex.SetSize(tdtex.size+dial.tim.img_size-tdtex.img_size);
 				tdtex.img_size = dial.tim.img_size;
@@ -6023,7 +6658,7 @@ void CDDataStruct::OnFieldChangeChoice(wxCommandEvent& event) {
 	ScriptDataStruct* sc = fieldset.script_data[*sortid];
 //	TIMImageDataStruct* tdtex = fieldset.background_data[*sortid];
 	int id = event.GetId();
-	if (id==wxID_TEXTURE) {
+	if (id == wxID_TEXTURE) {
 		MACRO_FIELD_DISPLAY_BACKGROUND(*sortid,event.GetSelection())
 	}
 }
@@ -6035,7 +6670,7 @@ void CDDataStruct::OnFieldChangeButton(wxCommandEvent& event) {
 	unsigned int* sortid = (unsigned int*)m_fieldlist->GetClientData(sel);
 	ScriptDataStruct* sc = fieldset.script_data[*sortid];
 	int id = event.GetId();
-	if (id==wxID_NAME) {
+	if (id == wxID_NAME) {
 		if (gametype==GAME_TYPE_PSX) {
 			CharmapDataStruct* chmap = NULL;
 			if (saveset.sectionloaded[DATA_SECTION_TEXT])
@@ -6052,7 +6687,7 @@ void CDDataStruct::OnFieldChangeButton(wxCommandEvent& event) {
 				m_fieldname->SetValue(sc->name.str);
 			}
 		}
-	} else if (id==wxID_SCRIPT) {
+	} else if (id == wxID_SCRIPT) {
 		TextDataStruct* textobj = fieldset.related_text[*sortid];
 //fstream fout("aaaa.txt",ios::app|ios::out); fout << "Go" << endl; fout.close();
 		ScriptEditDialog dial(this,*sc,SCRIPT_TYPE_FIELD,&saveset,NULL,textobj);
@@ -6096,19 +6731,19 @@ if (sc->func[i][j].op[k].opcode==0x29) {
 	walkimgdc.DrawPolygon(sc->func[i][j].op[k].arg_amount,vert);
 }
 walkbmp.SaveFile(_(L"aaaa.bmp"),wxBITMAP_TYPE_BMP);*/
-	} else if (id==wxID_ENTRY) {
+	} else if (id == wxID_ENTRY) {
 		ScriptEditEntryDialog dial(this,*sc,SCRIPT_TYPE_FIELD);
 		if (dial.ShowModal()==wxID_OK) {
 			dial.ApplyModifications(*sc);
 			MarkDataFieldModified(*sortid,CHUNK_TYPE_SCRIPT);
 		}
-	} else if (id==wxID_SCRIPTLINK) {
+	} else if (id == wxID_SCRIPTLINK) {
 		ScriptEditLinkDialog dial(this,*sc,*fieldset.related_text[*sortid]);
 		if (dial.ShowModal()==wxID_OK) {
 			dial.ApplyModifications(*sc);
 			MarkDataFieldModified(*sortid,CHUNK_TYPE_SCRIPT,true);
 		}
-	} else if (id==wxID_PRELOAD) {
+	} else if (id == wxID_PRELOAD) {
 		if (gametype==GAME_TYPE_PSX) {
 			ImageMapEditDialog dial(this,fieldset.preload[*sortid],cluster.enemy_shared_map,&cluster.global_map,saveset);
 			if (dial.ShowModal()==wxID_OK) {
@@ -6140,7 +6775,7 @@ walkbmp.SaveFile(_(L"aaaa.bmp"),wxBITMAP_TYPE_BMP);*/
 				MarkDataFieldModified(*sortid,CHUNK_TYPE_IMAGE_MAP);
 			}
 		}
-	} else if (id==wxID_TEXTURE) {
+	} else if (id == wxID_TEXTURE) {
 		ManageFieldTextureDialog dial(this,*fieldset.background_data[*sortid]);
 		if (dial.ShowModal(m_fieldtexturechoice->GetSelection())==wxID_OK && dial.field.modified) {
 			dial.field.SetupDataInfos(false);
@@ -6440,7 +7075,7 @@ void CDDataStruct::OnWorldChangeName(wxCommandEvent& event) {
 
 void CDDataStruct::OnWorldChangeButton(wxCommandEvent& event) {
 	int id = event.GetId();
-	if (id==wxID_SCRIPT) {
+	if (id == wxID_SCRIPT) {
 		unsigned int sel = m_worldlist->GetSelection();
 		unsigned int* sortid = (unsigned int*)m_worldlist->GetClientData(sel);
 		ScriptDataStruct* sc = worldset.script[*sortid];
@@ -6449,7 +7084,7 @@ void CDDataStruct::OnWorldChangeButton(wxCommandEvent& event) {
 			*sc = dial.script;
 			MarkDataWorldMapModified(*sortid,CHUNK_TYPE_SCRIPT);
 		}
-	} else if (id==wxID_ENTRY) {
+	} else if (id == wxID_ENTRY) {
 		unsigned int sel = m_worldlist->GetSelection();
 		unsigned int* sortid = (unsigned int*)m_worldlist->GetClientData(sel);
 		ScriptEditEntryDialog dial(this,*worldset.script[*sortid],SCRIPT_TYPE_WORLD);
@@ -6457,7 +7092,7 @@ void CDDataStruct::OnWorldChangeButton(wxCommandEvent& event) {
 			dial.ApplyModifications(*worldset.script[*sortid]);
 			MarkDataWorldMapModified(*sortid,CHUNK_TYPE_SCRIPT);
 		}
-	} else if (id==wxID_SCRIPTLINK) {
+	} else if (id == wxID_SCRIPTLINK) {
 		unsigned int sel = m_worldlist->GetSelection();
 		unsigned int* sortid = (unsigned int*)m_worldlist->GetClientData(sel);
 		ScriptEditLinkDialog dial(this,*worldset.script[*sortid],*worldset.text_data[*sortid]);
@@ -6465,7 +7100,7 @@ void CDDataStruct::OnWorldChangeButton(wxCommandEvent& event) {
 			dial.ApplyModifications(*worldset.script[*sortid]);
 			MarkDataWorldMapScriptModified(*sortid,true);
 		}
-	} else if (id==wxID_PRELOAD) {
+	} else if (id == wxID_PRELOAD) {
 		unsigned int sel = m_worldlist->GetSelection();
 		unsigned int* sortid = (unsigned int*)m_worldlist->GetClientData(sel);
 		if (gametype==GAME_TYPE_PSX) {
@@ -6483,7 +7118,7 @@ void CDDataStruct::OnWorldChangeButton(wxCommandEvent& event) {
 				MarkDataWorldMapModified(*sortid,CHUNK_TYPE_IMAGE_MAP);
 			}
 		}
-	} else if (id==wxID_NAME) {
+	} else if (id == wxID_NAME) {
 		unsigned int sel = m_worldplacelist->GetSelection();
 		WorldMapDataStruct& wm = *worldset.world_data;
 		if (gametype==GAME_TYPE_PSX) {
@@ -6510,7 +7145,7 @@ void CDDataStruct::OnWorldChangeChoice(wxCommandEvent& event) {
 	int id = event.GetId();
 
 	#define MACRO_WORLD_CHANGE_CHOICE(VER,BTL) \
-		if (id==wxID_BATTLE ## VER ## BTL) { \
+		if (id == wxID_BATTLE ## VER ## BTL) { \
 			int bset = GetWorldBattleSetFromSpot(sel,VER-1); \
 			if (wm.ChangeBattle(bset, BTL-1, bd.object_id) != 0) { \
 				wxMessageDialog popup(NULL, HADES_STRING_WORLD_FRIENDLY_HELP, HADES_STRING_WARNING, wxOK | wxCENTRE); \
@@ -6544,7 +7179,7 @@ void CDDataStruct::OnWorldChangeSpin(wxSpinEvent& event) {
 	int id = event.GetId();
 
 	#define MACRO_WORLD_CHANGE_SPIN(VER,BTL) \
-		if (id==wxID_BATTLE ## VER ## BTL) { \
+		if (id == wxID_BATTLE ## VER ## BTL) { \
 			int bset = GetWorldBattleSetFromSpot(sel,VER-1); \
 			if (wm.ChangeBattle(bset, BTL-1, event.GetPosition()) != 0) { \
 				wxMessageDialog popup(NULL, HADES_STRING_WORLD_FRIENDLY_HELP, HADES_STRING_WARNING, wxOK | wxCENTRE); \
@@ -6831,7 +7466,7 @@ void CDDataStruct::OnBattleSceneManageTexturesButton(wxCommandEvent& event) {
 		uint32_t newsize = dial.pal_amount*512+dial.tim.img_size;
 		uint32_t oldsize = palcount*512+tdtex.img_size;
 		int id = wxID_OK;
-		while (id==wxID_OK && newsize>oldsize+tdtex.GetExtraSize()) {
+		while (id == wxID_OK && newsize>oldsize+tdtex.GetExtraSize()) {
 			LogStruct log;
 			wstringstream buffer;
 			buffer << L" - Not enough space : the imported texture takes " << newsize << L" bytes for " << oldsize+tdtex.GetExtraSize() << L" bytes available." << endl;
@@ -6841,7 +7476,7 @@ void CDDataStruct::OnBattleSceneManageTexturesButton(wxCommandEvent& event) {
 			id = dial.ShowModal();
 			newsize = dial.pal_amount*512+dial.tim.img_size;
 		}
-		if (id==wxID_OK) {
+		if (id == wxID_OK) {
 			if (tdtex.img_size!=dial.tim.img_size) {
 				tdtex.SetSize(tdtex.size+dial.tim.img_size-tdtex.img_size);
 				tdtex.img_size = dial.tim.img_size;
@@ -6983,7 +7618,7 @@ void CDDataStruct::OnSpellAnimationChangeButton(wxCommandEvent& event) {
 	unsigned int* sortid = (unsigned int*)m_spellanimlist->GetClientData(sel);
 	SpellAnimationDataStruct& sa = spellanimset.spell[*sortid];
 	int id = event.GetId();
-	if (id==wxID_SEQUENCE) {
+	if (id == wxID_SEQUENCE) {
 		AnimSequenceEditDialog dial(this,sa);
 		if (dial.ShowModal()==wxID_OK) {
 			sa.Copy(dial.anim);
@@ -7058,7 +7693,7 @@ void CDDataStruct::OnSpecialTextRightClickMenu(wxCommandEvent& event) {
 	SpecialTextDataStruct& td = ffuiset.special_text->text_block[sel];
 	int objid = m_specialtextdatalist->GetSelection();
 	int newsel = -1;
-	if (id==wxID_ADD) {
+	if (id == wxID_ADD) {
 		newsel = td.amount;
 		FF9String newstr;
 		newstr.CreateEmpty();
@@ -7069,7 +7704,7 @@ void CDDataStruct::OnSpecialTextRightClickMenu(wxCommandEvent& event) {
 			newsel = -1;
 			TextReachLimit();
 		}
-	} else if (id==wxID_REMOVE && objid!=wxNOT_FOUND) {
+	} else if (id == wxID_REMOVE && objid!=wxNOT_FOUND) {
 		td.RemoveText(objid);
 		newsel = min((int)td.amount-1,objid);
 	}
@@ -7271,7 +7906,7 @@ void CDDataStruct::InitSpell(void) {
 			m_spelleffect->Append(wxString::Format(wxT(HADES_STRING_SPELL_EFFECT_UNUSED_NAME), i), (void*)NULL);
 	}
 	for (i = 0; i < STATUS_SET_AMOUNT; i++) {
-		UpdateSpellStatusName(i);
+		UpdateSpellStatusName(spellset.status_set[i]);
 		m_spellstatus->Append(spellset.status_set[i].name);
 	}
 	if (!TheSpellModelWindow) {
@@ -7336,7 +7971,7 @@ void CDDataStruct::InitStat(void) {
 		InitSupport();
 	if (!saveset.sectionloaded[DATA_SECTION_ITEM])
 		InitItem();
-	unsigned int i;
+	unsigned int i, j;
 	fstream f;
 	if (gametype == GAME_TYPE_PSX) f.open(filename.c_str(), ios::in | ios::binary);
 	statset.Load(f, config);
@@ -7346,12 +7981,9 @@ void CDDataStruct::InitStat(void) {
 		m_statcharabilitychoice->Append(_(spellset.spell[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 	for (i = 0; i < supportset.support.size(); i++)
 		m_statcharabilitychoice->Append(_(supportset.support[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
-	for (i = 0; i < cmdset.cmd.size(); i++) {
-		m_statcharcommand1->Append(_(cmdset.cmd[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
-		m_statcharcommand2->Append(_(cmdset.cmd[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
-		m_statcharcommandtrance1->Append(_(cmdset.cmd[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
-		m_statcharcommandtrance2->Append(_(cmdset.cmd[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
-	}
+	for (i = 0; i < cmdset.cmd.size(); i++)
+		for (j = 0; j < commandchoicelist.size(); j++)
+			commandchoicelist[j]->Append(_(cmdset.cmd[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 	for (i = 0; i < itemset.item.size(); i++) {
 		m_statcharweapon->Append(_(itemset.item[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 		m_statcharhead->Append(_(itemset.item[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
@@ -7388,6 +8020,10 @@ void CDDataStruct::InitPartySpecial(void) {
 	for (i = 0; i < spellset.spell.size(); i++) {
 		m_partyspecialmagicswordrequirement->Append(_(spellset.spell[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 		m_partyspecialmagicswordspell->Append(_(spellset.spell[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+	}
+	for (int i = 0; i < STATUS_AMOUNT; i++) {
+		m_partyspecialmagicswordcasterstatusbaselist->Append(HADES_STRING_STATUS_NAME[i]);
+		m_partyspecialmagicswordknightstatusbaselist->Append(HADES_STRING_STATUS_NAME[i]);
 	}
 	saveset.sectionloaded[DATA_SECTION_PARTY_SPECIAL] = true;
 	m_partyspecialmagicswordset->SetSelection(0);
@@ -7447,6 +8083,8 @@ void CDDataStruct::InitItem(void) {
 	}
 	for (i = 0; i < STATUS_SET_AMOUNT; i++)
 		m_itemweaponstatus->Append(spellset.status_set[i].name);
+	for (int i = 0; i < STATUS_AMOUNT; i++)
+		m_itemusablestatusbaselist->Append(HADES_STRING_STATUS_NAME[i]);
 	for (i = 0; i < ITEM_WEAPON_AMOUNT; i++)
 		m_itemweaponsfx->Append(_(itemset.item[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 	if (!TheSpellModelWindow) {
@@ -7510,7 +8148,7 @@ void CDDataStruct::InitEnemy(void) {
 	EnemyDisplayNames(true);
 	for (i = 0; i < G_V_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME); i++)
 		m_enemyscene->Append(HADES_STRING_BATTLE_SCENE_NAME[i].label, (void*)&HADES_STRING_BATTLE_SCENE_NAME[i]);
-	for (i = 0; i < ITEM_AMOUNT; i++) {
+	for (i = 0; i < itemset.item.size(); i++) {
 		m_enemystatitemsteal1->Append(_(itemset.item[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 		m_enemystatitemsteal2->Append(_(itemset.item[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 		m_enemystatitemsteal3->Append(_(itemset.item[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
@@ -7523,9 +8161,9 @@ void CDDataStruct::InitEnemy(void) {
 	for (i = 0; i < G_V_ELEMENTS(HADES_STRING_MODEL_NAME); i++)
 		if (BattleModelLinks::IsBattleModel(HADES_STRING_MODEL_NAME[i].id))
 			m_enemystatmodel->Append(HADES_STRING_MODEL_NAME[i].label, (void*)&HADES_STRING_MODEL_NAME[i]);
-	for (i = 0; i < SPELL_AMOUNT; i++)
+	for (i = 0; i < spellset.spell.size(); i++)
 		m_enemystatbluemagic->Append(_(spellset.spell[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
-	for (i = 0; i < SUPPORT_AMOUNT; i++)
+	for (i = 0; i < supportset.support.size(); i++)
 		m_enemystatbluemagic->Append(_(supportset.support[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 	for (i = 0; i < HADES_STRING_SPELL_EFFECT_COUNT; i++) {
 		if (i < HADES_STRING_SPELL_EFFECT.size())
@@ -7535,11 +8173,14 @@ void CDDataStruct::InitEnemy(void) {
 	}
 	for (i = 0; i < STATUS_SET_AMOUNT; i++)
 		m_enemyspellstatus->Append(spellset.status_set[i].name);
-	for (i = 0; i < HADES_STRING_SPELL_MODEL.size(); i++)
-		m_enemyspellanimreflect->Append(HADES_STRING_SPELL_MODEL[i].label, (void*)&HADES_STRING_SPELL_MODEL[i]);
 	m_enemystatdropcard->Append(HADES_STRING_CARD_NOCARD);
 	for (i = 0; i < CARD_AMOUNT; i++)
 		m_enemystatdropcard->Append(cardset.card[i].name.GetStr(hades::TEXT_PREVIEW_TYPE));
+	for (int i = 0; i < STATUS_AMOUNT; i++) {
+		m_enemystatimmunebaselist->Append(HADES_STRING_STATUS_NAME[i]);
+		m_enemystatautobaselist->Append(HADES_STRING_STATUS_NAME[i]);
+		m_enemystatinitialbaselist->Append(HADES_STRING_STATUS_NAME[i]);
+	}
 	saveset.sectionloaded[DATA_SECTION_ENMY] = true;
 	if (saveset.sectionloaded[DATA_SECTION_WORLD_MAP]) {
 		bool showalt = m_worldbattlepanelspin3->IsShown();
@@ -7777,7 +8418,7 @@ void CDDataStruct::UpdateSpellName(unsigned int spellid) {
 		m_partyspecialmagicswordrequirement->SetString(spellid, newname);
 	if (!m_partyspecialmagicswordspell->IsEmpty())
 		m_partyspecialmagicswordspell->SetString(spellid, newname);
-	if (!m_enemystatbluemagic->IsEmpty() && spellid < SPELL_AMOUNT)
+	if (!m_enemystatbluemagic->IsEmpty())
 		m_enemystatbluemagic->SetString(spellid, newname);
 	if (!m_itemskillfulllist->IsEmpty())
 		m_itemskillfulllist->SetString(spellid, newname);
@@ -7799,6 +8440,8 @@ void CDDataStruct::RegisterSpellAdded(unsigned int spellid) {
 		m_partyspecialmagicswordrequirement->Insert(newname, spellid);
 	if (!m_partyspecialmagicswordspell->IsEmpty())
 		m_partyspecialmagicswordspell->Insert(newname, spellid);
+	if (!m_enemystatbluemagic->IsEmpty())
+		m_enemystatbluemagic->Insert(newname, spellid);
 	if (!m_itemskillfulllist->IsEmpty())
 		m_itemskillfulllist->Insert(newname, spellid);
 }
@@ -7812,44 +8455,54 @@ void CDDataStruct::RegisterSpellRemoved(unsigned int spellid) {
 		m_partyspecialmagicswordrequirement->Delete(spellid);
 	if (!m_partyspecialmagicswordspell->IsEmpty())
 		m_partyspecialmagicswordspell->Delete(spellid);
+	if (!m_enemystatbluemagic->IsEmpty())
+		m_enemystatbluemagic->Delete(spellid);
 	if (!m_itemskillfulllist->IsEmpty())
 		m_itemskillfulllist->Delete(spellid);
 }
 
-void CDDataStruct::UpdateSpellStatusName(unsigned int statusindex) {
-	uint32_t statustmp = spellset.status_set[statusindex].status;
+void CDDataStruct::UpdateSpellStatusName(StatusSetStruct& statusset) {
+	set<int>& statuslist = statusset.status_list;
 	wxString name = _(L"");
 	unsigned int i;
-	if (statustmp == 0) {
+	if (statuslist.empty()) {
 		name = _(HADES_STRING_STATUS_NONE);
-		spellset.status_set[statusindex].name = name.ToStdWstring();
+		statusset.name = name.ToStdWstring();
 	} else {
+		uint32_t statusbits = GetStatusBitList(statusset.status_list);
+		uint32_t statusdone = 0;
 		for (i = 0; i < HADES_STRING_STATUS_PACK.size(); i++)
-			if ((statustmp & HADES_STRING_STATUS_PACK[i].id) == HADES_STRING_STATUS_PACK[i].id) {
+			if ((statusbits & HADES_STRING_STATUS_PACK[i].id) == HADES_STRING_STATUS_PACK[i].id) {
 				if (name.Len() > 0)
 					name += _(L" + ") + _(HADES_STRING_STATUS_PACK[i].label);
 				else
 					name += _(HADES_STRING_STATUS_PACK[i].label);
-				statustmp ^= HADES_STRING_STATUS_PACK[i].id;
+				statusbits ^= HADES_STRING_STATUS_PACK[i].id;
+				statusdone |= HADES_STRING_STATUS_PACK[i].id;
 			}
-		for (i = 0; i < HADES_STRING_STATUS.size() && name.Len() < 30; i++)
-			if (statustmp & (1 << i)) {
-				if (name.Len() > 0)
-					name += _(L" + ") + HADES_STRING_STATUS[i];
-				else
-					name += HADES_STRING_STATUS[i];
-				statustmp ^= 1 << i;
-			}
-		if (statustmp != 0)
+		set<int>::iterator it;
+		for (it = statuslist.begin(); it != statuslist.end() && name.Len() < 30; it++) {
+			if (*it < STATUS_AMOUNT && (statusdone & (1u << *it)) != 0)
+				continue;
+			if (name.Len() > 0)
+				name += _(L" + ");
+			if (*it < (int)HADES_STRING_STATUS.size())
+				name += HADES_STRING_STATUS[*it];
+			else
+				name += wxString::Format(wxT("Status %d"), *it);
+		}
+		if (it != statuslist.end())
 			name += _(L" + ...");
-		spellset.status_set[statusindex].name = name.ToStdWstring();
+		statusset.name = name.ToStdWstring();
 	}
-	if (!m_spellstatus->IsEmpty())
-		m_spellstatus->SetString(statusindex, name);
-	if (!m_itemweaponstatus->IsEmpty())
-		m_itemweaponstatus->SetString(statusindex, name);
-	if (!m_enemyspellstatus->IsEmpty())
-		m_enemyspellstatus->SetString(statusindex, name);
+	if (statusset.id < (int)m_spellstatus->GetCount()) {
+		if (!m_spellstatus->IsEmpty())
+			m_spellstatus->SetString(statusset.id, name);
+		if (!m_itemweaponstatus->IsEmpty())
+			m_itemweaponstatus->SetString(statusset.id, name);
+		if (!m_enemyspellstatus->IsEmpty())
+			m_enemyspellstatus->SetString(statusset.id, name);
+	}
 }
 
 void CDDataStruct::UpdateSupportName(unsigned int supportid) {
@@ -7860,8 +8513,8 @@ void CDDataStruct::UpdateSupportName(unsigned int supportid) {
 		m_statcharabilitychoice->SetString(spellset.spell.size() + supportid, newname);
 	if (!m_itemskillfulllist->IsEmpty())
 		m_itemskillfulllist->SetString(spellset.spell.size() + supportid, newname);
-	if (!m_enemystatbluemagic->IsEmpty() && supportid < SUPPORT_AMOUNT)
-		m_enemystatbluemagic->SetString(SPELL_AMOUNT + supportid, newname);
+	if (!m_enemystatbluemagic->IsEmpty())
+		m_enemystatbluemagic->SetString(spellset.spell.size() + supportid, newname);
 }
 
 void CDDataStruct::RegisterSupportAdded(unsigned int supportid) {
@@ -7872,6 +8525,8 @@ void CDDataStruct::RegisterSupportAdded(unsigned int supportid) {
 		m_statcharabilitychoice->Insert(newname, spellset.spell.size() + supportid);
 	if (!m_itemskillfulllist->IsEmpty())
 		m_itemskillfulllist->Insert(newname, spellset.spell.size() + supportid);
+	if (!m_enemystatbluemagic->IsEmpty())
+		m_enemystatbluemagic->Insert(newname, spellset.spell.size() + supportid);
 }
 
 void CDDataStruct::RegisterSupportRemoved(unsigned int supportid) {
@@ -7881,41 +8536,28 @@ void CDDataStruct::RegisterSupportRemoved(unsigned int supportid) {
 		m_statcharabilitychoice->Delete(spellset.spell.size() + supportid);
 	if (!m_itemskillfulllist->IsEmpty())
 		m_itemskillfulllist->Delete(spellset.spell.size() + supportid);
+	if (!m_enemystatbluemagic->IsEmpty())
+		m_enemystatbluemagic->Delete(spellset.spell.size() + supportid);
 }
 
 void CDDataStruct::UpdateCommandName(unsigned int cmdid) {
 	wxString newname = _(cmdset.cmd[cmdid].name.GetStr(hades::TEXT_PREVIEW_TYPE));
-	if (!m_statcharcommand1->IsEmpty())
-		m_statcharcommand1->SetString(cmdid, newname);
-	if (!m_statcharcommand2->IsEmpty())
-		m_statcharcommand2->SetString(cmdid, newname);
-	if (!m_statcharcommandtrance1->IsEmpty())
-		m_statcharcommandtrance1->SetString(cmdid, newname);
-	if (!m_statcharcommandtrance2->IsEmpty())
-		m_statcharcommandtrance2->SetString(cmdid, newname);
+	for (unsigned int i = 0; i < commandchoicelist.size(); i++)
+		if (!commandchoicelist[i]->IsEmpty())
+			commandchoicelist[i]->SetString(cmdid, newname);
 }
 
 void CDDataStruct::RegisterCommandAdded(unsigned int cmdid) {
 	wxString newname = _(cmdset.cmd[cmdid].name.GetStr(hades::TEXT_PREVIEW_TYPE));
-	if (!m_statcharcommand1->IsEmpty())
-		m_statcharcommand1->Insert(newname, cmdid);
-	if (!m_statcharcommand2->IsEmpty())
-		m_statcharcommand2->Insert(newname, cmdid);
-	if (!m_statcharcommandtrance1->IsEmpty())
-		m_statcharcommandtrance1->Insert(newname, cmdid);
-	if (!m_statcharcommandtrance2->IsEmpty())
-		m_statcharcommandtrance2->Insert(newname, cmdid);
+	for (unsigned int i = 0; i < commandchoicelist.size(); i++)
+		if (!commandchoicelist[i]->IsEmpty())
+			commandchoicelist[i]->Insert(newname, cmdid);
 }
 
 void CDDataStruct::RegisterCommandRemoved(unsigned int cmdid) {
-	if (!m_statcharcommand1->IsEmpty())
-		m_statcharcommand1->Delete(cmdid);
-	if (!m_statcharcommand2->IsEmpty())
-		m_statcharcommand2->Delete(cmdid);
-	if (!m_statcharcommandtrance1->IsEmpty())
-		m_statcharcommandtrance1->Delete(cmdid);
-	if (!m_statcharcommandtrance2->IsEmpty())
-		m_statcharcommandtrance2->Delete(cmdid);
+	for (unsigned int i = 0; i < commandchoicelist.size(); i++)
+		if (!commandchoicelist[i]->IsEmpty())
+			commandchoicelist[i]->Delete(cmdid);
 }
 
 void CDDataStruct::UpdateStatName(unsigned int statid) {
@@ -7944,34 +8586,11 @@ void CDDataStruct::RegisterStatRemoved(unsigned int statid) {
 void CDDataStruct::UpdateItemName(unsigned int itemid) {
 	wxString newname = _(itemset.item[itemid].name.GetStr(hades::TEXT_PREVIEW_TYPE));
 	unsigned int i;
-	if (!m_statcharweapon->IsEmpty())
-		m_statcharweapon->SetString(itemid, newname);
-	if (!m_statcharhead->IsEmpty())
-		m_statcharhead->SetString(itemid, newname);
-	if (!m_statcharwrist->IsEmpty())
-		m_statcharwrist->SetString(itemid, newname);
-	if (!m_statchararmor->IsEmpty())
-		m_statchararmor->SetString(itemid, newname);
-	if (!m_statcharaccessory->IsEmpty())
-		m_statcharaccessory->SetString(itemid, newname);
+	for (i = 0; i < itemchoicelist.size(); i++)
+		if (!itemchoicelist[i]->IsEmpty())
+			itemchoicelist[i]->SetString(itemid, newname);
 	if (!m_statcharequipfulllist->IsEmpty())
 		m_statcharequipfulllist->SetString(itemid, newname);
-	if (!m_enemystatitemsteal1->IsEmpty() && itemid < ITEM_AMOUNT)
-		m_enemystatitemsteal1->SetString(itemid, newname);
-	if (!m_enemystatitemsteal2->IsEmpty() && itemid < ITEM_AMOUNT)
-		m_enemystatitemsteal2->SetString(itemid, newname);
-	if (!m_enemystatitemsteal3->IsEmpty() && itemid < ITEM_AMOUNT)
-		m_enemystatitemsteal3->SetString(itemid, newname);
-	if (!m_enemystatitemsteal4->IsEmpty() && itemid < ITEM_AMOUNT)
-		m_enemystatitemsteal4->SetString(itemid, newname);
-	if (!m_enemystatitemdrop1->IsEmpty() && itemid < ITEM_AMOUNT)
-		m_enemystatitemdrop1->SetString(itemid, newname);
-	if (!m_enemystatitemdrop2->IsEmpty() && itemid < ITEM_AMOUNT)
-		m_enemystatitemdrop2->SetString(itemid, newname);
-	if (!m_enemystatitemdrop3->IsEmpty() && itemid < ITEM_AMOUNT)
-		m_enemystatitemdrop3->SetString(itemid, newname);
-	if (!m_enemystatitemdrop4->IsEmpty() && itemid < ITEM_AMOUNT)
-		m_enemystatitemdrop4->SetString(itemid, newname);
 	if (!m_shopitemfulllist->IsEmpty())
 		m_shopitemfulllist->SetString(itemid, newname);
 	if (!m_synthshoplist->IsEmpty()) {
@@ -7996,98 +8615,41 @@ void CDDataStruct::UpdateItemName(unsigned int itemid) {
 			}
 		}
 	}
-	if (!m_itemmenuposchoice->IsEmpty())
-		m_itemmenuposchoice->SetString(itemid, newname);
-	if (!m_itemequipposchoice->IsEmpty())
-		m_itemequipposchoice->SetString(itemid, newname);
 	if (!m_itemweaponsfx->IsEmpty() && itemid < ITEM_WEAPON_AMOUNT)
 		m_itemweaponsfx->SetString(itemid, newname);
 }
 
 void CDDataStruct::RegisterItemAdded(unsigned int itemid) {
 	wxString newname = _(itemset.item[itemid].name.GetStr(hades::TEXT_PREVIEW_TYPE));
-	if (!m_statcharweapon->IsEmpty())
-		m_statcharweapon->Insert(newname, itemid);
-	if (!m_statcharhead->IsEmpty())
-		m_statcharhead->Insert(newname, itemid);
-	if (!m_statcharwrist->IsEmpty())
-		m_statcharwrist->Insert(newname, itemid);
-	if (!m_statchararmor->IsEmpty())
-		m_statchararmor->Insert(newname, itemid);
-	if (!m_statcharaccessory->IsEmpty())
-		m_statcharaccessory->Insert(newname, itemid);
+	unsigned int i;
+	for (i = 0; i < itemchoicelist.size(); i++)
+		if (!itemchoicelist[i]->IsEmpty())
+			itemchoicelist[i]->Insert(newname, itemid);
 	if (!m_statcharequipfulllist->IsEmpty())
 		m_statcharequipfulllist->Insert(newname, itemid);
-	if (!m_enemystatitemsteal1->IsEmpty() && itemid < ITEM_AMOUNT)
-		m_enemystatitemsteal1->Insert(newname, itemid);
-	if (!m_enemystatitemsteal2->IsEmpty() && itemid < ITEM_AMOUNT)
-		m_enemystatitemsteal2->Insert(newname, itemid);
-	if (!m_enemystatitemsteal3->IsEmpty() && itemid < ITEM_AMOUNT)
-		m_enemystatitemsteal3->Insert(newname, itemid);
-	if (!m_enemystatitemsteal4->IsEmpty() && itemid < ITEM_AMOUNT)
-		m_enemystatitemsteal4->Insert(newname, itemid);
-	if (!m_enemystatitemdrop1->IsEmpty() && itemid < ITEM_AMOUNT)
-		m_enemystatitemdrop1->Insert(newname, itemid);
-	if (!m_enemystatitemdrop2->IsEmpty() && itemid < ITEM_AMOUNT)
-		m_enemystatitemdrop2->Insert(newname, itemid);
-	if (!m_enemystatitemdrop3->IsEmpty() && itemid < ITEM_AMOUNT)
-		m_enemystatitemdrop3->Insert(newname, itemid);
-	if (!m_enemystatitemdrop4->IsEmpty() && itemid < ITEM_AMOUNT)
-		m_enemystatitemdrop4->Insert(newname, itemid);
 	if (!m_shopitemfulllist->IsEmpty())
 		m_shopitemfulllist->Insert(newname, itemid);
 	if (!m_synthshoplist->IsEmpty()) {
-		for (unsigned int i = 0; i < shopset.synthesis.size(); i++)
+		for (i = 0; i < shopset.synthesis.size(); i++)
 			if (shopset.synthesis[i].synthesized == itemset.item[itemid].id)
 				m_synthshoplist->SetString(i, newname);
 		m_synthshopsynthitem->Insert(newname, itemid);
 		m_synthshoprecipefulllist->Insert(newname, itemid);
 	}
-	if (!m_itemmenuposchoice->IsEmpty())
-		m_itemmenuposchoice->Insert(newname, itemid);
-	if (!m_itemequipposchoice->IsEmpty())
-		m_itemequipposchoice->Insert(newname, itemid);
 }
 
 void CDDataStruct::RegisterItemRemoved(unsigned int itemid) {
-	if (!m_statcharweapon->IsEmpty())
-		m_statcharweapon->Delete(itemid);
-	if (!m_statcharhead->IsEmpty())
-		m_statcharhead->Delete(itemid);
-	if (!m_statcharwrist->IsEmpty())
-		m_statcharwrist->Delete(itemid);
-	if (!m_statchararmor->IsEmpty())
-		m_statchararmor->Delete(itemid);
-	if (!m_statcharaccessory->IsEmpty())
-		m_statcharaccessory->Delete(itemid);
+	for (unsigned int i = 0; i < itemchoicelist.size(); i++)
+		if (!itemchoicelist[i]->IsEmpty())
+			itemchoicelist[i]->Delete(itemid);
 	if (!m_statcharequipfulllist->IsEmpty())
 		m_statcharequipfulllist->Delete(itemid);
-	if (!m_enemystatitemsteal1->IsEmpty() && itemid < ITEM_AMOUNT)
-		m_enemystatitemsteal1->Delete(itemid);
-	if (!m_enemystatitemsteal2->IsEmpty() && itemid < ITEM_AMOUNT)
-		m_enemystatitemsteal2->Delete(itemid);
-	if (!m_enemystatitemsteal3->IsEmpty() && itemid < ITEM_AMOUNT)
-		m_enemystatitemsteal3->Delete(itemid);
-	if (!m_enemystatitemsteal4->IsEmpty() && itemid < ITEM_AMOUNT)
-		m_enemystatitemsteal4->Delete(itemid);
-	if (!m_enemystatitemdrop1->IsEmpty() && itemid < ITEM_AMOUNT)
-		m_enemystatitemdrop1->Delete(itemid);
-	if (!m_enemystatitemdrop2->IsEmpty() && itemid < ITEM_AMOUNT)
-		m_enemystatitemdrop2->Delete(itemid);
-	if (!m_enemystatitemdrop3->IsEmpty() && itemid < ITEM_AMOUNT)
-		m_enemystatitemdrop3->Delete(itemid);
-	if (!m_enemystatitemdrop4->IsEmpty() && itemid < ITEM_AMOUNT)
-		m_enemystatitemdrop4->Delete(itemid);
 	if (!m_shopitemfulllist->IsEmpty())
 		m_shopitemfulllist->Delete(itemid);
 	if (!m_synthshoplist->IsEmpty()) {
 		m_synthshopsynthitem->Delete(itemid);
 		m_synthshoprecipefulllist->Delete(itemid);
 	}
-	if (!m_itemmenuposchoice->IsEmpty())
-		m_itemmenuposchoice->Delete(itemid);
-	if (!m_itemequipposchoice->IsEmpty())
-		m_itemequipposchoice->Delete(itemid);
 }
 
 void CDDataStruct::RegisterKeyItemAdded(unsigned int keyitemid) {
@@ -8415,6 +8977,33 @@ CDDataStruct::CDDataStruct(wxWindow* parent, string fname, ConfigurationSet& cfg
 	specialtextmenu->Append(wxID_ADD, HADES_STRING_GENERIC_ADD);
 	specialtextmenu->Append(wxID_REMOVE, HADES_STRING_GENERIC_REMOVE);
 	specialtextmenu->Connect(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(CDDataStruct::OnSpecialTextRightClickMenu), NULL, this);
+	commandchoicelist.push_back(m_statcharcommandattack);
+	commandchoicelist.push_back(m_statcharcommanddefend);
+	commandchoicelist.push_back(m_statcharcommand1);
+	commandchoicelist.push_back(m_statcharcommand2);
+	commandchoicelist.push_back(m_statcharcommanditem);
+	commandchoicelist.push_back(m_statcharcommandchange);
+	commandchoicelist.push_back(m_statcharcommandtranceattack);
+	commandchoicelist.push_back(m_statcharcommandtrancedefend);
+	commandchoicelist.push_back(m_statcharcommandtrance1);
+	commandchoicelist.push_back(m_statcharcommandtrance2);
+	commandchoicelist.push_back(m_statcharcommandtranceitem);
+	commandchoicelist.push_back(m_statcharcommandtrancechange);
+	itemchoicelist.push_back(m_statcharweapon);
+	itemchoicelist.push_back(m_statcharhead);
+	itemchoicelist.push_back(m_statcharwrist);
+	itemchoicelist.push_back(m_statchararmor);
+	itemchoicelist.push_back(m_statcharaccessory);
+	itemchoicelist.push_back(m_enemystatitemsteal1);
+	itemchoicelist.push_back(m_enemystatitemsteal2);
+	itemchoicelist.push_back(m_enemystatitemsteal3);
+	itemchoicelist.push_back(m_enemystatitemsteal4);
+	itemchoicelist.push_back(m_enemystatitemdrop1);
+	itemchoicelist.push_back(m_enemystatitemdrop2);
+	itemchoicelist.push_back(m_enemystatitemdrop3);
+	itemchoicelist.push_back(m_enemystatitemdrop4);
+	itemchoicelist.push_back(m_itemmenuposchoice);
+	itemchoicelist.push_back(m_itemequipposchoice);
 	InitSpell();
 	DisplaySpell(0);
 }

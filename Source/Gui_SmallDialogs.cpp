@@ -1,7 +1,9 @@
 #include "Gui_SmallDialogs.h"
 
+#include <wx/clipbrd.h>
 #include "main.h"
 #include "Hades_Strings.h"
+#include "CommonUtility.h"
 #include "Database_Animation.h"
 #include "Database_SpellAnimation.h"
 
@@ -408,32 +410,76 @@ void SpellModelWindow::OnButtonClick(wxCommandEvent& event) {
 
 // Status sets
 SpellStatusDialog::SpellStatusDialog(wxWindow* parent) : SpellStatusWindow(parent) {
+	for (int i = 0; i < STATUS_AMOUNT; i++)
+		m_baselist->Append(HADES_STRING_STATUS_NAME[i]);
 }
 
-int SpellStatusDialog::ShowModal(uint32_t statusflags) {
-	flags = statusflags;
-	m_statusbox1->SetValue(flags & 0x1);			m_statusbox2->SetValue(flags & 0x2);			m_statusbox3->SetValue(flags & 0x4);			m_statusbox4->SetValue(flags & 0x8);
-	m_statusbox5->SetValue(flags & 0x10);			m_statusbox6->SetValue(flags & 0x20);			m_statusbox7->SetValue(flags & 0x40);			m_statusbox8->SetValue(flags & 0x80);
-	m_statusbox9->SetValue(flags & 0x100);			m_statusbox10->SetValue(flags & 0x200);			m_statusbox11->SetValue(flags & 0x400);			m_statusbox12->SetValue(flags & 0x800);
-	m_statusbox13->SetValue(flags & 0x1000);		m_statusbox14->SetValue(flags & 0x2000);		m_statusbox15->SetValue(flags & 0x4000);		m_statusbox16->SetValue(flags & 0x8000);
-	m_statusbox17->SetValue(flags & 0x10000);		m_statusbox18->SetValue(flags & 0x20000);		m_statusbox19->SetValue(flags & 0x40000);		m_statusbox20->SetValue(flags & 0x80000);
-	m_statusbox21->SetValue(flags & 0x100000);		m_statusbox22->SetValue(flags & 0x200000);		m_statusbox23->SetValue(flags & 0x400000);		m_statusbox24->SetValue(flags & 0x800000);
-	m_statusbox25->SetValue(flags & 0x1000000);		m_statusbox26->SetValue(flags & 0x2000000);		m_statusbox27->SetValue(flags & 0x4000000);		m_statusbox28->SetValue(flags & 0x8000000);
-	m_statusbox29->SetValue(flags & 0x10000000);	m_statusbox30->SetValue(flags & 0x20000000);	m_statusbox31->SetValue(flags & 0x40000000);	m_statusbox32->SetValue(flags & 0x80000000);
+int SpellStatusDialog::ShowModal(CDDataStruct* data, StatusSetStruct& status) {
+	cddata = data;
+	status_list = status.status_list;
+	status_set_id = status.id;
+	m_baseint->SetRange(0, cddata->gametype == GAME_TYPE_STEAM && cddata->config.dll_usage != 0 ? INT32_MAX : 31);
+	for (auto st = status_list.begin(); st != status_list.end(); st++)
+		m_list->Append(StatusDisplayName(*st), new int[1]{ *st });
 	return SpellStatusWindow::ShowModal();
 }
 
+wxString SpellStatusDialog::StatusDisplayName(int status) {
+	if (status < STATUS_AMOUNT)
+		return wxString::Format(wxT("%s (%d)"), HADES_STRING_STATUS_NAME[status], status);
+	else if (status == 32)
+		return wxString::Format(wxT("ChangeStat (%d)"), status);
+	return wxString::Format(wxT("CustomStatus%d (%d)"), status - 32, status);
+}
+
 void SpellStatusDialog::OnButtonClick(wxCommandEvent& event) {
-	flags = 0;
-	flags |= m_statusbox1->IsChecked() ? 1 : 0;	flags |= m_statusbox2->IsChecked() << 1;	flags |= m_statusbox3->IsChecked() << 2;	flags |= m_statusbox4->IsChecked() << 3;
-	flags |= m_statusbox5->IsChecked() << 4;	flags |= m_statusbox6->IsChecked() << 5;	flags |= m_statusbox7->IsChecked() << 6;	flags |= m_statusbox8->IsChecked() << 7;
-	flags |= m_statusbox9->IsChecked() << 8;	flags |= m_statusbox10->IsChecked() << 9;	flags |= m_statusbox11->IsChecked() << 10;	flags |= m_statusbox12->IsChecked() << 11;
-	flags |= m_statusbox13->IsChecked() << 12;	flags |= m_statusbox14->IsChecked() << 13;	flags |= m_statusbox15->IsChecked() << 14;	flags |= m_statusbox16->IsChecked() << 15;
-	flags |= m_statusbox17->IsChecked() << 16;	flags |= m_statusbox18->IsChecked() << 17;	flags |= m_statusbox19->IsChecked() << 18;	flags |= m_statusbox20->IsChecked() << 19;
-	flags |= m_statusbox21->IsChecked() << 20;	flags |= m_statusbox22->IsChecked() << 21;	flags |= m_statusbox23->IsChecked() << 22;	flags |= m_statusbox24->IsChecked() << 23;
-	flags |= m_statusbox25->IsChecked() << 24;	flags |= m_statusbox26->IsChecked() << 25;	flags |= m_statusbox27->IsChecked() << 26;	flags |= m_statusbox28->IsChecked() << 27;
-	flags |= m_statusbox29->IsChecked() << 28;	flags |= m_statusbox30->IsChecked() << 29;	flags |= m_statusbox31->IsChecked() << 30;	flags |= m_statusbox32->IsChecked() << 31;
-	EndModal(event.GetId());
+	int id = event.GetId();
+	if (id == wxID_OK || id == wxID_CANCEL) {
+		EndModal(id);
+	} else if (id == wxID_ADD) {
+		int status = m_baseint->GetValue();
+		if (status_list.find(status) != status_list.end())
+			return;
+		status_list.insert(status);
+		m_list->Append(StatusDisplayName(status), new int[1]{ status });
+	} else if (id == wxID_REMOVE) {
+		if (m_list->GetSelection() == wxNOT_FOUND)
+			return;
+		int status = *(int*)m_list->GetClientData(m_list->GetSelection());
+		if (status_list.erase(status) > 0)
+			m_list->Delete(m_list->GetSelection());
+	} else if (id == wxID_CFGROUP) {
+		SpellDataSet& spellset = cddata->spellset;
+		DatabaseFormatDialog dial(this, &spellset.csv_header_status, &spellset.csv_format_status, &spellset.custom_field_status);
+		if (dial.ShowModal() == wxID_OK) {
+			for (unsigned int i = 0; i < spellset.status_set.size(); i++)
+				UpdateCustomFieldMap(spellset.status_set[i].custom_field, spellset.custom_field_status);
+			cddata->MarkDataSpellModified();
+		}
+	} else if (id == wxID_CFENTRY) {
+		SpellDataSet& spellset = cddata->spellset;
+		StatusSetStruct* statusset = NULL;
+		for (unsigned int i = 0; i < spellset.status_set.size(); i++) {
+			if (spellset.status_set[i].id == status_set_id) {
+				statusset = &spellset.status_set[i];
+				break;
+			}
+		}
+		if (statusset == NULL)
+			return;
+		DatabaseFieldDialog dial(this, &statusset->custom_field, spellset.custom_field_status);
+		if (dial.ShowModal() == wxID_OK)
+			cddata->MarkDataSpellModified();
+	}
+}
+
+void SpellStatusDialog::OnBaseListSelect(wxCommandEvent& event) {
+	m_baseint->SetValue(m_baselist->GetSelection());
+}
+
+void SpellStatusDialog::OnSpinCtrl(wxSpinEvent& event) {
+	int status = event.GetPosition();
+	m_baselist->SetSelection(status < STATUS_AMOUNT ? status : -1);
 }
 
 // Stat sets
@@ -513,6 +559,7 @@ int CharacterParameterDialog::ShowModal(CharBattleParameterStruct& btl, InitialS
 	m_category6->SetValue((stat.default_category & 0x20) != 0);
 	m_category7->SetValue((stat.default_category & 0x40) != 0);
 	m_category8->SetValue((stat.default_category & 0x80) != 0);
+	m_battleparam->ChangeValue(_(stat.battle_param));
 	m_modelname->ChangeValue(_(btl.model));
 	m_trancemodelname->ChangeValue(_(btl.model_trance));
 	m_tranceglowr->SetValue(btl.trance_color[0]);
@@ -566,6 +613,7 @@ int CharacterParameterDialog::ShowModal(CharBattleParameterStruct& btl, InitialS
 		m_animsizer->Add(m_listanimchoice[i], 0, wxALL, 5);
 		m_animsizer->Add(m_listanimname[i], 0, wxALL | wxEXPAND, 5);
 		m_listanimchoice[i]->Connect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(CharacterParameterDialog::OnAnimChoice), NULL, this);
+		m_listanimname[i]->Connect(wxEVT_KEY_DOWN, wxKeyEventHandler(CharacterParameterDialog::OnAnimKey), NULL, this);
 	}
 	ColorSelection();
 	ModelSelection();
@@ -589,6 +637,7 @@ void CharacterParameterDialog::ApplyModifications(CharBattleParameterStruct& btl
 	stat.default_winpose = m_winpose->IsChecked() ? 1 : 0;
 	stat.default_category = (m_category1->IsChecked() ? 0x01 : 0) | (m_category2->IsChecked() ? 0x02 : 0) | (m_category3->IsChecked() ? 0x04 : 0) | (m_category4->IsChecked() ? 0x08 : 0)
 						  | (m_category5->IsChecked() ? 0x10 : 0) | (m_category6->IsChecked() ? 0x20 : 0) | (m_category7->IsChecked() ? 0x40 : 0) | (m_category8->IsChecked() ? 0x80 : 0);
+	stat.battle_param = m_battleparam->GetValue().ToStdWstring();
 	btl.model = m_modelname->GetValue().ToStdWstring();
 	btl.model_trance = m_trancemodelname->GetValue().ToStdWstring();
 	btl.trance_color[0] = m_tranceglowr->GetValue();
@@ -683,11 +732,41 @@ void CharacterParameterDialog::OnAnimChoice(wxCommandEvent& event) {
 		}
 }
 
+void CharacterParameterDialog::OnAnimKey(wxKeyEvent& event) {
+	if (event.GetModifiers() == wxMOD_CONTROL && event.GetKeyCode() == 'V') {
+		if (wxTheClipboard->Open())
+		{
+			if (wxTheClipboard->IsSupported(wxDF_TEXT))
+			{
+				wxTextDataObject data;
+				unsigned int i, animindex = 0;
+				wxTheClipboard->GetData(data);
+				wxArrayString pastedlines = wxSplit(data.GetText(), '\n');
+				for (i = 0; i < BATTLE_MOTION_AMOUNT; i++)
+					if (m_listanimname[i] == event.GetEventObject()) {
+						animindex = i;
+						break;
+					}
+				for (i = 0; i < pastedlines.GetCount(); i++) {
+					if (animindex + i >= BATTLE_MOTION_AMOUNT)
+						break;
+					m_listanimname[animindex + i]->ChangeValue(pastedlines[i]);
+				}
+			}
+			wxTheClipboard->Close();
+		}
+		return;
+	}
+	event.Skip();
+}
+
 void CharacterParameterDialog::OnButtonClick(wxCommandEvent& event) {
 	int id = event.GetId();
 	if (id == wxID_OK || id == wxID_CANCEL) {
-		for (unsigned int i = 0; i < m_listanimchoice.size(); i++)
+		for (unsigned int i = 0; i < m_listanimchoice.size(); i++) {
 			m_listanimchoice[i]->Disconnect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(CharacterParameterDialog::OnAnimChoice), NULL, this);
+			m_listanimname[i]->Disconnect(wxEVT_KEY_DOWN, wxKeyEventHandler(CharacterParameterDialog::OnAnimKey), NULL, this);
+		}
 		EndModal(id);
 	}
 }
@@ -853,4 +932,117 @@ bool EnemyResourceDialog::ApplyModifications(EnemyStatDataStruct& es, BattleData
 			result = (es.parent->AddAnimation(es.id, m_listanimid[i]->GetValue()) == 0) && result;
 	}
 	return result;
+}
+
+DatabaseFormatDialog::DatabaseFormatDialog(wxWindow* parent, wxString* header, wxString* format, map<wxString, wxString>* fields) : DatabaseFormatWindow(parent) {
+	field_count = 0;
+	header_original = header;
+	format_original = format;
+	fields_original = fields;
+	m_textheader->SetValue(*header);
+	m_textformat->SetValue(*format);
+	for (auto f = fields->begin(); f != fields->end(); f++)
+		AddField(f->first, f->second);
+}
+
+map<wxString, wxString> DatabaseFormatDialog::GetFieldMap() {
+	map<wxString, wxString> result;
+	for (int i = 0; i < field_count; i++)
+		result.emplace(field_name[i]->GetValue(), field_default[i]->GetValue());
+	return result;
+}
+
+void DatabaseFormatDialog::ApplyChanges() {
+	*header_original = m_textheader->GetValue();
+	*format_original = m_textformat->GetValue();
+	*fields_original = GetFieldMap();
+}
+
+void DatabaseFormatDialog::AddField(wxString name, wxString defaultValue) {
+	wxTextCtrl* namectrl = new wxTextCtrl(m_fieldscrolled, wxID_ANY, name, wxDefaultPosition, wxDefaultSize, 0);
+	wxTextCtrl* defaultctrl = new wxTextCtrl(m_fieldscrolled, wxID_ANY, defaultValue, wxDefaultPosition, wxDefaultSize, 0);
+	wxButton* deletebtn = new wxButton(m_fieldscrolled, field_count, _("x"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
+	namectrl->SetToolTip(_("Name of the custom field"));
+	defaultctrl->SetToolTip(_("Default value of the custom field"));
+	customfieldSizer->Add(namectrl, 0, wxALL, 5);
+	customfieldSizer->Add(defaultctrl, 0, wxALL, 5);
+	customfieldSizer->Add(deletebtn, 0, wxALL, 5);
+	deletebtn->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(DatabaseFormatDialog::OnButtonClick), NULL, this);
+	field_name.push_back(namectrl);
+	field_default.push_back(defaultctrl);
+	field_delete_btn.push_back(deletebtn);
+	field_count++;
+	this->Layout();
+}
+
+void DatabaseFormatDialog::RemoveField(int fieldindex) {
+	if (fieldindex < 0 || fieldindex >= field_count)
+		return;
+	wxTextCtrl* namectrl = field_name[fieldindex];
+	wxTextCtrl* defaultctrl = field_default[fieldindex];
+	wxButton* deletebtn = field_delete_btn[fieldindex];
+	deletebtn->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(DatabaseFormatDialog::OnButtonClick), NULL, this);
+	namectrl->Destroy();
+	defaultctrl->Destroy();
+	deletebtn->Destroy();
+	field_name.erase(field_name.begin() + fieldindex);
+	field_default.erase(field_default.begin() + fieldindex);
+	field_delete_btn.erase(field_delete_btn.begin() + fieldindex);
+	field_count--;
+	for (int i = fieldindex; i < field_count; i++)
+		field_delete_btn[i]->SetId(i);
+	this->Layout();
+}
+
+void DatabaseFormatDialog::OnButtonClick(wxCommandEvent& event) {
+	int id = event.GetId();
+	if (id == wxID_OK || id == wxID_CANCEL) {
+		if (id == wxID_OK)
+			ApplyChanges();
+		EndModal(id);
+	} else if (id == wxID_ADD) {
+		AddField(wxString::Format(wxT("field%d"), field_count), wxEmptyString);
+	} else {
+		RemoveField(id);
+	}
+}
+
+DatabaseFieldDialog::DatabaseFieldDialog(wxWindow* parent, map<wxString, wxString>* fields, map<wxString, wxString>& parentfields) : DatabaseFieldWindow(parent) {
+	fields_original = fields;
+	for (auto f = parentfields.begin(); f != parentfields.end(); f++) {
+		auto fv = fields->find(f->first);
+		if (fv == fields->end())
+			AddField(f->first, wxEmptyString, f->second);
+		else
+			AddField(fv->first, fv->second, f->second);
+	}
+	this->Layout();
+}
+
+map<wxString, wxString> DatabaseFieldDialog::GetFieldMap() {
+	map<wxString, wxString> result;
+	for (unsigned int i = 0; i < field_name.size(); i++)
+		if (!field_value[i]->GetValue().IsEmpty())
+			result.emplace(field_name[i]->GetValue(), field_value[i]->GetValue());
+	return result;
+}
+
+void DatabaseFieldDialog::AddField(wxString name, wxString val, wxString defaultValue) {
+	wxTextCtrl* namectrl = new wxTextCtrl(m_fieldscrolled, wxID_ANY, name, wxDefaultPosition, wxDefaultSize, wxTE_READONLY | wxBORDER_SIMPLE);
+	wxTextCtrl* valuectrl = new wxTextCtrl(m_fieldscrolled, wxID_ANY, val, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
+	valuectrl->SetMinSize(wxSize(-1, namectrl->GetSize().y));
+	valuectrl->SetMaxSize(wxSize(-1, namectrl->GetSize().y));
+	namectrl->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_INFOBK));
+	valuectrl->SetToolTip(_("Default value: ") + defaultValue);
+	customfieldSizer->Add(namectrl, 0, wxALL, 5);
+	customfieldSizer->Add(valuectrl, 0, wxALL | wxEXPAND, 5);
+	field_name.push_back(namectrl);
+	field_value.push_back(valuectrl);
+}
+
+void DatabaseFieldDialog::OnButtonClick(wxCommandEvent& event) {
+	int id = event.GetId();
+	if (id == wxID_OK)
+		*fields_original = GetFieldMap();
+	EndModal(id);
 }

@@ -1263,3 +1263,50 @@ void HWSWriteWString(fstream& f, wstring str) {
 	for (unsigned int i = 0; (int)i < strlen; i++)
 		f.put(raw[i]);
 }
+
+void HWSReadWxString(fstream& f, wxString& str) {
+	int strlen;
+	char* raw;
+	HWSReadFlexibleChar(f, strlen, true);
+	raw = new char[strlen];
+	for (int i = 0; i < strlen; i++)
+		raw[i] = f.get();
+	str = wxString::FromUTF8(raw, strlen);
+}
+
+void HWSWriteWxString(fstream& f, wxString str) {
+	wxCharBuffer raw = str.mb_str(wxConvUTF8);
+	int strlen = raw.length();
+	HWSWriteFlexibleChar(f, strlen, true);
+	for (unsigned int i = 0; (int)i < strlen; i++)
+		f.put(raw[i]);
+}
+
+void HWSReadCSVFormatting(fstream& f, wxString& header, wxString& format) {
+	HWSReadWxString(f, header);
+	HWSReadWxString(f, format);
+}
+
+void HWSWriteCSVFormatting(fstream& f, wxString& header, wxString& format) {
+	HWSWriteWxString(f, header);
+	HWSWriteWxString(f, format);
+}
+
+void HWSReadCSVFields(fstream& f, map<wxString, wxString>& fields) {
+	wxString name, defaultvalue;
+	int fieldcount;
+	HWSReadFlexibleChar(f, fieldcount, true);
+	for (int i = 0; i < fieldcount; i++) {
+		HWSReadWxString(f, name);
+		HWSReadWxString(f, defaultvalue);
+		fields[name] = defaultvalue;
+	}
+}
+
+void HWSWriteCSVFields(fstream& f, map<wxString, wxString>& fields) {
+	HWSWriteFlexibleChar(f, fields.size(), true);
+	for (auto it = fields.begin(); it != fields.end(); it++) {
+		HWSWriteWxString(f, it->first);
+		HWSWriteWxString(f, it->second);
+	}
+}

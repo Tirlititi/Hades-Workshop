@@ -44,16 +44,21 @@ public:
 	FF9String help; // readonly
 	uint16_t help_size_x;
 	uint8_t category;
-	uint8_t cost;
+	int cost;
 
 	// Memoria custom feature
 	vector<int> boosted_support;
+
+	map<wxString, wxString> custom_field;
 	
 	// Return 0 if success ; 1 if the value is too long
 	int SetName(wstring newvalue);
 	int SetName(FF9String& newvalue);
 	int SetHelp(wstring newvalue);
 	int SetHelp(FF9String& newvalue);
+
+	wxString GetFieldValue(wxString fieldname);
+	bool CompareWithCSV(wxArrayString entries);
 
 private:
 	uint16_t name_offset;
@@ -72,6 +77,10 @@ public:
 	
 	uint32_t steam_method_position;
 	uint32_t steam_method_base_length;
+
+	wxString csv_header;
+	wxString csv_format;
+	map<wxString, wxString> custom_field;
 
 	int GetSupportIndexById(int supportid);
 	SupportDataStruct& GetSupportById(int supportid);

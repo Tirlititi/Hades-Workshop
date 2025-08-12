@@ -44,18 +44,18 @@ using namespace std;
 struct EnemySpellDataStruct {
 public:
 	FF9String name; // readonly
-	uint8_t effect;
-	uint8_t power;
+	int effect;
+	int power;
 	uint8_t element;
-	uint8_t accuracy;
+	int accuracy;
 	uint8_t flag;
-	uint8_t status;
-	uint8_t mp;
-	uint16_t model;
+	int status;
+	int mp;
+	int model;
 	uint8_t target_type;
 	uint8_t target_flag;
 	uint8_t menu_flag;
-	uint16_t model_alt;
+	int model_alt;
 	uint16_t name_offset;
 	
 	// Return 0 if success ; 1 if the value is too long
@@ -80,37 +80,40 @@ public:
 struct EnemyStatDataStruct {
 public:
 	FF9String name; // readonly
-	uint8_t lvl;
+	int lvl;
 	uint8_t classification;
-	uint16_t hp;
-	uint16_t mp;
-	uint16_t gils;
-	uint16_t exp;
-	uint8_t item_drop[4];
-	uint8_t item_steal[4];
-	uint8_t card_drop;
-	uint16_t attack; // Unused
-	uint8_t accuracy; // Unused
-	uint8_t cur_capa;
-	uint8_t max_capa;
-	uint8_t trans;
-	uint8_t speed;
-	uint8_t strength;
-	uint8_t magic;
-	uint8_t spirit;
-	uint8_t defence;
-	uint8_t evade;
-	uint8_t magic_defence;
-	uint8_t magic_evade;
+	int hp;
+	int mp;
+	int gils;
+	int exp;
+	int item_drop[4];
+	int item_steal[4];
+	int item_drop_rate[4];
+	int item_steal_rate[4];
+	int card_drop;
+	int card_drop_rate;
+	int attack; // Unused
+	int accuracy; // Unused
+	uint8_t cur_capa; // Unused
+	uint8_t max_capa; // Unused
+	uint8_t trans; // Unused
+	int speed;
+	int strength;
+	int magic;
+	int spirit;
+	int defence;
+	int evade;
+	int magic_defence;
+	int magic_evade;
 	uint8_t element_immune;
 	uint8_t element_absorb;
 	uint8_t element_half;
 	uint8_t element_weak;
-	uint32_t status_immune;
-	uint32_t status_auto;
-	uint32_t status_initial;
+	set<int> status_immune;
+	set<int> status_auto;
+	set<int> status_initial;
 	uint8_t default_attack;
-	uint8_t blue_magic;
+	int blue_magic;
 	uint16_t death_flag; // 1 : die_atk (allow script "Death" function) ; 2 : die_dmg
 	uint8_t text_amount;
 	uint16_t radius;
@@ -159,7 +162,7 @@ public:
 	uint8_t frequence;
 	uint8_t enemy_amount;
 	uint16_t camera_engage;
-	uint16_t ap;
+	uint32_t ap;
 	uint8_t enemy_id[4];
 	uint8_t targetable[4];
 	int16_t enemy_posx[4];
@@ -174,7 +177,7 @@ public:
 struct EnemyDataStruct : public ChunkChild {
 public:
 	uint16_t id;
-	uint8_t unknown;
+	uint8_t version;
 	uint8_t group_amount;
 	uint8_t stat_amount;
 	uint8_t spell_amount;

@@ -5,6 +5,7 @@
 #include "Gui_Preferences.h"
 #include "Database_Spell.h"
 #include "Hades_Strings.h"
+#include "CommonUtility.h"
 #include "main.h"
 
 // Strings and macros
@@ -184,7 +185,7 @@
 #define STRING_HEAL_MEAN3			"Average heal: %.1f (taking hit rate and critical strikes into account)\n"
 
 #define STRING_REFLECT				"The spell hits %s after reflecting on %d target(s)\n"
-#define STRING_MULTI_TARGET_RATE	"It has %.1f chances to hit instead when multi-targeting\n"
+#define STRING_MULTI_TARGET_RATE	"It has %.1f%% chances to hit instead when multi-targeting\n"
 #define STRING_IPSEN_CURSE			"The Ipsen curse inverts the weapon power from %d to %d\n"
 #define STRING_SUMMON_STATUS		L"Also grants Protect when casting the long form of the summon\n"
 #define STRING_CHAKRA				"Also heals %s's MP\n"
@@ -293,11 +294,11 @@ void ToolDamageCalculator::OnSaveProfile(wxCommandEvent& event) {
 		set<int> defaultiduse, defaultnameuse;
 		int i, j;
 		PreferencesDialog::GetToolCalculatorProfileList(&profileid, &profilename);
-		for (i = 0; i < profilename.GetCount(); i++) {
+		for (i = 0; i < (int)profilename.GetCount(); i++) {
 			dial.m_listprofile->Append(profilename[i]);
 			if (profilename[i].StartsWith(wxT(HADES_STRING_CALCULATOR_PROFILE_DEFAULT)))
 				defaultnameuse.insert(wxAtoi(profilename[i].Mid(sizeof(HADES_STRING_CALCULATOR_PROFILE_DEFAULT) - 1)));
-			for (j = 0; j < profilename.GetCount(); j++)
+			for (j = 0; j < (int)profilename.GetCount(); j++)
 				if (profileid[i].IsSameAs(wxString::Format(wxT("Profile%d"), j))) {
 					defaultiduse.insert(j);
 					break;
@@ -318,7 +319,7 @@ void ToolDamageCalculator::OnSaveProfile(wxCommandEvent& event) {
 			if (dial.m_radionew->GetValue()) {
 				newname = dial.m_profilename->GetValue();
 				newid = _(L"UnknownProfile");
-				for (j = 0; j <= profileid.GetCount(); j++)
+				for (j = 0; j <= (int)profileid.GetCount(); j++)
 					if (defaultiduse.find(j) == defaultiduse.end()) {
 						newid = wxString::Format(wxT("Profile%d"), j);
 						break;
@@ -352,7 +353,7 @@ void ToolDamageCalculator::OnLoadProfile(wxCommandEvent& event) {
 		return;
 	}
 	DamageCalculatorLoadProfile dial(this);
-	for (int i = 0; i < profilename.GetCount(); i++)
+	for (int i = 0; i < (int)profilename.GetCount(); i++)
 		dial.m_listprofile->Append(profilename[i]);
 	dial.m_listprofile->SetSelection(0);
 	if (dial.ShowModal() == wxID_OK) {
@@ -368,7 +369,7 @@ void ToolDamageCalculator::OnLoadProfile(wxCommandEvent& event) {
 }
 
 wxString CombineMultipleStrings(wxArrayString arr) {
-	int i, count = 0, max = 0;
+	unsigned int i, count = 0, max = 0;
 	for (i = 0; i < arr.size(); i++)
 		if (!arr[i].IsEmpty())
 			max++;
@@ -769,7 +770,7 @@ struct DamageCalculation {
 	void ApplyGambleDefence() {
 		if ((defender_support & SUPPORT_ABILITY_GAMBLE_DEFENCE) != 0) {
 			vector<int> newdef;
-			int i, j;
+			unsigned int i; int j;
 			for (i = 0; i < i_df_pow.size(); i++) {
 				if (i_df_pow[i] == 0)
 					newdef.push_back(0);
@@ -906,13 +907,13 @@ struct DamageCalculation {
 	}
 
 	void SetupMultiTargetDamage() {
-		for (int i = 0; i < i_at_num.size(); i++)
+		for (unsigned int i = 0; i < i_at_num.size(); i++)
 			i_at_num_multi_target.push_back(i_at_num[i] / 2);
 		use_multi_target_damage = true;
 	}
 
 	void ComputeDamage(int minpow = 1, int minnum = 1) {
-		int i, j;
+		unsigned int i, j;
 		has_damage = true;
 		for (i = 0; i < i_at_num.size(); i++)
 			for (j = 0; j < i_df_pow.size(); j++)
@@ -941,7 +942,7 @@ struct DamageCalculation {
 			return;
 		int pow = i_at_num[0];
 		vector<int> hp;
-		int i;
+		unsigned int i;
 		has_special_damage = true;
 		use_target_max_hp = true;
 		if (maxhp)
@@ -971,7 +972,7 @@ struct DamageCalculation {
 	}
 
 	void ComputeHeal() {
-		int i;
+		unsigned int i;
 		if ((defender_status & STATUS_ZOMBIE) != 0 || (defender_class & ENEMY_CLASSIFICATION_UNDEAD) != 0) {
 			use_target_zombie = true;
 			has_damage = true;
@@ -993,7 +994,7 @@ struct DamageCalculation {
 	}
 
 	void ProcessMain() {
-		int i, j;
+		unsigned int i, j;
 		is_summon = spell_command == 16 || spell_command == 18 || spell_command == 20;
 		switch (spell_effect) {
 		default:
@@ -1214,7 +1215,7 @@ struct DamageCalculation {
 			}
 			use_caster_magic = true;
 			use_caster_level = true;
-			for (i = 0; i < attacker_magic + attacker_level; i++)
+			for (i = 0; i < (unsigned int)(attacker_magic + attacker_level); i++)
 				i_at_num.push_back(i);
 			i_at_pow = spell_power;
 			i_df_pow.push_back(0);
@@ -2201,7 +2202,7 @@ void ToolDamageCalculator::UpdateInformation() {
 		return;
 	DamageCalculation calc;
 	wxString description = _(L"");
-	int i, j;
+	unsigned int i; int j;
 	// Initialize inputs
 	calc.cddata = cddata;
 	calc.attacker_is_player = m_panelleft->GetSelection() == 0;
@@ -2212,7 +2213,7 @@ void ToolDamageCalculator::UpdateInformation() {
 		calc.attacker_weapon_index = player_panel[0]->m_weapon->GetSelection();
 		if (calc.attacker_weapon_index >= 0 && calc.attacker_weapon_index < ITEM_WEAPON_AMOUNT) {
 			calc.attacker_weapon_element = cddata->itemset.weapon[calc.attacker_weapon_index].element;
-			calc.attacker_weapon_status = cddata->spellset.status_set[cddata->itemset.weapon[calc.attacker_weapon_index].status].status;
+			calc.attacker_weapon_status = GetStatusBitList(cddata->spellset.status_set[cddata->itemset.weapon[calc.attacker_weapon_index].status].status_list);
 		}
 		calc.attacker_weapon_power = max(0, min(255, player_panel[0]->equip.attack + player_panel[0]->stat->attack));
 		calc.attacker_level = player_panel[0]->m_level->GetValue();
@@ -2237,7 +2238,7 @@ void ToolDamageCalculator::UpdateInformation() {
 		calc.spell_power = player_panel[0]->m_power->GetValue();
 		calc.spell_accuracy = player_panel[0]->m_accuracy->GetValue();
 		MACRO_CALCULATOR_GETELEMS_WIN(calc.spell_element, player_panel[0])
-		calc.spell_status = cddata->spellset.status_set[player_panel[0]->m_status->GetSelection()].status;
+		calc.spell_status = GetStatusBitList(cddata->spellset.status_set[player_panel[0]->m_status->GetSelection()].status_list);
 		if (cddata->saveset.sectionloaded[DATA_SECTION_CMD]) {
 			if (calc.spell_index == 67 || calc.spell_index == 69 || calc.spell_index == 70 || calc.spell_index == 71 || calc.spell_index == 73)
 				calc.spell_command = 20;
@@ -2272,7 +2273,7 @@ void ToolDamageCalculator::UpdateInformation() {
 		calc.spell_power = enemy_panel[0]->m_power->GetValue();
 		calc.spell_accuracy = enemy_panel[0]->m_accuracy->GetValue();
 		MACRO_CALCULATOR_GETELEMS_WIN(calc.spell_element, enemy_panel[0])
-		calc.spell_status = cddata->spellset.status_set[enemy_panel[0]->m_status->GetSelection()].status;
+		calc.spell_status = GetStatusBitList(cddata->spellset.status_set[enemy_panel[0]->m_status->GetSelection()].status_list);
 		calc.reflect_count = (cddata->enemyset.battle[enemy_list_battle[enemy_panel[0]->m_baseenemy->GetSelection()]]->spell[enemy_panel[0]->m_basespell->GetSelection()].flag & SPELL_FLAG_REFLECTABLE) != 0 ? enemy_panel[0]->buff.reflect_count : 0;
 	}
 	if (calc.defender_is_player) {
@@ -2604,7 +2605,7 @@ void ToolDamageCalculator::UpdateInformation() {
 				description += wxString::Format(calc.has_heal ? wxT(STRING_ALTERNATE_HEAL) : wxT(STRING_ALTERNATE_DAMAGE), _(STRING_MULTI_TARGET)) + _(L" ") + wxString::Format(wxT("%d\n"), calc.multi_target_damage[0]);
 			}
 			if (calc.has_special_damage) {
-				int sdcount = min(calc.special_damage.size(), calc.special_damage_description.GetCount());
+				unsigned int sdcount = min(calc.special_damage.size(), calc.special_damage_description.GetCount());
 				for (i = 0; i < sdcount; i++)
 					description += calc.special_damage_description[i] + wxString::Format(wxT("%d\n"), calc.special_damage[i]);
 			}
@@ -2644,7 +2645,7 @@ void ToolDamageCalculator::UpdateInformation() {
 			for (i = 0; i < STATUS_AMOUNT; i++) if (calc.use_caster_status_low_rate.find(i) != calc.use_caster_status_low_rate.end()) description += wxString::Format(wxT(STRING_MODIF_HIT_LOW), wxString::Format(wxT("%s's %s"), calc.attacker_name, HADES_STRING_STATUS_NAME[i]));
 			for (i = 0; i < STATUS_AMOUNT; i++) if (calc.use_target_status_low_rate.find(i) != calc.use_target_status_low_rate.end()) description += wxString::Format(wxT(STRING_MODIF_HIT_LOW), wxString::Format(wxT("%s's %s"), calc.defender_name, HADES_STRING_STATUS_NAME[i]));
 			if ((calc.use_target_support & SUPPORT_ABILITY_DISTRACT) != 0) description += wxString::Format(wxT(STRING_MODIF_HIT_LOW), L"Distract");
-			if (!calc.addendum_end.IsEmpty()) description += desclengthtmp > description.Len() ? _(L"\n") + calc.addendum_end : calc.addendum_end;
+			if (!calc.addendum_end.IsEmpty()) description += desclengthtmp > (int)description.Len() ? _(L"\n") + calc.addendum_end : calc.addendum_end;
 		}
 	}
 	m_description->ChangeValue(description);
@@ -3237,7 +3238,7 @@ void ToolDamageCalculatorEnemy::SelectBaseEnemy(int sel) {
 	buff.element_half = stat.element_half;
 	buff.element_weak = stat.element_weak;
 	buff.element_boost = 0; // TODO: include the bug of the PSX version
-	buff.status = stat.status_auto | stat.status_initial;
+	buff.status = GetStatusBitList(stat.status_auto) | GetStatusBitList(stat.status_initial);
 	buff.back_row = false;
 	buff.back_attack = (enemy->flag & BATTLE_FLAG_BACK_ATTACK) != 0;
 	parent->UpdateIpsenCurseFlag(enemy);

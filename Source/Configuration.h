@@ -51,6 +51,7 @@ struct UnusedSaveBackup;
 
 #include "File_Manipulation.h"
 #include "Spells.h"
+#include "Statuses.h"
 #include "Supports.h"
 #include "Items.h"
 #include "Cards.h"

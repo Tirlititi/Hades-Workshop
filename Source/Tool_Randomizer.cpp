@@ -4,6 +4,7 @@
 #include <wx/arrstr.h>
 #include "Gui_Preferences.h"
 #include "Database_SpellAnimation.h"
+#include "CommonUtility.h"
 #include "main.h"
 
 //=====================================//
@@ -44,7 +45,7 @@ inline bool IsNotSafeAbility(int abil, vector<int>& safelist) {
 
 inline bool DoesCharacterUseSpell(AbilitySetDataStruct& abillist, int spell) {
 	for (unsigned int i = 0; i < ABILITY_SET_CAPACITY; i++)
-		if (abillist.ability[i].id == spell)
+		if (abillist.entry[i].ability.id == spell)
 			return true;
 	return false;
 }
@@ -331,10 +332,12 @@ public:
 	vector<int>* safelist[5];
 
 	wxString GetAbilName(int abil) {
-		if (abil < SPELL_AMOUNT && parent->cddata->saveset.sectionloaded[DATA_SECTION_SPELL])
-			return _(parent->cddata->spellset.spell[abil].name.GetStr(hades::TEXT_PREVIEW_TYPE));
-		if (abil >= SPELL_AMOUNT && parent->cddata->saveset.sectionloaded[DATA_SECTION_SUPPORT])
-			return _(parent->cddata->supportset.support[abil - SPELL_AMOUNT].name.GetStr(hades::TEXT_PREVIEW_TYPE));
+		int spellid = AnyAbilityStruct::ConvertIdToSpellId(abil);
+		if (spellid >= 0 && parent->cddata->saveset.sectionloaded[DATA_SECTION_SPELL])
+			return _(parent->cddata->spellset.GetSpellById(spellid).name.GetStr(hades::TEXT_PREVIEW_TYPE));
+		int supportid = AnyAbilityStruct::ConvertIdToSupportId(abil);
+		if (supportid >= 0 && parent->cddata->saveset.sectionloaded[DATA_SECTION_SUPPORT])
+			return _(parent->cddata->supportset.GetSupportById(supportid).name.GetStr(hades::TEXT_PREVIEW_TYPE));
 		return wxString::Format(wxT("%i"), abil);
 	}
 
@@ -581,9 +584,9 @@ void ToolRandomizer::ApplyRandomizerCharacter() {
 				statuslist.push_back(cddata->spellset.spell[i].status);
 		for (i = 0; i < SPELL_AMOUNT; i++)
 			if (SpellHasStatus(cddata->spellset.spell[i]) && (!m_charspellstatsafe->IsChecked() || IsNotSafeAbility(i, safe_abil_scramble))) {
-				prevstatus = cddata->spellset.status_set[cddata->spellset.spell[i].status].status;
+				prevstatus = GetStatusBitList(cddata->spellset.GetStatusSetById(cddata->spellset.spell[i].status).status_list);
 				cddata->spellset.spell[i].status = PickRandomInVector(statuslist);
-				ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[i]), cddata->spellset.spell[i].help, prevstatus, cddata->spellset.status_set[cddata->spellset.spell[i].status].status, &cddata->spellset.spell[i]);
+				ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[i]), cddata->spellset.spell[i].help, prevstatus, GetStatusBitList(cddata->spellset.status_set[cddata->spellset.spell[i].status].status_list), &cddata->spellset.spell[i]);
 			}
 		cddata->MarkDataSpellModified();
 	} else if (m_charspellstatus->GetSelection() == 2) {
@@ -594,8 +597,8 @@ void ToolRandomizer::ApplyRandomizerCharacter() {
 		uint8_t newstatus;
 		wstring help;
 		for (i = 39; i < STATUS_SET_AMOUNT; i++) { // Use defaultly unused status sets to avoid messing with items/enemy spells
-			oldset[i] = cddata->spellset.status_set[i].status;
-			cddata->spellset.status_set[i].status = 0;
+			oldset[i] = GetStatusBitList(cddata->spellset.status_set[i].status_list);
+			cddata->spellset.status_set[i].status_list.clear();
 			newcount = 1; // approx.: [1 50%] [2 25%] [3 12.5%] etc...
 			while (newcount < 29 && GetRandom(0, 2))
 				newcount++;
@@ -604,15 +607,15 @@ void ToolRandomizer::ApplyRandomizerCharacter() {
 				if (newstatus >= 7) newstatus++; // Easy Kill, Low HP, Jump
 				if (newstatus >= 9) newstatus++;
 				if (newstatus >= 30) newstatus++;
-				cddata->spellset.status_set[i].status |= (1 << newstatus);
+				cddata->spellset.status_set[i].status_list.insert(newstatus);
 			}
-			cddata->UpdateSpellStatusName(i);
+			cddata->UpdateSpellStatusName(cddata->spellset.status_set[i]);
 		}
 		for (i = 0; i < SPELL_AMOUNT; i++)
 			if (SpellHasStatus(cddata->spellset.spell[i]) && (!m_charspellstatsafe->IsChecked() || IsNotSafeAbility(i, safe_abil_scramble))) {
-				oldstatus = (cddata->spellset.spell[i].status >= 39 ? oldset[cddata->spellset.spell[i].status] : cddata->spellset.status_set[cddata->spellset.spell[i].status].status);
+				oldstatus = (cddata->spellset.spell[i].status >= 39 ? oldset[cddata->spellset.spell[i].status] : GetStatusBitList(cddata->spellset.GetStatusSetById(cddata->spellset.spell[i].status).status_list));
 				cddata->spellset.spell[i].status = GetRandom(39, STATUS_SET_AMOUNT);
-				ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[i]), cddata->spellset.spell[i].help, oldstatus, cddata->spellset.status_set[cddata->spellset.spell[i].status].status, &cddata->spellset.spell[i]);
+				ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[i]), cddata->spellset.spell[i].help, oldstatus, GetStatusBitList(cddata->spellset.GetStatusSetById(cddata->spellset.spell[i].status).status_list), &cddata->spellset.spell[i]);
 			}
 		cddata->MarkDataSpellModified();
 	}
@@ -727,13 +730,13 @@ void ToolRandomizer::ApplyRandomizerCharacter() {
 								cddata->spellset.spell[67].element = 0x20;
 							} else if (cmd.spell_list[j] == 68) { // Carbuncle slot
 								ReplacePartySpell(&cddata->spellset.spell[69], spellpick.second);
-								ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[69]), cddata->spellset.spell[69].help, cddata->spellset.status_set[cddata->spellset.spell[69].status].status, cddata->spellset.status_set[8].status, &cddata->spellset.spell[69]);
+								ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[69]), cddata->spellset.spell[69].help, GetStatusBitList(cddata->spellset.GetStatusSetById(cddata->spellset.spell[69].status).status_list), GetStatusBitList(cddata->spellset.status_set[8].status_list), &cddata->spellset.spell[69]);
 								cddata->spellset.spell[69].status = 8;
 								ReplacePartySpell(&cddata->spellset.spell[70], spellpick.second);
-								ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[70]), cddata->spellset.spell[70].help, cddata->spellset.status_set[cddata->spellset.spell[70].status].status, cddata->spellset.status_set[6].status, &cddata->spellset.spell[70]);
+								ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[70]), cddata->spellset.spell[70].help, GetStatusBitList(cddata->spellset.GetStatusSetById(cddata->spellset.spell[70].status).status_list), GetStatusBitList(cddata->spellset.status_set[6].status_list), &cddata->spellset.spell[70]);
 								cddata->spellset.spell[70].status = 6;
 								ReplacePartySpell(&cddata->spellset.spell[71], spellpick.second);
-								ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[71]), cddata->spellset.spell[71].help, cddata->spellset.status_set[cddata->spellset.spell[71].status].status, cddata->spellset.status_set[24].status, &cddata->spellset.spell[71]);
+								ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[71]), cddata->spellset.spell[71].help, GetStatusBitList(cddata->spellset.GetStatusSetById(cddata->spellset.spell[71].status).status_list), GetStatusBitList(cddata->spellset.status_set[24].status_list), &cddata->spellset.spell[71]);
 								cddata->spellset.spell[71].status = 24;
 							}
 							if (m_charelan->IsChecked()) // Flair/Elan
@@ -749,9 +752,9 @@ void ToolRandomizer::ApplyRandomizerCharacter() {
 						}
 					}
 			}
-		for (i = 0; i < cddata->statset.ability_list[5].ability.size(); i++) // Quina AP
-			if (!cddata->statset.ability_list[5].ability[i].IsVoid() && cddata->statset.ability_list[5].ability[i].is_active && (!m_charspellsafe->IsChecked() || IsNotSafeAbility(cddata->statset.ability_list[5].ability[i].id, safe_abil_spell)))
-				cddata->statset.ability_list[5].ap_cost[i] = m_charquinaap->GetValue();
+		for (i = 0; i < cddata->statset.ability_list[5].entry.size(); i++) // Quina AP
+			if (!cddata->statset.ability_list[5].entry[i].ability.IsVoid() && cddata->statset.ability_list[5].entry[i].ability.is_active && (!m_charspellsafe->IsChecked() || IsNotSafeAbility(cddata->statset.ability_list[5].entry[i].ability.id, safe_abil_spell)))
+				cddata->statset.ability_list[5].entry[i].ap_cost = m_charquinaap->GetValue();
 		for (i = 0; i < SPELL_AMOUNT; i++)
 			if (!m_charspellsafe->IsChecked() || IsNotSafeAbility(i, safe_abil_spell)) {
 				cddata->spellset.spell[i].menu_flag &= 0xF9;
@@ -767,7 +770,7 @@ void ToolRandomizer::ApplyRandomizerCharacter() {
 			if (cddata->cmdset.cmd[16].panel == COMMAND_PANEL_SPELL) spellcmdamount = cddata->cmdset.cmd[16].spell_amount;
 			for (i = 0; i < spellcmdamount; i++)
 				if (!m_charspellsafe->IsChecked() || IsNotSafeAbility(cddata->cmdset.cmd[16].spell_list[i], safe_abil_spell))
-					cddata->spellset.spell[cddata->cmdset.cmd[16].spell_list[i]].menu_flag |= 4;
+					cddata->spellset.GetSpellById(cddata->cmdset.cmd[16].spell_list[i]).menu_flag |= 4;
 		}
 		cddata->MarkDataSpellModified();
 		cddata->MarkDataStatModified();
@@ -785,26 +788,26 @@ void ToolRandomizer::ApplyRandomizerCharacter() {
 			supportnewlist.clear();
 			apcost.clear();
 			supportavaillist = supportfulllist;
-			for (j = 0; j < cddata->statset.ability_list[i].ability.size(); j++)
-				if (!cddata->statset.ability_list[i].ability[j].is_active) {
-					apcost[cddata->statset.ability_list[i].ability[j].id] = cddata->statset.ability_list[i].ap_cost[j];
-					if (!m_charsupportsafe->IsChecked() || IsNotSafeAbility(cddata->statset.ability_list[i].ability[j].id, safe_abil_support))
+			for (j = 0; j < cddata->statset.ability_list[i].entry.size(); j++)
+				if (!cddata->statset.ability_list[i].entry[j].ability.is_active) {
+					apcost[cddata->statset.ability_list[i].entry[j].ability.id] = cddata->statset.ability_list[i].entry[j].ap_cost;
+					if (!m_charsupportsafe->IsChecked() || IsNotSafeAbility(cddata->statset.ability_list[i].entry[j].ability.id, safe_abil_support))
 						supportnewlist.push_back(PickRandomInVector(supportavaillist));
 					else
-						supportnewlist.push_back(cddata->statset.ability_list[i].ability[j].id);
+						supportnewlist.push_back(cddata->statset.ability_list[i].entry[j].ability.id);
 				}
 			sort(supportnewlist.begin(), supportnewlist.end());
 			k = 0;
-			for (j = 0; j < cddata->statset.ability_list[i].ability.size(); j++)
-				if (!cddata->statset.ability_list[i].ability[j].is_active) {
-					cddata->statset.ability_list[i].ability[j].id = supportnewlist[k];
+			for (j = 0; j < cddata->statset.ability_list[i].entry.size(); j++)
+				if (!cddata->statset.ability_list[i].entry[j].ability.is_active) {
+					cddata->statset.ability_list[i].entry[j].ability.id = supportnewlist[k];
 					if (apcost[supportnewlist[k]] > 0) {
-						cddata->statset.ability_list[i].ap_cost[j] = apcost[supportnewlist[k]];
+						cddata->statset.ability_list[i].entry[j].ap_cost = apcost[supportnewlist[k]];
 					} else {
 						rnd = GetRandom(0, 50); // AP cost between 5 and 95 with higher density around 50
 						rnd = rnd * rnd / 50;
 						rnd -= rnd % 5;
-						cddata->statset.ability_list[i].ap_cost[j] = 50 + (2 * GetRandom(0, 2) - 1) * rnd;
+						cddata->statset.ability_list[i].entry[j].ap_cost = 50 + (2 * GetRandom(0, 2) - 1) * rnd;
 					}
 					k++;
 				}
@@ -884,11 +887,11 @@ void ToolRandomizer::ApplyRandomizerWeapon() {
 			charweaplist.clear();
 			AbilitySetDataStruct& abil = cddata->statset.ability_list[cddata->statset.GetCharacterCommandsIndices(i)[0]];
 			for (j = 0; j < ABILITY_SET_CAPACITY; j++)
-				if (!abil.ability[j].IsVoid() && (!m_weapsafe->IsChecked() || IsNotSafeAbility(abil.ability[j].id, safe_abil_weap))) {
-					if (abil.ability[j].is_active)
-						charspelllist.push_back(abil.ability[j].id);
+				if (!abil.entry[j].ability.IsVoid() && (!m_weapsafe->IsChecked() || IsNotSafeAbility(abil.entry[j].ability.id, safe_abil_weap))) {
+					if (abil.entry[j].ability.is_active)
+						charspelllist.push_back(abil.entry[j].ability.id);
 					else
-						charsupplist.push_back(abil.ability[j].id);
+						charsupplist.push_back(abil.entry[j].ability.id);
 				}
 			if (charspelllist.size() == 0 && charsupplist.size() == 0)
 				continue;
@@ -904,7 +907,7 @@ void ToolRandomizer::ApplyRandomizerWeapon() {
 			if (m_weapall->IsChecked() && charspelllist.size() > 0)
 				for (j = 0; j < charspelllist.size() && availableslotlist.size()>0; j++) {
 					addspell = true;
-					for (slotpick = 0; slotpick < charweaplist.size() && addspell; slotpick++)
+					for (slotpick = 0; slotpick < (int)charweaplist.size() && addspell; slotpick++)
 						for (k = 0; k < 3; k++)
 							if (charsupplist[j] == cddata->itemset.item[charweaplist[slotpick]].skill[k].id) {
 								addspell = false;
@@ -967,11 +970,11 @@ void ToolRandomizer::ApplyRandomizerArmor() {
 			charsupplist.clear();
 			AbilitySetDataStruct& abil = cddata->statset.ability_list[cddata->statset.GetCharacterCommandsIndices(i)[0]];
 			for (j = 0; j < ABILITY_SET_CAPACITY; j++)
-				if (!abil.ability[j].IsVoid() && (!m_armorsafe->IsChecked() || IsNotSafeAbility(abil.ability[j].id, safe_abil_armor))) {
-					if (abil.ability[j].is_active)
-						charspelllist.push_back(abil.ability[j].id);
+				if (!abil.entry[j].ability.IsVoid() && (!m_armorsafe->IsChecked() || IsNotSafeAbility(abil.entry[j].ability.id, safe_abil_armor))) {
+					if (abil.entry[j].ability.is_active)
+						charspelllist.push_back(abil.entry[j].ability.id);
 					else
-						charsupplist.push_back(abil.ability[j].id);
+						charsupplist.push_back(abil.entry[j].ability.id);
 				}
 			if (charspelllist.size() == 0 && charsupplist.size() == 0)
 				continue;
@@ -987,7 +990,7 @@ void ToolRandomizer::ApplyRandomizerArmor() {
 			if (m_armorall->IsChecked() && charspelllist.size() > 0)
 				for (j = 0; j < charsupplist.size() && availableslotlist.size()>0; j++) {
 					addsupp = true;
-					for (slotpick = 0; slotpick < chararmorlist.size() && addsupp; slotpick++)
+					for (slotpick = 0; slotpick < (int)chararmorlist.size() && addsupp; slotpick++)
 						for (k = 0; k < 3; k++)
 							if (charsupplist[j] == cddata->itemset.item[chararmorlist[slotpick]].skill[k].id) {
 								addsupp = false;

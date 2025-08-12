@@ -5,7 +5,10 @@
 #include "Database_CSV.h"
 #include "CommonUtility.h"
 
-#define SUPPORT_HWS_VERSION 2
+#define SUPPORT_HWS_VERSION 3
+
+#define SUPPORT_CSV_CHECK L"%id%;%cost%;%boosted%"
+#define SUPPORT_CSV_DEFAULT L"%name%;" SUPPORT_CSV_CHECK
 
 const unsigned int steam_support_field_size[] = { 8, 8, 16, 16, 16 };
 
@@ -61,14 +64,36 @@ int SupportDataStruct::SetHelp(FF9String& newvalue) {
 	return 0;
 }
 
+wxString SupportDataStruct::GetFieldValue(wxString fieldname) {
+	if (fieldname.IsSameAs("id")) return wxString::Format(wxT("%d"), id);
+	if (fieldname.IsSameAs("name")) return wxString::Format(wxT("%s"), name.str_nice);
+	if (fieldname.IsSameAs("help")) return wxString::Format(wxT("%s"), help.str_nice);
+	if (fieldname.IsSameAs("category")) return wxString::Format(wxT("%d"), category);
+	if (fieldname.IsSameAs("cost")) return wxString::Format(wxT("%d"), cost);
+	if (fieldname.IsSameAs("boosted")) wxString::Format(wxT("%s"), ConcatenateStrings<int>(", ", boosted_support, static_cast<string(*)(int)>(&to_string)));
+	if (auto search = custom_field.find(fieldname); search != custom_field.end()) return search->second;
+	if (auto search = parent->custom_field.find(fieldname); search != parent->custom_field.end()) return search->second;
+	return _(L"");
+}
+
+bool SupportDataStruct::CompareWithCSV(wxArrayString entries) {
+	if (id >= (int)entries.GetCount())
+		return false;
+	if (!custom_field.empty())
+		return false;
+	wxString rightcsv = MemoriaUtility::GenerateDatabaseEntryGeneric(*this, _(SUPPORT_CSV_CHECK));
+	return MemoriaUtility::CompareEntries(entries[id].AfterFirst(L';'), rightcsv);
+}
+
 #define MACRO_SUPPORT_IOFUNCTIONDATA(IO,SEEK,READ,PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<supportamount;i++) { \
-		IO ## Char(ffbin,support[i].category); \
-		IO ## Char(ffbin,support[i].cost); \
-		IO ## Short(ffbin,support[i].name_offset); \
-		IO ## Short(ffbin,support[i].help_offset); \
-		IO ## Short(ffbin,support[i].help_size_x); \
+	for (i = 0; i < supportamount; i++) { \
+		IO ## Char(ffbin, support[i].category); \
+		IO ## FlexibleChar(ffbin, support[i].cost, useextendedtype2); \
+		IO ## Short(ffbin, support[i].name_offset); \
+		IO ## Short(ffbin, support[i].help_offset); \
+		IO ## Short(ffbin, support[i].help_size_x); \
+		if (useextendedtype2) IO ## CSVFields(ffbin, support[i].custom_field); \
 	} \
 	if (PPF) PPFEndScanStep();
 
@@ -99,7 +124,10 @@ int SupportDataStruct::SetHelp(FF9String& newvalue) {
 
 void SupportDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 	int supportamount = SUPPORT_AMOUNT;
+	bool useextendedtype2 = false;
 	int i;
+	csv_header = _(HADES_STRING_CSV_SUPPORT_HEADER);
+	csv_format = _(SUPPORT_CSV_DEFAULT);
 	name_space_total = config.support_name_space_total;
 	help_space_total = config.support_help_space_total;
 	support.resize(SUPPORT_AMOUNT);
@@ -188,16 +216,8 @@ void SupportDataSet::GenerateCSharp(vector<string>& buffer) {
 	buffer.push_back(supportdb.str());
 }
 
-wxString CSV_SupportConstructor(SupportDataStruct& sp, int index) {
-	return wxString::Format(wxT("%s;%d;%d;%s"),
-		sp.name.str_nice,
-		sp.id,
-		sp.cost,
-		ConcatenateStrings<int>(", ", sp.boosted_support, static_cast<string(*)(int)>(&to_string)));
-}
-
 bool SupportDataSet::GenerateCSV(string basefolder) {
-	return MemoriaUtility::GenerateCSVGeneric<SupportDataStruct>(_(basefolder), _(HADES_STRING_CSV_SUPPORT_FILE), _(HADES_STRING_CSV_SUPPORT_HEADER), support, &CSV_SupportConstructor, &MemoriaUtility::CSV_ComparerWithoutStart, true);
+	return MemoriaUtility::GenerateDatabaseGeneric<SupportDataStruct>(_(basefolder), _(HADES_STRING_CSV_SUPPORT_FILE), csv_header, _(L"\n"), _(L"\n"), support, csv_format, true);
 }
 
 void SupportDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype, bool onlymodified, bool asmes, SteamLanguage lang) {
@@ -217,6 +237,7 @@ void SupportDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype, bool 
 
 void SupportDataSet::Write(fstream& ffbin, ConfigurationSet& config) {
 	int supportamount = SUPPORT_AMOUNT;
+	bool useextendedtype2 = false;
 	uint32_t txtpos;
 	int i;
 	UpdateOffset();
@@ -235,6 +256,7 @@ void SupportDataSet::Write(fstream& ffbin, ConfigurationSet& config) {
 
 void SupportDataSet::WritePPF(fstream& ffbin, ConfigurationSet& config) {
 	int supportamount = SUPPORT_AMOUNT;
+	bool useextendedtype2 = false;
 	uint32_t txtpos;
 	int i;
 	UpdateOffset();
@@ -254,6 +276,7 @@ void SupportDataSet::WritePPF(fstream& ffbin, ConfigurationSet& config) {
 int SupportDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 	int supportamount = SUPPORT_AMOUNT;
 	bool useextendedtype = false;
+	bool useextendedtype2 = false;
 	vector<SupportDataStruct> nonmodified;
 	SteamLanguage lg;
 	int txtspace;
@@ -273,6 +296,11 @@ int SupportDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 			support[added[i]].help.CreateEmpty(true);
 			support[added[i]].parent = this;
 		}
+	}
+	if (version >= 3) {
+		useextendedtype2 = true;
+		HWSReadCSVFormatting(ffbin, csv_header, csv_format);
+		HWSReadCSVFields(ffbin, custom_field);
 	}
 	MACRO_SUPPORT_IOFUNCTIONDATA(HWSRead, HWSSeek, true, false)
 	if (name_space_total <= namesize && usetext) {
@@ -371,6 +399,7 @@ int SupportDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 }
 
 void SupportDataSet::WriteHWS(fstream& ffbin) {
+	bool useextendedtype2 = true;
 	int supportamount = support.size();
 	int i;
 	UpdateOffset();
@@ -383,6 +412,8 @@ void SupportDataSet::WriteHWS(fstream& ffbin) {
 	HWSWriteFlexibleChar(ffbin, supportamount, true);
 	for (i = 0; i < supportamount; i++)
 		HWSWriteFlexibleChar(ffbin, support[i].id, true);
+	HWSWriteCSVFormatting(ffbin, csv_header, csv_format);
+	HWSWriteCSVFields(ffbin, custom_field);
 	MACRO_SUPPORT_IOFUNCTIONDATA(HWSWrite, HWSSeek, false, false)
 	if (GetGameType() == GAME_TYPE_PSX) {
 		uint32_t txtpos;

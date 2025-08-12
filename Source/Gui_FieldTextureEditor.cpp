@@ -416,27 +416,27 @@ void ManageFieldTextureDialog::OnFocusFileImage(wxFocusEvent& event) {
 
 void ManageFieldTextureDialog::OnButtonClick(wxCommandEvent& event) {
 	int id = event.GetId();
-	if (id==wxID_IMPORT) {
+	if (id == wxID_IMPORT) {
 /*		if (imported_img_base.IsOk()) {
-			imported_img_base.Rescale(imported_img_width,imported_img_height);
+			imported_img_base.Rescale(imported_img_width, imported_img_height);
 			uint32_t* paldata;
 			uint8_t* texdata = imported_img_base.GetData();
 			uint8_t* alphadata = imported_img_base.GetAlpha();
 			if (import_pal)
-				paldata = TIMImageDataStruct::CreatePaletteFromData(texdata,alphadata,imported_img_width,imported_img_height);
+				paldata = TIMImageDataStruct::CreatePaletteFromData(texdata, alphadata, imported_img_width, imported_img_height);
 			else
 				paldata = pal[m_palettelist->GetSelection()];
-			tim.Import(texdata,alphadata,imported_img_x,imported_img_y,imported_img_width,imported_img_height,paldata,char_flag ? m_palettelist->GetSelection()%2 : -1);
+			tim.Import(texdata, alphadata, imported_img_x, imported_img_y, imported_img_width, imported_img_height, paldata, char_flag ? m_palettelist->GetSelection() % 2 : -1);
 			if (import_pal) {
-				uint32_t** palarray = new uint32_t*[pal_amount+1];
-				memcpy(palarray,pal,pal_amount*sizeof(uint32_t*));
+				uint32_t** palarray = new uint32_t * [pal_amount + 1];
+				memcpy(palarray, pal, pal_amount * sizeof(uint32_t*));
 				palarray[pal_amount] = paldata;
 				delete[] pal;
 				pal = palarray;
 				wstringstream buffer;
 				buffer << "Palette " << ++pal_amount << endl;
 				m_palettelist->Append(_(buffer.str()));
-				m_palettelist->SetSelection(m_palettelist->GetCount()-1);
+				m_palettelist->SetSelection(m_palettelist->GetCount() - 1);
 			}
 			m_texturepicker->GetTextCtrl()->Clear();
 			imported_img_base.Destroy();
@@ -445,24 +445,24 @@ void ManageFieldTextureDialog::OnButtonClick(wxCommandEvent& event) {
 			m_textureposy->Enable(false);
 			m_texturewidth->Enable(false);
 			m_textureheight->Enable(false);
-			main_img_base = ConvertFullTIMToImage(tim,pal[m_palettelist->GetSelection()]);
+			main_img_base = ConvertFullTIMToImage(tim, pal[m_palettelist->GetSelection()]);
 			UpdateImage();
 		}*/
-	} else if (id==wxID_EXPORT) {
+	} else if (id == wxID_EXPORT) {
 		FieldTextureExportWindow dial(this);
-		dial.m_languagetitle->Enable(field.title_tile_amount>0);
-		if (dial.ShowModal()==wxID_OK) {
+		dial.m_languagetitle->Enable(field.title_tile_amount > 0);
+		if (dial.ShowModal() == wxID_OK) {
 			unsigned int i;
 			bool* tileflag = new bool[field.tiles_amount];
-			for (i=0;i<field.tiles_amount;i++)
+			for (i = 0; i < field.tiles_amount; i++)
 				tileflag[i] = m_tilechecklist->IsChecked(i) || !dial.m_onlyselected->IsChecked();
-			if (field.Export(dial.m_filepicker->GetPath().mb_str(),camera_id,tileflag,true,dial.m_mergetiles->IsChecked(),dial.m_exportorder->IsChecked(),dial.m_languagetitle->GetSelection()-1)) {
-				wxLogError(HADES_STRING_OPEN_ERROR_CREATE,dial.m_filepicker->GetPath());
+			if (field.Export(dial.m_filepicker->GetPath().mb_str(), camera_id, tileflag, true, dial.m_mergetiles->IsChecked(), dial.m_exportorder->IsChecked(), dial.m_languagetitle->GetSelection() - 1)) {
+				wxLogError(HADES_STRING_OPEN_ERROR_CREATE, dial.m_filepicker->GetPath());
 				delete[] tileflag;
 				return;
 			}
 			delete[] tileflag;
-			wxMessageDialog popupsuccess(this,HADES_STRING_FIELDTEXTURE_SAVE_SUCCESS,HADES_STRING_SUCCESS,wxOK|wxCENTRE);
+			wxMessageDialog popupsuccess(this, HADES_STRING_FIELDTEXTURE_SAVE_SUCCESS, HADES_STRING_SUCCESS, wxOK | wxCENTRE);
 			popupsuccess.ShowModal();
 		}
 	} else {

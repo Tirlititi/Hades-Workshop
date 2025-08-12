@@ -73,7 +73,7 @@ public:
 	void InitSpell(void);
 	void DisplaySpell(int spellid);
 	void UpdateSpellName(unsigned int spellid);
-	void UpdateSpellStatusName(unsigned int statusid);
+	void UpdateSpellStatusName(StatusSetStruct& statusset);
 	void RegisterSpellAdded(unsigned int spellid);
 	void RegisterSpellRemoved(unsigned int spellid);
 	void InitSupport(void);
@@ -89,6 +89,7 @@ public:
 	void RegisterCommandRemoved(unsigned int cmdid);
 	void InitStat(void);
 	void DisplayLevelStat(void);
+	void DisplayStatSelectedAbilityInfo(AbilitySetDataStruct& ab, int absel, int charindex);
 	void DisplayStatSelectedAbility();
 	void DisplayStatAbilityList(int abilsetid);
 	void DisplayStat(int charid);
@@ -200,6 +201,8 @@ private:
 	wxMenuItem* textmenuremove;
 	wxMenuItem* textmenucopy;
 	wxMenuItem* textmenupaste;
+	vector<wxChoice*> commandchoicelist;
+	vector<wxChoice*> itemchoicelist;
 
 	void TextReachLimit();
 	void OnNotebookMain(wxNotebookEvent& event);
@@ -236,19 +239,23 @@ private:
 	void OnCommandChangeHelp(wxCommandEvent& event);
 	void OnCommandChangeSpin(wxSpinEvent& event);
 	void OnCommandChangeChoice(wxCommandEvent& event);
+	void OnCommandChangeFlags(wxCommandEvent& event);
 	void OnCommandChangeButton(wxCommandEvent& event);
 	void OnListBoxStat(wxCommandEvent& event);
 	void OnStatRightClick(wxMouseEvent& event);
 	void OnStatAbilityRightClick(wxMouseEvent& event);
+	void OnStatKeyDown(wxKeyEvent& event);
 	void OnStatChangeDefaultName(wxCommandEvent& event);
 	void OnStatChangeSpin(wxSpinEvent& event);
 	void OnStatChangeChoice(wxCommandEvent& event);
 	void OnStatChangeButton(wxCommandEvent& event);
 	void OnStatChangeList(wxCommandEvent& event);
 	void OnListBoxPartySpecial(wxCommandEvent& event);
+	void OnPartySpecialChangeSpin(wxSpinEvent& event);
 	void OnPartySpecialChangeChoice(wxCommandEvent& event);
 	void OnPartySpecialChangeList(wxCommandEvent& event);
 	void OnPartySpecialChangeButton(wxCommandEvent& event);
+	void OnPartySpecialChangeListBox(wxCommandEvent& event);
 	void OnPartySpecialMagicSwordRightClick(wxMouseEvent& event);
 	void OnListBoxEnemy(wxCommandEvent& event);
 	void OnListBoxEnemyStat(wxCommandEvent& event);
@@ -261,6 +268,7 @@ private:
 	void OnEnemyChangeChoice(wxCommandEvent& event);
 	void OnEnemyChangeFlags(wxCommandEvent& event);
 	void OnEnemyChangeButton(wxCommandEvent& event);
+	void OnEnemyChangeListBox(wxCommandEvent& event);
 	void OnEnemyStatRightClick(wxMouseEvent& event);
 	void OnEnemySpellRightClick(wxMouseEvent& event);
 	void OnEnemyGroupRightClick(wxMouseEvent& event);
@@ -285,6 +293,7 @@ private:
 	void OnItemChangeChoice(wxCommandEvent& event);
 	void OnItemChangeFlags(wxCommandEvent& event);
 	void OnItemChangeButton(wxCommandEvent& event);
+	void OnItemChangeListBox(wxCommandEvent& event);
 	void OnKeyItemChangeSpin(wxSpinEvent& event);
 	void OnButtonClickItemModel(wxCommandEvent& event);
 	void OnItemPositionListClick(wxMouseEvent& event);

@@ -247,64 +247,64 @@ wxString ScriptEditHandler::GetArgumentDescription(int64_t argvalue, uint8_t arg
 	switch (argtype) {
 	case AT_TEXT:
 		if (use_text) {
-			if (argvalue>=text->amount) return _(L"[Invalid Text ID]");
+			if (argvalue >= text->amount) return _(L"[Invalid Text ID]");
 			wxString onelinestr = _(text->text[argvalue].str_nice);
-			onelinestr.Replace(_(L"\n"),_(L" "));
-			return _(L"\"")+onelinestr+_(L"\"");
+			onelinestr.Replace(_(L"\n"), _(L" "));
+			return _(L"\"") + onelinestr + _(L"\"");
 		}
 		break;
 	case AT_BATTLE:
 		if (use_battle) {
-			for (i=0;i<datas->enemyset->battle_amount;i++)
-				if (datas->enemyset->battle_data[i]->object_id==argvalue)
+			for (i = 0; i < datas->enemyset->battle_amount; i++)
+				if (datas->enemyset->battle_data[i]->object_id == argvalue)
 					return _(datas->enemyset->battle_name[i]);
 			return _(L"[Missing Battle]");
 		}
 		break;
 	case AT_FIELD:
 		if (use_field) {
-			for (i=0;i<datas->fieldset->amount;i++)
-				if (datas->fieldset->script_data[i]->object_id==argvalue)
+			for (i = 0; i < datas->fieldset->amount; i++)
+				if (datas->fieldset->script_data[i]->object_id == argvalue)
 					return _(datas->fieldset->script_data[i]->name.str_nice);
 			return _(L"[Missing Field]");
 		}
 		break;
 	case AT_ATTACK:
 		if (use_attack) {
-			if (argvalue>=enemy->spell_amount) return _(L"[Invalid Attack ID]");
+			if (argvalue >= enemy->spell_amount) return _(L"[Invalid Attack ID]");
 			return _(enemy->spell[argvalue].name.str_nice);
 		}
 		break;
 	case AT_ITEM:
-		if (use_item && argvalue<ITEM_AMOUNT) return _(datas->itemset->item[argvalue].name.str_nice);
-		if (use_item && argvalue>=0x100 && argvalue<0x100+KEY_ITEM_AMOUNT) return _(datas->itemset->key_item[argvalue-0x100].name.str_nice);
-		if (use_card && argvalue>=0x200 && argvalue<0x200+CARD_AMOUNT) return _(datas->cardset->card[argvalue-0x200].name.str_nice);
+		if (use_item && argvalue < ITEM_AMOUNT) return _(datas->itemset->item[argvalue].name.str_nice);
+		if (use_item && argvalue >= 0x100 && argvalue < 0x100 + KEY_ITEM_AMOUNT) return _(datas->itemset->key_item[argvalue - 0x100].name.str_nice);
+		if (use_card && argvalue >= 0x200 && argvalue < 0x200 + CARD_AMOUNT) return _(datas->cardset->card[argvalue - 0x200].name.str_nice);
 		break;
 	case AT_CHARACTER:
 		if (use_character) {
 			wxString charlist;
-			for (i=0;i<12;i++)
+			for (i = 0; i < 12; i++)
 				if (argvalue & (1LL << i))
-					charlist += _(datas->statset->initial_stat[i].default_name.str_nice)+_(L"|");
-			if (charlist.Len()>0) charlist.Truncate(charlist.Len()-1);
+					charlist += _(datas->statset->initial_stat[i].default_name.str_nice) + _(L"|");
+			if (charlist.Len() > 0) charlist.Truncate(charlist.Len() - 1);
 			return charlist;
 		}
 		break;
 	case AT_LCHARACTER:
 		if (use_character) {
-			if (argvalue==0xFF || argvalue==0xFFFF) return _(HADES_STRING_NULL_CHARACTER_SLOT);
-			if (argvalue<12) return _(datas->statset->initial_stat[argvalue].default_name.str_nice);
+			if (argvalue == 0xFF || argvalue == 0xFFFF) return _(HADES_STRING_NULL_CHARACTER_SLOT);
+			if (argvalue < 12) return _(datas->statset->initial_stat[argvalue].default_name.str_nice);
 			return _(L"[Invalid Character ID]");
 		}
 		break;
 	case AT_ENTRY:
-		if (argvalue==0xFA) return _(L"Player Character");
-		if (argvalue==0xFB) return _(L"Team Character 1");
-		if (argvalue==0xFC) return _(L"Team Character 2");
-		if (argvalue==0xFD) return _(L"Team Character 3");
-		if (argvalue==0xFE) return _(L"Team Character 4");
-		if (argvalue==0xFF) return _(L"This");
-		if (argvalue>=script.entry_amount) return _(L"[Invalid Entry ID]");
+		if (argvalue == 0xFA) return _(L"Player Character");
+		if (argvalue == 0xFB) return _(L"Team Character 1");
+		if (argvalue == 0xFC) return _(L"Team Character 2");
+		if (argvalue == 0xFD) return _(L"Team Character 3");
+		if (argvalue == 0xFE) return _(L"Team Character 4");
+		if (argvalue == 0xFF) return _(L"This");
+		if (argvalue >= script.entry_amount) return _(L"[Invalid Entry ID]");
 		return entry_name[argvalue];
 	case AT_MODEL:
 		for (i = 0; i < G_V_ELEMENTS(HADES_STRING_MODEL_NAME); i++)
@@ -326,8 +326,8 @@ wxString ScriptEditHandler::GetArgumentDescription(int64_t argvalue, uint8_t arg
 				return _(HADES_STRING_WORLD_BLOCK_NAME[i].label);
 		return _(L"[Unknown World Map]");
 	case AT_ABILITY:
-		if (use_ability && argvalue<SPELL_AMOUNT) return _(datas->spellset->spell[argvalue].name.str_nice);
-		if (use_support && argvalue>=SPELL_AMOUNT) return _(datas->supportset->support[argvalue-SPELL_AMOUNT].name.str_nice);
+		if (use_ability && argvalue < SPELL_AMOUNT) return _(datas->spellset->spell[argvalue].name.str_nice);
+		if (use_support && argvalue >= SPELL_AMOUNT) return _(datas->supportset->support[argvalue - SPELL_AMOUNT].name.str_nice);
 		break;
 	case AT_BATTLECODE:
 		for (i = 0; i < G_V_ELEMENTS(BattleCodeName); i++)
@@ -356,7 +356,7 @@ wxString ScriptEditHandler::GetArgumentDescription(int64_t argvalue, uint8_t arg
 		return _(L"[Invalid SPS Code]");
 	case AT_ANIMATION:
 		i = AnimationDatabase::GetIndex(argvalue);
-		if (i>=0) return AnimationDatabase::GetDescription(i);
+		if (i >= 0) return AnimationDatabase::GetDescription(i);
 		return _(L"[Invalid Animation ID]");
 	case AT_DECK:
 		return _(HADES_STRING_DECK_NAME[argvalue].label);
@@ -1824,7 +1824,6 @@ vector<uint8_t> ConvertStringToVararg(wxString varstr, wxString& errmsg, ScriptL
 							errmsg.Printf(wxT(HADES_STRING_SCRIPT_VARARG_MISS_VALUE), tmpstr);
 							return vector<uint8_t>();
 						}
-						// TODO: All the binary operations are currently performed from left-to-right, not right-to-left, so "a = b = c" is interpreted as "(a = b) = c"
 						while (!blockstack.top().binary_op.empty() && VarBinaryOpPrecedence[blockstack.top().binary_op.top()] <= VarBinaryOpPrecedence[i]) {
 							bufferpos += blockstack.top().buffer_catchup.top();
 							blockstack.top().buffer_catchup.pop();

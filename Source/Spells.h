@@ -70,39 +70,6 @@ typedef uint8_t Spell_Target_Amount;
 #define ELEMENT_HOLY	0x40
 #define ELEMENT_SHADOW	0x80
 
-#define STATUS_PETRIFY			0x00000001
-#define STATUS_VENOM			0x00000002
-#define STATUS_VIRUS			0x00000004
-#define STATUS_SILENCE			0x00000008
-#define STATUS_BLIND			0x00000010
-#define STATUS_TROUBLE			0x00000020
-#define STATUS_ZOMBIE			0x00000040
-#define STATUS_EASY_KILL		0x00000080
-#define STATUS_DEATH			0x00000100
-#define STATUS_LOW_HP			0x00000200
-#define STATUS_CONFUSE			0x00000400
-#define STATUS_BERSERK			0x00000800
-#define STATUS_STOP				0x00001000
-#define STATUS_AUTOLIFE			0x00002000
-#define STATUS_TRANCE			0x00004000
-#define STATUS_DEFEND			0x00008000
-#define STATUS_POISON			0x00010000
-#define STATUS_SLEEP			0x00020000
-#define STATUS_REGEN			0x00040000
-#define STATUS_HASTE			0x00080000
-#define STATUS_SLOW				0x00100000
-#define STATUS_FLOAT			0x00200000
-#define STATUS_SHELL			0x00400000
-#define STATUS_PROTECT			0x00800000
-#define STATUS_HEAT				0x01000000
-#define STATUS_FREEZE			0x02000000
-#define STATUS_VANISH			0x04000000
-#define STATUS_DOOM				0x08000000
-#define STATUS_MINI				0x10000000
-#define STATUS_REFLECT			0x20000000
-#define STATUS_JUMP				0x40000000
-#define STATUS_GRADUAL_PETRIFY	0x80000000
-
 #define SPELL_ATTACK_ID	176
 
 #include "File_Manipulation.h"
@@ -121,19 +88,23 @@ public:
 	uint8_t element;
 	int accuracy;
 	uint8_t flag;
-	uint8_t status;
+	int status;
 	int mp;
 	uint8_t menu_flag;
 	int model_alt;
 	uint16_t help_size_x;
 	
 	uint8_t perform_name;
+
+	map<wxString, wxString> custom_field;
 	
 	// Return 0 if success ; 1 if the value is too long
 	int SetName(wstring newvalue);
 	int SetName(FF9String& newvalue);
 	int SetHelp(wstring newvalue);
 	int SetHelp(FF9String& newvalue);
+	wxString GetFieldValue(wxString fieldname);
+	bool CompareWithCSV(wxArrayString entries);
 	
 	Spell_Panel GetPanel();
 	void SetPanel(Spell_Panel newvalue);
@@ -157,7 +128,16 @@ struct StatusSetStruct {
 public:
 	int id;
 	wstring name;
-	uint32_t status;
+	set<int> status_list;
+
+	map<wxString, wxString> custom_field;
+
+	wxString GetFieldValue(wxString fieldname);
+	bool CompareWithCSV(wxArrayString entries);
+
+private:
+	SpellDataSet* parent;
+	friend SpellDataSet;
 };
 
 struct SpellDataSet {
@@ -172,8 +152,20 @@ public:
 	uint32_t steam_method_position;
 	uint32_t steam_method_base_length;
 
+	wxString csv_header;
+	wxString csv_header_status;
+	wxString csv_format;
+	wxString csv_format_status;
+	map<wxString, wxString> custom_field;
+	map<wxString, wxString> custom_field_status;
+
+	wxArrayString GetModifiableSpellFields();
+	wxArrayString GetModifiableStatusSetFields();
+
 	int GetSpellIndexById(int spellid);
 	SpellDataStruct& GetSpellById(int spellid);
+	int GetStatusSetIndexById(int statusid);
+	StatusSetStruct& GetStatusSetById(int statusid);
 	
 	void Load(fstream& ffbin, ConfigurationSet& config);
 	void Write(fstream& ffbin, ConfigurationSet& config);

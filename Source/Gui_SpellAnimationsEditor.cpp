@@ -411,7 +411,7 @@ EnemyAnimSequenceEditDialog::EnemyAnimSequenceEditDialog(wxWindow* parent, Battl
 	unsigned int animamount = battle.animation_amount - battle.sequence_base_anim[anim_id];
 	int32_t animdbindex;
 	for (i = 0; i < battle.sequence_amount; i++)
-		if (battle.sequence_base_anim[i] > battle.sequence_base_anim[anim_id] && battle.sequence_base_anim[i] - battle.sequence_base_anim[anim_id] < animamount)
+		if (battle.sequence_base_anim[i] > battle.sequence_base_anim[anim_id] && battle.sequence_base_anim[i] - battle.sequence_base_anim[anim_id] < (int)animamount)
 			animamount = battle.sequence_base_anim[i] - battle.sequence_base_anim[anim_id];
 	arg_animation_id = new uint32_t*[animamount + 1];
 	arg_animation.Alloc(animamount + 1);
@@ -597,7 +597,7 @@ void EnemyAnimSequenceEditDialog::OnChangeCode(wxCommandEvent& event) {
 		oldlen += oldseq.arg_length[i];
 	for (i = 0; i < newseq.arg_amount; i++)
 		newlen += newseq.arg_length[i];
-	if (newlen + 3 > battle.GetExtraSize() + oldlen) { // Secure 3 bytes for padding...
+	if (newlen > battle.GetExtraSize() + oldlen - 3) { // Secure 3 bytes for padding...
 		for (i = 0; i < (int)ENEMYANIM_OPCODE.size(); i++)
 			if (ENEMYANIM_OPCODE[i].id == oldseq.id) {
 				sizer->m_code->SetSelection(i);

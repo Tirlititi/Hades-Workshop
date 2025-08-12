@@ -35,20 +35,26 @@ using namespace std;
 #define ITEM_POSITION_SAME_AS	2
 #define ITEM_POSITION_AFTER		3
 
-#include "File_Manipulation.h"
-#include "Configuration.h"
-#include "DllEditor.h"
-
 struct AnyAbilityStruct {
 	int id;
 	uint8_t is_active;
 
-	void Setup(uint8_t rawid);
+	bool operator==(AnyAbilityStruct other);
+	void Setup(int rawid);
 	void Setup(int abilid, bool active);
-	uint8_t GetRawId();
+	int GetRawId();
 	bool IsVoid();
 	string GetStringId();
+
+	static int ConvertSpellIdToId(int spellid);
+	static int ConvertSupportIdToId(int supportid);
+	static int ConvertIdToSpellId(int id);
+	static int ConvertIdToSupportId(int id);
 };
+
+#include "File_Manipulation.h"
+#include "Configuration.h"
+#include "DllEditor.h"
 
 struct ItemDataStruct {
 public:
@@ -57,6 +63,7 @@ public:
 	FF9String help; // readonly
 	FF9String battle_help; // readonly
 	int price;
+	int sell_price;
 	uint16_t char_availability;
 	int icon;
 	uint8_t icon_color;
@@ -73,6 +80,8 @@ public:
 	int usable_id; // -1 if not an usable item
 	int weapon_id; // -1 if not a weapon
 	int armor_id; // -1 if not a armor
+
+	map<wxString, wxString> custom_field;
 	
 	// Return 0 if success ; 1 if the value is too long
 	int SetName(wstring newvalue);
@@ -81,6 +90,8 @@ public:
 	int SetHelp(FF9String& newvalue);
 	int SetBattleHelp(wstring newvalue);
 	int SetBattleHelp(FF9String& newvalue);
+	wxString GetFieldValue(wxString fieldname);
+	bool CompareWithCSV(wxArrayString entries);
 
 private:
 	uint16_t name_offset;
@@ -100,7 +111,7 @@ public:
 	int power;
 	uint8_t element;
 	int accuracy;
-	uint32_t status;
+	set<int> status;
 	
 	void InitializeDefault(int dataid);
 
@@ -120,7 +131,7 @@ struct ItemWeaponDataStruct {
 public:
 	int id;
 	uint8_t flag;
-	uint8_t status;
+	int status;
 	uint16_t model;
 	wstring model_name;
 	int damage_formula;
@@ -142,10 +153,10 @@ public:
 struct ItemArmorDataStruct {
 public:
 	int id;
-	uint8_t defence;
-	uint8_t evade;
-	uint8_t magic_defence;
-	uint8_t magic_evade;
+	int defence;
+	int evade;
+	int magic_defence;
+	int magic_evade;
 
 	void InitializeDefault(int dataid);
 };
@@ -214,6 +225,18 @@ public:
 	
 	uint32_t steam_method_position[5];
 	uint32_t steam_method_base_length[5];
+
+	wxString csv_header;
+	wxString csv_header_weapon;
+	wxString csv_header_armor;
+	wxString csv_header_usable;
+	wxString csv_header_stat;
+	wxString csv_format;
+	wxString csv_format_weapon;
+	wxString csv_format_armor;
+	wxString csv_format_usable;
+	wxString csv_format_stat;
+	map<wxString, wxString> custom_field;
 
 	int GetItemIndexById(int itemid);
 	int GetKeyItemIndexById(int keyitemid);

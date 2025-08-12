@@ -258,6 +258,9 @@
     <ClCompile Include="Source\Database_Item.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Statuses.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\BattleScenes.h">
@@ -510,6 +513,9 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="Source\CommonUtility.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Statuses.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

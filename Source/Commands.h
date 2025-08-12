@@ -31,7 +31,9 @@ public:
 	uint16_t help_size_x;
 	
 	int link; // id of linked cmd : they share the same spell list. 0xFF if not linked.
-	
+
+	map<wxString, wxString> custom_field;
+
 	// Return 0 if success ; 1 if the value is too long
 	int SetName(wstring newvalue);
 	int SetName(FF9String& newvalue);
@@ -44,6 +46,10 @@ public:
 	void AddLink(int cmdid); // Assume there is no link yet and both use COMMAND_PANEL_SPELL
 	void ChangeLink(int newlink); // Assume there is a link and the new cmd is valid
 	void BreakLink(); // Assume there a link
+	int GetMainSpell();
+
+	wxString GetFieldValue(wxString fieldname);
+	bool CompareWithCSV(wxArrayString entries);
 
 private:
 	uint16_t name_offset;
@@ -64,6 +70,10 @@ public:
 	
 	uint32_t steam_method_position;
 	uint32_t steam_method_base_length;
+
+	wxString csv_header;
+	wxString csv_format;
+	map<wxString, wxString> custom_field;
 
 	int GetCommandIndexById(int cmdid);
 	CommandDataStruct& GetCommandById(int cmdid);

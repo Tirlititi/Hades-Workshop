@@ -27,6 +27,7 @@ struct CardSetDataStruct {
 
 struct CardDataStruct {
 public:
+	int id;
 	FF9String name; // readonly
 	uint16_t name_size_x;
 	
@@ -55,7 +56,7 @@ struct CardDataSet {
 public:
 	CardDeckDataStruct deck[CARD_DECK_AMOUNT];
 	CardSetDataStruct set[CARD_SET_AMOUNT];
-	CardDataStruct card[CARD_AMOUNT];
+	vector<CardDataStruct> card;
 	uint32_t card_amount; // == CARD_AMOUNT
 	uint16_t name_space_total;
 	uint16_t name_space_used;
@@ -66,8 +67,7 @@ public:
 	// Return 0 on success and 1 if names are too long
 	int LoadHWS(fstream& ffhws, bool usetext);
 	void WriteHWS(fstream& ffhws);
-	void WriteSteamText(fstream& ffbin, SteamLanguage lang = GetSteamLanguage());
-	int GetSteamTextSize(SteamLanguage lang = GetSteamLanguage());
+	void WriteSteamText(fstream& ffbin, bool onlymodified, bool asmes, SteamLanguage lang = GetSteamLanguage());
 	// datatype: 0 for stats, 1 for decks, 2 for sets
 	void WriteSteamData(fstream& ffbin, unsigned int datatype);
 	void UpdateOffset();

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gui.h"
+#include "Gui_Manipulation.h"
 #include "Configuration.h"
 
 class DiscardableMessageWindow : public DiscardableMessage {
@@ -61,13 +62,19 @@ public:
 
 class SpellStatusDialog : public SpellStatusWindow {
 public:
-	uint32_t flags;
+	int status_set_id;
+	CDDataStruct* cddata;
+	set<int> status_list;
 
 	SpellStatusDialog(wxWindow* parent);
-	int ShowModal(uint32_t statusflags);
+	int ShowModal(CDDataStruct* data, StatusSetStruct& status);
+
+	static wxString StatusDisplayName(int status);
 
 private:
 	void OnButtonClick(wxCommandEvent& event);
+	void OnBaseListSelect(wxCommandEvent& event);
+	void OnSpinCtrl(wxSpinEvent& event);
 };
 
 class ItemStatDialog : public ItemStatWindow {
@@ -105,6 +112,7 @@ private:
 	void OnChangeColor(wxSpinEvent& event);
 	void OnChangeModel(wxCommandEvent& event);
 	void OnAnimChoice(wxCommandEvent& event);
+	void OnAnimKey(wxKeyEvent& event);
 	void OnButtonClick(wxCommandEvent& event);
 };
 
@@ -122,5 +130,39 @@ public:
 
 private:
 	void OnAnimChoice(wxCommandEvent& event);
+	void OnButtonClick(wxCommandEvent& event);
+};
+
+class DatabaseFormatDialog : public DatabaseFormatWindow {
+public:
+	int field_count;
+	vector<wxTextCtrl*> field_name;
+	vector<wxTextCtrl*> field_default;
+	vector<wxButton*> field_delete_btn;
+	wxString* header_original;
+	wxString* format_original;
+	map<wxString, wxString>* fields_original;
+
+	DatabaseFormatDialog(wxWindow* parent, wxString* header, wxString* format, map<wxString, wxString>* fields);
+	map<wxString, wxString> GetFieldMap();
+	void ApplyChanges();
+
+private:
+	void AddField(wxString name, wxString defaultValue);
+	void RemoveField(int field_index);
+	void OnButtonClick(wxCommandEvent& event);
+};
+
+class DatabaseFieldDialog : public DatabaseFieldWindow {
+public:
+	vector<wxTextCtrl*> field_name;
+	vector<wxTextCtrl*> field_value;
+	map<wxString, wxString>* fields_original;
+
+	DatabaseFieldDialog(wxWindow* parent, map<wxString, wxString>* fields, map<wxString, wxString>& parentfields);
+	map<wxString, wxString> GetFieldMap();
+
+private:
+	void AddField(wxString name, wxString val, wxString defaultValue);
 	void OnButtonClick(wxCommandEvent& event);
 };

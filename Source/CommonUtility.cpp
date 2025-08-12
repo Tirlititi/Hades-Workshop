@@ -4,12 +4,61 @@
 #include <wx/translation.h>
 #include "Configuration.h"
 #include "File_Manipulation.h"
+#include "Database_CSV.h"
 
 //==========================
 // Non-templates
 
 bool IsNumber(string s) {
 	return !s.empty() && find_if(s.begin(), s.end(), [](unsigned char c) { return !isdigit(c); }) == s.end();
+}
+
+wxString GetStatusNameAndId(int statusid) {
+	static const wxString CSV_STATUS_NAME[STATUS_AMOUNT]{
+		L"Petrify",	L"Venom",	L"Virus",	L"Silence",	L"Blind",	L"Trouble",		L"Zombie",	L"EasyKill",
+		L"Death",	L"LowHP",	L"Confuse",	L"Berserk",	L"Stop",	L"AutoLife",	L"Trance",	L"Defend",
+		L"Poison",	L"Sleep",	L"Regen",	L"Haste",	L"Slow",	L"Float",		L"Shell",	L"Protect",
+		L"Heat",	L"Freeze",	L"Vanish",	L"Doom",	L"Mini",	L"Reflect",		L"Jump",	L"GradualPetrify"
+	};
+	if (statusid >= 0 && statusid < STATUS_AMOUNT)
+		return wxString::Format(wxT("%s(%d)"), CSV_STATUS_NAME[statusid], statusid);
+	return wxString::Format(wxT("%d"), statusid);
+}
+
+wxString FormatStatusSet(set<int>& statuses) {
+	wxString result = _(L"");
+	bool addcomma = false;
+	for (auto it = statuses.begin(); it != statuses.end(); it++) {
+		if (addcomma)
+			result += _(L", ");
+		result += GetStatusNameAndId(*it);
+		addcomma = true;
+	}
+	return result;
+}
+
+uint32_t GetStatusBitList(set<int>& statuses) {
+	uint32_t result = 0;
+	for (auto it = statuses.begin(); it != statuses.end(); it++)
+		if (*it < STATUS_AMOUNT)
+			result |= (1u << *it);
+	return result;
+}
+
+void SetupStatusList(set<int>& statuses, uint32_t statusbits) {
+	statuses.clear();
+	for (int i = 0; i < STATUS_AMOUNT; i++)
+		if ((statusbits & (1u << i)) != 0)
+			statuses.insert(i);
+}
+
+void UpdateCustomFieldMap(map<wxString, wxString>& fields, map<wxString, wxString>& parentfields) {
+	set<wxString> removed;
+	for (auto f = fields.begin(); f != fields.end(); f++)
+		if (parentfields.find(f->first) == parentfields.end())
+			removed.insert(f->first);
+	for (auto f = removed.begin(); f != removed.end(); f++)
+		fields.erase(*f);
 }
 
 wxArrayString MemoriaUtility::LoadCSVLines(wxString filename, wxArrayString* metadata) {
@@ -60,15 +109,26 @@ wxArrayString MemoriaUtility::LoadCSVEntry(wxString csvline) {
 	return entries;
 }
 
-wxArrayString MemoriaUtility::SplitEntryArray(wxString csventry) {
+wxArrayString MemoriaUtility::SplitEntryArray(wxString csventry, wxUniChar sep) {
 	wxArrayString values;
 	wxString val, rest;
 	while (!csventry.IsEmpty()) {
-		val = csventry.BeforeFirst(',', &rest);
+		val = csventry.BeforeFirst(sep, &rest);
 		csventry = rest;
 		values.Add(val.Trim(true).Trim(false));
 	}
 	return values;
+}
+
+bool MemoriaUtility::CompareEntries(wxString csventry1, wxString csventry2) {
+	wxArrayString values1 = MemoriaUtility::SplitEntryArray(csventry1, ';');
+	wxArrayString values2 = MemoriaUtility::SplitEntryArray(csventry2, ';');
+	if (values1.GetCount() != values2.GetCount())
+		return false;
+	for (unsigned int i = 0; i < values1.GetCount(); i++)
+		if (!values1[i].IsSameAs(values2[i]))
+			return false;
+	return true;
 }
 
 int MemoriaUtility::GetEntryEnum(wxString csventry) {
@@ -78,18 +138,6 @@ int MemoriaUtility::GetEntryEnum(wxString csventry) {
 	if (csventry.AfterFirst(L'(').BeforeFirst(L')').ToLong(&val))
 		return val;
 	return 0;
-}
-
-bool MemoriaUtility::CSV_ComparerWithoutStart(wxString left, wxString right) {
-	return left.AfterFirst(L';').IsSameAs(right.AfterFirst(L';'));
-}
-
-bool MemoriaUtility::CSV_ComparerWithoutEnd(wxString left, wxString right) {
-	return left.BeforeLast(L';').IsSameAs(right.BeforeLast(L';'));
-}
-
-bool MemoriaUtility::CSV_ComparerWithoutBoth(wxString left, wxString right) {
-	return left.AfterFirst(L';').BeforeLast(L';').IsSameAs(right.AfterFirst(L';').BeforeLast(L';'));
 }
 
 //==========================
@@ -271,10 +319,9 @@ bool MemoriaUtility::GenerateCSVGeneric(wxString modfolder, wxString csvpath, wx
 		entryline = entryconstructor(objlist[i], i);
 		if (entryline.IsEmpty())
 			continue;
-		if (skipnonmodified && objlist[i].id < (int)basecsv.GetCount()) {
+		if (skipnonmodified && objlist[i].id < (int)basecsv.GetCount())
 			if (entrycomparer(basecsv[objlist[i].id], entryline))
 				continue;
-		}
 		content += entryline + L"\n";
 	}
 	if (content.IsEmpty())
@@ -291,6 +338,58 @@ bool MemoriaUtility::GenerateCSVGeneric(wxString modfolder, wxString csvpath, wx
 }
 
 
+template<typename T>
+wxString MemoriaUtility::GenerateDatabaseEntryGeneric(T& obj, wxString format) {
+	wxString result = _(L"");
+	int codepos = format.Find(L'%');
+	while (codepos != wxNOT_FOUND) {
+		result += format.Left(codepos);
+		format = format.Mid(codepos + 1);
+		int codeend = format.Find(L'%');
+		if (codeend == wxNOT_FOUND)
+			return result + _(L"%") + format;
+		wxString fieldname = format.Left(codeend);
+		format = format.Mid(codeend + 1);
+		result += obj.GetFieldValue(fieldname);
+		codepos = format.Find(L'%');
+	}
+	return result + format;
+}
+
+template<typename T>
+bool MemoriaUtility::GenerateDatabaseGeneric(wxString modfolder, wxString path, wxString header, wxString sep, wxString footer, vector<T>& objlist, wxString format, bool skipnonmodified) {
+	wxArrayString basecsv;
+	wxString entryline, content = _(L"");
+	if (skipnonmodified && GetGameConfiguration() != NULL)
+		basecsv = MemoriaUtility::LoadCSVLines(_(GetGameConfiguration()->steam_dir_assets) + path);
+	bool addsep = false;
+	for (int i = 0; i < (int)objlist.size(); i++) {
+		entryline = GenerateDatabaseEntryGeneric(objlist[i], format);
+		if (entryline.IsEmpty())
+			continue;
+		if (skipnonmodified && objlist[i].CompareWithCSV(basecsv))
+			continue;
+		if (addsep)
+			content += sep;
+		content += entryline;
+		addsep = true;
+	}
+	if (content.IsEmpty())
+		return true;
+	wxFile csvfile;
+	if (!csvfile.Open(modfolder + path, wxFile::write))
+		return false;
+	if (!csvfile.Write(header))
+		return false;
+	if (!csvfile.Write(content))
+		return false;
+	if (!csvfile.Write(footer))
+		return false;
+	csvfile.Close();
+	return true;
+}
+
+
 //==========================
 // Template instantiations
 
@@ -301,8 +400,12 @@ bool MemoriaUtility::GenerateCSVGeneric(wxString modfolder, wxString csvpath, wx
 #define MACRO_INSTANTIATE_GetModifiedSteamTexts(T) template bool MemoriaUtility::GetModifiedSteamTexts(vector<int>* result, int32_t baseassetid[], vector<T>& objlist, function<wstring(T&)> stringifier, SteamLanguage lang);
 #define MACRO_INSTANTIATE_ConcatenateStrings(T) template string ConcatenateStrings(string delim, vector<T>& objlist, function<string(T)> stringifier, bool escapeempty);
 #define MACRO_INSTANTIATE_GenerateCSVGeneric(T) template bool MemoriaUtility::GenerateCSVGeneric(wxString modfolder, wxString csvpath, wxString csvheader, vector<T>& objlist, function<wxString(T&, int)> entryconstructor, function<bool(wxString, wxString)> entrycomparer, bool skipnonmodified);
+#define MACRO_INSTANTIATE_GenerateDatabaseEntryGeneric(T) template wxString MemoriaUtility::GenerateDatabaseEntryGeneric(T& obj, wxString format);
+#define MACRO_INSTANTIATE_GenerateDatabaseGeneric(T) template bool MemoriaUtility::GenerateDatabaseGeneric(wxString modfolder, wxString path, wxString header, wxString sep, wxString footer, vector<T>& objlist, wxString format, bool skipnonmodified);
+#define MACRO_INSTANTIATE_GenerateCSVAndDatabase(T) MACRO_INSTANTIATE_GenerateCSVGeneric(T) MACRO_INSTANTIATE_GenerateDatabaseEntryGeneric(T) MACRO_INSTANTIATE_GenerateDatabaseGeneric(T)
 
 MACRO_INSTANTIATE_InsertAtId(SpellDataStruct)
+MACRO_INSTANTIATE_InsertAtId(StatusSetStruct)
 MACRO_INSTANTIATE_InsertAtId(CommandDataStruct)
 MACRO_INSTANTIATE_InsertAtId(ItemDataStruct)
 MACRO_INSTANTIATE_InsertAtId(ItemUsableDataStruct)
@@ -319,6 +422,7 @@ MACRO_INSTANTIATE_InsertAtId(CommandSetDataStruct)
 MACRO_INSTANTIATE_InsertAtId(SynthesisDataStruct)
 MACRO_INSTANTIATE_InsertAtId(ShopDataStruct)
 MACRO_INSTANTIATE_PrepareHWSFlexibleList(SpellDataStruct)
+MACRO_INSTANTIATE_PrepareHWSFlexibleList(StatusSetStruct)
 MACRO_INSTANTIATE_PrepareHWSFlexibleList(CommandDataStruct)
 MACRO_INSTANTIATE_PrepareHWSFlexibleList(ItemDataStruct)
 MACRO_INSTANTIATE_PrepareHWSFlexibleList(ItemUsableDataStruct)
@@ -340,39 +444,43 @@ MACRO_INSTANTIATE_GetSteamTextSizeGeneric(ItemDataStruct)
 MACRO_INSTANTIATE_GetSteamTextSizeGeneric(KeyItemDataStruct)
 MACRO_INSTANTIATE_GetSteamTextSizeGeneric(SupportDataStruct)
 MACRO_INSTANTIATE_GetSteamTextSizeGeneric(InitialStatDataStruct)
+MACRO_INSTANTIATE_GetSteamTextSizeGeneric(CardDataStruct)
 MACRO_INSTANTIATE_WriteSteamTextGeneric(SpellDataStruct)
 MACRO_INSTANTIATE_WriteSteamTextGeneric(CommandDataStruct)
 MACRO_INSTANTIATE_WriteSteamTextGeneric(ItemDataStruct)
 MACRO_INSTANTIATE_WriteSteamTextGeneric(KeyItemDataStruct)
 MACRO_INSTANTIATE_WriteSteamTextGeneric(SupportDataStruct)
 MACRO_INSTANTIATE_WriteSteamTextGeneric(InitialStatDataStruct)
+MACRO_INSTANTIATE_WriteSteamTextGeneric(CardDataStruct)
 MACRO_INSTANTIATE_GetModifiedSteamTexts(SpellDataStruct)
 MACRO_INSTANTIATE_GetModifiedSteamTexts(CommandDataStruct)
 MACRO_INSTANTIATE_GetModifiedSteamTexts(ItemDataStruct)
 MACRO_INSTANTIATE_GetModifiedSteamTexts(KeyItemDataStruct)
 MACRO_INSTANTIATE_GetModifiedSteamTexts(SupportDataStruct)
+MACRO_INSTANTIATE_GetModifiedSteamTexts(CardDataStruct)
 MACRO_INSTANTIATE_ConcatenateStrings(int)
 MACRO_INSTANTIATE_ConcatenateStrings(float)
 MACRO_INSTANTIATE_ConcatenateStrings(wstring)
 MACRO_INSTANTIATE_ConcatenateStrings(AnyAbilityStruct)
-MACRO_INSTANTIATE_GenerateCSVGeneric(SpellDataStruct)
-MACRO_INSTANTIATE_GenerateCSVGeneric(StatusSetStruct)
-MACRO_INSTANTIATE_GenerateCSVGeneric(CommandDataStruct)
-MACRO_INSTANTIATE_GenerateCSVGeneric(ItemDataStruct)
+MACRO_INSTANTIATE_GenerateCSVAndDatabase(SpellDataStruct)
+MACRO_INSTANTIATE_GenerateCSVAndDatabase(StatusSetStruct)
+MACRO_INSTANTIATE_GenerateCSVAndDatabase(StatusDataStruct)
+MACRO_INSTANTIATE_GenerateCSVAndDatabase(CommandDataStruct)
+MACRO_INSTANTIATE_GenerateCSVAndDatabase(ItemDataStruct)
 MACRO_INSTANTIATE_GenerateCSVGeneric(ItemUsableDataStruct)
 MACRO_INSTANTIATE_GenerateCSVGeneric(ItemWeaponDataStruct)
 MACRO_INSTANTIATE_GenerateCSVGeneric(ItemArmorDataStruct)
 MACRO_INSTANTIATE_GenerateCSVGeneric(ItemStatDataStruct)
-MACRO_INSTANTIATE_GenerateCSVGeneric(SupportDataStruct)
-MACRO_INSTANTIATE_GenerateCSVGeneric(MagicSwordDataStruct)
-MACRO_INSTANTIATE_GenerateCSVGeneric(CharBattleParameterStruct)
-MACRO_INSTANTIATE_GenerateCSVGeneric(InitialStatDataStruct)
-MACRO_INSTANTIATE_GenerateCSVGeneric(InitialEquipDataStruct)
-MACRO_INSTANTIATE_GenerateCSVGeneric(AbilitySetDataStruct)
-MACRO_INSTANTIATE_GenerateCSVGeneric(CommandSetDataStruct)
-MACRO_INSTANTIATE_GenerateCSVGeneric(LevelDataStruct)
-MACRO_INSTANTIATE_GenerateCSVGeneric(SynthesisDataStruct)
-MACRO_INSTANTIATE_GenerateCSVGeneric(ShopDataStruct)
+MACRO_INSTANTIATE_GenerateCSVAndDatabase(SupportDataStruct)
+MACRO_INSTANTIATE_GenerateCSVAndDatabase(MagicSwordDataStruct)
+MACRO_INSTANTIATE_GenerateCSVAndDatabase(CharBattleParameterStruct)
+MACRO_INSTANTIATE_GenerateCSVAndDatabase(InitialStatDataStruct)
+MACRO_INSTANTIATE_GenerateCSVAndDatabase(InitialEquipDataStruct)
+MACRO_INSTANTIATE_GenerateCSVAndDatabase(AbilityEntryDataStruct)
+MACRO_INSTANTIATE_GenerateCSVAndDatabase(CommandSetDataStruct)
+MACRO_INSTANTIATE_GenerateCSVAndDatabase(LevelDataStruct)
+MACRO_INSTANTIATE_GenerateCSVAndDatabase(SynthesisDataStruct)
+MACRO_INSTANTIATE_GenerateCSVAndDatabase(ShopDataStruct)
 
 
 

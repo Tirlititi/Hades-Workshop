@@ -1,8 +1,9 @@
 #include "Cards.h"
 
 #include "main.h"
+#include "CommonUtility.h"
 
-#define CARD_HWS_VERSION 1
+#define CARD_HWS_VERSION 2
 
 int CardDataStruct::SetName(wstring newvalue) {
 	if (GetGameType() == GAME_TYPE_PSX) {
@@ -90,45 +91,50 @@ int CardDataStruct::SetName(FF9String& newvalue) {
 void CardDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 	unsigned int i;
 	name_space_total = config.card_name_space_total;
-	for (i=0;i<CARD_AMOUNT;i++)
+	card.resize(CARD_AMOUNT);
+	for (i = 0; i < CARD_AMOUNT; i++) {
 		card[i].parent = this;
-	if (GetGameType()==GAME_TYPE_PSX) {
+		card[i].id = i;
+	}
+	if (GetGameType() == GAME_TYPE_PSX) {
 		ffbin.seekg(config.card_text_offset);
-		MACRO_CARD_IOFUNCTIONNAME(FFIXRead,FFIXSeek,true,false)
+		MACRO_CARD_IOFUNCTIONNAME(FFIXRead, FFIXSeek, true, false)
 		ffbin.seekg(config.card_stat_offset[0]);
-		MACRO_CARD_IOFUNCTIONCARDDATA(FFIXRead,FFIXSeek,true,false,false)
+		MACRO_CARD_IOFUNCTIONCARDDATA(FFIXRead, FFIXSeek, true, false, false)
 		ffbin.seekg(config.card_stat_offset[1]);
-		MACRO_CARD_IOFUNCTIONCARDDATA(FFIXRead,FFIXSeek,true,false,true)
+		MACRO_CARD_IOFUNCTIONCARDDATA(FFIXRead, FFIXSeek, true, false, true)
 		ffbin.seekg(config.card_deck_offset);
-		MACRO_CARD_IOFUNCTIONDECK(FFIXRead,FFIXSeek,true,false)
+		MACRO_CARD_IOFUNCTIONDECK(FFIXRead, FFIXSeek, true, false)
 		ffbin.seekg(config.card_set_offset);
-		MACRO_CARD_IOFUNCTIONSET(FFIXRead,FFIXSeek,true,false)
+		MACRO_CARD_IOFUNCTIONSET(FFIXRead, FFIXSeek, true, false)
 	} else {
 		string fname = config.steam_dir_data;
 		fname += "resources.assets";
-		ffbin.open(fname.c_str(),ios::in | ios::binary);
-		for (SteamLanguage lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
-			if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+		ffbin.open(fname.c_str(), ios::in | ios::binary);
+		for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+			if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang != GetSteamLanguage())
 				continue;
 			ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.card_name_file[lang]));
 			name_space_used = config.meta_res.GetFileSizeByIndex(config.card_name_file[lang]);
-			for (i=0;i<CARD_AMOUNT;i++)
-				SteamReadFF9String(ffbin,card[i].name,lang);
+			for (i = 0; i < CARD_AMOUNT; i++)
+				SteamReadFF9String(ffbin, card[i].name, lang);
 		}
 		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.card_stat_file));
-		MACRO_CARD_IOFUNCTIONCARDDATA(SteamRead,SteamSeek,true,false,false)
+		MACRO_CARD_IOFUNCTIONCARDDATA(SteamRead, SteamSeek, true, false, false)
 		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.card_deck_file));
-		MACRO_CARD_IOFUNCTIONDECK(SteamRead,SteamSeek,true,false)
+		MACRO_CARD_IOFUNCTIONDECK(SteamRead, SteamSeek, true, false)
 		ffbin.seekg(config.meta_res.GetFileOffsetByIndex(config.card_set_file));
-		MACRO_CARD_IOFUNCTIONSET(SteamRead,SteamSeek,true,false)
+		MACRO_CARD_IOFUNCTIONSET(SteamRead, SteamSeek, true, false)
 		ffbin.close();
 	}
 }
 
-void CardDataSet::WriteSteamText(fstream& ffbin, SteamLanguage lang) {
-	unsigned int i;
-	for (i=0;i<CARD_AMOUNT;i++)
-		SteamWriteFF9String(ffbin,card[i].name,lang);
+void CardDataSet::WriteSteamText(fstream& ffbin, bool onlymodified, bool asmes, SteamLanguage lang) {
+	vector<int> writesubset;
+	if (onlymodified && MemoriaUtility::GetModifiedSteamTexts<CardDataStruct>(&writesubset, GetGameConfiguration()->card_name_file, card, [lang](CardDataStruct& c) { return c.name.multi_lang_str[lang]; }, lang))
+		WriteSteamTextGeneric(ffbin, card, &CardDataStruct::name, &writesubset, asmes, lang);
+	else
+		WriteSteamTextGeneric(ffbin, card, &CardDataStruct::name, NULL, asmes, lang);
 }
 
 void CardDataSet::WriteSteamData(fstream& ffbin, unsigned int datatype) {
@@ -173,59 +179,61 @@ void CardDataSet::WritePPF(fstream& ffbin, ConfigurationSet& config) {
 }
 
 int CardDataSet::LoadHWS(fstream& ffbin, bool usetext) {
-	unsigned int i;
+	bool useextendedtype = false;
+	SteamLanguage lg;
+	int txtspace;
+	int i;
 	int res = 0;
 	uint16_t version;
 	uint16_t namesize = name_space_total;
-	HWSReadShort(ffbin,version);
-	HWSReadShort(ffbin,name_space_total);
-	if (name_space_total<=namesize && usetext) {
-		if (GetHWSGameType()==GAME_TYPE_PSX) {
-			MACRO_CARD_IOFUNCTIONNAME(HWSRead,HWSSeek,true,false)
-			if (GetGameType()!=GAME_TYPE_PSX)
-				for (i=0;i<CARD_AMOUNT;i++)
+	HWSReadShort(ffbin, version);
+	HWSReadShort(ffbin, name_space_total);
+	if (version >= 2) {
+		useextendedtype = true;
+	}
+	if (name_space_total <= namesize && usetext) {
+		if (GetHWSGameType() == GAME_TYPE_PSX) {
+			MACRO_CARD_IOFUNCTIONNAME(HWSRead, HWSSeek, true, false)
+			if (GetGameType() != GAME_TYPE_PSX)
+				for (i = 0; i < CARD_AMOUNT; i++)
 					card[i].name.PSXToSteam();
 		} else {
-			SteamLanguage lg;
-			uint16_t txtspace;
 			uint32_t tmppos;
-			HWSReadChar(ffbin,lg);
-			while (lg!=STEAM_LANGUAGE_NONE) {
-				HWSReadShort(ffbin,txtspace);
+			HWSReadChar(ffbin, lg);
+			while (lg != STEAM_LANGUAGE_NONE) {
+				HWSReadFlexibleShort(ffbin, txtspace, useextendedtype);
 				tmppos = ffbin.tellg();
-				if (GetGameType()!=GAME_TYPE_PSX)
-					for (i=0;i<CARD_AMOUNT;i++)
-						SteamReadFF9String(ffbin,card[i].name,lg);
-				else if (lg==GetSteamLanguage())
-					for (i=0;i<CARD_AMOUNT;i++) {
-						SteamReadFF9String(ffbin,card[i].name);
+				if (GetGameType() != GAME_TYPE_PSX)
+					for (i = 0; i < CARD_AMOUNT; i++)
+						SteamReadFF9String(ffbin, card[i].name, lg);
+				else if (lg == GetSteamLanguage())
+					for (i = 0; i < CARD_AMOUNT; i++) {
+						SteamReadFF9String(ffbin, card[i].name);
 						card[i].name.SteamToPSX();
 					}
-				ffbin.seekg(tmppos+txtspace);
-				HWSReadChar(ffbin,lg);
+				ffbin.seekg(tmppos + txtspace);
+				HWSReadChar(ffbin, lg);
 			}
 		}
 	} else {
-		if (GetHWSGameType()==GAME_TYPE_PSX) {
-			ffbin.seekg(name_space_total+4,ios::cur);
+		if (GetHWSGameType() == GAME_TYPE_PSX) {
+			ffbin.seekg(name_space_total + 4, ios::cur);
 		} else {
-			SteamLanguage lg;
-			uint16_t txtspace;
-			HWSReadChar(ffbin,lg);
-			while (lg!=STEAM_LANGUAGE_NONE) {
-				HWSReadShort(ffbin,txtspace);
-				ffbin.seekg(txtspace,ios::cur);
-				HWSReadChar(ffbin,lg);
+			HWSReadChar(ffbin, lg);
+			while (lg != STEAM_LANGUAGE_NONE) {
+				HWSReadFlexibleShort(ffbin, txtspace, useextendedtype);
+				ffbin.seekg(txtspace, ios::cur);
+				HWSReadChar(ffbin, lg);
 			}
 		}
 		if (usetext)
 			res |= 1;
 	}
 	name_space_total = namesize;
-	MACRO_CARD_IOFUNCTIONCARDDATA(HWSRead,HWSSeek,true,false,false)
-	MACRO_CARD_IOFUNCTIONCARDDATA(HWSRead,HWSSeek,true,false,true)
-	MACRO_CARD_IOFUNCTIONSET(HWSRead,HWSSeek,true,false)
-	MACRO_CARD_IOFUNCTIONDECK(HWSRead,HWSSeek,true,false)
+	MACRO_CARD_IOFUNCTIONCARDDATA(HWSRead, HWSSeek, true, false, false)
+	MACRO_CARD_IOFUNCTIONCARDDATA(HWSRead, HWSSeek, true, false, true)
+	MACRO_CARD_IOFUNCTIONSET(HWSRead, HWSSeek, true, false)
+	MACRO_CARD_IOFUNCTIONDECK(HWSRead, HWSSeek, true, false)
 	UpdateOffset();
 	return res;
 }
@@ -233,44 +241,36 @@ int CardDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 void CardDataSet::WriteHWS(fstream& ffbin) {
 	unsigned int i;
 	UpdateOffset();
-	HWSWriteShort(ffbin,CARD_HWS_VERSION);
+	HWSWriteShort(ffbin, CARD_HWS_VERSION);
 	uint16_t namesize = name_space_total;
 	name_space_total = name_space_used;
-	HWSWriteShort(ffbin,name_space_total);
-	if (GetGameType()==GAME_TYPE_PSX) {
-		MACRO_CARD_IOFUNCTIONNAME(HWSWrite,HWSSeek,false,false)
+	HWSWriteShort(ffbin, name_space_total);
+	if (GetGameType() == GAME_TYPE_PSX) {
+		MACRO_CARD_IOFUNCTIONNAME(HWSWrite, HWSSeek, false, false)
 	} else {
 		SteamLanguage lg;
-		for (lg=STEAM_LANGUAGE_US;lg<STEAM_LANGUAGE_AMOUNT;lg++) {
-			HWSWriteChar(ffbin,lg);
-			HWSWriteShort(ffbin,GetSteamTextSize(lg));
-			for (i=0;i<CARD_AMOUNT;i++)
-				SteamWriteFF9String(ffbin,card[i].name,lg);
+		for (lg = STEAM_LANGUAGE_US; lg < STEAM_LANGUAGE_AMOUNT; lg++) {
+			HWSWriteChar(ffbin, lg);
+			HWSWriteFlexibleShort(ffbin, GetSteamTextSizeGeneric(card, &CardDataStruct::name, false, lg), true);
+			for (i = 0; i < CARD_AMOUNT; i++)
+				SteamWriteFF9String(ffbin, card[i].name, lg);
 		}
-		HWSWriteChar(ffbin,STEAM_LANGUAGE_NONE);
+		HWSWriteChar(ffbin, STEAM_LANGUAGE_NONE);
 	}
-	MACRO_CARD_IOFUNCTIONCARDDATA(HWSWrite,HWSSeek,false,false,false)
-	MACRO_CARD_IOFUNCTIONCARDDATA(HWSWrite,HWSSeek,false,false,true)
-	MACRO_CARD_IOFUNCTIONSET(HWSWrite,HWSSeek,false,false)
-	MACRO_CARD_IOFUNCTIONDECK(HWSWrite,HWSSeek,false,false)
+	MACRO_CARD_IOFUNCTIONCARDDATA(HWSWrite, HWSSeek, false, false, false)
+	MACRO_CARD_IOFUNCTIONCARDDATA(HWSWrite, HWSSeek, false, false, true)
+	MACRO_CARD_IOFUNCTIONSET(HWSWrite, HWSSeek, false, false)
+	MACRO_CARD_IOFUNCTIONDECK(HWSWrite, HWSSeek, false, false)
 	name_space_total = namesize;
 }
 
-int CardDataSet::GetSteamTextSize(SteamLanguage lang) {
-	unsigned int i;
-	int res = 0;
-	for (i=0;i<CARD_AMOUNT;i++)
-		res += card[i].name.GetLength(lang);
-	return res;
-}
-
 void CardDataSet::UpdateOffset() {
-	if (GetGameType()!=GAME_TYPE_PSX)
+	if (GetGameType() != GAME_TYPE_PSX)
 		return;
 	unsigned int i;
 	uint16_t j;
-	j = 4*CARD_AMOUNT;
-	for (i=0;i<CARD_AMOUNT;i++) {
+	j = 4 * CARD_AMOUNT;
+	for (i = 0; i < CARD_AMOUNT; i++) {
 		card[i].name_offset = j;
 		j += card[i].name.length;
 	}

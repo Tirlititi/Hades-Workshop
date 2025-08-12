@@ -182,6 +182,7 @@ namespace hades {
 	extern SteamLanguage CURRENT_STEAM_LANGUAGE;
 	extern bool STEAM_LANGUAGE_SAVE_LIST[STEAM_LANGUAGE_AMOUNT];
 	extern bool STEAM_SINGLE_LANGUAGE_MODE;
+	extern bool PREFER_EXPORT_AS_PATCHES;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

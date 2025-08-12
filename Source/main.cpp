@@ -33,7 +33,7 @@ static const wxCmdLineEntryDesc cmdLineDesc[] = {
 IMPLEMENT_APP(MainApp);
 
 namespace hades {
-	wxColour TEXT_WINDOW_COLOR = wxColour(190,190,190);
+	wxColour TEXT_WINDOW_COLOR = wxColour(190, 190, 190);
 	wxFont TEXT_DISPLAY_FONT = wxFont(wxNORMAL_FONT->GetPointSize(), wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("Arial"));
 	int TEXT_PREVIEW_TYPE = 0;
 	int FIELD_BACKGROUND_RESOLUTION = 32;
@@ -45,6 +45,7 @@ namespace hades {
 	SteamLanguage CURRENT_STEAM_LANGUAGE = STEAM_LANGUAGE_US;
 	bool STEAM_LANGUAGE_SAVE_LIST[STEAM_LANGUAGE_AMOUNT] = { true, false, false, false, false, false, false };
 	bool STEAM_SINGLE_LANGUAGE_MODE = false;
+	bool PREFER_EXPORT_AS_PATCHES = false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -536,73 +537,73 @@ void MainFrame::OnSaveBinClick(wxCommandEvent& event) {
 }
 
 void MainFrame::OnSortSpellClick( wxCommandEvent& event ) {
-	for (unsigned int i=0;i<CDPanelAmount;i++)
+	for (unsigned int i = 0; i < CDPanelAmount; i++)
 		if (CDPanel[i]->saveset.sectionloaded[DATA_SECTION_SPELL])
 			CDPanel[i]->SpellDisplayNames();
 }
 
 void MainFrame::OnSortSupportClick( wxCommandEvent& event ) {
-	for (unsigned int i=0;i<CDPanelAmount;i++)
+	for (unsigned int i = 0; i < CDPanelAmount; i++)
 		if (CDPanel[i]->saveset.sectionloaded[DATA_SECTION_SUPPORT])
 			CDPanel[i]->SupportDisplayNames();
 }
 
 void MainFrame::OnSortCommandClick( wxCommandEvent& event ) {
-	for (unsigned int i=0;i<CDPanelAmount;i++)
+	for (unsigned int i = 0; i < CDPanelAmount; i++)
 		if (CDPanel[i]->saveset.sectionloaded[DATA_SECTION_CMD])
 			CDPanel[i]->CommandDisplayNames();
 }
 
 void MainFrame::OnSortEnemyClick( wxCommandEvent& event ) {
-	for (unsigned int i=0;i<CDPanelAmount;i++)
+	for (unsigned int i = 0; i < CDPanelAmount; i++)
 		if (CDPanel[i]->saveset.sectionloaded[DATA_SECTION_ENMY])
 			CDPanel[i]->EnemyDisplayNames();
 }
 
 void MainFrame::OnSortCardClick( wxCommandEvent& event ) {
-	for (unsigned int i=0;i<CDPanelAmount;i++)
+	for (unsigned int i = 0; i < CDPanelAmount; i++)
 		if (CDPanel[i]->saveset.sectionloaded[DATA_SECTION_CARD])
 			CDPanel[i]->CardDisplayNames();
 }
 
 void MainFrame::OnSortItemClick( wxCommandEvent& event ) {
-	for (unsigned int i=0;i<CDPanelAmount;i++)
+	for (unsigned int i = 0; i < CDPanelAmount; i++)
 		if (CDPanel[i]->saveset.sectionloaded[DATA_SECTION_ITEM])
 			CDPanel[i]->ItemDisplayNames();
 }
 
 void MainFrame::OnSortKeyItemClick( wxCommandEvent& event ) {
-	for (unsigned int i=0;i<CDPanelAmount;i++)
+	for (unsigned int i = 0; i < CDPanelAmount; i++)
 		if (CDPanel[i]->saveset.sectionloaded[DATA_SECTION_ITEM])
 			CDPanel[i]->KeyItemDisplayNames();
 }
 
-void MainFrame::OnSortTextClick( wxCommandEvent& event ) {
-	for (unsigned int i=0;i<CDPanelAmount;i++)
+void MainFrame::OnSortTextClick(wxCommandEvent& event) {
+	for (unsigned int i = 0; i < CDPanelAmount; i++)
 		if (CDPanel[i]->saveset.sectionloaded[DATA_SECTION_TEXT])
 			CDPanel[i]->TextDisplayNames();
 }
 
-void MainFrame::OnSortWorldMapClick( wxCommandEvent& event ) {
-	for (unsigned int i=0;i<CDPanelAmount;i++)
+void MainFrame::OnSortWorldMapClick(wxCommandEvent& event) {
+	for (unsigned int i = 0; i < CDPanelAmount; i++)
 		if (CDPanel[i]->saveset.sectionloaded[DATA_SECTION_WORLD_MAP])
 			CDPanel[i]->WorldMapDisplayNames();
 }
 
-void MainFrame::OnSortFieldClick( wxCommandEvent& event ) {
-	for (unsigned int i=0;i<CDPanelAmount;i++)
+void MainFrame::OnSortFieldClick(wxCommandEvent& event) {
+	for (unsigned int i = 0; i < CDPanelAmount; i++)
 		if (CDPanel[i]->saveset.sectionloaded[DATA_SECTION_FIELD])
 			CDPanel[i]->FieldDisplayNames();
 }
 
-void MainFrame::OnSortBattleSceneClick( wxCommandEvent& event ) {
-	for (unsigned int i=0;i<CDPanelAmount;i++)
+void MainFrame::OnSortBattleSceneClick(wxCommandEvent& event) {
+	for (unsigned int i = 0; i < CDPanelAmount; i++)
 		if (CDPanel[i]->saveset.sectionloaded[DATA_SECTION_BATTLE_SCENE])
 			CDPanel[i]->BattleSceneDisplayNames();
 }
 
-void MainFrame::OnSortSpellAnimationClick( wxCommandEvent& event ) {
-	for (unsigned int i=0;i<CDPanelAmount;i++)
+void MainFrame::OnSortSpellAnimationClick(wxCommandEvent& event) {
+	for (unsigned int i = 0; i < CDPanelAmount; i++)
 		if (CDPanel[i]->saveset.sectionloaded[DATA_SECTION_SPELL_ANIM])
 			CDPanel[i]->SpellAnimationDisplayNames();
 }
@@ -672,20 +673,21 @@ void MainFrame::PreferencesUpdate() {
 							CDPanel[i]->fieldset.background_data[j]->camera[k].UpdateSize();
 			}
 	}
+	hades::PREFER_EXPORT_AS_PATCHES = PreferenceWindow->prefer_export_as_patches;
 }
 
-void MainFrame::OnPreferencesClick( wxCommandEvent& event ) {
+void MainFrame::OnPreferencesClick(wxCommandEvent& event) {
 	unsigned int i;
 	bool steamloaded = false;
-	for (i=0;i<CDPanelAmount;i++)
-		if (CDPanel[i]->gametype!=GAME_TYPE_PSX) {
+	for (i = 0; i < CDPanelAmount; i++)
+		if (CDPanel[i]->gametype != GAME_TYPE_PSX) {
 			steamloaded = true;
 			break;
 		}
-	int res = PreferenceWindow->ShowModal(!hades::STEAM_SINGLE_LANGUAGE_MODE || !steamloaded,!steamloaded);
-	if (res==wxID_OK) {
+	int res = PreferenceWindow->ShowModal(!hades::STEAM_SINGLE_LANGUAGE_MODE || !steamloaded, !steamloaded);
+	if (res == wxID_OK) {
 		PreferencesUpdate();
-	} else if (res==wxID_EXIT) {
+	} else if (res == wxID_EXIT) {
 		wxLogError(HADES_STRING_PREFERENCE_OPEN_FAIL);
 	}
 }

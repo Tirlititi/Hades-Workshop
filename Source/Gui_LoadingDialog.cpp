@@ -1,5 +1,7 @@
 #include "Gui_LoadingDialog.h"
 
+#include "main.h"
+
 LoadingDialog::LoadingDialog(wxWindow* parent, const wxString& title) :
 	wxGenericProgressDialog(title,wxEmptyString,100,parent,wxPD_AUTO_HIDE),
 	object_amount(1),
@@ -43,6 +45,8 @@ void LoadingDialogUpdate(unsigned int objdone, wxString message) {
 		TheLoadingDialog->wxGenericProgressDialog::Update(newvalue<=99 ? newvalue : 99,message);
 	else
 		TheLoadingDialog->wxGenericProgressDialog::Update(oldvalue,message);
+	wxYield();
+	GetTopWindow()->SetDoubleBuffered(false);
 }
 
 void LoadingDialogEnd() {

@@ -7,18 +7,21 @@
 #include "Database_Resource.h"
 #include "Database_SpellAnimation.h"
 #include "Database_CSV.h"
+#include "CommonUtility.h"
 
-#define HWS_BATTLE_SCENE_MOD_ID		0xFFF0
+#define HWS_BATTLE_SCENE_VERSION_VANILLA	7
+#define HWS_BATTLE_SCENE_VERSION			8
+#define HWS_BATTLE_SCENE_MOD_ID				0xFFF0
 
 int EnemySpellDataStruct::SetName(wstring newvalue, SteamLanguage lang) {
-	if (parent->parent->text[parent->id]->SetText(id+parent->stat_amount,newvalue,lang))
+	if (parent->parent->text[parent->id]->SetText(id + parent->stat_amount, newvalue, lang))
 		return 1;
 	name.SetValue(newvalue);
 	return 0;
 }
 
 int EnemySpellDataStruct::SetName(FF9String& newvalue) {
-	if (parent->parent->text[parent->id]->SetText(id+parent->stat_amount,newvalue))
+	if (parent->parent->text[parent->id]->SetText(id + parent->stat_amount, newvalue))
 		return 1;
 	name = newvalue;
 	return 0;
@@ -26,13 +29,13 @@ int EnemySpellDataStruct::SetName(FF9String& newvalue) {
 
 EnemyStatDataStruct* EnemySpellDataStruct::GetAssociatedStat() {
 	BattleDataStruct* bd = parent->parent->battle_data[parent->id];
-	if (id>bd->sequence_amount || bd->sequence_stat_id[id]>parent->stat_amount)
+	if (id > bd->sequence_amount || bd->sequence_stat_id[id] > parent->stat_amount)
 		return NULL;
 	return &parent->stat[bd->sequence_stat_id[id]];
 }
 
 int EnemyStatDataStruct::SetName(wstring newvalue, SteamLanguage lang) {
-	if (parent->parent->text[parent->id]->SetText(id,newvalue,lang))
+	if (parent->parent->text[parent->id]->SetText(id, newvalue, lang))
 		return 1;
 	name.SetValue(newvalue);
 	parent->parent->UpdateBattleName(parent->id);
@@ -40,7 +43,7 @@ int EnemyStatDataStruct::SetName(wstring newvalue, SteamLanguage lang) {
 }
 
 int EnemyStatDataStruct::SetName(FF9String& newvalue) {
-	if (parent->parent->text[parent->id]->SetText(id,newvalue))
+	if (parent->parent->text[parent->id]->SetText(id, newvalue))
 		return 1;
 	name = newvalue;
 	parent->parent->UpdateBattleName(parent->id);
@@ -51,22 +54,22 @@ int EnemyDataStruct::AddStat(EnemyStatDataStruct* copystat) {
 	BattleDataStruct& bd = *parent->battle_data[id];
 	BattleDataStruct& copybd = *copystat->parent->parent->battle_data[copystat->parent->id];
 	TextDataStruct& td = *parent->text[id];
-	uint32_t sizereqbd = 2*copystat->sequence_anim_amount;
+	uint32_t sizereqbd = 2 * copystat->sequence_anim_amount;
 	uint32_t sizereqes = 0x74;
-	if (bd.GetExtraSize()<sizereqbd)
+	if (bd.GetExtraSize() < sizereqbd)
 		return 1;
-	bd.SetSize(bd.size+sizereqbd);
-	if (GetExtraSize()<sizereqes) {
-		bd.SetSize(bd.size-sizereqbd);
-		return 1;
-	}
-	SetSize(size+sizereqes);
-	if (td.AddText(stat_amount,copystat->name)) {
-		bd.SetSize(bd.size-sizereqbd);
-		SetSize(size-sizereqes);
+	bd.SetSize(bd.size + sizereqbd);
+	if (GetExtraSize() < sizereqes) {
+		bd.SetSize(bd.size - sizereqbd);
 		return 1;
 	}
-	stat.resize(stat_amount+1,*copystat);
+	SetSize(size + sizereqes);
+	if (td.AddText(stat_amount, copystat->name)) {
+		bd.SetSize(bd.size - sizereqbd);
+		SetSize(size - sizereqes);
+		return 1;
+	}
+	stat.resize(stat_amount + 1, *copystat);
 	stat[stat_amount].default_attack = 0;
 	stat[stat_amount].text_amount = 0;
 	stat[stat_amount].sequence_anim_base = bd.animation_amount;
@@ -74,7 +77,7 @@ int EnemyDataStruct::AddStat(EnemyStatDataStruct* copystat) {
 	stat[stat_amount].parent = this;
 	stat_amount++;
 	bd.animation_amount += copystat->sequence_anim_amount;
-	bd.animation_id.insert(bd.animation_id.end(),copybd.animation_id.begin()+copystat->sequence_anim_base,copybd.animation_id.begin()+copystat->sequence_anim_base+copystat->sequence_anim_amount);
+	bd.animation_id.insert(bd.animation_id.end(), copybd.animation_id.begin() + copystat->sequence_anim_base, copybd.animation_id.begin() + copystat->sequence_anim_base + copystat->sequence_anim_amount);
 	parent->UpdateBattleName(id);
 	return 0;
 }
@@ -83,60 +86,60 @@ void EnemyDataStruct::RemoveStat(uint16_t statid) {
 	BattleDataStruct& bd = *parent->battle_data[id];
 	TextDataStruct& td = *parent->text[id];
 	unsigned int i;
-	bd.SetSize(bd.size-2*stat[statid].sequence_anim_amount);
+	bd.SetSize(bd.size - 2 * stat[statid].sequence_anim_amount);
 	bd.animation_amount -= stat[statid].sequence_anim_amount;
-	bd.animation_id.erase(bd.animation_id.begin()+stat[statid].sequence_anim_base,bd.animation_id.begin()+stat[statid].sequence_anim_amount);
-	for (i=0;i<bd.sequence_amount;i++)
-		if (bd.sequence_stat_id[i]==statid) {
+	bd.animation_id.erase(bd.animation_id.begin() + stat[statid].sequence_anim_base, bd.animation_id.begin() + stat[statid].sequence_anim_amount);
+	for (i = 0; i < bd.sequence_amount; i++)
+		if (bd.sequence_stat_id[i] == statid) {
 			bd.sequence_base_anim[i] = 0;
 			bd.sequence_stat_id[i] = 0;
 		} else {
-			if (bd.sequence_base_anim[i]>stat[statid].sequence_anim_base)
+			if (bd.sequence_base_anim[i] > stat[statid].sequence_anim_base)
 				bd.sequence_base_anim[i] -= stat[statid].sequence_anim_amount;
-			if (bd.sequence_stat_id[i]>statid)
+			if (bd.sequence_stat_id[i] > statid)
 				bd.sequence_stat_id[i]--;
 		}
-	for (i=0;i<stat_amount;i++)
-		if (stat[i].sequence_anim_base>stat[statid].sequence_anim_base)
+	for (i = 0; i < stat_amount; i++)
+		if (stat[i].sequence_anim_base > stat[statid].sequence_anim_base)
 			stat[i].sequence_anim_base -= stat[statid].sequence_anim_amount;
-	SetSize(size-0x74);
-	stat.erase(stat.begin()+statid);
+	SetSize(size - 0x74);
+	stat.erase(stat.begin() + statid);
 	stat_amount--;
 	td.RemoveText(statid);
 	parent->UpdateBattleName(id);
 }
 
 int EnemyDataStruct::AddSpell(EnemySpellDataStruct* copyspell) {
-	unsigned int i,j;
+	unsigned int i; int j;
 	BattleDataStruct& bs = *parent->battle_data[id];
 	BattleDataStruct& copybs = *copyspell->parent->parent->battle_data[copyspell->parent->id];
 	TextDataStruct& td = *parent->text[id];
 	uint16_t reqlenbattle = 1;
 	uint16_t reqlenspell = 8;
-	if (bs.sequence_amount%2==0)
+	if (bs.sequence_amount % 2 == 0)
 		reqlenbattle += 4;
-	for (i=0;i<copybs.sequence_code_amount[copyspell->id];i++) {
+	for (i = 0; i < copybs.sequence_code_amount[copyspell->id]; i++) {
 		EnemySequenceCode& seq = GetEnemySequenceCode(copybs.sequence_code[copyspell->id][i].code);
 		reqlenbattle++;
-		for (j=0;j<seq.arg_amount;j++)
+		for (j = 0; j < seq.arg_amount; j++)
 			reqlenbattle += seq.arg_length[j];
 	}
-	while (reqlenbattle%4)
+	while (reqlenbattle % 4)
 		reqlenbattle++;
-	if (GetExtraSize()<reqlenbattle+reqlenspell)
+	if (GetExtraSize() < (unsigned int)(reqlenbattle + reqlenspell))
 		return 1;
-	if (td.AddText(stat_amount+spell_amount,copyspell->name))
+	if (td.AddText(stat_amount + spell_amount, copyspell->name))
 		return 1;
-	SetSize(size+reqlenspell);
-	spell.resize(spell_amount+1,*copyspell);
+	SetSize(size + reqlenspell);
+	spell.resize(spell_amount + 1, *copyspell);
 	spell[spell_amount].id = spell_amount;
 	spell[spell_amount].parent = this;
 	spell_amount++;
 	unsigned int seqamount = bs.sequence_amount;
-	unsigned int newseqindex = bs.sequence_amount-1;
+	unsigned int newseqindex = bs.sequence_amount - 1;
 	bool lastisdummy = false;
-	if (bs.sequence_amount>1)
-		lastisdummy = bs.sequence_offset[bs.sequence_amount-1]==bs.sequence_offset[0];
+	if (bs.sequence_amount > 1)
+		lastisdummy = bs.sequence_offset[bs.sequence_amount - 1] == bs.sequence_offset[0];
 	if (!lastisdummy) {
 		seqamount += 2;
 		newseqindex++;
@@ -145,19 +148,19 @@ int EnemyDataStruct::AddSpell(EnemySpellDataStruct* copyspell) {
 		bs.sequence_stat_id.resize(seqamount);
 		bs.sequence_code_amount.resize(seqamount);
 		bs.sequence_code.resize(seqamount);
-		bs.sequence_offset[seqamount-1] = bs.sequence_offset[0];
+		bs.sequence_offset[seqamount - 1] = bs.sequence_offset[0];
 	}
 	bs.sequence_offset[newseqindex] = 0;
 	bs.sequence_base_anim[newseqindex] = 0;
 	bs.sequence_stat_id[newseqindex] = 0;
 	bs.sequence_code_amount[newseqindex] = copybs.sequence_code_amount[copyspell->id];
 	bs.sequence_code[newseqindex].resize(bs.sequence_code_amount[newseqindex]);
-	for (i=0;i<bs.sequence_code_amount[newseqindex];i++) {
+	for (i = 0; i < bs.sequence_code_amount[newseqindex]; i++) {
 		EnemySequenceCode& seq = GetEnemySequenceCode(copybs.sequence_code[copyspell->id][i].code);
 		bs.sequence_code[newseqindex][i].parent = &bs;
 		bs.sequence_code[newseqindex][i].code = seq.id;
 		bs.sequence_code[newseqindex][i].arg = new uint32_t[seq.arg_amount];
-		memcpy(bs.sequence_code[newseqindex][i].arg,copybs.sequence_code[copyspell->id][i].arg,seq.arg_amount*sizeof(uint32_t));
+		memcpy(bs.sequence_code[newseqindex][i].arg, copybs.sequence_code[copyspell->id][i].arg, seq.arg_amount * sizeof(uint32_t));
 	}
 	bs.sequence_amount = seqamount;
 	bs.UpdateOffset();
@@ -168,16 +171,16 @@ void EnemyDataStruct::RemoveSpell(uint16_t spellid) {
 	BattleDataStruct* bs = parent->battle_data[id];
 	TextDataStruct* td = parent->text[id];
 	spell_amount--;
-	spell.erase(spell.begin()+spellid);
+	spell.erase(spell.begin() + spellid);
 	UpdateOffset();
 	bool lastisdummy = false;
-	if (bs->sequence_amount>1)
-		lastisdummy = bs->sequence_offset[bs->sequence_amount-1]==bs->sequence_offset[0];
-	bs->sequence_offset.erase(bs->sequence_offset.begin()+spellid);
-	bs->sequence_base_anim.erase(bs->sequence_base_anim.begin()+spellid);
-	bs->sequence_stat_id.erase(bs->sequence_stat_id.begin()+spellid);
-	bs->sequence_code_amount.erase(bs->sequence_code_amount.begin()+spellid);
-	bs->sequence_code.erase(bs->sequence_code.begin()+spellid);
+	if (bs->sequence_amount > 1)
+		lastisdummy = bs->sequence_offset[bs->sequence_amount - 1] == bs->sequence_offset[0];
+	bs->sequence_offset.erase(bs->sequence_offset.begin() + spellid);
+	bs->sequence_base_anim.erase(bs->sequence_base_anim.begin() + spellid);
+	bs->sequence_stat_id.erase(bs->sequence_stat_id.begin() + spellid);
+	bs->sequence_code_amount.erase(bs->sequence_code_amount.begin() + spellid);
+	bs->sequence_code.erase(bs->sequence_code.begin() + spellid);
 	if (lastisdummy) {
 		bs->sequence_amount -= 2;
 		bs->sequence_offset.resize(bs->sequence_amount);
@@ -185,7 +188,7 @@ void EnemyDataStruct::RemoveSpell(uint16_t spellid) {
 		bs->sequence_stat_id.resize(bs->sequence_amount);
 		bs->sequence_code_amount.resize(bs->sequence_amount);
 		bs->sequence_code.resize(bs->sequence_amount);
-	} else if (bs->sequence_amount>1) {
+	} else if (bs->sequence_amount > 1) {
 		bs->sequence_offset.push_back(bs->sequence_offset[0]);
 		bs->sequence_base_anim.push_back(0);
 		bs->sequence_stat_id.push_back(0);
@@ -193,23 +196,23 @@ void EnemyDataStruct::RemoveSpell(uint16_t spellid) {
 		bs->sequence_code.push_back(vector<EnemySequenceCodeLine>());
 	}
 	bs->UpdateOffset();
-	td->RemoveText(stat_amount+spellid);
+	td->RemoveText(stat_amount + spellid);
 }
 
 int EnemyDataStruct::AddGroup() {
-	if (GetExtraSize()<0x38)
+	if (GetExtraSize() < 0x38)
 		return 1;
 	unsigned int i;
-	SetSize(size+0x38);
-	group.resize(group_amount+1);
+	SetSize(size + 0x38);
+	group.resize(group_amount + 1);
 	group[group_amount].frequence = 0;
 	group[group_amount].enemy_amount = 1;
 	group[group_amount].camera_engage = 0;
 	group[group_amount].ap = 0;
-	for (i=0;i<4;i++) {
+	for (i = 0; i < 4; i++) {
 		group[group_amount].enemy_id[i] = 0;
 		group[group_amount].targetable[i] = 1;
-		group[group_amount].enemy_posx[i] = 1500-1000*i;
+		group[group_amount].enemy_posx[i] = 1500 - 1000 * i;
 		group[group_amount].enemy_posz[i] = 0;
 		group[group_amount].enemy_posy[i] = 600;
 		group[group_amount].enemy_angle[i] = 0;
@@ -221,24 +224,24 @@ int EnemyDataStruct::AddGroup() {
 }
 
 void EnemyDataStruct::RemoveGroup(uint16_t groupid) {
-	SetSize(size-0x38);
-	group.erase(group.begin()+groupid);
+	SetSize(size - 0x38);
+	group.erase(group.begin() + groupid);
 	group_amount--;
 }
 
 int EnemyDataStruct::AddAnimation(uint16_t statid, uint16_t animid) {
-	if (GetExtraSize()<2)
+	if (GetExtraSize() < 2)
 		return 1;
 	BattleDataStruct& bs = *parent->battle_data[id];
-	unsigned int i, animindex = stat[statid].sequence_anim_base+stat[statid].sequence_anim_amount;
-	SetSize(size+2);
+	unsigned int i, animindex = stat[statid].sequence_anim_base + stat[statid].sequence_anim_amount;
+	SetSize(size + 2);
 	bs.animation_amount++;
-	bs.animation_id.insert(bs.animation_id.begin()+animindex,animid);
-	for (i=0;i<bs.sequence_amount;i++)
-		if (bs.sequence_base_anim[i]>=animindex && bs.sequence_stat_id[i]!=statid)
+	bs.animation_id.insert(bs.animation_id.begin() + animindex, animid);
+	for (i = 0; i < bs.sequence_amount; i++)
+		if (bs.sequence_base_anim[i] >= animindex && bs.sequence_stat_id[i] != statid)
 			bs.sequence_base_anim[i]++;
-	for (i=0;i<stat_amount;i++)
-		if (stat[i].sequence_anim_base>=animindex && i!=statid)
+	for (i = 0; i < stat_amount; i++)
+		if (stat[i].sequence_anim_base >= animindex && i != statid)
 			stat[i].sequence_anim_base++;
 	stat[statid].sequence_anim_amount++;
 	return 0;
@@ -247,18 +250,18 @@ int EnemyDataStruct::AddAnimation(uint16_t statid, uint16_t animid) {
 void EnemyDataStruct::RemoveAnimation(uint16_t animindex) {
 	BattleDataStruct& bs = *parent->battle_data[id];
 	unsigned int i;
-	SetSize(size-2);
+	SetSize(size - 2);
 	bs.animation_amount--;
-	bs.animation_id.erase(bs.animation_id.begin()+animindex);
-	for (i=0;i<stat_amount;i++)
-		if (animindex>=stat[i].sequence_anim_base && animindex<stat[i].sequence_anim_base+stat[i].sequence_anim_amount) {
+	bs.animation_id.erase(bs.animation_id.begin() + animindex);
+	for (i = 0; i < stat_amount; i++)
+		if (animindex >= stat[i].sequence_anim_base && animindex < stat[i].sequence_anim_base + stat[i].sequence_anim_amount) {
 			stat[i].sequence_anim_amount--;
-		} else if (stat[i].sequence_anim_base>animindex) {
+		} else if (stat[i].sequence_anim_base > animindex) {
 			stat[i].sequence_anim_base--;
 		}
-	for (i=0;i<bs.sequence_amount;i++)
-		if (bs.sequence_base_anim[i]>animindex)
-			bs.sequence_base_anim[i]--;
+		for (i = 0; i < bs.sequence_amount; i++)
+			if (bs.sequence_base_anim[i] > animindex)
+				bs.sequence_base_anim[i]--;
 }
 
 Spell_Panel EnemySpellDataStruct::GetPanel() {
@@ -338,190 +341,219 @@ void EnemySpellDataStruct::SetTargetAmount(Spell_Target_Amount newvalue) {
 		target_type = (target_type & 0xF0) + 0x9 + tt % 3;
 }
 
-#define MACRO_ENEMY_IOFUNCTION(IO,SEEK,READ,PPF) \
-	unsigned int i,j; \
+#define MACRO_ENEMY_IOFUNCTION(IO, SEEK, READ, PPF, READHWS) \
+	unsigned int i, j; \
 	uint16_t zero16 = 0; \
 	if (PPF) PPFInitScanStep(f); \
-	IO ## Char(f,unknown); \
-	IO ## Char(f,group_amount); \
-	IO ## Char(f,stat_amount); \
-	IO ## Char(f,spell_amount); \
-	IO ## Short(f,flag); \
-	IO ## Short(f,zero16); \
+	IO ## Char(f, version); \
+	if (READHWS) useextendedtype = version > HWS_BATTLE_SCENE_VERSION_VANILLA; \
+	IO ## Char(f, group_amount); \
+	IO ## Char(f, stat_amount); \
+	IO ## Char(f, spell_amount); \
+	IO ## Short(f, flag); \
+	IO ## Short(f, zero16); \
 	if (READ) { \
 		group.resize(group_amount); \
 		stat.resize(stat_amount); \
 		spell.resize(spell_amount); \
 	} \
-	for (i=0;i<group_amount;i++) { \
+	for (i = 0; i < group_amount; i++) { \
 		if (READ) group[i].parent = this; \
 		if (READ) group[i].id = i; \
-		IO ## Char(f,group[i].frequence); \
-		IO ## Char(f,group[i].enemy_amount); \
-		IO ## Short(f,group[i].camera_engage); \
-		IO ## Short(f,group[i].ap); \
-		IO ## Short(f,zero16); \
-		for (j=0;j<4;j++) { \
-			IO ## Char(f,group[i].enemy_id[j]); \
-			IO ## Char(f,group[i].targetable[j]); \
-			IO ## Short(f,zero16); \
-			IO ## Short(f,(uint16_t&)group[i].enemy_posx[j]); \
-			IO ## Short(f,(uint16_t&)group[i].enemy_posz[j]); \
-			IO ## Short(f,(uint16_t&)group[i].enemy_posy[j]); \
-			IO ## Short(f,(uint16_t&)group[i].enemy_angle[j]); \
+		IO ## Char(f, group[i].frequence); \
+		IO ## Char(f, group[i].enemy_amount); \
+		IO ## Short(f, group[i].camera_engage); \
+		IO ## Long(f, group[i].ap); \
+		for (j = 0; j < 4; j++) { \
+			IO ## Char(f, group[i].enemy_id[j]); \
+			IO ## Char(f, group[i].targetable[j]); \
+			IO ## Short(f, zero16); \
+			IO ## Short(f, (uint16_t&)group[i].enemy_posx[j]); \
+			IO ## Short(f, (uint16_t&)group[i].enemy_posz[j]); \
+			IO ## Short(f, (uint16_t&)group[i].enemy_posy[j]); \
+			IO ## Short(f, (uint16_t&)group[i].enemy_angle[j]); \
 		} \
 	} \
-	for (i=0;i<stat_amount;i++) { \
+	for (i = 0; i < stat_amount; i++) { \
 		if (READ) stat[i].parent = this; \
 		if (READ) stat[i].id = i; \
-		IO ## Long(f,stat[i].status_immune); \
-		IO ## Long(f,stat[i].status_auto); \
-		IO ## Long(f,stat[i].status_initial); \
-		IO ## Short(f,stat[i].hp); \
-		IO ## Short(f,stat[i].mp); \
-		IO ## Short(f,stat[i].gils); \
-		IO ## Short(f,stat[i].exp); \
-		IO ## Char(f,stat[i].item_drop[0]); \
-		IO ## Char(f,stat[i].item_drop[1]); \
-		IO ## Char(f,stat[i].item_drop[2]); \
-		IO ## Char(f,stat[i].item_drop[3]); \
-		IO ## Char(f,stat[i].item_steal[0]); \
-		IO ## Char(f,stat[i].item_steal[1]); \
-		IO ## Char(f,stat[i].item_steal[2]); \
-		IO ## Char(f,stat[i].item_steal[3]); \
-		IO ## Short(f,stat[i].radius); \
-		IO ## Short(f,stat[i].model); \
-		IO ## Short(f,stat[i].anim_idle); \
-		IO ## Short(f,stat[i].anim_idle_alt); \
-		IO ## Short(f,stat[i].anim_hit); \
-		IO ## Short(f,stat[i].anim_hit_alt); \
-		IO ## Short(f,stat[i].anim_death); \
-		IO ## Short(f,stat[i].anim_death_alt); \
-		IO ## Short(f,stat[i].mesh); \
-		IO ## Short(f,stat[i].mesh_vanish); \
-		IO ## Short(f,stat[i].death_flag); \
-		IO ## Short(f,stat[i].attack); \
-		IO ## Char(f,stat[i].speed); \
-		IO ## Char(f,stat[i].strength); \
-		IO ## Char(f,stat[i].magic); \
-		IO ## Char(f,stat[i].spirit); \
-		IO ## Char(f,stat[i].zerostat); \
-		IO ## Char(f,stat[i].trans); \
-		IO ## Char(f,stat[i].cur_capa); \
-		IO ## Char(f,stat[i].max_capa); \
-		IO ## Char(f,stat[i].element_immune); \
-		IO ## Char(f,stat[i].element_absorb); \
-		IO ## Char(f,stat[i].element_half); \
-		IO ## Char(f,stat[i].element_weak); \
-		IO ## Char(f,stat[i].lvl); \
-		IO ## Char(f,stat[i].classification); \
-		IO ## Char(f,stat[i].accuracy); \
-		IO ## Char(f,stat[i].defence); \
-		IO ## Char(f,stat[i].evade); \
-		IO ## Char(f,stat[i].magic_defence); \
-		IO ## Char(f,stat[i].magic_evade); \
-		IO ## Char(f,stat[i].blue_magic); \
-		IO ## Char(f,stat[i].bone_camera1); \
-		IO ## Char(f,stat[i].bone_camera2); \
-		IO ## Char(f,stat[i].bone_camera3); \
-		IO ## Char(f,stat[i].bone_target); \
-		IO ## Short(f,stat[i].sound_death); \
-		IO ## Char(f,stat[i].default_attack); \
-		IO ## Char(f,stat[i].text_amount); \
-		IO ## Char(f,stat[i].selection_bone[0]); \
-		IO ## Char(f,stat[i].selection_bone[1]); \
-		IO ## Char(f,stat[i].selection_bone[2]); \
-		IO ## Char(f,stat[i].selection_bone[3]); \
-		IO ## Char(f,stat[i].selection_bone[4]); \
-		IO ## Char(f,stat[i].selection_bone[5]); \
-		IO ## Char(f,(uint8_t&)stat[i].selection_offsetz[0]); \
-		IO ## Char(f,(uint8_t&)stat[i].selection_offsetz[1]); \
-		IO ## Char(f,(uint8_t&)stat[i].selection_offsetz[2]); \
-		IO ## Char(f,(uint8_t&)stat[i].selection_offsetz[3]); \
-		IO ## Char(f,(uint8_t&)stat[i].selection_offsetz[4]); \
-		IO ## Char(f,(uint8_t&)stat[i].selection_offsetz[5]); \
-		IO ## Char(f,(uint8_t&)stat[i].selection_offsety[0]); \
-		IO ## Char(f,(uint8_t&)stat[i].selection_offsety[1]); \
-		IO ## Char(f,(uint8_t&)stat[i].selection_offsety[2]); \
-		IO ## Char(f,(uint8_t&)stat[i].selection_offsety[3]); \
-		IO ## Char(f,(uint8_t&)stat[i].selection_offsety[4]); \
-		IO ## Char(f,(uint8_t&)stat[i].selection_offsety[5]); \
-		IO ## Short(f,stat[i].sound_engage); \
-		IO ## Short(f,stat[i].shadow_size_x); \
-		IO ## Short(f,stat[i].shadow_size_y); \
-		IO ## Char(f,stat[i].shadow_bone1); \
-		IO ## Char(f,stat[i].card_drop); \
-		IO ## Short(f,(uint16_t&)stat[i].shadow_offset_x); \
-		IO ## Short(f,(uint16_t&)stat[i].shadow_offset_y); \
-		IO ## Char(f,stat[i].shadow_bone2); \
-		IO ## Char(f,stat[i].zero1); \
-		IO ## Short(f,stat[i].zero2); \
-		IO ## Short(f,stat[i].zero3); \
+		MACRO_IOFUNCTIONGENERIC_STATUS(f, useextendedtype, IO, READ, stat[i].status_immune) \
+		MACRO_IOFUNCTIONGENERIC_STATUS(f, useextendedtype, IO, READ, stat[i].status_auto) \
+		MACRO_IOFUNCTIONGENERIC_STATUS(f, useextendedtype, IO, READ, stat[i].status_initial) \
+		IO ## FlexibleShort(f, stat[i].hp, useextendedtype); \
+		IO ## FlexibleShort(f, stat[i].mp, useextendedtype); \
+		IO ## FlexibleShort(f, stat[i].gils, useextendedtype); \
+		IO ## FlexibleShort(f, stat[i].exp, useextendedtype); \
+		IO ## FlexibleChar(f, stat[i].item_drop[0], useextendedtype); \
+		IO ## FlexibleChar(f, stat[i].item_drop[1], useextendedtype); \
+		IO ## FlexibleChar(f, stat[i].item_drop[2], useextendedtype); \
+		IO ## FlexibleChar(f, stat[i].item_drop[3], useextendedtype); \
+		IO ## FlexibleChar(f, stat[i].item_steal[0], useextendedtype); \
+		IO ## FlexibleChar(f, stat[i].item_steal[1], useextendedtype); \
+		IO ## FlexibleChar(f, stat[i].item_steal[2], useextendedtype); \
+		IO ## FlexibleChar(f, stat[i].item_steal[3], useextendedtype); \
+		if (useextendedtype) { \
+			IO ## FlexibleChar(f, stat[i].item_drop_rate[0], true); \
+			IO ## FlexibleChar(f, stat[i].item_drop_rate[1], true); \
+			IO ## FlexibleChar(f, stat[i].item_drop_rate[2], true); \
+			IO ## FlexibleChar(f, stat[i].item_drop_rate[3], true); \
+			IO ## FlexibleChar(f, stat[i].item_steal_rate[0], true); \
+			IO ## FlexibleChar(f, stat[i].item_steal_rate[1], true); \
+			IO ## FlexibleChar(f, stat[i].item_steal_rate[2], true); \
+			IO ## FlexibleChar(f, stat[i].item_steal_rate[3], true); \
+			IO ## FlexibleChar(f, stat[i].card_drop_rate, true); \
+		} else if (READ) { \
+			stat[i].item_drop_rate[0] = 256; \
+			stat[i].item_drop_rate[1] = 96; \
+			stat[i].item_drop_rate[2] = 32; \
+			stat[i].item_drop_rate[3] = 1; \
+			stat[i].item_steal_rate[0] = 256; \
+			stat[i].item_steal_rate[1] = 64; \
+			stat[i].item_steal_rate[2] = 16; \
+			stat[i].item_steal_rate[3] = 1; \
+			stat[i].card_drop_rate = 32; \
+		} \
+		IO ## Short(f, stat[i].radius); \
+		IO ## Short(f, stat[i].model); \
+		IO ## Short(f, stat[i].anim_idle); \
+		IO ## Short(f, stat[i].anim_idle_alt); \
+		IO ## Short(f, stat[i].anim_hit); \
+		IO ## Short(f, stat[i].anim_hit_alt); \
+		IO ## Short(f, stat[i].anim_death); \
+		IO ## Short(f, stat[i].anim_death_alt); \
+		IO ## Short(f, stat[i].mesh); \
+		IO ## Short(f, stat[i].mesh_vanish); \
+		IO ## Short(f, stat[i].death_flag); \
+		IO ## FlexibleShort(f, stat[i].attack, useextendedtype); \
+		IO ## FlexibleChar(f, stat[i].speed, useextendedtype); \
+		IO ## FlexibleChar(f, stat[i].strength, useextendedtype); \
+		IO ## FlexibleChar(f, stat[i].magic, useextendedtype); \
+		IO ## FlexibleChar(f, stat[i].spirit, useextendedtype); \
+		IO ## Char(f, stat[i].zerostat); \
+		IO ## Char(f, stat[i].trans); \
+		IO ## Char(f, stat[i].cur_capa); \
+		IO ## Char(f, stat[i].max_capa); \
+		IO ## Char(f, stat[i].element_immune); \
+		IO ## Char(f, stat[i].element_absorb); \
+		IO ## Char(f, stat[i].element_half); \
+		IO ## Char(f, stat[i].element_weak); \
+		IO ## FlexibleChar(f, stat[i].lvl, useextendedtype); \
+		IO ## Char(f, stat[i].classification); \
+		IO ## FlexibleChar(f, stat[i].accuracy, useextendedtype); \
+		IO ## FlexibleChar(f, stat[i].defence, useextendedtype); \
+		IO ## FlexibleChar(f, stat[i].evade, useextendedtype); \
+		IO ## FlexibleChar(f, stat[i].magic_defence, useextendedtype); \
+		IO ## FlexibleChar(f, stat[i].magic_evade, useextendedtype); \
+		IO ## FlexibleChar(f, stat[i].blue_magic, useextendedtype); \
+		IO ## Char(f, stat[i].bone_camera1); \
+		IO ## Char(f, stat[i].bone_camera2); \
+		IO ## Char(f, stat[i].bone_camera3); \
+		IO ## Char(f, stat[i].bone_target); \
+		IO ## Short(f, stat[i].sound_death); \
+		IO ## Char(f, stat[i].default_attack); \
+		IO ## Char(f, stat[i].text_amount); \
+		IO ## Char(f, stat[i].selection_bone[0]); \
+		IO ## Char(f, stat[i].selection_bone[1]); \
+		IO ## Char(f, stat[i].selection_bone[2]); \
+		IO ## Char(f, stat[i].selection_bone[3]); \
+		IO ## Char(f, stat[i].selection_bone[4]); \
+		IO ## Char(f, stat[i].selection_bone[5]); \
+		IO ## Char(f, (uint8_t&)stat[i].selection_offsetz[0]); \
+		IO ## Char(f, (uint8_t&)stat[i].selection_offsetz[1]); \
+		IO ## Char(f, (uint8_t&)stat[i].selection_offsetz[2]); \
+		IO ## Char(f, (uint8_t&)stat[i].selection_offsetz[3]); \
+		IO ## Char(f, (uint8_t&)stat[i].selection_offsetz[4]); \
+		IO ## Char(f, (uint8_t&)stat[i].selection_offsetz[5]); \
+		IO ## Char(f, (uint8_t&)stat[i].selection_offsety[0]); \
+		IO ## Char(f, (uint8_t&)stat[i].selection_offsety[1]); \
+		IO ## Char(f, (uint8_t&)stat[i].selection_offsety[2]); \
+		IO ## Char(f, (uint8_t&)stat[i].selection_offsety[3]); \
+		IO ## Char(f, (uint8_t&)stat[i].selection_offsety[4]); \
+		IO ## Char(f, (uint8_t&)stat[i].selection_offsety[5]); \
+		IO ## Short(f, stat[i].sound_engage); \
+		IO ## Short(f, stat[i].shadow_size_x); \
+		IO ## Short(f, stat[i].shadow_size_y); \
+		IO ## Char(f, stat[i].shadow_bone1); \
+		IO ## FlexibleChar(f, stat[i].card_drop, useextendedtype); \
+		IO ## Short(f, (uint16_t&)stat[i].shadow_offset_x); \
+		IO ## Short(f, (uint16_t&)stat[i].shadow_offset_y); \
+		IO ## Char(f, stat[i].shadow_bone2); \
+		IO ## Char(f, stat[i].zero1); \
+		IO ## Short(f, stat[i].zero2); \
+		IO ## Short(f, stat[i].zero3); \
 	} \
-	for (i=0;i<spell_amount;i++) { \
+	for (i = 0; i < spell_amount; i++) { \
 		if (READ) spell[i].parent = this; \
 		if (READ) spell[i].id = i; \
-		IO ## Char(f,spell[i].target_type); \
-		if (READ) { \
-			IO ## Short(f,spell[i].model); \
+		IO ## Char(f, spell[i].target_type); \
+		if (useextendedtype) { \
+			IO ## FlexibleShort(f, spell[i].model, useextendedtype); \
+		} else if (READ) { \
+			IO ## FlexibleShort(f, spell[i].model, useextendedtype); \
 			spell[i].model &= 0x1FF; \
 		} else { \
 			uint16_t tmp = spell[i].model | ~0x1FF; \
-			IO ## Short(f,tmp); \
+			IO ## Short(f, tmp); \
 		} \
-		IO ## Char(f,spell[i].target_flag); \
-		IO ## Char(f,spell[i].effect); \
-		IO ## Char(f,spell[i].power); \
-		IO ## Char(f,spell[i].element); \
-		IO ## Char(f,spell[i].accuracy); \
-		IO ## Char(f,spell[i].flag); \
-		IO ## Char(f,spell[i].status); \
-		IO ## Char(f,spell[i].mp); \
-		IO ## Char(f,spell[i].menu_flag); \
-		IO ## Short(f,spell[i].model_alt); \
-		IO ## Short(f,spell[i].name_offset); \
+		IO ## Char(f, spell[i].target_flag); \
+		IO ## FlexibleChar(f, spell[i].effect, useextendedtype); \
+		IO ## FlexibleChar(f, spell[i].power, useextendedtype); \
+		IO ## Char(f, spell[i].element); \
+		IO ## FlexibleChar(f, spell[i].accuracy, useextendedtype); \
+		IO ## Char(f, spell[i].flag); \
+		IO ## FlexibleChar(f, spell[i].status, useextendedtype); \
+		IO ## FlexibleChar(f, spell[i].mp, useextendedtype); \
+		IO ## Char(f, spell[i].menu_flag); \
+		IO ## FlexibleShort(f, spell[i].model_alt, useextendedtype); \
+		IO ## Short(f, spell[i].name_offset); \
 	} \
 	if (PPF) PPFEndScanStep();
 
 void EnemyDataStruct::Read(fstream& f) {
 	if (loaded)
 		return;
-	if (GetGameType()==GAME_TYPE_PSX) {
-		MACRO_ENEMY_IOFUNCTION(FFIXRead,FFIXSeek,true,false)
+	bool useextendedtype = false;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		MACRO_ENEMY_IOFUNCTION(FFIXRead, FFIXSeek, true, false, false)
 	} else {
-		MACRO_ENEMY_IOFUNCTION(SteamRead,SteamSeek,true,false)
+		MACRO_ENEMY_IOFUNCTION(SteamRead, SteamSeek, true, false, false)
 	}
 	loaded = true;
 }
 
 void EnemyDataStruct::Write(fstream& f) {
-	MACRO_ENEMY_IOFUNCTION(FFIXWrite,FFIXSeek,false,false)
+	bool useextendedtype = false;
+	MACRO_ENEMY_IOFUNCTION(FFIXWrite, FFIXSeek, false, false, false)
 	modified = false;
 }
 
 void EnemyDataStruct::WritePPF(fstream& f) {
-	MACRO_ENEMY_IOFUNCTION(PPFStepAdd,FFIXSeek,false,true)
+	bool useextendedtype = false;
+	MACRO_ENEMY_IOFUNCTION(PPFStepAdd, FFIXSeek, false, true, false)
 }
 
 void EnemyDataStruct::ReadHWS(fstream& f) {
-	MACRO_ENEMY_IOFUNCTION(HWSRead,HWSSeek,true,false)
+	bool useextendedtype = false;
+	MACRO_ENEMY_IOFUNCTION(HWSRead, HWSSeek, true, false, true)
 	MarkDataModified();
 }
 
 void EnemyDataStruct::WriteHWS(fstream& f) {
-	MACRO_ENEMY_IOFUNCTION(HWSWrite,HWSSeek,false,false)
+	bool useextendedtype = true; // TODO: situations in which HWS_BATTLE_SCENE_VERSION_VANILLA is used instead ?
+	version = HWS_BATTLE_SCENE_VERSION;
+	MACRO_ENEMY_IOFUNCTION(HWSWrite, HWSSeek, false, false, false)
 }
 
 void EnemyDataStruct::UpdateOffset() {
-	SetSize(group_amount*0x38+stat_amount*0x74+spell_amount*0x10+8);
+	SetSize(group_amount * 0x38 + stat_amount * 0x74 + spell_amount * 0x10 + 8);
 }
 
 void EnemyDataSet::GetSpellSequenceModelRef(vector<EnemySequenceCodeLine>& sequence, int* code, int* arg) {
 	unsigned int i, j;
-	for (i=0; i<sequence.size(); i++) {
+	for (i = 0; i < sequence.size(); i++) {
 		EnemySequenceCode& c = GetEnemySequenceCode(sequence[i].code);
-		for (j=0; (int)j<c.arg_amount; j++)
-			if (c.arg_type[j]==EAAT_SPELL_ANIM) {
+		for (j = 0; (int)j < c.arg_amount; j++)
+			if (c.arg_type[j] == EAAT_SPELL_ANIM) {
 				*code = i;
 				*arg = j;
 				return;
@@ -535,11 +567,11 @@ EnemyStatDataStruct* GetSimilarEnemyStatsResult[1024];
 EnemySpellDataStruct* GetSimilarEnemySpellsResult[1024];
 unsigned int GetSimilarEnemyBattlesId[1024];
 EnemyStatDataStruct** EnemyDataSet::GetSimilarEnemyStats(EnemyStatDataStruct& stat, unsigned int* amountfound, unsigned int** battleid) {
-	unsigned int i,j,nb = 0;
+	unsigned int i, j, nb = 0;
 	wstring& statname = stat.name.str_nice;
-	for (i=0;i<battle_amount;i++)
-		for (j=0;j<battle[i]->stat_amount;j++)
-			if (battle[i]->stat[j].name.str_nice==statname && battle[i]->stat[j].lvl==stat.lvl) {
+	for (i = 0; i < battle_amount; i++)
+		for (j = 0; j < battle[i]->stat_amount; j++)
+			if (battle[i]->stat[j].name.str_nice == statname && battle[i]->stat[j].lvl == stat.lvl) {
 				GetSimilarEnemyStatsResult[nb] = &(battle[i]->stat[j]);
 				GetSimilarEnemyBattlesId[nb++] = i;
 			}
@@ -550,31 +582,31 @@ EnemyStatDataStruct** EnemyDataSet::GetSimilarEnemyStats(EnemyStatDataStruct& st
 
 EnemySpellDataStruct** EnemyDataSet::GetSimilarEnemySpells(EnemySpellDataStruct& spell, unsigned int* amountfound, unsigned int** battleid) {
 	int baseseqcode, basecodearg, seqcode, codearg;
-	unsigned int i,j,nbstat, nb = 0;
+	unsigned int i, j, nbstat, nb = 0;
 	unsigned int* bid;
 	EnemyStatDataStruct* stat = spell.GetAssociatedStat();
-	if (stat==NULL) {
+	if (stat == NULL) {
 		*amountfound = 0;
 		return NULL;
 	}
-	EnemyStatDataStruct** similarstat = GetSimilarEnemyStats(*stat,&nbstat,&bid);
+	EnemyStatDataStruct** similarstat = GetSimilarEnemyStats(*stat, &nbstat, &bid);
 	wstring& spellname = spell.name.str_nice;
 	GetSpellSequenceModelRef(battle_data[spell.parent->id]->sequence_code[spell.id], &baseseqcode, &basecodearg);
-	for (i=0;i<nbstat;i++)
-		for (j=0;j<battle[bid[i]]->spell_amount;j++)
-			if (stat==similarstat[i] && &battle[bid[i]]->spell[j]==&spell) {
+	for (i = 0; i < nbstat; i++)
+		for (j = 0; j < battle[bid[i]]->spell_amount; j++)
+			if (stat == similarstat[i] && &battle[bid[i]]->spell[j] == &spell) {
 				GetSimilarEnemySpellsResult[nb] = &(battle[bid[i]]->spell[j]);
 				GetSimilarEnemyBattlesId[nb++] = bid[i];
-			} else if (battle_data[bid[i]]->sequence_stat_id[j]==similarstat[i]->id && battle[bid[i]]->spell[j].name.str_nice==spellname && battle[bid[i]]->spell[j].effect==spell.effect && battle[bid[i]]->spell[j].power==spell.power) {
+			} else if (battle_data[bid[i]]->sequence_stat_id[j] == similarstat[i]->id && battle[bid[i]]->spell[j].name.str_nice == spellname && battle[bid[i]]->spell[j].effect == spell.effect && battle[bid[i]]->spell[j].power == spell.power) {
 				GetSpellSequenceModelRef(battle_data[bid[i]]->sequence_code[j], &seqcode, &codearg);
-				if ((baseseqcode<0 && seqcode<0) || (baseseqcode>=0 && battle_data[bid[i]]->sequence_code[j][seqcode].arg[codearg]==battle_data[spell.parent->id]->sequence_code[spell.id][baseseqcode].arg[basecodearg])) {
+				if ((baseseqcode < 0 && seqcode < 0) || (baseseqcode >= 0 && battle_data[bid[i]]->sequence_code[j][seqcode].arg[codearg] == battle_data[spell.parent->id]->sequence_code[spell.id][baseseqcode].arg[basecodearg])) {
 					GetSimilarEnemySpellsResult[nb] = &(battle[bid[i]]->spell[j]);
 					GetSimilarEnemyBattlesId[nb++] = bid[i];
 				}
 			}
-	*amountfound = nb;
-	*battleid = GetSimilarEnemyBattlesId;
-	return GetSimilarEnemySpellsResult;
+			*amountfound = nb;
+			*battleid = GetSimilarEnemyBattlesId;
+			return GetSimilarEnemySpellsResult;
 }
 
 EnemySequenceCodeLine::~EnemySequenceCodeLine() {
@@ -624,7 +656,7 @@ EnemySequenceCodeLine::~EnemySequenceCodeLine() {
 	}
 
 #define MACRO_BATTLE_IOFUNCTION(IO,SEEK,READ,PPF) \
-	unsigned int i,j,k; \
+	unsigned int i, j; int k; \
 	uint8_t zero8 = 0; \
 	uint16_t zero16 = 0; \
 	uint32_t headerpos = f.tellg(); \
@@ -714,10 +746,10 @@ void BattleDataStruct::WriteHWS(fstream& f) {
 }
 
 void BattleDataStruct::UpdateOffset() {
-	unsigned int i,j,k;
+	unsigned int i, j; int k;
 	uint32_t size;
 	animblock_offset = 0x4;
-	if (sequence_amount%2) {
+	if (sequence_amount % 2) {
 		sequence_amount++;
 		sequence_offset.push_back(sequence_offset[0]);
 		sequence_base_anim.push_back(0);
@@ -726,24 +758,24 @@ void BattleDataStruct::UpdateOffset() {
 		sequence_code.push_back(vector<EnemySequenceCodeLine>());
 	}
 	bool lastisdummy = false;
-	if (sequence_amount>1)
-		lastisdummy = sequence_offset[sequence_amount-1]==sequence_offset[0];
-	size = animation_amount*4+3*sequence_amount+4;
-	for (i=0;i<sequence_amount;i++) {
-		if (lastisdummy && i+1==sequence_amount) {
+	if (sequence_amount > 1)
+		lastisdummy = sequence_offset[sequence_amount - 1] == sequence_offset[0];
+	size = animation_amount * 4 + 3 * sequence_amount + 4;
+	for (i = 0; i < sequence_amount; i++) {
+		if (lastisdummy && i + 1 == sequence_amount) {
 			sequence_offset[i] = sequence_offset[0];
 		} else {
 			sequence_offset[i] = size;
-			for (j=0;j<sequence_code_amount[i];j++) {
+			for (j = 0; j < sequence_code_amount[i]; j++) {
 				EnemySequenceCode& seq = GetEnemySequenceCode(sequence_code[i][j].code);
-				for (k=0;k<seq.arg_amount;k++)
+				for (k = 0; k < seq.arg_amount; k++)
 					size += seq.arg_length[k];
 				size++;
 			}
 		}
 	}
-	if (size%4)
-		size += 4-size%4;
+	if (size % 4)
+		size += 4 - size % 4;
 	size += 4;
 	camerablock_offset = size;
 	size += camera_size;
@@ -1173,10 +1205,10 @@ void EnemyDataSet::WritePPF(fstream& ffbin, ClusterSet& clusset, bool saveworldm
 }
 
 int* EnemyDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool usetext, unsigned int localflag) {
-	unsigned int i,j,k,l;
-	uint32_t chunksize,clustersize,chunkpos,objectpos,objectsize;
-	uint16_t nbmodified,objectid;
-	SteamLanguage lang,sublang;
+	unsigned int i, j, k, l;
+	uint32_t chunksize, clustersize, chunkpos, objectpos, objectsize;
+	uint16_t nbmodified, objectid;
+	SteamLanguage lang, sublang;
 	bool shouldread;
 	uint8_t langcount;
 	uint8_t chunktype;
@@ -1185,11 +1217,11 @@ int* EnemyDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 	res[0] = 0; res[1] = 0; res[2] = 0; res[3] = 0;
 	bool loadmain = localflag & 1;
 	bool loadlocal = localflag & 2;
-	HWSReadShort(ffhws,nbmodified);
-	for (i=0;i<nbmodified;i++) {
+	HWSReadShort(ffhws, nbmodified);
+	for (i = 0; i < nbmodified; i++) {
 		objectpos = ffhws.tellg();
-		HWSReadShort(ffhws,objectid);
-		HWSReadLong(ffhws,clustersize);
+		HWSReadShort(ffhws, objectid);
+		HWSReadLong(ffhws, clustersize);
 		if (GetHWSGameType() == GAME_TYPE_PSX && GetGameType() != GAME_TYPE_PSX) {
 			for (j = 0; j < G_V_ELEMENTS(SteamBattleScript); j++)
 				if (SteamBattleScript[j].psx_id == objectid) {
@@ -1203,217 +1235,217 @@ int* EnemyDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 					break;
 				}
 		}
-		if (objectid==HWS_BATTLE_SCENE_MOD_ID) {
+		if (objectid == HWS_BATTLE_SCENE_MOD_ID) {
 			bool load = true;
-			if (GetGameType()==GAME_TYPE_PSX) {
+			if (GetGameType() == GAME_TYPE_PSX) {
 				clus = shared_map->parent_cluster;
-				if (clustersize>clus->size+clus->extra_size) { // There should never be a problem about that...
+				if (clustersize > clus->size + clus->extra_size) { // There should never be a problem about that...
 					objectsize = 7;
-					HWSReadChar(ffhws,chunktype);
-					while (chunktype!=0xFF) {
-						HWSReadLong(ffhws,chunksize);
-						ffhws.seekg(chunksize,ios::cur);
-						HWSReadChar(ffhws,chunktype);
-						objectsize += chunksize+5;
+					HWSReadChar(ffhws, chunktype);
+					while (chunktype != 0xFF) {
+						HWSReadLong(ffhws, chunksize);
+						ffhws.seekg(chunksize, ios::cur);
+						HWSReadChar(ffhws, chunktype);
+						objectsize += chunksize + 5;
 					}
 					ffhws.seekg(objectpos);
-					backup.Add(ffhws,objectsize);
+					backup.Add(ffhws, objectsize);
 					res[0]++;
 					load = false;
 				}
 			}
 			if (load) {
-				HWSReadChar(ffhws,chunktype); // 0x14
-				HWSReadLong(ffhws,chunksize);
+				HWSReadChar(ffhws, chunktype); // 0x14
+				HWSReadLong(ffhws, chunksize);
 				chunkpos = ffhws.tellg();
-				unsigned int bsceneamount = chunksize/0x10;
+				unsigned int bsceneamount = chunksize / 0x10;
 				uint32_t soff, ssz;
 				uint16_t bid, sid;
 				uint16_t zero16;
-				for (j=0;j<bsceneamount;j++) {
-					HWSReadShort(ffhws,bid);
-					HWSReadShort(ffhws,zero16); // Might be useful in the future...
-					HWSReadShort(ffhws,sid);
-					HWSReadShort(ffhws,zero16);
-					HWSReadLong(ffhws,soff);
-					HWSReadLong(ffhws,ssz);
-					ChangeBattleScene(bid,sid,soff,ssz);
+				for (j = 0; j < bsceneamount; j++) {
+					HWSReadShort(ffhws, bid);
+					HWSReadShort(ffhws, zero16); // Might be useful in the future...
+					HWSReadShort(ffhws, sid);
+					HWSReadShort(ffhws, zero16);
+					HWSReadLong(ffhws, soff);
+					HWSReadLong(ffhws, ssz);
+					ChangeBattleScene(bid, sid, soff, ssz);
 				}
-				HWSReadChar(ffhws,chunktype); // 0xFF
+				HWSReadChar(ffhws, chunktype); // 0xFF
 			}
 			continue;
 		}
-		for (j=0;j<battle_amount;j++) {
-			if (objectid==battle[j]->object_id) {
+		for (j = 0; j < battle_amount; j++) {
+			if (objectid == battle[j]->object_id) {
 				clus = battle[j]->parent_cluster;
-				if (clustersize<=clus->size+clus->extra_size) {
-					HWSReadChar(ffhws,chunktype);
-					while (chunktype!=0xFF) {
-						HWSReadLong(ffhws,chunksize);
+				if (clustersize <= clus->size + clus->extra_size) {
+					HWSReadChar(ffhws, chunktype);
+					while (chunktype != 0xFF) {
+						HWSReadLong(ffhws, chunksize);
 						chunkpos = ffhws.tellg();
-						if (chunktype==CHUNK_TYPE_BATTLE_DATA) {
+						if (chunktype == CHUNK_TYPE_BATTLE_DATA) {
 							if (loadmain) {
 								battle_data[j]->SetSize(chunksize);
 								battle_data[j]->ReadHWS(ffhws);
 								battle_data[j]->SetSize(chunksize);
 							}
-						} else if (chunktype==CHUNK_TYPE_ENEMY_STATS) {
+						} else if (chunktype == CHUNK_TYPE_ENEMY_STATS) {
 							if (loadmain) {
 								battle[j]->ReadHWS(ffhws);
 								battle[j]->SetSize(chunksize);
 							}
-						} else if (chunktype==CHUNK_TYPE_TEXT) {
+						} else if (chunktype == CHUNK_TYPE_TEXT) {
 							if (usetext && loadmain) {
 								text[j]->ReadHWS(ffhws);
-								text[j]->SetSize(chunksize - (GetHWSGameType()==GAME_TYPE_PSX ? 0 : 2));
+								text[j]->SetSize(chunksize - (GetHWSGameType() == GAME_TYPE_PSX ? 0 : 2));
 							}
-						} else if (chunktype==CHUNK_TYPE_SCRIPT) {
+						} else if (chunktype == CHUNK_TYPE_SCRIPT) {
 							if (loadmain) {
 								script[j]->ReadHWS(ffhws);
 								script[j]->SetSize(chunksize);
 							}
-						} else if (chunktype==CHUNK_TYPE_IMAGE_MAP) {
+						} else if (chunktype == CHUNK_TYPE_IMAGE_MAP) {
 							if (loadmain) {
-								if (GetHWSGameType()!=GetGameType()) {
+								if (GetHWSGameType() != GetGameType()) {
 									res[3]++;
 								} else {
 									preload[j]->ReadHWS(ffhws);
 									preload[j]->SetSize(chunksize);
 								}
 							}
-						} else if (chunktype==CHUNK_SPECIAL_TYPE_LOCAL) {
+						} else if (chunktype == CHUNK_SPECIAL_TYPE_LOCAL) {
 							if (loadlocal)
 								script[j]->ReadLocalHWS(ffhws);
-						} else if (chunktype==CHUNK_STEAM_TEXT_MULTILANG) {
+						} else if (chunktype == CHUNK_STEAM_TEXT_MULTILANG) {
 							if (usetext && loadmain)
-								text[j]->ReadHWS(ffhws,true);
-						} else if (chunktype==CHUNK_STEAM_SCRIPT_MULTILANG) {
+								text[j]->ReadHWS(ffhws, true);
+						} else if (chunktype == CHUNK_STEAM_SCRIPT_MULTILANG) {
 							if (loadmain) {
 								uint16_t langcorrcount;
 								uint32_t langcorrpos;
-								vector<uint16_t> corrlinkbase,corrlink;
-								HWSReadChar(ffhws,lang);
-								while (lang!=STEAM_LANGUAGE_NONE) {
+								vector<uint16_t> corrlinkbase, corrlink;
+								HWSReadChar(ffhws, lang);
+								while (lang != STEAM_LANGUAGE_NONE) {
 									uint32_t langdatasize;
 									shouldread = false;
-									HWSReadChar(ffhws,langcount);
+									HWSReadChar(ffhws, langcount);
 									langcorrpos = ffhws.tellg();
-									for (k=0;k<langcount;k++) {
-										HWSReadChar(ffhws,sublang);
-										HWSReadLong(ffhws,langdatasize);
-										if (hades::STEAM_SINGLE_LANGUAGE_MODE && sublang==GetSteamLanguage()) {
+									for (k = 0; k < langcount; k++) {
+										HWSReadChar(ffhws, sublang);
+										HWSReadLong(ffhws, langdatasize);
+										if (hades::STEAM_SINGLE_LANGUAGE_MODE && sublang == GetSteamLanguage()) {
 											shouldread = true;
-											HWSReadShort(ffhws,langcorrcount);
+											HWSReadShort(ffhws, langcorrcount);
 											corrlinkbase.resize(langcorrcount);
 											corrlink.resize(langcorrcount);
-											for (l=0;l<langcorrcount;l++) {
-												HWSReadShort(ffhws,corrlinkbase[l]);
-												HWSReadShort(ffhws,corrlink[l]);
+											for (l = 0; l < langcorrcount; l++) {
+												HWSReadShort(ffhws, corrlinkbase[l]);
+												HWSReadShort(ffhws, corrlink[l]);
 											}
 										} else {
-											ffhws.seekg((long long)ffhws.tellg()+langdatasize);
+											ffhws.seekg((long long)ffhws.tellg() + langdatasize);
 										}
 									}
-									HWSReadLong(ffhws,langdatasize);
-									if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage()) {
+									HWSReadLong(ffhws, langdatasize);
+									if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang != GetSteamLanguage()) {
 										if (shouldread) {
-											script[j]->ReadHWS(ffhws,false);
-											script[j]->ApplyDialogLink(corrlink,corrlinkbase);
+											script[j]->ReadHWS(ffhws, false);
+											script[j]->ApplyDialogLink(corrlink, corrlinkbase);
 										} else {
-											ffhws.seekg(langdatasize,ios::cur);
+											ffhws.seekg(langdatasize, ios::cur);
 										}
 									} else {
-										script[j]->ReadHWS(ffhws,false,lang);
-										if (script[j]->multi_lang_script!=NULL) {
+										script[j]->ReadHWS(ffhws, false, lang);
+										if (script[j]->multi_lang_script != NULL) {
 											uint32_t endlangpos = ffhws.tellg();
 											ffhws.seekg(langcorrpos);
-											for (k=0;k<langcount;k++) {
-												HWSReadChar(ffhws,sublang);
-												HWSReadLong(ffhws,langdatasize);
-												HWSReadShort(ffhws,langcorrcount);
+											for (k = 0; k < langcount; k++) {
+												HWSReadChar(ffhws, sublang);
+												HWSReadLong(ffhws, langdatasize);
+												HWSReadShort(ffhws, langcorrcount);
 												corrlinkbase.resize(langcorrcount);
 												corrlink.resize(langcorrcount);
-												for (l=0;l<langcorrcount;l++) {
-													HWSReadShort(ffhws,corrlinkbase[l]);
-													HWSReadShort(ffhws,corrlink[l]);
+												for (l = 0; l < langcorrcount; l++) {
+													HWSReadShort(ffhws, corrlinkbase[l]);
+													HWSReadShort(ffhws, corrlink[l]);
 												}
-												script[j]->LinkLanguageScripts(sublang,lang,corrlink,corrlinkbase);
+												script[j]->LinkLanguageScripts(sublang, lang, corrlink, corrlinkbase);
 											}
 											ffhws.seekg(endlangpos);
 										}
 									}
-									HWSReadChar(ffhws,lang);
+									HWSReadChar(ffhws, lang);
 								}
 							}
-						} else if (chunktype==CHUNK_SPECIAL_TYPE_LOCAL_MULTILANG) {
+						} else if (chunktype == CHUNK_SPECIAL_TYPE_LOCAL_MULTILANG) {
 							if (loadlocal) {
-								HWSReadChar(ffhws,lang);
-								while (lang!=STEAM_LANGUAGE_NONE) {
+								HWSReadChar(ffhws, lang);
+								while (lang != STEAM_LANGUAGE_NONE) {
 									uint32_t langdatasize;
 									shouldread = false;
-									HWSReadChar(ffhws,langcount);
-									for (k=0;k<langcount;k++) {
-										HWSReadChar(ffhws,sublang);
-										if (sublang==GetSteamLanguage())
+									HWSReadChar(ffhws, langcount);
+									for (k = 0; k < langcount; k++) {
+										HWSReadChar(ffhws, sublang);
+										if (sublang == GetSteamLanguage())
 											shouldread = true;
 									}
-									HWSReadLong(ffhws,langdatasize);
-									if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage()) {
+									HWSReadLong(ffhws, langdatasize);
+									if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang != GetSteamLanguage()) {
 										if (shouldread)
 											script[j]->ReadLocalHWS(ffhws);
 										else
-											ffhws.seekg(langdatasize,ios::cur);
+											ffhws.seekg(langdatasize, ios::cur);
 									} else {
-										script[j]->ReadLocalHWS(ffhws,lang);
+										script[j]->ReadLocalHWS(ffhws, lang);
 									}
-									HWSReadChar(ffhws,lang);
+									HWSReadChar(ffhws, lang);
 								}
 							}
 						} else
 							res[1]++;
-						ffhws.seekg(chunkpos+chunksize);
-						HWSReadChar(ffhws,chunktype);
+						ffhws.seekg(chunkpos + chunksize);
+						HWSReadChar(ffhws, chunktype);
 					}
 					if (loadmain)
 						SetupEnemyInfo(j);
 				} else {
 					objectsize = 7;
-					HWSReadChar(ffhws,chunktype);
-					while (chunktype!=0xFF) {
-						HWSReadLong(ffhws,chunksize);
-						ffhws.seekg(chunksize,ios::cur);
-						HWSReadChar(ffhws,chunktype);
-						objectsize += chunksize+5;
+					HWSReadChar(ffhws, chunktype);
+					while (chunktype != 0xFF) {
+						HWSReadLong(ffhws, chunksize);
+						ffhws.seekg(chunksize, ios::cur);
+						HWSReadChar(ffhws, chunktype);
+						objectsize += chunksize + 5;
 					}
 					ffhws.seekg(objectpos);
-					backup.Add(ffhws,objectsize);
+					backup.Add(ffhws, objectsize);
 					res[0]++;
 				}
-				if (GetGameType()==GAME_TYPE_PSX) {
-					for (k=0;k<preload[j]->amount;k++)
-						if (preload[j]->data_type[k]==CHUNK_TYPE_BATTLE_SCENE) {
+				if (GetGameType() == GAME_TYPE_PSX) {
+					for (k = 0; k < preload[j]->amount; k++)
+						if (preload[j]->data_type[k] == CHUNK_TYPE_BATTLE_SCENE) {
 							battle[j]->scene_id = preload[j]->data_id[k];
 							break;
 						}
 				}
 				l = 0;
-				for (k=0;k<battle[j]->stat_amount;k++)
+				for (k = 0; k < battle[j]->stat_amount; k++)
 					battle[j]->stat[k].name = text[j]->text[l++];
-				for (k=0;k<battle[j]->spell_amount;k++)
+				for (k = 0; k < battle[j]->spell_amount; k++)
 					battle[j]->spell[k].name = text[j]->text[l++];
 				UpdateBattleName(j);
 				j = battle_amount;
-			} else if (j+1==battle_amount) {
+			} else if (j + 1 == battle_amount) {
 				objectsize = 7;
-				HWSReadChar(ffhws,chunktype);
-				while (chunktype!=0xFF) {
-					HWSReadLong(ffhws,chunksize);
-					ffhws.seekg(chunksize,ios::cur);
-					HWSReadChar(ffhws,chunktype);
-					objectsize += chunksize+5;
+				HWSReadChar(ffhws, chunktype);
+				while (chunktype != 0xFF) {
+					HWSReadLong(ffhws, chunksize);
+					ffhws.seekg(chunksize, ios::cur);
+					HWSReadChar(ffhws, chunktype);
+					objectsize += chunksize + 5;
 				}
 				ffhws.seekg(objectpos);
-				backup.Add(ffhws,objectsize);
+				backup.Add(ffhws, objectsize);
 				res[2]++;
 			}
 		}
@@ -1422,7 +1454,7 @@ int* EnemyDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 }
 
 void EnemyDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsigned int localflag) {
-	unsigned int i,j;
+	unsigned int i, j;
 	uint16_t nbmodified = 0;
 	uint32_t chunkpos, chunksize, nboffset = ffhws.tellg();
 	uint32_t aftlinkpos, linkpos;
@@ -1431,216 +1463,220 @@ void EnemyDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsign
 	uint8_t nbscriptlink;
 	bool savemain = localflag & 1;
 	bool savelocal = localflag & 2;
-	HWSWriteShort(ffhws,nbmodified);
-	if (modified_battle_scene_amount>0) {
-		if (GetGameType()==GAME_TYPE_PSX) {
+	HWSWriteShort(ffhws, nbmodified);
+	if (modified_battle_scene_amount > 0) {
+		if (GetGameType() == GAME_TYPE_PSX) {
 			clus = shared_map->parent_cluster;
 			clus->UpdateOffset();
 		}
-		HWSWriteShort(ffhws,HWS_BATTLE_SCENE_MOD_ID);
-		HWSWriteLong(ffhws,GetGameType()==GAME_TYPE_PSX ? clus->size : 0);
-		HWSWriteChar(ffhws,CHUNK_TYPE_IMAGE_MAP);
-		HWSWriteLong(ffhws,modified_battle_scene_amount*0x10);
+		HWSWriteShort(ffhws, HWS_BATTLE_SCENE_MOD_ID);
+		HWSWriteLong(ffhws, GetGameType() == GAME_TYPE_PSX ? clus->size : 0);
+		HWSWriteChar(ffhws, CHUNK_TYPE_IMAGE_MAP);
+		HWSWriteLong(ffhws, modified_battle_scene_amount * 0x10);
 		chunkpos = ffhws.tellg();
 		uint16_t zero16 = 0;
-		for (i=0;i<modified_battle_scene_amount;i++) {
-			HWSWriteShort(ffhws,modified_battle_id[i]);
-			HWSWriteShort(ffhws,zero16);
-			HWSWriteShort(ffhws,modified_scene_id[i]);
-			HWSWriteShort(ffhws,zero16);
-			HWSWriteLong(ffhws,GetGameType()==GAME_TYPE_PSX ? modified_scene_offset[i] : 0);
-			HWSWriteLong(ffhws,GetGameType()==GAME_TYPE_PSX ? modified_scene_size[i] : 0);
+		for (i = 0; i < modified_battle_scene_amount; i++) {
+			HWSWriteShort(ffhws, modified_battle_id[i]);
+			HWSWriteShort(ffhws, zero16);
+			HWSWriteShort(ffhws, modified_scene_id[i]);
+			HWSWriteShort(ffhws, zero16);
+			HWSWriteLong(ffhws, GetGameType() == GAME_TYPE_PSX ? modified_scene_offset[i] : 0);
+			HWSWriteLong(ffhws, GetGameType() == GAME_TYPE_PSX ? modified_scene_size[i] : 0);
 		}
-		ffhws.seekg(chunkpos+modified_battle_scene_amount*0x10);
-		HWSWriteChar(ffhws,0xFF);
+		ffhws.seekg(chunkpos + modified_battle_scene_amount * 0x10);
+		HWSWriteChar(ffhws, 0xFF);
 		nbmodified++;
 	}
-	for (i=0;i<battle_amount;i++) {
+	for (i = 0; i < battle_amount; i++) {
 		clus = battle[i]->parent_cluster;
 		if (clus->modified) {
 			clus->UpdateOffset();
-			HWSWriteShort(ffhws,battle[i]->object_id);
-			HWSWriteLong(ffhws,clus->size);
+			HWSWriteShort(ffhws, battle[i]->object_id);
+			HWSWriteLong(ffhws, clus->size);
 			if (battle_data[i]->modified && savemain) {
-				HWSWriteChar(ffhws,CHUNK_TYPE_BATTLE_DATA);
-				HWSWriteLong(ffhws,battle_data[i]->size);
+				HWSWriteChar(ffhws, CHUNK_TYPE_BATTLE_DATA);
+				HWSWriteLong(ffhws, battle_data[i]->size);
 				chunkpos = ffhws.tellg();
 				battle_data[i]->WriteHWS(ffhws);
-				ffhws.seekg(chunkpos+battle_data[i]->size);
+				ffhws.seekg(chunkpos + battle_data[i]->size);
 			}
 			if (battle[i]->modified && savemain) {
-				HWSWriteChar(ffhws,CHUNK_TYPE_ENEMY_STATS);
-				HWSWriteLong(ffhws,battle[i]->size);
+				uint32_t btlsize = 0;
+				HWSWriteChar(ffhws, CHUNK_TYPE_ENEMY_STATS);
+				HWSWriteLong(ffhws, btlsize);
 				chunkpos = ffhws.tellg();
 				battle[i]->WriteHWS(ffhws);
-				ffhws.seekg(chunkpos+battle[i]->size);
+				btlsize = (uint32_t)ffhws.tellg() - chunkpos;
+				ffhws.seekg(chunkpos - 4);
+				HWSWriteLong(ffhws, btlsize);
+				ffhws.seekg(chunkpos + btlsize);
 			}
-			if (GetGameType()==GAME_TYPE_PSX) {
+			if (GetGameType() == GAME_TYPE_PSX) {
 				if (text[i]->modified && savemain) {
-					HWSWriteChar(ffhws,CHUNK_TYPE_TEXT);
-					HWSWriteLong(ffhws,text[i]->size+2);
+					HWSWriteChar(ffhws, CHUNK_TYPE_TEXT);
+					HWSWriteLong(ffhws, text[i]->size + 2);
 					chunkpos = ffhws.tellg();
 					text[i]->WriteHWS(ffhws);
-					ffhws.seekg(chunkpos+text[i]->size+2);
+					ffhws.seekg(chunkpos + text[i]->size + 2);
 				}
 				if (script[i]->modified && savemain) {
-					HWSWriteChar(ffhws,CHUNK_TYPE_SCRIPT);
-					HWSWriteLong(ffhws,script[i]->size);
+					HWSWriteChar(ffhws, CHUNK_TYPE_SCRIPT);
+					HWSWriteLong(ffhws, script[i]->size);
 					chunkpos = ffhws.tellg();
 					script[i]->WriteHWS(ffhws);
-					ffhws.seekg(chunkpos+script[i]->size);
+					ffhws.seekg(chunkpos + script[i]->size);
 				}
 				if (savelocal) {
 					uint32_t localsize = 0;
-					HWSWriteChar(ffhws,CHUNK_SPECIAL_TYPE_LOCAL);
-					HWSWriteLong(ffhws,localsize);
+					HWSWriteChar(ffhws, CHUNK_SPECIAL_TYPE_LOCAL);
+					HWSWriteLong(ffhws, localsize);
 					chunkpos = ffhws.tellg();
 					script[i]->WriteLocalHWS(ffhws);
-					localsize = (long long)ffhws.tellg()-chunkpos;
-					ffhws.seekg(chunkpos-4);
-					HWSWriteLong(ffhws,localsize);
-					ffhws.seekg(chunkpos+localsize);
+					localsize = (long long)ffhws.tellg() - chunkpos;
+					ffhws.seekg(chunkpos - 4);
+					HWSWriteLong(ffhws, localsize);
+					ffhws.seekg(chunkpos + localsize);
 				}
 				if (preload[i]->modified && savemain) {
-					HWSWriteChar(ffhws,CHUNK_TYPE_IMAGE_MAP);
-					HWSWriteLong(ffhws,preload[i]->size);
+					HWSWriteChar(ffhws, CHUNK_TYPE_IMAGE_MAP);
+					HWSWriteLong(ffhws, preload[i]->size);
 					chunkpos = ffhws.tellg();
 					preload[i]->WriteHWS(ffhws);
-					ffhws.seekg(chunkpos+preload[i]->size);
+					ffhws.seekg(chunkpos + preload[i]->size);
 				}
 			} else {
 				if (text[i]->modified && savemain) {
-					HWSWriteChar(ffhws,CHUNK_STEAM_TEXT_MULTILANG);
-					HWSWriteLong(ffhws,0);
+					HWSWriteChar(ffhws, CHUNK_STEAM_TEXT_MULTILANG);
+					HWSWriteLong(ffhws, 0);
 					chunkpos = ffhws.tellg();
-					text[i]->WriteHWS(ffhws,true);
-					chunksize = (long long)ffhws.tellg()-chunkpos;
-					ffhws.seekg(chunkpos-4);
-					HWSWriteLong(ffhws,chunksize);
-					ffhws.seekg(chunkpos+chunksize);
+					text[i]->WriteHWS(ffhws, true);
+					chunksize = (long long)ffhws.tellg() - chunkpos;
+					ffhws.seekg(chunkpos - 4);
+					HWSWriteLong(ffhws, chunksize);
+					ffhws.seekg(chunkpos + chunksize);
 				}
-				for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+				for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
 					if (savemain && hades::STEAM_LANGUAGE_SAVE_LIST[lang] && script[i]->IsDataModified(lang))
 						break;
-				if (lang<STEAM_LANGUAGE_AMOUNT) {
-					HWSWriteChar(ffhws,CHUNK_STEAM_SCRIPT_MULTILANG);
-					HWSWriteLong(ffhws,0);
+				if (lang < STEAM_LANGUAGE_AMOUNT) {
+					HWSWriteChar(ffhws, CHUNK_STEAM_SCRIPT_MULTILANG);
+					HWSWriteLong(ffhws, 0);
 					chunkpos = ffhws.tellg();
-					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+					for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
 						if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && script[i]->IsDataModified(lang)) {
-							if (script[i]->multi_lang_script!=NULL && script[i]->multi_lang_script->base_script_lang[lang]!=lang && hades::STEAM_LANGUAGE_SAVE_LIST[script[i]->multi_lang_script->base_script_lang[lang]])
+							if (script[i]->multi_lang_script != NULL && script[i]->multi_lang_script->base_script_lang[lang] != lang && hades::STEAM_LANGUAGE_SAVE_LIST[script[i]->multi_lang_script->base_script_lang[lang]])
 								continue;
-							HWSWriteChar(ffhws,lang);
-							HWSWriteChar(ffhws,0);
-							if (script[i]->multi_lang_script!=NULL && script[i]->multi_lang_script->base_script_lang[lang]==lang) {
+							HWSWriteChar(ffhws, lang);
+							HWSWriteChar(ffhws, 0);
+							if (script[i]->multi_lang_script != NULL && script[i]->multi_lang_script->base_script_lang[lang] == lang) {
 								linkpos = ffhws.tellg();
 								nbscriptlink = 0;
-								for (sublang=0;sublang<STEAM_LANGUAGE_AMOUNT;sublang++)
-									if (lang!=sublang && hades::STEAM_LANGUAGE_SAVE_LIST[sublang] && script[i]->multi_lang_script->base_script_lang[sublang]==lang) {
+								for (sublang = 0; sublang < STEAM_LANGUAGE_AMOUNT; sublang++)
+									if (lang != sublang && hades::STEAM_LANGUAGE_SAVE_LIST[sublang] && script[i]->multi_lang_script->base_script_lang[sublang] == lang) {
 										uint16_t textcorresp = script[i]->multi_lang_script->base_script_text_id[sublang].size();
-										HWSWriteChar(ffhws,sublang);
-										HWSWriteLong(ffhws,2+4*textcorresp);
-										HWSWriteShort(ffhws,textcorresp);
-										for (j=0;j<textcorresp;j++) {
-											HWSWriteShort(ffhws,script[i]->multi_lang_script->base_script_text_id[sublang][j]);
-											HWSWriteShort(ffhws,script[i]->multi_lang_script->lang_script_text_id[sublang][j]);
+										HWSWriteChar(ffhws, sublang);
+										HWSWriteLong(ffhws, 2 + 4 * textcorresp);
+										HWSWriteShort(ffhws, textcorresp);
+										for (j = 0; j < textcorresp; j++) {
+											HWSWriteShort(ffhws, script[i]->multi_lang_script->base_script_text_id[sublang][j]);
+											HWSWriteShort(ffhws, script[i]->multi_lang_script->lang_script_text_id[sublang][j]);
 										}
 										nbscriptlink++;
 									}
 								aftlinkpos = ffhws.tellg();
-								ffhws.seekg(linkpos-1);
-								HWSWriteChar(ffhws,nbscriptlink);
+								ffhws.seekg(linkpos - 1);
+								HWSWriteChar(ffhws, nbscriptlink);
 								ffhws.seekg(aftlinkpos);
 							}
-							HWSWriteLong(ffhws,script[i]->GetDataSize(lang));
-							script[i]->WriteHWS(ffhws,lang);
+							HWSWriteLong(ffhws, script[i]->GetDataSize(lang));
+							script[i]->WriteHWS(ffhws, lang);
 						}
-					HWSWriteChar(ffhws,STEAM_LANGUAGE_NONE);
-					chunksize = (long long)ffhws.tellg()-chunkpos;
-					ffhws.seekg(chunkpos-4);
-					HWSWriteLong(ffhws,chunksize);
-					ffhws.seekg(chunkpos+chunksize);
+					HWSWriteChar(ffhws, STEAM_LANGUAGE_NONE);
+					chunksize = (long long)ffhws.tellg() - chunkpos;
+					ffhws.seekg(chunkpos - 4);
+					HWSWriteLong(ffhws, chunksize);
+					ffhws.seekg(chunkpos + chunksize);
 				}
-				for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+				for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
 					if (savelocal && hades::STEAM_LANGUAGE_SAVE_LIST[lang])
 						break;
-				if (lang<STEAM_LANGUAGE_AMOUNT) {
+				if (lang < STEAM_LANGUAGE_AMOUNT) {
 					uint32_t langdatasize, langdatapos;
-					HWSWriteChar(ffhws,CHUNK_SPECIAL_TYPE_LOCAL_MULTILANG);
-					HWSWriteLong(ffhws,0);
+					HWSWriteChar(ffhws, CHUNK_SPECIAL_TYPE_LOCAL_MULTILANG);
+					HWSWriteLong(ffhws, 0);
 					chunkpos = ffhws.tellg();
-					for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+					for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
 						if (hades::STEAM_LANGUAGE_SAVE_LIST[lang]) {
-							if (script[i]->multi_lang_script!=NULL && script[i]->multi_lang_script->base_script_lang[lang]!=lang && hades::STEAM_LANGUAGE_SAVE_LIST[script[i]->multi_lang_script->base_script_lang[lang]])
+							if (script[i]->multi_lang_script != NULL && script[i]->multi_lang_script->base_script_lang[lang] != lang && hades::STEAM_LANGUAGE_SAVE_LIST[script[i]->multi_lang_script->base_script_lang[lang]])
 								continue;
-							HWSWriteChar(ffhws,lang);
-							HWSWriteChar(ffhws,0);
-							if (script[i]->multi_lang_script!=NULL && script[i]->multi_lang_script->base_script_lang[lang]==lang) {
+							HWSWriteChar(ffhws, lang);
+							HWSWriteChar(ffhws, 0);
+							if (script[i]->multi_lang_script != NULL && script[i]->multi_lang_script->base_script_lang[lang] == lang) {
 								nbscriptlink = 0;
-								for (sublang=0;sublang<STEAM_LANGUAGE_AMOUNT;sublang++)
-									if (lang!=sublang && hades::STEAM_LANGUAGE_SAVE_LIST[sublang] && script[i]->multi_lang_script->base_script_lang[sublang]==lang) {
-										HWSWriteChar(ffhws,sublang);
+								for (sublang = 0; sublang < STEAM_LANGUAGE_AMOUNT; sublang++)
+									if (lang != sublang && hades::STEAM_LANGUAGE_SAVE_LIST[sublang] && script[i]->multi_lang_script->base_script_lang[sublang] == lang) {
+										HWSWriteChar(ffhws, sublang);
 										nbscriptlink++;
 									}
-								ffhws.seekg((long long)ffhws.tellg()-nbscriptlink-1);
-								HWSWriteChar(ffhws,nbscriptlink);
-								ffhws.seekg((long long)ffhws.tellg()+nbscriptlink);
+								ffhws.seekg((long long)ffhws.tellg() - nbscriptlink - 1);
+								HWSWriteChar(ffhws, nbscriptlink);
+								ffhws.seekg((long long)ffhws.tellg() + nbscriptlink);
 							}
-							HWSWriteLong(ffhws,0);
+							HWSWriteLong(ffhws, 0);
 							langdatapos = ffhws.tellg();
-							script[i]->WriteLocalHWS(ffhws,lang);
-							langdatasize = (long long)ffhws.tellg()-langdatapos;
-							ffhws.seekg(langdatapos-4);
-							HWSWriteLong(ffhws,langdatasize);
-							ffhws.seekg(langdatapos+langdatasize);
+							script[i]->WriteLocalHWS(ffhws, lang);
+							langdatasize = (long long)ffhws.tellg() - langdatapos;
+							ffhws.seekg(langdatapos - 4);
+							HWSWriteLong(ffhws, langdatasize);
+							ffhws.seekg(langdatapos + langdatasize);
 						}
-					HWSWriteChar(ffhws,STEAM_LANGUAGE_NONE);
-					chunksize = (long long)ffhws.tellg()-chunkpos;
-					ffhws.seekg(chunkpos-4);
-					HWSWriteLong(ffhws,chunksize);
-					ffhws.seekg(chunkpos+chunksize);
+					HWSWriteChar(ffhws, STEAM_LANGUAGE_NONE);
+					chunksize = (long long)ffhws.tellg() - chunkpos;
+					ffhws.seekg(chunkpos - 4);
+					HWSWriteLong(ffhws, chunksize);
+					ffhws.seekg(chunkpos + chunksize);
 				}
 			}
-			HWSWriteChar(ffhws,0xFF);
+			HWSWriteChar(ffhws, 0xFF);
 			nbmodified++;
 		}
 	}
-	for (i=0;i<backup.save_amount;i++)
-		for (j=0;j<backup.save_size[i];j++)
-			HWSWriteChar(ffhws,backup.save_data[i][j]);
+	for (i = 0; i < backup.save_amount; i++)
+		for (j = 0; j < backup.save_size[i]; j++)
+			HWSWriteChar(ffhws, backup.save_data[i][j]);
 	nbmodified += backup.save_amount;
 	uint32_t endoffset = ffhws.tellg();
 	ffhws.seekg(nboffset);
-	HWSWriteShort(ffhws,nbmodified);
+	HWSWriteShort(ffhws, nbmodified);
 	ffhws.seekg(endoffset);
 }
 
 int EnemyDataSet::ChangeBattleScene(uint16_t battleid, uint16_t newsceneid, uint32_t newsceneoffset, uint32_t newscenesize) {
 	bool newmod = true;
-	unsigned int i,j;
-	for (i=0;i<battle_amount;i++)
-		if (battle_data[i]->object_id==battleid) {
+	unsigned int i, j;
+	for (i = 0; i < battle_amount; i++)
+		if (battle_data[i]->object_id == battleid) {
 			battle[i]->scene_id = newsceneid;
 			break;
 		}
-	if (GetGameType()==GAME_TYPE_PSX) {
+	if (GetGameType() == GAME_TYPE_PSX) {
 		bool foundbattle, foundscene, replacescene, scenehere;
 		uint16_t replacingsceneid, scenepos;
 		int res = 0;
-		if (newsceneoffset==0) // find the offset and size by itself
-			for (i=0;i<image_map_amount;i++)
-				for (j=0;j<image_map[0][i]->amount;j++) {
-					if (image_map[0][i]->data_type[j]==CHUNK_TYPE_BATTLE_SCENE && image_map[0][i]->data_id[j]==newsceneid) {
+		if (newsceneoffset == 0) // find the offset and size by itself
+			for (i = 0; i < image_map_amount; i++)
+				for (j = 0; j < image_map[0][i]->amount; j++) {
+					if (image_map[0][i]->data_type[j] == CHUNK_TYPE_BATTLE_SCENE && image_map[0][i]->data_id[j] == newsceneid) {
 						newsceneoffset = image_map[0][i]->data_offset[j];
 						newscenesize = image_map[0][i]->data_size[j];
 						i = image_map_amount;
 						break;
 					}
 				}
-		for (i=0;i<image_map_amount;i++) {
+		for (i = 0; i < image_map_amount; i++) {
 			foundbattle = false;
-			for (j=0;j<image_map[0][i]->amount;j++) {
-				if (image_map[0][i]->data_type[j]==CHUNK_TYPE_BATTLE_DATA && image_map[0][i]->data_id[j]==battleid && image_map[0][i]->data_related_type[j]==CHUNK_TYPE_BATTLE_SCENE) {
+			for (j = 0; j < image_map[0][i]->amount; j++) {
+				if (image_map[0][i]->data_type[j] == CHUNK_TYPE_BATTLE_DATA && image_map[0][i]->data_id[j] == battleid && image_map[0][i]->data_related_type[j] == CHUNK_TYPE_BATTLE_SCENE) {
 					image_map[0][i]->data_related_id[j] = newsceneid;
 					image_map[0][i]->MarkDataModified();
 					foundbattle = true;
@@ -1650,12 +1686,12 @@ int EnemyDataSet::ChangeBattleScene(uint16_t battleid, uint16_t newsceneid, uint
 				scenehere = false;
 				foundscene = false;
 				replacescene = false;
-				for (j=0;j<image_map[0][i]->amount;j++) {
-					if (image_map[0][i]->data_type[j]==CHUNK_TYPE_BATTLE_SCENE && image_map[0][i]->data_related_id[j]==battleid) {
+				for (j = 0; j < image_map[0][i]->amount; j++) {
+					if (image_map[0][i]->data_type[j] == CHUNK_TYPE_BATTLE_SCENE && image_map[0][i]->data_related_id[j] == battleid) {
 						replacingsceneid = image_map[0][i]->data_id[j];
 						scenepos = j;
 						foundscene = true;
-						scenehere = replacingsceneid==newsceneid;
+						scenehere = replacingsceneid == newsceneid;
 						break;
 					}
 				}
@@ -1663,8 +1699,8 @@ int EnemyDataSet::ChangeBattleScene(uint16_t battleid, uint16_t newsceneid, uint
 					continue;
 				if (foundscene) {
 					replacescene = true;
-					for (j=0;j<image_map[0][i]->amount;j++) {
-						if (image_map[0][i]->data_type[j]==CHUNK_TYPE_BATTLE_DATA && image_map[0][i]->data_related_id[j]==replacingsceneid) {
+					for (j = 0; j < image_map[0][i]->amount; j++) {
+						if (image_map[0][i]->data_type[j] == CHUNK_TYPE_BATTLE_DATA && image_map[0][i]->data_related_id[j] == replacingsceneid) {
 							replacescene = false;
 							break;
 						}
@@ -1672,13 +1708,13 @@ int EnemyDataSet::ChangeBattleScene(uint16_t battleid, uint16_t newsceneid, uint
 				}
 				if (replacescene)
 					image_map[0][i]->RemoveDataByPos(scenepos);
-				res += image_map[0][i]->AddDataSingle(newsceneid,CHUNK_TYPE_BATTLE_SCENE,0,newsceneoffset,newscenesize,battleid,CHUNK_TYPE_BATTLE_DATA,0);
+				res += image_map[0][i]->AddDataSingle(newsceneid, CHUNK_TYPE_BATTLE_SCENE, 0, newsceneoffset, newscenesize, battleid, CHUNK_TYPE_BATTLE_DATA, 0);
 				image_map[0][i]->UpdateOffset();
 			}
 		}
 	}
-	for (i=0;i<modified_battle_scene_amount;i++)
-		if (modified_battle_id[i]==battleid) {
+	for (i = 0; i < modified_battle_scene_amount; i++)
+		if (modified_battle_id[i] == battleid) {
 			modified_scene_id[i] = newsceneid;
 			modified_scene_offset[i] = newsceneoffset;
 			modified_scene_size[i] = newscenesize;
@@ -1699,55 +1735,59 @@ int EnemyDataSet::ChangeBattleModel(uint16_t battleid, uint8_t enemyid, BattleMo
 	EnemyStatDataStruct& es = battle[battleid]->stat[enemyid];
 	BattleDataStruct& bd = *battle_data[battleid];
 	unsigned int i;
-	int32_t sizereq = 2*(newmodelinfo.sequence_anim_amount-es.sequence_anim_amount);
-	if ((int32_t)bd.GetExtraSize()<sizereq)
+	int32_t sizereq = 2 * (newmodelinfo.sequence_anim_amount - es.sequence_anim_amount);
+	if ((int32_t)bd.GetExtraSize() < sizereq)
 		return 1;
-	bd.SetSize(bd.size+sizereq);
+	bd.SetSize(bd.size + sizereq);
 	newmodelinfo.ApplyToEnemyStat(es);
-	uint16_t* newseqanimid = new uint16_t[bd.animation_amount+newmodelinfo.sequence_anim_amount-es.sequence_anim_amount];
-	int animgap = (int)newmodelinfo.sequence_anim_amount-es.sequence_anim_amount;
+	uint16_t* newseqanimid = new uint16_t[bd.animation_amount + newmodelinfo.sequence_anim_amount - es.sequence_anim_amount];
+	int animgap = (int)newmodelinfo.sequence_anim_amount - es.sequence_anim_amount;
 	bd.animation_amount += animgap;
-	bd.animation_id.erase(bd.animation_id.begin()+es.sequence_anim_base,bd.animation_id.begin()+es.sequence_anim_base+es.sequence_anim_amount);
-	for (i=0;i<newmodelinfo.sequence_anim_amount;i++)
-		bd.animation_id.insert(bd.animation_id.begin()+es.sequence_anim_base+i,newmodelinfo.sequence_anim[i]);
+	bd.animation_id.erase(bd.animation_id.begin() + es.sequence_anim_base, bd.animation_id.begin() + es.sequence_anim_base + es.sequence_anim_amount);
+	for (i = 0; i < newmodelinfo.sequence_anim_amount; i++)
+		bd.animation_id.insert(bd.animation_id.begin() + es.sequence_anim_base + i, newmodelinfo.sequence_anim[i]);
 	es.sequence_anim_amount = newmodelinfo.sequence_anim_amount;
-	for (i=0;i<bd.sequence_amount;i++)
-		if (bd.sequence_base_anim[i]>es.sequence_anim_base)
+	for (i = 0; i < bd.sequence_amount; i++)
+		if (bd.sequence_base_anim[i] > es.sequence_anim_base)
 			bd.sequence_base_anim[i] += animgap;
-	for (i=0;i<battle[battleid]->stat_amount;i++)
-		if (battle[battleid]->stat[i].sequence_anim_base>es.sequence_anim_base)
+	for (i = 0; i < battle[battleid]->stat_amount; i++)
+		if (battle[battleid]->stat[i].sequence_anim_base > es.sequence_anim_base)
 			battle[battleid]->stat[i].sequence_anim_base += animgap;
 	return 0;
 }
 
-void EnemyDataSet::SetupEnemyInfo(uint16_t battleid) { // DEBUG: Assume at least one sequence (spell) is configured for each stat, in the order of the stats
+void EnemyDataSet::SetupEnemyInfo(uint16_t battleid) { // TODO: Check that any order is OK
 	EnemyDataStruct& ed = *battle[battleid];
 	BattleDataStruct& bd = *battle_data[battleid];
-	unsigned int i, j = 0, firstanim = 0,lastisdummy = 0;
-	if (bd.sequence_amount>1 && bd.sequence_offset[bd.sequence_amount-1]==bd.sequence_offset[0]) {
+	unsigned int i, j = 0, firstanim = 0, lastisdummy = 0;
+	if (bd.sequence_amount > 1 && bd.sequence_offset[bd.sequence_amount - 1] == bd.sequence_offset[0]) {
 		lastisdummy = 1;
-		bd.sequence_stat_id[bd.sequence_amount-1] = 0;
+		bd.sequence_stat_id[bd.sequence_amount - 1] = 0;
 	}
-	for (i=0;i<ed.stat_amount;i++) {
+	for (i = 0; i < ed.stat_amount; i++) {
 		ed.stat[i].sequence_anim_base = firstanim;
-		while (j+lastisdummy<bd.sequence_amount && bd.sequence_base_anim[j]==firstanim)
+		while (j + lastisdummy < bd.sequence_amount && bd.sequence_base_anim[j] == firstanim)
 			bd.sequence_stat_id[j++] = i;
-		if (j+lastisdummy<bd.sequence_amount) {
-			ed.stat[i].sequence_anim_amount = bd.sequence_base_anim[j]-firstanim;
+		if (j + lastisdummy < bd.sequence_amount) {
+			ed.stat[i].sequence_anim_amount = bd.sequence_base_anim[j] - firstanim;
 			firstanim = bd.sequence_base_anim[j];
 		} else {
-			ed.stat[i].sequence_anim_amount = bd.animation_amount-firstanim;
+			ed.stat[i].sequence_anim_amount = bd.animation_amount - firstanim;
 			firstanim = bd.animation_amount;
 		}
 	}
-	while (j+lastisdummy<bd.sequence_amount && bd.sequence_base_anim[j]==firstanim)
-		bd.sequence_stat_id[j++] = ed.stat_amount-1;
-	while (j+lastisdummy<bd.sequence_amount)
-		for (i=0;i<ed.stat_amount;i++)
-			if (ed.stat[i].sequence_anim_base==bd.sequence_base_anim[j]) {
-				bd.sequence_stat_id[j] = i;
+	while (j + lastisdummy < bd.sequence_amount && bd.sequence_base_anim[j] == firstanim)
+		bd.sequence_stat_id[j++] = ed.stat_amount - 1;
+	while (j + lastisdummy < bd.sequence_amount) {
+		for (i = 0; i < ed.stat_amount; i++) {
+			if (ed.stat[i].sequence_anim_base == bd.sequence_base_anim[j]) {
+				bd.sequence_stat_id[j++] = i;
 				break;
 			}
+		}
+		if (i >= ed.stat_amount)
+			bd.sequence_stat_id[j++] = ed.stat_amount - 1;
+	}
 }
 
 // Model Links
@@ -1945,25 +1985,25 @@ static BattleModelLinks BATTLE_MODEL_LINKS[] = {
 
 BattleModelLinks& BattleModelLinks::GetLinksByModel(uint16_t modelid) {
 	unsigned int i;
-	for (i=1;i<G_N_ELEMENTS(BATTLE_MODEL_LINKS);i++)
-		if (modelid==BATTLE_MODEL_LINKS[i].model)
+	for (i = 1; i < G_N_ELEMENTS(BATTLE_MODEL_LINKS); i++)
+		if (modelid == BATTLE_MODEL_LINKS[i].model)
 			return BATTLE_MODEL_LINKS[i];
 	return BATTLE_MODEL_LINKS[0];
 }
 
 bool BattleModelLinks::IsBattleModel(uint16_t modelid) {
-	if (modelid==0xFFFF)
+	if (modelid == 0xFFFF)
 		return false;
 	unsigned int i;
-	for (i=0;i<G_N_ELEMENTS(BATTLE_MODEL_LINKS);i++)
-		if (modelid==BATTLE_MODEL_LINKS[i].model)
+	for (i = 0; i < G_N_ELEMENTS(BATTLE_MODEL_LINKS); i++)
+		if (modelid == BATTLE_MODEL_LINKS[i].model)
 			return true;
 	return false;
 }
 
 void BattleModelLinks::ApplyToEnemyStat(EnemyStatDataStruct& es) {
 	unsigned int i;
-	if (model!=0xFFFF)
+	if (model != 0xFFFF)
 		es.model = model;
 	es.anim_idle = anim_idle;
 	es.anim_idle_alt = anim_idle_alt;
@@ -1986,7 +2026,7 @@ void BattleModelLinks::ApplyToEnemyStat(EnemyStatDataStruct& es) {
 	es.shadow_offset_y = shadow_offset_y;
 	es.sound_engage = sound_engage;
 	es.sound_death = sound_death;
-	for (i=0;i<6;i++) {
+	for (i = 0; i < 6; i++) {
 		es.selection_bone[i] = selection_bone[i];
 		es.selection_offsetz[i] = selection_offsetz[i];
 		es.selection_offsety[i] = selection_offsety[i];

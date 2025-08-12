@@ -315,33 +315,33 @@ void ManageTextureDialog::UpdateImportSpins() {
 void ManageTextureDialog::DrawPaletteColors(int palid) {
 	int pixelsize = (tim.format & 0x8) ? 10 : 5;
 	unsigned int coloramount = char_flag ? 4 : (tim.format & 0x8) ? 16 : 256;
-	int i,x,y;
-	unsigned char r,g,b,a;
+	int i, x, y;
+	unsigned char r, g, b, a;
 	wxClientDC dc(m_drawpanelcolor);
 	wxPen pen = dc.GetPen();
 	wxBrush brush = dc.GetBrush();
 	dc.Clear();
 	if (char_flag)
-		palid -= palid%2;
-	for (i=0;i<coloramount;i++) {
-		x = (i%32)*pixelsize;
-		y = (i/32)*pixelsize;
+		palid -= palid % 2;
+	for (i = 0; i < (int)coloramount; i++) {
+		x = (i % 32) * pixelsize;
+		y = (i / 32) * pixelsize;
 		b = pal[palid][i];
 		g = (pal[palid][i] >> 8);
 		r = (pal[palid][i] >> 16);
 		a = (pal[palid][i] >> 24);
-		if (color_selected==i) {
-			pen.SetColour(SELECTION_RED,SELECTION_GREEN,SELECTION_BLUE);
+		if (color_selected == i) {
+			pen.SetColour(SELECTION_RED, SELECTION_GREEN, SELECTION_BLUE);
 			pen.SetStyle(wxPENSTYLE_SOLID);
 		} else {
-			pen.SetColour(r,g,b);
+			pen.SetColour(r, g, b);
 			pen.SetStyle(a ? wxPENSTYLE_SOLID : wxPENSTYLE_TRANSPARENT);
 		}
-		brush.SetColour(r,g,b);
+		brush.SetColour(r, g, b);
 		brush.SetStyle(a ? wxBRUSHSTYLE_SOLID : wxBRUSHSTYLE_TRANSPARENT);
 		dc.SetPen(pen);
 		dc.SetBrush(brush);
-		dc.DrawRectangle(x,y,pixelsize,pixelsize);
+		dc.DrawRectangle(x, y, pixelsize, pixelsize);
 	}
 }
 
@@ -547,8 +547,8 @@ void ManageTextureDialog::OnPaletteMouseMove(wxMouseEvent& event) {
 		wxPoint mpos = event.GetLogicalPosition(dc);
 		int pixelsize = (tim.format & 0x8) ? 10 : 5;
 		unsigned int coloramount = char_flag ? 4 : (tim.format & 0x8) ? 16 : 256;
-		int newsel = (mpos.x/pixelsize)%32+(mpos.y/pixelsize)*32;
-		if (mpos.x/pixelsize<32 && newsel<coloramount && color_selected!=newsel) {
+		int newsel = (mpos.x / pixelsize) % 32 + (mpos.y / pixelsize) * 32;
+		if (mpos.x / pixelsize < 32 && newsel < (int)coloramount && color_selected != newsel) {
 			color_selected = newsel;
 			DrawPaletteColors(m_palettelist->GetSelection());
 			m_texturelist->SetSelection(wxNOT_FOUND);

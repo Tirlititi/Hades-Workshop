@@ -1603,9 +1603,10 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 				remove(fname.c_str());
 			}
 			vector<string> intstatfile;
-			for (const auto& statfile : experimental::filesystem::directory_iterator(dirassets + HADES_STRING_CSV_STATABIL_DEFAULT_FILE))
-				if (statfile.path().extension().string().compare(".csv") == 0 && IsNumber(statfile.path().stem().string()))
-					intstatfile.push_back(statfile.path().filename().string());
+			if (std::filesystem::exists(dirassets + HADES_STRING_CSV_STATABIL_DEFAULT_FILE))
+				for (const auto& statfile : std::filesystem::directory_iterator(dirassets + HADES_STRING_CSV_STATABIL_DEFAULT_FILE))
+					if (statfile.path().extension().string().compare(".csv") == 0 && IsNumber(statfile.path().stem().string()))
+						intstatfile.push_back(statfile.path().filename().string());
 			for (i = 0; i < intstatfile.size(); i++) {
 				fname = dirassets + HADES_STRING_CSV_STATABIL_DEFAULT_FILE + intstatfile[i];
 				remove(fname.c_str());
@@ -2056,7 +2057,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 				MACRO_STEAM_CHECKFILEUPDATE(field_text_file[lang], section[DATA_SECTION_FIELD], saveset.fieldset->GetSteamTextSize(lang))
 				MACRO_STEAM_CHECKFILEUPDATE(world_text_file[lang], section[DATA_SECTION_WORLD_MAP], saveset.worldset->GetSteamTextSize(0, lang))
 				MACRO_STEAM_CHECKFILEUPDATE(world_worldplace_name_file[lang], section[DATA_SECTION_WORLD_MAP], saveset.worldset->GetSteamTextSize(1, lang))
-				MACRO_STEAM_CHECKFILEUPDATE(card_name_file[lang], section[DATA_SECTION_CARD], saveset.cardset->GetSteamTextSize(lang))
+				MACRO_STEAM_CHECKFILEUPDATE(card_name_file[lang], section[DATA_SECTION_CARD], GetSteamTextSizeGeneric(saveset.cardset->card, &CardDataStruct::name, true, lang))
 				MACRO_STEAM_CHECKFILEUPDATE(spetext_battleinfo_file[lang], section[DATA_SECTION_MENU_UI], saveset.ffuiset->special_text->text_block[0].GetDataSize(lang))
 				MACRO_STEAM_CHECKFILEUPDATE(spetext_battlescan_file[lang], section[DATA_SECTION_MENU_UI], saveset.ffuiset->special_text->text_block[1].GetDataSize(lang))
 				MACRO_STEAM_CHECKFILEUPDATE(spetext_spellnaming_file[lang], section[DATA_SECTION_MENU_UI], saveset.ffuiset->special_text->text_block[2].GetDataSize(lang))
@@ -2127,7 +2128,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 					MACRO_STEAM_WRITEFILEUPDATE(support_help_file[lang], supportset->WriteSteamText(filedest, 1, false, true, lang), false)
 				}
 				if (section[DATA_SECTION_CARD]) {
-					MACRO_STEAM_WRITEFILEUPDATE(card_name_file[lang], cardset->WriteSteamText(filedest, lang), false)
+					MACRO_STEAM_WRITEFILEUPDATE(card_name_file[lang], cardset->WriteSteamText(filedest, false, true, lang), false)
 				}
 				if (section[DATA_SECTION_FIELD]) {
 					MACRO_STEAM_WRITEFILEUPDATE(field_text_file[lang], fieldset->WriteSteamText(filedest, lang), false)
@@ -2193,7 +2194,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			MACRO_SAVE_ASSET_RESOURCES(itemkey_desc_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_ITEM], itemset->WriteSteamText(filedest, 5, config.dll_usage != 0, true, lang))
 			MACRO_SAVE_ASSET_RESOURCES(support_name_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_SUPPORT], supportset->WriteSteamText(filedest, 0, config.dll_usage != 0, true, lang))
 			MACRO_SAVE_ASSET_RESOURCES(support_help_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_SUPPORT], supportset->WriteSteamText(filedest, 1, config.dll_usage != 0, true, lang))
-			MACRO_SAVE_ASSET_RESOURCES(card_name_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_CARD], cardset->WriteSteamText(filedest, lang))
+			MACRO_SAVE_ASSET_RESOURCES(card_name_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_CARD], cardset->WriteSteamText(filedest, config.dll_usage != 0, true, lang))
 			MACRO_SAVE_ASSET_RESOURCES(field_text_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_FIELD], fieldset->WriteSteamText(filedest, lang))
 			MACRO_SAVE_ASSET_RESOURCES(spetext_battleinfo_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteam(filedest, 0, lang))
 			MACRO_SAVE_ASSET_RESOURCES(spetext_battlescan_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteam(filedest, 1, lang))
@@ -2619,6 +2620,7 @@ wstring* LoadHWS(string filepath, bool* section, bool* sectext, bool* localsec, 
 	for (i=0;i<nbsection;i++) {
 		HWSReadChar(save,sectiontype[i]);
 		HWSReadLong(save,sectionlength[i]);
+		fstream fout("aaaa.txt", ios::out | ios::app); fout << "Section " << (int)sectiontype[i] << " (length " << (int)sectionlength[i] << ") at 0x" << std::hex << (int)save.tellg() << endl; fout.close();
 		sectionpos = save.tellg();
 		if (section[sectiontype[i]]) {
 			

@@ -8,6 +8,8 @@
 #include <sstream>
 #include <vector>
 #include <set>
+#include <map>
+#include <array>
 #include <functional>
 #include <wx/string.h>
 #include <wx/arrstr.h>
@@ -29,17 +31,23 @@ template<typename T> void WriteSteamTextGeneric(fstream& f, vector<T>& list, FF9
 // Concatenate multiple strings using a delimiter between each, possibly with strings generated out of a list of non-strings
 template<typename T> string ConcatenateStrings(string delim, vector<T>& objlist, function<string(T)> stringifier, bool escapeempty = false);
 string ConcatenateStrings(string delim, vector<string>& objlist, bool escapeempty = false);
+wxString GetStatusNameAndId(int statusid);
+wxString FormatStatusSet(set<int>& statuses);
+uint32_t GetStatusBitList(set<int>& statuses);
+void SetupStatusList(set<int>& statuses, uint32_t statusbits);
 bool IsNumber(string s);
+
+void UpdateCustomFieldMap(map<wxString, wxString>& fields, map<wxString, wxString>& parentfields);
 
 namespace MemoriaUtility {
 	wxArrayString LoadCSVLines(wxString filename, wxArrayString* metadata = NULL);
 	wxArrayString LoadCSVEntry(wxString csvline);
-	wxArrayString SplitEntryArray(wxString csventry);
+	wxArrayString SplitEntryArray(wxString csventry, wxUniChar sep = ',');
+	bool CompareEntries(wxString csventry1, wxString csventry2);
 	int GetEntryEnum(wxString csventry);
-	bool CSV_ComparerWithoutStart(wxString left, wxString right);
-	bool CSV_ComparerWithoutEnd(wxString left, wxString right);
-	bool CSV_ComparerWithoutBoth(wxString left, wxString right);
 	template<typename T> bool GenerateCSVGeneric(wxString modfolder, wxString csvpath, wxString csvheader, vector<T>& objlist, function<wxString(T&, int)> entryconstructor, function<bool(wxString, wxString)> entrycomparer, bool skipnonmodified);
+	template<typename T> wxString GenerateDatabaseEntryGeneric(T& obj, wxString format);
+	template<typename T> bool GenerateDatabaseGeneric(wxString modfolder, wxString path, wxString header, wxString sep, wxString footer, vector<T>& objlist, wxString format, bool skipnonmodified);
 
 	template<typename T> bool GetModifiedSteamTexts(vector<int>* result, int32_t baseassetid[], vector<T>& objlist, function<wstring(T&)> stringifier, SteamLanguage lang);
 }

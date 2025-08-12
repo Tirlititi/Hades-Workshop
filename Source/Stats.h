@@ -41,6 +41,17 @@ public:
 	wstring model_trance;
 	wstring anim[BATTLE_MOTION_AMOUNT];
 	uint8_t trance_color[3];
+
+	map<wxString, wxString> custom_field;
+
+	int GetCharacterIndex();
+
+	wxString GetFieldValue(wxString fieldname);
+	bool CompareWithCSV(wxArrayString entries);
+
+private:
+	StatDataSet* parent;
+	friend StatDataSet;
 };
 
 struct InitialStatDataStruct {
@@ -48,23 +59,29 @@ public:
 	int id;
 	FF9String default_name; // readonly
 	uint16_t default_name_size_x;
-	uint8_t speed;
-	uint8_t strength;
-	uint8_t magic;
-	uint8_t spirit;
-	uint8_t magic_stone;
+	int speed;
+	int strength;
+	int magic;
+	int spirit;
+	int magic_stone;
 
 	// Parameters for Memoria mod
 	wstring name_keyword;
 	uint8_t default_row;
 	uint8_t default_winpose;
 	uint8_t default_category;
+	wstring battle_param;
 	vector<int> equip_patch;
+
+	map<wxString, wxString> custom_field;
 	
 	// Return 0 if success ; 1 if the value is too long
 	void GenerateDefaultName();
 	int SetDefaultName(wstring newvalue);
 	int SetDefaultName(FF9String& newvalue);
+
+	wxString GetFieldValue(wxString fieldname);
+	bool CompareWithCSV(wxArrayString entries);
 
 private:
 	uint16_t default_name_offset;
@@ -80,13 +97,47 @@ public:
 	int wrist;
 	int armor;
 	int accessory;
+
+	map<wxString, wxString> custom_field;
+
+	int GetCharacterIndex();
+
+	wxString GetFieldValue(wxString fieldname);
+	bool CompareWithCSV(wxArrayString entries);
+
+private:
+	StatDataSet* parent;
+	friend StatDataSet;
+};
+
+struct AbilityEntryDataStruct {
+public:
+	int id;
+	AnyAbilityStruct ability;
+	int ap_cost;
+
+	map<wxString, wxString> custom_field;
+
+	wxString GetFieldValue(wxString fieldname);
+	bool CompareWithCSV(wxArrayString entries);
+
+private:
+	AbilitySetDataStruct* parent;
+	friend AbilitySetDataStruct;
+	friend StatDataSet;
 };
 
 struct AbilitySetDataStruct {
 public:
 	int id;
-	vector<AnyAbilityStruct> ability;
-	vector<uint8_t> ap_cost;
+	vector<AbilityEntryDataStruct> entry;
+
+	int GetCharacterIndex();
+
+private:
+	StatDataSet* parent;
+	friend AbilityEntryDataStruct;
+	friend StatDataSet;
 };
 
 struct CommandSetDataStruct {
@@ -96,7 +147,27 @@ public:
 	int second_command;
 	int first_command_trance;
 	int second_command_trance;
+	int attack_command;
+	int defend_command;
+	int item_command;
+	int change_command;
+	int attack_command_trance;
+	int defend_command_trance;
+	int item_command_trance;
+	int change_command_trance;
 	uint8_t trance_attack;
+
+	map<wxString, wxString> custom_field;
+
+	void InitializeDefaultCommands();
+	int GetCharacterIndex();
+
+	wxString GetFieldValue(wxString fieldname);
+	bool CompareWithCSV(wxArrayString entries);
+
+private:
+	StatDataSet* parent;
+	friend StatDataSet;
 };
 
 struct LevelDataStruct {
@@ -105,6 +176,15 @@ public:
 	uint16_t hp_table;
 	uint16_t mp_table;
 	uint32_t exp_table;
+
+	map<wxString, wxString> custom_field;
+
+	wxString GetFieldValue(wxString fieldname);
+	bool CompareWithCSV(wxArrayString entries);
+
+private:
+	StatDataSet* parent;
+	friend StatDataSet;
 };
 
 struct StatDataSet {
@@ -131,6 +211,27 @@ public:
 	uint32_t steam_method_base_length_hpmp;
 	uint32_t steam_method_position_cmdset;
 	uint32_t steam_method_base_length_cmdset;
+
+	wxString csv_header_battle_param;
+	wxString csv_header_character_param;
+	wxString csv_header_initial_stat;
+	wxString csv_header_initial_equip;
+	wxString csv_header_ability_list;
+	wxString csv_header_command_list;
+	wxString csv_header_level;
+	wxString csv_format_battle_param;
+	wxString csv_format_character_param;
+	wxString csv_format_initial_stat;
+	wxString csv_format_initial_equip;
+	wxString csv_format_ability_list;
+	wxString csv_format_command_list;
+	wxString csv_format_level;
+	map<wxString, wxString> custom_field_battle_param;
+	map<wxString, wxString> custom_field_initial_stat;
+	map<wxString, wxString> custom_field_initial_equip;
+	map<wxString, wxString> custom_field_ability_list;
+	map<wxString, wxString> custom_field_command_list;
+	map<wxString, wxString> custom_field_level;
 	
 	// Return a temporary array, not to be deleted
 	static int* GetCharacterEquipmentsIndices(int charindex, unsigned int* amount = NULL);

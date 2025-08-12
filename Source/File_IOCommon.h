@@ -55,4 +55,31 @@ wstring ConvertStrToWStr(const string& str);
 
 #define StreamAsHex(VALUE) hex << showbase << (unsigned long)VALUE << dec << noshowbase
 
+#define MACRO_IOFUNCTIONGENERIC_STATUS(FFBIN, CONDITION, IO, READ, STATUSSET) \
+	if (CONDITION) { \
+		int macrostatuscount = 0; \
+		if (READ) { \
+			IO ## FlexibleChar(FFBIN, macrostatuscount, true); \
+			for (int statusit = 0; statusit < macrostatuscount; statusit++) { \
+				int statusnum = 0; \
+				IO ## FlexibleChar(FFBIN, statusnum, true); \
+				STATUSSET.insert(statusnum); \
+			} \
+		} else { \
+			macrostatuscount = STATUSSET.size(); \
+			IO ## FlexibleChar(FFBIN, macrostatuscount, true); \
+			for (auto statusit = STATUSSET.begin(); statusit != STATUSSET.end(); statusit++) { \
+				int statusnum = *statusit; \
+				IO ## FlexibleChar(FFBIN, statusnum, true); \
+			} \
+		} \
+	} else { \
+		uint32_t macrostatusraw = 0; \
+		if (!READ) \
+			macrostatusraw = GetStatusBitList(STATUSSET); \
+		IO ## Long(FFBIN, macrostatusraw); \
+		if (READ) \
+			SetupStatusList(STATUSSET, macrostatusraw); \
+	}
+
 #endif

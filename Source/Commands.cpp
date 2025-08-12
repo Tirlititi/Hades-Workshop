@@ -5,7 +5,10 @@
 #include "Database_CSV.h"
 #include "CommonUtility.h"
 
-#define COMMAND_HWS_VERSION 2
+#define COMMAND_HWS_VERSION 3
+
+#define COMMAND_CSV_CHECK L"%id%;%panel%;%spell_main%;%spell_list%"
+#define COMMAND_CSV_DEFAULT COMMAND_CSV_CHECK L";# %name%"
 
 const unsigned int steam_cmd_field_size[] = { 16, 16, 16, 8, 8, 32 };
 
@@ -145,17 +148,60 @@ void CommandDataStruct::BreakLink() {
 	}
 }
 
+int CommandDataStruct::GetMainSpell() {
+	if (spell_list.size() == 0)
+		return 0;
+	return spell_list[0];
+}
+
+wxString CommandDataStruct::GetFieldValue(wxString fieldname) {
+	if (fieldname.IsSameAs("id")) return wxString::Format(wxT("%d"), id);
+	if (fieldname.IsSameAs("name")) return wxString::Format(wxT("%s"), name.str_nice);
+	if (fieldname.IsSameAs("help")) return wxString::Format(wxT("%s"), help.str_nice);
+	if (fieldname.IsSameAs("panel")) return wxString::Format(wxT("%d"), panel);
+	if (fieldname.IsSameAs("spell_amount_raw")) return wxString::Format(wxT("%d"), spell_amount);
+	if (fieldname.IsSameAs("spell_main")) return wxString::Format(wxT("%d"), GetMainSpell());
+	if (fieldname.IsSameAs("spell_list")) {
+		if (panel == COMMAND_PANEL_SPELL)
+			return wxString::Format(wxT("%s"), ConcatenateStrings<int>(", ", spell_list, static_cast<string(*)(int)>(&to_string)));
+		else if ((panel == COMMAND_PANEL_ITEM || panel == COMMAND_PANEL_WEAPON) && spell_amount < 0)
+			return wxString::Format(wxT("%d"), spell_amount);
+		return wxEmptyString;
+	}
+	if (auto search = custom_field.find(fieldname); search != custom_field.end()) return search->second;
+	if (auto search = parent->custom_field.find(fieldname); search != parent->custom_field.end()) return search->second;
+	return _(L"");
+}
+
+bool CommandDataStruct::CompareWithCSV(wxArrayString entries) {
+	if (id == 14)
+		return panel == COMMAND_PANEL_ITEM && spell_index == 0 && spell_amount >= 0;
+	if (id == 15)
+		return panel == COMMAND_PANEL_WEAPON && spell_index == 190 && spell_amount >= 0;
+	if (id == 35 || id == 37 || id == 39)
+		return panel == COMMAND_PANEL_SPELL && spell_amount == 0;
+	if (id == 47)
+		return panel == COMMAND_PANEL_NONE && spell_index == 0 && spell_amount == 0;
+	if (id >= (int)entries.GetCount())
+		return false;
+	if (!custom_field.empty())
+		return false;
+	wxString rightcsv = MemoriaUtility::GenerateDatabaseEntryGeneric(*this, _(COMMAND_CSV_CHECK));
+	return MemoriaUtility::CompareEntries(entries[id].BeforeLast(L';'), rightcsv);
+}
+
 #define MACRO_COMMAND_IOFUNCTIONDATA(IO,SEEK,READ,PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<cmdamount;i++) { \
-		IO ## Short(ffbin,cmd[i].name_offset); \
-		IO ## Short(ffbin,cmd[i].help_offset); \
-		IO ## Short(ffbin,cmd[i].help_size_x); \
-		IO ## Char(ffbin,cmd[i].panel); \
-		IO ## FlexibleChar(ffbin,cmd[i].spell_amount, useextendedtype); \
-		IO ## FlexibleChar(ffbin,cmd[i].spell_index, useextendedtype); \
-		IO ## Char(ffbin,zero8); \
-		IO ## Short(ffbin,zero16); \
+	for (i = 0; i < cmdamount; i++) { \
+		IO ## Short(ffbin, cmd[i].name_offset); \
+		IO ## Short(ffbin, cmd[i].help_offset); \
+		IO ## Short(ffbin, cmd[i].help_size_x); \
+		IO ## Char(ffbin, cmd[i].panel); \
+		IO ## FlexibleChar(ffbin, cmd[i].spell_amount, useextendedtype); \
+		IO ## FlexibleChar(ffbin, cmd[i].spell_index, useextendedtype); \
+		IO ## Char(ffbin, zero8); \
+		IO ## Short(ffbin, zero16); \
+		if (useextendedtype2) IO ## CSVFields(ffbin, cmd[i].custom_field); \
 	} \
 	if (PPF) PPFEndScanStep();
 
@@ -204,10 +250,13 @@ void CommandDataStruct::BreakLink() {
 void CommandDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 	int cmdamount = COMMAND_AMOUNT;
 	bool useextendedtype = false;
+	bool useextendedtype2 = false;
 	int i;
 	uint32_t txtpos;
 	uint8_t zero8 = 0;
 	uint16_t zero16 = 0;
+	csv_header = _(HADES_STRING_CSV_COMMAND_HEADER);
+	csv_format = _(COMMAND_CSV_DEFAULT);
 	name_space_total = config.cmd_name_space_total;
 	help_space_total = config.cmd_help_space_total;
 	cmd.resize(COMMAND_AMOUNT);
@@ -317,27 +366,8 @@ void CommandDataSet::GenerateCSharp(vector<string>& buffer) {
 	buffer.push_back(cmddb.str());
 }
 
-wxString CSV_CommandConstructor(CommandDataStruct& cm, int index) {
-	if ((cm.id == 35 || cm.id == 37 || cm.id == 39) && cm.panel == COMMAND_PANEL_SPELL && cm.spell_amount == 0)
-		return wxEmptyString;
-	if (cm.id == 47 && cm.panel == COMMAND_PANEL_NONE && (cm.spell_list.size() == 0 || cm.spell_list[0] == 0))
-		return wxEmptyString;
-	wxString csventry = wxString::Format(wxT("%d;%d;%d;"), cm.id, cm.panel, cm.spell_list.size() > 0 ? cm.spell_list[0] : 0);
-	if (cm.panel == COMMAND_PANEL_SPELL)
-		csventry += ConcatenateStrings<int>(", ", cm.spell_list, static_cast<string(*)(int)>(&to_string));
-	csventry += wxString::Format(wxT(";# %s"), cm.name.str_nice);
-	return csventry;
-}
-
-bool CSV_CommandComparer(wxString left, wxString right) {
-	wxArrayString leftentries = MemoriaUtility::LoadCSVEntry(left);
-	if (leftentries.GetCount() >= 4 && wxAtoi(leftentries[1]) != COMMAND_PANEL_SPELL)
-		return left.BeforeLast(L';').BeforeLast(L';').IsSameAs(right.BeforeLast(L';').BeforeLast(L';'));
-	return left.BeforeLast(L';').IsSameAs(right.BeforeLast(L';'));
-}
-
 bool CommandDataSet::GenerateCSV(string basefolder) {
-	return MemoriaUtility::GenerateCSVGeneric<CommandDataStruct>(_(basefolder), _(HADES_STRING_CSV_COMMAND_FILE), _(HADES_STRING_CSV_COMMAND_HEADER), cmd, &CSV_CommandConstructor, &CSV_CommandComparer, true);
+	return MemoriaUtility::GenerateDatabaseGeneric<CommandDataStruct>(_(basefolder), _(HADES_STRING_CSV_COMMAND_FILE), csv_header, _(L"\n"), _(L"\n"), cmd, csv_format, true);
 }
 
 void CommandDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype, bool onlymodified, bool asmes, SteamLanguage lang) {
@@ -358,6 +388,7 @@ void CommandDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype, bool 
 void CommandDataSet::Write(fstream &ffbin, ConfigurationSet& config) {
 	int cmdamount = COMMAND_AMOUNT;
 	bool useextendedtype = false;
+	bool useextendedtype2 = false;
 	int i;
 	uint32_t txtpos;
 	uint8_t zero8 = 0;
@@ -381,6 +412,7 @@ void CommandDataSet::Write(fstream &ffbin, ConfigurationSet& config) {
 void CommandDataSet::WritePPF(fstream &ffbin, ConfigurationSet& config) {
 	int cmdamount = COMMAND_AMOUNT;
 	bool useextendedtype = false;
+	bool useextendedtype2 = false;
 	int i;
 	uint32_t txtpos;
 	uint8_t zero8 = 0;
@@ -404,6 +436,7 @@ void CommandDataSet::WritePPF(fstream &ffbin, ConfigurationSet& config) {
 int CommandDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 	int cmdamount = COMMAND_AMOUNT;
 	bool useextendedtype = false;
+	bool useextendedtype2 = false;
 	vector<CommandDataStruct> nonmodified;
 	SteamLanguage lg;
 	int txtspace;
@@ -431,6 +464,11 @@ int CommandDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 			cmd[added[i]].help.CreateEmpty(true);
 			cmd[added[i]].parent = this;
 		}
+	}
+	if (version >= 3) {
+		useextendedtype2 = true;
+		HWSReadCSVFormatting(ffbin, csv_header, csv_format);
+		HWSReadCSVFields(ffbin, custom_field);
 	}
 	MACRO_COMMAND_IOFUNCTIONDATA(HWSRead, HWSSeek, true, false)
 	if (name_space_total <= namesize && usetext) {
@@ -521,6 +559,7 @@ int CommandDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 void CommandDataSet::WriteHWS(fstream& ffbin) {
 	int cmdamount = cmd.size();
 	bool useextendedtype = true;
+	bool useextendedtype2 = true;
 	int i;
 	uint32_t txtpos;
 	uint8_t zero8 = 0;
@@ -536,6 +575,8 @@ void CommandDataSet::WriteHWS(fstream& ffbin) {
 	HWSWriteFlexibleChar(ffbin, cmdamount, true);
 	for (i = 0; i < cmdamount; i++)
 		HWSWriteFlexibleChar(ffbin, cmd[i].id, true);
+	HWSWriteCSVFormatting(ffbin, csv_header, csv_format);
+	HWSWriteCSVFields(ffbin, custom_field);
 	MACRO_COMMAND_IOFUNCTIONDATA(HWSWrite, HWSSeek, false, false)
 	if (GetGameType() == GAME_TYPE_PSX) {
 		MACRO_COMMAND_IOFUNCTIONNAME(HWSWrite, HWSSeek, false, false)

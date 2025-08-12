@@ -396,7 +396,7 @@ void GLWindow::Prepare2DViewport(int topleft_x, int topleft_y, int bottomrigth_x
 }
 
 void GLWindow::ResetCamera() {
-	if (field_tiles!=NULL) {
+	if (field_tiles != NULL) {
 		FieldTilesCameraDataStruct& cam = field_tiles->camera[field_camera];
 /*		camera_pos_x = cam.offset_centerx+cam.offset_width/2.0-160.0;
 		camera_pos_y = -(cam.offset_centery+cam.offset_height/2.0)+112.0;
@@ -404,16 +404,16 @@ void GLWindow::ResetCamera() {
 		camera_eye_x = camera_pos_x + cam.matrix[0]*cam.offset_x/4096.0 - cam.matrix[1]*cam.offset_z/4096.0 + cam.matrix[2]*cam.offset_y/4096.0;
 		camera_eye_y = camera_pos_y + cam.matrix[3]*cam.offset_x/4096.0 - cam.matrix[4]*cam.offset_z/4096.0 + cam.matrix[5]*cam.offset_y/4096.0;
 		camera_eye_z = camera_eye_z + cam.matrix[6]*cam.offset_x/4096.0 - cam.matrix[7]*cam.offset_z/4096.0 + cam.matrix[8]*cam.offset_y/4096.0;*/
-/*		camera_eye_x = -cam.matrix[0]*cam.offset_x/4096.0 + cam.matrix[3]*cam.offset_z/4096.0 - cam.matrix[6]*cam.offset_y/4096.0;
-		camera_eye_y = -cam.matrix[1]*cam.offset_x/4096.0 + cam.matrix[4]*cam.offset_z/4096.0 - cam.matrix[7]*cam.offset_y/4096.0;
-		camera_eye_z = -cam.matrix[2]*cam.offset_x/4096.0 + cam.matrix[5]*cam.offset_z/4096.0 - cam.matrix[8]*cam.offset_y/4096.0;
-		camera_pos_x = camera_eye_x+cam.matrix[6]*cam.distance/4096.0;
-		camera_pos_y = camera_eye_y+cam.matrix[7]*cam.distance/4096.0;
-		camera_pos_z = camera_eye_z+cam.matrix[8]*cam.distance/4096.0;
+/*		camera_eye_x = -cam.matrix[0] * cam.offset_x / 4096.0 + cam.matrix[3] * cam.offset_z / 4096.0 - cam.matrix[6] * cam.offset_y / 4096.0;
+		camera_eye_y = -cam.matrix[1] * cam.offset_x / 4096.0 + cam.matrix[4] * cam.offset_z / 4096.0 - cam.matrix[7] * cam.offset_y / 4096.0;
+		camera_eye_z = -cam.matrix[2] * cam.offset_x / 4096.0 + cam.matrix[5] * cam.offset_z / 4096.0 - cam.matrix[8] * cam.offset_y / 4096.0;
+		camera_pos_x = camera_eye_x + cam.matrix[6] * cam.distance / 4096.0;
+		camera_pos_y = camera_eye_y + cam.matrix[7] * cam.distance / 4096.0;
+		camera_pos_z = camera_eye_z + cam.matrix[8] * cam.distance / 4096.0;
 		camera_eye_z *= -1.0;
 		camera_pos_z *= -1.0;*/
-		camera_pos_x = (cam.min_x+cam.max_x)/2;
-		camera_pos_y = -(cam.min_y+cam.max_y)/2;
+		camera_pos_x = (cam.min_x + cam.max_x) / 2;
+		camera_pos_y = -(cam.min_y + cam.max_y) / 2;
 		camera_pos_z = 0.0;
 		camera_eye_x = cam.matrix[2];
 		camera_eye_y = -cam.matrix[4];
@@ -425,10 +425,10 @@ fout << "CX " << (int)cam.offset_centerx << " CY "  << (int)cam.offset_centery;
 fout << " W " << (int)cam.offset_width << " H "  << (int)cam.offset_height;
 fout << " D " << (unsigned int)cam.distance << " DD "  << (int)cam.depth << endl;
 fout.close();*/
-		camera_angle_xy = atan2(camera_pos_y-camera_eye_y,camera_pos_x-camera_eye_x);
-		camera_angle_z = atan2(camera_eye_z-camera_pos_z,sqrt((camera_pos_x-camera_eye_x)*(camera_pos_x-camera_eye_x)+(camera_pos_y-camera_eye_y)*(camera_pos_y-camera_eye_y)));
-		camera_fovy = atan2(cam.offset_height/2,cam.distance);//65.0;
-		camera_aspect = cam.offset_width*1.0f/cam.offset_height;//1.0;
+		camera_angle_xy = atan2(camera_pos_y - camera_eye_y, camera_pos_x - camera_eye_x);
+		camera_angle_z = atan2(camera_eye_z - camera_pos_z, sqrt((camera_pos_x - camera_eye_x) * (camera_pos_x - camera_eye_x) + (camera_pos_y - camera_eye_y) * (camera_pos_y - camera_eye_y)));
+		camera_fovy = atan2(cam.offset_height / 2, cam.distance); // 65.0;
+		camera_aspect = cam.offset_width * 1.0f / cam.offset_height; // 1.0;
 		camera_znear = 1.0;
 		camera_zfar = 100000.0;
 	} else {
@@ -438,8 +438,8 @@ fout.close();*/
 		camera_eye_x = 0.0;
 		camera_eye_y = 0.0;
 		camera_eye_z = 1000.0;
-		camera_angle_xy = M_PI/2;
-		camera_angle_z = M_PI/2;
+		camera_angle_xy = (GLfloat)(M_PI / 2);
+		camera_angle_z = (GLfloat)(M_PI / 2);
 		camera_fovy = 65.0;
 		camera_aspect = 1.0;
 		camera_znear = 1.0;

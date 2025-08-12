@@ -4,7 +4,10 @@
 #include "CommonUtility.h"
 #include "Database_CSV.h"
 
-#define PARTY_SPECIAL_HWS_VERSION 2
+#define PARTY_SPECIAL_HWS_VERSION 3
+
+#define MAGIC_SWORD_CSV_CHECK L"%id%;%supporter%;%beneficiary%;%requirement%;%unlocked%;%supporter_status_blocker%;%beneficiary_status_blocker%"
+#define MAGIC_SWORD_CSV_DEFAULT MAGIC_SWORD_CSV_CHECK L";# %name%"
 
 void MagicSwordDataStruct::InitDefault() {
 	id = 0;
@@ -17,6 +20,31 @@ void MagicSwordDataStruct::InitDefault() {
 	unlocked[6] = 0x3D;		unlocked[7] = 0x3F;		unlocked[8] = 0x41;
 	unlocked[9] = 0x4B;		unlocked[10] = 0x4C;
 	unlocked[11] = 0xBD;	unlocked[12] = 0xBF;
+	supporter_status_blocker = { 3, 10, 11, 17, 24, 28 };
+	beneficiary_status_blocker = { 17, 28 };
+}
+
+wxString MagicSwordDataStruct::GetFieldValue(wxString fieldname) {
+	if (fieldname.IsSameAs("id")) return wxString::Format(wxT("%d"), id);
+	if (fieldname.IsSameAs("name")) return wxString::Format(wxT("Magic Sword %d"), id);
+	if (fieldname.IsSameAs("supporter")) return wxString::Format(wxT("%d"), supporter);
+	if (fieldname.IsSameAs("beneficiary")) return wxString::Format(wxT("%d"), beneficiary);
+	if (fieldname.IsSameAs("requirement")) return wxString::Format(wxT("%s"), ConcatenateStrings<int>(", ", requirement, [](int spellid) { return "AA:" + to_string(spellid); }));
+	if (fieldname.IsSameAs("unlocked")) return wxString::Format(wxT("%s"), ConcatenateStrings<int>(", ", unlocked, [](int spellid) { return "AA:" + to_string(spellid); }));
+	if (fieldname.IsSameAs("supporter_status_blocker")) return FormatStatusSet(supporter_status_blocker);
+	if (fieldname.IsSameAs("beneficiary_status_blocker")) return FormatStatusSet(beneficiary_status_blocker);
+	if (auto search = custom_field.find(fieldname); search != custom_field.end()) return search->second;
+	if (auto search = parent->custom_field.find(fieldname); search != parent->custom_field.end()) return search->second;
+	return _(L"");
+}
+
+bool MagicSwordDataStruct::CompareWithCSV(wxArrayString entries) {
+	if (id >= (int)entries.GetCount())
+		return false;
+	if (!custom_field.empty())
+		return false;
+	wxString rightcsv = MemoriaUtility::GenerateDatabaseEntryGeneric(*this, _(MAGIC_SWORD_CSV_CHECK));
+	return MemoriaUtility::CompareEntries(entries[id].BeforeLast(L';'), rightcsv);
 }
 
 #define MACRO_MAGICSWORD_IOFUNCTION(IO,SEEK,READ,PPF) \
@@ -33,15 +61,22 @@ void MagicSwordDataStruct::InitDefault() {
 		if (useextendedtype) IO ## FlexibleChar(ffbin, mgswd.unlocked[i], useextendedtype); \
 		IO ## FlexibleChar(ffbin, mgswd.requirement[i], useextendedtype); \
 	} \
+	MACRO_IOFUNCTIONGENERIC_STATUS(ffbin, useextendedtype2, IO, READ, mgswd.supporter_status_blocker) \
+	MACRO_IOFUNCTIONGENERIC_STATUS(ffbin, useextendedtype2, IO, READ, mgswd.beneficiary_status_blocker) \
+	if (useextendedtype2) IO ## CSVFields(ffbin, mgswd.custom_field); \
 	if (PPF) PPFEndScanStep();
 
 
 void PartySpecialDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 	int swdamount = MAGIC_SWORD_AMOUNT;
 	bool useextendedtype = false;
+	bool useextendedtype2 = false;
 	int i;
+	csv_header = _(HADES_STRING_CSV_MGCSWORD_HEADER);
+	csv_format = _(MAGIC_SWORD_CSV_DEFAULT);
 	magic_sword.resize(1);
 	MagicSwordDataStruct& mgswd = magic_sword[0];
+	mgswd.parent = this;
 	mgswd.InitDefault();
 	if (GetGameType() == GAME_TYPE_PSX) {
 		ffbin.seekg(config.party_magicsword_offset);
@@ -93,18 +128,8 @@ void PartySpecialDataSet::GenerateCSharp(vector<string>& buffer) {
 	buffer.push_back(mgcswddb.str());
 }
 
-wxString CSV_MagicSwordConstructor(MagicSwordDataStruct& ms, int index) {
-	return wxString::Format(wxT("%d;%d;%d;%s;%s;# Magic Sword %d"),
-		index,
-		ms.supporter,
-		ms.beneficiary,
-		ConcatenateStrings<int>(", ", ms.requirement, [](int spellid) { return "AA:" + to_string(spellid); }),
-		ConcatenateStrings<int>(", ", ms.unlocked, [](int spellid) { return "AA:" + to_string(spellid); }),
-		index);
-}
-
 bool PartySpecialDataSet::GenerateCSV(string basefolder) {
-	return MemoriaUtility::GenerateCSVGeneric<MagicSwordDataStruct>(_(basefolder), _(HADES_STRING_CSV_MGCSWORD_FILE), _(HADES_STRING_CSV_MGCSWORD_HEADER), magic_sword, &CSV_MagicSwordConstructor, &MemoriaUtility::CSV_ComparerWithoutEnd, true);
+	return MemoriaUtility::GenerateDatabaseGeneric<MagicSwordDataStruct>(_(basefolder), _(HADES_STRING_CSV_MGCSWORD_FILE), csv_header, _(L"\n"), _(L"\n"), magic_sword, csv_format, true);
 }
 
 void PartySpecialDataSet::Write(fstream& ffbin, ConfigurationSet& config) {
@@ -112,6 +137,7 @@ void PartySpecialDataSet::Write(fstream& ffbin, ConfigurationSet& config) {
 		return;
 	int swdamount = MAGIC_SWORD_AMOUNT;
 	bool useextendedtype = false;
+	bool useextendedtype2 = false;
 	MagicSwordDataStruct& mgswd = magic_sword[0];
 	int i;
 	ffbin.seekg(config.party_magicsword_offset);
@@ -123,6 +149,7 @@ void PartySpecialDataSet::WritePPF(fstream& ffbin, ConfigurationSet& config) {
 		return;
 	int swdamount = MAGIC_SWORD_AMOUNT;
 	bool useextendedtype = false;
+	bool useextendedtype2 = false;
 	MagicSwordDataStruct& mgswd = magic_sword[0];
 	int i;
 	ffbin.seekg(config.party_magicsword_offset);
@@ -133,15 +160,22 @@ void PartySpecialDataSet::LoadHWS(fstream& ffbin) {
 	int swdamount = MAGIC_SWORD_AMOUNT;
 	int swdsetamount = 1;
 	bool useextendedtype = false;
+	bool useextendedtype2 = false;
 	uint16_t version;
 	int i;
 	HWSReadShort(ffbin, version);
+	if (version >= 3) {
+		useextendedtype2 = true;
+		HWSReadCSVFormatting(ffbin, csv_header, csv_format);
+		HWSReadCSVFields(ffbin, custom_field);
+	}
 	if (version >= 2) {
 		useextendedtype = true;
 		HWSReadFlexibleChar(ffbin, swdsetamount, true);
 		magic_sword.resize(swdsetamount);
 		for (int seti = 0; seti < swdsetamount; seti++) {
 			MagicSwordDataStruct& mgswd = magic_sword[seti];
+			mgswd.parent = this;
 			HWSReadFlexibleChar(ffbin, mgswd.supporter, true);
 			HWSReadFlexibleChar(ffbin, mgswd.beneficiary, true);
 			MACRO_MAGICSWORD_IOFUNCTION(HWSRead, HWSSeek, true, false)
@@ -149,6 +183,7 @@ void PartySpecialDataSet::LoadHWS(fstream& ffbin) {
 	} else {
 		magic_sword.resize(1);
 		MagicSwordDataStruct& mgswd = magic_sword[0];
+		mgswd.parent = this;
 		mgswd.InitDefault();
 		MACRO_MAGICSWORD_IOFUNCTION(HWSRead, HWSSeek, true, false)
 	}
@@ -156,9 +191,12 @@ void PartySpecialDataSet::LoadHWS(fstream& ffbin) {
 
 void PartySpecialDataSet::WriteHWS(fstream& ffbin) {
 	bool useextendedtype = true;
+	bool useextendedtype2 = true;
 	int swdsetamount = magic_sword.size();
 	int i, seti;
 	HWSWriteShort(ffbin, PARTY_SPECIAL_HWS_VERSION);
+	HWSWriteCSVFormatting(ffbin, csv_header, csv_format);
+	HWSWriteCSVFields(ffbin, custom_field);
 	HWSWriteFlexibleChar(ffbin, swdsetamount, true);
 	for (seti = 0; seti < swdsetamount; seti++) {
 		MagicSwordDataStruct& mgswd = magic_sword[seti];

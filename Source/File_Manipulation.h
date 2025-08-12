@@ -8,6 +8,8 @@ struct FF9String;
 #include <fstream>
 #include <string>
 #include <vector>
+#include <map>
+#include <wx/string.h>
 using namespace std;
 
 #define FILE_IGNORE_DATA_FIRST -0x118
@@ -182,5 +184,17 @@ void HWSWriteFlexibleChar(fstream& f, int value, bool asint);
 void HWSSeek(fstream& f, uint32_t abspos, uint32_t offset);
 void HWSReadWString(fstream& f, wstring& str);
 void HWSWriteWString(fstream& f, wstring str);
+void HWSReadWxString(fstream& f, wxString& str);
+void HWSWriteWxString(fstream& f, wxString str);
+void HWSReadCSVFormatting(fstream& f, wxString& header, wxString& format);
+void HWSWriteCSVFormatting(fstream& f, wxString& header, wxString& format);
+void HWSReadCSVFields(fstream& f, map<wxString, wxString>& fields);
+void HWSWriteCSVFields(fstream& f, map<wxString, wxString>& fields);
+// dummy CSVFields functions for macros
+inline void FFIXWriteCSVFields(fstream& f, map<wxString, wxString>& fields) {}
+inline void FFIXReadCSVFields(fstream& f, map<wxString, wxString>& fields) {}
+inline void SteamWriteCSVFields(fstream& f, map<wxString, wxString>& fields) {}
+inline void SteamReadCSVFields(fstream& f, map<wxString, wxString>& fields) {}
+inline void PPFStepAddCSVFields(fstream& f, map<wxString, wxString>& fields) {}
 
 #endif

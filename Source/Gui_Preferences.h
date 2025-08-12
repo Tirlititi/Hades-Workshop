@@ -20,6 +20,7 @@ public:
 	wxCheckBox* save_lang_box[STEAM_LANGUAGE_AMOUNT];
 	bool save_lang[STEAM_LANGUAGE_AMOUNT];
 	int background_resolution;
+	bool prefer_export_as_patches;
 
 	bool lang_change_allowed;
 	

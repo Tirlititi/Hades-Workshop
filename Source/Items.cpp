@@ -8,7 +8,18 @@
 #include "Database_CSV.h"
 #include "CommonUtility.h"
 
-#define ITEM_HWS_VERSION 2
+#define ITEM_HWS_VERSION 3
+
+#define ITEM_CSV_CHECK L"%id%;%weapon_id%;%armor_id%;%usable_id%;%price%;%sell_price%;%icon%;%icon_color%;%equip_position%;%stat_id%;%skill_list%;%type_weapon%;%type_armlet%;%type_helmet%;%type_armor%;%type_accessory%;%type_item%;%type_gem%;%type_usable%;%menu_position%;%zidane%;%vivi%;%garnet%;%steiner%;%freya%;%quina%;%eiko%;%amarant%;%cinna%;%marcus%;%blank%;%beatrix%"
+#define ITEM_CSV_DEFAULT ITEM_CSV_CHECK L";# %id% - %name%"
+#define WEAPON_CSV_CHECK L"%weapon_id%;%weapon_category%;%weapon_status%;%weapon_model%;%weapon_script%;%weapon_power%;%weapon_element%;%weapon_accuracy%;%weapon_offset1%;%weapon_offset2%;%weapon_hitsfx%;%weapon_textures%"
+#define WEAPON_CSV_DEFAULT L"%name%;" WEAPON_CSV_CHECK
+#define ARMOR_CSV_CHECK L"%armor_id%;%armor_defence%;%armor_evade%;%armor_magic_defence%;%armor_magic_evade%"
+#define ARMOR_CSV_DEFAULT L"%name%;" ARMOR_CSV_CHECK
+#define USABLE_CSV_CHECK L"%usable_id%;%usable_target_type%;%usable_target_default_ally%;%usable_panel%;%usable_model%;%usable_target_for_dead%;%usable_target_default_on_dead%;%usable_script%;%usable_power%;%usable_accuracy%;%usable_element%;%usable_status%"
+#define USABLE_CSV_DEFAULT USABLE_CSV_CHECK L";# %id% - %name%"
+#define ITEMSTAT_CSV_CHECK L"%stat_id%;%stat_speed%;%stat_strength%;%stat_magic%;%stat_spirit%;%stat_element_boost%;%stat_element_immune%;%stat_element_absorb%;%stat_element_half%;%stat_element_weak%"
+#define ITEMSTAT_CSV_DEFAULT L"Bonus %stat_id% - %name%;" ITEMSTAT_CSV_CHECK
 
 const unsigned int steam_item_field_size[] = { 16, 16, 16, 16, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8 };
 const unsigned int steam_item_field_array[] = { 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0 };
@@ -94,6 +105,169 @@ int ItemDataStruct::SetBattleHelp(FF9String& newvalue) {
 	}
 	battle_help = newvalue;
 	return 0;
+}
+
+wxString GetEquipPositionStr(ItemDataStruct& it, ItemDataSet* itemset) {
+	if (it.equip_position_type == ITEM_POSITION_ABSOLUTE)
+		return wxString::Format(wxT("%d"), it.equip_position);
+	int index;
+	for (index = 0; index < (int)itemset->item.size(); index++)
+		if (itemset->item[index].id == it.id)
+			break;
+	if (index >= (int)itemset->item.size())
+		return wxString::Format(wxT("%d"), it.id);
+	int posprecision = itemset->item.size() > ITEM_AMOUNT ? (int)ceil(log10(itemset->item.size() - ITEM_AMOUNT + 1)) : 0;
+	float posstep = 1.0f / pow(10.0f, posprecision);
+	float pos;
+	if (itemset->GetEquipPositionFloat(index, posstep, &pos))
+		return wxString::Format(wxString::Format(wxT("%%.%df"), posprecision), pos);
+	return wxString::Format(wxT("%d"), it.id);
+}
+
+wxString GetMenuPositionStr(ItemDataStruct& it, ItemDataSet* itemset) {
+	if (it.menu_position_type == ITEM_POSITION_ABSOLUTE)
+		return wxString::Format(wxT("%d"), it.menu_position);
+	int index;
+	for (index = 0; index < (int)itemset->item.size(); index++)
+		if (itemset->item[index].id == it.id)
+			break;
+	if (index >= (int)itemset->item.size())
+		return wxString::Format(wxT("%d"), it.id);
+	int posprecision = itemset->item.size() > ITEM_AMOUNT ? (int)ceil(log10(itemset->item.size() - ITEM_AMOUNT + 1)) : 0;
+	float posstep = 1.0f / pow(10.0f, posprecision);
+	float pos;
+	if (itemset->GetMenuPositionFloat(index, posstep, &pos))
+		return wxString::Format(wxString::Format(wxT("%%.%df"), posprecision), pos);
+	return wxString::Format(wxT("%d"), it.id);
+}
+
+wxString ItemDataStruct::GetFieldValue(wxString fieldname) {
+	if (fieldname.IsSameAs("id")) return wxString::Format(wxT("%d"), id);
+	if (fieldname.IsSameAs("weapon_id")) return wxString::Format(wxT("%d"), weapon_id);
+	if (fieldname.IsSameAs("armor_id")) return wxString::Format(wxT("%d"), armor_id);
+	if (fieldname.IsSameAs("usable_id")) return wxString::Format(wxT("%d"), usable_id);
+	if (fieldname.IsSameAs("stat_id")) return wxString::Format(wxT("%d"), stat_id);
+	if (fieldname.IsSameAs("name")) return wxString::Format(wxT("%s"), name.str_nice);
+	if (fieldname.IsSameAs("help")) return wxString::Format(wxT("%s"), help.str_nice);
+	if (fieldname.IsSameAs("price")) return wxString::Format(wxT("%d"), price);
+	if (fieldname.IsSameAs("sell_price")) return wxString::Format(wxT("%d"), sell_price);
+	if (fieldname.IsSameAs("icon")) return wxString::Format(wxT("%d"), icon);
+	if (fieldname.IsSameAs("icon_color")) return wxString::Format(wxT("%d"), icon_color);
+	if (fieldname.IsSameAs("equip_position")) return GetEquipPositionStr(*this, parent);
+	if (fieldname.IsSameAs("skill_list")) {
+		string concat = ConcatenateStrings<AnyAbilityStruct>(", ", skill, [](AnyAbilityStruct ab) { return ab.IsVoid() || (hades::PREFER_EXPORT_AS_PATCHES && ab.GetRawId() >= 256) ? "" : ab.GetStringId(); }, true);
+		return wxString::Format(wxT("%s"), concat.empty() ? "0" : concat);
+	}
+	if (fieldname.IsSameAs("type")) return wxString::Format(wxT("%d"), type);
+	if (fieldname.IsSameAs("type_weapon")) return wxString::Format(wxT("%d"), (type & ITEM_TYPE_WEAPON) != 0 ? 1 : 0);
+	if (fieldname.IsSameAs("type_armlet")) return wxString::Format(wxT("%d"), (type & ITEM_TYPE_WRIST) != 0 ? 1 : 0);
+	if (fieldname.IsSameAs("type_helmet")) return wxString::Format(wxT("%d"), (type & ITEM_TYPE_HEAD) != 0 ? 1 : 0);
+	if (fieldname.IsSameAs("type_armor")) return wxString::Format(wxT("%d"), (type & ITEM_TYPE_ARMOR) != 0 ? 1 : 0);
+	if (fieldname.IsSameAs("type_accessory")) return wxString::Format(wxT("%d"), (type & ITEM_TYPE_ACCESSORY) != 0 ? 1 : 0);
+	if (fieldname.IsSameAs("type_item")) return wxString::Format(wxT("%d"), (type & ITEM_TYPE_USABLE) != 0 ? 1 : 0);
+	if (fieldname.IsSameAs("type_gem")) return wxString::Format(wxT("%d"), (type & ITEM_TYPE_SPECIAL) != 0 ? 1 : 0);
+	if (fieldname.IsSameAs("type_usable")) return wxString::Format(wxT("%d"), (type & ITEM_TYPE_CONSUMABLE) != 0 ? 1 : 0);
+	if (fieldname.IsSameAs("menu_position")) return GetMenuPositionStr(*this, parent);
+	if (fieldname.IsSameAs("char_availability")) return wxString::Format(wxT("%d"), char_availability);
+	if (fieldname.IsSameAs("zidane")) return wxString::Format(wxT("%d"), (char_availability >> 11) & 1);
+	if (fieldname.IsSameAs("vivi")) return wxString::Format(wxT("%d"), (char_availability >> 10) & 1);
+	if (fieldname.IsSameAs("garnet")) return wxString::Format(wxT("%d"), (char_availability >> 9) & 1);
+	if (fieldname.IsSameAs("steiner")) return wxString::Format(wxT("%d"), (char_availability >> 8) & 1);
+	if (fieldname.IsSameAs("freya")) return wxString::Format(wxT("%d"), (char_availability >> 7) & 1);
+	if (fieldname.IsSameAs("quina")) return wxString::Format(wxT("%d"), (char_availability >> 6) & 1);
+	if (fieldname.IsSameAs("eiko")) return wxString::Format(wxT("%d"), (char_availability >> 5) & 1);
+	if (fieldname.IsSameAs("amarant")) return wxString::Format(wxT("%d"), (char_availability >> 4) & 1);
+	if (fieldname.IsSameAs("cinna")) return wxString::Format(wxT("%d"), (char_availability >> 3) & 1);
+	if (fieldname.IsSameAs("marcus")) return wxString::Format(wxT("%d"), (char_availability >> 2) & 1);
+	if (fieldname.IsSameAs("blank")) return wxString::Format(wxT("%d"), (char_availability >> 1) & 1);
+	if (fieldname.IsSameAs("beatrix")) return wxString::Format(wxT("%d"), char_availability & 1);
+	if (fieldname.StartsWith("weapon_") && parent->GetWeaponIndexById(weapon_id) >= 0) {
+		ItemWeaponDataStruct& weap = parent->GetWeaponById(weapon_id);
+		if (fieldname.IsSameAs("weapon_category")) return wxString::Format(wxT("%d"), weap.flag);
+		if (fieldname.IsSameAs("weapon_status")) return wxString::Format(wxT("%d"), weap.status);
+		if (fieldname.IsSameAs("weapon_model")) return wxString::Format(wxT("%s"), weap.model_name);
+		if (fieldname.IsSameAs("weapon_model_id")) return wxString::Format(wxT("%d"), weap.model);
+		if (fieldname.IsSameAs("weapon_script")) return wxString::Format(wxT("%d"), weap.damage_formula);
+		if (fieldname.IsSameAs("weapon_power")) return wxString::Format(wxT("%d"), weap.power);
+		if (fieldname.IsSameAs("weapon_element")) return wxString::Format(wxT("%d"), weap.element);
+		if (fieldname.IsSameAs("weapon_accuracy")) return wxString::Format(wxT("%d"), weap.status_accuracy);
+		if (fieldname.IsSameAs("weapon_offset1")) return wxString::Format(wxT("%d"), weap.offset1);
+		if (fieldname.IsSameAs("weapon_offset2")) return wxString::Format(wxT("%d"), weap.offset2);
+		if (fieldname.IsSameAs("weapon_hitsfx")) return wxString::Format(wxT("%d"), weap.hit_sfx);
+		if (fieldname.IsSameAs("weapon_textures")) return wxString::Format(wxT("%s"), ConcatenateStrings<wstring>(", ", weap.texture_names, [](wstring str) { return ConvertWStrToStr(str); }, true));
+	}
+	if (fieldname.StartsWith("armor_") && parent->GetArmorIndexById(armor_id) >= 0) {
+		ItemArmorDataStruct& armor = parent->GetArmorById(armor_id);
+		if (fieldname.IsSameAs("armor_defence")) return wxString::Format(wxT("%d"), armor.defence);
+		if (fieldname.IsSameAs("armor_evade")) return wxString::Format(wxT("%d"), armor.evade);
+		if (fieldname.IsSameAs("armor_magic_defence")) return wxString::Format(wxT("%d"), armor.magic_defence);
+		if (fieldname.IsSameAs("armor_magic_evade")) return wxString::Format(wxT("%d"), armor.magic_evade);
+	}
+	if (fieldname.StartsWith("usable_") && parent->GetUsableIndexById(usable_id) >= 0) {
+		ItemUsableDataStruct& usable = parent->GetUsableById(usable_id);
+		if (fieldname.IsSameAs("usable_target_type_var")) return wxString::Format(wxT("%d"), usable.target_type);
+		if (fieldname.IsSameAs("usable_target_type")) return wxString::Format(wxT("%d"), usable.target_type & 0xF);
+		if (fieldname.IsSameAs("usable_target_default_ally")) return wxString::Format(wxT("%d"), (usable.target_type >> 4) & 0x1);
+		if (fieldname.IsSameAs("usable_target_for_dead")) return wxString::Format(wxT("%d"), (usable.target_flag >> 5) & 0x1);
+		if (fieldname.IsSameAs("usable_target_default_on_dead")) return wxString::Format(wxT("%d"), (usable.target_flag >> 7) & 0x1);
+		if (fieldname.IsSameAs("usable_target_default_camera")) return wxString::Format(wxT("%d"), (usable.target_flag >> 6) & 0x1);
+		if (fieldname.IsSameAs("usable_panel")) return wxString::Format(wxT("%d"), usable.GetPanel());
+		if (fieldname.IsSameAs("usable_model")) return wxString::Format(wxT("%d"), usable.model);
+		if (fieldname.IsSameAs("usable_script")) return wxString::Format(wxT("%d"), usable.effect);
+		if (fieldname.IsSameAs("usable_power")) return wxString::Format(wxT("%d"), usable.power);
+		if (fieldname.IsSameAs("usable_accuracy")) return wxString::Format(wxT("%d"), usable.accuracy);
+		if (fieldname.IsSameAs("usable_element")) return wxString::Format(wxT("%d"), usable.element);
+		if (fieldname.IsSameAs("usable_status")) return FormatStatusSet(usable.status); // TODO: https://github.com/Albeoris/Memoria/blob/main/Assembly-CSharp/Memoria/Data/Items/ItemEffect.cs / https://github.com/Albeoris/Memoria/blob/main/Assembly-CSharp/Global/BTL_SCENE.cs
+	}
+	if (fieldname.StartsWith("stat_") && parent->GetStatIndexById(stat_id) >= 0) {
+		ItemStatDataStruct& stat = parent->GetStatById(stat_id);
+		if (fieldname.IsSameAs("stat_speed")) return wxString::Format(wxT("%d"), stat.speed);
+		if (fieldname.IsSameAs("stat_strength")) return wxString::Format(wxT("%d"), stat.strength);
+		if (fieldname.IsSameAs("stat_magic")) return wxString::Format(wxT("%d"), stat.magic);
+		if (fieldname.IsSameAs("stat_spirit")) return wxString::Format(wxT("%d"), stat.spirit);
+		if (fieldname.IsSameAs("stat_element_boost")) return wxString::Format(wxT("%d"), stat.element_boost);
+		if (fieldname.IsSameAs("stat_element_immune")) return wxString::Format(wxT("%d"), stat.element_immune);
+		if (fieldname.IsSameAs("stat_element_absorb")) return wxString::Format(wxT("%d"), stat.element_absorb);
+		if (fieldname.IsSameAs("stat_element_half")) return wxString::Format(wxT("%d"), stat.element_half);
+		if (fieldname.IsSameAs("stat_element_weak")) return wxString::Format(wxT("%d"), stat.element_weak);
+	}
+	if (auto search = custom_field.find(fieldname); search != custom_field.end()) return search->second;
+	if (auto search = parent->custom_field.find(fieldname); search != parent->custom_field.end()) return search->second;
+	return _(L"");
+}
+
+bool ItemDataStruct::CompareWithCSV(wxArrayString entries) {
+	if (entries.GetCount() == 0)
+		return false;
+	if (!custom_field.empty())
+		return false;
+	int fieldcount = entries[0].Replace(";", ";") + 1;
+	if (fieldcount == 33) {
+		if (id >= (int)entries.GetCount()) return false;
+		wxString rightcsv = MemoriaUtility::GenerateDatabaseEntryGeneric(*this, _(ITEM_CSV_CHECK));
+		return MemoriaUtility::CompareEntries(entries[id].BeforeLast(L';'), rightcsv);
+	}
+	if (fieldcount == 13) {
+		if (entries[0].find(L'#') != wxString::npos) {
+			if (usable_id < 0 || usable_id >= (int)entries.GetCount()) return false;
+			wxString rightcsv = MemoriaUtility::GenerateDatabaseEntryGeneric(*this, _(USABLE_CSV_CHECK));
+			return MemoriaUtility::CompareEntries(entries[usable_id].BeforeLast(L';'), rightcsv);
+		}
+		if (weapon_id < 0 || weapon_id >= (int)entries.GetCount()) return false;
+		wxString rightcsv = MemoriaUtility::GenerateDatabaseEntryGeneric(*this, _(WEAPON_CSV_CHECK));
+		return MemoriaUtility::CompareEntries(entries[weapon_id].AfterFirst(L';'), rightcsv);
+	}
+	if (fieldcount == 6) {
+		if (armor_id < 0 || armor_id >= (int)entries.GetCount()) return false;
+		wxString rightcsv = MemoriaUtility::GenerateDatabaseEntryGeneric(*this, _(ARMOR_CSV_CHECK));
+		return MemoriaUtility::CompareEntries(entries[armor_id].AfterFirst(L';'), rightcsv);
+	}
+	if (fieldcount == 11) {
+		if (stat_id < 0 || stat_id >= (int)entries.GetCount()) return false;
+		wxString rightcsv = MemoriaUtility::GenerateDatabaseEntryGeneric(*this, _(ITEMSTAT_CSV_CHECK));
+		return MemoriaUtility::CompareEntries(entries[stat_id].AfterFirst(L';'), rightcsv);
+	}
+	return false;
 }
 
 int KeyItemDataStruct::SetName(wstring newvalue) {
@@ -187,7 +361,7 @@ void ItemUsableDataStruct::InitializeDefault(int dataid) {
 	power = 0;
 	element = 0;
 	accuracy = 0;
-	status = 0;
+	status.clear();
 }
 
 Spell_Panel ItemUsableDataStruct::GetPanel() {
@@ -291,6 +465,8 @@ void ItemUsableDataStruct::SetSound(uint16_t newvalue) {
 		IO ## Short(ffbin,item[i].name_offset); \
 		IO ## Short(ffbin,item[i].help_offset); \
 		IO ## FlexibleShort(ffbin,item[i].price, useextendedtype); \
+		if (useextendedtype2)	IO ## FlexibleChar(ffbin,item[i].sell_price, true); \
+		else if (READ)			item[i].sell_price = item[i].price / 2; \
 		IO ## Short(ffbin,item[i].char_availability); \
 		IO ## FlexibleChar(ffbin,item[i].icon, useextendedtype); \
 		IO ## Char(ffbin,item[i].icon_color); \
@@ -326,6 +502,7 @@ void ItemUsableDataStruct::SetSound(uint16_t newvalue) {
 		if (useextendedtype) IO ## Char(ffbin, item[i].menu_position_type); \
 		IO ## FlexibleChar(ffbin,item[i].menu_position, useextendedtype); \
 		IO ## Char(ffbin,item[i].zero); \
+		if (useextendedtype2) IO ## CSVFields(ffbin, item[i].custom_field); \
 	} \
 	if (PPF) PPFEndScanStep();
 
@@ -353,7 +530,7 @@ void ItemUsableDataStruct::SetSound(uint16_t newvalue) {
 		IO ## FlexibleChar(ffbin,usable[i].power, useextendedtype); \
 		IO ## Char(ffbin,usable[i].element); \
 		IO ## FlexibleChar(ffbin,usable[i].accuracy, useextendedtype); \
-		IO ## Long(ffbin,usable[i].status); \
+		MACRO_IOFUNCTIONGENERIC_STATUS(ffbin, useextendedtype2, IO, READ, usable[i].status) \
 	} \
 	if (PPF) PPFEndScanStep();
 
@@ -382,10 +559,10 @@ void ItemUsableDataStruct::SetSound(uint16_t newvalue) {
 #define MACRO_ITEM_IOFUNCTIONARMOR(IO,SEEK,READ,PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
 	for (i=0;i<armoramount;i++) { \
-		IO ## Char(ffbin,armor[i].defence); \
-		IO ## Char(ffbin,armor[i].evade); \
-		IO ## Char(ffbin,armor[i].magic_defence); \
-		IO ## Char(ffbin,armor[i].magic_evade); \
+		IO ## FlexibleChar(ffbin, armor[i].defence, useextendedtype2); \
+		IO ## FlexibleChar(ffbin, armor[i].evade, useextendedtype2); \
+		IO ## FlexibleChar(ffbin, armor[i].magic_defence, useextendedtype2); \
+		IO ## FlexibleChar(ffbin, armor[i].magic_evade, useextendedtype2); \
 	} \
 	if (PPF) PPFEndScanStep();
 
@@ -410,7 +587,7 @@ void ItemUsableDataStruct::SetSound(uint16_t newvalue) {
 	if (PPF) PPFInitScanStep(ffbin); \
 	for (i=0;i<weaponamount;i++) { \
 		IO ## Char(ffbin,weapon[i].flag); \
-		IO ## Char(ffbin,weapon[i].status); \
+		IO ## FlexibleChar(ffbin,weapon[i].status, useextendedtype2); \
 		IO ## Short(ffbin,weapon[i].model); \
 		IO ## FlexibleChar(ffbin,weapon[i].damage_formula, useextendedtype); \
 		IO ## FlexibleChar(ffbin,weapon[i].power, useextendedtype); \
@@ -493,8 +670,19 @@ void ItemDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 	int statamount = ITEM_STAT_AMOUNT;
 	int keyitemamount = KEY_ITEM_AMOUNT;
 	bool useextendedtype = false;
+	bool useextendedtype2 = false;
 	int i, j;
 	uint32_t txtpos;
+	csv_header = _(HADES_STRING_CSV_ITEM_HEADER);
+	csv_header_weapon = _(HADES_STRING_CSV_WEAPON_HEADER);
+	csv_header_armor = _(HADES_STRING_CSV_ARMOR_HEADER);
+	csv_header_usable = _(HADES_STRING_CSV_USABLE_HEADER);
+	csv_header_stat = _(HADES_STRING_CSV_ITEMSTAT_HEADER);
+	csv_format = _(ITEM_CSV_DEFAULT);
+	csv_format_weapon = _(WEAPON_CSV_DEFAULT);
+	csv_format_armor = _(ARMOR_CSV_DEFAULT);
+	csv_format_usable = _(USABLE_CSV_DEFAULT);
+	csv_format_stat = _(ITEMSTAT_CSV_DEFAULT);
 	name_space_total = config.item_name_space_total;
 	help_space_total = config.item_help_space_total;
 	help2_space_total = config.item_help_space2_total;
@@ -714,7 +902,7 @@ DllMetaDataModification* ItemDataSet::ComputeSteamMod(ConfigurationSet& config, 
 		argvalue[i][9] = usable[i].power;
 		argvalue[i][10] = usable[i].element;
 		argvalue[i][11] = usable[i].accuracy;
-		argvalue[i][12] = usable[i].status;
+		argvalue[i][12] = GetStatusBitList(usable[i].status);
 	}
 	res[1] = dlldata.ConvertRawToScript_Object(argvalue, steam_method_position[1], steam_method_base_length[1], ITEM_USABLE_AMOUNT, 13, steam_usable_field_size);
 	for (i = 0; i < ITEM_USABLE_AMOUNT; i++)
@@ -783,7 +971,7 @@ void ItemDataSet::GenerateCSharp(vector<string>& buffer) {
 	for (i = 0; i < ITEM_USABLE_AMOUNT; i++)
 		itemdb	<< "\t\tnew ITEM_DATA(new CMD_INFO(" << (int)(usable[i].target_type & 0xF) << ", " << (int)((usable[i].target_type >> 4) & 0x1) << ", " << (int)((usable[i].target_type >> 5) & 0x7) << ", " << (int)(usable[i].model & 0x1FF) << ", " << (int)usable[i].GetSound() << ", " << (int)((usable[i].target_flag >> 5) & 0x1) << ", " << (int)((usable[i].target_flag >> 6) & 0x1) << ", " << (int)((usable[i].target_flag >> 7) & 0x1)
 				<< "), new BTL_REF(" << (int)usable[i].effect << ", " << (int)usable[i].power << ", " << StreamAsHex(usable[i].element) << ", " << (int)usable[i].accuracy
-				 << "), " << StreamAsHex(usable[i].status) << (i+1==ITEM_USABLE_AMOUNT ? "u)" : "u),") << " // " << ConvertWStrToStr(item[ITEM_WEAPON_AMOUNT+ITEM_ARMOR_AMOUNT+i].name.str_nice) << "\n";
+				 << "), " << StreamAsHex(GetStatusBitList(usable[i].status)) << (i+1==ITEM_USABLE_AMOUNT ? "u)" : "u),") << " // " << ConvertWStrToStr(item[ITEM_WEAPON_AMOUNT+ITEM_ARMOR_AMOUNT+i].name.str_nice) << "\n";
 	itemdb << "\t};\n";
 	buffer.push_back(itemdb.str());
 	stringstream weapondb;
@@ -872,142 +1060,72 @@ bool ItemDataSet::GetMenuPositionFloat(int itemindex, float step, float* positio
 	}
 }
 
-wxString CSV_ItemConstructor(ItemDataStruct& it, int index, ItemDataSet* itemset, int posprecision, float posstep) {
-	wxString equipposstr, menuposstr;
-	float pos;
-	if (it.equip_position_type == ITEM_POSITION_ABSOLUTE)
-		equipposstr = wxString::Format(wxT("%d"), it.equip_position);
-	else if (itemset->GetEquipPositionFloat(index, posstep, &pos))
-		equipposstr = wxString::Format(wxString::Format(wxT("%%.%df"), posprecision), pos);
-	else
-		equipposstr = wxString::Format(wxT("%d"), it.id);
-	if (it.menu_position_type == ITEM_POSITION_ABSOLUTE)
-		menuposstr = wxString::Format(wxT("%d"), it.menu_position);
-	else if (itemset->GetMenuPositionFloat(index, posstep, &pos))
-		menuposstr = wxString::Format(wxString::Format(wxT("%%.%df"), posprecision), pos);
-	else
-		menuposstr = wxString::Format(wxT("%d"), it.id);
-	wxString csventry = wxString::Format(wxT("%d;%d;%d;%d;%d;%d;%d;%s;%d;%s;%d;%d;%d;%d;%d;%d;%d;%d;%s;"),
-		it.id,
-		it.weapon_id,
-		it.armor_id,
-		it.usable_id,
-		it.price,
-		it.icon,
-		it.icon_color,
-		equipposstr,
-		it.stat_id,
-		it.skill[0].IsVoid() ? "0" : ConcatenateStrings<AnyAbilityStruct>(", ", it.skill, [](AnyAbilityStruct ab) { return ab.IsVoid() ? "" : ab.GetStringId(); }, true),
-		(it.type & ITEM_TYPE_WEAPON) != 0 ? 1 : 0,
-		(it.type & ITEM_TYPE_WRIST) != 0 ? 1 : 0,
-		(it.type & ITEM_TYPE_HEAD) != 0 ? 1 : 0,
-		(it.type & ITEM_TYPE_ARMOR) != 0 ? 1 : 0,
-		(it.type & ITEM_TYPE_ACCESSORY) != 0 ? 1 : 0,
-		(it.type & ITEM_TYPE_USABLE) != 0 ? 1 : 0,
-		(it.type & ITEM_TYPE_SPECIAL) != 0 ? 1 : 0,
-		(it.type & ITEM_TYPE_CONSUMABLE) != 0 ? 1 : 0,
-		menuposstr);
-	for (int i = 0; i < PLAYABLE_CHAR_AMOUNT; i++)
-		csventry += wxString::Format(wxT("%d;"), (it.char_availability >> (PLAYABLE_CHAR_AMOUNT - i - 1)) & 1);
-	csventry += wxString::Format(wxT("# %d - %s"), it.id, it.name.str_nice);
-	return csventry;
-}
-
-wxString CSV_WeaponConstructor(ItemWeaponDataStruct& iw, int index, unordered_map<int, ItemDataStruct&>& usagemap) {
-	auto it = usagemap.find(iw.id);
-	if (it == usagemap.end())
-		return wxEmptyString;
-	return wxString::Format(wxT("%s;%d;%d;%d;%s;%d;%d;%d;%d;%d;%d;%d;%s"),
-		it->second.name.str_nice,
-		iw.id,
-		iw.flag,
-		iw.status,
-		iw.model_name,
-		iw.damage_formula,
-		iw.power,
-		iw.element,
-		iw.status_accuracy,
-		iw.offset1,
-		iw.offset2,
-		iw.hit_sfx,
-		ConcatenateStrings<wstring>(", ", iw.texture_names, [](wstring str) { return ConvertWStrToStr(str); }, true));
-}
-
-wxString CSV_ArmorConstructor(ItemArmorDataStruct& ia, int index, unordered_map<int, ItemDataStruct&>& usagemap) {
-	auto it = usagemap.find(ia.id);
-	if (it == usagemap.end())
-		return wxEmptyString;
-	return wxString::Format(wxT("%s;%d;%d;%d;%d;%d"),
-		it->second.name.str_nice,
-		ia.id,
-		ia.defence,
-		ia.evade,
-		ia.magic_defence,
-		ia.magic_evade);
-}
-
-wxString CSV_UsableConstructor(ItemUsableDataStruct& ic, int index, unordered_map<int, ItemDataStruct&>& usagemap) {
-	auto it = usagemap.find(ic.id);
-	if (it == usagemap.end())
-		return wxEmptyString;
-	return wxString::Format(wxT("%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%u;# %d - %s"),
-		ic.id,
-		ic.target_type & 0xF,
-		(ic.target_type >> 4) & 0x1,
-		ic.GetPanel(),
-		ic.model,
-		(ic.target_flag >> 5) & 0x1,
-		(ic.target_flag >> 7) & 0x1,
-		ic.effect,
-		ic.power,
-		ic.accuracy,
-		ic.element,
-		ic.status,
-		ic.id,
-		it->second.name.str_nice);
-}
-
-wxString CSV_StatConstructor(ItemStatDataStruct& is, int index, unordered_map<int, ItemDataStruct&>& usagemap) {
-	auto it = usagemap.find(is.id);
-	if (it == usagemap.end())
-		return wxEmptyString;
-	return wxString::Format(wxT("Stat Set %d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d"),
-		is.id,
-		is.id,
-		is.speed,
-		is.strength,
-		is.magic,
-		is.spirit,
-		is.element_boost,
-		is.element_immune,
-		is.element_absorb,
-		is.element_half,
-		is.element_weak);
-}
-
 bool ItemDataSet::GenerateCSV(string basefolder) {
-	int posprecision = item.size() > ITEM_AMOUNT ? (int)ceil(log10(item.size() - ITEM_AMOUNT + 1)) : 0;
-	float posstep = 1.0f / pow(10.0f, posprecision);
-	unordered_map<int, ItemDataStruct&> weaponmap;
-	unordered_map<int, ItemDataStruct&> armormap;
-	unordered_map<int, ItemDataStruct&> usablemap;
-	unordered_map<int, ItemDataStruct&> statmap;
-	for (unsigned int i = 0; i < item.size(); i++) {
-		if (item[i].weapon_id >= 0)		weaponmap.emplace(item[i].weapon_id, item[i]);
-		if (item[i].armor_id >= 0)		armormap.emplace(item[i].armor_id, item[i]);
-		if (item[i].usable_id >= 0)		usablemap.emplace(item[i].usable_id, item[i]);
-		if (item[i].stat_id >= 0)		statmap.emplace(item[i].stat_id, item[i]);
+	vector<ItemDataStruct> weaponmap;
+	vector<ItemDataStruct> armormap;
+	vector<ItemDataStruct> usablemap;
+	vector<ItemDataStruct> statmap;
+	unsigned int i, j;
+	for (i = 0; i < item.size(); i++) {
+		if (item[i].weapon_id >= 0)		weaponmap.push_back(item[i]);
+		if (item[i].armor_id >= 0)		armormap.push_back(item[i]);
+		if (item[i].usable_id >= 0)		usablemap.push_back(item[i]);
+		if (item[i].stat_id >= 0)		statmap.push_back(item[i]);
 	}
-	if (!MemoriaUtility::GenerateCSVGeneric<ItemDataStruct>(_(basefolder), _(HADES_STRING_CSV_ITEM_FILE), _(HADES_STRING_CSV_ITEM_HEADER), item, [this, posprecision, posstep](ItemDataStruct& it, int index) { return CSV_ItemConstructor(it, index, this, posprecision, posstep); }, &MemoriaUtility::CSV_ComparerWithoutEnd, true))
+	std::sort(statmap.begin(), statmap.end(), [](ItemDataStruct& a, ItemDataStruct& b) { return a.stat_id > b.stat_id; });
+	for (i = 1; i < statmap.size(); i++) {
+		if (statmap[i].stat_id == statmap[i - 1].stat_id) {
+			statmap.erase(statmap.begin() + i);
+			i--;
+		}
+	}
+	if (!MemoriaUtility::GenerateDatabaseGeneric<ItemDataStruct>(_(basefolder), _(HADES_STRING_CSV_ITEM_FILE), csv_header, _(L"\n"), _(L"\n"), item, csv_format, true))
 		return false;
-	if (!MemoriaUtility::GenerateCSVGeneric<ItemWeaponDataStruct>(_(basefolder), _(HADES_STRING_CSV_WEAPON_FILE), _(HADES_STRING_CSV_WEAPON_HEADER), weapon, [&weaponmap](ItemWeaponDataStruct& iw, int index) { return CSV_WeaponConstructor(iw, index, weaponmap); }, &MemoriaUtility::CSV_ComparerWithoutStart, true))
+	if (!MemoriaUtility::GenerateDatabaseGeneric<ItemDataStruct>(_(basefolder), _(HADES_STRING_CSV_WEAPON_FILE), csv_header_weapon, _(L"\n"), _(L"\n"), weaponmap, csv_format_weapon, true))
 		return false;
-	if (!MemoriaUtility::GenerateCSVGeneric<ItemArmorDataStruct>(_(basefolder), _(HADES_STRING_CSV_ARMOR_FILE), _(HADES_STRING_CSV_ARMOR_HEADER), armor, [&armormap](ItemArmorDataStruct& ia, int index) { return CSV_ArmorConstructor(ia, index, armormap); }, &MemoriaUtility::CSV_ComparerWithoutStart, true))
+	if (!MemoriaUtility::GenerateDatabaseGeneric<ItemDataStruct>(_(basefolder), _(HADES_STRING_CSV_ARMOR_FILE), csv_header_armor, _(L"\n"), _(L"\n"), armormap, csv_format_armor, true))
 		return false;
-	if (!MemoriaUtility::GenerateCSVGeneric<ItemUsableDataStruct>(_(basefolder), _(HADES_STRING_CSV_USABLE_FILE), _(HADES_STRING_CSV_USABLE_HEADER), usable, [&usablemap](ItemUsableDataStruct& ic, int index) { return CSV_UsableConstructor(ic, index, usablemap); }, &MemoriaUtility::CSV_ComparerWithoutEnd, true))
+	if (!MemoriaUtility::GenerateDatabaseGeneric<ItemDataStruct>(_(basefolder), _(HADES_STRING_CSV_USABLE_FILE), csv_header_usable, _(L"\n"), _(L"\n"), usablemap, csv_format_usable, true))
 		return false;
-	if (!MemoriaUtility::GenerateCSVGeneric<ItemStatDataStruct>(_(basefolder), _(HADES_STRING_CSV_ITEMSTAT_FILE), _(HADES_STRING_CSV_ITEMSTAT_HEADER), stat, [&statmap](ItemStatDataStruct& is, int index) { return CSV_StatConstructor(is, index, statmap); }, &MemoriaUtility::CSV_ComparerWithoutStart, true))
+	if (!MemoriaUtility::GenerateDatabaseGeneric<ItemDataStruct>(_(basefolder), _(HADES_STRING_CSV_ITEMSTAT_FILE), csv_header_stat, _(L"\n"), _(L"\n"), statmap, csv_format_stat, true))
 		return false;
+	if (hades::PREFER_EXPORT_AS_PATCHES && GetGameSaveSet() != NULL && GetGameSaveSet()->sectionloaded[DATA_SECTION_SPELL] && GetGameSaveSet()->sectionloaded[DATA_SECTION_SUPPORT]) {
+		SupportDataSet* supportset = GetGameSaveSet()->supportset;
+		SpellDataSet* spellset = GetGameSaveSet()->spellset;
+		wxString skillpatchstr = _(L"");
+		set<int> releventabil;
+		for (i = 0; i < item.size(); i++)
+			for (j = 0; j < item[i].skill.size(); j++)
+				if (item[i].skill[j].GetRawId() >= 256)
+					releventabil.insert(item[i].skill[j].GetRawId());
+		for (auto it = releventabil.begin(); it != releventabil.end(); it++) {
+			vector<ItemDataStruct*> teaching;
+			AnyAbilityStruct abil;
+			abil.Setup(*it);
+			skillpatchstr += wxString::Format(wxT("// %s: "), abil.is_active ? spellset->GetSpellById(abil.id).name.str : supportset->GetSupportById(abil.id).name.str);
+			for (i = 0; i < item.size(); i++)
+				for (j = 0; j < item[i].skill.size(); j++)
+					if (item[i].skill[j] == abil)
+						teaching.push_back(&item[i]);
+			for (i = 0; i < teaching.size(); i++) {
+				if (i > 0)
+					skillpatchstr += _(L", ");
+				skillpatchstr += teaching[i]->name.str;
+			}
+			skillpatchstr += wxString::Format(wxT("\n%s Add"), abil.GetStringId());
+			for (i = 0; i < teaching.size(); i++)
+				skillpatchstr += wxString::Format(wxT(" %d"), teaching[i]->id);
+			skillpatchstr += _(L"\n\n");
+		}
+		if (!skillpatchstr.IsEmpty()) {
+			wxFile skilltxtfile;
+			if (!skilltxtfile.Open(_(basefolder) + _(HADES_STRING_SKILL_PATCH_FILE), wxFile::write))
+				return false;
+			if (!skilltxtfile.Write(skillpatchstr))
+				return false;
+			skilltxtfile.Close();
+		}
+	}
 	return true;
 }
 
@@ -1043,6 +1161,7 @@ void ItemDataSet::Write(fstream& ffbin, ConfigurationSet& config) {
 	int statamount = ITEM_STAT_AMOUNT;
 	int keyitemamount = KEY_ITEM_AMOUNT;
 	bool useextendedtype = false;
+	bool useextendedtype2 = false;
 	int i, j;
 	uint32_t txtpos;
 	UpdateOffset();
@@ -1077,6 +1196,7 @@ void ItemDataSet::WritePPF(fstream& ffbin, ConfigurationSet& config) {
 	int statamount = ITEM_STAT_AMOUNT;
 	int keyitemamount = KEY_ITEM_AMOUNT;
 	bool useextendedtype = false;
+	bool useextendedtype2 = false;
 	int i, j;
 	uint32_t txtpos;
 	UpdateOffset();
@@ -1111,6 +1231,7 @@ int ItemDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 	int statamount = ITEM_STAT_AMOUNT;
 	int keyitemamount = KEY_ITEM_AMOUNT;
 	bool useextendedtype = false;
+	bool useextendedtype2 = false;
 	vector<ItemDataStruct> nonmodifieditem;
 	vector<ItemWeaponDataStruct> nonmodifiedweapon;
 	vector<ItemArmorDataStruct> nonmodifiedarmor;
@@ -1151,6 +1272,15 @@ int ItemDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 			key_item[added[i]].description.CreateEmpty(true);
 			key_item[added[i]].parent = this;
 		}
+	}
+	if (version >= 3) {
+		useextendedtype2 = true;
+		HWSReadCSVFormatting(ffbin, csv_header, csv_format);
+		HWSReadCSVFormatting(ffbin, csv_header_weapon, csv_format_weapon);
+		HWSReadCSVFormatting(ffbin, csv_header_armor, csv_format_armor);
+		HWSReadCSVFormatting(ffbin, csv_header_usable, csv_format_usable);
+		HWSReadCSVFormatting(ffbin, csv_header_stat, csv_format_stat);
+		HWSReadCSVFields(ffbin, custom_field);
 	}
 	MACRO_ITEM_IOFUNCTIONDATA(HWSRead, HWSSeek, true, false)
 	if (GetHWSGameType() == GAME_TYPE_PSX) {
@@ -1296,6 +1426,7 @@ void ItemDataSet::WriteHWS(fstream& ffbin) {
 	int statamount = stat.size();
 	int keyitemamount = key_item.size();
 	bool useextendedtype = true;
+	bool useextendedtype2 = true;
 	int i, j;
 	uint32_t txtpos;
 	UpdateOffset();
@@ -1332,6 +1463,12 @@ void ItemDataSet::WriteHWS(fstream& ffbin) {
 	HWSWriteFlexibleChar(ffbin, keyitemamount, true);
 	for (i = 0; i < keyitemamount; i++)
 		HWSWriteFlexibleChar(ffbin, key_item[i].id, true);
+	HWSWriteCSVFormatting(ffbin, csv_header, csv_format);
+	HWSWriteCSVFormatting(ffbin, csv_header_weapon, csv_format_weapon);
+	HWSWriteCSVFormatting(ffbin, csv_header_armor, csv_format_armor);
+	HWSWriteCSVFormatting(ffbin, csv_header_usable, csv_format_usable);
+	HWSWriteCSVFormatting(ffbin, csv_header_stat, csv_format_stat);
+	HWSWriteCSVFields(ffbin, custom_field);
 	MACRO_ITEM_IOFUNCTIONDATA(HWSWrite, HWSSeek, false, false)
 	if (GetGameType() == GAME_TYPE_PSX) {
 		MACRO_ITEM_IOFUNCTIONNAME(HWSWrite, HWSSeek, false, false)
@@ -1354,7 +1491,7 @@ void ItemDataSet::WriteHWS(fstream& ffbin) {
 		HWSWriteWString(ffbin, weapon[i].model_name);
 		HWSWriteFlexibleChar(ffbin, weapon[i].hit_sfx, true);
 		HWSWriteFlexibleChar(ffbin, weapon[i].texture_names.size(), true);
-		for (j = 0; j < weapon[i].texture_names.size(); j++)
+		for (j = 0; j < (int)weapon[i].texture_names.size(); j++)
 			HWSWriteWString(ffbin, weapon[i].texture_names[j]);
 	}
 	name_space_total = namesize;
@@ -1481,6 +1618,7 @@ ItemDataStruct& ItemDataSet::GetItemById(int itemid) {
 	int index = GetItemIndexById(itemid);
 	if (index >= 0)
 		return item[index];
+	dummyitem.parent = this;
 	dummyitem.id = -1;
 	dummyitem.name.CreateEmpty();
 	dummyitem.name.SetValue(L"[Invalid]");
@@ -1590,12 +1728,17 @@ void ItemStatDataStruct::InitializeDefault(int dataid) {
 	element_boost = 0;
 }
 
-void AnyAbilityStruct::Setup(uint8_t rawid) {
-	if (rawid < SPELL_AMOUNT) {
-		id = rawid;
+bool AnyAbilityStruct::operator==(AnyAbilityStruct other) {
+	return id == other.id && (is_active != 0) == (other.is_active != 0);
+}
+
+void AnyAbilityStruct::Setup(int rawid) {
+	int spellid = ConvertIdToSpellId(rawid);
+	if (spellid >= 0) {
+		id = spellid;
 		is_active = true;
 	} else {
-		id = rawid - SPELL_AMOUNT;
+		id = ConvertIdToSupportId(rawid);
 		is_active = false;
 	}
 }
@@ -1605,10 +1748,10 @@ void AnyAbilityStruct::Setup(int abilid, bool active) {
 	is_active = active;
 }
 
-uint8_t AnyAbilityStruct::GetRawId() {
+int AnyAbilityStruct::GetRawId() {
 	if (is_active)
-		return (uint8_t)id;
-	return (uint8_t)(SPELL_AMOUNT + id);
+		return ConvertSpellIdToId(id);
+	return ConvertSupportIdToId(id);
 }
 
 bool AnyAbilityStruct::IsVoid() {
@@ -1621,4 +1764,32 @@ string AnyAbilityStruct::GetStringId() {
 	if (is_active)
 		return "AA:" + to_string(id);
 	return "SA:" + to_string(id);
+}
+
+int AnyAbilityStruct::ConvertSpellIdToId(int spellid) {
+	int poolnum = spellid / SPELL_AMOUNT;
+	int idinpool = spellid % SPELL_AMOUNT;
+	return poolnum * 256 + idinpool;
+}
+
+int AnyAbilityStruct::ConvertSupportIdToId(int supportid) {
+	int poolnum = supportid / SUPPORT_AMOUNT;
+	int idinpool = supportid % SUPPORT_AMOUNT;
+	return poolnum * 256 + SPELL_AMOUNT + idinpool;
+}
+
+int AnyAbilityStruct::ConvertIdToSpellId(int id) {
+	if (id % 256 >= SPELL_AMOUNT)
+		return -1;
+	int poolnum = id / 256;
+	int idinpool = id % 256;
+	return poolnum * SPELL_AMOUNT + idinpool;
+}
+
+int AnyAbilityStruct::ConvertIdToSupportId(int id) {
+	if (id % 256 < SPELL_AMOUNT)
+		return -1;
+	int poolnum = id / 256;
+	int idinpool = id % 256 - SPELL_AMOUNT;
+	return poolnum * SUPPORT_AMOUNT + idinpool;
 }

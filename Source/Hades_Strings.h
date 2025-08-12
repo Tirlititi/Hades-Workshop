@@ -24,7 +24,7 @@
 #define HADES_STRING_NYI L"Not yet implemented"
 #define HADES_STRING_NO_STEAM	L" This feature is disabled for the Steam version\n"\
 								L" Open the archive p0data2 with the tool Unity Assets Viewer\n"\
-								L"to access to the Battle Scene 3D models"
+								L"to access the Battle Scene 3D models"
 #define HADES_STRING_VOID L"_"
 
 //-- Main Frame
@@ -179,6 +179,8 @@ extern vector<wxString> HADES_STRING_PRINTABLE_CHARTABLE;
 										L"to increase the limit here."
 
 #define HADES_STRING_DATA_REACH_LIMIT	L"The data size has reached his limit."
+#define HADES_STRING_SPECIAL_CHAR_VALIDATE		L"✔"
+#define HADES_STRING_SPECIAL_CHAR_INVALIDATE	L"✘"
 
 extern vector<wxString> HADES_STRING_ELEMENT_NAME;
 extern vector<wxString> HADES_STRING_STATUS_NAME;

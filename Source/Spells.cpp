@@ -4,7 +4,12 @@
 #include "Database_CSV.h"
 #include "CommonUtility.h"
 
-#define SPELL_HWS_VERSION 4
+#define SPELL_HWS_VERSION 5
+
+#define SPELL_CSV_CHECK L"%id%;%panel%;%target_type%;%target_default_ally%;%target_for_dead%;%target_default_on_dead%;%target_default_camera%;%model%;%model_alt%;%effect%;%power%;%element%;%accuracy%;%flag%;%status%;%mp%;%menu_flag%;%perform_name%"
+#define SPELL_CSV_DEFAULT L"%name%;" SPELL_CSV_CHECK L";# %name%"
+#define STATUS_CSV_CHECK L"%id%;%status_list%"
+#define STATUS_CSV_DEFAULT L"Set %id%;" STATUS_CSV_CHECK L";# %description%"
 
 const unsigned int steam_spell_field_size[] = { 4, 1, 3, 9, 12, 1, 1, 1, 8, 8, 8, 8, 8, 8, 8, 8, 16, 16 };
 
@@ -58,6 +63,69 @@ int SpellDataStruct::SetHelp(FF9String& newvalue) {
 	}
 	help = newvalue;
 	return 0;
+}
+
+wxString SpellDataStruct::GetFieldValue(wxString fieldname) {
+	static const wxString CSV_PANEL_NAME[]{
+		L"None", L"Hp", L"Mp", L"Debuffs", L"Buffs", L"Empty", L"Card", L"Special"
+	};
+	static const wxString CSV_TARGET_TYPE_NAME[]{
+		L"SingleAny",	L"SingleAlly",	L"SingleEnemy",	L"ManyAny",		L"ManyAlly",	L"ManyEnemy",	L"All",			L"AllAlly",
+		L"AllEnemy",	L"Random",		L"RandomAlly",	L"RandomEnemy",	L"Everyone",	L"Self",		L"Automatic",	L"Special"
+	};
+	if (fieldname.IsSameAs("id")) return wxString::Format(wxT("%d"), id);
+	if (fieldname.IsSameAs("name")) return wxString::Format(wxT("%s"), name.str_nice);
+	if (fieldname.IsSameAs("help")) return wxString::Format(wxT("%s"), help.str_nice);
+	if (fieldname.IsSameAs("panel")) return wxString::Format(wxT("%s(%d)"), CSV_PANEL_NAME[GetPanel()], GetPanel());
+	if (fieldname.IsSameAs("target_type_var")) return wxString::Format(wxT("%d"), target_type);
+	if (fieldname.IsSameAs("target_type")) return wxString::Format(wxT("%s(%d)"), CSV_TARGET_TYPE_NAME[target_type & 0xF], target_type & 0xF);
+	if (fieldname.IsSameAs("target_default_ally")) return wxString::Format(wxT("%d"), (target_type >> 4) & 0x1);
+	if (fieldname.IsSameAs("target_for_dead")) return wxString::Format(wxT("%d"), (target_flag >> 5) & 0x1);
+	if (fieldname.IsSameAs("target_default_on_dead")) return wxString::Format(wxT("%d"), (target_flag >> 7) & 0x1);
+	if (fieldname.IsSameAs("target_default_camera")) return wxString::Format(wxT("%d"), (target_flag >> 6) & 0x1);
+	if (fieldname.IsSameAs("model")) return wxString::Format(wxT("%d"), model);
+	if (fieldname.IsSameAs("model_alt")) return wxString::Format(wxT("%d"), model_alt);
+	if (fieldname.IsSameAs("effect")) return wxString::Format(wxT("%d"), effect);
+	if (fieldname.IsSameAs("power")) return wxString::Format(wxT("%d"), power);
+	if (fieldname.IsSameAs("element")) return wxString::Format(wxT("%d"), element);
+	if (fieldname.IsSameAs("accuracy")) return wxString::Format(wxT("%d"), accuracy);
+	if (fieldname.IsSameAs("flag")) return wxString::Format(wxT("%d"), flag);
+	if (fieldname.IsSameAs("status")) return wxString::Format(wxT("%d"), status);
+	if (fieldname.IsSameAs("mp")) return wxString::Format(wxT("%d"), mp);
+	if (fieldname.IsSameAs("menu_flag")) return wxString::Format(wxT("%d"), menu_flag);
+	if (fieldname.IsSameAs("perform_name")) return wxString::Format(wxT("%d"), perform_name);
+	if (auto search = custom_field.find(fieldname); search != custom_field.end()) return search->second;
+	if (auto search = parent->custom_field.find(fieldname); search != parent->custom_field.end()) return search->second;
+	return _(L"");
+}
+
+bool SpellDataStruct::CompareWithCSV(wxArrayString entries) {
+	if (id >= (int)entries.GetCount())
+		return false;
+	if (!custom_field.empty())
+		return false;
+	wxString rightcsv = MemoriaUtility::GenerateDatabaseEntryGeneric(*this, _(SPELL_CSV_CHECK));
+	return MemoriaUtility::CompareEntries(entries[id].AfterFirst(L';').BeforeLast(L';'), rightcsv);
+}
+
+wxString StatusSetStruct::GetFieldValue(wxString fieldname) {
+	if (fieldname.IsSameAs("id")) return wxString::Format(wxT("%d"), id);
+	if (fieldname.IsSameAs("status_list")) return FormatStatusSet(status_list);
+	if (fieldname.IsSameAs("description")) return wxString::Format(wxT("%s"), name);
+	if (auto search = custom_field.find(fieldname); search != custom_field.end()) return search->second;
+	if (auto search = parent->custom_field_status.find(fieldname); search != parent->custom_field_status.end()) return search->second;
+	return _(L"");
+}
+
+bool StatusSetStruct::CompareWithCSV(wxArrayString entries) {
+	if (!custom_field.empty())
+		return false;
+	if (status_list.size() == 0 && id >= 39)
+		return true;
+	if (id >= (int)entries.GetCount())
+		return false;
+	wxString rightcsv = MemoriaUtility::GenerateDatabaseEntryGeneric(*this, _(STATUS_CSV_CHECK));
+	return MemoriaUtility::CompareEntries(entries[id].AfterFirst(L';').BeforeLast(L';'), rightcsv);
 }
 
 Spell_Panel SpellDataStruct::GetPanel() {
@@ -157,11 +225,12 @@ void SpellDataStruct::SetSound(uint16_t newvalue) {
 		IO ## Char(ffbin,spell[i].element); \
 		IO ## FlexibleChar(ffbin,spell[i].accuracy, useextendedtype); \
 		IO ## Char(ffbin,spell[i].flag); \
-		IO ## Char(ffbin,spell[i].status); \
+		IO ## FlexibleChar(ffbin,spell[i].status, useextendedtype2); \
 		IO ## FlexibleChar(ffbin,spell[i].mp, useextendedtype); \
 		IO ## Char(ffbin,spell[i].menu_flag); \
 		IO ## FlexibleShort(ffbin,spell[i].model_alt, useextendedtype); \
 		IO ## Short(ffbin,spell[i].name_offset); \
+		if (useextendedtype2) IO ## CSVFields(ffbin, spell[i].custom_field); \
 	} \
 	if (PPF) PPFEndScanStep();
 
@@ -206,16 +275,24 @@ void SpellDataStruct::SetSound(uint16_t newvalue) {
 
 #define MACRO_SPELL_IOFUNCTIONSTATUS(IO,SEEK,READ,PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<STATUS_SET_AMOUNT;i++) \
-		IO ## Long(ffbin,status_set[i].status); \
+	for (i=0;i<statussetamount;i++) { \
+		MACRO_IOFUNCTIONGENERIC_STATUS(ffbin, useextendedtype2, IO, READ, status_set[i].status_list) \
+		if (useextendedtype2) IO ## CSVFields(ffbin, status_set[i].custom_field); \
+	} \
 	if (PPF) PPFEndScanStep();
 
 
 void SpellDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 	int spellamount = SPELL_AMOUNT;
+	int statussetamount = STATUS_SET_AMOUNT;
 	bool useextendedtype = false;
+	bool useextendedtype2 = false;
 	uint32_t txtpos;
 	int i;
+	csv_header = _(HADES_STRING_CSV_SPELL_HEADER);
+	csv_header_status = _(HADES_STRING_CSV_STATUS_HEADER);
+	csv_format = _(SPELL_CSV_DEFAULT);
+	csv_format_status = _(STATUS_CSV_DEFAULT);
 	name_space_total = config.spell_name_space_total;
 	help_space_total = config.spell_help_space_total;
 	spell.resize(SPELL_AMOUNT);
@@ -224,8 +301,10 @@ void SpellDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 		spell[i].parent = this;
 		spell[i].id = i;
 	}
-	for (i = 0; i < STATUS_SET_AMOUNT; i++)
+	for (i = 0; i < STATUS_SET_AMOUNT; i++) {
+		status_set[i].parent = this;
 		status_set[i].id = i;
+	}
 	if (GetGameType() == GAME_TYPE_PSX) {
 		ffbin.seekg(config.spell_data_offset[0]);
 		MACRO_SPELL_IOFUNCTIONDATA(FFIXRead, FFIXSeek, true, false)
@@ -258,8 +337,11 @@ void SpellDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 		for (i = 0; i < SPELL_AMOUNT; i++)
 			SteamReadChar(dlldata.dll_file, spell[i].perform_name);
 		dlldata.dll_file.seekg(dlldata.GetStaticFieldOffset(config.dll_statusset_field_id));
-		for (i = 0; i < STATUS_SET_AMOUNT; i++)
-			SteamReadLong(dlldata.dll_file, status_set[i].status);
+		for (i = 0; i < STATUS_SET_AMOUNT; i++) {
+			uint32_t statusraw;
+			SteamReadLong(dlldata.dll_file, statusraw);
+			SetupStatusList(status_set[i].status_list, statusraw);
+		}
 		dlldata.dll_file.seekg(dlldata.GetMethodOffset(config.dll_battledb_method_id));
 		methinfo.ReadMethodInfo(dlldata.dll_file);
 		ILInstruction initinst[3] = {
@@ -331,7 +413,7 @@ DllMetaDataModification* SpellDataSet::ComputeSteamMod(ConfigurationSet& config,
 	res[2].value = new uint8_t[res[2].new_length];
 	BufferInitPosition();
 	for (i = 0; i < STATUS_SET_AMOUNT; i++)
-		BufferWriteLong(res[2].value, status_set[i].status);
+		BufferWriteLong(res[2].value, GetStatusBitList(status_set[i].status_list));
 	for (i = 0; i < STATUS_SET_AMOUNT; i++) // DEBUG: Steam version has 2x more status sets...
 		BufferWriteLong(res[2].value, 0);
 	*modifamount = 3;
@@ -344,107 +426,31 @@ void SpellDataSet::GenerateCSharp(vector<string>& buffer) {
 	battledb << "// Method: FF9BattleDB::.cctor\n\n";
 	battledb << "\tFF9BattleDB.aa_data = new AA_DATA[] {\n";
 	for (i = 0; i < SPELL_AMOUNT; i++)
-		battledb<< "\t\tnew AA_DATA(new CMD_INFO(" << (int)(spell[i].target_type & 0xF) << ", " << (int)((spell[i].target_type >> 4) & 0x1) << ", " << (int)((spell[i].target_type >> 5) & 0x7) << ", " << (int)(spell[i].model & 0x1FF) << ", " << (int)spell[i].GetSound() << ", " << (int)((spell[i].target_flag >> 5) & 0x1) << ", " << (int)((spell[i].target_flag >> 6) & 0x1) << ", " << (int)((spell[i].target_flag >> 7) & 0x1)
-				<< "), new BTL_REF(" << (int)spell[i].effect << ", " << (int)spell[i].power << ", " << StreamAsHex(spell[i].element) << ", " << (int)spell[i].accuracy
-				<< "), " << StreamAsHex(spell[i].flag) << ", " << (int)spell[i].status << ", " << (int)spell[i].mp << ", " << StreamAsHex(spell[i].menu_flag) << ", " << (int)spell[i].model_alt << ", " << (int)spell[i].name_offset << (i+1==SPELL_AMOUNT ? ")" : "),") << " // " << ConvertWStrToStr(spell[i].name.str_nice) << "\n";
+		battledb << "\t\tnew AA_DATA(new CMD_INFO(" << (int)(spell[i].target_type & 0xF) << ", " << (int)((spell[i].target_type >> 4) & 0x1) << ", " << (int)((spell[i].target_type >> 5) & 0x7) << ", " << (int)(spell[i].model & 0x1FF) << ", " << (int)spell[i].GetSound() << ", " << (int)((spell[i].target_flag >> 5) & 0x1) << ", " << (int)((spell[i].target_flag >> 6) & 0x1) << ", " << (int)((spell[i].target_flag >> 7) & 0x1)
+		<< "), new BTL_REF(" << (int)spell[i].effect << ", " << (int)spell[i].power << ", " << StreamAsHex(spell[i].element) << ", " << (int)spell[i].accuracy
+		<< "), " << StreamAsHex(spell[i].flag) << ", " << (int)spell[i].status << ", " << (int)spell[i].mp << ", " << StreamAsHex(spell[i].menu_flag) << ", " << (int)spell[i].model_alt << ", " << (int)spell[i].name_offset << (i + 1 == SPELL_AMOUNT ? ")" : "),") << " // " << ConvertWStrToStr(spell[i].name.str_nice) << "\n";
 	battledb << "\t};\n";
 	battledb << "\t// ...\n";
 	battledb << "\tFF9BattleDB.add_status = new uint[] { ";
 	for (i = 0; i < STATUS_SET_AMOUNT; i++)
-		battledb << StreamAsHex(status_set[i].status) << "u, ";
+		battledb << StreamAsHex(GetStatusBitList(status_set[i].status_list)) << "u, ";
 	for (i = 0; i < STATUS_SET_AMOUNT; i++)
-		battledb << 0 << (i+1==STATUS_SET_AMOUNT ? "u " : "u, ");
+		battledb << 0 << (i + 1 == STATUS_SET_AMOUNT ? "u " : "u, ");
 	battledb << "};\n";
 	buffer.push_back(battledb.str());
 	stringstream spellnaming;
 	spellnaming << "// Method: BattleHUD::.cctor\n\n";
 	spellnaming << "\tBattleHUD.CmdTitleTable = new byte[] { ";
 	for (i = 0; i < SPELL_AMOUNT; i++)
-		spellnaming << (int)spell[i].perform_name << (i+1==SPELL_AMOUNT ? " " : ", ");
+		spellnaming << (int)spell[i].perform_name << (i + 1 == SPELL_AMOUNT ? " " : ", ");
 	spellnaming << "};\n";
 	buffer.push_back(spellnaming.str());
 }
 
-wxString CSV_SpellConstructor(SpellDataStruct& sp, int index) {
-	static const wxString CSV_PANEL_NAME[]{
-		L"None", L"Hp", L"Mp", L"Debuffs", L"Buffs", L"Empty", L"Card", L"Special"
-	};
-	static const wxString CSV_TARGET_TYPE_NAME[]{
-		L"SingleAny",	L"SingleAlly",	L"SingleEnemy",	L"ManyAny",		L"ManyAlly",	L"ManyEnemy",	L"All",			L"AllAlly",
-		L"AllEnemy",	L"Random",		L"RandomAlly",	L"RandomEnemy",	L"Everyone",	L"Self",		L"Automatic",	L"Special"
-	};
-	// Note that the Sound is removed from Memoria's AA_DATA class
-	return wxString::Format(wxT("%s;%d;%s(%d);%s(%d);%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;# %s"),
-		sp.name.str_nice,
-		sp.id,
-		CSV_PANEL_NAME[sp.GetPanel()], sp.GetPanel(),
-		CSV_TARGET_TYPE_NAME[sp.target_type & 0xF], sp.target_type & 0xF,
-		(sp.target_type >> 4) & 0x1,
-		(sp.target_flag >> 5) & 0x1,
-		(sp.target_flag >> 7) & 0x1,
-		(sp.target_flag >> 6) & 0x1,
-		sp.model,
-		sp.model_alt,
-		sp.effect,
-		sp.power,
-		sp.element,
-		sp.accuracy,
-		sp.flag,
-		sp.status,
-		sp.mp,
-		sp.menu_flag,
-		sp.perform_name,
-		sp.name.str_nice);
-}
-
-wxString CSV_StatusSetConstructor(StatusSetStruct& st, int index) {
-	static const wxString CSV_STATUS_NAME[]{
-		L"Petrify",	L"Venom",	L"Virus",	L"Silence",	L"Blind",	L"Trouble",		L"Zombie",	L"EasyKill",
-		L"Death",	L"LowHP",	L"Confuse",	L"Berserk",	L"Stop",	L"AutoLife",	L"Trance",	L"Defend",
-		L"Poison",	L"Sleep",	L"Regen",	L"Haste",	L"Slow",	L"Float",		L"Shell",	L"Protect",
-		L"Heat",	L"Freeze",	L"Vanish",	L"Doom",	L"Mini",	L"Reflect",		L"Jump",	L"GradualPetrify"
-	};
-	if (st.status == 0 && index >= 39 && index < 64)
-		return wxEmptyString;
-	wxString csventry = wxString::Format(wxT("Set %d;%d;"), index, index);
-	if (st.status == 0) {
-		csventry += _(L"None(0)");
-	} else {
-		bool addcomma = false;
-		for (int i = 0; i < STATUS_AMOUNT; i++) {
-			if (st.status & (1u << i)) {
-				if (addcomma)
-					csventry += _(L", ");
-				csventry += wxString::Format(wxT("%s(%d)"), CSV_STATUS_NAME[i], i + 1);
-				addcomma = true;
-			}
-		}
-	}
-	csventry += wxString::Format(wxT(";# %s"), st.name);
-	return csventry;
-}
-
-bool CSV_SpellComparer(wxString left, wxString right) {
-	wxArrayString leftcsv = MemoriaUtility::LoadCSVEntry(left);
-	wxArrayString rightcsv = MemoriaUtility::LoadCSVEntry(right);
-	if (leftcsv.GetCount() != rightcsv.GetCount() || leftcsv.GetCount() < 4)
-		return false;
-	if (!leftcsv[1].IsSameAs(rightcsv[1]))
-		return false;
-	if (MemoriaUtility::GetEntryEnum(leftcsv[2]) != MemoriaUtility::GetEntryEnum(leftcsv[2]))
-		return false;
-	if (MemoriaUtility::GetEntryEnum(leftcsv[3]) != MemoriaUtility::GetEntryEnum(leftcsv[3]))
-		return false;
-	for (unsigned int i = 4; i < leftcsv.GetCount(); i++)
-		if (!leftcsv[i].IsSameAs(rightcsv[i]))
-			return false;
-	return true;
-}
-
 bool SpellDataSet::GenerateCSV(string basefolder) {
-	if (!MemoriaUtility::GenerateCSVGeneric<SpellDataStruct>(_(basefolder), _(HADES_STRING_CSV_SPELL_FILE), _(HADES_STRING_CSV_SPELL_HEADER), spell, &CSV_SpellConstructor, &CSV_SpellComparer, true))
+	if (!MemoriaUtility::GenerateDatabaseGeneric<SpellDataStruct>(_(basefolder), _(HADES_STRING_CSV_SPELL_FILE), csv_header, _(L"\n"), _(L"\n"), spell, csv_format, true))
 		return false;
-	if (!MemoriaUtility::GenerateCSVGeneric<StatusSetStruct>(_(basefolder), _(HADES_STRING_CSV_STATUS_FILE), _(HADES_STRING_CSV_STATUS_HEADER), status_set, &CSV_StatusSetConstructor, &MemoriaUtility::CSV_ComparerWithoutBoth, true))
+	if (!MemoriaUtility::GenerateDatabaseGeneric<StatusSetStruct>(_(basefolder), _(HADES_STRING_CSV_STATUS_FILE), csv_header_status, _(L"\n"), _(L"\n"), status_set, csv_format_status, true))
 		return false;
 	return true;
 }
@@ -466,7 +472,9 @@ void SpellDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype, bool on
 
 void SpellDataSet::Write(fstream& ffbin, ConfigurationSet& config) {
 	int spellamount = SPELL_AMOUNT;
+	int statussetamount = STATUS_SET_AMOUNT;
 	bool useextendedtype = false;
+	bool useextendedtype2 = false;
 	uint32_t txtpos;
 	int i;
 	UpdateOffset();
@@ -495,7 +503,9 @@ void SpellDataSet::Write(fstream& ffbin, ConfigurationSet& config) {
 
 void SpellDataSet::WritePPF(fstream& ffbin, ConfigurationSet& config) {
 	int spellamount = SPELL_AMOUNT;
+	int statussetamount = STATUS_SET_AMOUNT;
 	bool useextendedtype = false;
+	bool useextendedtype2 = false;
 	uint32_t txtpos;
 	int i;
 	UpdateOffset();
@@ -524,8 +534,11 @@ void SpellDataSet::WritePPF(fstream& ffbin, ConfigurationSet& config) {
 
 int SpellDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 	int spellamount = SPELL_AMOUNT;
+	int statussetamount = STATUS_SET_AMOUNT;
 	bool useextendedtype = false;
-	vector<SpellDataStruct> nonmodified;
+	bool useextendedtype2 = false;
+	vector<SpellDataStruct> nonmodifiedspell;
+	vector<StatusSetStruct> nonmodifiedstatusset;
 	uint32_t txtpos;
 	SteamLanguage lg;
 	int txtspace;
@@ -544,12 +557,23 @@ int SpellDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 	if (version >= 4) {
 		useextendedtype = true;
 		vector<int> added;
-		spellamount = PrepareHWSFlexibleList(ffbin, spell, nonmodified, added);
+		spellamount = PrepareHWSFlexibleList(ffbin, spell, nonmodifiedspell, added);
 		for (i = 0; i < (int)added.size(); i++) {
 			spell[added[i]].name.CreateEmpty(true);
 			spell[added[i]].help.CreateEmpty(true);
 			spell[added[i]].parent = this;
 		}
+	}
+	if (version >= 5) {
+		useextendedtype2 = true;
+		vector<int> added;
+		statussetamount = PrepareHWSFlexibleList(ffbin, status_set, nonmodifiedstatusset, added);
+		for (i = 0; i < (int)added.size(); i++)
+			status_set[added[i]].parent = this;
+		HWSReadCSVFormatting(ffbin, csv_header, csv_format);
+		HWSReadCSVFields(ffbin, custom_field);
+		HWSReadCSVFormatting(ffbin, csv_header_status, csv_format_status);
+		HWSReadCSVFields(ffbin, custom_field_status);
 	}
 	MACRO_SPELL_IOFUNCTIONDATA(HWSRead, HWSSeek, true, false)
 	if (name_space_total <= namesize && usetext) {
@@ -634,8 +658,10 @@ int SpellDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 	if (version >= 3) {
 		MACRO_SPELL_IOFUNCTIONSTATUS(HWSRead, HWSSeek, true, false)
 	}
-	for (i = 0; i < (int)nonmodified.size(); i++)
-		InsertAtId(spell, nonmodified[i], nonmodified[i].id);
+	for (i = 0; i < (int)nonmodifiedspell.size(); i++)
+		InsertAtId(spell, nonmodifiedspell[i], nonmodifiedspell[i].id);
+	for (i = 0; i < (int)nonmodifiedstatusset.size(); i++)
+		InsertAtId(status_set, nonmodifiedstatusset[i], nonmodifiedstatusset[i].id);
 	name_space_total = namesize;
 	help_space_total = helpsize;
 	UpdateOffset();
@@ -644,7 +670,9 @@ int SpellDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 
 void SpellDataSet::WriteHWS(fstream& ffbin) {
 	int spellamount = spell.size();
+	int statussetamount = status_set.size();
 	bool useextendedtype = true;
+	bool useextendedtype2 = true;
 	uint32_t txtpos;
 	int i;
 	UpdateOffset();
@@ -657,6 +685,13 @@ void SpellDataSet::WriteHWS(fstream& ffbin) {
 	HWSWriteFlexibleChar(ffbin, spellamount, true);
 	for (i = 0; i < spellamount; i++)
 		HWSWriteFlexibleChar(ffbin, spell[i].id, true);
+	HWSWriteFlexibleChar(ffbin, statussetamount, true);
+	for (i = 0; i < statussetamount; i++)
+		HWSWriteFlexibleChar(ffbin, status_set[i].id, true);
+	HWSWriteCSVFormatting(ffbin, csv_header, csv_format);
+	HWSWriteCSVFields(ffbin, custom_field);
+	HWSWriteCSVFormatting(ffbin, csv_header_status, csv_format_status);
+	HWSWriteCSVFields(ffbin, custom_field_status);
 	MACRO_SPELL_IOFUNCTIONDATA(HWSWrite, HWSSeek, false, false)
 	if (GetGameType() == GAME_TYPE_PSX) {
 		MACRO_SPELL_IOFUNCTIONNAME(HWSWrite, HWSSeek, ffbin.tellg(), false, false)
@@ -701,6 +736,38 @@ void SpellDataSet::UpdateOffset() {
 	help_space_used = k;
 }
 
+wxArrayString SpellDataSet::GetModifiableSpellFields() {
+	wxArrayString list;
+	list.Add(_(L"name"));
+	list.Add(_(L"help"));
+	list.Add(_(L"target_type_var"));
+	list.Add(_(L"target_for_dead"));
+	list.Add(_(L"target_default_on_dead"));
+	list.Add(_(L"target_default_camera"));
+	list.Add(_(L"model"));
+	list.Add(_(L"model_alt"));
+	list.Add(_(L"effect"));
+	list.Add(_(L"power"));
+	list.Add(_(L"element"));
+	list.Add(_(L"accuracy"));
+	list.Add(_(L"flag"));
+	list.Add(_(L"status"));
+	list.Add(_(L"mp"));
+	list.Add(_(L"menu_flag"));
+	list.Add(_(L"perform_name"));
+	for (auto f = custom_field.begin(); f != custom_field.end(); f++)
+		list.Add(f->first);
+	return list;
+}
+
+wxArrayString SpellDataSet::GetModifiableStatusSetFields() {
+	wxArrayString list;
+	list.Add(_(L"status_list"));
+	for (auto f = custom_field.begin(); f != custom_field.end(); f++)
+		list.Add(f->first);
+	return list;
+}
+
 int SpellDataSet::GetSpellIndexById(int spellid) {
 	if (spellid < SPELL_AMOUNT)
 		return spellid;
@@ -719,4 +786,23 @@ SpellDataStruct& SpellDataSet::GetSpellById(int spellid) {
 	dummyspell.name.CreateEmpty();
 	dummyspell.name.SetValue(L"[Invalid]");
 	return dummyspell;
+}
+
+int SpellDataSet::GetStatusSetIndexById(int statusid) {
+	if (statusid < STATUS_SET_AMOUNT)
+		return statusid;
+	for (unsigned int i = STATUS_SET_AMOUNT; i < status_set.size(); i++)
+		if (status_set[i].id == statusid)
+			return i;
+	return -1;
+}
+
+StatusSetStruct dummystatusset;
+StatusSetStruct& SpellDataSet::GetStatusSetById(int statusid) {
+	int index = GetStatusSetIndexById(statusid);
+	if (index >= 0)
+		return status_set[index];
+	dummystatusset.id = -1;
+	dummystatusset.name = L"[Invalid]";
+	return dummystatusset;
 }

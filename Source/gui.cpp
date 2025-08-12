@@ -312,7 +312,7 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortEnemyClick ), this, m_enemyshowid->GetId());
 	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortCardClick ), this, m_sortcard->GetId());
 	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortTextClick ), this, m_sorttext->GetId());
-	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortWorldClick ), this, m_sortworld->GetId());
+	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortWorldMapClick ), this, m_sortworld->GetId());
 	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortFieldClick ), this, m_sortfield->GetId());
 	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortFieldClick ), this, m_fieldshowid->GetId());
 	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortBattleSceneClick ), this, m_sortbattlescene->GetId());
@@ -527,6 +527,9 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	bSizer147->Add( m_spellstatus, 0, wxALL, 2 );
 
+	m_spellstatusint = new wxSpinCtrl( m_spellscrolledwindow, wxID_STATUS, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	bSizer147->Add( m_spellstatusint, 0, wxALL, 2 );
+
 	m_spellstatusset = new wxButton( m_spellscrolledwindow, wxID_STATUS, _("Edit Status Set"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_spellstatusset->SetToolTip( _("Warning\nChanging a status set will modify it\nfor all the spells using the same set") );
 
@@ -597,39 +600,39 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_spellmodellabel->Wrap( -1 );
 	fgSizer7->Add( m_spellmodellabel, 0, wxALL, 5 );
 
-	wxGridSizer* gSizer3;
-	gSizer3 = new wxGridSizer( 1, 2, 0, 0 );
+	wxBoxSizer* bSizer330;
+	bSizer330 = new wxBoxSizer( wxHORIZONTAL );
 
-	m_spellmodel = new wxStaticText( m_spellscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_spellmodel = new wxStaticText( m_spellscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 150,-1 ), 0 );
 	m_spellmodel->Wrap( -1 );
 	m_spellmodel->SetToolTip( _("For special effects, characters' animations, camera movements...\nAlso defines which and when characters are hit\nas well as when the spell ends (which can be never)") );
 
-	gSizer3->Add( m_spellmodel, 0, wxALL|wxEXPAND, 5 );
+	bSizer330->Add( m_spellmodel, 0, wxALL|wxEXPAND, 5 );
 
 	m_spellmodeledit = new wxButton( m_spellscrolledwindow, wxID_ANY, _("Change Animation"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer3->Add( m_spellmodeledit, 0, wxALL, 2 );
+	bSizer330->Add( m_spellmodeledit, 0, wxALL, 2 );
 
 
-	fgSizer7->Add( gSizer3, 1, wxEXPAND, 5 );
+	fgSizer7->Add( bSizer330, 1, wxEXPAND, 5 );
 
 	m_spellmodelaltlabel = new wxStaticText( m_spellscrolledwindow, wxID_ANY, _("Animation 2"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_spellmodelaltlabel->Wrap( -1 );
 	fgSizer7->Add( m_spellmodelaltlabel, 0, wxALL, 5 );
 
-	wxGridSizer* gSizer4;
-	gSizer4 = new wxGridSizer( 1, 2, 0, 0 );
+	wxBoxSizer* bSizer331;
+	bSizer331 = new wxBoxSizer( wxHORIZONTAL );
 
-	m_spellmodelalt = new wxStaticText( m_spellscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_spellmodelalt = new wxStaticText( m_spellscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 150,-1 ), 0 );
 	m_spellmodelalt->Wrap( -1 );
 	m_spellmodelalt->SetToolTip( _("For single-multi target spells and eidolons mainly") );
 
-	gSizer4->Add( m_spellmodelalt, 0, wxALL|wxEXPAND, 5 );
+	bSizer331->Add( m_spellmodelalt, 0, wxALL|wxEXPAND, 5 );
 
 	m_spellmodelaltedit = new wxButton( m_spellscrolledwindow, wxID_ANY, _("Change Animation 2"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer4->Add( m_spellmodelaltedit, 0, wxALL, 2 );
+	bSizer331->Add( m_spellmodelaltedit, 0, wxALL, 2 );
 
 
-	fgSizer7->Add( gSizer4, 1, wxEXPAND, 5 );
+	fgSizer7->Add( bSizer331, 1, wxEXPAND, 5 );
 
 	m_spelltargettypelabel = new wxStaticText( m_spellscrolledwindow, wxID_ANY, _("Target Type"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_spelltargettypelabel->Wrap( -1 );
@@ -745,6 +748,26 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 
 	fgSizer7->Add( gSizer6, 1, wxEXPAND, 5 );
+
+	m_spellcustomlabel = new wxStaticText( m_spellscrolledwindow, wxID_ANY, _("Custom fields"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_spellcustomlabel->Wrap( -1 );
+	fgSizer7->Add( m_spellcustomlabel, 0, wxALL, 5 );
+
+	wxBoxSizer* bSizer320;
+	bSizer320 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_spellcustomformat = new wxButton( m_spellscrolledwindow, wxID_CFGROUP, _("Setup format"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_spellcustomformat->SetToolTip( _("Modify CSV formatting") );
+
+	bSizer320->Add( m_spellcustomformat, 0, wxALL, 2 );
+
+	m_spellcustomfields = new wxButton( m_spellscrolledwindow, wxID_CFENTRY, _("Edit fields"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_spellcustomfields->SetToolTip( _("Edit the custom field\nof this specific entry") );
+
+	bSizer320->Add( m_spellcustomfields, 0, wxALL, 2 );
+
+
+	fgSizer7->Add( bSizer320, 1, wxEXPAND, 5 );
 
 
 	m_spellscrolledwindow->SetSizer( fgSizer7 );
@@ -882,6 +905,26 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	fgSizer153->Fit( m_supportboostedpanel );
 	fgSizer22->Add( m_supportboostedpanel, 1, wxEXPAND | wxALL, 2 );
 
+	m_supportcustomlabel = new wxStaticText( m_supportscrolledwindow, wxID_ANY, _("Custom fields"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_supportcustomlabel->Wrap( -1 );
+	fgSizer22->Add( m_supportcustomlabel, 0, wxALL, 5 );
+
+	wxBoxSizer* bSizer3201;
+	bSizer3201 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_supportcustomformat = new wxButton( m_supportscrolledwindow, wxID_CFGROUP, _("Setup format"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_supportcustomformat->SetToolTip( _("Modify CSV formatting") );
+
+	bSizer3201->Add( m_supportcustomformat, 0, wxALL, 2 );
+
+	m_supportcustomfields = new wxButton( m_supportscrolledwindow, wxID_CFENTRY, _("Edit fields"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_supportcustomfields->SetToolTip( _("Edit the custom field\nof this specific entry") );
+
+	bSizer3201->Add( m_supportcustomfields, 0, wxALL, 2 );
+
+
+	fgSizer22->Add( bSizer3201, 1, wxEXPAND, 5 );
+
 
 	m_supportscrolledwindow->SetSizer( fgSizer22 );
 	m_supportscrolledwindow->Layout();
@@ -962,13 +1005,24 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_cmdpanellabel->Wrap( -1 );
 	fgSizer2->Add( m_cmdpanellabel, 0, wxALL, 5 );
 
+	wxBoxSizer* bSizer326;
+	bSizer326 = new wxBoxSizer( wxHORIZONTAL );
+
 	wxString m_cmdpanelChoices[] = { _("None"), _("Spells"), _("Items"), _("Weapons") };
 	int m_cmdpanelNChoices = sizeof( m_cmdpanelChoices ) / sizeof( wxString );
 	m_cmdpanel = new wxChoice( m_cmdscrolledwindow, wxID_PANEL, wxDefaultPosition, wxDefaultSize, m_cmdpanelNChoices, m_cmdpanelChoices, 0 );
 	m_cmdpanel->SetSelection( 0 );
 	m_cmdpanel->SetToolTip( _("Warning : changing this field\nresets the fields below") );
 
-	fgSizer2->Add( m_cmdpanel, 0, wxALL, 2 );
+	bSizer326->Add( m_cmdpanel, 0, wxALL, 2 );
+
+	m_cmdspecificitems = new wxCheckBox( m_cmdscrolledwindow, wxID_ITEM, _("Specific items only"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_cmdspecificitems->SetToolTip( _("When activated, only the items that have\na condition like \"CommandId == XXX\"\nwill be usable by this command") );
+
+	bSizer326->Add( m_cmdspecificitems, 0, wxALL, 5 );
+
+
+	fgSizer2->Add( bSizer326, 1, wxEXPAND, 5 );
 
 	m_cmdlinklabel = new wxStaticText( m_cmdscrolledwindow, wxID_ANY, _("Linked Command"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_cmdlinklabel->Wrap( -1 );
@@ -1030,6 +1084,26 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_cmdspelllistpanel->Layout();
 	fgSizer3->Fit( m_cmdspelllistpanel );
 	fgSizer2->Add( m_cmdspelllistpanel, 1, wxEXPAND | wxALL, 2 );
+
+	m_cmdcustomlabel = new wxStaticText( m_cmdscrolledwindow, wxID_ANY, _("Custom fields"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_cmdcustomlabel->Wrap( -1 );
+	fgSizer2->Add( m_cmdcustomlabel, 0, wxALL, 5 );
+
+	wxBoxSizer* bSizer32011;
+	bSizer32011 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_cmdcustomformat = new wxButton( m_cmdscrolledwindow, wxID_CFGROUP, _("Setup format"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_cmdcustomformat->SetToolTip( _("Modify CSV formatting") );
+
+	bSizer32011->Add( m_cmdcustomformat, 0, wxALL, 2 );
+
+	m_cmdcustomfields = new wxButton( m_cmdscrolledwindow, wxID_CFENTRY, _("Edit fields"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_cmdcustomfields->SetToolTip( _("Edit the custom field\nof this specific entry") );
+
+	bSizer32011->Add( m_cmdcustomfields, 0, wxALL, 2 );
+
+
+	fgSizer2->Add( bSizer32011, 1, wxEXPAND, 5 );
 
 
 	m_cmdscrolledwindow->SetSizer( fgSizer2 );
@@ -1136,8 +1210,19 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_staticText498->Wrap( -1 );
 	fgSizer23->Add( m_staticText498, 0, wxALL, 5 );
 
+	wxBoxSizer* bSizer325;
+	bSizer325 = new wxBoxSizer( wxHORIZONTAL );
+
 	m_statcharadvanced = new wxButton( m_statcharscrolledwindow, wxID_PARAM, _("Change Advanced Parameters"), wxDefaultPosition, wxDefaultSize, 0 );
-	fgSizer23->Add( m_statcharadvanced, 0, wxALL, 2 );
+	bSizer325->Add( m_statcharadvanced, 0, wxALL, 2 );
+
+	wxArrayString m_statcharadvancedkindChoices;
+	m_statcharadvancedkind = new wxChoice( m_statcharscrolledwindow, wxID_PARAMKIND, wxDefaultPosition, wxDefaultSize, m_statcharadvancedkindChoices, 0 );
+	m_statcharadvancedkind->SetSelection( 0 );
+	bSizer325->Add( m_statcharadvancedkind, 0, wxALL, 2 );
+
+
+	fgSizer23->Add( bSizer325, 1, wxEXPAND, 5 );
 
 	m_staticText113115 = new wxStaticText( m_statcharscrolledwindow, wxID_ANY, _("Ability Lists"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText113115->Wrap( -1 );
@@ -1204,6 +1289,11 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	bSizer75->Add( bSizer881, 1, wxEXPAND, 5 );
 
+	m_statcharabilitylearninfo = new wxStaticText( m_statcharscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_statcharabilitylearninfo->SetLabelMarkup( wxEmptyString );
+	m_statcharabilitylearninfo->Wrap( -1 );
+	bSizer75->Add( m_statcharabilitylearninfo, 0, wxALL|wxEXPAND, 5 );
+
 
 	fgSizer43->Add( bSizer75, 1, wxEXPAND, 5 );
 
@@ -1220,6 +1310,16 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_staticText1981->Wrap( -1 );
 	fgSizer42->Add( m_staticText1981, 0, wxALL, 1 );
 
+	wxArrayString m_statcharcommandattackChoices;
+	m_statcharcommandattack = new wxChoice( m_statcharscrolledwindow, wxID_COMMANDATK, wxDefaultPosition, wxDefaultSize, m_statcharcommandattackChoices, 0 );
+	m_statcharcommandattack->SetSelection( 0 );
+	fgSizer42->Add( m_statcharcommandattack, 0, wxALL, 3 );
+
+	wxArrayString m_statcharcommanddefendChoices;
+	m_statcharcommanddefend = new wxChoice( m_statcharscrolledwindow, wxID_COMMANDDEF, wxDefaultPosition, wxDefaultSize, m_statcharcommanddefendChoices, 0 );
+	m_statcharcommanddefend->SetSelection( 0 );
+	fgSizer42->Add( m_statcharcommanddefend, 0, wxALL, 3 );
+
 	wxArrayString m_statcharcommand1Choices;
 	m_statcharcommand1 = new wxChoice( m_statcharscrolledwindow, wxID_COMMAND1, wxDefaultPosition, wxDefaultSize, m_statcharcommand1Choices, 0 );
 	m_statcharcommand1->SetSelection( 0 );
@@ -1230,6 +1330,16 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_statcharcommand2->SetSelection( 0 );
 	fgSizer42->Add( m_statcharcommand2, 0, wxALL, 3 );
 
+	wxArrayString m_statcharcommanditemChoices;
+	m_statcharcommanditem = new wxChoice( m_statcharscrolledwindow, wxID_COMMANDITEM, wxDefaultPosition, wxDefaultSize, m_statcharcommanditemChoices, 0 );
+	m_statcharcommanditem->SetSelection( 0 );
+	fgSizer42->Add( m_statcharcommanditem, 0, wxALL, 3 );
+
+	wxArrayString m_statcharcommandchangeChoices;
+	m_statcharcommandchange = new wxChoice( m_statcharscrolledwindow, wxID_COMMANDCHANGE, wxDefaultPosition, wxDefaultSize, m_statcharcommandchangeChoices, 0 );
+	m_statcharcommandchange->SetSelection( 0 );
+	fgSizer42->Add( m_statcharcommandchange, 0, wxALL, 3 );
+
 	m_staticText1991 = new wxStaticText( m_statcharscrolledwindow, wxID_ANY, _("Trance Commands"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText1991->Wrap( -1 );
 	fgSizer42->Add( m_staticText1991, 0, wxALL, 1 );
@@ -1237,6 +1347,16 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_staticText2001 = new wxStaticText( m_statcharscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText2001->Wrap( -1 );
 	fgSizer42->Add( m_staticText2001, 0, wxALL, 1 );
+
+	wxArrayString m_statcharcommandtranceattackChoices;
+	m_statcharcommandtranceattack = new wxChoice( m_statcharscrolledwindow, wxID_TRANCE_COMMANDATK, wxDefaultPosition, wxDefaultSize, m_statcharcommandtranceattackChoices, 0 );
+	m_statcharcommandtranceattack->SetSelection( 0 );
+	fgSizer42->Add( m_statcharcommandtranceattack, 0, wxALL, 3 );
+
+	wxArrayString m_statcharcommandtrancedefendChoices;
+	m_statcharcommandtrancedefend = new wxChoice( m_statcharscrolledwindow, wxID_TRANCE_COMMANDDEF, wxDefaultPosition, wxDefaultSize, m_statcharcommandtrancedefendChoices, 0 );
+	m_statcharcommandtrancedefend->SetSelection( 0 );
+	fgSizer42->Add( m_statcharcommandtrancedefend, 0, wxALL, 3 );
 
 	wxArrayString m_statcharcommandtrance1Choices;
 	m_statcharcommandtrance1 = new wxChoice( m_statcharscrolledwindow, wxID_TRANCE_COMMAND1, wxDefaultPosition, wxDefaultSize, m_statcharcommandtrance1Choices, 0 );
@@ -1247,6 +1367,16 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_statcharcommandtrance2 = new wxChoice( m_statcharscrolledwindow, wxID_TRANCE_COMMAND2, wxDefaultPosition, wxDefaultSize, m_statcharcommandtrance2Choices, 0 );
 	m_statcharcommandtrance2->SetSelection( 0 );
 	fgSizer42->Add( m_statcharcommandtrance2, 0, wxALL, 3 );
+
+	wxArrayString m_statcharcommandtranceitemChoices;
+	m_statcharcommandtranceitem = new wxChoice( m_statcharscrolledwindow, wxID_TRANCE_COMMANDITEM, wxDefaultPosition, wxDefaultSize, m_statcharcommandtranceitemChoices, 0 );
+	m_statcharcommandtranceitem->SetSelection( 0 );
+	fgSizer42->Add( m_statcharcommandtranceitem, 0, wxALL, 3 );
+
+	wxArrayString m_statcharcommandtrancechangeChoices;
+	m_statcharcommandtrancechange = new wxChoice( m_statcharscrolledwindow, wxID_TRANCE_COMMANDCHANGE, wxDefaultPosition, wxDefaultSize, m_statcharcommandtrancechangeChoices, 0 );
+	m_statcharcommandtrancechange->SetSelection( 0 );
+	fgSizer42->Add( m_statcharcommandtrancechange, 0, wxALL, 3 );
 
 
 	fgSizer43->Add( fgSizer42, 1, wxEXPAND, 5 );
@@ -1380,6 +1510,32 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	fgSizer31->Fit( m_statcharequippanel );
 	fgSizer23->Add( m_statcharequippanel, 1, wxEXPAND | wxALL, 5 );
 
+	m_statcustomlabel = new wxStaticText( m_statcharscrolledwindow, wxID_ANY, _("Custom fields"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_statcustomlabel->Wrap( -1 );
+	fgSizer23->Add( m_statcustomlabel, 0, wxALL, 5 );
+
+	wxBoxSizer* bSizer320111;
+	bSizer320111 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_statcustomformat = new wxButton( m_statcharscrolledwindow, wxID_CFGROUP, _("Setup format"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_statcustomformat->SetToolTip( _("Modify CSV formatting") );
+
+	bSizer320111->Add( m_statcustomformat, 0, wxALL, 2 );
+
+	m_statcustomfields = new wxButton( m_statcharscrolledwindow, wxID_CFENTRY, _("Edit fields"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_statcustomfields->SetToolTip( _("Edit the custom field\nof this specific entry") );
+
+	bSizer320111->Add( m_statcustomfields, 0, wxALL, 2 );
+
+	wxString m_statcustomkindChoices[] = { _("BaseStats.csv"), _("CharacterParameters.csv"), _("BattleParameters.csv"), _("Abilities/List.csv"), _("CommandSets.csv"), _("DefaultEquipment.csv") };
+	int m_statcustomkindNChoices = sizeof( m_statcustomkindChoices ) / sizeof( wxString );
+	m_statcustomkind = new wxChoice( m_statcharscrolledwindow, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_statcustomkindNChoices, m_statcustomkindChoices, 0 );
+	m_statcustomkind->SetSelection( 0 );
+	bSizer320111->Add( m_statcustomkind, 0, wxALL, 2 );
+
+
+	fgSizer23->Add( bSizer320111, 1, wxEXPAND, 5 );
+
 
 	m_statcharscrolledwindow->SetSizer( fgSizer23 );
 	m_statcharscrolledwindow->Layout();
@@ -1477,6 +1633,26 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	fgSizer231->Add( bSizer762, 1, wxEXPAND, 5 );
 
+	m_statlvlcustomlabel = new wxStaticText( m_statlvlscrolledwindow, wxID_ANY, _("Custom fields"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_statlvlcustomlabel->Wrap( -1 );
+	fgSizer231->Add( m_statlvlcustomlabel, 0, wxALL, 5 );
+
+	wxBoxSizer* bSizer320112;
+	bSizer320112 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_statlvlcustomformat = new wxButton( m_statlvlscrolledwindow, wxID_CFGROUP, _("Setup format"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_statlvlcustomformat->SetToolTip( _("Modify CSV formatting") );
+
+	bSizer320112->Add( m_statlvlcustomformat, 0, wxALL, 2 );
+
+	m_statlvlcustomfields = new wxButton( m_statlvlscrolledwindow, wxID_CFENTRY, _("Edit fields"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_statlvlcustomfields->SetToolTip( _("Edit the custom field\nof this specific entry") );
+
+	bSizer320112->Add( m_statlvlcustomfields, 0, wxALL, 2 );
+
+
+	fgSizer231->Add( bSizer320112, 1, wxEXPAND, 5 );
+
 
 	m_statlvlscrolledwindow->SetSizer( fgSizer231 );
 	m_statlvlscrolledwindow->Layout();
@@ -1566,10 +1742,84 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	gbSizer74->Add( m_partyspecialmagicswordspell, wxGBPosition( 5, 2 ), wxGBSpan( 1, 1 ), wxALL, 5 );
 
+	m_staticText541 = new wxStaticText( m_partyspecialavailabilityscrolledwindow, wxID_ANY, _("Can't cast if the caster has statuses:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText541->Wrap( -1 );
+	gbSizer74->Add( m_staticText541, wxGBPosition( 7, 0 ), wxGBSpan( 1, 3 ), wxALL, 5 );
+
+	wxGridBagSizer* gbSizer75;
+	gbSizer75 = new wxGridBagSizer( 0, 0 );
+	gbSizer75->SetFlexibleDirection( wxBOTH );
+	gbSizer75->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_partyspecialmagicswordcasteraddstatus = new wxButton( m_partyspecialavailabilityscrolledwindow, wxID_ADDCASTER, _("Add Status"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer75->Add( m_partyspecialmagicswordcasteraddstatus, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
+
+	m_partyspecialmagicswordcasterremovestatus = new wxButton( m_partyspecialavailabilityscrolledwindow, wxID_REMOVECASTER, _("Remove Status"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer75->Add( m_partyspecialmagicswordcasterremovestatus, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
+
+	m_partyspecialmagicswordcasterstatusbaselist = new wxListBox( m_partyspecialavailabilityscrolledwindow, wxID_ADDCASTER, wxDefaultPosition, wxSize( 120,150 ), 0, NULL, 0 );
+	gbSizer75->Add( m_partyspecialmagicswordcasterstatusbaselist, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
+
+	m_partyspecialmagicswordcasterstatusbaseint = new wxSpinCtrl( m_partyspecialavailabilityscrolledwindow, wxID_STATUSCASTER, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL|wxSP_ARROW_KEYS, 0, 31, 0 );
+	gbSizer75->Add( m_partyspecialmagicswordcasterstatusbaseint, wxGBPosition( 2, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
+
+	m_partyspecialmagicswordcasterstatuslist = new wxListBox( m_partyspecialavailabilityscrolledwindow, wxID_REMOVECASTER, wxDefaultPosition, wxSize( 120,-1 ), 0, NULL, 0 );
+	gbSizer75->Add( m_partyspecialmagicswordcasterstatuslist, wxGBPosition( 1, 1 ), wxGBSpan( 2, 1 ), wxALL|wxEXPAND, 5 );
+
+
+	gbSizer74->Add( gbSizer75, wxGBPosition( 8, 0 ), wxGBSpan( 1, 3 ), wxEXPAND, 5 );
+
+	m_staticText5411 = new wxStaticText( m_partyspecialavailabilityscrolledwindow, wxID_ANY, _("Can't cast if the knight has statuses:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText5411->Wrap( -1 );
+	gbSizer74->Add( m_staticText5411, wxGBPosition( 9, 0 ), wxGBSpan( 1, 3 ), wxALL, 5 );
+
+	wxGridBagSizer* gbSizer751;
+	gbSizer751 = new wxGridBagSizer( 0, 0 );
+	gbSizer751->SetFlexibleDirection( wxBOTH );
+	gbSizer751->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_partyspecialmagicswordknightaddstatus = new wxButton( m_partyspecialavailabilityscrolledwindow, wxID_ADDKNIGHT, _("Add Status"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer751->Add( m_partyspecialmagicswordknightaddstatus, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
+
+	m_partyspecialmagicswordknightremovestatus = new wxButton( m_partyspecialavailabilityscrolledwindow, wxID_REMOVEKNIGHT, _("Remove Status"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer751->Add( m_partyspecialmagicswordknightremovestatus, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
+
+	m_partyspecialmagicswordknightstatusbaselist = new wxListBox( m_partyspecialavailabilityscrolledwindow, wxID_ADDKNIGHT, wxDefaultPosition, wxSize( 120,150 ), 0, NULL, 0 );
+	gbSizer751->Add( m_partyspecialmagicswordknightstatusbaselist, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
+
+	m_partyspecialmagicswordknightstatusbaseint = new wxSpinCtrl( m_partyspecialavailabilityscrolledwindow, wxID_STATUSKNIGHT, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL|wxSP_ARROW_KEYS, 0, 31, 0 );
+	gbSizer751->Add( m_partyspecialmagicswordknightstatusbaseint, wxGBPosition( 2, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
+
+	m_partyspecialmagicswordknightstatuslist = new wxListBox( m_partyspecialavailabilityscrolledwindow, wxID_REMOVEKNIGHT, wxDefaultPosition, wxSize( 120,-1 ), 0, NULL, 0 );
+	gbSizer751->Add( m_partyspecialmagicswordknightstatuslist, wxGBPosition( 1, 1 ), wxGBSpan( 2, 1 ), wxALL|wxEXPAND, 5 );
+
+
+	gbSizer74->Add( gbSizer751, wxGBPosition( 10, 0 ), wxGBSpan( 1, 3 ), wxEXPAND, 5 );
+
 
 	gbSizer74->AddGrowableRow( 5 );
 
 	fgSizer74->Add( gbSizer74, 1, wxEXPAND, 5 );
+
+	m_partyspecialcustomlabel = new wxStaticText( m_partyspecialavailabilityscrolledwindow, wxID_ANY, _("Custom fields"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_partyspecialcustomlabel->Wrap( -1 );
+	fgSizer74->Add( m_partyspecialcustomlabel, 0, wxALL, 5 );
+
+	wxBoxSizer* bSizer320113;
+	bSizer320113 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_partyspecialcustomformat = new wxButton( m_partyspecialavailabilityscrolledwindow, wxID_CFGROUP, _("Setup format"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_partyspecialcustomformat->SetToolTip( _("Modify CSV formatting") );
+
+	bSizer320113->Add( m_partyspecialcustomformat, 0, wxALL, 2 );
+
+	m_partyspecialcustomfields = new wxButton( m_partyspecialavailabilityscrolledwindow, wxID_CFENTRY, _("Edit fields"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_partyspecialcustomfields->SetToolTip( _("Edit the custom field\nof this specific entry") );
+
+	bSizer320113->Add( m_partyspecialcustomfields, 0, wxALL, 2 );
+
+
+	fgSizer74->Add( bSizer320113, 1, wxEXPAND, 5 );
 
 
 	m_partyspecialavailabilityscrolledwindow->SetSizer( fgSizer74 );
@@ -1748,10 +1998,21 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_staticText1552->Wrap( -1 );
 	fgSizer511->Add( m_staticText1552, 0, wxALL, 5 );
 
-	m_itemprice = new wxSpinCtrl( m_itemscrolledwindow, wxID_PRICE, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
-	m_itemprice->SetToolTip( _("Price at which merchants sell the item\nThey buy it half this price") );
+	wxBoxSizer* bSizer327;
+	bSizer327 = new wxBoxSizer( wxHORIZONTAL );
 
-	fgSizer511->Add( m_itemprice, 0, wxALL, 2 );
+	m_itemprice = new wxSpinCtrl( m_itemscrolledwindow, wxID_PRICE, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	m_itemprice->SetToolTip( _("Price at which merchants sell the item\nThey normally buy it half this price") );
+
+	bSizer327->Add( m_itemprice, 0, wxALL, 2 );
+
+	m_itemsellprice = new wxSpinCtrl( m_itemscrolledwindow, wxID_SELLPRICE, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	m_itemsellprice->SetToolTip( _("Price at which merchants buy\nthe item from the player") );
+
+	bSizer327->Add( m_itemsellprice, 0, wxALL, 2 );
+
+
+	fgSizer511->Add( bSizer327, 1, wxEXPAND, 5 );
 
 	m_staticText15522 = new wxStaticText( m_itemscrolledwindow, wxID_ANY, _("Usability"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText15522->Wrap( -1 );
@@ -2065,6 +2326,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_itemusablepanel = new wxPanel( m_itemscrolledwindow, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxFlexGridSizer* fgSizer33;
 	fgSizer33 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer33->AddGrowableCol( 1 );
 	fgSizer33->SetFlexibleDirection( wxBOTH );
 	fgSizer33->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -2110,130 +2372,94 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_itemusablepower = new wxSpinCtrl( m_itemusablepanel, wxID_POWER, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
 	fgSizer33->Add( m_itemusablepower, 0, wxALL, 2 );
 
+	m_staticText544 = new wxStaticText( m_itemusablepanel, wxID_ANY, _("Element"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText544->Wrap( -1 );
+	fgSizer33->Add( m_staticText544, 0, wxALL, 5 );
+
+	wxGridSizer* m_itemusableelement;
+	m_itemusableelement = new wxGridSizer( 2, 4, 0, 0 );
+
+	m_itemusableelement1 = new wxCheckBox( m_itemusablepanel, wxID_UE1, _("Fire"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_itemusableelement->Add( m_itemusableelement1, 0, wxALL, 5 );
+
+	m_itemusableelement2 = new wxCheckBox( m_itemusablepanel, wxID_UE2, _("Ice"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_itemusableelement->Add( m_itemusableelement2, 0, wxALL, 5 );
+
+	m_itemusableelement3 = new wxCheckBox( m_itemusablepanel, wxID_UE3, _("Thunder"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_itemusableelement->Add( m_itemusableelement3, 0, wxALL, 5 );
+
+	m_itemusableelement4 = new wxCheckBox( m_itemusablepanel, wxID_UE4, _("Earth"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_itemusableelement->Add( m_itemusableelement4, 0, wxALL, 5 );
+
+	m_itemusableelement5 = new wxCheckBox( m_itemusablepanel, wxID_UE5, _("Water"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_itemusableelement->Add( m_itemusableelement5, 0, wxALL, 5 );
+
+	m_itemusableelement6 = new wxCheckBox( m_itemusablepanel, wxID_UE6, _("Wind"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_itemusableelement->Add( m_itemusableelement6, 0, wxALL, 5 );
+
+	m_itemusableelement7 = new wxCheckBox( m_itemusablepanel, wxID_UE7, _("Holy"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_itemusableelement->Add( m_itemusableelement7, 0, wxALL, 5 );
+
+	m_itemusableelement8 = new wxCheckBox( m_itemusablepanel, wxID_UE8, _("Shadow"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_itemusableelement->Add( m_itemusableelement8, 0, wxALL, 5 );
+
+
+	fgSizer33->Add( m_itemusableelement, 1, wxEXPAND, 5 );
+
 	m_staticText194 = new wxStaticText( m_itemusablepanel, wxID_ANY, _("Status"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText194->Wrap( -1 );
 	fgSizer33->Add( m_staticText194, 0, wxALL, 5 );
 
-	wxGridSizer* gSizer1911;
-	gSizer1911 = new wxGridSizer( 8, 4, 0, 0 );
+	wxGridBagSizer* gbSizer752;
+	gbSizer752 = new wxGridBagSizer( 0, 0 );
+	gbSizer752->SetFlexibleDirection( wxBOTH );
+	gbSizer752->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
-	m_itemusablestatus1 = new wxCheckBox( m_itemusablepanel, wxID_IS1, _("Petrify"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus1, 0, wxALL, 5 );
+	m_itemusableaddstatus = new wxButton( m_itemusablepanel, wxID_ADDSTATUS, _("Add Status"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer752->Add( m_itemusableaddstatus, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
 
-	m_itemusablestatus2 = new wxCheckBox( m_itemusablepanel, wxID_IS2, _("Venom"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus2, 0, wxALL, 5 );
+	m_itemusableremovestatus = new wxButton( m_itemusablepanel, wxID_REMOVESTATUS, _("Remove Status"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer752->Add( m_itemusableremovestatus, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
 
-	m_itemusablestatus3 = new wxCheckBox( m_itemusablepanel, wxID_IS3, _("Virus"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus3, 0, wxALL, 5 );
+	m_itemusablestatusbaselist = new wxListBox( m_itemusablepanel, wxID_ADDSTATUS, wxDefaultPosition, wxSize( 120,150 ), 0, NULL, 0 );
+	gbSizer752->Add( m_itemusablestatusbaselist, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
 
-	m_itemusablestatus4 = new wxCheckBox( m_itemusablepanel, wxID_IS4, _("Silence"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus4, 0, wxALL, 5 );
+	m_itemusablestatusbaseint = new wxSpinCtrl( m_itemusablepanel, wxID_STATUSINT, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL|wxSP_ARROW_KEYS, 0, 31, 0 );
+	gbSizer752->Add( m_itemusablestatusbaseint, wxGBPosition( 2, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
 
-	m_itemusablestatus5 = new wxCheckBox( m_itemusablepanel, wxID_IS5, _("Blind"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus5, 0, wxALL, 5 );
-
-	m_itemusablestatus6 = new wxCheckBox( m_itemusablepanel, wxID_IS6, _("Trouble"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus6, 0, wxALL, 5 );
-
-	m_itemusablestatus7 = new wxCheckBox( m_itemusablepanel, wxID_IS7, _("Zombie"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus7, 0, wxALL, 5 );
-
-	m_itemusablestatus8 = new wxCheckBox( m_itemusablepanel, wxID_IS8, _("Easy Kill"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus8, 0, wxALL, 5 );
-
-	m_itemusablestatus9 = new wxCheckBox( m_itemusablepanel, wxID_IS9, _("Death"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus9, 0, wxALL, 5 );
-
-	m_itemusablestatus10 = new wxCheckBox( m_itemusablepanel, wxID_IS10, _("Low HP"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus10, 0, wxALL, 5 );
-
-	m_itemusablestatus11 = new wxCheckBox( m_itemusablepanel, wxID_IS11, _("Confuse"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus11, 0, wxALL, 5 );
-
-	m_itemusablestatus12 = new wxCheckBox( m_itemusablepanel, wxID_IS12, _("Berserk"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus12, 0, wxALL, 5 );
-
-	m_itemusablestatus13 = new wxCheckBox( m_itemusablepanel, wxID_IS13, _("Stop"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus13, 0, wxALL, 5 );
-
-	m_itemusablestatus14 = new wxCheckBox( m_itemusablepanel, wxID_IS14, _("Auto-Life"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus14, 0, wxALL, 5 );
-
-	m_itemusablestatus15 = new wxCheckBox( m_itemusablepanel, wxID_IS15, _("Trance"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus15, 0, wxALL, 5 );
-
-	m_itemusablestatus16 = new wxCheckBox( m_itemusablepanel, wxID_IS16, _("Defend"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus16, 0, wxALL, 5 );
-
-	m_itemusablestatus17 = new wxCheckBox( m_itemusablepanel, wxID_IS17, _("Poison"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus17, 0, wxALL, 5 );
-
-	m_itemusablestatus18 = new wxCheckBox( m_itemusablepanel, wxID_IS18, _("Sleep"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus18, 0, wxALL, 5 );
-
-	m_itemusablestatus19 = new wxCheckBox( m_itemusablepanel, wxID_IS19, _("Regen"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus19, 0, wxALL, 5 );
-
-	m_itemusablestatus20 = new wxCheckBox( m_itemusablepanel, wxID_IS20, _("Haste"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus20, 0, wxALL, 5 );
-
-	m_itemusablestatus21 = new wxCheckBox( m_itemusablepanel, wxID_IS21, _("Slow"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus21, 0, wxALL, 5 );
-
-	m_itemusablestatus22 = new wxCheckBox( m_itemusablepanel, wxID_IS22, _("Float"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus22, 0, wxALL, 5 );
-
-	m_itemusablestatus23 = new wxCheckBox( m_itemusablepanel, wxID_IS23, _("Shell"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus23, 0, wxALL, 5 );
-
-	m_itemusablestatus24 = new wxCheckBox( m_itemusablepanel, wxID_IS24, _("Protect"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus24, 0, wxALL, 5 );
-
-	m_itemusablestatus25 = new wxCheckBox( m_itemusablepanel, wxID_IS25, _("Heat"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus25, 0, wxALL, 5 );
-
-	m_itemusablestatus26 = new wxCheckBox( m_itemusablepanel, wxID_IS26, _("Freeze"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus26, 0, wxALL, 5 );
-
-	m_itemusablestatus27 = new wxCheckBox( m_itemusablepanel, wxID_IS27, _("Vanish"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus27, 0, wxALL, 5 );
-
-	m_itemusablestatus28 = new wxCheckBox( m_itemusablepanel, wxID_IS28, _("Doom"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus28, 0, wxALL, 5 );
-
-	m_itemusablestatus29 = new wxCheckBox( m_itemusablepanel, wxID_IS29, _("Mini"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus29, 0, wxALL, 5 );
-
-	m_itemusablestatus30 = new wxCheckBox( m_itemusablepanel, wxID_IS30, _("Reflect"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus30, 0, wxALL, 5 );
-
-	m_itemusablestatus31 = new wxCheckBox( m_itemusablepanel, wxID_IS31, _("Jump"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus31, 0, wxALL, 5 );
-
-	m_itemusablestatus32 = new wxCheckBox( m_itemusablepanel, wxID_IS32, _("Gradual Petrify"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer1911->Add( m_itemusablestatus32, 0, wxALL, 5 );
+	m_itemusablestatuslist = new wxListBox( m_itemusablepanel, wxID_REMOVESTATUS, wxDefaultPosition, wxSize( 120,-1 ), 0, NULL, 0 );
+	gbSizer752->Add( m_itemusablestatuslist, wxGBPosition( 1, 1 ), wxGBSpan( 2, 1 ), wxALL|wxEXPAND, 5 );
 
 
-	fgSizer33->Add( gSizer1911, 1, wxEXPAND, 5 );
+	fgSizer33->Add( gbSizer752, 1, wxEXPAND, 5 );
+
+	m_staticText547 = new wxStaticText( m_itemusablepanel, wxID_ANY, _("Accuracy"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText547->Wrap( -1 );
+	fgSizer33->Add( m_staticText547, 0, wxALL, 5 );
+
+	m_itemusableaccuracy = new wxSpinCtrl( m_itemusablepanel, wxID_ACCURACY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_itemusableaccuracy->SetToolTip( _("Unused by default") );
+
+	fgSizer33->Add( m_itemusableaccuracy, 0, wxALL, 2 );
 
 	m_staticText195 = new wxStaticText( m_itemusablepanel, wxID_ANY, _("Animation"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText195->Wrap( -1 );
 	fgSizer33->Add( m_staticText195, 0, wxALL, 5 );
 
-	wxGridSizer* gSizer32;
-	gSizer32 = new wxGridSizer( 1, 2, 0, 0 );
+	wxBoxSizer* bSizer329;
+	bSizer329 = new wxBoxSizer( wxHORIZONTAL );
 
-	m_itemusablemodel = new wxStaticText( m_itemusablepanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_itemusablemodel = new wxStaticText( m_itemusablepanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 150,-1 ), 0 );
 	m_itemusablemodel->Wrap( -1 );
 	m_itemusablemodel->SetToolTip( _("For special effects, characters' animations, camera movements...\nAlso defines which and when characters are hit\nas well as when the spell ends (which can be never)") );
 
-	gSizer32->Add( m_itemusablemodel, 0, wxALL|wxEXPAND, 5 );
+	bSizer329->Add( m_itemusablemodel, 0, wxALL|wxEXPAND, 5 );
 
 	m_itemusablemodeledit = new wxButton( m_itemusablepanel, wxID_ANY, _("Change Animation"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer32->Add( m_itemusablemodeledit, 0, wxALL, 2 );
+	bSizer329->Add( m_itemusablemodeledit, 0, wxALL, 2 );
 
 
-	fgSizer33->Add( gSizer32, 1, wxEXPAND, 5 );
+	fgSizer33->Add( bSizer329, 1, wxEXPAND, 5 );
 
 	m_staticText196 = new wxStaticText( m_itemusablepanel, wxID_ANY, _("Target Type"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText196->Wrap( -1 );
@@ -2315,6 +2541,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_itemweaponpanel = new wxPanel( m_itemscrolledwindow, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxFlexGridSizer* fgSizer29;
 	fgSizer29 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer29->AddGrowableCol( 1 );
 	fgSizer29->SetFlexibleDirection( wxBOTH );
 	fgSizer29->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -2384,10 +2611,24 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_staticText159->Wrap( -1 );
 	fgSizer29->Add( m_staticText159, 0, wxALL, 5 );
 
+	wxBoxSizer* bSizer322;
+	bSizer322 = new wxBoxSizer( wxHORIZONTAL );
+
 	wxArrayString m_itemweaponstatusChoices;
 	m_itemweaponstatus = new wxChoice( m_itemweaponpanel, wxID_WEAPONSTATUS, wxDefaultPosition, wxDefaultSize, m_itemweaponstatusChoices, 0 );
 	m_itemweaponstatus->SetSelection( 0 );
-	fgSizer29->Add( m_itemweaponstatus, 0, wxALL, 2 );
+	bSizer322->Add( m_itemweaponstatus, 0, wxALL, 2 );
+
+	m_itemweaponstatusint = new wxSpinCtrl( m_itemweaponpanel, wxID_WEAPONSTATUS, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	bSizer322->Add( m_itemweaponstatusint, 0, wxALL, 2 );
+
+	m_itemweaponstatusset = new wxButton( m_itemweaponpanel, wxID_WEAPONSTATUS, _("Edit Status Set"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_itemweaponstatusset->SetToolTip( _("Warning\nChanging a status set will modify it\nfor all the spells using the same set") );
+
+	bSizer322->Add( m_itemweaponstatusset, 0, wxALL, 2 );
+
+
+	fgSizer29->Add( bSizer322, 1, wxEXPAND, 5 );
 
 	m_staticText2961 = new wxStaticText( m_itemweaponpanel, wxID_ANY, _("Status Accuracy"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText2961->Wrap( -1 );
@@ -2495,6 +2736,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_itemarmorpanel = new wxPanel( m_itemscrolledwindow, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxFlexGridSizer* fgSizer291;
 	fgSizer291 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer291->AddGrowableCol( 1 );
 	fgSizer291->SetFlexibleDirection( wxBOTH );
 	fgSizer291->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -2531,6 +2773,32 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_itemarmorpanel->Layout();
 	fgSizer291->Fit( m_itemarmorpanel );
 	fgSizer511->Add( m_itemarmorpanel, 1, wxEXPAND | wxALL, 0 );
+
+	m_itemcustomlabel = new wxStaticText( m_itemscrolledwindow, wxID_ANY, _("Custom fields"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_itemcustomlabel->Wrap( -1 );
+	fgSizer511->Add( m_itemcustomlabel, 0, wxALL, 5 );
+
+	wxBoxSizer* bSizer3201111;
+	bSizer3201111 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_itemcustomformat = new wxButton( m_itemscrolledwindow, wxID_CFGROUP, _("Setup format"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_itemcustomformat->SetToolTip( _("Modify CSV formatting") );
+
+	bSizer3201111->Add( m_itemcustomformat, 0, wxALL, 2 );
+
+	m_itemcustomfields = new wxButton( m_itemscrolledwindow, wxID_CFENTRY, _("Edit fields"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_itemcustomfields->SetToolTip( _("Edit the custom field\nof this specific entry") );
+
+	bSizer3201111->Add( m_itemcustomfields, 0, wxALL, 2 );
+
+	wxString m_itemcustomkindChoices[] = { _("Items.csv"), _("Stats.csv"), _("Weapons.csv"), _("Armors.csv"), _("ItemEffects.csv") };
+	int m_itemcustomkindNChoices = sizeof( m_itemcustomkindChoices ) / sizeof( wxString );
+	m_itemcustomkind = new wxChoice( m_itemscrolledwindow, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_itemcustomkindNChoices, m_itemcustomkindChoices, 0 );
+	m_itemcustomkind->SetSelection( 0 );
+	bSizer3201111->Add( m_itemcustomkind, 0, wxALL, 2 );
+
+
+	fgSizer511->Add( bSizer3201111, 1, wxEXPAND, 5 );
 
 
 	m_itemscrolledwindow->SetSizer( fgSizer511 );
@@ -2728,6 +2996,26 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	fgSizer312->Fit( m_shopitemlistpanel );
 	fgSizer513->Add( m_shopitemlistpanel, 1, wxEXPAND | wxALL, 2 );
 
+	m_shopcustomlabel = new wxStaticText( m_shopscrolledwindow, wxID_ANY, _("Custom fields"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_shopcustomlabel->Wrap( -1 );
+	fgSizer513->Add( m_shopcustomlabel, 0, wxALL, 5 );
+
+	wxBoxSizer* bSizer320114;
+	bSizer320114 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_shopcustomformat = new wxButton( m_shopscrolledwindow, wxID_CFGROUP, _("Setup format"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_shopcustomformat->SetToolTip( _("Modify CSV formatting") );
+
+	bSizer320114->Add( m_shopcustomformat, 0, wxALL, 2 );
+
+	m_shopcustomfields = new wxButton( m_shopscrolledwindow, wxID_CFENTRY, _("Edit fields"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_shopcustomfields->SetToolTip( _("Edit the custom field\nof this specific entry") );
+
+	bSizer320114->Add( m_shopcustomfields, 0, wxALL, 2 );
+
+
+	fgSizer513->Add( bSizer320114, 1, wxEXPAND, 5 );
+
 
 	m_shopscrolledwindow->SetSizer( fgSizer513 );
 	m_shopscrolledwindow->Layout();
@@ -2883,6 +3171,26 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_synthshopshoppanel->Layout();
 	gbSizer73->Fit( m_synthshopshoppanel );
 	fgSizer5141->Add( m_synthshopshoppanel, 1, wxEXPAND | wxALL, 2 );
+
+	m_synthshopcustomlabel = new wxStaticText( m_synthshopscrolledwindow, wxID_ANY, _("Custom fields"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_synthshopcustomlabel->Wrap( -1 );
+	fgSizer5141->Add( m_synthshopcustomlabel, 0, wxALL, 5 );
+
+	wxBoxSizer* bSizer320115;
+	bSizer320115 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_synthshopcustomformat = new wxButton( m_synthshopscrolledwindow, wxID_CFGROUP, _("Setup format"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_synthshopcustomformat->SetToolTip( _("Modify CSV formatting") );
+
+	bSizer320115->Add( m_synthshopcustomformat, 0, wxALL, 2 );
+
+	m_synthshopcustomfields = new wxButton( m_synthshopscrolledwindow, wxID_CFENTRY, _("Edit fields"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_synthshopcustomfields->SetToolTip( _("Edit the custom field\nof this specific entry") );
+
+	bSizer320115->Add( m_synthshopcustomfields, 0, wxALL, 2 );
+
+
+	fgSizer5141->Add( bSizer320115, 1, wxEXPAND, 5 );
 
 
 	m_synthshopscrolledwindow->SetSizer( fgSizer5141 );
@@ -3147,6 +3455,15 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	fgSizer9->Add( m_enemystatattack, 0, wxALL, 2 );
 
+	m_staticText546 = new wxStaticText( m_enemystatpanel1, wxID_ANY, _("Accuracy"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText546->Wrap( -1 );
+	fgSizer9->Add( m_staticText546, 0, wxALL, 5 );
+
+	m_enemystataccuracy = new wxSpinCtrl( m_enemystatpanel1, wxID_ACCURACY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	m_enemystataccuracy->SetToolTip( _("\"Hit Rate\", actually unused") );
+
+	fgSizer9->Add( m_enemystataccuracy, 0, wxALL, 2 );
+
 	m_enemystatspeedlabel = new wxStaticText( m_enemystatpanel1, wxID_ANY, _("Speed"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_enemystatspeedlabel->Wrap( -1 );
 	fgSizer9->Add( m_enemystatspeedlabel, 0, wxALL, 5 );
@@ -3207,36 +3524,50 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemystatitemsteallabel->Wrap( -1 );
 	fgSizer9->Add( m_enemystatitemsteallabel, 0, wxALL, 5 );
 
-	wxGridSizer* m_enemystatitemsteal;
-	m_enemystatitemsteal = new wxGridSizer( 4, 1, 0, 0 );
+	wxFlexGridSizer* m_enemystatitemsteal;
+	m_enemystatitemsteal = new wxFlexGridSizer( 4, 2, 0, 0 );
+	m_enemystatitemsteal->SetFlexibleDirection( wxBOTH );
+	m_enemystatitemsteal->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
 	wxArrayString m_enemystatitemsteal1Choices;
 	m_enemystatitemsteal1 = new wxChoice( m_enemystatpanel1, wxID_STEAL1, wxDefaultPosition, wxDefaultSize, m_enemystatitemsteal1Choices, 0 );
 	m_enemystatitemsteal1->SetSelection( 0 );
-	m_enemystatitemsteal1->SetToolTip( _("The first steal slot :\n256/256 steal rate") );
+	m_enemystatitemsteal1->SetToolTip( _("The first steal slot :\n256/256 default steal rate") );
 
 	m_enemystatitemsteal->Add( m_enemystatitemsteal1, 0, wxALL, 2 );
+
+	m_enemystatitemstealrate1 = new wxSpinCtrl( m_enemystatpanel1, wxID_STEALRATE1, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 2147483647, 0 );
+	m_enemystatitemsteal->Add( m_enemystatitemstealrate1, 0, wxALL, 2 );
 
 	wxArrayString m_enemystatitemsteal2Choices;
 	m_enemystatitemsteal2 = new wxChoice( m_enemystatpanel1, wxID_STEAL2, wxDefaultPosition, wxDefaultSize, m_enemystatitemsteal2Choices, 0 );
 	m_enemystatitemsteal2->SetSelection( 0 );
-	m_enemystatitemsteal2->SetToolTip( _("The second steal slot :\n64/256 steal rate") );
+	m_enemystatitemsteal2->SetToolTip( _("The second steal slot :\n64/256 default steal rate") );
 
 	m_enemystatitemsteal->Add( m_enemystatitemsteal2, 0, wxALL, 2 );
+
+	m_enemystatitemstealrate2 = new wxSpinCtrl( m_enemystatpanel1, wxID_STEALRATE2, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 2147483647, 0 );
+	m_enemystatitemsteal->Add( m_enemystatitemstealrate2, 0, wxALL, 2 );
 
 	wxArrayString m_enemystatitemsteal3Choices;
 	m_enemystatitemsteal3 = new wxChoice( m_enemystatpanel1, wxID_STEAL3, wxDefaultPosition, wxDefaultSize, m_enemystatitemsteal3Choices, 0 );
 	m_enemystatitemsteal3->SetSelection( 0 );
-	m_enemystatitemsteal3->SetToolTip( _("The third steal slot :\n16/256 steal rate\n32/256 with Master Thief") );
+	m_enemystatitemsteal3->SetToolTip( _("The third steal slot :\n16/256 default steal rate\n32/256 with Master Thief") );
 
 	m_enemystatitemsteal->Add( m_enemystatitemsteal3, 0, wxALL, 2 );
+
+	m_enemystatitemstealrate3 = new wxSpinCtrl( m_enemystatpanel1, wxID_STEALRATE3, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 2147483647, 0 );
+	m_enemystatitemsteal->Add( m_enemystatitemstealrate3, 0, wxALL, 2 );
 
 	wxArrayString m_enemystatitemsteal4Choices;
 	m_enemystatitemsteal4 = new wxChoice( m_enemystatpanel1, wxID_STEAL4, wxDefaultPosition, wxDefaultSize, m_enemystatitemsteal4Choices, 0 );
 	m_enemystatitemsteal4->SetSelection( 0 );
-	m_enemystatitemsteal4->SetToolTip( _("The fourth steal slot :\n1/256 steal rate\n32/256 with Master Thief") );
+	m_enemystatitemsteal4->SetToolTip( _("The fourth steal slot :\n1/256 default steal rate\n32/256 with Master Thief") );
 
 	m_enemystatitemsteal->Add( m_enemystatitemsteal4, 0, wxALL, 2 );
+
+	m_enemystatitemstealrate4 = new wxSpinCtrl( m_enemystatpanel1, wxID_STEALRATE4, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 2147483647, 0 );
+	m_enemystatitemsteal->Add( m_enemystatitemstealrate4, 0, wxALL, 2 );
 
 
 	fgSizer9->Add( m_enemystatitemsteal, 1, wxEXPAND, 5 );
@@ -3245,36 +3576,50 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemystatitemdroplabel->Wrap( -1 );
 	fgSizer9->Add( m_enemystatitemdroplabel, 0, wxALL, 5 );
 
-	wxGridSizer* m_enemystatitemdrop;
-	m_enemystatitemdrop = new wxGridSizer( 4, 1, 0, 0 );
+	wxFlexGridSizer* m_enemystatitemdrop;
+	m_enemystatitemdrop = new wxFlexGridSizer( 4, 2, 0, 0 );
+	m_enemystatitemdrop->SetFlexibleDirection( wxBOTH );
+	m_enemystatitemdrop->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
 	wxArrayString m_enemystatitemdrop1Choices;
 	m_enemystatitemdrop1 = new wxChoice( m_enemystatpanel1, wxID_DROP1, wxDefaultPosition, wxDefaultSize, m_enemystatitemdrop1Choices, 0 );
 	m_enemystatitemdrop1->SetSelection( 0 );
-	m_enemystatitemdrop1->SetToolTip( _("The first drop slot :\n256/256 drop rate") );
+	m_enemystatitemdrop1->SetToolTip( _("The first drop slot :\n256/256 default drop rate") );
 
 	m_enemystatitemdrop->Add( m_enemystatitemdrop1, 0, wxALL, 2 );
+
+	m_enemystatitemdroprate1 = new wxSpinCtrl( m_enemystatpanel1, wxID_DROPRATE1, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 2147483647, 0 );
+	m_enemystatitemdrop->Add( m_enemystatitemdroprate1, 0, wxALL, 2 );
 
 	wxArrayString m_enemystatitemdrop2Choices;
 	m_enemystatitemdrop2 = new wxChoice( m_enemystatpanel1, wxID_DROP2, wxDefaultPosition, wxDefaultSize, m_enemystatitemdrop2Choices, 0 );
 	m_enemystatitemdrop2->SetSelection( 0 );
-	m_enemystatitemdrop2->SetToolTip( _("The second drop slot :\n96/256 drop rate") );
+	m_enemystatitemdrop2->SetToolTip( _("The second drop slot :\n96/256 default drop rate") );
 
 	m_enemystatitemdrop->Add( m_enemystatitemdrop2, 0, wxALL, 2 );
+
+	m_enemystatitemdroprate2 = new wxSpinCtrl( m_enemystatpanel1, wxID_DROPRATE2, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 2147483647, 0 );
+	m_enemystatitemdrop->Add( m_enemystatitemdroprate2, 0, wxALL, 2 );
 
 	wxArrayString m_enemystatitemdrop3Choices;
 	m_enemystatitemdrop3 = new wxChoice( m_enemystatpanel1, wxID_DROP3, wxDefaultPosition, wxDefaultSize, m_enemystatitemdrop3Choices, 0 );
 	m_enemystatitemdrop3->SetSelection( 0 );
-	m_enemystatitemdrop3->SetToolTip( _("The third drop slot :\n32/256 drop rate") );
+	m_enemystatitemdrop3->SetToolTip( _("The third drop slot :\n32/256 default drop rate") );
 
 	m_enemystatitemdrop->Add( m_enemystatitemdrop3, 0, wxALL, 2 );
+
+	m_enemystatitemdroprate3 = new wxSpinCtrl( m_enemystatpanel1, wxID_DROPRATE3, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 2147483647, 0 );
+	m_enemystatitemdrop->Add( m_enemystatitemdroprate3, 0, wxALL, 2 );
 
 	wxArrayString m_enemystatitemdrop4Choices;
 	m_enemystatitemdrop4 = new wxChoice( m_enemystatpanel1, wxID_DROP4, wxDefaultPosition, wxDefaultSize, m_enemystatitemdrop4Choices, 0 );
 	m_enemystatitemdrop4->SetSelection( 0 );
-	m_enemystatitemdrop4->SetToolTip( _("The fourth drop slot :\n1/256 drop rate") );
+	m_enemystatitemdrop4->SetToolTip( _("The fourth drop slot :\n1/256 default drop rate") );
 
 	m_enemystatitemdrop->Add( m_enemystatitemdrop4, 0, wxALL, 2 );
+
+	m_enemystatitemdroprate4 = new wxSpinCtrl( m_enemystatpanel1, wxID_DROPRATE4, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 2147483647, 0 );
+	m_enemystatitemdrop->Add( m_enemystatitemdroprate4, 0, wxALL, 2 );
 
 
 	fgSizer9->Add( m_enemystatitemdrop, 1, wxEXPAND, 5 );
@@ -3283,12 +3628,21 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemystatdropcardlabel->Wrap( -1 );
 	fgSizer9->Add( m_enemystatdropcardlabel, 0, wxALL, 5 );
 
+	wxBoxSizer* bSizer328;
+	bSizer328 = new wxBoxSizer( wxHORIZONTAL );
+
 	wxArrayString m_enemystatdropcardChoices;
 	m_enemystatdropcard = new wxChoice( m_enemystatpanel1, wxID_CARD, wxDefaultPosition, wxDefaultSize, m_enemystatdropcardChoices, 0 );
 	m_enemystatdropcard->SetSelection( 0 );
-	m_enemystatdropcard->SetToolTip( _("32/256 drop rate") );
+	m_enemystatdropcard->SetToolTip( _("32/256 default drop rate") );
 
-	fgSizer9->Add( m_enemystatdropcard, 0, wxALL, 2 );
+	bSizer328->Add( m_enemystatdropcard, 0, wxALL, 2 );
+
+	m_enemystatdropcardrate = new wxSpinCtrl( m_enemystatpanel1, wxID_CARDRATE, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 2147483647, 0 );
+	bSizer328->Add( m_enemystatdropcardrate, 0, wxALL, 2 );
+
+
+	fgSizer9->Add( bSizer328, 1, wxEXPAND, 5 );
 
 	m_enemystatexplabel = new wxStaticText( m_enemystatpanel1, wxID_ANY, _("Exp"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_enemystatexplabel->Wrap( -1 );
@@ -3602,319 +3956,82 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_staticText79->Wrap( -1 );
 	fgSizer92->Add( m_staticText79, 0, wxALL, 5 );
 
-	wxGridSizer* gSizer19;
-	gSizer19 = new wxGridSizer( 8, 4, 0, 0 );
+	wxGridBagSizer* gbSizer7521;
+	gbSizer7521 = new wxGridBagSizer( 0, 0 );
+	gbSizer7521->SetFlexibleDirection( wxBOTH );
+	gbSizer7521->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
-	m_enemystatstatusimmune1 = new wxCheckBox( m_enemystatpanel2, wxID_SI1, _("Petrify"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune1, 0, wxALL, 5 );
+	m_enemystataddimmune = new wxButton( m_enemystatpanel2, wxID_ADDIMMUNE, _("Add Status"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer7521->Add( m_enemystataddimmune, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
 
-	m_enemystatstatusimmune2 = new wxCheckBox( m_enemystatpanel2, wxID_SI2, _("Venom"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune2, 0, wxALL, 5 );
+	m_enemystatremoveimmune = new wxButton( m_enemystatpanel2, wxID_REMOVEIMMUNE, _("Remove Status"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer7521->Add( m_enemystatremoveimmune, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
 
-	m_enemystatstatusimmune3 = new wxCheckBox( m_enemystatpanel2, wxID_SI3, _("Virus"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune3, 0, wxALL, 5 );
+	m_enemystatimmunebaselist = new wxListBox( m_enemystatpanel2, wxID_ADDIMMUNE, wxDefaultPosition, wxSize( 120,150 ), 0, NULL, 0 );
+	gbSizer7521->Add( m_enemystatimmunebaselist, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
 
-	m_enemystatstatusimmune4 = new wxCheckBox( m_enemystatpanel2, wxID_SI4, _("Silence"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune4, 0, wxALL, 5 );
+	m_enemystatimmunebaseint = new wxSpinCtrl( m_enemystatpanel2, wxID_IMMUNESTATUS, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL|wxSP_ARROW_KEYS, 0, 31, 0 );
+	gbSizer7521->Add( m_enemystatimmunebaseint, wxGBPosition( 2, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
 
-	m_enemystatstatusimmune5 = new wxCheckBox( m_enemystatpanel2, wxID_SI5, _("Blind"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune5, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune6 = new wxCheckBox( m_enemystatpanel2, wxID_SI6, _("Trouble"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune6, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune7 = new wxCheckBox( m_enemystatpanel2, wxID_SI7, _("Zombie"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune7, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune8 = new wxCheckBox( m_enemystatpanel2, wxID_SI8, _("Easy Kill"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune8, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune9 = new wxCheckBox( m_enemystatpanel2, wxID_SI9, _("Death"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune9, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune10 = new wxCheckBox( m_enemystatpanel2, wxID_SI10, _("Low HP"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune10, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune11 = new wxCheckBox( m_enemystatpanel2, wxID_SI11, _("Confuse"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune11, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune12 = new wxCheckBox( m_enemystatpanel2, wxID_SI12, _("Berserk"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune12, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune13 = new wxCheckBox( m_enemystatpanel2, wxID_SI13, _("Stop"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune13, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune14 = new wxCheckBox( m_enemystatpanel2, wxID_SI14, _("Auto-Life"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune14, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune15 = new wxCheckBox( m_enemystatpanel2, wxID_SI15, _("Trance"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune15, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune16 = new wxCheckBox( m_enemystatpanel2, wxID_SI16, _("Defend"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune16, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune17 = new wxCheckBox( m_enemystatpanel2, wxID_SI17, _("Poison"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune17, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune18 = new wxCheckBox( m_enemystatpanel2, wxID_SI18, _("Sleep"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune18, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune19 = new wxCheckBox( m_enemystatpanel2, wxID_SI19, _("Regen"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune19, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune20 = new wxCheckBox( m_enemystatpanel2, wxID_SI20, _("Haste"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune20, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune21 = new wxCheckBox( m_enemystatpanel2, wxID_SI21, _("Slow"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune21, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune22 = new wxCheckBox( m_enemystatpanel2, wxID_SI22, _("Float"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune22, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune23 = new wxCheckBox( m_enemystatpanel2, wxID_SI23, _("Shell"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune23, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune24 = new wxCheckBox( m_enemystatpanel2, wxID_SI24, _("Protect"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune24, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune25 = new wxCheckBox( m_enemystatpanel2, wxID_SI25, _("Heat"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune25, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune26 = new wxCheckBox( m_enemystatpanel2, wxID_SI26, _("Freeze"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune26, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune27 = new wxCheckBox( m_enemystatpanel2, wxID_SI27, _("Vanish"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune27, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune28 = new wxCheckBox( m_enemystatpanel2, wxID_SI28, _("Doom"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune28, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune29 = new wxCheckBox( m_enemystatpanel2, wxID_SI29, _("Mini"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune29, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune30 = new wxCheckBox( m_enemystatpanel2, wxID_SI30, _("Reflect"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune30, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune31 = new wxCheckBox( m_enemystatpanel2, wxID_SI31, _("Jump"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune31, 0, wxALL, 5 );
-
-	m_enemystatstatusimmune32 = new wxCheckBox( m_enemystatpanel2, wxID_SI32, _("Gradual Petrify"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer19->Add( m_enemystatstatusimmune32, 0, wxALL, 5 );
+	m_enemystatimmunelist = new wxListBox( m_enemystatpanel2, wxID_REMOVEIMMUNE, wxDefaultPosition, wxSize( 120,-1 ), 0, NULL, 0 );
+	gbSizer7521->Add( m_enemystatimmunelist, wxGBPosition( 1, 1 ), wxGBSpan( 2, 1 ), wxALL|wxEXPAND, 5 );
 
 
-	fgSizer92->Add( gSizer19, 1, wxEXPAND, 5 );
+	fgSizer92->Add( gbSizer7521, 1, wxEXPAND, 5 );
 
 	m_staticText78 = new wxStaticText( m_enemystatpanel2, wxID_ANY, _("Auto-status"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText78->Wrap( -1 );
 	fgSizer92->Add( m_staticText78, 0, wxALL, 5 );
 
-	wxGridSizer* gSizer191;
-	gSizer191 = new wxGridSizer( 8, 4, 0, 0 );
+	wxGridBagSizer* gbSizer75211;
+	gbSizer75211 = new wxGridBagSizer( 0, 0 );
+	gbSizer75211->SetFlexibleDirection( wxBOTH );
+	gbSizer75211->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
-	m_enemystatstatusauto1 = new wxCheckBox( m_enemystatpanel2, wxID_SA1, _("Petrify"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto1, 0, wxALL, 5 );
+	m_enemystataddauto = new wxButton( m_enemystatpanel2, wxID_ADDAUTO, _("Add Status"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer75211->Add( m_enemystataddauto, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
 
-	m_enemystatstatusauto2 = new wxCheckBox( m_enemystatpanel2, wxID_SA2, _("Venom"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto2, 0, wxALL, 5 );
+	m_enemystatremoveauto = new wxButton( m_enemystatpanel2, wxID_REMOVEAUTO, _("Remove Status"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer75211->Add( m_enemystatremoveauto, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
 
-	m_enemystatstatusauto3 = new wxCheckBox( m_enemystatpanel2, wxID_SA3, _("Virus"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto3, 0, wxALL, 5 );
+	m_enemystatautobaselist = new wxListBox( m_enemystatpanel2, wxID_ADDAUTO, wxDefaultPosition, wxSize( 120,150 ), 0, NULL, 0 );
+	gbSizer75211->Add( m_enemystatautobaselist, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
 
-	m_enemystatstatusauto4 = new wxCheckBox( m_enemystatpanel2, wxID_SA4, _("Silence"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto4, 0, wxALL, 5 );
+	m_enemystatautobaseint = new wxSpinCtrl( m_enemystatpanel2, wxID_AUTOSTATUS, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL|wxSP_ARROW_KEYS, 0, 31, 0 );
+	gbSizer75211->Add( m_enemystatautobaseint, wxGBPosition( 2, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
 
-	m_enemystatstatusauto5 = new wxCheckBox( m_enemystatpanel2, wxID_SA5, _("Blind"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto5, 0, wxALL, 5 );
-
-	m_enemystatstatusauto6 = new wxCheckBox( m_enemystatpanel2, wxID_SA6, _("Trouble"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto6, 0, wxALL, 5 );
-
-	m_enemystatstatusauto7 = new wxCheckBox( m_enemystatpanel2, wxID_SA7, _("Zombie"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto7, 0, wxALL, 5 );
-
-	m_enemystatstatusauto8 = new wxCheckBox( m_enemystatpanel2, wxID_SA8, _("Easy Kill"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto8, 0, wxALL, 5 );
-
-	m_enemystatstatusauto9 = new wxCheckBox( m_enemystatpanel2, wxID_SA9, _("Death"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto9, 0, wxALL, 5 );
-
-	m_enemystatstatusauto10 = new wxCheckBox( m_enemystatpanel2, wxID_SA10, _("Low HP"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto10, 0, wxALL, 5 );
-
-	m_enemystatstatusauto11 = new wxCheckBox( m_enemystatpanel2, wxID_SA11, _("Confuse"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto11, 0, wxALL, 5 );
-
-	m_enemystatstatusauto12 = new wxCheckBox( m_enemystatpanel2, wxID_SA12, _("Berserk"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto12, 0, wxALL, 5 );
-
-	m_enemystatstatusauto13 = new wxCheckBox( m_enemystatpanel2, wxID_SA13, _("Stop"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto13, 0, wxALL, 5 );
-
-	m_enemystatstatusauto14 = new wxCheckBox( m_enemystatpanel2, wxID_SA14, _("Auto-Life"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto14, 0, wxALL, 5 );
-
-	m_enemystatstatusauto15 = new wxCheckBox( m_enemystatpanel2, wxID_SA15, _("Trance"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto15, 0, wxALL, 5 );
-
-	m_enemystatstatusauto16 = new wxCheckBox( m_enemystatpanel2, wxID_SA16, _("Defend"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto16, 0, wxALL, 5 );
-
-	m_enemystatstatusauto17 = new wxCheckBox( m_enemystatpanel2, wxID_SA17, _("Poison"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto17, 0, wxALL, 5 );
-
-	m_enemystatstatusauto18 = new wxCheckBox( m_enemystatpanel2, wxID_SA18, _("Sleep"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto18, 0, wxALL, 5 );
-
-	m_enemystatstatusauto19 = new wxCheckBox( m_enemystatpanel2, wxID_SA19, _("Regen"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto19, 0, wxALL, 5 );
-
-	m_enemystatstatusauto20 = new wxCheckBox( m_enemystatpanel2, wxID_SA20, _("Haste"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto20, 0, wxALL, 5 );
-
-	m_enemystatstatusauto21 = new wxCheckBox( m_enemystatpanel2, wxID_SA21, _("Slow"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto21, 0, wxALL, 5 );
-
-	m_enemystatstatusauto22 = new wxCheckBox( m_enemystatpanel2, wxID_SA22, _("Float"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto22, 0, wxALL, 5 );
-
-	m_enemystatstatusauto23 = new wxCheckBox( m_enemystatpanel2, wxID_SA23, _("Shell"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto23, 0, wxALL, 5 );
-
-	m_enemystatstatusauto24 = new wxCheckBox( m_enemystatpanel2, wxID_SA24, _("Protect"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto24, 0, wxALL, 5 );
-
-	m_enemystatstatusauto25 = new wxCheckBox( m_enemystatpanel2, wxID_SA25, _("Heat"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto25, 0, wxALL, 5 );
-
-	m_enemystatstatusauto26 = new wxCheckBox( m_enemystatpanel2, wxID_SA26, _("Freeze"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto26, 0, wxALL, 5 );
-
-	m_enemystatstatusauto27 = new wxCheckBox( m_enemystatpanel2, wxID_SA27, _("Vanish"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto27, 0, wxALL, 5 );
-
-	m_enemystatstatusauto28 = new wxCheckBox( m_enemystatpanel2, wxID_SA28, _("Doom"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto28, 0, wxALL, 5 );
-
-	m_enemystatstatusauto29 = new wxCheckBox( m_enemystatpanel2, wxID_SA29, _("Mini"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto29, 0, wxALL, 5 );
-
-	m_enemystatstatusauto30 = new wxCheckBox( m_enemystatpanel2, wxID_SA30, _("Reflect"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto30, 0, wxALL, 5 );
-
-	m_enemystatstatusauto31 = new wxCheckBox( m_enemystatpanel2, wxID_SA31, _("Jump"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto31, 0, wxALL, 5 );
-
-	m_enemystatstatusauto32 = new wxCheckBox( m_enemystatpanel2, wxID_SA32, _("Gradual Petrify"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer191->Add( m_enemystatstatusauto32, 0, wxALL, 5 );
+	m_enemystatautolist = new wxListBox( m_enemystatpanel2, wxID_REMOVEAUTO, wxDefaultPosition, wxSize( 120,-1 ), 0, NULL, 0 );
+	gbSizer75211->Add( m_enemystatautolist, wxGBPosition( 1, 1 ), wxGBSpan( 2, 1 ), wxALL|wxEXPAND, 5 );
 
 
-	fgSizer92->Add( gSizer191, 1, wxEXPAND, 5 );
+	fgSizer92->Add( gbSizer75211, 1, wxEXPAND, 5 );
 
 	m_staticText80 = new wxStaticText( m_enemystatpanel2, wxID_ANY, _("Initial Status"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText80->Wrap( -1 );
 	fgSizer92->Add( m_staticText80, 0, wxALL, 5 );
 
-	wxGridSizer* gSizer192;
-	gSizer192 = new wxGridSizer( 8, 4, 0, 0 );
+	wxGridBagSizer* gbSizer75212;
+	gbSizer75212 = new wxGridBagSizer( 0, 0 );
+	gbSizer75212->SetFlexibleDirection( wxBOTH );
+	gbSizer75212->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
-	m_enemystatstatusinitial1 = new wxCheckBox( m_enemystatpanel2, wxID_ST1, _("Petrify"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial1, 0, wxALL, 5 );
+	m_enemystataddinitial = new wxButton( m_enemystatpanel2, wxID_ADDINITIAL, _("Add Status"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer75212->Add( m_enemystataddinitial, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
 
-	m_enemystatstatusinitial2 = new wxCheckBox( m_enemystatpanel2, wxID_ST2, _("Venom"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial2, 0, wxALL, 5 );
+	m_enemystatremoveinitial = new wxButton( m_enemystatpanel2, wxID_REMOVEINITIAL, _("Remove Status"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer75212->Add( m_enemystatremoveinitial, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
 
-	m_enemystatstatusinitial3 = new wxCheckBox( m_enemystatpanel2, wxID_ST3, _("Virus"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial3, 0, wxALL, 5 );
+	m_enemystatinitialbaselist = new wxListBox( m_enemystatpanel2, wxID_ADDINITIAL, wxDefaultPosition, wxSize( 120,150 ), 0, NULL, 0 );
+	gbSizer75212->Add( m_enemystatinitialbaselist, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
 
-	m_enemystatstatusinitial4 = new wxCheckBox( m_enemystatpanel2, wxID_ST4, _("Silence"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial4, 0, wxALL, 5 );
+	m_enemystatinitialbaseint = new wxSpinCtrl( m_enemystatpanel2, wxID_INITIALSTATUS, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL|wxSP_ARROW_KEYS, 0, 31, 0 );
+	gbSizer75212->Add( m_enemystatinitialbaseint, wxGBPosition( 2, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
 
-	m_enemystatstatusinitial5 = new wxCheckBox( m_enemystatpanel2, wxID_ST5, _("Blind"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial5, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial6 = new wxCheckBox( m_enemystatpanel2, wxID_ST6, _("Trouble"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial6, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial7 = new wxCheckBox( m_enemystatpanel2, wxID_ST7, _("Zombie"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial7, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial8 = new wxCheckBox( m_enemystatpanel2, wxID_ST8, _("Easy Kill"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial8, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial9 = new wxCheckBox( m_enemystatpanel2, wxID_ST9, _("Death"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial9, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial10 = new wxCheckBox( m_enemystatpanel2, wxID_ST10, _("Low HP"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial10, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial11 = new wxCheckBox( m_enemystatpanel2, wxID_ST11, _("Confuse"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial11, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial12 = new wxCheckBox( m_enemystatpanel2, wxID_ST12, _("Berserk"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial12, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial13 = new wxCheckBox( m_enemystatpanel2, wxID_ST13, _("Stop"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial13, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial14 = new wxCheckBox( m_enemystatpanel2, wxID_ST14, _("Auto-Life"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial14, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial15 = new wxCheckBox( m_enemystatpanel2, wxID_ST15, _("Trance"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial15, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial16 = new wxCheckBox( m_enemystatpanel2, wxID_ST16, _("Defend"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial16, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial17 = new wxCheckBox( m_enemystatpanel2, wxID_ST17, _("Poison"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial17, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial18 = new wxCheckBox( m_enemystatpanel2, wxID_ST18, _("Sleep"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial18, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial19 = new wxCheckBox( m_enemystatpanel2, wxID_ST19, _("Regen"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial19, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial20 = new wxCheckBox( m_enemystatpanel2, wxID_ST20, _("Haste"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial20, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial21 = new wxCheckBox( m_enemystatpanel2, wxID_ST21, _("Slow"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial21, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial22 = new wxCheckBox( m_enemystatpanel2, wxID_ST22, _("Float"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial22, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial23 = new wxCheckBox( m_enemystatpanel2, wxID_ST23, _("Shell"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial23, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial24 = new wxCheckBox( m_enemystatpanel2, wxID_ST24, _("Protect"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial24, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial25 = new wxCheckBox( m_enemystatpanel2, wxID_ST25, _("Heat"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial25, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial26 = new wxCheckBox( m_enemystatpanel2, wxID_ST26, _("Freeze"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial26, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial27 = new wxCheckBox( m_enemystatpanel2, wxID_ST27, _("Vanish"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial27, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial28 = new wxCheckBox( m_enemystatpanel2, wxID_ST28, _("Doom"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial28, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial29 = new wxCheckBox( m_enemystatpanel2, wxID_ST29, _("Mini"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial29, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial30 = new wxCheckBox( m_enemystatpanel2, wxID_ST30, _("Reflect"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial30, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial31 = new wxCheckBox( m_enemystatpanel2, wxID_ST31, _("Jump"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial31, 0, wxALL, 5 );
-
-	m_enemystatstatusinitial32 = new wxCheckBox( m_enemystatpanel2, wxID_ST32, _("Gradual Petrify"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer192->Add( m_enemystatstatusinitial32, 0, wxALL, 5 );
+	m_enemystatinitiallist = new wxListBox( m_enemystatpanel2, wxID_REMOVEINITIAL, wxDefaultPosition, wxSize( 120,-1 ), 0, NULL, 0 );
+	gbSizer75212->Add( m_enemystatinitiallist, wxGBPosition( 1, 1 ), wxGBSpan( 2, 1 ), wxALL|wxEXPAND, 5 );
 
 
-	fgSizer92->Add( gSizer192, 1, wxEXPAND, 5 );
+	fgSizer92->Add( gbSizer75212, 1, wxEXPAND, 5 );
 
 	m_staticText701 = new wxStaticText( m_enemystatpanel2, wxID_ANY, _("Blue Magic"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText701->Wrap( -1 );
@@ -4074,6 +4191,9 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemyspellstatus->SetSelection( 0 );
 	bSizer148->Add( m_enemyspellstatus, 0, wxALL, 2 );
 
+	m_enemyspellstatusint = new wxSpinCtrl( m_enemyspellscrolledwindow, wxID_STATUS, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	bSizer148->Add( m_enemyspellstatusint, 0, wxALL, 2 );
+
 	m_enemyspellstatusset = new wxButton( m_enemyspellscrolledwindow, wxID_STATUS, _("Edit Status Set"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_enemyspellstatusset->SetToolTip( _("Warning\nChanging a status set will modify it\nfor all the spells using the same set") );
 
@@ -4093,23 +4213,25 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_staticText75->Wrap( -1 );
 	fgSizer10->Add( m_staticText75, 0, wxALL, 5 );
 
-	wxGridSizer* gSizer31;
-	gSizer31 = new wxGridSizer( 1, 2, 0, 0 );
+	wxBoxSizer* bSizer332;
+	bSizer332 = new wxBoxSizer( wxHORIZONTAL );
 
 	m_enemyspellanimedit = new wxButton( m_enemyspellscrolledwindow, wxID_ANIM, _("Edit Animation"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_enemyspellanimedit->SetToolTip( _("Edit the animation sequence") );
 
-	gSizer31->Add( m_enemyspellanimedit, 0, wxALL, 2 );
+	bSizer332->Add( m_enemyspellanimedit, 0, wxALL, 2 );
 
-	wxArrayString m_enemyspellanimreflectChoices;
-	m_enemyspellanimreflect = new wxChoice( m_enemyspellscrolledwindow, wxID_ANIM, wxDefaultPosition, wxDefaultSize, m_enemyspellanimreflectChoices, 0 );
-	m_enemyspellanimreflect->SetSelection( 0 );
-	m_enemyspellanimreflect->SetToolTip( _("Spell animation used on \"Reflect Magic\"") );
+	m_enemyspellanimreflect = new wxSpinCtrl( m_enemyspellscrolledwindow, wxID_ANIM, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 511, 0 );
+	m_enemyspellanimreflect->SetToolTip( _("This SFX is only used for Return Magic\nChange the SFX in \"Edit Animation\"\nfor the main animation effect") );
 
-	gSizer31->Add( m_enemyspellanimreflect, 0, wxALL, 2 );
+	bSizer332->Add( m_enemyspellanimreflect, 0, wxALL, 2 );
+
+	m_enemyspellanimreflectlabel = new wxStaticText( m_enemyspellscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 150,-1 ), 0 );
+	m_enemyspellanimreflectlabel->Wrap( -1 );
+	bSizer332->Add( m_enemyspellanimreflectlabel, 0, wxALL, 5 );
 
 
-	fgSizer10->Add( gSizer31, 1, wxEXPAND, 5 );
+	fgSizer10->Add( bSizer332, 1, wxEXPAND, 5 );
 
 	m_staticText244 = new wxStaticText( m_enemyspellscrolledwindow, wxID_ANY, _("Animations"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText244->Wrap( -1 );
@@ -6121,6 +6243,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_spellelement7->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnSpellChangeFlags ), NULL, this );
 	m_spellelement8->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnSpellChangeFlags ), NULL, this );
 	m_spellstatus->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnSpellChangeChoice ), NULL, this );
+	m_spellstatusint->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnSpellChangeSpin ), NULL, this );
 	m_spellstatusset->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnSpellChangeButton ), NULL, this );
 	m_spellaccuracy->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnSpellChangeSpin ), NULL, this );
 	m_spellmp->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnSpellChangeSpin ), NULL, this );
@@ -6149,6 +6272,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_spellflag6->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnSpellChangeFlags ), NULL, this );
 	m_spellflag7->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnSpellChangeFlags ), NULL, this );
 	m_spellflag8->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnSpellChangeFlags ), NULL, this );
+	m_spellcustomformat->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnSpellChangeButton ), NULL, this );
+	m_spellcustomfields->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnSpellChangeButton ), NULL, this );
 	m_supportlist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxSupport ), NULL, this );
 	m_supportlist->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnSupportRightClick ), NULL, this );
 	m_supportname->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnSupportChangeName ), NULL, this );
@@ -6160,6 +6285,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_supportboostedbase->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnSupportChangeChoice ), NULL, this );
 	m_supportboostedup->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnSupportChangeButton ), NULL, this );
 	m_supportboosteddown->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnSupportChangeButton ), NULL, this );
+	m_supportcustomformat->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnSupportChangeButton ), NULL, this );
+	m_supportcustomfields->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnSupportChangeButton ), NULL, this );
 	m_cmdlist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxCommand ), NULL, this );
 	m_cmdlist->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnCommandRightClick ), NULL, this );
 	m_cmdname->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnCommandChangeName ), NULL, this );
@@ -6168,6 +6295,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_cmdhelp->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnCommandChangeHelp ), NULL, this );
 	m_cmdhelpbutton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnCommandChangeButton ), NULL, this );
 	m_cmdpanel->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnCommandChangeChoice ), NULL, this );
+	m_cmdspecificitems->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnCommandChangeFlags ), NULL, this );
 	m_cmdlink->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnCommandChangeChoice ), NULL, this );
 	m_cmdaddspell->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnCommandChangeButton ), NULL, this );
 	m_cmdremovespell->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnCommandChangeButton ), NULL, this );
@@ -6175,6 +6303,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_cmdspelllist->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnCommandChangeButton ), NULL, this );
 	m_cmdmovespellup->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnCommandChangeButton ), NULL, this );
 	m_cmdmovespelldown->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnCommandChangeButton ), NULL, this );
+	m_cmdcustomformat->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnCommandChangeButton ), NULL, this );
+	m_cmdcustomfields->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnCommandChangeButton ), NULL, this );
 	m_statlist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxStat ), NULL, this );
 	m_statlist->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnStatRightClick ), NULL, this );
 	m_statchardefaultname->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnStatChangeDefaultName ), NULL, this );
@@ -6187,16 +6317,25 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_statcharmagicstone->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnStatChangeSpin ), NULL, this );
 	m_statcharadvanced->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
 	m_statcharabilityset->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
+	m_statcharabilitylist->Connect( wxEVT_KEY_DOWN, wxKeyEventHandler( CDPanel::OnStatKeyDown ), NULL, this );
 	m_statcharabilitylist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeList ), NULL, this );
 	m_statcharabilitylist->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnStatAbilityRightClick ), NULL, this );
 	m_statcharabilitychoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharabilitycost->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnStatChangeSpin ), NULL, this );
 	m_statcharabilitybuttonup->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
 	m_statcharabilitybuttondown->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
+	m_statcharcommandattack->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
+	m_statcharcommanddefend->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharcommand1->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharcommand2->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
+	m_statcharcommanditem->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
+	m_statcharcommandchange->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
+	m_statcharcommandtranceattack->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
+	m_statcharcommandtrancedefend->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharcommandtrance1->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharcommandtrance2->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
+	m_statcharcommandtranceitem->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
+	m_statcharcommandtrancechange->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statchartranceattack->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharequipset->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharweapon->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
@@ -6208,6 +6347,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_statcharequipremove->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
 	m_statcharequipfulllist->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
 	m_statcharequiplist->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
+	m_statcustomformat->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
+	m_statcustomfields->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
 	m_statlvlexpmanage->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
 	m_statlvlexplist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeList ), NULL, this );
 	m_statlvlexpspin->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnStatChangeSpin ), NULL, this );
@@ -6217,6 +6358,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_statlvlmpmanage->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
 	m_statlvlmplist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeList ), NULL, this );
 	m_statlvlmpspin->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnStatChangeSpin ), NULL, this );
+	m_statlvlcustomformat->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
+	m_statlvlcustomfields->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
 	m_partyspeciallist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxPartySpecial ), NULL, this );
 	m_partyspecialmagicswordset->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeChoice ), NULL, this );
 	m_partyspecialmagicswordadd->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeButton ), NULL, this );
@@ -6227,6 +6370,20 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_partyspecialmagicswordlist->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnPartySpecialMagicSwordRightClick ), NULL, this );
 	m_partyspecialmagicswordrequirement->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeChoice ), NULL, this );
 	m_partyspecialmagicswordspell->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeChoice ), NULL, this );
+	m_partyspecialmagicswordcasteraddstatus->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeButton ), NULL, this );
+	m_partyspecialmagicswordcasterremovestatus->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeButton ), NULL, this );
+	m_partyspecialmagicswordcasterstatusbaselist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeListBox ), NULL, this );
+	m_partyspecialmagicswordcasterstatusbaselist->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeButton ), NULL, this );
+	m_partyspecialmagicswordcasterstatusbaseint->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnPartySpecialChangeSpin ), NULL, this );
+	m_partyspecialmagicswordcasterstatuslist->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeButton ), NULL, this );
+	m_partyspecialmagicswordknightaddstatus->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeButton ), NULL, this );
+	m_partyspecialmagicswordknightremovestatus->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeButton ), NULL, this );
+	m_partyspecialmagicswordknightstatusbaselist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeListBox ), NULL, this );
+	m_partyspecialmagicswordknightstatusbaselist->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeButton ), NULL, this );
+	m_partyspecialmagicswordknightstatusbaseint->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnPartySpecialChangeSpin ), NULL, this );
+	m_partyspecialmagicswordknightstatuslist->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeButton ), NULL, this );
+	m_partyspecialcustomformat->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeButton ), NULL, this );
+	m_partyspecialcustomfields->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeButton ), NULL, this );
 	m_notebookinventory->Connect( wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED, wxNotebookEventHandler( CDPanel::OnNotebookInventory ), NULL, this );
 	m_notebookitem->Connect( wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED, wxNotebookEventHandler( CDPanel::OnNotebookNone ), NULL, this );
 	m_itemlist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxItem ), NULL, this );
@@ -6250,6 +6407,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_itemtype7->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
 	m_itemtype8->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
 	m_itemprice->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
+	m_itemsellprice->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
 	m_itemcharavailability16->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
 	m_itemcharavailability15->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
 	m_itemcharavailability14->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
@@ -6290,38 +6448,21 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_itemusableeffect->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnItemChangeChoice ), NULL, this );
 	m_itemusableeffectint->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
 	m_itemusablepower->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
-	m_itemusablestatus1->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus2->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus3->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus4->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus5->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus6->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus7->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus8->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus9->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus10->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus11->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus12->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus13->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus14->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus15->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus16->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus17->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus18->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus19->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus20->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus21->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus22->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus23->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus24->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus25->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus26->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus27->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus28->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus29->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus30->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus31->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus32->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
+	m_itemusableelement1->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
+	m_itemusableelement2->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
+	m_itemusableelement3->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
+	m_itemusableelement4->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
+	m_itemusableelement5->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
+	m_itemusableelement6->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
+	m_itemusableelement7->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
+	m_itemusableelement8->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
+	m_itemusableaddstatus->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
+	m_itemusableremovestatus->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
+	m_itemusablestatusbaselist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnItemChangeListBox ), NULL, this );
+	m_itemusablestatusbaselist->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
+	m_itemusablestatusbaseint->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
+	m_itemusablestatuslist->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
+	m_itemusableaccuracy->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
 	m_itemusablemodeledit->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnButtonClickItemModel ), NULL, this );
 	m_itemusabletargettype->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnItemChangeChoice ), NULL, this );
 	m_itemusabletargetamount->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnItemChangeChoice ), NULL, this );
@@ -6342,6 +6483,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_itemweaponelement7->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
 	m_itemweaponelement8->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
 	m_itemweaponstatus->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnItemChangeChoice ), NULL, this );
+	m_itemweaponstatusint->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
+	m_itemweaponstatusset->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
 	m_itemweaponaccuracy->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
 	m_itemweaponflag1->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
 	m_itemweaponflag2->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
@@ -6361,6 +6504,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_itemarmorevade->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
 	m_itemarmormagicdefence->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
 	m_itemarmormagicevade->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
+	m_itemcustomformat->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
+	m_itemcustomfields->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
 	m_keyitemlist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxKeyItem ), NULL, this );
 	m_keyitemlist->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnKeyItemRightClick ), NULL, this );
 	m_keyitemname->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnKeyItemChangeName ), NULL, this );
@@ -6380,6 +6525,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_shopitemlist->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnShopChangeButton ), NULL, this );
 	m_shopmoveitemup->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnShopChangeButton ), NULL, this );
 	m_shopmoveitemdown->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnShopChangeButton ), NULL, this );
+	m_shopcustomformat->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnShopChangeButton ), NULL, this );
+	m_shopcustomfields->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnShopChangeButton ), NULL, this );
 	m_synthshoplist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxSynthesisShop ), NULL, this );
 	m_synthshoplist->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnSynthesisRightClick ), NULL, this );
 	m_synthshopid->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnShopChangeSpin ), NULL, this );
@@ -6399,6 +6546,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_synthshopshoplist->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnShopChangeButton ), NULL, this );
 	m_synthshopmoveshopup->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnShopChangeButton ), NULL, this );
 	m_synthshopmoveshopdown->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnShopChangeButton ), NULL, this );
+	m_synthshopcustomformat->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnShopChangeButton ), NULL, this );
+	m_synthshopcustomfields->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnShopChangeButton ), NULL, this );
 	m_enemylist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxEnemy ), NULL, this );
 	m_enemystatlist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxEnemyStat ), NULL, this );
 	m_enemystatlist->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnEnemyStatRightClick ), NULL, this );
@@ -6434,6 +6583,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemystathp->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatmp->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatattack->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
+	m_enemystataccuracy->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatspeed->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatstrength->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatmagic->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
@@ -6443,14 +6593,23 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemystatmagicdefence->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatmagicevade->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatitemsteal1->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemystatitemstealrate1->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatitemsteal2->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemystatitemstealrate2->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatitemsteal3->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemystatitemstealrate3->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatitemsteal4->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemystatitemstealrate4->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatitemdrop1->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemystatitemdroprate1->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatitemdrop2->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemystatitemdroprate2->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatitemdrop3->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemystatitemdroprate3->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatitemdrop4->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemystatitemdroprate4->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatdropcard->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemystatdropcardrate->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatexp->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatgils->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatdefaultattack->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
@@ -6509,102 +6668,24 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemystatclass6->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemystatclass7->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemystatclass8->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune1->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune2->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune3->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune4->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune5->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune6->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune7->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune8->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune9->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune10->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune11->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune12->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune13->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune14->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune15->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune16->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune17->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune18->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune19->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune20->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune21->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune22->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune23->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune24->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune25->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune26->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune27->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune28->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune29->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune30->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune31->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune32->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto1->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto2->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto3->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto4->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto5->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto6->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto7->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto8->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto9->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto10->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto11->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto12->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto13->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto14->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto15->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto16->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto17->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto18->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto19->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto20->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto21->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto22->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto23->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto24->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto25->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto26->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto27->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto28->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto29->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto30->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto31->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto32->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial1->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial2->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial3->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial4->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial5->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial6->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial7->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial8->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial9->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial10->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial11->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial12->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial13->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial14->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial15->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial16->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial17->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial18->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial19->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial20->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial21->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial22->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial23->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial24->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial25->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial26->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial27->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial28->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial29->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial30->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial31->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial32->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemystataddimmune->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
+	m_enemystatremoveimmune->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
+	m_enemystatimmunebaselist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeListBox ), NULL, this );
+	m_enemystatimmunebaselist->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
+	m_enemystatimmunebaseint->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
+	m_enemystatimmunelist->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
+	m_enemystataddauto->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
+	m_enemystatremoveauto->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
+	m_enemystatautobaselist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeListBox ), NULL, this );
+	m_enemystatautobaselist->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
+	m_enemystatautobaseint->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
+	m_enemystatautolist->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
+	m_enemystataddinitial->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
+	m_enemystatremoveinitial->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
+	m_enemystatinitialbaselist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeListBox ), NULL, this );
+	m_enemystatinitialbaselist->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
+	m_enemystatinitialbaseint->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
+	m_enemystatinitiallist->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
 	m_enemystatbluemagic->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
 	m_enemyspellname->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnEnemySpellChangeName ), NULL, this );
 	m_enemyspellnamebutton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
@@ -6621,10 +6702,11 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemyspellelement8->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyspellaccuracy->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemyspellstatus->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemyspellstatusint->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemyspellstatusset->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
 	m_enemyspellmp->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemyspellanimedit->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
-	m_enemyspellanimreflect->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemyspellanimreflect->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemyspellbaseanim->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
 	m_enemyspelltargetflagdead->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyspelltargetflagdeadfirst->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
@@ -6829,6 +6911,7 @@ CDPanel::~CDPanel()
 	m_spellelement7->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnSpellChangeFlags ), NULL, this );
 	m_spellelement8->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnSpellChangeFlags ), NULL, this );
 	m_spellstatus->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnSpellChangeChoice ), NULL, this );
+	m_spellstatusint->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnSpellChangeSpin ), NULL, this );
 	m_spellstatusset->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnSpellChangeButton ), NULL, this );
 	m_spellaccuracy->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnSpellChangeSpin ), NULL, this );
 	m_spellmp->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnSpellChangeSpin ), NULL, this );
@@ -6857,6 +6940,8 @@ CDPanel::~CDPanel()
 	m_spellflag6->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnSpellChangeFlags ), NULL, this );
 	m_spellflag7->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnSpellChangeFlags ), NULL, this );
 	m_spellflag8->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnSpellChangeFlags ), NULL, this );
+	m_spellcustomformat->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnSpellChangeButton ), NULL, this );
+	m_spellcustomfields->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnSpellChangeButton ), NULL, this );
 	m_supportlist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxSupport ), NULL, this );
 	m_supportlist->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnSupportRightClick ), NULL, this );
 	m_supportname->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnSupportChangeName ), NULL, this );
@@ -6868,6 +6953,8 @@ CDPanel::~CDPanel()
 	m_supportboostedbase->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnSupportChangeChoice ), NULL, this );
 	m_supportboostedup->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnSupportChangeButton ), NULL, this );
 	m_supportboosteddown->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnSupportChangeButton ), NULL, this );
+	m_supportcustomformat->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnSupportChangeButton ), NULL, this );
+	m_supportcustomfields->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnSupportChangeButton ), NULL, this );
 	m_cmdlist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxCommand ), NULL, this );
 	m_cmdlist->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnCommandRightClick ), NULL, this );
 	m_cmdname->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnCommandChangeName ), NULL, this );
@@ -6876,6 +6963,7 @@ CDPanel::~CDPanel()
 	m_cmdhelp->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnCommandChangeHelp ), NULL, this );
 	m_cmdhelpbutton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnCommandChangeButton ), NULL, this );
 	m_cmdpanel->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnCommandChangeChoice ), NULL, this );
+	m_cmdspecificitems->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnCommandChangeFlags ), NULL, this );
 	m_cmdlink->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnCommandChangeChoice ), NULL, this );
 	m_cmdaddspell->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnCommandChangeButton ), NULL, this );
 	m_cmdremovespell->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnCommandChangeButton ), NULL, this );
@@ -6883,6 +6971,8 @@ CDPanel::~CDPanel()
 	m_cmdspelllist->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnCommandChangeButton ), NULL, this );
 	m_cmdmovespellup->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnCommandChangeButton ), NULL, this );
 	m_cmdmovespelldown->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnCommandChangeButton ), NULL, this );
+	m_cmdcustomformat->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnCommandChangeButton ), NULL, this );
+	m_cmdcustomfields->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnCommandChangeButton ), NULL, this );
 	m_statlist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxStat ), NULL, this );
 	m_statlist->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnStatRightClick ), NULL, this );
 	m_statchardefaultname->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnStatChangeDefaultName ), NULL, this );
@@ -6895,16 +6985,25 @@ CDPanel::~CDPanel()
 	m_statcharmagicstone->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnStatChangeSpin ), NULL, this );
 	m_statcharadvanced->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
 	m_statcharabilityset->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
+	m_statcharabilitylist->Disconnect( wxEVT_KEY_DOWN, wxKeyEventHandler( CDPanel::OnStatKeyDown ), NULL, this );
 	m_statcharabilitylist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeList ), NULL, this );
 	m_statcharabilitylist->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnStatAbilityRightClick ), NULL, this );
 	m_statcharabilitychoice->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharabilitycost->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnStatChangeSpin ), NULL, this );
 	m_statcharabilitybuttonup->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
 	m_statcharabilitybuttondown->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
+	m_statcharcommandattack->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
+	m_statcharcommanddefend->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharcommand1->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharcommand2->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
+	m_statcharcommanditem->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
+	m_statcharcommandchange->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
+	m_statcharcommandtranceattack->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
+	m_statcharcommandtrancedefend->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharcommandtrance1->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharcommandtrance2->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
+	m_statcharcommandtranceitem->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
+	m_statcharcommandtrancechange->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statchartranceattack->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharequipset->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharweapon->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
@@ -6916,6 +7015,8 @@ CDPanel::~CDPanel()
 	m_statcharequipremove->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
 	m_statcharequipfulllist->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
 	m_statcharequiplist->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
+	m_statcustomformat->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
+	m_statcustomfields->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
 	m_statlvlexpmanage->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
 	m_statlvlexplist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeList ), NULL, this );
 	m_statlvlexpspin->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnStatChangeSpin ), NULL, this );
@@ -6925,6 +7026,8 @@ CDPanel::~CDPanel()
 	m_statlvlmpmanage->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
 	m_statlvlmplist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeList ), NULL, this );
 	m_statlvlmpspin->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnStatChangeSpin ), NULL, this );
+	m_statlvlcustomformat->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
+	m_statlvlcustomfields->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
 	m_partyspeciallist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxPartySpecial ), NULL, this );
 	m_partyspecialmagicswordset->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeChoice ), NULL, this );
 	m_partyspecialmagicswordadd->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeButton ), NULL, this );
@@ -6935,6 +7038,20 @@ CDPanel::~CDPanel()
 	m_partyspecialmagicswordlist->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnPartySpecialMagicSwordRightClick ), NULL, this );
 	m_partyspecialmagicswordrequirement->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeChoice ), NULL, this );
 	m_partyspecialmagicswordspell->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeChoice ), NULL, this );
+	m_partyspecialmagicswordcasteraddstatus->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeButton ), NULL, this );
+	m_partyspecialmagicswordcasterremovestatus->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeButton ), NULL, this );
+	m_partyspecialmagicswordcasterstatusbaselist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeListBox ), NULL, this );
+	m_partyspecialmagicswordcasterstatusbaselist->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeButton ), NULL, this );
+	m_partyspecialmagicswordcasterstatusbaseint->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnPartySpecialChangeSpin ), NULL, this );
+	m_partyspecialmagicswordcasterstatuslist->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeButton ), NULL, this );
+	m_partyspecialmagicswordknightaddstatus->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeButton ), NULL, this );
+	m_partyspecialmagicswordknightremovestatus->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeButton ), NULL, this );
+	m_partyspecialmagicswordknightstatusbaselist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeListBox ), NULL, this );
+	m_partyspecialmagicswordknightstatusbaselist->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeButton ), NULL, this );
+	m_partyspecialmagicswordknightstatusbaseint->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnPartySpecialChangeSpin ), NULL, this );
+	m_partyspecialmagicswordknightstatuslist->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeButton ), NULL, this );
+	m_partyspecialcustomformat->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeButton ), NULL, this );
+	m_partyspecialcustomfields->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnPartySpecialChangeButton ), NULL, this );
 	m_notebookinventory->Disconnect( wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED, wxNotebookEventHandler( CDPanel::OnNotebookInventory ), NULL, this );
 	m_notebookitem->Disconnect( wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED, wxNotebookEventHandler( CDPanel::OnNotebookNone ), NULL, this );
 	m_itemlist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxItem ), NULL, this );
@@ -6958,6 +7075,7 @@ CDPanel::~CDPanel()
 	m_itemtype7->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
 	m_itemtype8->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
 	m_itemprice->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
+	m_itemsellprice->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
 	m_itemcharavailability16->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
 	m_itemcharavailability15->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
 	m_itemcharavailability14->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
@@ -6998,38 +7116,21 @@ CDPanel::~CDPanel()
 	m_itemusableeffect->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnItemChangeChoice ), NULL, this );
 	m_itemusableeffectint->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
 	m_itemusablepower->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
-	m_itemusablestatus1->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus2->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus3->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus4->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus5->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus6->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus7->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus8->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus9->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus10->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus11->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus12->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus13->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus14->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus15->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus16->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus17->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus18->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus19->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus20->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus21->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus22->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus23->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus24->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus25->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus26->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus27->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus28->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus29->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus30->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus31->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
-	m_itemusablestatus32->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
+	m_itemusableelement1->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
+	m_itemusableelement2->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
+	m_itemusableelement3->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
+	m_itemusableelement4->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
+	m_itemusableelement5->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
+	m_itemusableelement6->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
+	m_itemusableelement7->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
+	m_itemusableelement8->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
+	m_itemusableaddstatus->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
+	m_itemusableremovestatus->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
+	m_itemusablestatusbaselist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnItemChangeListBox ), NULL, this );
+	m_itemusablestatusbaselist->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
+	m_itemusablestatusbaseint->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
+	m_itemusablestatuslist->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
+	m_itemusableaccuracy->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
 	m_itemusablemodeledit->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnButtonClickItemModel ), NULL, this );
 	m_itemusabletargettype->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnItemChangeChoice ), NULL, this );
 	m_itemusabletargetamount->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnItemChangeChoice ), NULL, this );
@@ -7050,6 +7151,8 @@ CDPanel::~CDPanel()
 	m_itemweaponelement7->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
 	m_itemweaponelement8->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
 	m_itemweaponstatus->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnItemChangeChoice ), NULL, this );
+	m_itemweaponstatusint->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
+	m_itemweaponstatusset->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
 	m_itemweaponaccuracy->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
 	m_itemweaponflag1->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
 	m_itemweaponflag2->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeFlags ), NULL, this );
@@ -7069,6 +7172,8 @@ CDPanel::~CDPanel()
 	m_itemarmorevade->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
 	m_itemarmormagicdefence->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
 	m_itemarmormagicevade->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnItemChangeSpin ), NULL, this );
+	m_itemcustomformat->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
+	m_itemcustomfields->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
 	m_keyitemlist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxKeyItem ), NULL, this );
 	m_keyitemlist->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnKeyItemRightClick ), NULL, this );
 	m_keyitemname->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnKeyItemChangeName ), NULL, this );
@@ -7088,6 +7193,8 @@ CDPanel::~CDPanel()
 	m_shopitemlist->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnShopChangeButton ), NULL, this );
 	m_shopmoveitemup->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnShopChangeButton ), NULL, this );
 	m_shopmoveitemdown->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnShopChangeButton ), NULL, this );
+	m_shopcustomformat->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnShopChangeButton ), NULL, this );
+	m_shopcustomfields->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnShopChangeButton ), NULL, this );
 	m_synthshoplist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxSynthesisShop ), NULL, this );
 	m_synthshoplist->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnSynthesisRightClick ), NULL, this );
 	m_synthshopid->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnShopChangeSpin ), NULL, this );
@@ -7107,6 +7214,8 @@ CDPanel::~CDPanel()
 	m_synthshopshoplist->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnShopChangeButton ), NULL, this );
 	m_synthshopmoveshopup->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnShopChangeButton ), NULL, this );
 	m_synthshopmoveshopdown->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnShopChangeButton ), NULL, this );
+	m_synthshopcustomformat->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnShopChangeButton ), NULL, this );
+	m_synthshopcustomfields->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnShopChangeButton ), NULL, this );
 	m_enemylist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxEnemy ), NULL, this );
 	m_enemystatlist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxEnemyStat ), NULL, this );
 	m_enemystatlist->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnEnemyStatRightClick ), NULL, this );
@@ -7142,6 +7251,7 @@ CDPanel::~CDPanel()
 	m_enemystathp->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatmp->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatattack->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
+	m_enemystataccuracy->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatspeed->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatstrength->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatmagic->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
@@ -7151,14 +7261,23 @@ CDPanel::~CDPanel()
 	m_enemystatmagicdefence->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatmagicevade->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatitemsteal1->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemystatitemstealrate1->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatitemsteal2->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemystatitemstealrate2->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatitemsteal3->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemystatitemstealrate3->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatitemsteal4->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemystatitemstealrate4->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatitemdrop1->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemystatitemdroprate1->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatitemdrop2->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemystatitemdroprate2->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatitemdrop3->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemystatitemdroprate3->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatitemdrop4->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemystatitemdroprate4->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatdropcard->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemystatdropcardrate->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatexp->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatgils->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemystatdefaultattack->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
@@ -7217,102 +7336,24 @@ CDPanel::~CDPanel()
 	m_enemystatclass6->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemystatclass7->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemystatclass8->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune1->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune2->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune3->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune4->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune5->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune6->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune7->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune8->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune9->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune10->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune11->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune12->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune13->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune14->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune15->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune16->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune17->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune18->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune19->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune20->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune21->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune22->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune23->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune24->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune25->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune26->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune27->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune28->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune29->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune30->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune31->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusimmune32->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto1->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto2->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto3->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto4->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto5->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto6->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto7->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto8->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto9->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto10->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto11->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto12->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto13->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto14->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto15->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto16->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto17->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto18->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto19->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto20->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto21->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto22->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto23->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto24->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto25->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto26->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto27->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto28->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto29->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto30->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto31->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusauto32->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial1->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial2->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial3->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial4->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial5->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial6->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial7->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial8->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial9->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial10->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial11->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial12->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial13->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial14->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial15->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial16->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial17->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial18->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial19->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial20->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial21->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial22->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial23->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial24->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial25->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial26->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial27->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial28->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial29->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial30->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial31->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
-	m_enemystatstatusinitial32->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemystataddimmune->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
+	m_enemystatremoveimmune->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
+	m_enemystatimmunebaselist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeListBox ), NULL, this );
+	m_enemystatimmunebaselist->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
+	m_enemystatimmunebaseint->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
+	m_enemystatimmunelist->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
+	m_enemystataddauto->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
+	m_enemystatremoveauto->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
+	m_enemystatautobaselist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeListBox ), NULL, this );
+	m_enemystatautobaselist->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
+	m_enemystatautobaseint->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
+	m_enemystatautolist->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
+	m_enemystataddinitial->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
+	m_enemystatremoveinitial->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
+	m_enemystatinitialbaselist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeListBox ), NULL, this );
+	m_enemystatinitialbaselist->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
+	m_enemystatinitialbaseint->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
+	m_enemystatinitiallist->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
 	m_enemystatbluemagic->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
 	m_enemyspellname->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnEnemySpellChangeName ), NULL, this );
 	m_enemyspellnamebutton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
@@ -7329,10 +7370,11 @@ CDPanel::~CDPanel()
 	m_enemyspellelement8->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyspellaccuracy->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemyspellstatus->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemyspellstatusint->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemyspellstatusset->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
 	m_enemyspellmp->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemyspellanimedit->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
-	m_enemyspellanimreflect->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
+	m_enemyspellanimreflect->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemyspellbaseanim->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
 	m_enemyspelltargetflagdead->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyspelltargetflagdeadfirst->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
@@ -7811,110 +7853,48 @@ SpellStatusWindow::SpellStatusWindow( wxWindow* parent, wxWindowID id, const wxS
 
 	wxFlexGridSizer* fgSizer33;
 	fgSizer33 = new wxFlexGridSizer( 0, 1, 0, 0 );
+	fgSizer33->AddGrowableRow( 0 );
 	fgSizer33->SetFlexibleDirection( wxBOTH );
 	fgSizer33->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
-	wxGridSizer* gSizer46;
-	gSizer46 = new wxGridSizer( 0, 4, 0, 0 );
+	wxGridBagSizer* gbSizer75;
+	gbSizer75 = new wxGridBagSizer( 0, 0 );
+	gbSizer75->SetFlexibleDirection( wxBOTH );
+	gbSizer75->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
-	m_statusbox1 = new wxCheckBox( this, wxID_ANY, _("Petrify"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox1, 0, wxALL, 5 );
+	m_addstatus = new wxButton( this, wxID_ADD, _("Add Status"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer75->Add( m_addstatus, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
 
-	m_statusbox2 = new wxCheckBox( this, wxID_ANY, _("Venom"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox2, 0, wxALL, 5 );
+	m_removestatus = new wxButton( this, wxID_REMOVE, _("Remove Status"), wxDefaultPosition, wxDefaultSize, 0 );
+	gbSizer75->Add( m_removestatus, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
 
-	m_statusbox3 = new wxCheckBox( this, wxID_ANY, _("Virus"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox3, 0, wxALL, 5 );
+	m_baselist = new wxListBox( this, wxID_ADD, wxDefaultPosition, wxSize( 120,150 ), 0, NULL, 0 );
+	gbSizer75->Add( m_baselist, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
 
-	m_statusbox4 = new wxCheckBox( this, wxID_ANY, _("Silence"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox4, 0, wxALL, 5 );
+	m_baseint = new wxSpinCtrl( this, wxID_STATUS, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL|wxSP_ARROW_KEYS, 0, 31, 0 );
+	gbSizer75->Add( m_baseint, wxGBPosition( 2, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
 
-	m_statusbox5 = new wxCheckBox( this, wxID_ANY, _("Darkness"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox5, 0, wxALL, 5 );
-
-	m_statusbox6 = new wxCheckBox( this, wxID_ANY, _("Trouble"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox6, 0, wxALL, 5 );
-
-	m_statusbox7 = new wxCheckBox( this, wxID_ANY, _("Zombie"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox7, 0, wxALL, 5 );
-
-	m_statusbox8 = new wxCheckBox( this, wxID_ANY, _("Easy Kill"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox8, 0, wxALL, 5 );
-
-	m_statusbox9 = new wxCheckBox( this, wxID_ANY, _("Death"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox9, 0, wxALL, 5 );
-
-	m_statusbox10 = new wxCheckBox( this, wxID_ANY, _("Low HP"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox10, 0, wxALL, 5 );
-
-	m_statusbox11 = new wxCheckBox( this, wxID_ANY, _("Confuse"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox11, 0, wxALL, 5 );
-
-	m_statusbox12 = new wxCheckBox( this, wxID_ANY, _("Berserk"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox12, 0, wxALL, 5 );
-
-	m_statusbox13 = new wxCheckBox( this, wxID_ANY, _("Stop"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox13, 0, wxALL, 5 );
-
-	m_statusbox14 = new wxCheckBox( this, wxID_ANY, _("Auto-Life"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox14, 0, wxALL, 5 );
-
-	m_statusbox15 = new wxCheckBox( this, wxID_ANY, _("Trance"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox15, 0, wxALL, 5 );
-
-	m_statusbox16 = new wxCheckBox( this, wxID_ANY, _("Defend"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox16, 0, wxALL, 5 );
-
-	m_statusbox17 = new wxCheckBox( this, wxID_ANY, _("Poison"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox17, 0, wxALL, 5 );
-
-	m_statusbox18 = new wxCheckBox( this, wxID_ANY, _("Sleep"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox18, 0, wxALL, 5 );
-
-	m_statusbox19 = new wxCheckBox( this, wxID_ANY, _("Regen"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox19, 0, wxALL, 5 );
-
-	m_statusbox20 = new wxCheckBox( this, wxID_ANY, _("Haste"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox20, 0, wxALL, 5 );
-
-	m_statusbox21 = new wxCheckBox( this, wxID_ANY, _("Slow"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox21, 0, wxALL, 5 );
-
-	m_statusbox22 = new wxCheckBox( this, wxID_ANY, _("Float"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox22, 0, wxALL, 5 );
-
-	m_statusbox23 = new wxCheckBox( this, wxID_ANY, _("Shell"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox23, 0, wxALL, 5 );
-
-	m_statusbox24 = new wxCheckBox( this, wxID_ANY, _("Protect"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox24, 0, wxALL, 5 );
-
-	m_statusbox25 = new wxCheckBox( this, wxID_ANY, _("Heat"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox25, 0, wxALL, 5 );
-
-	m_statusbox26 = new wxCheckBox( this, wxID_ANY, _("Freeze"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox26, 0, wxALL, 5 );
-
-	m_statusbox27 = new wxCheckBox( this, wxID_ANY, _("Vanish"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox27, 0, wxALL, 5 );
-
-	m_statusbox28 = new wxCheckBox( this, wxID_ANY, _("Doom"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox28, 0, wxALL, 5 );
-
-	m_statusbox29 = new wxCheckBox( this, wxID_ANY, _("Mini"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox29, 0, wxALL, 5 );
-
-	m_statusbox30 = new wxCheckBox( this, wxID_ANY, _("Reflect"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox30, 0, wxALL, 5 );
-
-	m_statusbox31 = new wxCheckBox( this, wxID_ANY, _("Jump"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox31, 0, wxALL, 5 );
-
-	m_statusbox32 = new wxCheckBox( this, wxID_ANY, _("Gradual Petrify"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer46->Add( m_statusbox32, 0, wxALL, 5 );
+	m_list = new wxListBox( this, wxID_REMOVE, wxDefaultPosition, wxSize( 120,-1 ), 0, NULL, 0 );
+	gbSizer75->Add( m_list, wxGBPosition( 1, 1 ), wxGBSpan( 2, 1 ), wxALL|wxEXPAND, 5 );
 
 
-	fgSizer33->Add( gSizer46, 1, wxEXPAND, 5 );
+	fgSizer33->Add( gbSizer75, 1, wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer320;
+	bSizer320 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_statuscustomformat = new wxButton( this, wxID_CFGROUP, _("Setup format"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_statuscustomformat->SetToolTip( _("Modify CSV formatting") );
+
+	bSizer320->Add( m_statuscustomformat, 0, wxALL, 2 );
+
+	m_statuscustomfields = new wxButton( this, wxID_CFENTRY, _("Edit fields"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_statuscustomfields->SetToolTip( _("Edit the custom field\nof this specific entry") );
+
+	bSizer320->Add( m_statuscustomfields, 0, wxALL, 2 );
+
+
+	fgSizer33->Add( bSizer320, 1, wxBOTTOM|wxEXPAND|wxTOP, 8 );
 
 	wxBoxSizer* bSizer931;
 	bSizer931 = new wxBoxSizer( wxHORIZONTAL );
@@ -7936,6 +7916,14 @@ SpellStatusWindow::SpellStatusWindow( wxWindow* parent, wxWindowID id, const wxS
 	this->Centre( wxBOTH );
 
 	// Connect Events
+	m_addstatus->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( SpellStatusWindow::OnButtonClick ), NULL, this );
+	m_removestatus->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( SpellStatusWindow::OnButtonClick ), NULL, this );
+	m_baselist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( SpellStatusWindow::OnBaseListSelect ), NULL, this );
+	m_baselist->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( SpellStatusWindow::OnButtonClick ), NULL, this );
+	m_baseint->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( SpellStatusWindow::OnSpinCtrl ), NULL, this );
+	m_list->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( SpellStatusWindow::OnButtonClick ), NULL, this );
+	m_statuscustomformat->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( SpellStatusWindow::OnButtonClick ), NULL, this );
+	m_statuscustomfields->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( SpellStatusWindow::OnButtonClick ), NULL, this );
 	m_buttoncancel->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( SpellStatusWindow::OnButtonClick ), NULL, this );
 	m_buttonok->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( SpellStatusWindow::OnButtonClick ), NULL, this );
 }
@@ -7943,6 +7931,14 @@ SpellStatusWindow::SpellStatusWindow( wxWindow* parent, wxWindowID id, const wxS
 SpellStatusWindow::~SpellStatusWindow()
 {
 	// Disconnect Events
+	m_addstatus->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( SpellStatusWindow::OnButtonClick ), NULL, this );
+	m_removestatus->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( SpellStatusWindow::OnButtonClick ), NULL, this );
+	m_baselist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( SpellStatusWindow::OnBaseListSelect ), NULL, this );
+	m_baselist->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( SpellStatusWindow::OnButtonClick ), NULL, this );
+	m_baseint->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( SpellStatusWindow::OnSpinCtrl ), NULL, this );
+	m_list->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( SpellStatusWindow::OnButtonClick ), NULL, this );
+	m_statuscustomformat->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( SpellStatusWindow::OnButtonClick ), NULL, this );
+	m_statuscustomfields->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( SpellStatusWindow::OnButtonClick ), NULL, this );
 	m_buttoncancel->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( SpellStatusWindow::OnButtonClick ), NULL, this );
 	m_buttonok->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( SpellStatusWindow::OnButtonClick ), NULL, this );
 
@@ -8409,6 +8405,15 @@ CharacterParameterWindow::CharacterParameterWindow( wxWindow* parent, wxWindowID
 
 
 	fgSizer92->Add( gSizer491, 1, wxEXPAND, 5 );
+
+	m_staticText546 = new wxStaticText( this, wxID_ANY, _("Battle Parameter\nFormula"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText546->Wrap( -1 );
+	fgSizer92->Add( m_staticText546, 0, wxALL, 5 );
+
+	m_battleparam = new wxTextCtrl( this, wxID_ANY, _("0"), wxDefaultPosition, wxSize( -1,-1 ), 0 );
+	m_battleparam->SetToolTip( _("NCalc formula that can be used\nfor alternative battle parameters") );
+
+	fgSizer92->Add( m_battleparam, 0, wxALIGN_CENTER_VERTICAL|wxALL|wxEXPAND, 5 );
 
 	m_staticText355 = new wxStaticText( this, wxID_ANY, _("Model"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText355->Wrap( -1 );
@@ -9205,6 +9210,15 @@ PreferencesWindow::PreferencesWindow( wxWindow* parent, wxWindowID id, const wxS
 	m_backgroundresolution->SetToolTip( _("Expected resolution of the Field backgrounds\n32 is the default Steam resolution\nIt should be increased only if a background mod has been installed directly on the files that you open with Hades Workshop") );
 
 	fgSizer182->Add( m_backgroundresolution, 0, wxALL, 2 );
+
+	m_staticText548 = new wxStaticText( m_panel172, wxID_ANY, _("Export as Patches"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText548->Wrap( -1 );
+	fgSizer182->Add( m_staticText548, 0, wxALL, 5 );
+
+	m_preferexportaspatches = new wxCheckBox( m_panel172, wxID_ANY, _("Enable"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_preferexportaspatches->SetToolTip( _("Export custom datas as \"ItemAbilityPatch.txt\"\nand \"ItemShopPatch.txt\" instead of CSV entries\n\nThis improves mod compatibility sometimes") );
+
+	fgSizer182->Add( m_preferexportaspatches, 0, wxALL, 5 );
 
 
 	bSizer422->Add( fgSizer182, 1, wxEXPAND, 5 );
@@ -13755,6 +13769,149 @@ ImageMapAddModelWindow::ImageMapAddModelWindow( wxWindow* parent, wxWindowID id,
 
 ImageMapAddModelWindow::~ImageMapAddModelWindow()
 {
+}
+
+DatabaseFormatWindow::DatabaseFormatWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxSize( 500,400 ), wxDefaultSize );
+
+	wxFlexGridSizer* fgSizer45;
+	fgSizer45 = new wxFlexGridSizer( 0, 1, 0, 0 );
+	fgSizer45->AddGrowableCol( 0 );
+	fgSizer45->AddGrowableRow( 0 );
+	fgSizer45->SetFlexibleDirection( wxBOTH );
+	fgSizer45->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	wxBoxSizer* bSizer315;
+	bSizer315 = new wxBoxSizer( wxVERTICAL );
+
+	m_staticText295 = new wxStaticText( this, wxID_ANY, _("Header"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText295->Wrap( -1 );
+	bSizer315->Add( m_staticText295, 0, wxALL, 5 );
+
+	m_textheader = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 500,100 ), wxTE_DONTWRAP|wxTE_MULTILINE );
+	bSizer315->Add( m_textheader, 0, wxALL|wxEXPAND, 5 );
+
+	m_staticText530 = new wxStaticText( this, wxID_ANY, _("Format"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText530->Wrap( -1 );
+	bSizer315->Add( m_staticText530, 0, wxALL, 5 );
+
+	m_textformat = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 500,50 ), wxTE_DONTWRAP|wxTE_MULTILINE );
+	bSizer315->Add( m_textformat, 0, wxALL|wxEXPAND, 5 );
+
+	m_staticText529 = new wxStaticText( this, wxID_ANY, _("Custom fields"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText529->Wrap( -1 );
+	bSizer315->Add( m_staticText529, 0, wxALL, 5 );
+
+	m_fieldscrolled = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxSize( -1,200 ), wxVSCROLL );
+	m_fieldscrolled->SetScrollRate( 5, 5 );
+	m_fieldscrolled->SetMaxSize( wxSize( -1,200 ) );
+
+	customfieldSizer = new wxFlexGridSizer( 0, 3, 0, 0 );
+	customfieldSizer->SetFlexibleDirection( wxBOTH );
+	customfieldSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+
+	m_fieldscrolled->SetSizer( customfieldSizer );
+	m_fieldscrolled->Layout();
+	bSizer315->Add( m_fieldscrolled, 1, wxEXPAND | wxALL, 5 );
+
+	m_buttonaddfield = new wxButton( this, wxID_ADD, _("Add custom field"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer315->Add( m_buttonaddfield, 0, wxALL, 5 );
+
+
+	fgSizer45->Add( bSizer315, 1, wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer124;
+	bSizer124 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_buttoncancel = new wxButton( this, wxID_CANCEL, _("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer124->Add( m_buttoncancel, 0, wxALL, 5 );
+
+	m_buttonok = new wxButton( this, wxID_OK, _("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer124->Add( m_buttonok, 0, wxALL, 5 );
+
+
+	fgSizer45->Add( bSizer124, 1, wxALIGN_BOTTOM|wxALIGN_RIGHT, 5 );
+
+
+	this->SetSizer( fgSizer45 );
+	this->Layout();
+	fgSizer45->Fit( this );
+
+	this->Centre( wxBOTH );
+
+	// Connect Events
+	m_buttonaddfield->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DatabaseFormatWindow::OnButtonClick ), NULL, this );
+	m_buttoncancel->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DatabaseFormatWindow::OnButtonClick ), NULL, this );
+	m_buttonok->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DatabaseFormatWindow::OnButtonClick ), NULL, this );
+}
+
+DatabaseFormatWindow::~DatabaseFormatWindow()
+{
+	// Disconnect Events
+	m_buttonaddfield->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DatabaseFormatWindow::OnButtonClick ), NULL, this );
+	m_buttoncancel->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DatabaseFormatWindow::OnButtonClick ), NULL, this );
+	m_buttonok->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DatabaseFormatWindow::OnButtonClick ), NULL, this );
+
+}
+
+DatabaseFieldWindow::DatabaseFieldWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxSize( 300,300 ), wxDefaultSize );
+
+	wxFlexGridSizer* fgSizer45;
+	fgSizer45 = new wxFlexGridSizer( 0, 1, 0, 0 );
+	fgSizer45->AddGrowableCol( 0 );
+	fgSizer45->AddGrowableRow( 1 );
+	fgSizer45->SetFlexibleDirection( wxBOTH );
+	fgSizer45->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_staticText529 = new wxStaticText( this, wxID_ANY, _("Custom fields"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText529->Wrap( -1 );
+	fgSizer45->Add( m_staticText529, 0, wxALL, 5 );
+
+	m_fieldscrolled = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxSize( -1,200 ), wxVSCROLL );
+	m_fieldscrolled->SetScrollRate( 5, 5 );
+	customfieldSizer = new wxFlexGridSizer( 0, 2, 0, 0 );
+	customfieldSizer->AddGrowableCol( 1 );
+	customfieldSizer->SetFlexibleDirection( wxBOTH );
+	customfieldSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+
+	m_fieldscrolled->SetSizer( customfieldSizer );
+	m_fieldscrolled->Layout();
+	fgSizer45->Add( m_fieldscrolled, 1, wxEXPAND | wxALL, 5 );
+
+	wxBoxSizer* bSizer124;
+	bSizer124 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_buttoncancel = new wxButton( this, wxID_CANCEL, _("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer124->Add( m_buttoncancel, 0, wxALL, 5 );
+
+	m_buttonok = new wxButton( this, wxID_OK, _("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer124->Add( m_buttonok, 0, wxALL, 5 );
+
+
+	fgSizer45->Add( bSizer124, 1, wxALIGN_BOTTOM|wxALIGN_RIGHT, 5 );
+
+
+	this->SetSizer( fgSizer45 );
+	this->Layout();
+
+	this->Centre( wxBOTH );
+
+	// Connect Events
+	m_buttoncancel->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DatabaseFieldWindow::OnButtonClick ), NULL, this );
+	m_buttonok->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DatabaseFieldWindow::OnButtonClick ), NULL, this );
+}
+
+DatabaseFieldWindow::~DatabaseFieldWindow()
+{
+	// Disconnect Events
+	m_buttoncancel->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DatabaseFieldWindow::OnButtonClick ), NULL, this );
+	m_buttonok->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DatabaseFieldWindow::OnButtonClick ), NULL, this );
+
 }
 
 SteamImageMapEditWindow::SteamImageMapEditWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )

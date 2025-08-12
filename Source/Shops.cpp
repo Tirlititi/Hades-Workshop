@@ -5,11 +5,73 @@
 #include "Database_Item.h"
 #include "Database_CSV.h"
 #include "CommonUtility.h"
+#include "main.h"
 
-#define SHOP_HWS_VERSION 3
+#define SHOP_HWS_VERSION 4
+
+#define SHOP_CSV_CHECK L"%id%;%item_list%"
+#define SHOP_CSV_DEFAULT L"Shop %id%;" SHOP_CSV_CHECK L";# Shop %id% - %name%"
+#define SYNTH_CSV_CHECK L"%id%;%shop_list%;%price%;%synthesized%;%recipe_list%"
+#define SYNTH_CSV_DEFAULT L"%synthesized_name%;" SYNTH_CSV_CHECK
 
 const unsigned int steam_shop_field_size[] = { 16, 8, 8, 8, 8 };
 const unsigned int steam_shop_field_array[] = { 0, 2, 0, 0, 0 };
+
+wxString ShopDataStruct::GetFieldValue(wxString fieldname) {
+	if (fieldname.IsSameAs("id")) return wxString::Format(wxT("%d"), id);
+	if (fieldname.IsSameAs("name")) return id < G_V_ELEMENTS(HADES_STRING_SHOP_NAME) ? HADES_STRING_SHOP_NAME[id].label : (_("Custom shop ") + to_string(id));
+	if (fieldname.IsSameAs("item_list")) {
+		wxString result = wxEmptyString;
+		bool addcomma = false;
+		for (unsigned int i = 0; i < item_list.size(); i++) {
+			if (item_list[i] == 0xFF)
+				break;
+			if (hades::PREFER_EXPORT_AS_PATCHES && item_list[i] >= 256)
+				continue;
+			result += (addcomma ? _(L", ") : _(L"")) + to_string(item_list[i]);
+			addcomma = true;
+		}
+		return result;
+	}
+	if (auto search = custom_field.find(fieldname); search != custom_field.end()) return search->second;
+	if (auto search = parent->custom_field_shop.find(fieldname); search != parent->custom_field_shop.end()) return search->second;
+	return _(L"");
+}
+
+bool ShopDataStruct::CompareWithCSV(wxArrayString entries) {
+	if (id >= (int)entries.GetCount())
+		return false;
+	if (!custom_field.empty())
+		return false;
+	wxString rightcsv = MemoriaUtility::GenerateDatabaseEntryGeneric(*this, _(SHOP_CSV_CHECK));
+	return MemoriaUtility::CompareEntries(entries[id].AfterFirst(L';').BeforeLast(L';'), rightcsv);
+}
+
+wxString SynthesisDataStruct::GetFieldValue(wxString fieldname) {
+	if (fieldname.IsSameAs("id")) return wxString::Format(wxT("%d"), id);
+	if (fieldname.IsSameAs("synthesized_name")) {
+		if (GetGameSaveSet() != NULL && GetGameSaveSet()->sectionloaded[DATA_SECTION_ITEM])
+			return _(GetGameSaveSet()->itemset->GetItemById(synthesized).name.str_nice);
+		else
+			return wxString::Format(wxT("Synthesis %d"), id);
+	}
+	if (fieldname.IsSameAs("price")) return wxString::Format(wxT("%d"), price);
+	if (fieldname.IsSameAs("synthesized")) return wxString::Format(wxT("%d"), synthesized);
+	if (fieldname.IsSameAs("shop_list")) return wxString::Format(wxT("%s"), ConcatenateStrings<int>(", ", shops, static_cast<string(*)(int)>(&to_string), true));
+	if (fieldname.IsSameAs("recipe_list")) return wxString::Format(wxT("%s"), ConcatenateStrings<int>(", ", recipe, static_cast<string(*)(int)>(&to_string), true));
+	if (auto search = custom_field.find(fieldname); search != custom_field.end()) return search->second;
+	if (auto search = parent->custom_field_synthesis.find(fieldname); search != parent->custom_field_synthesis.end()) return search->second;
+	return _(L"");
+}
+
+bool SynthesisDataStruct::CompareWithCSV(wxArrayString entries) {
+	if (id >= (int)entries.GetCount())
+		return false;
+	if (!custom_field.empty())
+		return false;
+	wxString rightcsv = MemoriaUtility::GenerateDatabaseEntryGeneric(*this, _(SYNTH_CSV_CHECK));
+	return MemoriaUtility::CompareEntries(entries[id].AfterFirst(L';'), rightcsv);
+}
 
 #define MACRO_SHOP_IOFUNCTIONSHOP(IO,READ,PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
@@ -30,6 +92,7 @@ const unsigned int steam_shop_field_array[] = { 0, 2, 0, 0, 0 };
 					shop[i].item_amount = j; \
 			} \
 		} \
+		if (useextendedtype2) IO ## CSVFields(ffbin, shop[i].custom_field); \
 	} \
 	if (PPF) PPFEndScanStep();
 
@@ -67,6 +130,7 @@ const unsigned int steam_shop_field_array[] = { 0, 2, 0, 0, 0 };
 						synthesis[i].shops.push_back(32 + j); \
 			} \
 		} \
+		if (useextendedtype2) IO ## CSVFields(ffbin, synthesis[i].custom_field); \
 	} \
 	if (PPF) PPFEndScanStep();
 
@@ -75,15 +139,22 @@ void ShopDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 	int shopamount = SHOP_AMOUNT;
 	int synthamount = SYNTHESIS_AMOUNT;
 	bool useextendedtype = false;
+	bool useextendedtype2 = false;
 	int i, j;
+	csv_header_shop = _(HADES_STRING_CSV_SHOP_HEADER);
+	csv_header_synthesis = _(HADES_STRING_CSV_SYNTHESIS_HEADER);
+	csv_format_shop = _(SHOP_CSV_DEFAULT);
+	csv_format_synthesis = _(SYNTH_CSV_DEFAULT);
 	shop.resize(SHOP_AMOUNT);
 	synthesis.resize(SYNTHESIS_AMOUNT);
 	for (i = 0; i < SHOP_AMOUNT; i++) {
 		shop[i].id = i;
+		shop[i].parent = this;
 		shop[i].item_list.resize(SHOP_ITEM_AMOUNT);
 	}
 	for (i = 0; i < SYNTHESIS_AMOUNT; i++) {
 		synthesis[i].id = i;
+		synthesis[i].parent = this;
 		synthesis[i].recipe.resize(2);
 	}
 	if (GetGameType() == GAME_TYPE_PSX) {
@@ -198,39 +269,38 @@ void ShopDataSet::GenerateCSharp(vector<string>& buffer) {
 	buffer.push_back(synthdb.str());
 }
 
-wxString CSV_ShopConstructor(ShopDataStruct& sh, int index) {
-	wxString shopname = sh.id < G_V_ELEMENTS(HADES_STRING_SHOP_NAME) ? HADES_STRING_SHOP_NAME[sh.id].label : (_("Custom shop ") + to_string(sh.id));
-	vector<int> short_item_list(sh.item_amount);
-	for (int i = 0; i < sh.item_amount; i++)
-		short_item_list[i] = sh.item_list[i];
-	return wxString::Format(wxT("%s;%d;%s;# %s"),
-		shopname,
-		sh.id,
-		ConcatenateStrings<int>(", ", short_item_list, [](int itid) {
-			return itid == 0xFF ? "" : to_string(itid);
-		}, true),
-		shopname);
-}
-
-wxString CSV_SynthesisConstructor(SynthesisDataStruct& sy, int index) {
-	wxString entry;
-	if (GetGameSaveSet() != NULL && GetGameSaveSet()->sectionloaded[DATA_SECTION_ITEM])
-		entry = _(GetGameSaveSet()->itemset->GetItemById(sy.synthesized).name.str_nice) + _(L";");
-	else
-		entry = wxString::Format(wxT("Synthesis %d;"), sy.id);
-	return entry + wxString::Format(wxT("%d;%s;%d;%d;%s"),
-		sy.id,
-		ConcatenateStrings<int>(", ", sy.shops, static_cast<string(*)(int)>(&to_string)),
-		sy.price,
-		sy.synthesized,
-		ConcatenateStrings<int>(", ", sy.recipe, static_cast<string(*)(int)>(&to_string)));
-}
-
 bool ShopDataSet::GenerateCSV(string basefolder) {
-	if (!MemoriaUtility::GenerateCSVGeneric<ShopDataStruct>(_(basefolder), _(HADES_STRING_CSV_SHOP_FILE), _(HADES_STRING_CSV_SHOP_HEADER), shop, &CSV_ShopConstructor, &MemoriaUtility::CSV_ComparerWithoutBoth, true))
+	if (!MemoriaUtility::GenerateDatabaseGeneric<ShopDataStruct>(_(basefolder), _(HADES_STRING_CSV_SHOP_FILE), csv_header_shop, _(L"\n"), _(L"\n"), shop, csv_format_shop, true))
 		return false;
-	if (!MemoriaUtility::GenerateCSVGeneric<SynthesisDataStruct>(_(basefolder), _(HADES_STRING_CSV_SYNTHESIS_FILE), _(HADES_STRING_CSV_SYNTHESIS_HEADER), synthesis, &CSV_SynthesisConstructor, &MemoriaUtility::CSV_ComparerWithoutStart, true))
+	if (!MemoriaUtility::GenerateDatabaseGeneric<SynthesisDataStruct>(_(basefolder), _(HADES_STRING_CSV_SYNTHESIS_FILE), csv_header_synthesis, _(L"\n"), _(L"\n"), synthesis, csv_format_synthesis, true))
 		return false;
+	if (hades::PREFER_EXPORT_AS_PATCHES && GetGameSaveSet() != NULL && GetGameSaveSet()->sectionloaded[DATA_SECTION_ITEM]) {
+		ItemDataSet* itemset = GetGameSaveSet()->itemset;
+		wxString shoppatchstr = _(L"");
+		set<int> releventitem;
+		unsigned int i, j;
+		for (i = 0; i < shop.size(); i++)
+			for (j = 0; j < shop[i].item_list.size(); j++)
+				if (shop[i].item_list[j] >= 256)
+					releventitem.insert(shop[i].item_list[j]);
+		for (auto it = releventitem.begin(); it != releventitem.end(); it++) {
+			ItemDataStruct& item = itemset->GetItemById(*it);
+			shoppatchstr += wxString::Format(wxT("// %s\n%d Add"), item.name.str, item.id);
+			for (i = 0; i < shop.size(); i++)
+				for (j = 0; j < shop[i].item_list.size(); j++)
+					if (shop[i].item_list[j] == *it)
+						shoppatchstr += wxString::Format(wxT(" %d"), shop[i].id);
+			shoppatchstr += _(L"\n\n");
+		}
+		if (!shoppatchstr.IsEmpty()) {
+			wxFile shoptxtfile;
+			if (!shoptxtfile.Open(_(basefolder) + _(HADES_STRING_SHOP_PATCH_FILE), wxFile::write))
+				return false;
+			if (!shoptxtfile.Write(shoppatchstr))
+				return false;
+			shoptxtfile.Close();
+		}
+	}
 	return true;
 }
 
@@ -238,6 +308,7 @@ void ShopDataSet::Write(fstream& ffbin, ConfigurationSet& config) {
 	int shopamount = SHOP_AMOUNT;
 	int synthamount = SYNTHESIS_AMOUNT;
 	bool useextendedtype = false;
+	bool useextendedtype2 = false;
 	int i, j;
 	ffbin.seekg(config.shop_data_offset);
 	MACRO_SHOP_IOFUNCTIONSHOP(FFIXWrite,false,false)
@@ -249,6 +320,7 @@ void ShopDataSet::WritePPF(fstream& ffbin, ConfigurationSet& config) {
 	int shopamount = SHOP_AMOUNT;
 	int synthamount = SYNTHESIS_AMOUNT;
 	bool useextendedtype = false;
+	bool useextendedtype2 = false;
 	int i, j;
 	ffbin.seekg(config.shop_data_offset);
 	MACRO_SHOP_IOFUNCTIONSHOP(PPFStepAdd,false,true)
@@ -260,6 +332,7 @@ void ShopDataSet::LoadHWS(fstream& ffbin, bool versionflag) {
 	int shopamount = SHOP_AMOUNT;
 	int synthamount = SYNTHESIS_AMOUNT;
 	bool useextendedtype = false;
+	bool useextendedtype2 = false;
 	vector<ShopDataStruct> nonmodifiedshop;
 	vector<SynthesisDataStruct> nonmodifiedsynth;
 	int i, j;
@@ -270,7 +343,18 @@ void ShopDataSet::LoadHWS(fstream& ffbin, bool versionflag) {
 		useextendedtype = true;
 		vector<int> added;
 		shopamount = PrepareHWSFlexibleList(ffbin, shop, nonmodifiedshop, added);
+		for (i = 0; i < (int)added.size(); i++)
+			shop[added[i]].parent = this;
 		synthamount = PrepareHWSFlexibleList(ffbin, synthesis, nonmodifiedsynth, added);
+		for (i = 0; i < (int)added.size(); i++)
+			synthesis[added[i]].parent = this;
+	}
+	if (version >= 4) {
+		useextendedtype2 = true;
+		HWSReadCSVFormatting(ffbin, csv_header_shop, csv_format_shop);
+		HWSReadCSVFields(ffbin, custom_field_shop);
+		HWSReadCSVFormatting(ffbin, csv_header_synthesis, csv_format_synthesis);
+		HWSReadCSVFields(ffbin, custom_field_synthesis);
 	}
 	MACRO_SHOP_IOFUNCTIONSHOP(HWSRead, true, false)
 	if (version >= 2) {
@@ -286,6 +370,7 @@ void ShopDataSet::WriteHWS(fstream& ffbin) {
 	int shopamount = shop.size();
 	int synthamount = synthesis.size();
 	bool useextendedtype = true;
+	bool useextendedtype2 = true;
 	int i, j;
 	HWSWriteShort(ffbin,SHOP_HWS_VERSION);
 	HWSWriteFlexibleChar(ffbin, shopamount, true);
@@ -294,6 +379,10 @@ void ShopDataSet::WriteHWS(fstream& ffbin) {
 	HWSWriteFlexibleChar(ffbin, synthamount, true);
 	for (i = 0; i < synthamount; i++)
 		HWSWriteFlexibleChar(ffbin, synthesis[i].id, true);
+	HWSWriteCSVFormatting(ffbin, csv_header_shop, csv_format_shop);
+	HWSWriteCSVFields(ffbin, custom_field_shop);
+	HWSWriteCSVFormatting(ffbin, csv_header_synthesis, csv_format_synthesis);
+	HWSWriteCSVFields(ffbin, custom_field_synthesis);
 	MACRO_SHOP_IOFUNCTIONSHOP(HWSWrite,false,false)
 	MACRO_SHOP_IOFUNCTIONSYNTH(HWSWrite,false,false)
 }
@@ -313,6 +402,7 @@ ShopDataStruct& ShopDataSet::GetShopById(int shopid) {
 	if (index >= 0)
 		return shop[index];
 	dummyshop.id = -1;
+	dummyshop.parent = this;
 	return dummyshop;
 }
 

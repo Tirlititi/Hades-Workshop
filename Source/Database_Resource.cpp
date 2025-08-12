@@ -982,7 +982,7 @@ vector<ModelDatabaseItem> HADES_STRING_MODEL_NAME = {
 	{ 659,	5,	1,	7,	L"GEO_SUB_F7_BLN",	L"BlankB" },
 	{ 660,	5,	1,	7,	L"GEO_SUB_F7_MRC",	L"MarcusB" },
 	{ 661,	5,	1,	7,	L"GEO_SUB_F7_CNA",	L"CinnaB" },
-	{ 665,	5,	1,	0,	L"GEO_SUB_F0_MOM",	L"Zidane Hooded" },
+	{ 665,	5,	1,	0,	L"GEO_SUB_F0_MOM",	L"Jane Hooded" },
 	{ 667,	5,	1,	3,	L"GEO_SUB_F3_KJA",	L"Kuja Burned" },
 	{ 5464,	5,	1,	0,	L"GEO_SUB_F0_BAK",	L"Baku" },
 	{ 5467,	5,	1,	0,	L"GEO_SUB_F0_BLN",	L"Blank" },

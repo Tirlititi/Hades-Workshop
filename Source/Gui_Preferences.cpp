@@ -32,6 +32,7 @@ PreferencesDialog::PreferencesDialog(wxWindow* parent) :
 	steam_single_lang_mode(false),
 	background_resolution(32),
 	lang_change_allowed(true),
+	prefer_export_as_patches(false),
 	CharmapNames() {
 	unsigned int i;
 	save_lang_box[STEAM_LANGUAGE_US] = m_steamsaveus;
@@ -179,32 +180,33 @@ bool PreferencesDialog::SavePreferences() {
 	wxString before, after, comma = _(L"");
 	if (!GetBeforeAndAfterSection(_(L"[Preferences]"), before, after))
 		return false;
-	wxFile configfileout(_(PREFERENCE_FILE_NAME),wxFile::write);
+	wxFile configfileout(_(PREFERENCE_FILE_NAME), wxFile::write);
 	configfileout.Write(before);
 	configfileout.Write(_(L"[Preferences]"));
-	configfileout.Write(_(L"\nCharmap=")+CharmapNames[m_gamealphabet->GetSelection()]);
+	configfileout.Write(_(L"\nCharmap=") + CharmapNames[m_gamealphabet->GetSelection()]);
 	configfileout.Write(_(L"\nOpcodeCharacter="));
 	configfileout.Write(wxString(charmap_opchar));
-	configfileout.Write(_(L"\nMenuColor=")+wxString::Format(wxT("%i"),menu_color));
-	configfileout.Write(_(L"\nTextPreview=")+wxString::Format(wxT("%i"),text_preview_type));
-	configfileout.Write(_(L"\nSteamLanguage=")+wxString::Format(wxT("%s"),HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[steam_language]));
-	configfileout.Write(_(L"\nSteamSingleLanguage=")+wxString::Format(wxT("%i"),steam_single_lang_mode ? 1 : 0));
+	configfileout.Write(_(L"\nMenuColor=") + wxString::Format(wxT("%i"), menu_color));
+	configfileout.Write(_(L"\nTextPreview=") + wxString::Format(wxT("%i"), text_preview_type));
+	configfileout.Write(_(L"\nSteamLanguage=") + wxString::Format(wxT("%s"), HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[steam_language]));
+	configfileout.Write(_(L"\nSteamSingleLanguage=") + wxString::Format(wxT("%i"), steam_single_lang_mode ? 1 : 0));
 	configfileout.Write(_(L"\nSteamSaveLanguage="));
-	for (i=0;i<STEAM_LANGUAGE_AMOUNT;i++)
-		if (save_lang[i])	{ configfileout.Write(comma+wxString::Format(wxT("%s"),HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[i])); comma = _(L","); }
-	configfileout.Write(_(L"\nBackgroundResolution=")+wxString::Format(wxT("%i"),background_resolution));
+	for (i = 0; i < STEAM_LANGUAGE_AMOUNT; i++)
+		if (save_lang[i]) { configfileout.Write(comma + wxString::Format(wxT("%s"), HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[i])); comma = _(L","); }
+	configfileout.Write(_(L"\nBackgroundResolution=") + wxString::Format(wxT("%i"), background_resolution));
+	configfileout.Write(_(L"\nPreferExportAsPatches=") + wxString::Format(wxT("%i"), prefer_export_as_patches ? 1 : 0));
 	configfileout.Write(_(L"\n\n") + after);
 	configfileout.Close();
 	return true;
 }
 
 bool PreferencesDialog::ReadConfiguration() {
-	wxFile configfile(_(PREFERENCE_FILE_NAME),wxFile::read);
+	wxFile configfile(_(PREFERENCE_FILE_NAME), wxFile::read);
 	if (!configfile.IsOpened()) {
-		configfile.Open(_(PREFERENCE_FILE_NAME),wxFile::write);
+		configfile.Open(_(PREFERENCE_FILE_NAME), wxFile::write);
 		if (configfile.IsOpened())
 			configfile.Close();
-		configfile.Open(_(PREFERENCE_FILE_NAME),wxFile::read);
+		configfile.Open(_(PREFERENCE_FILE_NAME), wxFile::read);
 		if (!configfile.IsOpened())
 			return false;
 	}
@@ -213,59 +215,59 @@ bool PreferencesDialog::ReadConfiguration() {
 		return false;
 	configfile.Close();
 	cfgsection = cfgall;
-	unsigned int i,argcount;
+	unsigned int i, argcount;
 	unsigned int chmapselected = 0;
 	CharmapNames.Empty();
 	CharmapNames.Add(_(L"Default"));
-	if (GoToSection(cfgsection,_(L"Text"))) {
+	if (GoToSection(cfgsection, _(L"Text"))) {
 		cfgfield = cfgsection;
 		bool newchmap;
-		while (SearchField(cfgfield,_(L"Charmap"),TmpArgs,argcount)) {
-			if (argcount==0)
+		while (SearchField(cfgfield, _(L"Charmap"), TmpArgs, argcount)) {
+			if (argcount == 0)
 				continue;
 			newchmap = true;
-			for (i=1;i<CharmapNames.GetCount();i++)
-				if (TmpArgs[0]==CharmapNames[i])
+			for (i = 1; i < CharmapNames.GetCount(); i++)
+				if (TmpArgs[0] == CharmapNames[i])
 					newchmap = false;
 			if (newchmap)
 				CharmapNames.Add(TmpArgs[0]);
 		}
 	}
 	cfgsection = cfgall;
-	if (GoToSection(cfgsection,_(L"Preferences"))) {
+	if (GoToSection(cfgsection, _(L"Preferences"))) {
 		cfgfield = cfgsection;
-		if (SearchField(cfgfield,_(L"Charmap"),TmpArgs,argcount))
-			for (i=0;i<CharmapNames.GetCount();i++)
-				if (TmpArgs[argcount]==CharmapNames[i])
+		if (SearchField(cfgfield, _(L"Charmap"), TmpArgs, argcount))
+			for (i = 0; i < CharmapNames.GetCount(); i++)
+				if (TmpArgs[argcount] == CharmapNames[i])
 					chmapselected = i;
 		cfgfield = cfgsection;
-		if (SearchField(cfgfield,_(L"OpcodeCharacter"),TmpArgs,argcount))
+		if (SearchField(cfgfield, _(L"OpcodeCharacter"), TmpArgs, argcount))
 			charmap_opchar = TmpArgs[argcount][0];
 		cfgfield = cfgsection;
-		if (SearchField(cfgfield,_(L"MenuColor"),TmpArgs,argcount))
+		if (SearchField(cfgfield, _(L"MenuColor"), TmpArgs, argcount))
 			menu_color = wxAtoi(TmpArgs[argcount]);
 		cfgfield = cfgsection;
-		if (SearchField(cfgfield,_(L"TextPreview"),TmpArgs,argcount))
+		if (SearchField(cfgfield, _(L"TextPreview"), TmpArgs, argcount))
 			text_preview_type = wxAtoi(TmpArgs[argcount]);
 		cfgfield = cfgsection;
-		if (SearchField(cfgfield,_(L"SteamLanguage"),TmpArgs,argcount))
-			for (i=0;i<STEAM_LANGUAGE_AMOUNT;i++)
+		if (SearchField(cfgfield, _(L"SteamLanguage"), TmpArgs, argcount))
+			for (i = 0; i < STEAM_LANGUAGE_AMOUNT; i++)
 				if (TmpArgs[argcount].IsSameAs(HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[i])) {
 					steam_language = i;
 					break;
 				}
 		cfgfield = cfgsection;
-		if (SearchField(cfgfield,_(L"SteamSingleLanguage"),TmpArgs,argcount))
-			steam_single_lang_mode = wxAtoi(TmpArgs[argcount])>0;
+		if (SearchField(cfgfield, _(L"SteamSingleLanguage"), TmpArgs, argcount))
+			steam_single_lang_mode = wxAtoi(TmpArgs[argcount]) > 0;
 		cfgfield = cfgsection;
-		if (SearchField(cfgfield,_(L"SteamSaveLanguage"),TmpArgs,argcount)) {
-			wxStringTokenizer savelist(TmpArgs[argcount],L",");
+		if (SearchField(cfgfield, _(L"SteamSaveLanguage"), TmpArgs, argcount)) {
+			wxStringTokenizer savelist(TmpArgs[argcount], L",");
 			wxString savetoken;
-			for (i=0;i<STEAM_LANGUAGE_AMOUNT;i++)
+			for (i = 0; i < STEAM_LANGUAGE_AMOUNT; i++)
 				save_lang[i] = false;
 			while (savelist.HasMoreTokens()) {
 				savetoken = savelist.GetNextToken();
-				for (i=0;i<STEAM_LANGUAGE_AMOUNT;i++)
+				for (i = 0; i < STEAM_LANGUAGE_AMOUNT; i++)
 					if (savetoken.IsSameAs(HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[i])) {
 						save_lang[i] = true;
 						break;
@@ -273,8 +275,11 @@ bool PreferencesDialog::ReadConfiguration() {
 			}
 		}
 		cfgfield = cfgsection;
-		if (SearchField(cfgfield,_(L"BackgroundResolution"),TmpArgs,argcount))
+		if (SearchField(cfgfield, _(L"BackgroundResolution"), TmpArgs, argcount))
 			background_resolution = wxAtoi(TmpArgs[argcount]);
+		cfgfield = cfgsection;
+		if (SearchField(cfgfield, _(L"PreferExportAsPatches"), TmpArgs, argcount))
+			prefer_export_as_patches = wxAtoi(TmpArgs[argcount]) > 0;
 	}
 	m_gamealphabet->Clear();
 	m_gamealphabet->Append(CharmapNames);
@@ -284,9 +289,10 @@ bool PreferencesDialog::ReadConfiguration() {
 	m_textpreviewtype->SetSelection(text_preview_type);
 	m_steamlanguage->SetSelection(steam_language);
 	m_steamsinglelanguage->SetValue(steam_single_lang_mode);
-	for (i=0;i<STEAM_LANGUAGE_AMOUNT;i++)
+	for (i = 0; i < STEAM_LANGUAGE_AMOUNT; i++)
 		save_lang_box[i]->SetValue(save_lang[i]);
 	m_backgroundresolution->SetValue(background_resolution);
+	m_preferexportaspatches->SetValue(prefer_export_as_patches);
 	UpdateSteamLanguageAvailability();
 	return true;
 }
@@ -1170,14 +1176,14 @@ bool PreferencesDialog::ReadCharmaps() {
 void PreferencesDialog::OnSteamLanguageChange(wxCommandEvent& event) {
 	SteamLanguage lang, newlang = event.GetSelection();
 	if (m_steamsinglelanguage->IsChecked()) {
-		for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-			save_lang_box[lang]->SetValue(lang==newlang);
+		for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+			save_lang_box[lang]->SetValue(lang == newlang);
 	} else {
 		SteamLanguage lastlang = STEAM_LANGUAGE_AMOUNT;
 		bool unchecklast = false;
-		for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
+		for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
 			if (save_lang_box[lang]->IsChecked()) {
-				if (lastlang==STEAM_LANGUAGE_AMOUNT) {
+				if (lastlang == STEAM_LANGUAGE_AMOUNT) {
 					lastlang = lang;
 					unchecklast = true;
 				} else {
@@ -1197,9 +1203,9 @@ void PreferencesDialog::OnSingleLanguageMode(wxCommandEvent & event) {
 
 void PreferencesDialog::OnButtonClick(wxCommandEvent& event) {
 	int id = event.GetId();
-	if (id==wxID_OK) {
+	if (id == wxID_OK) {
 		wxString opchar = m_opcodechar->GetValue();
-		if (opchar.length()==0)
+		if (opchar.length() == 0)
 			charmap_opchar = OPCODE_WCHAR;
 		else
 			charmap_opchar = opchar[0];
@@ -1208,32 +1214,32 @@ void PreferencesDialog::OnButtonClick(wxCommandEvent& event) {
 		text_preview_type = m_textpreviewtype->GetSelection();
 		steam_language = m_steamlanguage->GetSelection();
 		steam_single_lang_mode = m_steamsinglelanguage->IsChecked();
-		for (unsigned int i=0;i<STEAM_LANGUAGE_AMOUNT;i++)
+		for (unsigned int i = 0; i < STEAM_LANGUAGE_AMOUNT; i++)
 			save_lang[i] = save_lang_box[i]->IsChecked();
 		background_resolution = m_backgroundresolution->GetValue();
+		prefer_export_as_patches = m_preferexportaspatches->IsChecked();
 		SavePreferences();
 		return EndModal(id);
-	} else if (id==wxID_CANCEL) {
-		
+	} else if (id == wxID_CANCEL) {
 		return EndModal(id);
 	}
 }
 
 void PreprocessLine(wxString& str) {
-	str = str.substr(str.find_first_not_of(L" \t"),str.find_last_not_of(L" \t")+1);
-	if (str[0]==L'#')
+	str = str.substr(str.find_first_not_of(L" \t"), str.find_last_not_of(L" \t") + 1);
+	if (str[0] == L'#')
 		str = L"";
 }
 
 bool GoToSection(wxString& cfgstr, wxString secname) {
-	wxString section = _(L"[")+wxString(secname)+_(L"]");
+	wxString section = _(L"[") + wxString(secname) + _(L"]");
 	wxString line;
 	while (!cfgstr.IsEmpty()) {
 		line = GetWxStringLine(cfgstr);
-		if (line.length()==0)
+		if (line.length() == 0)
 			continue;
 		PreprocessLine(line);
-		if (line==section)
+		if (line == section)
 			return true;
 	}
 	return false;
@@ -1245,20 +1251,20 @@ bool SearchField(wxString& cfgstr, wxString fieldname, wxArrayString& args, unsi
 	args.Clear();
 	while (!cfgstr.IsEmpty()) {
 		line = GetWxStringLine(cfgstr);
-		if (line.length()==0)
+		if (line.length() == 0)
 			continue;
 		PreprocessLine(line);
-		if (line[0]==L'[')
+		if (line[0] == L'[')
 			break;
-		field = line.substr(0,line.find_first_of(L"=[ "));
-		if (field==fieldname) {
+		field = line.substr(0, line.find_first_of(L"=[ "));
+		if (field == fieldname) {
 			line = line.substr(field.length());
-			while (line[0]==L'[') {
-				args.Add(line.substr(1,line.find_first_of(L"]")-1));
-				line = line.substr(line.find_first_of(L"]")+1);
+			while (line[0] == L'[') {
+				args.Add(line.substr(1, line.find_first_of(L"]") - 1));
+				line = line.substr(line.find_first_of(L"]") + 1);
 				argcount++;
 			}
-			args.Add(line.substr(line.find_first_of(L"=")+1));
+			args.Add(line.substr(line.find_first_of(L"=") + 1));
 			return true;
 		}
 	}
