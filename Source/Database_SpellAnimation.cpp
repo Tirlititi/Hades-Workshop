@@ -551,6 +551,43 @@ vector<SpellAnimSequenceArgumentString> SPELLANIM_ARGUMENT_STRING = {
 	{ SAAT_FADE_INOUT, 15,	L"???" }
 };
 
+vector<pair<wstring, wstring>> ANIMATION_INDEX_EXTRA_INFO = {
+	{ L"MP_IDLE_NORMAL",	L"The normal idling animation", },
+	{ L"MP_IDLE_DYING",		L"The idling animation under low HP\nor Poison / Sleep / ..." },
+	{ L"MP_DAMAGE1",		L"The animation when damaged\nEnd frame: MP_IDLE_NORMAL" },
+	{ L"MP_DAMAGE2",		L"The animation when strongly damaged\nEnd frame: MP_DISABLE" },
+	{ L"MP_DISABLE",		L"The idling animation\nwhen KO'd" },
+	{ L"MP_GET_UP_DYING",	L"The transition from\nMP_IDLE_DYING to MP_IDLE_NORMAL" },
+	{ L"MP_GET_UP_DISABLE",	L"The transition from\nMP_DISABLE to MP_IDLE_DYING" },
+	{ L"MP_DOWN_DYING",		L"The transition from\nMP_IDLE_NORMAL to MP_IDLE_DYING" },
+	{ L"MP_DOWN_DISABLE",	L"The transition from\nMP_IDLE_DYING to MP_DISABLE" },
+	{ L"MP_IDLE_CMD",		L"The idling animation\nwhen a command is queued" },
+	{ L"MP_NORMAL_TO_CMD",	L"The transition from\nMP_IDLE_NORMAL to MP_IDLE_CMD" },
+	{ L"MP_DYING_TO_CMD",	L"The transition from\nMP_IDLE_DYING to MP_IDLE_CMD" },
+	{ L"MP_IDLE_TO_DEF",	L"The transition from\nMP_IDLE_CMD to MP_DEFENCE" },
+	{ L"MP_DEFENCE",		L"The idling animation\nwhen defending" },
+	{ L"MP_DEF_TO_IDLE",	L"The transition from\nMP_DEFENCE to MP_IDLE_NORMAL" },
+	{ L"MP_COVER",			L"The animation when\nprotecting someone else" },
+	{ L"MP_AVOID",			L"The animation when\ndodging an attack" },
+	{ L"MP_ESCAPE",			L"The animation when\ntrying to flee" },
+	{ L"MP_WIN",			L"The first part of the\nvictory pose animation" },
+	{ L"MP_WIN_LOOP",		L"The second part of the\nvictory pose animation\nStart/end frames: MP_WIN" },
+	{ L"MP_SET",			L"Prepare the attack\nTransition from\nMP_IDLE_CMD to MP_RUN" },
+	{ L"MP_RUN",			L"Run toward the enemy\nTransition from\nMP_SET to MP_RUN_TO_ATTACK" },
+	{ L"MP_RUN_TO_ATTACK",	L"Run close to the enemy\nTransition from\nMP_RUN to MP_ATTACK" },
+	{ L"MP_ATTACK",			L"Strike the enemy\nTransition from\nMP_RUN_TO_ATTACK to MP_BACK" },
+	{ L"MP_BACK",			L"Withdraw after the attack\nTransition from\nMP_ATTACK to MP_IDLE_NORMAL" },
+	{ L"MP_ATK_TO_NORMAL",	L"Another withdrawing animation\nused by Steal commands" },
+	{ L"MP_IDLE_TO_CHANT",	L"The transition from\nMP_IDLE_CMD to MP_CHANT" },
+	{ L"MP_CHANT",			L"The idling animation\nwhen channeling" },
+	{ L"MP_MAGIC",			L"Launch a spell\nTransition from\nMP_CHANT to MP_IDLE_NORMAL" },
+	{ L"MP_STEP_FORWARD",	L"Move from back to front row\nTransition from\nMP_IDLE_CMD to MP_IDLE_CMD" },
+	{ L"MP_STEP_BACK",		L"Move from front to back row\nTransition from\nMP_IDLE_CMD to MP_IDLE_CMD" },
+	{ L"MP_ITEM1",			L"Use an item\nTransition from\nMP_IDLE_CMD to MP_IDLE_CMD" },
+	{ L"MP_CMD_TO_NORMAL",	L"The transition from\nMP_IDLE_CMD to MP_IDLE_NORMAL" },
+	{ L"MP_SPECIAL1",		L"An animation used by\nsecondary commands like\nSteal, Charge, Focus,\nEat, Spear, Throw..." }
+};
+
 vector<EnemySequenceCode> ENEMYANIM_OPCODE = {
 	{ 0x01, L"Wait", L"Wait some time.\n - 1st arg: Time", 1, new int[1]{ 1 }, new Enemy_Animation_Argument_Type[1]{ EAAT_INTEGER } },
 	{ 0x07, L"Wait Animation", L"Wait until the animation is completed.", 0, NULL, NULL },

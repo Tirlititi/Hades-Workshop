@@ -45,9 +45,9 @@ PreferencesDialog::PreferencesDialog(wxWindow* parent) :
 	for (i = 0; i < STEAM_LANGUAGE_AMOUNT; i++)
 		save_lang[i] = false;
 	save_lang[STEAM_LANGUAGE_US] = true;
-	charmap_ext.id = new uint16_t[G_V_ELEMENTS(HADES_STRING_TEXT_BLOCK_NAME)];
-	charmap_ext.letter = new wchar_t* [G_V_ELEMENTS(HADES_STRING_TEXT_BLOCK_NAME)];
-	for (i = 0; i < G_V_ELEMENTS(HADES_STRING_TEXT_BLOCK_NAME); i++)
+	charmap_ext.id = new uint16_t[HADES_STRING_TEXT_BLOCK_NAME.size()];
+	charmap_ext.letter = new wchar_t* [HADES_STRING_TEXT_BLOCK_NAME.size()];
+	for (i = 0; i < HADES_STRING_TEXT_BLOCK_NAME.size(); i++)
 		charmap_ext.letter[i] = new wchar_t[256];
 	ReadConfiguration();
 	ReadCharmaps();

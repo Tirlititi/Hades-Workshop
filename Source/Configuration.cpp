@@ -1,5 +1,7 @@
 #include "Configuration.h"
 
+#define MAIN_HWS_VERSION 100
+
 #include <filesystem>
 #include <algorithm>
 #include <sstream>
@@ -46,6 +48,7 @@ GameType TheGameType;
 GameType TheHWSGameType;
 ConfigurationSet* TheGameConfiguration = NULL;
 SaveSet* TheGameSaveSet = NULL;
+uint16_t TheHWSGlobalVersion = 0;
 
 GameType GetGameType() {
 	return TheGameType;
@@ -58,6 +61,12 @@ GameType GetHWSGameType() {
 }
 void SetHWSGameType(GameType gt) {
 	TheHWSGameType = gt;
+}
+uint16_t GetHWSGlobalVersion() {
+	return TheHWSGlobalVersion;
+}
+void SetHWSGlobalVersion(uint16_t version) {
+	TheHWSGlobalVersion = version;
 }
 ConfigurationSet* GetGameConfiguration() {
 	return TheGameConfiguration;
@@ -1627,7 +1636,11 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			remove(fname.c_str());
 			fname = dirassets + HADES_STRING_EQUIP_PATCH_FILE;
 			remove(fname.c_str());
-			// Keep the old file and let EnemyDataSet::GenerateCSV patch its content by modifying the "BattleMapModel" lines only
+			fname = dirassets + HADES_STRING_SKILL_PATCH_FILE;
+			remove(fname.c_str());
+			fname = dirassets + HADES_STRING_SHOP_PATCH_FILE;
+			remove(fname.c_str());
+			// Keep the old file and let MemoriaUtility::ExportDictionaryPatchLines patch its content
 //			fname = destfolder + HADES_STRING_DICTIONARY_PATCH_FILE;
 //			remove(fname.c_str());
 		} else if (dllformat==2) {
@@ -1662,7 +1675,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 	if (section[DATA_SECTION_CARD])
 		saveset.cardset->UpdateOffset();
 	if (section[DATA_SECTION_MENU_UI])
-		for (i = 0; i < saveset.ffuiset->special_text->amount; i++)
+		for (i = 0; i < saveset.ffuiset->special_text->text_block.size(); i++)
 			saveset.ffuiset->special_text->text_block[i].UpdateOffset();
 
 	fstream filebase, filedest;
@@ -1704,7 +1717,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 						break;
 					} else if (saveset.enemyset->battle[j]->modified && i == config.enmy_stat_file[j]) {
 						filedest.seekg(unitydataoff[i]);
-						saveset.enemyset->battle[j]->WriteHWS(filedest);
+						saveset.enemyset->battle[j]->WriteHWS(filedest, false);
 						break;
 					}
 			}
@@ -1730,11 +1743,14 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 				filedest.open(fname.c_str(), ios::out | ios::binary);
 				if (!filedest.is_open())
 					return 3;
-				saveset.enemyset->battle[i]->WriteHWS(filedest);
+				saveset.enemyset->battle[i]->WriteHWS(filedest, config.dll_usage != 0);
 				filedest.close();
 			}
 		}
 	}
+
+	wxYield();
+	GetTopWindow()->SetDoubleBuffered(false);
 
 	// p0data3: world map files
 	if (assetformat == 0) {
@@ -1813,6 +1829,9 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		filebase.close();
 	}
 
+	wxYield();
+	GetTopWindow()->SetDoubleBuffered(false);
+
 	// p0data7: script files
 	if (assetformat == 0) {
 		if (section[DATA_SECTION_ENMY] || section[DATA_SECTION_FIELD] || section[DATA_SECTION_WORLD_MAP]) {
@@ -1871,7 +1890,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 							if (i == config.enmy_script_file[lang][j]) {
 								if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && saveset.enemyset->script[j]->IsDataModified(lang)) {
 									filedest.seekg(unitydataoff[i]);
-									saveset.enemyset->script[j]->WriteHWS(filedest, lang);
+									saveset.enemyset->script[j]->WriteSteam(filedest, lang);
 								}
 								j = config.enmy_amount;
 								break;
@@ -1882,7 +1901,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 							if (i == config.field_script_file[lang][j]) {
 								if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && saveset.fieldset->script_data[j]->IsDataModified(lang)) {
 									filedest.seekg(unitydataoff[i]);
-									saveset.fieldset->script_data[j]->WriteHWS(filedest, lang);
+									saveset.fieldset->script_data[j]->WriteSteam(filedest, lang);
 								}
 								j = config.field_amount;
 								break;
@@ -1893,7 +1912,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 							if (i == config.world_script_file[lang][j]) {
 								if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && saveset.worldset->script[j]->IsDataModified(lang)) {
 									filedest.seekg(unitydataoff[i]);
-									saveset.worldset->script[j]->WriteHWS(filedest, lang);
+									saveset.worldset->script[j]->WriteSteam(filedest, lang);
 								}
 								j = config.world_amount;
 								break;
@@ -1913,7 +1932,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 						MainFrame::MakeDirForFile(fname); \
 						filedest.open(fname.c_str(), ios::out | ios::binary); \
 						if (!filedest.is_open()) return 3; \
-						saveset.DATA[i]->WriteHWS(filedest, lang); \
+						saveset.DATA[i]->WriteSteam(filedest, lang); \
 						filedest.close(); \
 					} \
 				}
@@ -1922,7 +1941,10 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		MACRO_SAVE_ASSET_SCRIPT(DATA_SECTION_FIELD, field_amount, fieldset->script_data, field_script_file)
 		MACRO_SAVE_ASSET_SCRIPT(DATA_SECTION_WORLD_MAP, world_amount, worldset->script, world_script_file)
 	}
-	
+
+	wxYield();
+	GetTopWindow()->SetDoubleBuffered(false);
+
 	// p0data11 to 19: field files
 	if (assetformat == 0) {
 		if (section[DATA_SECTION_FIELD]) {
@@ -2016,7 +2038,10 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			}
 		}
 	}
-	
+
+	wxYield();
+	GetTopWindow()->SetDoubleBuffered(false);
+
 	// resources.assets: text and card files
 	if (assetformat == 0) {
 		fname = config.steam_dir_data + "resources.assets";
@@ -2055,8 +2080,8 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 				MACRO_STEAM_CHECKFILEUPDATE(itemkey_help_file[lang], section[DATA_SECTION_ITEM], GetSteamTextSizeGeneric(saveset.itemset->key_item, &KeyItemDataStruct::help, true, lang))
 				MACRO_STEAM_CHECKFILEUPDATE(itemkey_desc_file[lang], section[DATA_SECTION_ITEM], GetSteamTextSizeGeneric(saveset.itemset->key_item, &KeyItemDataStruct::description, true, lang))
 				MACRO_STEAM_CHECKFILEUPDATE(field_text_file[lang], section[DATA_SECTION_FIELD], saveset.fieldset->GetSteamTextSize(lang))
-				MACRO_STEAM_CHECKFILEUPDATE(world_text_file[lang], section[DATA_SECTION_WORLD_MAP], saveset.worldset->GetSteamTextSize(0, lang))
-				MACRO_STEAM_CHECKFILEUPDATE(world_worldplace_name_file[lang], section[DATA_SECTION_WORLD_MAP], saveset.worldset->GetSteamTextSize(1, lang))
+				MACRO_STEAM_CHECKFILEUPDATE(world_text_file[lang], section[DATA_SECTION_WORLD_MAP], saveset.worldset->text_data[0]->GetDataSize(lang))
+				MACRO_STEAM_CHECKFILEUPDATE(world_worldplace_name_file[lang], section[DATA_SECTION_WORLD_MAP], saveset.worldset->GetSteamTextSize(lang))
 				MACRO_STEAM_CHECKFILEUPDATE(card_name_file[lang], section[DATA_SECTION_CARD], GetSteamTextSizeGeneric(saveset.cardset->card, &CardDataStruct::name, true, lang))
 				MACRO_STEAM_CHECKFILEUPDATE(spetext_battleinfo_file[lang], section[DATA_SECTION_MENU_UI], saveset.ffuiset->special_text->text_block[0].GetDataSize(lang))
 				MACRO_STEAM_CHECKFILEUPDATE(spetext_battlescan_file[lang], section[DATA_SECTION_MENU_UI], saveset.ffuiset->special_text->text_block[1].GetDataSize(lang))
@@ -2071,7 +2096,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 					MACRO_STEAM_CHECKFILEUPDATE(text_file[lang][j], section[DATA_SECTION_TEXT] && saveset.textset->text_data[j]->modified, saveset.textset->text_data[j]->GetDataSize(lang))
 				}
 			}
-			MACRO_STEAM_CHECKFILEUPDATE(spetext_localization_file, section[DATA_SECTION_MENU_UI], saveset.ffuiset->special_text->text_block[6].GetDataSize())
+			MACRO_STEAM_CHECKFILEUPDATE(spetext_localization_file, section[DATA_SECTION_MENU_UI], saveset.ffuiset->special_text->text_block[SPECIAL_TEXT_LOCALIZATION_INDEX_STEAM].GetDataSize())
 			MACRO_STEAM_CHECKFILEUPDATE(card_stat_file, section[DATA_SECTION_CARD], 5 * CARD_AMOUNT)
 			MACRO_STEAM_CHECKFILEUPDATE(card_deck_file, section[DATA_SECTION_CARD], 2 * CARD_DECK_AMOUNT)
 			MACRO_STEAM_CHECKFILEUPDATE(card_set_file, section[DATA_SECTION_CARD], CARD_SET_AMOUNT*CARD_SET_CAPACITY)
@@ -2112,8 +2137,8 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 							MACRO_STEAM_WRITEFILEUPDATE(text_file[lang][j], textset->text_data[j]->WriteSteam(filedest, lang), true)
 						}
 				if (section[DATA_SECTION_WORLD_MAP]) {
-					MACRO_STEAM_WRITEFILEUPDATE(world_text_file[lang], worldset->WriteSteamText(filedest, 0, lang), false)
-					MACRO_STEAM_WRITEFILEUPDATE(world_worldplace_name_file[lang], worldset->WriteSteamText(filedest, 1, lang), false)
+					MACRO_STEAM_WRITEFILEUPDATE(world_text_file[lang], worldset->text_data[0]->WriteSteam(filedest, lang), false)
+					MACRO_STEAM_WRITEFILEUPDATE(world_worldplace_name_file[lang], worldset->WriteSteamText(filedest, lang), false)
 				}
 				if (section[DATA_SECTION_ITEM]) {
 					MACRO_STEAM_WRITEFILEUPDATE(item_name_file[lang], itemset->WriteSteamText(filedest, 0, false, true, lang), false)
@@ -2143,7 +2168,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 				}
 			}
 			if (section[DATA_SECTION_MENU_UI]) {
-				MACRO_STEAM_WRITEFILEUPDATE(spetext_localization_file, ffuiset->special_text->WriteSteam(filedest, 6), false)
+				MACRO_STEAM_WRITEFILEUPDATE(spetext_localization_file, ffuiset->special_text->WriteSteamLocalization(filedest, true), false)
 			}
 			if (section[DATA_SECTION_CARD]) {
 				MACRO_STEAM_WRITEFILEUPDATE(card_stat_file, cardset->WriteSteamData(filedest, 0), false)
@@ -2159,6 +2184,11 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		filebase.close();
 		filedest.close();
 	} else if (assetformat == 1) {
+		vector<char> basetextbuffer;
+		fname = config.steam_dir_data + "resources.assets";
+		filebase.open(fname.c_str(), ios::in | ios::binary);
+		if (!filebase.is_open())
+			return 2;
 
 		#define MACRO_SAVE_ASSET_RESOURCES(FILEID, CONDITION, SAVEFUNC) \
 			fname = destfolder + config.GetSteamAssetPath(UNITY_ARCHIVE_RESOURCES, config.FILEID); \
@@ -2172,6 +2202,31 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 				filedest.close(); \
 				if (isempty) remove(fname.c_str()); \
 			}
+		#define MACRO_SAVE_TEXT_ASSET_RESOURCES(FILEID, CONDITION, SAVEFUNC) \
+			fname = destfolder + config.GetSteamAssetPath(UNITY_ARCHIVE_RESOURCES, config.FILEID); \
+			if (deleteold) remove(fname.c_str()); \
+			if (CONDITION) { \
+				MainFrame::MakeDirForFile(fname); \
+				filedest.open(fname.c_str(), ios::out | ios::binary); \
+				if (!filedest.is_open()) return 3; \
+				wxArrayString filebasecontent; \
+				uint32_t basetextoffset = config.meta_res.GetFileOffsetByIndex(config.FILEID); \
+				uint32_t basetextsize = config.meta_res.GetFileSizeByIndex(config.FILEID); \
+				filebase.seekg(basetextoffset); \
+				basetextbuffer.resize(basetextsize); \
+				filebase.read(basetextbuffer.data(), basetextsize); \
+				uint32_t basetextamount = FF9String::CountSteamTextAmount(basetextbuffer.data(), basetextsize); \
+				filebase.seekg(basetextoffset); \
+				FF9String basetextstr; \
+				for (unsigned int macroi = 0; macroi < basetextamount; macroi++) { \
+					SteamReadFF9String(filebase, basetextstr, lang); \
+					filebasecontent.Add(_(basetextstr.multi_lang_str[lang])); \
+				} \
+				saveset.SAVEFUNC; \
+				bool isempty = filedest.tellp() == 0; \
+				filedest.close(); \
+				if (isempty) remove(fname.c_str()); \
+			}
 
 		for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
 			MACRO_SAVE_ASSET_RESOURCES(spell_name_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_SPELL], spellset->WriteSteamText(filedest, 0, config.dll_usage != 0, true, lang))
@@ -2179,13 +2234,13 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			MACRO_SAVE_ASSET_RESOURCES(cmd_name_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_CMD], cmdset->WriteSteamText(filedest, 0, config.dll_usage != 0, true, lang))
 			MACRO_SAVE_ASSET_RESOURCES(cmd_help_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_CMD], cmdset->WriteSteamText(filedest, 1, config.dll_usage != 0, true, lang))
 			for (i = 0; i < config.enmy_amount; i++) {
-				MACRO_SAVE_ASSET_RESOURCES(enmy_text_file[lang][i], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_ENMY] && saveset.enemyset->text[i]->modified, enemyset->text[i]->WriteSteam(filedest, lang))
+				MACRO_SAVE_TEXT_ASSET_RESOURCES(enmy_text_file[lang][i], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_ENMY] && saveset.enemyset->text[i]->modified, enemyset->text[i]->WriteSteamPatch(filedest, filebasecontent, lang))
 			}
 			for (i = 0; i < config.text_amount; i++) {
-				MACRO_SAVE_ASSET_RESOURCES(text_file[lang][i], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_TEXT] && saveset.textset->text_data[i]->modified, textset->text_data[i]->WriteSteam(filedest, lang))
+				MACRO_SAVE_TEXT_ASSET_RESOURCES(text_file[lang][i], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_TEXT] && saveset.textset->text_data[i]->modified, textset->text_data[i]->WriteSteamPatch(filedest, filebasecontent, lang))
 			}
-			MACRO_SAVE_ASSET_RESOURCES(world_text_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_WORLD_MAP], worldset->WriteSteamText(filedest, 0, lang))
-			MACRO_SAVE_ASSET_RESOURCES(world_worldplace_name_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_WORLD_MAP], worldset->WriteSteamText(filedest, 1, lang))
+			MACRO_SAVE_TEXT_ASSET_RESOURCES(world_text_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_WORLD_MAP], worldset->text_data[0]->WriteSteamPatch(filedest, filebasecontent, lang))
+			MACRO_SAVE_TEXT_ASSET_RESOURCES(world_worldplace_name_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_WORLD_MAP], worldset->WriteSteamTextPatch(filedest, filebasecontent, lang))
 			MACRO_SAVE_ASSET_RESOURCES(item_name_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_ITEM], itemset->WriteSteamText(filedest, 0, config.dll_usage != 0, true, lang))
 			MACRO_SAVE_ASSET_RESOURCES(item_help_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_ITEM], itemset->WriteSteamText(filedest, 1, config.dll_usage != 0, true, lang))
 			MACRO_SAVE_ASSET_RESOURCES(item_help2_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_ITEM], itemset->WriteSteamText(filedest, 2, config.dll_usage != 0, true, lang))
@@ -2195,24 +2250,41 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			MACRO_SAVE_ASSET_RESOURCES(support_name_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_SUPPORT], supportset->WriteSteamText(filedest, 0, config.dll_usage != 0, true, lang))
 			MACRO_SAVE_ASSET_RESOURCES(support_help_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_SUPPORT], supportset->WriteSteamText(filedest, 1, config.dll_usage != 0, true, lang))
 			MACRO_SAVE_ASSET_RESOURCES(card_name_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_CARD], cardset->WriteSteamText(filedest, config.dll_usage != 0, true, lang))
-			MACRO_SAVE_ASSET_RESOURCES(field_text_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_FIELD], fieldset->WriteSteamText(filedest, lang))
-			MACRO_SAVE_ASSET_RESOURCES(spetext_battleinfo_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteam(filedest, 0, lang))
-			MACRO_SAVE_ASSET_RESOURCES(spetext_battlescan_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteam(filedest, 1, lang))
-			MACRO_SAVE_ASSET_RESOURCES(spetext_spellnaming_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteam(filedest, 2, lang))
-			MACRO_SAVE_ASSET_RESOURCES(spetext_chocomenu_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteam(filedest, 3, lang))
-			MACRO_SAVE_ASSET_RESOURCES(spetext_cardrank_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteam(filedest, 4, lang))
-			MACRO_SAVE_ASSET_RESOURCES(spetext_tetramaster_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteam(filedest, 5, lang))
+			MACRO_SAVE_ASSET_RESOURCES(field_text_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_FIELD], fieldset->WriteSteamTextPatch(filedest, filebase, config, lang))
+			MACRO_SAVE_TEXT_ASSET_RESOURCES(spetext_battleinfo_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteamPatch(filedest, 0, filebasecontent, lang))
+			MACRO_SAVE_TEXT_ASSET_RESOURCES(spetext_battlescan_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteamPatch(filedest, 1, filebasecontent, lang))
+			MACRO_SAVE_TEXT_ASSET_RESOURCES(spetext_spellnaming_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteamPatch(filedest, 2, filebasecontent, lang))
+			MACRO_SAVE_TEXT_ASSET_RESOURCES(spetext_chocomenu_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteamPatch(filedest, 3, filebasecontent, lang))
+			MACRO_SAVE_TEXT_ASSET_RESOURCES(spetext_cardrank_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteamPatch(filedest, 4, filebasecontent, lang))
+			MACRO_SAVE_TEXT_ASSET_RESOURCES(spetext_tetramaster_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteamPatch(filedest, 5, filebasecontent, lang))
 		}
-		MACRO_SAVE_ASSET_RESOURCES(spetext_localization_file, section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteam(filedest, 6))
+		fname = destfolder + config.GetSteamAssetPath(UNITY_ARCHIVE_RESOURCES, config.spetext_localization_file);
+		if (deleteold) remove(fname.c_str());
+		fname = dirassets + HADES_STRING_LOCALIZATION_PATCH_FILE;
+		if (deleteold) remove(fname.c_str());
+		if (section[DATA_SECTION_MENU_UI]) {
+			MainFrame::MakeDirForFile(fname);
+			filedest.open(fname.c_str(), ios::out | ios::binary);
+			if (!filedest.is_open()) return 3;
+			saveset.ffuiset->special_text->WriteSteamLocalizationPatch(filedest, filebase, config);
+			bool isempty = filedest.tellp() == 0;
+			filedest.close();
+			if (isempty) remove(fname.c_str());
+		}
 		MACRO_SAVE_ASSET_RESOURCES(card_stat_file, section[DATA_SECTION_CARD], cardset->WriteSteamData(filedest, 0))
 		MACRO_SAVE_ASSET_RESOURCES(card_deck_file, section[DATA_SECTION_CARD], cardset->WriteSteamData(filedest, 1))
 		MACRO_SAVE_ASSET_RESOURCES(card_set_file, section[DATA_SECTION_CARD], cardset->WriteSteamData(filedest, 2))
 		for (i = 0; i < SPELL_ANIMATION_AMOUNT; i++)
-			if (config.spellanim_steam_file[i]>=0) {
+			if (config.spellanim_steam_file[i] >= 0) {
 				MACRO_SAVE_ASSET_RESOURCES(spellanim_steam_file[i], section[DATA_SECTION_SPELL_ANIM] && saveset.spellanimset->spell[i].modified_data != 0, spellanimset->spell[i].Write(filedest))
 			}
+		if (filebase.is_open())
+			filebase.close();
 	}
-	
+
+	wxYield();
+	GetTopWindow()->SetDoubleBuffered(false);
+
 	// Assembly-CSharp.dll: everything else...
 	if (dllformat == 0) {
 		unsigned int dllmodifcount, dllmodifmax, sectionmodifcount;
@@ -2318,14 +2390,14 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 				fname = dirassets + HADES_STRING_CSV_STATABIL_FILE[i];
 				MainFrame::MakeDirForFile(fname);
 			}
-			if (!saveset.statset->GenerateCSV(dirassets)) return 3;
+			if (!saveset.statset->GenerateCSV(destfolder, dirassets)) return 3;
 		}
 		if (section[DATA_SECTION_PARTY_SPECIAL]) {
 			fname = dirassets + HADES_STRING_CSV_MGCSWORD_FILE;
 			MainFrame::MakeDirForFile(fname);
 			if (!saveset.partyspecialset->GenerateCSV(dirassets)) return 3;
 		}
-		if (section[DATA_SECTION_ENMY] && saveset.enemyset->modified_battle_scene_amount > 0) {
+		if (section[DATA_SECTION_ENMY]) {
 //			fname = destfolder + HADES_STRING_DICTIONARY_PATCH_FILE;
 //			MainFrame::MakeDirForFile(fname);
 			if (!saveset.enemyset->GenerateCSV(destfolder)) return 3;
@@ -2413,7 +2485,7 @@ int CreateSteamCustomBattleAssets(string destfolder, ConfigurationSet& config, S
 	filedest.open(fname.c_str(), ios::out | ios::binary);
 	if (!filedest.is_open())
 		return 3;
-	saveset.enemyset->battle[basebattle]->WriteHWS(filedest);
+	saveset.enemyset->battle[basebattle]->WriteHWS(filedest, true);
 	filedest.close();
 	for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
 		fname = destfolder + "StreamingAssets\\Assets\\Resources\\CommonAsset\\EventEngine\\EventBinary\\Battle\\" + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[lang].ToStdString() + "\\" + battleid + ".eb.bytes";
@@ -2421,7 +2493,7 @@ int CreateSteamCustomBattleAssets(string destfolder, ConfigurationSet& config, S
 		filedest.open(fname.c_str(), ios::out | ios::binary);
 		if (!filedest.is_open())
 			return 3;
-		saveset.enemyset->script[basebattle]->WriteHWS(filedest, lang);
+		saveset.enemyset->script[basebattle]->WriteSteam(filedest, lang);
 		filedest.close();
 		fname = destfolder + "FF9_Data\\EmbeddedAsset\\Text\\" + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[lang].ToStdString() + "\\Battle\\" + to_string(scriptid) + ".mes";
 		MainFrame::MakeDirForFile(fname);
@@ -2467,7 +2539,7 @@ int CreateSteamCustomFieldAssets(string destfolder, ConfigurationSet& config, Sa
 		filedest.open(fname.c_str(), ios::out | ios::binary);
 		if (!filedest.is_open())
 			return 3;
-		saveset.fieldset->script_data[basefield]->WriteHWS(filedest, lang);
+		saveset.fieldset->script_data[basefield]->WriteSteam(filedest, lang);
 		filedest.close();
 	}
 	filebase.open(config.steam_dir_assets + "p0data1" + to_string(config.field_file_id[basefield]) + ".bin", ios::in | ios::binary);
@@ -2556,25 +2628,33 @@ int PreloadHWS(string filepath, bool* section) {
 	for (i = 0; i < DATA_SECTION_AMOUNT; i++)
 		section[i] = false;
 	GameType hwsgt = GAME_TYPE_PSX;
-	fstream save(filepath.c_str(),ios::in|ios::binary);
+	fstream save(filepath.c_str(), ios::in | ios::binary);
 	if (!save.is_open())
 		return 1;
 	char buffer[5];
 	buffer[4] = 0;
-	save.read(buffer,4);
+	save.read(buffer, 4);
 	if (SAVE_HEADER_PSX.compare(buffer)) {
 		hwsgt = GAME_TYPE_STEAM;
 		if (SAVE_HEADER_STEAM.compare(buffer))
 			return 2;
 	}
-	uint32_t nbsection,tmp32;
+	uint32_t nbsection, tmp32;
 	uint8_t sectiontype;
-	HWSReadLong(save,nbsection);
-	for (i=0;i<nbsection;i++) {
-		HWSReadChar(save,sectiontype);
-		HWSReadLong(save,tmp32);
-		save.seekg(tmp32,ios::cur);
-		if (sectiontype<DATA_SECTION_AMOUNT)
+	HWSReadLong(save, nbsection);
+	if (nbsection == 0) {
+		uint16_t version;
+		HWSReadShort(save, version);
+		SetHWSGlobalVersion(version);
+		HWSReadLong(save, nbsection);
+	} else {
+		SetHWSGlobalVersion(0);
+	}
+	for (i = 0; i < nbsection; i++) {
+		HWSReadChar(save, sectiontype);
+		HWSReadLong(save, tmp32);
+		save.seekg(tmp32, ios::cur);
+		if (sectiontype < DATA_SECTION_AMOUNT)
 			section[sectiontype] = true;
 	}
 	save.close();
@@ -2586,7 +2666,7 @@ wstring* LoadHWS(string filepath, bool* section, bool* sectext, bool* localsec, 
 	bool problem = false;
 	wstringstream problemres;
 	problemres << HADES_STRING_HWS_OPEN_WARNING;
-	fstream save(filepath.c_str(),ios::in|ios::binary);
+	fstream save(filepath.c_str(), ios::in | ios::binary);
 	wstring* res = new wstring[2];
 	if (!save.is_open()) {
 		res[0] = HADES_STRING_OPEN_ERROR_FAIL_NF;
@@ -2595,10 +2675,10 @@ wstring* LoadHWS(string filepath, bool* section, bool* sectext, bool* localsec, 
 	}
 	char buffer[5];
 	buffer[4] = 0;
-	save.read(buffer,4);
-	if (SAVE_HEADER_PSX.compare(buffer)==0) {
+	save.read(buffer, 4);
+	if (SAVE_HEADER_PSX.compare(buffer) == 0) {
 		SetHWSGameType(GAME_TYPE_PSX);
-	} else if (SAVE_HEADER_STEAM.compare(buffer)==0) {
+	} else if (SAVE_HEADER_STEAM.compare(buffer) == 0) {
 		SetHWSGameType(GAME_TYPE_STEAM);
 	} else {
 		save.close();
@@ -2606,8 +2686,16 @@ wstring* LoadHWS(string filepath, bool* section, bool* sectext, bool* localsec, 
 		res[1] = HADES_STRING_ERROR;
 		return res;
 	}
-	uint32_t nbsection,sectionpos;
-	HWSReadLong(save,nbsection);
+	uint32_t nbsection, sectionpos;
+	HWSReadLong(save, nbsection);
+	if (nbsection == 0) {
+		uint16_t version;
+		HWSReadShort(save, version);
+		SetHWSGlobalVersion(version);
+		HWSReadLong(save, nbsection);
+	} else {
+		SetHWSGlobalVersion(0);
+	}
 	uint8_t* sectiontype = new uint8_t[nbsection];
 	uint32_t* sectionlength = new uint32_t[nbsection];
 	unsigned int enmyload = (section[DATA_SECTION_ENMY] ? 1 : 0) | (localsec[0] << 1);
@@ -2617,13 +2705,16 @@ wstring* LoadHWS(string filepath, bool* section, bool* sectext, bool* localsec, 
 	section[DATA_SECTION_WORLD_MAP] |= localsec[1];
 	section[DATA_SECTION_FIELD] |= localsec[2];
 //	LoadingDialogInit(nbsection,_(L"Importing HWS datas..."));
-	for (i=0;i<nbsection;i++) {
-		HWSReadChar(save,sectiontype[i]);
-		HWSReadLong(save,sectionlength[i]);
+	for (i = 0; i < nbsection; i++) {
+		HWSReadChar(save, sectiontype[i]);
+		HWSReadLong(save, sectionlength[i]);
+		// TODO: Crash after (1) import AF (2) save copy HWS (3) close data -> (4) open game again crash (consistently?)
+		// also had the same crash without import/save any HWS; Party Special tab involved?
+		// TODO
 		fstream fout("aaaa.txt", ios::out | ios::app); fout << "Section " << (int)sectiontype[i] << " (length " << (int)sectionlength[i] << ") at 0x" << std::hex << (int)save.tellg() << endl; fout.close();
 		sectionpos = save.tellg();
 		if (section[sectiontype[i]]) {
-			
+
 			#define MACRO_HANDLE_FLAG_PROBLEM(flag,str) \
 				if (res & flag) { \
 					problemres << HADES_STRING_HWS_OPEN_WARNING_COMMON << str; \
@@ -2634,116 +2725,116 @@ wstring* LoadHWS(string filepath, bool* section, bool* sectext, bool* localsec, 
 					problemres << HADES_STRING_HWS_OPEN_WARNING_COMMON << res[index] << str; \
 					problem = true; \
 				}
-			
-			if (sectiontype[i]==DATA_SECTION_SPELL) {
-				int res = saveset.spellset->LoadHWS(save,sectext[sectiontype[i]]);
-				MACRO_HANDLE_FLAG_PROBLEM(1,HADES_STRING_HWS_OPEN_WARNING_SPELL_NAME)
-				MACRO_HANDLE_FLAG_PROBLEM(2,HADES_STRING_HWS_OPEN_WARNING_SPELL_HELP)
-			} else if (sectiontype[i]==DATA_SECTION_CMD) {
-				int res = saveset.cmdset->LoadHWS(save,sectext[sectiontype[i]]);
-				MACRO_HANDLE_FLAG_PROBLEM(1,HADES_STRING_HWS_OPEN_WARNING_CMD_NAME)
-				MACRO_HANDLE_FLAG_PROBLEM(2,HADES_STRING_HWS_OPEN_WARNING_CMD_HELP)
-			} else if (sectiontype[i]==DATA_SECTION_ENMY) {
-				int* res = saveset.enemyset->LoadHWS(save,backup.enemy,sectext[sectiontype[i]],enmyload);
-				MACRO_HANDLE_QUANTIFIED_PROBLEM(0,HADES_STRING_HWS_OPEN_WARNING_ENEMY_SIZE)
-				MACRO_HANDLE_QUANTIFIED_PROBLEM(1,HADES_STRING_HWS_OPEN_WARNING_ENEMY_UNKNOWN)
-				MACRO_HANDLE_QUANTIFIED_PROBLEM(2,HADES_STRING_HWS_OPEN_WARNING_ENEMY_UNUSED)
-				MACRO_HANDLE_QUANTIFIED_PROBLEM(3,HADES_STRING_HWS_OPEN_WARNING_ENEMY_PRELOAD_UNAVAILABLE)
+
+			if (sectiontype[i] == DATA_SECTION_SPELL) {
+				int res = saveset.spellset->LoadHWS(save, sectext[sectiontype[i]]);
+				MACRO_HANDLE_FLAG_PROBLEM(1, HADES_STRING_HWS_OPEN_WARNING_SPELL_NAME)
+				MACRO_HANDLE_FLAG_PROBLEM(2, HADES_STRING_HWS_OPEN_WARNING_SPELL_HELP)
+			} else if (sectiontype[i] == DATA_SECTION_CMD) {
+				int res = saveset.cmdset->LoadHWS(save, sectext[sectiontype[i]]);
+				MACRO_HANDLE_FLAG_PROBLEM(1, HADES_STRING_HWS_OPEN_WARNING_CMD_NAME)
+				MACRO_HANDLE_FLAG_PROBLEM(2, HADES_STRING_HWS_OPEN_WARNING_CMD_HELP)
+			} else if (sectiontype[i] == DATA_SECTION_ENMY) {
+				int* res = saveset.enemyset->LoadHWS(save, backup.enemy, sectext[sectiontype[i]], enmyload);
+				MACRO_HANDLE_QUANTIFIED_PROBLEM(0, HADES_STRING_HWS_OPEN_WARNING_ENEMY_SIZE)
+				MACRO_HANDLE_QUANTIFIED_PROBLEM(1, HADES_STRING_HWS_OPEN_WARNING_ENEMY_UNKNOWN)
+				MACRO_HANDLE_QUANTIFIED_PROBLEM(2, HADES_STRING_HWS_OPEN_WARNING_ENEMY_UNUSED)
+				MACRO_HANDLE_QUANTIFIED_PROBLEM(3, HADES_STRING_HWS_OPEN_WARNING_ENEMY_PRELOAD_UNAVAILABLE)
 				delete[] res;
-			} else if (sectiontype[i]==DATA_SECTION_SHOP) {
-				saveset.shopset->LoadHWS(save,sectionlength[i]>SHOP_AMOUNT*SHOP_ITEM_AMOUNT);
-			} else if (sectiontype[i]==DATA_SECTION_TEXT) {
-				int* res = saveset.textset->LoadHWS(save,backup.text);
-				MACRO_HANDLE_QUANTIFIED_PROBLEM(0,HADES_STRING_HWS_OPEN_WARNING_TEXT_SIZE)
-				MACRO_HANDLE_QUANTIFIED_PROBLEM(1,HADES_STRING_HWS_OPEN_WARNING_TEXT_UNKNOWN)
-				MACRO_HANDLE_QUANTIFIED_PROBLEM(2,HADES_STRING_HWS_OPEN_WARNING_TEXT_UNUSED)
+			} else if (sectiontype[i] == DATA_SECTION_SHOP) {
+				saveset.shopset->LoadHWS(save, sectionlength[i] > SHOP_AMOUNT * SHOP_ITEM_AMOUNT);
+			} else if (sectiontype[i] == DATA_SECTION_TEXT) {
+				int* res = saveset.textset->LoadHWS(save, backup.text);
+				MACRO_HANDLE_QUANTIFIED_PROBLEM(0, HADES_STRING_HWS_OPEN_WARNING_TEXT_SIZE)
+				MACRO_HANDLE_QUANTIFIED_PROBLEM(1, HADES_STRING_HWS_OPEN_WARNING_TEXT_UNKNOWN)
+				MACRO_HANDLE_QUANTIFIED_PROBLEM(2, HADES_STRING_HWS_OPEN_WARNING_TEXT_UNUSED)
 				delete[] res;
-			} else if (sectiontype[i]==DATA_SECTION_BATTLE_SCENE) {
-				if (GetGameType()==GAME_TYPE_PSX) {
-					int* res = saveset.sceneset->LoadHWS(save,backup.scene);
-					MACRO_HANDLE_QUANTIFIED_PROBLEM(0,HADES_STRING_HWS_OPEN_WARNING_BATTLE_SCENE_SIZE)
-					MACRO_HANDLE_QUANTIFIED_PROBLEM(1,HADES_STRING_HWS_OPEN_WARNING_BATTLE_SCENE_UNKNOWN)
-					MACRO_HANDLE_QUANTIFIED_PROBLEM(2,HADES_STRING_HWS_OPEN_WARNING_BATTLE_SCENE_UNUSED)
+			} else if (sectiontype[i] == DATA_SECTION_BATTLE_SCENE) {
+				if (GetGameType() == GAME_TYPE_PSX) {
+					int* res = saveset.sceneset->LoadHWS(save, backup.scene);
+					MACRO_HANDLE_QUANTIFIED_PROBLEM(0, HADES_STRING_HWS_OPEN_WARNING_BATTLE_SCENE_SIZE)
+					MACRO_HANDLE_QUANTIFIED_PROBLEM(1, HADES_STRING_HWS_OPEN_WARNING_BATTLE_SCENE_UNKNOWN)
+					MACRO_HANDLE_QUANTIFIED_PROBLEM(2, HADES_STRING_HWS_OPEN_WARNING_BATTLE_SCENE_UNUSED)
 					delete[] res;
 				} else {
 					problemres << HADES_STRING_HWS_OPEN_WARNING_COMMON << HADES_STRING_HWS_OPEN_WARNING_BATTLE_SCENE_UNAVAILABLE;
 					problem = true;
 				}
-			} else if (sectiontype[i]==DATA_SECTION_WORLD_MAP) {
-				int* res = saveset.worldset->LoadHWS(save,backup.world,sectext[sectiontype[i]],worldload);
-				MACRO_HANDLE_QUANTIFIED_PROBLEM(0,HADES_STRING_HWS_OPEN_WARNING_WORLD_MAP_SIZE)
-				MACRO_HANDLE_QUANTIFIED_PROBLEM(1,HADES_STRING_HWS_OPEN_WARNING_WORLD_MAP_UNKNOWN)
-				MACRO_HANDLE_QUANTIFIED_PROBLEM(2,HADES_STRING_HWS_OPEN_WARNING_WORLD_MAP_UNUSED)
-				MACRO_HANDLE_QUANTIFIED_PROBLEM(3,HADES_STRING_HWS_OPEN_WARNING_WORLD_MAP_PARENTSIZE)
-				MACRO_HANDLE_QUANTIFIED_PROBLEM(4,HADES_STRING_HWS_OPEN_WARNING_WORLD_MAP_PRELOAD_UNAVAILABLE)
+			} else if (sectiontype[i] == DATA_SECTION_WORLD_MAP) {
+				int* res = saveset.worldset->LoadHWS(save, backup.world, sectext[sectiontype[i]], worldload);
+				MACRO_HANDLE_QUANTIFIED_PROBLEM(0, HADES_STRING_HWS_OPEN_WARNING_WORLD_MAP_SIZE)
+				MACRO_HANDLE_QUANTIFIED_PROBLEM(1, HADES_STRING_HWS_OPEN_WARNING_WORLD_MAP_UNKNOWN)
+				MACRO_HANDLE_QUANTIFIED_PROBLEM(2, HADES_STRING_HWS_OPEN_WARNING_WORLD_MAP_UNUSED)
+				MACRO_HANDLE_QUANTIFIED_PROBLEM(3, HADES_STRING_HWS_OPEN_WARNING_WORLD_MAP_PARENTSIZE)
+				MACRO_HANDLE_QUANTIFIED_PROBLEM(4, HADES_STRING_HWS_OPEN_WARNING_WORLD_MAP_PRELOAD_UNAVAILABLE)
 				delete[] res;
-			} else if (sectiontype[i]==DATA_SECTION_ITEM) {
-				int res = saveset.itemset->LoadHWS(save,sectext[sectiontype[i]]);
-				MACRO_HANDLE_FLAG_PROBLEM(0x1,HADES_STRING_HWS_OPEN_WARNING_ITEM_NAME)
-				MACRO_HANDLE_FLAG_PROBLEM(0x2,HADES_STRING_HWS_OPEN_WARNING_ITEM_HELP)
-				MACRO_HANDLE_FLAG_PROBLEM(0x4,HADES_STRING_HWS_OPEN_WARNING_ITEM_HELP2)
-				MACRO_HANDLE_FLAG_PROBLEM(0x8,HADES_STRING_HWS_OPEN_WARNING_KEY_ITEM_NAME)
-				MACRO_HANDLE_FLAG_PROBLEM(0x10,HADES_STRING_HWS_OPEN_WARNING_KEY_ITEM_HELP)
-				MACRO_HANDLE_FLAG_PROBLEM(0x20,HADES_STRING_HWS_OPEN_WARNING_KEY_ITEM_DESC)
-			} else if (sectiontype[i]==DATA_SECTION_SUPPORT) {
-				int res = saveset.supportset->LoadHWS(save,sectext[sectiontype[i]]);
-				MACRO_HANDLE_FLAG_PROBLEM(1,HADES_STRING_HWS_OPEN_WARNING_SUPPORT_NAME)
-				MACRO_HANDLE_FLAG_PROBLEM(2,HADES_STRING_HWS_OPEN_WARNING_SUPPORT_HELP)
-			} else if (sectiontype[i]==DATA_SECTION_STAT) {
-				int res = saveset.statset->LoadHWS(save,sectext[sectiontype[i]]);
-				MACRO_HANDLE_FLAG_PROBLEM(1,HADES_STRING_HWS_OPEN_WARNING_STAT_DEFAULTNAME)
-			} else if (sectiontype[i]==DATA_SECTION_CARD) {
-				int res = saveset.cardset->LoadHWS(save,sectext[sectiontype[i]]);
-				MACRO_HANDLE_FLAG_PROBLEM(1,HADES_STRING_HWS_OPEN_WARNING_CARD_NAME)
-			} else if (sectiontype[i]==DATA_SECTION_FIELD) {
-				int* res = saveset.fieldset->LoadHWS(save,backup.field,sectext[sectiontype[i]],fieldload);
-				MACRO_HANDLE_QUANTIFIED_PROBLEM(0,HADES_STRING_HWS_OPEN_WARNING_FIELD_SIZE)
-				MACRO_HANDLE_QUANTIFIED_PROBLEM(1,HADES_STRING_HWS_OPEN_WARNING_FIELD_UNKNOWN)
-				MACRO_HANDLE_QUANTIFIED_PROBLEM(2,HADES_STRING_HWS_OPEN_WARNING_FIELD_UNUSED)
-				MACRO_HANDLE_QUANTIFIED_PROBLEM(3,HADES_STRING_HWS_OPEN_WARNING_FIELD_PARENTSIZE)
-				MACRO_HANDLE_QUANTIFIED_PROBLEM(4,HADES_STRING_HWS_OPEN_WARNING_FIELD_PRELOAD_UNAVAILABLE)
+			} else if (sectiontype[i] == DATA_SECTION_ITEM) {
+				int res = saveset.itemset->LoadHWS(save, sectext[sectiontype[i]]);
+				MACRO_HANDLE_FLAG_PROBLEM(0x1, HADES_STRING_HWS_OPEN_WARNING_ITEM_NAME)
+				MACRO_HANDLE_FLAG_PROBLEM(0x2, HADES_STRING_HWS_OPEN_WARNING_ITEM_HELP)
+				MACRO_HANDLE_FLAG_PROBLEM(0x4, HADES_STRING_HWS_OPEN_WARNING_ITEM_HELP2)
+				MACRO_HANDLE_FLAG_PROBLEM(0x8, HADES_STRING_HWS_OPEN_WARNING_KEY_ITEM_NAME)
+				MACRO_HANDLE_FLAG_PROBLEM(0x10, HADES_STRING_HWS_OPEN_WARNING_KEY_ITEM_HELP)
+				MACRO_HANDLE_FLAG_PROBLEM(0x20, HADES_STRING_HWS_OPEN_WARNING_KEY_ITEM_DESC)
+			} else if (sectiontype[i] == DATA_SECTION_SUPPORT) {
+				int res = saveset.supportset->LoadHWS(save, sectext[sectiontype[i]]);
+				MACRO_HANDLE_FLAG_PROBLEM(1, HADES_STRING_HWS_OPEN_WARNING_SUPPORT_NAME)
+				MACRO_HANDLE_FLAG_PROBLEM(2, HADES_STRING_HWS_OPEN_WARNING_SUPPORT_HELP)
+			} else if (sectiontype[i] == DATA_SECTION_STAT) {
+				int res = saveset.statset->LoadHWS(save, sectext[sectiontype[i]]);
+				MACRO_HANDLE_FLAG_PROBLEM(1, HADES_STRING_HWS_OPEN_WARNING_STAT_DEFAULTNAME)
+			} else if (sectiontype[i] == DATA_SECTION_CARD) {
+				int res = saveset.cardset->LoadHWS(save, sectext[sectiontype[i]]);
+				MACRO_HANDLE_FLAG_PROBLEM(1, HADES_STRING_HWS_OPEN_WARNING_CARD_NAME)
+			} else if (sectiontype[i] == DATA_SECTION_FIELD) {
+				int* res = saveset.fieldset->LoadHWS(save, backup.field, sectext[sectiontype[i]], fieldload);
+				MACRO_HANDLE_QUANTIFIED_PROBLEM(0, HADES_STRING_HWS_OPEN_WARNING_FIELD_SIZE)
+				MACRO_HANDLE_QUANTIFIED_PROBLEM(1, HADES_STRING_HWS_OPEN_WARNING_FIELD_UNKNOWN)
+				MACRO_HANDLE_QUANTIFIED_PROBLEM(2, HADES_STRING_HWS_OPEN_WARNING_FIELD_UNUSED)
+				MACRO_HANDLE_QUANTIFIED_PROBLEM(3, HADES_STRING_HWS_OPEN_WARNING_FIELD_PARENTSIZE)
+				MACRO_HANDLE_QUANTIFIED_PROBLEM(4, HADES_STRING_HWS_OPEN_WARNING_FIELD_PRELOAD_UNAVAILABLE)
 				delete[] res;
-			} else if (sectiontype[i]==DATA_SECTION_SPELL_ANIM) {
+			} else if (sectiontype[i] == DATA_SECTION_SPELL_ANIM) {
 				int* res = saveset.spellanimset->LoadHWS(save);
-				MACRO_HANDLE_QUANTIFIED_PROBLEM(0,HADES_STRING_HWS_OPEN_WARNING_SPELL_ANIMATION_SIZE)
+				MACRO_HANDLE_QUANTIFIED_PROBLEM(0, HADES_STRING_HWS_OPEN_WARNING_SPELL_ANIMATION_SIZE)
 				delete[] res;
-			} else if (sectiontype[i]==DATA_SECTION_MENU_UI) {
-				if (GetGameType()==GetHWSGameType()) {
-					int* res = saveset.ffuiset->LoadHWS(save,backup.menu_ui,true);
-					MACRO_HANDLE_QUANTIFIED_PROBLEM(0,HADES_STRING_HWS_OPEN_WARNING_MENU_UI_TEXT_SIZE)
-					MACRO_HANDLE_QUANTIFIED_PROBLEM(1,HADES_STRING_HWS_OPEN_WARNING_MENU_UI_TEXT_UNKNOWN)
+			} else if (sectiontype[i] == DATA_SECTION_MENU_UI) {
+				if (GetGameType() == GetHWSGameType()) {
+					int* res = saveset.ffuiset->LoadHWS(save, backup.menu_ui, true);
+					MACRO_HANDLE_QUANTIFIED_PROBLEM(0, HADES_STRING_HWS_OPEN_WARNING_MENU_UI_TEXT_SIZE)
+					MACRO_HANDLE_QUANTIFIED_PROBLEM(1, HADES_STRING_HWS_OPEN_WARNING_MENU_UI_TEXT_UNKNOWN)
 					delete[] res;
 				} else {
 					problemres << HADES_STRING_HWS_OPEN_WARNING_COMMON << HADES_STRING_HWS_OPEN_WARNING_MENU_UI_TEXT_UNAVAILABLE;
 					problem = true;
 				}
-			} else if (sectiontype[i]==DATA_SECTION_PARTY_SPECIAL) {
+			} else if (sectiontype[i] == DATA_SECTION_PARTY_SPECIAL) {
 				saveset.partyspecialset->LoadHWS(save);
-			} else if (sectiontype[i]==DATA_SECTION_ASSEMBLY) {
-				if (GetHWSGameType()==GAME_TYPE_PSX) { // MIPS
-					if (GetGameType()==GAME_TYPE_PSX) {
+			} else if (sectiontype[i] == DATA_SECTION_ASSEMBLY) {
+				if (GetHWSGameType() == GAME_TYPE_PSX) { // MIPS
+					if (GetGameType() == GAME_TYPE_PSX) {
 						int res = saveset.mipsset->LoadHWS(save);
-						MACRO_HANDLE_FLAG_PROBLEM(1,HADES_STRING_HWS_OPEN_WARNING_MIPS_SIZE)
+						MACRO_HANDLE_FLAG_PROBLEM(1, HADES_STRING_HWS_OPEN_WARNING_MIPS_SIZE)
 					} else {
 						problemres << HADES_STRING_HWS_OPEN_WARNING_COMMON << HADES_STRING_HWS_OPEN_WARNING_MIPS_UNAVAILABLE;
 						problem = true;
 					}
 				} else { // CIL
-					if (GetGameType()==GAME_TYPE_PSX) {
+					if (GetGameType() == GAME_TYPE_PSX) {
 						problemres << HADES_STRING_HWS_OPEN_WARNING_COMMON << HADES_STRING_HWS_OPEN_WARNING_CIL_UNAVAILABLE;
 						problem = true;
 					} else {
 						int* res = saveset.cilset->LoadHWS(save);
-						MACRO_HANDLE_QUANTIFIED_PROBLEM(0,HADES_STRING_HWS_OPEN_WARNING_CIL_RAW_NOT_FOUND)
-						MACRO_HANDLE_QUANTIFIED_PROBLEM(1,HADES_STRING_HWS_OPEN_WARNING_CIL_RAW_NOT_MATCHING)
-						MACRO_HANDLE_QUANTIFIED_PROBLEM(2,HADES_STRING_HWS_OPEN_WARNING_CIL_MACRO_UNKNOWN)
-						MACRO_HANDLE_QUANTIFIED_PROBLEM(3,HADES_STRING_HWS_OPEN_WARNING_CIL_MACRO_FAIL)
+						MACRO_HANDLE_QUANTIFIED_PROBLEM(0, HADES_STRING_HWS_OPEN_WARNING_CIL_RAW_NOT_FOUND)
+						MACRO_HANDLE_QUANTIFIED_PROBLEM(1, HADES_STRING_HWS_OPEN_WARNING_CIL_RAW_NOT_MATCHING)
+						MACRO_HANDLE_QUANTIFIED_PROBLEM(2, HADES_STRING_HWS_OPEN_WARNING_CIL_MACRO_UNKNOWN)
+						MACRO_HANDLE_QUANTIFIED_PROBLEM(3, HADES_STRING_HWS_OPEN_WARNING_CIL_MACRO_FAIL)
 						delete[] res;
 					}
 				}
 			}
 		}
-		save.seekg(sectionpos+sectionlength[i]);
+		save.seekg(sectionpos + sectionlength[i]);
 //		LoadingDialogUpdate(i);
 	}
 //	LoadingDialogEnd();
@@ -2760,74 +2851,77 @@ wstring* LoadHWS(string filepath, bool* section, bool* sectext, bool* localsec, 
 
 int WriteHWS(string filepath, bool* section, bool* localsec, SaveSet& saveset, UnusedSaveBackup& backup) {
 	unsigned int i;
-	fstream save(filepath.c_str(),ios::out|ios::binary);
+	fstream save(filepath.c_str(), ios::out | ios::binary);
 	if (!save.is_open())
 		return 1;
-	if (GetGameType()==GAME_TYPE_PSX)
+	if (GetGameType() == GAME_TYPE_PSX)
 		save << SAVE_HEADER_PSX.c_str();
 	else
 		save << SAVE_HEADER_STEAM.c_str();
 	uint32_t nbsection = 0;
-	for (i=0;i<DATA_SECTION_AMOUNT;i++)
+	uint16_t version = MAIN_HWS_VERSION;
+	HWSWriteLong(save, nbsection); // Write 0 to flag that a HWS version comes next
+	HWSWriteShort(save, version);
+	for (i = 0; i < DATA_SECTION_AMOUNT; i++)
 		if (section[i])
 			nbsection++;
 	if (localsec[0] && !section[DATA_SECTION_ENMY]) nbsection++;
 	if (localsec[1] && !section[DATA_SECTION_WORLD_MAP]) nbsection++;
 	if (localsec[2] && !section[DATA_SECTION_FIELD]) nbsection++;
-	HWSWriteLong(save,nbsection);
-	uint32_t sectionpos,sectionlength = 0;
+	HWSWriteLong(save, nbsection);
+	uint32_t sectionpos, sectionlength = 0;
 	unsigned int enmysave = (section[DATA_SECTION_ENMY] ? 1 : 0) | (localsec[0] << 1);
 	unsigned int worldsave = (section[DATA_SECTION_WORLD_MAP] ? 1 : 0) | (localsec[1] << 1);
 	unsigned int fieldsave = (section[DATA_SECTION_FIELD] ? 1 : 0) | (localsec[2] << 1);
 	section[DATA_SECTION_ENMY] |= localsec[0];
 	section[DATA_SECTION_WORLD_MAP] |= localsec[1];
 	section[DATA_SECTION_FIELD] |= localsec[2];
-	for (i=0;i<DATA_SECTION_AMOUNT;i++) {
+	for (i = 0; i < DATA_SECTION_AMOUNT; i++) {
 		if (section[i]) {
-			HWSWriteChar(save,i);
-			HWSWriteLong(save,sectionlength);
+			HWSWriteChar(save, i);
+			HWSWriteLong(save, sectionlength);
 			sectionpos = save.tellg();
-			if (i==DATA_SECTION_SPELL)
+			if (i == DATA_SECTION_SPELL)
 				saveset.spellset->WriteHWS(save);
-			else if (i==DATA_SECTION_CMD)
+			else if (i == DATA_SECTION_CMD)
 				saveset.cmdset->WriteHWS(save);
-			else if (i==DATA_SECTION_ENMY)
-				saveset.enemyset->WriteHWS(save,backup.enemy,enmysave);
-			else if (i==DATA_SECTION_SHOP)
+			else if (i == DATA_SECTION_ENMY)
+				saveset.enemyset->WriteHWS(save, backup.enemy, enmysave);
+			else if (i == DATA_SECTION_SHOP)
 				saveset.shopset->WriteHWS(save);
-			else if (i==DATA_SECTION_TEXT)
-				saveset.textset->WriteHWS(save,backup.text);
-			else if (i==DATA_SECTION_BATTLE_SCENE)
-				saveset.sceneset->WriteHWS(save,backup.scene);
-			else if (i==DATA_SECTION_WORLD_MAP)
-				saveset.worldset->WriteHWS(save,backup.world,worldsave);
-			else if (i==DATA_SECTION_ITEM)
+			else if (i == DATA_SECTION_TEXT)
+				saveset.textset->WriteHWS(save, backup.text);
+			else if (i == DATA_SECTION_BATTLE_SCENE)
+				saveset.sceneset->WriteHWS(save, backup.scene);
+			else if (i == DATA_SECTION_WORLD_MAP)
+				saveset.worldset->WriteHWS(save, backup.world, worldsave);
+			else if (i == DATA_SECTION_ITEM)
 				saveset.itemset->WriteHWS(save);
-			else if (i==DATA_SECTION_SUPPORT)
+			else if (i == DATA_SECTION_SUPPORT)
 				saveset.supportset->WriteHWS(save);
-			else if (i==DATA_SECTION_STAT)
+			else if (i == DATA_SECTION_STAT)
 				saveset.statset->WriteHWS(save);
-			else if (i==DATA_SECTION_CARD)
+			else if (i == DATA_SECTION_CARD)
 				saveset.cardset->WriteHWS(save);
-			else if (i==DATA_SECTION_FIELD)
-				saveset.fieldset->WriteHWS(save,backup.field,fieldsave);
-			else if (i==DATA_SECTION_SPELL_ANIM)
+			else if (i == DATA_SECTION_FIELD)
+				saveset.fieldset->WriteHWS(save, backup.field, fieldsave);
+			else if (i == DATA_SECTION_SPELL_ANIM)
 				saveset.spellanimset->WriteHWS(save);
-			else if (i==DATA_SECTION_MENU_UI)
-				saveset.ffuiset->WriteHWS(save,backup.menu_ui);
-			else if (i==DATA_SECTION_PARTY_SPECIAL)
+			else if (i == DATA_SECTION_MENU_UI)
+				saveset.ffuiset->WriteHWS(save, backup.menu_ui);
+			else if (i == DATA_SECTION_PARTY_SPECIAL)
 				saveset.partyspecialset->WriteHWS(save);
-			else if (i==DATA_SECTION_ASSEMBLY) {
-				if (GetGameType()==GAME_TYPE_PSX)
+			else if (i == DATA_SECTION_ASSEMBLY) {
+				if (GetGameType() == GAME_TYPE_PSX)
 					saveset.mipsset->WriteHWS(save);
 				else
 					saveset.cilset->WriteHWS(save);
 			}
 			sectionlength = save.tellg();
 			sectionlength -= sectionpos;
-			save.seekg(sectionpos-4);
-			HWSWriteLong(save,sectionlength);
-			save.seekg(sectionpos+sectionlength);
+			save.seekg(sectionpos - 4);
+			HWSWriteLong(save, sectionlength);
+			save.seekg(sectionpos + sectionlength);
 		}
 	}
 	save.close();

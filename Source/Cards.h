@@ -43,7 +43,7 @@ public:
 	uint8_t points;
 	
 	// Return 0 if success ; 1 if the value is too long
-	int SetName(wstring newvalue);
+	int SetName(wstring newvalue, SteamLanguage lang = GetSteamLanguage());
 	int SetName(FF9String& newvalue);
 
 private:

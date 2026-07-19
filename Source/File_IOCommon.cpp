@@ -247,3 +247,15 @@ wstring ConvertStrToWStr(const string& str) {
     wstring_convert<codecvt_utf8<wchar_t>, wchar_t> converterX;
     return converterX.from_bytes(str);
 }
+
+fstream debuglog;
+fstream& GetDebugLog() {
+	if (!debuglog.is_open()) {
+		debuglog.open("HadesWorkshopLog.txt", ios::out);
+	} else if (debuglog.fail() || debuglog.tellp() > 0x1000000) {
+		debuglog.close();
+		debuglog.open("HadesWorkshopLog.txt", ios::out);
+		debuglog << "[DBG] Reopen log after closure" << endl;
+	}
+	return debuglog;
+}

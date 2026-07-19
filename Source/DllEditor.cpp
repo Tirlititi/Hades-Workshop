@@ -499,15 +499,15 @@ int DllMetaData::Load(const char* fname) {
 }
 
 int DllMetaData::GetMethodIdByName(const char* tname, const char* mname, const char* namesp) {
-	int i,j,methamount;
-	for (i=0;i<table[TableType_TypeDef].length;i++)
-		if (IsNameMatching(cil_type_namespace_id[i],namesp) && IsNameMatching(cil_type_name_id[i],tname)) {
-			if (cil_type_method_id[i]==0)
+	unsigned int i; int j, methamount;
+	for (i = 0; i < table[TableType_TypeDef].length; i++)
+		if (IsNameMatching(cil_type_namespace_id[i], namesp) && IsNameMatching(cil_type_name_id[i], tname)) {
+			if (cil_type_method_id[i] == 0)
 				return -1;
-			methamount = GetTypeMethodAmount(i)-1;
-			for (j=-1;j<methamount;j++)
-				if (IsNameMatching(cil_method_name_id[cil_type_method_id[i]+j],mname))
-					return cil_type_method_id[i]+j;
+			methamount = GetTypeMethodAmount(i) - 1;
+			for (j = -1; j < methamount; j++)
+				if (IsNameMatching(cil_method_name_id[cil_type_method_id[i] + j], mname))
+					return cil_type_method_id[i] + j;
 			return -1;
 		}
 	return -1;
@@ -1216,10 +1216,10 @@ uint32_t DllMetaData::ReadCompressedUInt32() {
 }
 
 int DllMetaData::GetCodedIndexSize(unsigned int codedindex) {
-	if (coded_index_size[codedindex]!=0)
+	if (coded_index_size[codedindex] != 0)
 		return coded_index_size[codedindex];
 	uint32_t maxlen = 0;
-	uint8_t relamount,bits;
+	uint8_t relamount, bits;
 	unsigned int* relevantid = NULL;
 	unsigned int i;
 	switch (codedindex) {
@@ -1293,10 +1293,10 @@ int DllMetaData::GetCodedIndexSize(unsigned int codedindex) {
 		relevantid = new unsigned int[2]{ TableType_TypeDef, TableType_Method };
 		break;
 	}
-	for (i=0;i<relamount;i++)
-		maxlen = max(table[relevantid[i]].length,maxlen);
+	for (i = 0; i < relamount; i++)
+		maxlen = max(table[relevantid[i]].length, maxlen);
 	delete[] relevantid;
-	coded_index_size[codedindex] = maxlen < (1 << (16-bits)) ? 2 : 4;
+	coded_index_size[codedindex] = maxlen < (1u << (16 - bits)) ? 2 : 4;
 	return coded_index_size[codedindex];
 }
 
@@ -2420,45 +2420,45 @@ void CILDataSet::RemoveMacroModif(uint32_t macroid) {
 }
 
 bool CILDataSet::UpdateWithNewModification(DllMetaDataModification& newmodif, unsigned int checkmacrostartindex) {
-	unsigned int j,k,tid,mid,methamount,macroconvertedamount;
-	int i,macrometh;
+	unsigned int j, k, tid, mid, methamount, macroconvertedamount;
+	int i, macrometh;
 	bool shouldconvertmacro;
-	data->GetMethodRelativeId(newmodif.method_id,&tid,&mid);
-	for (i=0;i<rawmodifamount;i++) {
-		if (newmodif.method_id==rawmodif[i].method_id) {
+	data->GetMethodRelativeId(newmodif.method_id, &tid, &mid);
+	for (i = 0; i < (int)rawmodifamount; i++) {
+		if (newmodif.method_id == rawmodif[i].method_id) {
 			delete[] rawmodif[i].value;
 			rawmodif[i] = newmodif;
 			return false;
 		}
 	}
-	for (i=checkmacrostartindex;i<macromodifamount;i++) {
-		macrometh = macromodif[i].FindMethod(tid,mid);
-		if (macrometh>=0) {
+	for (i = checkmacrostartindex; i < (int)macromodifamount; i++) {
+		macrometh = macromodif[i].FindMethod(tid, mid);
+		if (macrometh >= 0) {
 			DllMetaDataModification* newmacromod = macromodif[i].info->ComputeModifications(&methamount);
 			macroconvertedamount = 0;
-			for (j=0;j<methamount;j++) {
-				shouldconvertmacro = newmacromod[j].method_id!=newmodif.method_id;
+			for (j = 0; j < methamount; j++) {
+				shouldconvertmacro = newmacromod[j].method_id != newmodif.method_id;
 				if (shouldconvertmacro) {
-					for (k=0;k<rawmodifamount;k++) {
-						if (rawmodif[k].method_id==newmacromod[j].method_id) {
+					for (k = 0; k < rawmodifamount; k++) {
+						if (rawmodif[k].method_id == newmacromod[j].method_id) {
 							shouldconvertmacro = false;
 							break;
 						}
 					}
 				}
 				if (shouldconvertmacro) {
-					UpdateWithNewModification(newmacromod[j],i+1);
+					UpdateWithNewModification(newmacromod[j], i + 1);
 					macroconvertedamount++;
 				}
 			}
-			if (macroconvertedamount==0)
+			if (macroconvertedamount == 0)
 				delete[] newmacromod;
 			RemoveMacroModif(macromodif[i].type->id);
 			i--;
 		}
 	}
-	DllMetaDataModification* newmodiflist = new DllMetaDataModification[rawmodifamount+1];
-	memcpy(newmodiflist,rawmodif,rawmodifamount*sizeof(DllMetaDataModification));
+	DllMetaDataModification* newmodiflist = new DllMetaDataModification[rawmodifamount + 1];
+	memcpy(newmodiflist, rawmodif, rawmodifamount * sizeof(DllMetaDataModification));
 	newmodiflist[rawmodifamount] = newmodif;
 	delete[] rawmodif;
 	rawmodif = newmodiflist;

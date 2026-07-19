@@ -70,6 +70,7 @@ public:
 	bool OverwriteBinary();
 	bool ExportPPF(); // replaced by "CreatePPF"
 	wstring* ReadHWS(const char* fname, bool* section, bool* sectext, bool* localsec);
+	void UpdateTextDisplays(int section, unsigned int spelloldamount = 0, unsigned int supportoldamount = 0, unsigned int cmdoldamount = 0, unsigned int statoldamount = 0, unsigned int itemoldamount = 0);
 	void InitSpell(void);
 	void DisplaySpell(int spellid);
 	void UpdateSpellName(unsigned int spellid);
@@ -179,7 +180,7 @@ private:
 	int copyenemystat_statid;
 	int copyenemyspell_battleid;
 	int copyenemyspell_spellid;
-	FF9String* copystring;
+	vector<FF9String*> copystring;
 	BattleSceneImportLinkTextureWindow* scenetexturelink;
 	wxBitmap chartexpreview;
 	wxBitmap worldchartexpreview;
@@ -201,6 +202,8 @@ private:
 	wxMenuItem* textmenuremove;
 	wxMenuItem* textmenucopy;
 	wxMenuItem* textmenupaste;
+	wxMenuItem* specialtextmenuadd;
+	wxMenuItem* specialtextmenuremove;
 	vector<wxChoice*> commandchoicelist;
 	vector<wxChoice*> itemchoicelist;
 
@@ -312,8 +315,10 @@ private:
 	void OnCardChangeChoice(wxCommandEvent& event);
 	void OnCardChangeSpin(wxSpinEvent& event);
 	void OnListBoxText(wxCommandEvent& event);
+	void OnTextSelectText(wxCommandEvent& event);
 	void OnTextEditText(wxCommandEvent& event);
 	void OnTextExportText(wxCommandEvent& event);
+	void OnTextChangeSpin(wxSpinEvent& event);
 	void OnTextCharmapListSelection(wxCommandEvent& event);
 	void OnTextCharmapPaletteChoice(wxCommandEvent& event);
 	void OnTextExportCharmap(wxCommandEvent& event);
@@ -350,7 +355,10 @@ private:
 	void OnListBoxSpellAnimation(wxCommandEvent& event);
 	void OnSpellAnimationChangeButton(wxCommandEvent& event);
 	void OnListBoxSpecialText(wxCommandEvent& event);
+	void OnSpecialTextSelectText(wxCommandEvent& event);
 	void OnSpecialTextEditText(wxCommandEvent& event);
+	void OnSpecialTextEditKey(wxCommandEvent& event);
+	void OnSpecialTextChangeSpin(wxSpinEvent& event);
 	void OnSpecialTextRightClick(wxMouseEvent& event);
 	void OnSpecialTextRightClickMenu(wxCommandEvent& event);
 	void OnListBoxMipsBattle(wxCommandEvent& event);

@@ -74,7 +74,7 @@
 		} \
 		SEEK(f,objpos,obj_tex_offset[i]); \
 		if (PPF) PPFInitScanStep(f); \
-		for (j=0;j<obj_quad_amount[i]+obj_trgl_amount[i];j++) { \
+		for (j=0;j<(unsigned int)(obj_quad_amount[i]+obj_trgl_amount[i]);j++) { \
 			IO ## Char(f,obj_tex_unknown1[i][j]); \
 			IO ## Char(f,obj_tex_unknown2[i][j]); \
 			IO ## Char(f,obj_tex_unknown3[i][j]); \
@@ -83,18 +83,18 @@
 		if (PPF) PPFEndScanStep(); \
 		SEEK(f,objpos,obj_face_offset[i]); \
 		if (PPF) PPFInitScanStep(f); \
-		for (j=0;j<obj_quad_amount[i]*4;j++) \
+		for (j=0;j<obj_quad_amount[i]*4u;j++) \
 			IO ## Short(f,obj_face_quadp[i][j]); \
-		for (j=0;j<obj_trgl_amount[i]*3;j++) \
+		for (j=0;j<obj_trgl_amount[i]*3u;j++) \
 			IO ## Short(f,obj_face_trglp[i][j]); \
 		if (PPF) PPFEndScanStep(); \
 		SEEK(f,objpos,obj_tvert_offset[i]); \
 		if (PPF) PPFInitScanStep(f); \
-		for (j=0;j<obj_quad_amount[i]*4;j++) { \
+		for (j=0;j<obj_quad_amount[i]*4u;j++) { \
 			IO ## Char(f,obj_tvert_quadx[i][j]); \
 			IO ## Char(f,obj_tvert_quady[i][j]); \
 		} \
-		for (j=0;j<obj_trgl_amount[i]*3;j++) { \
+		for (j=0;j<obj_trgl_amount[i]*3u;j++) { \
 			IO ## Char(f,obj_tvert_trglx[i][j]); \
 			IO ## Char(f,obj_tvert_trgly[i][j]); \
 		} \
@@ -321,100 +321,100 @@ void ObjectModelImage::Read(wstring& line, LogStruct& log, uint32_t linenum) {
 }
 
 int BattleSceneDataStruct::Export(const char* outputbase, bool usequads) {
-	unsigned int i,j;
+	unsigned int i, j;
 	char buffer[256];
 	const char* filename = outputbase;
-	for (i=strlen(outputbase)-1;i>0;i--)
-		if (outputbase[i] == '/' || outputbase[i]=='\\') {
-			filename = outputbase+i+1;
+	for (i = strlen(outputbase) - 1; i > 0; i--)
+		if (outputbase[i] == '/' || outputbase[i] == '\\') {
+			filename = outputbase + i + 1;
 			break;
 		}
 	if (parent->image[id])
-		for (i=0;i<tim_amount;i++) {
+		for (i = 0; i < tim_amount; i++) {
 			uint8_t texloc = 1;
 			uint32_t* imgpal = parent->image[id][0].ConvertAsPalette(tim_palpos[i]);
-			if (imgpal==NULL) {
+			if (imgpal == NULL) {
 				imgpal = parent->image[id][1].ConvertAsPalette(tim_palpos[i]);
 				texloc = 0;
-				if (imgpal==NULL)
+				if (imgpal == NULL)
 					return 3;
 			}
-			sprintf(buffer,"%s_tex%d.tga",outputbase,i+1);
-			if (parent->image[id][texloc].Export(buffer,false,tim_texpos[i],imgpal))
-				return -(int)i-1;
+			sprintf(buffer, "%s_tex%d.tga", outputbase, i + 1);
+			if (parent->image[id][texloc].Export(buffer, false, tim_texpos[i], imgpal))
+				return -(int)i - 1;
 		}
-	sprintf(buffer,"%s.obj",outputbase);
-	fstream fobj(buffer,ios::out);
+	sprintf(buffer, "%s.obj", outputbase);
+	fstream fobj(buffer, ios::out);
 	if (!fobj.is_open())
 		return 1;
-	sprintf(buffer,"%s_mtl.lib",outputbase);
-	fstream mtl(buffer,ios::out);
+	sprintf(buffer, "%s_mtl.lib", outputbase);
+	fstream mtl(buffer, ios::out);
 	if (!mtl.is_open()) {
 		fobj.close();
 		return 2;
 	}
-	for (i=0;i<tim_amount;i++) {
-		mtl << "newmtl tex" << i+1 << endl;
+	for (i = 0; i < tim_amount; i++) {
+		mtl << "newmtl tex" << i + 1 << endl;
 		mtl << "Ka 1.000 1.000 1.000" << endl << "Kd 1.000 1.000 1.000" << endl << "Ks 0.000 0.000 0.000" << endl;
 		mtl << "d 1.0" << endl << "illum 0" << endl;
-		mtl << "map_Kd " << filename << "_tex" << i+1 << ".tga" << endl;
+		mtl << "map_Kd " << filename << "_tex" << i + 1 << ".tga" << endl;
 	}
 	mtl.close();
 	fobj << std::showpoint;
 	fobj << "mtllib " << filename << "_mtl.lib" << endl;
 	uint16_t vertcount = 1;
 	uint16_t tvertcount = 1;
-	for (i=0;i<obj_amount;i++) {
-		fobj << "o Object_" << i+1 << endl;
-		for (j=0;j<obj_vert_amount[i];j++) {
-			double xx = int16_t(vert_x[obj_vert_index[i]+j])/100.0;
-			double yy = int16_t(vert_y[obj_vert_index[i]+j])/100.0;
-			double zz = int16_t(vert_z[obj_vert_index[i]+j])/100.0;
+	for (i = 0; i < obj_amount; i++) {
+		fobj << "o Object_" << i + 1 << endl;
+		for (j = 0; j < obj_vert_amount[i]; j++) {
+			double xx = int16_t(vert_x[obj_vert_index[i] + j]) / 100.0;
+			double yy = int16_t(vert_y[obj_vert_index[i] + j]) / 100.0;
+			double zz = int16_t(vert_z[obj_vert_index[i] + j]) / 100.0;
 			fobj << "v " << xx << " " << -yy << " " << zz << endl;
 		}
-		for (j=0;j<obj_quad_amount[i]*4;j++) {
-			double txx = obj_tvert_quadx[i][j]/255.0;
-			double tyy = 1.0-obj_tvert_quady[i][j]/255.0;
+		for (j = 0; j < obj_quad_amount[i] * 4u; j++) {
+			double txx = obj_tvert_quadx[i][j] / 255.0;
+			double tyy = 1.0 - obj_tvert_quady[i][j] / 255.0;
 			fobj << "vt " << txx << " " << tyy << endl;
 		}
-		for (j=0;j<obj_trgl_amount[i]*3;j++) {
-			double txx = obj_tvert_trglx[i][j]/255.0;
-			double tyy = 1.0-obj_tvert_trgly[i][j]/255.0;
+		for (j = 0; j < obj_trgl_amount[i] * 3u; j++) {
+			double txx = obj_tvert_trglx[i][j] / 255.0;
+			double tyy = 1.0 - obj_tvert_trgly[i][j] / 255.0;
 			fobj << "vt " << txx << " " << tyy << endl;
 		}
 		uint8_t prevtex = (uint8_t)-1;
 		uint8_t newtex;
-		for (j=0;j<obj_quad_amount[i];j++) {
+		for (j = 0; j < obj_quad_amount[i]; j++) {
 			newtex = obj_tex_id[i][j] & 0x1F;
-			if (prevtex!=newtex) {
+			if (prevtex != newtex) {
 				prevtex = newtex;
-				fobj << "usemtl tex" << (int)newtex+1 << endl;
+				fobj << "usemtl tex" << (int)newtex + 1 << endl;
 			}
 			if (usequads) {
-				fobj << "f " << obj_face_quadp[i][j*4+2]/4+vertcount << "/" << tvertcount+2;
-				fobj << " " << obj_face_quadp[i][j*4]/4+vertcount << "/" << tvertcount;
-				fobj << " " << obj_face_quadp[i][j*4+1]/4+vertcount << "/" << tvertcount+1;
-				fobj << " " << obj_face_quadp[i][j*4+3]/4+vertcount << "/" << tvertcount+3 << endl;
+				fobj << "f " << obj_face_quadp[i][j * 4 + 2] / 4 + vertcount << "/" << tvertcount + 2;
+				fobj << " " << obj_face_quadp[i][j * 4] / 4 + vertcount << "/" << tvertcount;
+				fobj << " " << obj_face_quadp[i][j * 4 + 1] / 4 + vertcount << "/" << tvertcount + 1;
+				fobj << " " << obj_face_quadp[i][j * 4 + 3] / 4 + vertcount << "/" << tvertcount + 3 << endl;
 				tvertcount += 4;
 			} else {
-				fobj << "f " << obj_face_quadp[i][j*4]/4+vertcount << "/" << tvertcount++;
-				fobj << " " << obj_face_quadp[i][j*4+1]/4+vertcount << "/" << tvertcount++;
-				fobj << " " << obj_face_quadp[i][j*4+2]/4+vertcount << "/" << tvertcount++ << endl;
-				fobj << "f " << obj_face_quadp[i][j*4+3]/4+vertcount << "/" << tvertcount--;
-				fobj << " " << obj_face_quadp[i][j*4+2]/4+vertcount << "/" << tvertcount--;
-				fobj << " " << obj_face_quadp[i][j*4+1]/4+vertcount << "/" << tvertcount << endl;
+				fobj << "f " << obj_face_quadp[i][j * 4] / 4 + vertcount << "/" << tvertcount++;
+				fobj << " " << obj_face_quadp[i][j * 4 + 1] / 4 + vertcount << "/" << tvertcount++;
+				fobj << " " << obj_face_quadp[i][j * 4 + 2] / 4 + vertcount << "/" << tvertcount++ << endl;
+				fobj << "f " << obj_face_quadp[i][j * 4 + 3] / 4 + vertcount << "/" << tvertcount--;
+				fobj << " " << obj_face_quadp[i][j * 4 + 2] / 4 + vertcount << "/" << tvertcount--;
+				fobj << " " << obj_face_quadp[i][j * 4 + 1] / 4 + vertcount << "/" << tvertcount << endl;
 				tvertcount += 3;
 			}
 		}
-		for (j=0;j<obj_trgl_amount[i];j++) {
-			newtex = obj_tex_id[i][j+obj_quad_amount[i]] & 0x1F;
-			if (prevtex!=newtex) {
+		for (j = 0; j < obj_trgl_amount[i]; j++) {
+			newtex = obj_tex_id[i][j + obj_quad_amount[i]] & 0x1F;
+			if (prevtex != newtex) {
 				prevtex = newtex;
-				fobj << "usemtl tex" << (int)newtex+1 << endl;
+				fobj << "usemtl tex" << (int)newtex + 1 << endl;
 			}
-			fobj << "f " << obj_face_trglp[i][j*3]/4+vertcount << "/" << tvertcount++;
-			fobj << " " << obj_face_trglp[i][j*3+1]/4+vertcount << "/" << tvertcount++;
-			fobj << " " << obj_face_trglp[i][j*3+2]/4+vertcount << "/" << tvertcount++ << endl;
+			fobj << "f " << obj_face_trglp[i][j * 3] / 4 + vertcount << "/" << tvertcount++;
+			fobj << " " << obj_face_trglp[i][j * 3 + 1] / 4 + vertcount << "/" << tvertcount++;
+			fobj << " " << obj_face_trglp[i][j * 3 + 2] / 4 + vertcount << "/" << tvertcount++ << endl;
 		}
 		vertcount += obj_vert_amount[i];
 	}
@@ -423,11 +423,11 @@ int BattleSceneDataStruct::Export(const char* outputbase, bool usequads) {
 }
 
 LogStruct BattleSceneDataStruct::Import(const char* inputfile, unsigned int* numtex, wstring** texname) {
-	unsigned int i,j;
+	unsigned int i, j;
 	std::size_t strpos;
 	LogStruct res = LogStruct();
 	wfstream fobj;
-	fobj.open(inputfile,ios::in);
+	fobj.open(inputfile, ios::in);
 	if (!fobj.is_open()) {
 		wstringstream buffer;
 		buffer << L" - Can't open the file '" << inputfile << L"'." << endl;
@@ -452,15 +452,16 @@ LogStruct BattleSceneDataStruct::Import(const char* inputfile, unsigned int* num
 	uint32_t linenum = 0;
 	while (!fobj.eof()) {
 		linenum++;
-		fobj.getline(linec,1024);
+		fobj.getline(linec, 1024);
 		if (!linec[0])
 			continue;
 		line = linec;
-		line = line.substr(line.find_first_not_of(L' '),line.find(L'#'));
+		line = line.substr(line.find_first_not_of(L' '), line.find(L'#'));
 		strpos = line.find(L' ');
-		word = line.substr(0,strpos);
+		word = line.substr(0, strpos);
 		if (line.empty())
 			continue;
+
 		#define MACRO_CREATE_NEW_OBJECT(MDL) { \
 			ObjectModelObject* newobj = new ObjectModelObject(); \
 			MDL.obj.push_back(*newobj); \
@@ -468,19 +469,20 @@ LogStruct BattleSceneDataStruct::Import(const char* inputfile, unsigned int* num
 			objfaceq[obj] = 0; \
 			obj++; \
 		}
+
 		if (!word.compare(L"mtllib")) {
 		} else if (!word.compare(L"o")) {
 			if (!tmpobj.obj.empty()) {
-				vidoffset += tmpobj.obj[obj-1].vert.size();
-				vtidoffset += tmpobj.obj[obj-1].tvert.size();
+				vidoffset += tmpobj.obj[obj - 1].vert.size();
+				vtidoffset += tmpobj.obj[obj - 1].tvert.size();
 				// Why? WHY?????
 				// Doesn't seem to work otherwise...
-				while (tmpobj.obj[obj-1].vert.size()%6) {
+				while (tmpobj.obj[obj - 1].vert.size() % 6) {
 					ObjectModelVertice newvert;
 					newvert.x = 0;
 					newvert.y = 0;
 					newvert.z = 0;
-					tmpobj.obj[obj-1].vert.push_back(newvert);
+					tmpobj.obj[obj - 1].vert.push_back(newvert);
 					vert++;
 				}
 			}
@@ -488,35 +490,35 @@ LogStruct BattleSceneDataStruct::Import(const char* inputfile, unsigned int* num
 		} else if (!word.compare(L"v")) {
 			if (tmpobj.obj.empty())
 				MACRO_CREATE_NEW_OBJECT(tmpobj);
-			word = line.substr(strpos+1);
+			word = line.substr(strpos + 1);
 			ObjectModelVertice newvert;
-			newvert.Read(word,res,linenum);
-			tmpobj.obj[obj-1].vert.push_back(newvert);
+			newvert.Read(word, res, linenum);
+			tmpobj.obj[obj - 1].vert.push_back(newvert);
 			vert++;
 		} else if (!word.compare(L"vt")) {
 			if (tmpobj.obj.empty())
 				MACRO_CREATE_NEW_OBJECT(tmpobj);
-			word = line.substr(strpos+1);
+			word = line.substr(strpos + 1);
 			ObjectModelTVertice newtvert;
-			newtvert.Read(word,res,linenum);
-			tmpobj.obj[obj-1].tvert.push_back(newtvert);
+			newtvert.Read(word, res, linenum);
+			tmpobj.obj[obj - 1].tvert.push_back(newtvert);
 			tvert++;
 		} else if (!word.compare(L"f")) {
 			if (tmpobj.obj.empty())
 				MACRO_CREATE_NEW_OBJECT(tmpobj);
-			word = line.substr(strpos+1);
+			word = line.substr(strpos + 1);
 			ObjectModelFace newface;
-			newface.Read(word,res,linenum);
-			for (i=0;i<newface.pt.size();i++) {
-				if (newface.pt[i].v>=vidoffset)
-					newface.pt[i].rel_v = newface.pt[i].v-vidoffset;
+			newface.Read(word, res, linenum);
+			for (i = 0; i < newface.pt.size(); i++) {
+				if (newface.pt[i].v >= vidoffset)
+					newface.pt[i].rel_v = newface.pt[i].v - vidoffset;
 				else {
 					wstringstream buffer;
 					buffer << L" - Vertice number '" << newface.pt[i].v << L"' doesn't belong to the current object at line " << linenum << L"." << endl;
 					res.AddError(buffer.str());
 				}
-				if (newface.pt[i].vt>=vtidoffset)
-					newface.pt[i].rel_vt = newface.pt[i].vt-vtidoffset;
+				if (newface.pt[i].vt >= vtidoffset)
+					newface.pt[i].rel_vt = newface.pt[i].vt - vtidoffset;
 				else {
 					wstringstream buffer;
 					buffer << L" - TVertice number '" << newface.pt[i].vt << L"' doesn't belong to the current object at line " << linenum << L"." << endl;
@@ -524,13 +526,13 @@ LogStruct BattleSceneDataStruct::Import(const char* inputfile, unsigned int* num
 				}
 				newface.pt[i].rel_n = newface.pt[i].n;
 			}
-			tmpobj.obj[obj-1].face.push_back(newface);
-			if (newface.pt.size()==3) {
+			tmpobj.obj[obj - 1].face.push_back(newface);
+			if (newface.pt.size() == 3) {
 				facet++;
-				objfacet[obj-1]++;
-			} else if (newface.pt.size()==4) {
+				objfacet[obj - 1]++;
+			} else if (newface.pt.size() == 4) {
 				faceq++;
-				objfaceq[obj-1]++;
+				objfaceq[obj - 1]++;
 			} else {
 				wstringstream buffer;
 				buffer << L" - Unhandled number of face points at line " << linenum << L"." << endl;
@@ -539,12 +541,12 @@ LogStruct BattleSceneDataStruct::Import(const char* inputfile, unsigned int* num
 		} else if (!word.compare(L"usemtl")) {
 			if (tmpobj.obj.empty())
 				MACRO_CREATE_NEW_OBJECT(tmpobj);
-			word = line.substr(strpos+1);
+			word = line.substr(strpos + 1);
 			ObjectModelImage newimg;
-			newimg.Read(word,res,linenum);
-			newimg.face_id = tmpobj.obj[obj-1].face.size();
+			newimg.Read(word, res, linenum);
+			newimg.face_id = tmpobj.obj[obj - 1].face.size();
 			bool newtim = true;
-			for (i=0;i<tim;i++)
+			for (i = 0; i < tim; i++)
 				if (!newimg.name.compare(timname[i])) {
 					newtim = false;
 					newimg.img_id = i;
@@ -554,37 +556,37 @@ LogStruct BattleSceneDataStruct::Import(const char* inputfile, unsigned int* num
 				timname[tim] = newimg.name;
 				newimg.img_id = tim++;
 			}
-			tmpobj.obj[obj-1].img.push_back(newimg);
+			tmpobj.obj[obj - 1].img.push_back(newimg);
 		} else {
 			wstringstream buffer;
 			buffer << L" - Unrecognized object definition '" << word << L"' at line " << linenum << L"." << endl;
 			res.AddWarning(buffer.str());
 		}
 	}
-	if (obj>0)
-		while (tmpobj.obj[obj-1].vert.size()%6) {
+	if (obj > 0)
+		while (tmpobj.obj[obj - 1].vert.size() % 6) {
 			ObjectModelVertice newvert;
 			newvert.x = 0;
 			newvert.y = 0;
 			newvert.z = 0;
-			tmpobj.obj[obj-1].vert.push_back(newvert);
+			tmpobj.obj[obj - 1].vert.push_back(newvert);
 			vert++;
 		}
-	uint32_t totalsize = 0x18+0x10*obj+0x6*vert+0x10*facet+0x14*faceq;
-	for (i=0;i<obj;i++)
-		totalsize += 0x4*(objfacet[i]%2);
-	if (totalsize>GetExtraSize()+size-0x4*tim_amount) {
+	uint32_t totalsize = 0x18 + 0x10 * obj + 0x6 * vert + 0x10 * facet + 0x14 * faceq;
+	for (i = 0; i < obj; i++)
+		totalsize += 0x4 * (objfacet[i] % 2);
+	if (totalsize > GetExtraSize() + size - 0x4 * tim_amount) {
 		wstringstream buffer;
-		buffer << L" - Not enough space : the imported model takes " << totalsize << L" bytes for " << GetExtraSize()+size-0x4*tim_amount << L" bytes available." << endl;
+		buffer << L" - Not enough space : the imported model takes " << totalsize << L" bytes for " << GetExtraSize() + size - 0x4 * tim_amount << L" bytes available." << endl;
 		res.AddError(buffer.str());
 	}
 	fobj.close();
 	if (res.ok) {
-		face_amount = faceq*4+facet*3;
+		face_amount = faceq * 4 + facet * 3;
 		obj_amount = obj;
 //		tim_amount = tim;
 		vert_amount = vert;
-		tex_amount = faceq+facet;
+		tex_amount = faceq + facet;
 //		obj_tim_index = new uint16_t[obj_amount];
 		obj_vert_amount = new uint16_t[obj_amount];
 		obj_vert_index = new uint16_t[obj_amount];
@@ -609,26 +611,26 @@ LogStruct BattleSceneDataStruct::Import(const char* inputfile, unsigned int* num
 		vert_y = new uint16_t[vert_amount];
 		vert_z = new uint16_t[vert_amount];
 		uint32_t verti = 0;
-		for (obj=0;obj<obj_amount;obj++) {
-			obj_tex_unknown1[obj] = new uint8_t[objfaceq[obj]+objfacet[obj]];
-			obj_tex_unknown2[obj] = new uint8_t[objfaceq[obj]+objfacet[obj]];
-			obj_tex_unknown3[obj] = new uint8_t[objfaceq[obj]+objfacet[obj]];
-			obj_tex_id[obj] = new uint8_t[objfaceq[obj]+objfacet[obj]];
-			obj_face_quadp[obj] = new uint16_t[objfaceq[obj]*4];
-			obj_face_trglp[obj] = new uint16_t[objfacet[obj]*3];
-			obj_tvert_quadx[obj] = new uint8_t[objfaceq[obj]*4];
-			obj_tvert_quady[obj] = new uint8_t[objfaceq[obj]*4];
-			obj_tvert_trglx[obj] = new uint8_t[objfacet[obj]*3];
-			obj_tvert_trgly[obj] = new uint8_t[objfacet[obj]*3];
+		for (obj = 0; obj < obj_amount; obj++) {
+			obj_tex_unknown1[obj] = new uint8_t[objfaceq[obj] + objfacet[obj]];
+			obj_tex_unknown2[obj] = new uint8_t[objfaceq[obj] + objfacet[obj]];
+			obj_tex_unknown3[obj] = new uint8_t[objfaceq[obj] + objfacet[obj]];
+			obj_tex_id[obj] = new uint8_t[objfaceq[obj] + objfacet[obj]];
+			obj_face_quadp[obj] = new uint16_t[objfaceq[obj] * 4];
+			obj_face_trglp[obj] = new uint16_t[objfacet[obj] * 3];
+			obj_tvert_quadx[obj] = new uint8_t[objfaceq[obj] * 4];
+			obj_tvert_quady[obj] = new uint8_t[objfaceq[obj] * 4];
+			obj_tvert_trglx[obj] = new uint8_t[objfacet[obj] * 3];
+			obj_tvert_trgly[obj] = new uint8_t[objfacet[obj] * 3];
 //			obj_tim_index[obj] = 0;
 			obj_vert_amount[obj] = tmpobj.obj[obj].vert.size();
 			obj_quad_amount[obj] = objfaceq[obj];
 			obj_trgl_amount[obj] = objfacet[obj];
 			uint32_t curimg = 0;
 			std::vector<ObjectModelImage>& tmpimg = tmpobj.obj[obj].img;
-			for (i=0;i<obj_quad_amount[obj]+obj_trgl_amount[obj];i++) {
-				for (j=0;j<tmpimg.size();j++)
-					if (i==tmpimg[j].face_id) {
+			for (i = 0; i < (unsigned int)(obj_quad_amount[obj] + obj_trgl_amount[obj]); i++) {
+				for (j = 0; j < tmpimg.size(); j++)
+					if (i == tmpimg[j].face_id) {
 						curimg = tmpimg[j].img_id;
 						break;
 					}
@@ -639,34 +641,34 @@ LogStruct BattleSceneDataStruct::Import(const char* inputfile, unsigned int* num
 			}
 			uint32_t quadi = 0;
 			uint32_t trgli = 0;
-			for (i=0;i<tmpobj.obj[obj].face.size();i++)
-				if (tmpobj.obj[obj].face[i].pt.size()==4) {
-					obj_face_quadp[obj][quadi+2] = tmpobj.obj[obj].face[i].pt[0].rel_v*4;
-					obj_tvert_quadx[obj][quadi+2] = uint8_t(tmpobj.obj[obj].tvert[tmpobj.obj[obj].face[i].pt[0].rel_vt].x*255);
-					obj_tvert_quady[obj][quadi+2] = uint8_t(tmpobj.obj[obj].tvert[tmpobj.obj[obj].face[i].pt[0].rel_vt].y*255);
-					obj_face_quadp[obj][quadi] = tmpobj.obj[obj].face[i].pt[1].rel_v*4;
-					obj_tvert_quadx[obj][quadi] = uint8_t(tmpobj.obj[obj].tvert[tmpobj.obj[obj].face[i].pt[1].rel_vt].x*255);
-					obj_tvert_quady[obj][quadi] = uint8_t(tmpobj.obj[obj].tvert[tmpobj.obj[obj].face[i].pt[1].rel_vt].y*255);
-					obj_face_quadp[obj][quadi+1] = tmpobj.obj[obj].face[i].pt[2].rel_v*4;
-					obj_tvert_quadx[obj][quadi+1] = uint8_t(tmpobj.obj[obj].tvert[tmpobj.obj[obj].face[i].pt[2].rel_vt].x*255);
-					obj_tvert_quady[obj][quadi+1] = uint8_t(tmpobj.obj[obj].tvert[tmpobj.obj[obj].face[i].pt[2].rel_vt].y*255);
-					obj_face_quadp[obj][quadi+3] = tmpobj.obj[obj].face[i].pt[3].rel_v*4;
-					obj_tvert_quadx[obj][quadi+3] = uint8_t(tmpobj.obj[obj].tvert[tmpobj.obj[obj].face[i].pt[3].rel_vt].x*255);
-					obj_tvert_quady[obj][quadi+3] = uint8_t(tmpobj.obj[obj].tvert[tmpobj.obj[obj].face[i].pt[3].rel_vt].y*255);
+			for (i = 0; i < tmpobj.obj[obj].face.size(); i++)
+				if (tmpobj.obj[obj].face[i].pt.size() == 4) {
+					obj_face_quadp[obj][quadi + 2] = tmpobj.obj[obj].face[i].pt[0].rel_v * 4;
+					obj_tvert_quadx[obj][quadi + 2] = uint8_t(tmpobj.obj[obj].tvert[tmpobj.obj[obj].face[i].pt[0].rel_vt].x * 255);
+					obj_tvert_quady[obj][quadi + 2] = uint8_t(tmpobj.obj[obj].tvert[tmpobj.obj[obj].face[i].pt[0].rel_vt].y * 255);
+					obj_face_quadp[obj][quadi] = tmpobj.obj[obj].face[i].pt[1].rel_v * 4;
+					obj_tvert_quadx[obj][quadi] = uint8_t(tmpobj.obj[obj].tvert[tmpobj.obj[obj].face[i].pt[1].rel_vt].x * 255);
+					obj_tvert_quady[obj][quadi] = uint8_t(tmpobj.obj[obj].tvert[tmpobj.obj[obj].face[i].pt[1].rel_vt].y * 255);
+					obj_face_quadp[obj][quadi + 1] = tmpobj.obj[obj].face[i].pt[2].rel_v * 4;
+					obj_tvert_quadx[obj][quadi + 1] = uint8_t(tmpobj.obj[obj].tvert[tmpobj.obj[obj].face[i].pt[2].rel_vt].x * 255);
+					obj_tvert_quady[obj][quadi + 1] = uint8_t(tmpobj.obj[obj].tvert[tmpobj.obj[obj].face[i].pt[2].rel_vt].y * 255);
+					obj_face_quadp[obj][quadi + 3] = tmpobj.obj[obj].face[i].pt[3].rel_v * 4;
+					obj_tvert_quadx[obj][quadi + 3] = uint8_t(tmpobj.obj[obj].tvert[tmpobj.obj[obj].face[i].pt[3].rel_vt].x * 255);
+					obj_tvert_quady[obj][quadi + 3] = uint8_t(tmpobj.obj[obj].tvert[tmpobj.obj[obj].face[i].pt[3].rel_vt].y * 255);
 					quadi += 4;
-				} else if (tmpobj.obj[obj].face[i].pt.size()==3)
-					for (j=0;j<3;j++) {
-						obj_face_trglp[obj][trgli] = tmpobj.obj[obj].face[i].pt[j].rel_v*4;
-						obj_tvert_trglx[obj][trgli] = uint8_t(tmpobj.obj[obj].tvert[tmpobj.obj[obj].face[i].pt[j].rel_vt].x*255);
-						obj_tvert_trgly[obj][trgli] = uint8_t(tmpobj.obj[obj].tvert[tmpobj.obj[obj].face[i].pt[j].rel_vt].y*255);
+				} else if (tmpobj.obj[obj].face[i].pt.size() == 3)
+					for (j = 0; j < 3; j++) {
+						obj_face_trglp[obj][trgli] = tmpobj.obj[obj].face[i].pt[j].rel_v * 4;
+						obj_tvert_trglx[obj][trgli] = uint8_t(tmpobj.obj[obj].tvert[tmpobj.obj[obj].face[i].pt[j].rel_vt].x * 255);
+						obj_tvert_trgly[obj][trgli] = uint8_t(tmpobj.obj[obj].tvert[tmpobj.obj[obj].face[i].pt[j].rel_vt].y * 255);
 						trgli++;
 					}
-			for (i=0;i<tmpobj.obj[obj].vert.size();i++) {
-				vert_x[verti] = uint16_t(int16_t(tmpobj.obj[obj].vert[i].x*100));
-				vert_y[verti] = uint16_t(int16_t(tmpobj.obj[obj].vert[i].y*-100));
-				vert_z[verti] = uint16_t(int16_t(tmpobj.obj[obj].vert[i].z*100));
-				verti++;
-			}
+				for (i = 0; i < tmpobj.obj[obj].vert.size(); i++) {
+					vert_x[verti] = uint16_t(int16_t(tmpobj.obj[obj].vert[i].x * 100));
+					vert_y[verti] = uint16_t(int16_t(tmpobj.obj[obj].vert[i].y * -100));
+					vert_z[verti] = uint16_t(int16_t(tmpobj.obj[obj].vert[i].z * 100));
+					verti++;
+				}
 		}
 //		for (i=0;i<tim_amount;i++) {
 //			tim_texpos[i] = 
@@ -674,8 +676,9 @@ LogStruct BattleSceneDataStruct::Import(const char* inputfile, unsigned int* num
 //		}
 		*numtex = tim;
 		*texname = timname;
-	} else
+	} else {
 		delete[] timname;
+	}
 	return res;
 }
 

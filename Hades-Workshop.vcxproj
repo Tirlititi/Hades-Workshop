@@ -118,6 +118,7 @@
       <AdditionalIncludeDirectories>C:\Dev\wxWidgets-3.1.3\include\;C:\Dev\wxWidgets-3.1.3\include\msvc\;C:\Program Files\Autodesk\FBX\FBX SDK\2020.0.1\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <DisableSpecificWarnings>6011;6262;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <AdditionalDependencies>opengl32.lib;glu32.lib;libfbxsdk-md.lib;libxml2-md.lib;zlib-md.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -143,6 +144,7 @@
       <AdditionalIncludeDirectories>C:\Dev\wxWidgets-3.1.3\include\;C:\Dev\wxWidgets-3.1.3\include\msvc\;C:\Program Files\Autodesk\FBX\FBX SDK\2020.0.1\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <DisableSpecificWarnings>6011;6262;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -164,6 +166,7 @@
       <AdditionalIncludeDirectories>C:\Dev\wxWidgets-3.1.3\include\;C:\Dev\wxWidgets-3.1.3\include\msvc\;C:\Program Files\Autodesk\FBX\FBX SDK\2020.0.1\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <DisableSpecificWarnings>6011;6262;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>

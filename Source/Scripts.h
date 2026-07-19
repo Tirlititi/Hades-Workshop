@@ -26,11 +26,11 @@ struct ScriptArgument;
 struct ScriptOperation;
 struct ScriptFunction;
 struct ScriptDataStruct;
-struct MultiLanguageScriptDataStruct;
 
 #include <inttypes.h>
 #include <fstream>
 #include <vector>
+#include <set>
 #include "File_Manipulation.h"
 #include "Configuration.h"
 using namespace std;
@@ -59,13 +59,14 @@ struct ScriptArgument {
 	// newvaluevar must be malloc'ed and not freed (the arg takes control of it)
 	// no check performed...
 	void SetValueVar(vector<uint8_t> newvaluevar);
-	int64_t GetValue(); // Get value with sign if needed
+	int64_t GetValue() const; // Get value with sign if needed
 	
 	void Read(fstream& f, uint8_t sz, bool isvar, bool issign);
 	void Write(fstream& f);
 	void WritePPF(fstream& f);
 	void ReadHWS(fstream& f, uint8_t sz, bool isvar, bool issign);
 	void WriteHWS(fstream& f);
+	void WriteSteam(fstream& f);
 };
 
 struct ScriptOperation {
@@ -81,56 +82,43 @@ public:
 	ScriptOperation& operator=(const ScriptOperation& from);
 	ScriptOperation(const ScriptOperation& from);
 	ScriptOperation() {}
+
+	// 0: identical, 1: different argument(s) but same opcode and vararg structure, 2: different vararg formulas but same size, 3: different opcodes or size
+	int Compare(const ScriptOperation& other) const;
 	
 	void Read(fstream& f);
 	void Write(fstream& f);
 	void WritePPF(fstream& f);
 	void ReadHWS(fstream& f);
 	void WriteHWS(fstream& f);
+	void WriteSteam(fstream& f);
 };
 
 struct ScriptFunction {
+public:
 	ScriptDataStruct* parent;
-	unsigned int op_amount;
 	vector<ScriptOperation> op;
-	unsigned int length;
+	vector<int32_t> indices[STEAM_LANGUAGE_AMOUNT];
+	uint16_t function_point;
+	uint16_t function_type;
 
 	ScriptFunction& operator=(const ScriptFunction& from);
 	ScriptFunction(const ScriptFunction& from);
 	ScriptFunction() {}
 
-	void Read(fstream& f);
-	void Write(fstream& f);
-	void WritePPF(fstream& f);
-	void ReadHWS(fstream& f);
-	void WriteHWS(fstream& f);
-};
+	void Import(const vector<ScriptOperation>& langop, SteamLanguage lang);
 
-struct MultiLanguageScriptDataStruct {
-	vector< vector<ScriptFunction> > func[STEAM_LANGUAGE_AMOUNT];
-	uint16_t magic_number[STEAM_LANGUAGE_AMOUNT];
-	uint8_t header_unknown1[STEAM_LANGUAGE_AMOUNT];
-	uint8_t entry_amount[STEAM_LANGUAGE_AMOUNT];
-	uint8_t header_unknown2[STEAM_LANGUAGE_AMOUNT][20];
-	uint8_t header_unknown3[STEAM_LANGUAGE_AMOUNT][20];
-	uint8_t header_name[STEAM_LANGUAGE_AMOUNT][SCRIPT_NAME_MAX_LENGTH];
-	vector<uint16_t> entry_offset[STEAM_LANGUAGE_AMOUNT];
-	vector<uint16_t> entry_size[STEAM_LANGUAGE_AMOUNT];
-	vector<uint8_t> entry_local_var[STEAM_LANGUAGE_AMOUNT];
-	vector<uint8_t> entry_flag[STEAM_LANGUAGE_AMOUNT];
-	vector<uint8_t> entry_type[STEAM_LANGUAGE_AMOUNT];
-	vector<uint8_t> entry_function_amount[STEAM_LANGUAGE_AMOUNT];
-	vector< vector<uint16_t> > function_type[STEAM_LANGUAGE_AMOUNT];
-	vector< vector<uint16_t> > function_point[STEAM_LANGUAGE_AMOUNT];
-	ScriptLocalVariableSet global_data[STEAM_LANGUAGE_AMOUNT];
-	vector<ScriptLocalVariableSet> local_data[STEAM_LANGUAGE_AMOUNT];
-	bool is_loaded[STEAM_LANGUAGE_AMOUNT];
-	bool is_modified[STEAM_LANGUAGE_AMOUNT];
-	//  If scripts are the same in different languages (except possibly for AT_TEXT arguments),
-	// do not duplicate the functions but use a base script and an AT_TEXT argument correspondancy
-	SteamLanguage base_script_lang[STEAM_LANGUAGE_AMOUNT];
-	vector<uint16_t> base_script_text_id[STEAM_LANGUAGE_AMOUNT]; // lang_script_text_id[lang][i] == Translation(base_script_text_id[base_script_lang[lang]][i])
-	vector<uint16_t> lang_script_text_id[STEAM_LANGUAGE_AMOUNT];
+	void Read(fstream& f, unsigned int length, SteamLanguage lang);
+	void Write(fstream& f, SteamLanguage lang);
+	void WritePPF(fstream& f, SteamLanguage lang);
+	void ReadHWS(fstream& f, unsigned int length, SteamLanguage lang);
+	void WriteHWS(fstream& f);
+	void WriteSteam(fstream& f, SteamLanguage lang = GetSteamLanguage());
+	unsigned int GetLength(SteamLanguage lang = GetSteamLanguage());
+	unsigned int GetSubLength(const vector<unsigned int>& indices);
+
+private:
+	bool SearchOperationCorrespondance(const vector<ScriptOperation>& langop, SteamLanguage lang, unsigned int& langindex, unsigned int& searchindex, unsigned int& codecount, unsigned int codediff, set<unsigned int>& elsejumpoffsets, unsigned int& codeoffset);
 };
 
 struct ScriptDataStruct : public ChunkChild {
@@ -142,20 +130,16 @@ public:
 	uint8_t entry_amount;
 	uint8_t header_unknown2[20];
 	uint8_t header_unknown3[20];
-	uint8_t header_name[SCRIPT_NAME_MAX_LENGTH];
+	uint8_t header_name[STEAM_LANGUAGE_AMOUNT][SCRIPT_NAME_MAX_LENGTH];
 	vector<uint16_t> entry_offset;
 	vector<uint16_t> entry_size;
 	vector<uint8_t> entry_local_var;
 	vector<uint8_t> entry_flag;
 	vector<uint8_t> entry_type;
 	vector<uint8_t> entry_function_amount;
-	vector< vector<uint16_t> > function_type;
-	vector< vector<uint16_t> > function_point;
 	ScriptLocalVariableSet global_data;
 	vector<ScriptLocalVariableSet> local_data;
 	
-	MultiLanguageScriptDataStruct* multi_lang_script = NULL; // Storage for multiple language scripts ; note that accessing its pointers of index "current_language" is unsafe (use the normal variables instead)
-	SteamLanguage current_language;
 	uint16_t related_charmap_id;
 
 	ScriptDataStruct& operator=(const ScriptDataStruct& from);
@@ -164,32 +148,23 @@ public:
 	int SetName(wstring newvalue, SteamLanguage lang = GetSteamLanguage());
 	int SetName(FF9String& newvalue);
 	void AddFunction(int entryid, int funcidpos, uint16_t functype); // Needs 4 or 8 bytes available
-	int RemoveFunction(int entryid, int funcid); // Returns nb of bytes freed
+	void RemoveFunction(int entryid, int funcid);
 	void AddEntry(int entrypos, uint8_t entrytype); // Needs 16 bytes available
-	int RemoveEntry(int entrypos, int* modifiedargamount = NULL); // Returns nb of bytes freed ; *modifiedargamount is incremented by the amount of arguments previously using the removed entry
+	int RemoveEntry(int entrypos); // Returns the amount of arguments previously using the removed entry
 	int ShiftArgument(int argtype, vector<pair<int, int>> shift);
-	void ChangeSteamLanguage(SteamLanguage newlang);
-	void UpdateSteamMultiLanguage(); // Update the datas of multi_lang_script->data[current_language]
-
-	// Note: Similarity and link methods require multi_lang_script to be up-to-date if lang or baselang is the current_language
-	bool CheckLanguageSimilarity(SteamLanguage lang, SteamLanguage baselang, vector<uint16_t>* langtextid = NULL, vector<uint16_t>* baselangtextid = NULL);
-	// Use baselang = lang to break a link
-	void LinkLanguageScripts(SteamLanguage lang, SteamLanguage baselang, vector<uint16_t> langtextid = vector<uint16_t>(), vector<uint16_t> baselangtextid = vector<uint16_t>(), bool markmodified = true);
-	void LinkSimilarLanguageScripts();
-	// Replace the dialog IDs without any linking process
-	void ApplyDialogLink(vector<uint16_t> langtextid, vector<uint16_t> baselangtextid);
 
 	void Read(fstream& f, SteamLanguage lang);
-	void Read(fstream& f) { Read(f, STEAM_LANGUAGE_NONE); }
+	void Read(fstream& f) { Read(f, GetSteamLanguage()); }
 	void Write(fstream& f);
 	void WritePPF(fstream& f);
-	void ReadHWS(fstream& f, bool usetext = true, SteamLanguage lang = STEAM_LANGUAGE_NONE);
-	void WriteHWS(fstream& f, SteamLanguage lang = STEAM_LANGUAGE_NONE); // Remark: unlike other WriteHWS methods, this writes only 1 language by calls, not all those flagged by hades::STEAM_LANGUAGE_SAVE_LIST
-	void ReadLocalHWS(fstream& f, SteamLanguage lang = STEAM_LANGUAGE_NONE);
-	void WriteLocalHWS(fstream& f, SteamLanguage lang = STEAM_LANGUAGE_NONE);
+	void ReadHWS(fstream& f, bool usetext = true, SteamLanguage lang = GetSteamLanguage());
+	void WriteHWS(fstream& f); // Remark: unlike other WriteHWS methods, this writes only 1 language by calls, not all those flagged by hades::STEAM_LANGUAGE_SAVE_LIST
+	void WriteSteam(fstream& f, SteamLanguage lang = GetSteamLanguage());
+	void ReadLocalHWS(fstream& f);
+	void WriteLocalHWS(fstream& f);
 	bool IsDataModified(SteamLanguage lang = GetSteamLanguage());
 	int GetDataSize(SteamLanguage lang = GetSteamLanguage());
-	void UpdateOffset();
+	void UpdateOffset(SteamLanguage lang = GetSteamLanguage());
 };
 
 vector<ScriptArgument> NewScriptArgumentArray(unsigned int amount, ScriptOperation* p);

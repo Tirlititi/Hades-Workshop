@@ -214,6 +214,7 @@ public:
 	
 	void MarkDataModified(); // Mark the selected CD in the cdnotebook as modified
 	void PreferencesUpdate(); // Read and apply configurations from PreferenceWindow
+	void UpdateMenuAvailability(int panel = wxNOT_FOUND);
 
 	static void MakeDirForFile(string filename);
 	static void DeleteFullDir(string dirname);
@@ -255,9 +256,6 @@ protected:
 	virtual void OnFramePaint( wxPaintEvent& event );
 	
 	virtual void OnDebugClick( wxCommandEvent& event );
-	
-private:
-	void UpdateMenuAvailability(int panel);
 };
 
 MainFrame* GetTopWindow();

@@ -111,6 +111,7 @@
 #define STRING_FORMULA_MPDAMAGE		"MP Damage Formula: %s\n"
 #define STRING_FORMULA_MPHEAL		"MP Heal Formula: %s\n"
 #define STRING_FORMULA_CRITICAL		L"Critical Rate Formula: (Spirit / 4 - 1) / 2\n"
+#define STRING_FORMULA_CRITICAL_PSX	L"Critical Rate Condition (PSX): let \"x = Random(0, 255) * 257\" then check if \"x % 100 < x % Spirit / 4\"\n"
 #define STRING_FORMULA_JUMP_TIME	L"Jump duration Formula: 40 * (60 - Spirit) ticks\n"
 #define STRING_FORMULA_GIL			L"Gil Loss Formula: Level * Power\n"
 #define STRING_FORMULA_FLEE			L"Flee Rate Formula: 200 * TeamMeanLevel / EnemiesMeanLevel / 16\n"
@@ -898,12 +899,22 @@ struct DamageCalculation {
 
 	void SetupCritical() {
 		use_caster_spirit = true;
-		if (attacker_spirit < 8)
-			return;
-		critical_rate = (attacker_spirit / 4 - 1) * 0.005;
-		formulae += _(STRING_FORMULA_CRITICAL);
-		// TODO: compute differently for the PSX version (same random number is picked in the following formula)
-		//if (Comn.random16() % (int)(v.caster.elem.wpr >> 2) > Comn.random16() % 100)
+		if (GetGameType() == GAME_TYPE_PSX) {
+			if (attacker_spirit < 4)
+				return;
+			int spirit4 = attacker_spirit / 4;
+			int successcount = 0;
+			for (int x = 0; x < 256; x++)
+				if (x * 257 % 100 < x * 257 % spirit4)
+					successcount++;
+			critical_rate = successcount / 256.0;
+			formulae += _(STRING_FORMULA_CRITICAL_PSX);
+		} else {
+			if (attacker_spirit < 8)
+				return;
+			critical_rate = (attacker_spirit / 4 - 1) * 0.005;
+			formulae += _(STRING_FORMULA_CRITICAL);
+		}
 	}
 
 	void SetupMultiTargetDamage() {

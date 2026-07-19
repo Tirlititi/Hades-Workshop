@@ -19,7 +19,7 @@ public:
 	WalkmeshAddTriangleDialog(WalkmeshEditDialog* p, int initialpath) : WalkmeshAddTriangleWindow(p), parent(p) {
 		FieldWalkmeshDataStruct* walk = &parent->walkmesh;
 		wxArrayString choicelist;
-		int i, j, k, l, di;
+		unsigned int i, j, k, l, di;
 		for (i = 0; i < walk->walkpath_amount; i++)
 			choicelist.Add(wxString::Format(wxT("Walkpath %d"), i));
 		m_walkpath->Append(choicelist);
@@ -360,7 +360,7 @@ int WalkmeshEditDialog::ShowModal() {
 void WalkmeshEditDialog::ComputeDuplicateVertice(vector<int> news) {
 	vector<vector<int>> vabspos;
 	vector<int> vpath;
-	int i, j;
+	unsigned int i, j;
 	vabspos.resize(walkmesh.vertex_amount);
 	vpath.resize(walkmesh.vertex_amount);
 	for (i = 0; i < walkmesh.triangle_amount; i++) {
@@ -379,12 +379,12 @@ void WalkmeshEditDialog::ComputeDuplicateVertice(vector<int> news) {
 		for (i = 0; i < walkmesh.vertex_amount; i++)
 			for (j = i + 1; j < walkmesh.vertex_amount; j++)
 				if (vabspos[i].size() == 3 && vabspos[j].size() == 3 && vabspos[i][0] == vabspos[j][0] && vabspos[i][1] == vabspos[j][1] && vabspos[i][2] == vabspos[j][2])
-					duplicate_vertex.push_back({ i, j, vpath[i], vpath[j] });
+					duplicate_vertex.push_back({ (int)i, (int)j, vpath[i], vpath[j] });
 	} else {
 		for (i = 0; i < news.size(); i++)
-			for (j = 0; j < news[i]; j++)
+			for (j = 0; (int)j < news[i]; j++)
 				if (vabspos[news[i]].size() == 3 && vabspos[j].size() == 3 && vabspos[news[i]][0] == vabspos[j][0] && vabspos[news[i]][1] == vabspos[j][1] && vabspos[news[i]][2] == vabspos[j][2])
-					duplicate_vertex.push_back({ j, news[i], vpath[j], vpath[news[i]] });
+					duplicate_vertex.push_back({ (int)j, news[i], vpath[j], vpath[news[i]] });
 	}
 }
 
@@ -474,7 +474,8 @@ void WalkmeshEditDialog::DisplayTriangle(int sel) {
 void WalkmeshEditDialog::ChangeVertexCoordinate(int triangleid, int vertid, int coordaxis, int16_t c) {
 	set<pair<int, int>> linkedpathvert;
 	vector<int> changedvert;
-	int i, j, v1, v2, v3;
+	unsigned int i, j;
+	int v1, v2, v3;
 	if (m_changeallpos->IsChecked()) {
 		for (i = 0; i < duplicate_vertex.size(); i++) {
 			if (duplicate_vertex[i][0] == vertid)

@@ -13,7 +13,7 @@
 
 const unsigned int steam_spell_field_size[] = { 4, 1, 3, 9, 12, 1, 1, 1, 8, 8, 8, 8, 8, 8, 8, 8, 16, 16 };
 
-int SpellDataStruct::SetName(wstring newvalue) {
+int SpellDataStruct::SetName(wstring newvalue, SteamLanguage lang) {
 	if (GetGameType() == GAME_TYPE_PSX) {
 		FF9String tmp(name);
 		tmp.SetValue(newvalue);
@@ -23,7 +23,7 @@ int SpellDataStruct::SetName(wstring newvalue) {
 			return 1;
 		parent->name_space_used += newlen - oldlen;
 	}
-	name.SetValue(newvalue);
+	name.SetValue(newvalue, lang);
 	return 0;
 }
 
@@ -39,7 +39,7 @@ int SpellDataStruct::SetName(FF9String& newvalue) {
 	return 0;
 }
 
-int SpellDataStruct::SetHelp(wstring newvalue) {
+int SpellDataStruct::SetHelp(wstring newvalue, SteamLanguage lang) {
 	if (GetGameType() == GAME_TYPE_PSX) {
 		FF9String tmp(help);
 		tmp.SetValue(newvalue);
@@ -49,7 +49,7 @@ int SpellDataStruct::SetHelp(wstring newvalue) {
 			return 1;
 		parent->help_space_used += newlen - oldlen;
 	}
-	help.SetValue(newvalue);
+	help.SetValue(newvalue, lang);
 	return 0;
 }
 
@@ -90,7 +90,7 @@ wxString SpellDataStruct::GetFieldValue(wxString fieldname) {
 	if (fieldname.IsSameAs("element")) return wxString::Format(wxT("%d"), element);
 	if (fieldname.IsSameAs("accuracy")) return wxString::Format(wxT("%d"), accuracy);
 	if (fieldname.IsSameAs("flag")) return wxString::Format(wxT("%d"), flag);
-	if (fieldname.IsSameAs("status")) return wxString::Format(wxT("%d"), status);
+	if (fieldname.IsSameAs("status")) return wxString::Format(wxT("%d"), RedirectEmptyStatusSetToNull(status));
 	if (fieldname.IsSameAs("mp")) return wxString::Format(wxT("%d"), mp);
 	if (fieldname.IsSameAs("menu_flag")) return wxString::Format(wxT("%d"), menu_flag);
 	if (fieldname.IsSameAs("perform_name")) return wxString::Format(wxT("%d"), perform_name);
@@ -269,13 +269,13 @@ void SpellDataStruct::SetSound(uint16_t newvalue) {
 
 #define MACRO_SPELL_IOFUNCTIONPERFNAME(IO,SEEK,READ,PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<spellamount;i++) \
-		IO ## Char(ffbin,spell[i].perform_name); \
+	for (i = 0; i < spellamount; i++) \
+		IO ## FlexibleChar(ffbin, spell[i].perform_name, useextendedtype2); \
 	if (PPF) PPFEndScanStep();
 
 #define MACRO_SPELL_IOFUNCTIONSTATUS(IO,SEEK,READ,PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<statussetamount;i++) { \
+	for (i = 0; i < statussetamount; i++) { \
 		MACRO_IOFUNCTIONGENERIC_STATUS(ffbin, useextendedtype2, IO, READ, status_set[i].status_list) \
 		if (useextendedtype2) IO ## CSVFields(ffbin, status_set[i].custom_field); \
 	} \
@@ -335,7 +335,7 @@ void SpellDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 		ffbin.close();
 		dlldata.dll_file.seekg(dlldata.GetStaticFieldOffset(config.dll_spellnaming_field_id));
 		for (i = 0; i < SPELL_AMOUNT; i++)
-			SteamReadChar(dlldata.dll_file, spell[i].perform_name);
+			SteamReadFlexibleChar(dlldata.dll_file, spell[i].perform_name, false);
 		dlldata.dll_file.seekg(dlldata.GetStaticFieldOffset(config.dll_statusset_field_id));
 		for (i = 0; i < STATUS_SET_AMOUNT; i++) {
 			uint32_t statusraw;

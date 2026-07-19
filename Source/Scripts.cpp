@@ -3,6 +3,28 @@
 #include "Hades_Strings.h"
 #include "Database_Script.h"
 
+#define ENTRY_MAX_VALID_ID 128
+
+int EntryIdShift = 0;
+int EntryIdShift_Base = 0;
+
+uint16_t CurrentScriptReadField = 0;
+uint16_t CurrentScriptReadEntry = 0;
+uint16_t CurrentScriptReadFunction = 0;
+
+inline uint8_t LangBoolsAsBits(const bool* lang) {
+	uint8_t langbits = 0;
+	for (uint8_t i = 0; i < STEAM_LANGUAGE_AMOUNT; i++)
+		if (lang[i])
+			langbits |= 1 << i;
+	return langbits;
+}
+
+inline void LangBitsAsBools(uint8_t langbits, bool* lang) {
+	for (uint8_t i = 0; i < STEAM_LANGUAGE_AMOUNT; i++)
+		lang[i] = (langbits & (1 << i)) != 0;
+}
+
 inline wxString CS_GetNextWord(wxString& str) {
 	size_t pos = str.find_first_of(L" \t\r\n");
 	if (pos == wxString::npos) {
@@ -103,21 +125,6 @@ void LoadCustomScriptUtility() {
 }
 
 bool ScriptArgument::SetValue(long long newvalue) {
-	if (typesize == 2 && !is_signed) {
-		SteamLanguage curlang = parent->parent->parent->current_language;
-		if (curlang != STEAM_LANGUAGE_NONE && parent->parent->parent->multi_lang_script != NULL && parent->parent->parent->multi_lang_script->base_script_lang[curlang] != curlang)
-			for (unsigned int i = 0; i < parent->arg_amount; i++)
-				if (this == &parent->arg[i] && (int)i < HADES_STRING_SCRIPT_OPCODE[parent->opcode].arg_amount && HADES_STRING_SCRIPT_OPCODE[parent->opcode].arg_type[i] == AT_TEXT) {
-					MultiLanguageScriptDataStruct* multilangdata = parent->parent->parent->multi_lang_script;
-					SteamLanguage baselang = multilangdata->base_script_lang[curlang];
-					for (unsigned int j = 0; j < multilangdata->lang_script_text_id[curlang].size(); j++)
-						if (newvalue == multilangdata->lang_script_text_id[curlang][j]) {
-							newvalue = multilangdata->base_script_text_id[curlang][j];
-							break;
-						}
-					break;
-				}
-	}
 	if (newvalue < 0) {
 		uint32_t sign = 0x1 << (typesize * 8 - 1);
 		value = ~(-newvalue - 1 & ~sign) | sign;
@@ -136,7 +143,7 @@ void ScriptArgument::SetValueVar(vector<uint8_t> newvaluevar) {
 	is_var = true;
 }
 
-int64_t ScriptArgument::GetValue() {
+int64_t ScriptArgument::GetValue() const {
 	if (is_signed) {
 		if (typesize == 1) {
 			int8_t* num = (int8_t*)&value;
@@ -152,92 +159,79 @@ int64_t ScriptArgument::GetValue() {
 			uint8_t* num = (uint8_t*)&value;
 			return *num;
 		} else if (typesize == 2) {
-			uint16_t num = *(uint16_t*)&value;
-			SteamLanguage curlang = parent->parent->parent->current_language;
-			if (curlang != STEAM_LANGUAGE_NONE && parent->parent->parent->multi_lang_script != NULL && parent->parent->parent->multi_lang_script->base_script_lang[curlang] != curlang)
-				for (unsigned int i = 0; i < parent->arg_amount; i++)
-					if (this == &parent->arg[i] && (int)i < HADES_STRING_SCRIPT_OPCODE[parent->opcode].arg_amount && HADES_STRING_SCRIPT_OPCODE[parent->opcode].arg_type[i] == AT_TEXT) {
-						MultiLanguageScriptDataStruct* multilangdata = parent->parent->parent->multi_lang_script;
-						SteamLanguage baselang = multilangdata->base_script_lang[curlang];
-						for (unsigned int j = 0; j < multilangdata->base_script_text_id[curlang].size(); j++)
-							if (num == multilangdata->base_script_text_id[curlang][j]) {
-								num = multilangdata->lang_script_text_id[curlang][j];
-								break;
-							}
-						break;
-					}
-			return num;
+			uint16_t* num = (uint16_t*)&value;
+			return *num;
 		}
 	}
 	return value;
 }
 
-#define MACRO_SCRIPT_IOFUNCTION_ARGREAD(IO,SEEK) \
+#define MACRO_SCRIPT_IOFUNCTION_ARGREAD(IO, SEEK) \
 	unsigned int i; \
 	uint8_t varbyte; \
 	typesize = sz; \
 	if (is_var) { \
 		int vartype; \
 		size = 0; \
-		IO ## Char(f,varbyte); var.push_back(varbyte); \
+		IO ## Char(f, varbyte); var.push_back(varbyte); \
 		vartype = VarOpList[varbyte].type; \
 		while (vartype != -1) { \
 			if (vartype == 2) { \
 			} else if (vartype == 3) { \
-				IO ## Char(f,varbyte); var.push_back(varbyte); \
+				IO ## Char(f, varbyte); var.push_back(varbyte); \
 			} else if (vartype == 5) { \
-				IO ## Char(f,varbyte); var.push_back(varbyte); \
+				IO ## Char(f, varbyte); var.push_back(varbyte); \
 			} else if (vartype == 6) { \
-				IO ## Char(f,varbyte); var.push_back(varbyte); \
-				IO ## Char(f,varbyte); var.push_back(varbyte); \
+				IO ## Char(f, varbyte); var.push_back(varbyte); \
+				IO ## Char(f, varbyte); var.push_back(varbyte); \
 			} else if (vartype == 7) { \
-				IO ## Char(f,varbyte); var.push_back(varbyte); \
-				IO ## Char(f,varbyte); var.push_back(varbyte); \
-				IO ## Char(f,varbyte); var.push_back(varbyte); \
-				IO ## Char(f,varbyte); var.push_back(varbyte); \
+				IO ## Char(f, varbyte); var.push_back(varbyte); \
+				IO ## Char(f, varbyte); var.push_back(varbyte); \
+				IO ## Char(f, varbyte); var.push_back(varbyte); \
+				IO ## Char(f, varbyte); var.push_back(varbyte); \
 			} else if (vartype >= 10 && vartype < 20) { \
-				IO ## Char(f,varbyte); var.push_back(varbyte); \
+				IO ## Char(f, varbyte); var.push_back(varbyte); \
 			} else if (vartype >= 20 && vartype < 30) { \
-				IO ## Char(f,varbyte); var.push_back(varbyte); \
-				IO ## Char(f,varbyte); var.push_back(varbyte); \
+				IO ## Char(f, varbyte); var.push_back(varbyte); \
+				IO ## Char(f, varbyte); var.push_back(varbyte); \
 			} else if (vartype == 55) { \
-				IO ## Char(f,varbyte); var.push_back(varbyte); \
-				IO ## Char(f,varbyte); var.push_back(varbyte); \
+				IO ## Char(f, varbyte); var.push_back(varbyte); \
+				IO ## Char(f, varbyte); var.push_back(varbyte); \
 			} else if (vartype == 60) { \
-				IO ## Char(f,varbyte); var.push_back(varbyte); \
-				IO ## Char(f,varbyte); var.push_back(varbyte); \
-				IO ## Char(f,varbyte); var.push_back(varbyte); \
+				IO ## Char(f, varbyte); var.push_back(varbyte); \
+				IO ## Char(f, varbyte); var.push_back(varbyte); \
+				IO ## Char(f, varbyte); var.push_back(varbyte); \
 			} \
-			IO ## Char(f,varbyte); var.push_back(varbyte); \
+			IO ## Char(f, varbyte); var.push_back(varbyte); \
 			vartype = VarOpList[varbyte].type; \
 		} \
 		size = var.size(); \
 	} else { \
 		size = typesize; \
 		value = 0; \
-		for (i=0;i<size;i++) { \
-			IO ## Char(f,varbyte); \
+		for (i = 0; i < size; i++) { \
+			IO ## Char(f, varbyte); \
 			value |= (varbyte << i*8); \
 		} \
 	}
 
-#define MACRO_SCRIPT_IOFUNCTION_ARGWRITE(IO,SEEK,PPF) \
+#define MACRO_SCRIPT_IOFUNCTION_ARGWRITE(IO, SEEK, PPF) \
 	unsigned int i; \
 	uint8_t buffer; \
 	if (PPF) PPFInitScanStep(f); \
 	if (is_var) \
-		for (i=0;i<size;i++) \
-			IO ## Char(f,var[i]); \
-	else if (size!=2 || is_signed) \
-		for (i=0;i<size;i++) { \
+		for (i = 0; i < size; i++) \
+			IO ## Char(f, var[i]); \
+	else if (size != 2 || is_signed) \
+		for (i = 0; i < size; i++) { \
 			buffer = (value >> i*8) & 0xFF; \
-			IO ## Char(f,buffer); \
+			IO ## Char(f, buffer); \
 		} \
 	else { \
 		uint16_t translatedval = GetValue(); \
-		for (i=0;i<size;i++) { \
+		for (i = 0; i < size; i++) { \
 			buffer = (translatedval >> i*8) & 0xFF; \
-			IO ## Char(f,buffer); \
+			IO ## Char(f, buffer); \
 		} \
 	} \
 	if (PPF) PPFEndScanStep();
@@ -246,43 +240,55 @@ int64_t ScriptArgument::GetValue() {
 void ScriptArgument::Read(fstream& f, uint8_t sz, bool isvar, bool issign) {
 	is_var = isvar;
 	is_signed = issign;
-	if (GetGameType()==GAME_TYPE_PSX) {
-		MACRO_SCRIPT_IOFUNCTION_ARGREAD(FFIXRead,FFIXSeek)
+	if (GetGameType() == GAME_TYPE_PSX) {
+		MACRO_SCRIPT_IOFUNCTION_ARGREAD(FFIXRead, FFIXSeek)
 	} else {
-		MACRO_SCRIPT_IOFUNCTION_ARGREAD(SteamRead,SteamSeek)
+		MACRO_SCRIPT_IOFUNCTION_ARGREAD(SteamRead, SteamSeek)
 	}
 }
 
 void ScriptArgument::Write(fstream& f) {
-	MACRO_SCRIPT_IOFUNCTION_ARGWRITE(FFIXWrite,FFIXSeek,false)
+	MACRO_SCRIPT_IOFUNCTION_ARGWRITE(FFIXWrite, FFIXSeek, false)
 }
 
 void ScriptArgument::WritePPF(fstream& f) {
-	MACRO_SCRIPT_IOFUNCTION_ARGWRITE(PPFStepAdd,FFIXSeek,true)
+	MACRO_SCRIPT_IOFUNCTION_ARGWRITE(PPFStepAdd, FFIXSeek, true)
 }
 
 void ScriptArgument::ReadHWS(fstream& f, uint8_t sz, bool isvar, bool issign) {
 	is_var = isvar;
 	is_signed = issign;
-	MACRO_SCRIPT_IOFUNCTION_ARGREAD(HWSRead,HWSSeek)
+	MACRO_SCRIPT_IOFUNCTION_ARGREAD(HWSRead, HWSSeek)
 }
 
 void ScriptArgument::WriteHWS(fstream& f) {
-	MACRO_SCRIPT_IOFUNCTION_ARGWRITE(HWSWrite,HWSSeek,false)
+	MACRO_SCRIPT_IOFUNCTION_ARGWRITE(HWSWrite, HWSSeek, false)
 }
 
-vector<ScriptArgument> NewScriptArgumentArray(unsigned int amount, ScriptOperation* p) {
+void ScriptArgument::WriteSteam(fstream& f) {
+	MACRO_SCRIPT_IOFUNCTION_ARGWRITE(SteamWrite, SteamSeek, false)
+}
+
+inline vector<ScriptArgument> NewScriptArgumentArray(unsigned int amount, ScriptOperation* p) {
 	vector<ScriptArgument> res(amount);
-	for (unsigned int i=0;i<amount;i++)
+	for (unsigned int i = 0; i < amount; i++)
 		res[i].parent = p;
 	return res;
 }
 
-bool IsScriptArgTypeSigned(uint8_t argtype) {
-	return argtype==AT_JUMP || argtype==AT_SPIN || argtype==AT_POSITION_X || argtype==AT_POSITION_Y || argtype==AT_POSITION_Z;
+inline bool IsScriptArgTypeSigned(uint8_t argtype) {
+	return argtype == AT_JUMP || argtype == AT_SPIN || argtype == AT_POSITION_X || argtype == AT_POSITION_Y || argtype == AT_POSITION_Z;
 }
 
-#define MACRO_SCRIPT_IOFUNCTION_OPREAD(IO,SEEK,FUNC) \
+inline bool IsScriptArgTypeEntry(const ScriptOperation& op, int argindex) {
+	if (HADES_STRING_SCRIPT_OPCODE[op.opcode].arg_type[argindex] == AT_ENTRY)
+		return true;
+	if ((op.opcode == 0xB3 || op.opcode == 0xDA) && argindex == 2 && !op.arg[1].is_var && op.arg[1].value == 150)
+		return true;
+	return false;
+}
+
+#define MACRO_SCRIPT_IOFUNCTION_OPREAD(IO, SEEK, FUNC) \
 	unsigned int i; \
 	uint8_t opcodebyte; \
 	opcode = 0; \
@@ -294,58 +300,86 @@ bool IsScriptArgTypeSigned(uint8_t argtype) {
 		IO ## Char(f, opcodebyte); \
 	} \
 	opcode += opcodebyte; \
-	if (opcode==0x06) { \
-		IO ## Char(f,size_byte); \
-		arg_amount = 1+size_byte*2; \
-		arg = NewScriptArgumentArray(arg_amount,this); \
-		arg[0].FUNC(f,2,false,true); \
-		for (i=0;i<size_byte;i++) { \
-			arg[2*i+1].FUNC(f,2,false,false); \
-			arg[2*i+2].FUNC(f,2,false,true); \
+	if (opcode == 0x06) { \
+		IO ## Char(f, size_byte); \
+		arg_amount = 1 + size_byte * 2; \
+		arg = NewScriptArgumentArray(arg_amount, this); \
+		arg[0].FUNC(f, 2, false, true); \
+		for (i = 0; i < size_byte; i++) { \
+			arg[2 * i + 1].FUNC(f, 2, false, false); \
+			arg[2 * i + 2].FUNC(f, 2, false, true); \
 		} \
-		size += 3+size_byte*4; \
-	} else if (opcode==0x0B) { \
-		IO ## Char(f,size_byte); \
-		arg_amount = 2+size_byte; \
-		arg = NewScriptArgumentArray(arg_amount,this); \
-		arg[0].FUNC(f,2,false,false); \
-		for (i=1;i<arg_amount;i++) \
-			arg[i].FUNC(f,2,false,true); \
-		size += 5+size_byte*2; \
-	} else if (opcode==0x29) { \
+		size += 3 + size_byte * 4; \
+	} else if (opcode == 0x0B) { \
+		IO ## Char(f, size_byte); \
+		arg_amount = 2 + size_byte; \
+		arg = NewScriptArgumentArray(arg_amount, this); \
+		arg[0].FUNC(f, 2, false, false); \
+		for (i = 1; i < arg_amount; i++) \
+			arg[i].FUNC(f, 2, false, true); \
+		size += 5 + size_byte * 2; \
+	} else if (opcode == 0x29) { \
 		uint8_t flag = 1; \
-		IO ## Char(f,vararg_flag); \
-		IO ## Char(f,size_byte); \
+		IO ## Char(f, vararg_flag); \
+		IO ## Char(f, size_byte); \
 		arg_amount = size_byte; \
-		arg = NewScriptArgumentArray(arg_amount,this); \
+		arg = NewScriptArgumentArray(arg_amount, this); \
 		size += 2; \
-		for (i=0;i<arg_amount;i++) { \
-			arg[i].FUNC(f,4,flag & vararg_flag,true); \
+		for (i = 0; i < arg_amount; i++) { \
+			arg[i].FUNC(f, 4, flag & vararg_flag, true); \
 			size += arg[i].size; \
 			flag *= 2; \
 		} \
 	} else { \
 		SortedChoiceItemScriptOpcode& scriptop = HADES_STRING_SCRIPT_OPCODE[opcode]; \
 		arg_amount = scriptop.arg_amount; \
-		arg = NewScriptArgumentArray(arg_amount,this); \
+		arg = NewScriptArgumentArray(arg_amount, this); \
 		if (scriptop.use_vararg) { \
 			uint8_t flag = 1; \
-			IO ## Char(f,vararg_flag); \
+			IO ## Char(f, vararg_flag); \
 			size += 1; \
-			for (i=0;i<arg_amount;i++) { \
+			for (i = 0; i < arg_amount; i++) { \
 				arg[i].FUNC(f, scriptop.arg_length[i], flag & vararg_flag, IsScriptArgTypeSigned(scriptop.arg_type[i])); \
 				size += arg[i].size; \
 				flag *= 2; \
 			} \
 		} else { \
-			for (i=0;i<arg_amount;i++) { \
-				arg[i].FUNC(f, scriptop.arg_length[i], opcode==0x05, IsScriptArgTypeSigned(scriptop.arg_type[i])); \
+			for (i = 0; i < arg_amount; i++) { \
+				arg[i].FUNC(f, scriptop.arg_length[i], opcode == 0x05, IsScriptArgTypeSigned(scriptop.arg_type[i])); \
 				size += arg[i].size; \
+			} \
+		} \
+		if (EntryIdShift != 0) { \
+			for (i = 0; i < arg_amount; i++) { \
+				if (!arg[i].is_var && IsScriptArgTypeEntry(*this, i)) { \
+					if ((int)arg[i].value >= EntryIdShift_Base && arg[i].value < ENTRY_MAX_VALID_ID) \
+						arg[i].value += EntryIdShift; \
+				} else if (arg[i].is_var) { \
+					int varargtype; \
+					for (unsigned int m = 0; m < arg[i].size; m++) { \
+						varargtype = VarOpList[arg[i].var[m]].type; \
+						if (varargtype == 55) { \
+							if (arg[i].var[m + 1] > EntryIdShift_Base && arg[i].var[m + 1] < ENTRY_MAX_VALID_ID) \
+								arg[i].var[m + 1] += EntryIdShift; \
+							m += 2; \
+						} else if (varargtype == 3 || varargtype == 5 || (varargtype >= 10 && varargtype < 20)) { \
+							if (arg[i].var[m] == 0x5F && arg[i].var[m + 1] > EntryIdShift_Base && arg[i].var[m + 1] < ENTRY_MAX_VALID_ID) \
+								arg[i].var[m + 1] += EntryIdShift; \
+							m++; \
+						} else if (varargtype == 6 || (varargtype >= 20 && varargtype < 30)) { \
+							m += 2; \
+						} else if (varargtype == 7) { \
+							m += 4; \
+						} else if (varargtype == 60) { \
+							m += 3; \
+						} \
+					} \
+				} \
 			} \
 		} \
 	}
 
-#define MACRO_SCRIPT_IOFUNCTION_OPWRITE(IO,SEEK,PPF,FUNC) \
+#define MACRO_SCRIPT_IOFUNCTION_OPWRITE(IO, SEEK, PPF, FUNC) \
 	unsigned int i; \
 	uint16_t opcodecopy = opcode; \
 	if (PPF) PPFInitScanStep(f); \
@@ -354,37 +388,137 @@ bool IsScriptArgTypeSigned(uint8_t argtype) {
 		opcodecopy -= 0x100; \
 	} \
 	IO ## Char(f, opcodecopy); \
-	if (opcode==0x06) { \
-		IO ## Char(f,size_byte); \
+	if (opcode == 0x06) { \
+		IO ## Char(f, size_byte); \
 		if (PPF) PPFEndScanStep(); \
 		arg[0].FUNC(f); \
-		for (i=1;i<arg_amount;i++) \
+		for (i = 1; i < arg_amount; i++) \
 			arg[i].FUNC(f); \
-	} else if (opcode==0x0B) { \
-		IO ## Char(f,size_byte); \
+	} else if (opcode == 0x0B) { \
+		IO ## Char(f, size_byte); \
 		if (PPF) PPFEndScanStep(); \
 		arg[0].FUNC(f); \
 		arg[1].FUNC(f); \
-		for (i=2;i<arg_amount;i++) \
+		for (i = 2; i < arg_amount; i++) \
 			arg[i].FUNC(f); \
-	} else if (opcode==0x29) { \
-		IO ## Char(f,vararg_flag); \
-		IO ## Char(f,size_byte); \
+	} else if (opcode == 0x29) { \
+		IO ## Char(f, vararg_flag); \
+		IO ## Char(f, size_byte); \
 		if (PPF) PPFEndScanStep(); \
-		for (i=0;i<arg_amount;i++) \
+		for (i = 0; i < arg_amount; i++) \
 			arg[i].FUNC(f); \
 	} else { \
 		if (HADES_STRING_SCRIPT_OPCODE[opcode].use_vararg) { \
-			IO ## Char(f,vararg_flag); \
+			IO ## Char(f, vararg_flag); \
 			if (PPF) PPFEndScanStep(); \
-			for (i=0;i<arg_amount;i++) \
+			for (i = 0; i < arg_amount; i++) \
 				arg[i].FUNC(f); \
 		} else { \
 			if (PPF) PPFEndScanStep(); \
-			for (i=0;i<arg_amount;i++) \
+			for (i = 0; i < arg_amount; i++) \
 				arg[i].FUNC(f); \
 		} \
 	}
+
+inline bool AreVerySimilarOpcodes(uint16_t op1, uint16_t op2) {
+	// "RunScript" opcodes are sometimes changed to other "RunScript" opcodes in different languages (field 1755, Function Zidane_13)
+	if ((op1 == 0x10 || op1 == 0x12 || op1 == 0x14) && (op2 == 0x10 || op2 == 0x12 || op2 == 0x14))
+		return true;
+	// No other instances in vanilla, don't check for other very similar opcodes (like "Window(A)sync")
+	return false;
+}
+
+inline bool IsDebugCutsceneSwitch(SteamLanguage lang) {
+	// The way that bug is handled currently doesn't generate optimal codes (the whole function is duplicated for the JP language)
+	
+	// Function GrandpaA_Loop of field 457 (Mountain/Shack)
+	//  switchex 10 ( VAR_GlobInt16_28 ) {
+	//  [...] (same in all languages)
+	//  default:
+	//    [...]
+	//    [jp] RunScriptSync( 4, 4, 22 )
+	//    [~jp] if ( VAR_GlobInt8_34 == 0 ) { RunScriptSync( 4, 4, 22 ) }
+	//    [...]
+	//  }
+	//  Wait( 1 )
+	//  loop
+	if (CurrentScriptReadField == 457 && CurrentScriptReadEntry == 4 && CurrentScriptReadFunction == 1)
+		return lang == STEAM_LANGUAGE_JA;
+
+	// Function Vivi_Loop of field 661 (Marsh/Master's House)
+	//  switchex 6 ( VARL_GenUInt8_408 ) {
+	//  [...]
+	//  case 20:
+	//    [...]
+	//    [Some code, overall very similar but in different order in jp and ~jp]
+	//    [...]
+	//  }
+	//  Wait( 1 )
+	//  loop
+	if (CurrentScriptReadField == 661 && CurrentScriptReadEntry == 8 && CurrentScriptReadFunction == 1)
+		return lang == STEAM_LANGUAGE_JA;
+
+	// Function Main_Init of field 1052 (Cleyra/Sandpit)
+	//   [...]
+	//   switch 3 ( General_ScenarioCounter ) from 4725 {
+	//     [...]
+	//   default:
+	//     set VAR_GlobUInt8_24 = 0
+	//     [jp] set VAR_GenInt16_239 = 1052
+	//     [jp] InitCode(2, 0) // Entry2
+	//     [jp] set VAR_GlobBool_153 = 1
+	//     [...]
+	//   }
+	//   [jp] [...]
+	//   [...]
+	//   return
+	if (CurrentScriptReadField == 1052 && CurrentScriptReadEntry == 0 && CurrentScriptReadFunction == 0)
+		return lang == STEAM_LANGUAGE_JA;
+	return false;
+}
+
+inline bool IsDebugIifaCutsceneSwitch() {
+	// Function Dagger_Loop of field 1663 (Iifa Tree/Tree Trunk)
+	//   switchex 15 ( VAR_GlobInt16_47 ) {
+	//     [...]
+	//   case 124:
+	//     [...]
+	//     [us,jp] WindowAsync( 3, 128, "Dagger: No... I can't... I can't let anything happen to my mother." )
+	//     [us,jp] WaitAnimation(  )
+	//     [uk,gr,fr,it,es] WaitAnimation(  )
+	//     [uk,gr,fr,it,es] WindowAsync( 3, 128, "Dagger: No... I can't... I can't let anything happen to my mother." )
+	//     [...]
+	//   }
+	//   [...]
+	//   return
+	if (CurrentScriptReadField == 1663 && CurrentScriptReadEntry == 20 && CurrentScriptReadFunction == 1)
+		return true;
+	return false;
+}
+
+int ScriptOperation::Compare(const ScriptOperation& other) const {
+	if (opcode != other.opcode || arg_amount != other.arg_amount)
+		return 3;
+	unsigned int i, j;
+	int cmp = 0;
+	for (i = 0; i < arg_amount; i++) {
+		const ScriptArgument& thisarg = arg[i];
+		const ScriptArgument& otherarg = other.arg[i];
+		if (thisarg.is_var != otherarg.is_var)
+			return 3;
+		if (thisarg.is_var) {
+			if (thisarg.size != otherarg.size)
+				return 3;
+			for (j = 0; j < thisarg.size; j++)
+				if (thisarg.var[j] != otherarg.var[j])
+					cmp = 2;
+		} else {
+			if (cmp < 1 && thisarg.value != otherarg.value)
+				cmp = 1;
+		}
+	}
+	return cmp;
+}
 
 void ScriptOperation::Read(fstream& f) {
 	if (GetGameType() == GAME_TYPE_PSX) {
@@ -395,19 +529,23 @@ void ScriptOperation::Read(fstream& f) {
 }
 
 void ScriptOperation::Write(fstream& f) {
-	MACRO_SCRIPT_IOFUNCTION_OPWRITE(FFIXWrite,FFIXSeek,false,Write)
+	MACRO_SCRIPT_IOFUNCTION_OPWRITE(FFIXWrite, FFIXSeek, false, Write)
 }
 
 void ScriptOperation::WritePPF(fstream& f) {
-	MACRO_SCRIPT_IOFUNCTION_OPWRITE(PPFStepAdd,FFIXSeek,true,WritePPF)
+	MACRO_SCRIPT_IOFUNCTION_OPWRITE(PPFStepAdd, FFIXSeek, true, WritePPF)
 }
 
 void ScriptOperation::ReadHWS(fstream& f) {
-	MACRO_SCRIPT_IOFUNCTION_OPREAD(HWSRead,HWSSeek,ReadHWS)
+	MACRO_SCRIPT_IOFUNCTION_OPREAD(HWSRead, HWSSeek, ReadHWS)
 }
 
 void ScriptOperation::WriteHWS(fstream& f) {
-	MACRO_SCRIPT_IOFUNCTION_OPWRITE(HWSWrite,HWSSeek,false,WriteHWS)
+	MACRO_SCRIPT_IOFUNCTION_OPWRITE(HWSWrite, HWSSeek, false, WriteHWS)
+}
+
+void ScriptOperation::WriteSteam(fstream& f) {
+	MACRO_SCRIPT_IOFUNCTION_OPWRITE(SteamWrite, SteamSeek, false, WriteSteam)
 }
 
 ScriptOperation& ScriptOperation::operator=(const ScriptOperation& from) {
@@ -418,7 +556,7 @@ ScriptOperation& ScriptOperation::operator=(const ScriptOperation& from) {
 	arg_amount = from.arg_amount;
 	size = from.size;
 	arg = from.arg;
-	for (unsigned int i=0;i<arg_amount;i++)
+	for (unsigned int i = 0; i < arg_amount; i++)
 		arg[i].parent = this;
 	return *this;
 }
@@ -435,61 +573,548 @@ ScriptOperation::ScriptOperation(const ScriptOperation& from) :
 		arg[i].parent = this;
 }
 
-void ScriptFunction::Read(fstream& f) {
-	unsigned int len = 0;
-	op_amount = 0;
-	op.clear();
-	while (len < length) {
-		op.resize(op_amount + 1);
-		op[op_amount].parent = this;
-		op[op_amount].Read(f);
-		len += op[op_amount++].size;
+uint16_t GetControlVarArgCode(const vector<ScriptOperation>& oplist, unsigned int pos, unsigned int nextpos) {
+	if (oplist[pos].opcode != 0x05 || nextpos >= oplist.size())
+		return 0;
+	if (oplist[nextpos].opcode != 0x02 && oplist[nextpos].opcode != 0x03 && oplist[nextpos].opcode != 0x06 && oplist[nextpos].opcode != 0x0B)
+		return 0;
+	return oplist[nextpos].opcode;
+}
+
+bool dbgscript = false;
+bool ScriptFunction::SearchOperationCorrespondance(const vector<ScriptOperation>& langop, SteamLanguage lang, unsigned int& langindex, unsigned int& searchindex, unsigned int& codecount, unsigned int codediff, set<unsigned int>& elsejumpoffsets, unsigned int& codeoffset) {
+	unsigned int i, j, langsearchindex;
+	SteamLanguage lg;
+	uint16_t controlvararg = GetControlVarArgCode(langop, langindex, langindex + 1);
+	if (controlvararg == 0x02 && langop[langindex].arg[0].GetValue() > 0)
+		elsejumpoffsets.insert((unsigned int)(codeoffset + langop[langindex].arg[0].GetValue()));
+	for (lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++) {
+		if (lg == lang || indices[lg].empty())
+			continue;
+		langsearchindex = searchindex;
+		while (langsearchindex < codecount && indices[lg][langsearchindex] < 0)
+			langsearchindex++;
+		if (langsearchindex >= codecount)
+			continue;
+		int cmp = langop[langindex].Compare(op[indices[lg][langsearchindex]]);
+		if (cmp == 0) {
+			// Exact match
+			if (controlvararg == 0 || langop[langindex + 1].Compare(op[indices[lg][langsearchindex + 1]]) == 0) {
+				if (dbgscript) {
+					GetDebugLog() << "Exact match: " << (int)lang << " " << (int)lg << " -> " << (int)langindex << " " << (int)langsearchindex << " [" << ConvertWStrToStr(HADES_STRING_SCRIPT_OPCODE[langop[langindex].opcode].label).c_str() << "]" << endl;
+				}
+				// TODO: Similar JUMP with different offsets currently don't match (more duplicated functions but easier "indices" structure)
+				indices[lang].insert(indices[lang].end(), langsearchindex - searchindex, -1);
+				indices[lang].push_back(indices[lg][langsearchindex]);
+				searchindex = langsearchindex + 1;
+				return true;
+			}
+		}
+	}
+	for (lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++) {
+		if (lg == lang || indices[lg].empty())
+			continue;
+		langsearchindex = searchindex;
+		while (langsearchindex < codecount && indices[lg][langsearchindex] < 0)
+			langsearchindex++;
+		if (langsearchindex >= codecount)
+			continue;
+		int cmp = langop[langindex].Compare(op[indices[lg][langsearchindex]]);
+		if (cmp == 1 || cmp == 2) {
+			if (dbgscript) {
+				GetDebugLog() << "SEARCH SIMILAR? " << langsearchindex << " " << codecount << " " << (int)indices[lg].size() << endl;
+			}
+			uint16_t othercontrolvararg = langsearchindex + 1 < codecount ? GetControlVarArgCode(op, indices[lg][langsearchindex], indices[lg][langsearchindex + 1]) : 0;
+			if (controlvararg == othercontrolvararg) {
+				// Variation of the same code
+				if ((controlvararg == 0 || langop[langindex + 1].Compare(op[indices[lg][langsearchindex + 1]]) == 0) && (langop[langindex].opcode != 0x01 || elsejumpoffsets.find(codeoffset) != elsejumpoffsets.end())) {
+					if (dbgscript) {
+						GetDebugLog() << "Similar match: " << (int)lang << " " << (int)lg << " -> " << (int)langindex << " " << (int)langsearchindex << " [" << ConvertWStrToStr(HADES_STRING_SCRIPT_OPCODE[langop[langindex].opcode].label).c_str() << "]" << endl;
+					}
+					// TODO: Similar JUMP with different offsets currently don't match (more duplicated functions but easier "indices" structure), except "else" JUMP instructions and some cutscene switch debug ("switchex" opcode is same for all languages but the "break" inside are not because of the "default" case)
+					indices[lang].insert(indices[lang].end(), langsearchindex - searchindex, -1);
+					indices[lang].push_back(op.size());
+					op.push_back(langop[langindex]);
+					searchindex = langsearchindex + 1;
+					return true;
+				}
+			}
+		}
+	}
+	// Special gap: very similar opcodes (most likely the same arguments and sizes, but with different albeit similar opcodes)
+	// Do it just for the one occurrence where it's effective in vanilla, although it might be extended
+	if (CurrentScriptReadField == 1755) {
+		for (lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++) {
+			if (lg == lang || indices[lg].empty())
+				continue;
+			langsearchindex = searchindex;
+			while (langsearchindex < codecount && indices[lg][langsearchindex] < 0)
+				langsearchindex++;
+			if (langsearchindex >= codecount)
+				continue;
+			if (langop[langindex].size == op[indices[lg][langsearchindex]].size && AreVerySimilarOpcodes(langop[langindex].opcode, op[indices[lg][langsearchindex]].opcode)) {
+				if (dbgscript) {
+					GetDebugLog() << "Very similar opcode match: " << (int)lang << " " << (int)lg << " -> " << (int)langop[langindex].opcode << "/" << (int)op[indices[lg][langsearchindex]].opcode << " (size = " << langop[langindex].size << ")" << endl;
+				}
+				indices[lang].insert(indices[lang].end(), langsearchindex - searchindex + 1, -1);
+				indices[lang].push_back(op.size());
+				op.push_back(langop[langindex]);
+				for (lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++)
+					if (lg != lang && !indices[lg].empty())
+						indices[lg].insert(indices[lg].begin() + langsearchindex + 1, 1, -1);
+				searchindex = langsearchindex + 2;
+				codecount++;
+				return true;
+			}
+		}
+	}
+	if (IsDebugIifaCutsceneSwitch() && langindex + 1 < langop.size() && controlvararg == 0) {
+		for (lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++) {
+			if (lg == lang || indices[lg].empty())
+				continue;
+			langsearchindex = searchindex;
+			while (langsearchindex < codecount && indices[lg][langsearchindex] < 0)
+				langsearchindex++;
+			if (langsearchindex + 1 >= codecount)
+				continue;
+			int cmp1 = langop[langindex + 1].Compare(op[indices[lg][langsearchindex]]);
+			int cmp2 = langop[langindex].Compare(op[indices[lg][langsearchindex + 1]]);
+			if (cmp1 <= 2 && cmp2 <= 2) {
+				if (true || dbgscript) {
+					GetDebugLog() << "Debug Iifa switch match: " << (int)lang << " " << (int)lg << " -> " << (int)langop[langindex].opcode << " and " << (int)langop[langindex + 1].opcode << " at " << langindex << "/" << langsearchindex << endl;
+				}
+				indices[lang].insert(indices[lang].end(), langsearchindex - searchindex + 2, -1);
+				indices[lang].push_back(op.size());
+				op.push_back(langop[langindex++]);
+				indices[lang].push_back(op.size());
+				op.push_back(langop[langindex]);
+				for (lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++)
+					if (lg != lang && !indices[lg].empty())
+						indices[lg].insert(indices[lg].begin() + langsearchindex + 2, 2, -1);
+				searchindex = langsearchindex + 4;
+				codecount += 2;
+				return true;
+			}
+		}
+	}
+	return false; // TODO: never search for a gap in the code flow, mark the whole function as language-different instead
+	// Search for a gap in a code flow (langop either lacks a part or has some more than the others)
+	for (i = 1; i < codediff; i++) {
+		for (lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++) {
+			if (lg == lang || indices[lg].empty())
+				continue;
+			if (searchindex + i < codecount && indices[lg][searchindex + i] >= 0) {
+				int cmp = langop[langindex].Compare(op[indices[lg][searchindex + i]]);
+				if (cmp == 0) {
+					// Assume langop lacks a code block of i operations that other languages have
+					indices[lang].insert(indices[lang].end(), i, -1);
+					indices[lang].push_back(indices[lg][searchindex + i]);
+					searchindex += i + 1;
+					return true;
+				}
+			}
+			if (langindex + i < langop.size() && indices[lg][searchindex] >= 0) {
+				int cmp = langop[langindex + i].Compare(op[indices[lg][searchindex]]);
+				if (cmp == 0) {
+					controlvararg = GetControlVarArgCode(langop, langindex + i, langindex + i + 1);
+					uint16_t othercontrolvararg = searchindex + 1 < codecount ? GetControlVarArgCode(op, indices[lg][searchindex], indices[lg][searchindex + 1]) : 0;
+					if (controlvararg == othercontrolvararg) {
+						// Assume langop has a code block of i operations that other languages don't have
+						for (j = 0; j < i; j++) {
+							indices[lang].push_back(op.size());
+							op.push_back(langop[langindex]);
+							codeoffset += langop[langindex++].size;
+						}
+						indices[lang].push_back(indices[lg][searchindex]);
+						for (lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++)
+							if (lg != lang && !indices[lg].empty())
+								indices[lg].insert(indices[lg].begin() + searchindex, i, -1);
+						searchindex += i + 1;
+						codecount += i;
+						return true;
+					}
+				}
+			}
+		}
+	}
+	return false;
+}
+
+void ScriptFunction::Import(const vector<ScriptOperation>& langop, SteamLanguage lang) {
+	unsigned int langindex;
+	SteamLanguage lg;
+	indices[lang].clear();
+	// TODO: flush previous
+	if (dbgscript) {
+		GetDebugLog() << "START IMPORT " << HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[lang] << " (" << (int)langop.size() << ")" << endl;
+		GetDebugLog() << "LANGS:";
+		for (lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++)
+			GetDebugLog() << " " << (int)indices[lg].size();
+		GetDebugLog().flush();
+	}
+	unsigned int codecount = 0, validcodecount = 0, searchindex = 0, codeoffset = 0;
+	set<unsigned int> elsejumpoffsets;
+	for (lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++) {
+		if (lg != lang && !indices[lg].empty()) {
+			unsigned int langvalidcodecount = 0;
+			codecount = indices[lg].size();
+			for (langindex = 0; langindex < indices[lg].size(); langindex++)
+				if (indices[lg][langindex] >= 0)
+					langvalidcodecount++;
+			validcodecount = max(validcodecount, langvalidcodecount);
+		}
+	}
+	int codediff = max(20, abs((int)validcodecount - (int)langop.size()));
+	if (dbgscript) {
+		GetDebugLog() << " -> " << codecount << " " << validcodecount << " " << codediff << endl;
+	}
+	if (IsDebugCutsceneSwitch(lang)) {
+		langindex = 0;
+	} else {
+		for (langindex = 0; langindex < langop.size(); langindex++) {
+			if (searchindex >= codecount)
+				break;
+			if (SearchOperationCorrespondance(langop, lang, langindex, searchindex, codecount, codediff, elsejumpoffsets, codeoffset)) {
+				uint16_t controlvararg = GetControlVarArgCode(langop, langindex, langindex + 1);
+				if (controlvararg != 0) { // Keep control codes next to their var_arg setup
+					bool foundmatch = false;
+					codeoffset += langop[langindex++].size;
+					if (controlvararg == 0x02 && langop[langindex].arg[0].GetValue() > 0)
+						elsejumpoffsets.insert((unsigned int)(codeoffset + langop[langindex].arg[0].GetValue()));
+					if (searchindex < codecount) {
+						for (lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++) {
+							if (lg != lang && !indices[lg].empty() && indices[lg][searchindex] >= 0) {
+								uint16_t othercontrolvararg = op[indices[lg][searchindex]].opcode;
+								if (controlvararg == othercontrolvararg && langop[langindex].Compare(op[indices[lg][searchindex]]) == 0) {
+									indices[lang].push_back(indices[lg][searchindex]);
+									foundmatch = true;
+									break;
+								}
+							}
+						}
+					}
+					if (!foundmatch) {
+						indices[lang].push_back(op.size());
+						op.push_back(langop[langindex]);
+					}
+					searchindex++;
+				}
+			} else {
+				break; // TODO: never search for a gap in the code flow, mark the whole function as language-different instead
+				// Cannot find any correspondance: treat as distinct operations
+				uint16_t controlvararg = GetControlVarArgCode(langop, langindex, langindex + 1);
+				unsigned int distinctcount = controlvararg != 0 ? 2 : 1; // If it is a controlvararg, treat the next one as distinct as well
+				indices[lang].push_back(op.size());
+				op.push_back(langop[langindex]);
+				for (unsigned int dc = 1; dc < distinctcount; dc++) {
+					codeoffset += langop[langindex++].size;
+					indices[lang].push_back(op.size());
+					op.push_back(langop[langindex]);
+				}
+				for (lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++)
+					if (lg != lang && !indices[lg].empty())
+						indices[lg].insert(indices[lg].begin() + searchindex, distinctcount, -1);
+				searchindex += distinctcount;
+				codecount += distinctcount;
+				if (validcodecount >= langop.size()) {
+					// Advance the searchindex if there are more opcodes in other languages than in lang
+					// TODO: compare the *remaining* opcode counts instead?
+					indices[lang].push_back(-1);
+					searchindex++;
+					uint16_t othercontrolvararg = 0;
+					if (searchindex < codecount)
+						for (lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++)
+							if (lg != lang && !indices[lg].empty() && indices[lg][searchindex] >= 0)
+								othercontrolvararg = op[indices[lg][searchindex]].opcode;
+					if (othercontrolvararg == 0x02 || othercontrolvararg == 0x03 || othercontrolvararg == 0x06 || othercontrolvararg == 0x0B) {
+						// Keep (already in place) control codes next to their var_arg setup
+						indices[lang].push_back(-1);
+						searchindex++;
+					}
+				}
+			}
+			codeoffset += langop[langindex].size;
+		}
+	}
+	unsigned int addop = op.size();
+	if (langindex < langop.size())
+		op.insert(op.end(), langop.begin() + langindex, langop.end());
+	if (searchindex < codecount)
+		indices[lang].insert(indices[lang].end(), codecount - searchindex, -1);
+	while (langindex < langop.size()) {
+		for (lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++) {
+			if (lg == lang)
+				indices[lg].push_back(addop++);
+			else if (!indices[lg].empty())
+				indices[lg].push_back(-1);
+		}
+		codeoffset += langop[langindex++].size;
+		codecount++;
+	}
+	if (codecount > 0) {
+		while (codecount < indices[lang].size()) {
+			for (lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++)
+				if (lg != lang && !indices[lg].empty())
+					indices[lg].push_back(-1);
+			codecount++;
+		}
+	}
+	if (dbgscript) {
+		GetDebugLog() << "END IMPORT: " << langindex << " " << codecount << " " << (int)langop.size() << " " << (int)op.size() << endl;
 	}
 }
 
-void ScriptFunction::Write(fstream& f) {
-	for (unsigned int i=0;i<op_amount;i++)
-		op[i].Write(f);
-}
+/*
+void ScriptFunction::Import(const vector<ScriptOperation>& langop, SteamLanguage lang) {
+	// TODO: flush previous
+	// TODO: improve
+	unsigned int i, j, k;
+	for (i = 0; i < breaks.size(); i++) {
+		vector<unsigned int> routeindices = GetRouteIndices(&breaks[i], breaks[i].GetFirstLang());
+		if (abs((int)(routeindices.size() - langop.size())) > (int)langop.size() / 2)
+			continue;
+		unsigned int routeindex = 0;
+		bool useasbasis = true;
+		vector<ScriptLanguageBreakPoint> subbreaks;
+		for (j = 0; j < langop.size(); j++) {
+			if (routeindex >= routeindices.size()) {
+				if (langop.size() - j > langop.size() / 5) {
+					useasbasis = false;
+				} else {
+					// Add breakpoint for end
+					ScriptLanguageBreakPoint br(false);
+					br.lang[lang] = true;
+					br.op_start_relative = j;
+					br.op_amount = langop.size() - j;
+					subbreaks.push_back(br);
+				}
+				break;
+			}
+			int cmp = langop[j].Compare(op[routeindices[routeindex]]);
+			if (cmp == 0) {
+				routeindex++;
+			} else if (cmp == 1) {
+				if (langop[j].opcode >= 0x10) {
+					// Insert size 1 breakpoint
+					ScriptLanguageBreakPoint br(false);
+					br.lang[lang] = true;
+					br.op_start_relative = j;
+					br.op_amount = 1;
+					subbreaks.push_back(br);
+					for (SteamLanguage lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++)
+						br.lang[lg] = breaks[i].lang[lg];
+					br.op_start_relative = routeindex;
+					br.op_amount = 1;
+					subbreaks.push_back(br);
+				} else {
+					// TODO ??? (control block most likely) - same size
+					useasbasis = false;
+					break;
+				}
+				routeindex++;
+			} else {
+				bool shiftfound = false;
+				for (k = 1; k < 10 && routeindex + k < routeindices.size(); k++) {
+					cmp = langop[j].Compare(op[routeindices[routeindex + k]]);
+					if (cmp == 0) {
+						// Insert breakpoint: langop has less operations than breaks[i]
+						ScriptLanguageBreakPoint br(false);
+						for (SteamLanguage lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++)
+							br.lang[lg] = breaks[i].lang[lg];
+						br.op_start_relative = routeindex;
+						br.op_amount = k;
+						subbreaks.push_back(br);
+						routeindex += k + 1;
+						shiftfound = true;
+						break;
+					}
+				}
+				if (!shiftfound) {
+					for (k = 1; k < 10 && j + k < langop.size(); k++) {
+						cmp = langop[j + k].Compare(op[routeindices[routeindex]]);
+						if (cmp == 0) {
+							// Insert breakpoint: breaks[i] has less operations than langop
+							ScriptLanguageBreakPoint br(false);
+							br.lang[lang] = true;
+							br.op_start_relative = j;
+							br.op_amount = k;
+							subbreaks.push_back(br);
+							j += k;
+							shiftfound = true;
+							break;
+						}
+					}
+				}
+				if (!shiftfound) {
+					useasbasis = false;
+					break;
+				}
+			}
+		}
+		if (routeindex < routeindices.size()) {
+			if (routeindices.size() - routeindex > routeindices.size() / 5) {
+				useasbasis = false;
+			} else {
+				// Add breakpoint for end
+				ScriptLanguageBreakPoint br(false);
+				for (SteamLanguage lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++)
+					br.lang[lg] = breaks[i].lang[lg];
+				br.op_start_relative = routeindex;
+				br.op_amount = routeindices.size() - routeindex;
+				subbreaks.push_back(br);
+			}
+		}
+		if (useasbasis) {
+			breaks[i].lang[lang] = true;
+			for (k = 0; k < breaks[i].sub.size(); k++)
+				if (breaks[i].sub[k].lang[breaks[i].GetFirstLang()])
+					breaks[i].sub[k].lang[lang] = true;
+			for (j = 0; j < subbreaks.size(); j++) {
+				for (k = 0; k < breaks[i].sub.size(); k++) {
+					if (breaks[i].sub[k].op_start_relative < subbreaks[j].op_start_relative) {
+						subbreaks[j].op_start_relative += breaks[i].sub[k].op_amount;
 
-void ScriptFunction::WritePPF(fstream& f) {
-	for (unsigned int i=0;i<op_amount;i++)
-		op[i].WritePPF(f);
-}
+					}
+				}
+				if (subbreaks[j].lang[lang]) {
+					subbreaks[j].op_start_absolute = op.size();
+					for (k = 0; k < subbreaks[j].op_amount; k++)
+						op.push_back(langop[subbreaks[j].op_start_relative + k]);
+				} else {
 
-void ScriptFunction::ReadHWS(fstream& f) {
+				}
+				breaks[i].InsertSub(subbreaks[j]);
+			}
+			// TODO
+			return;
+		}
+	}
+	ScriptLanguageBreakPoint rootbreak(false);
+	rootbreak.lang[lang] = true;
+	rootbreak.op_start_absolute = op.size();
+	rootbreak.op_start_relative = op.size();
+	rootbreak.op_amount = langop.size();
+	breaks.push_back(rootbreak);
+	op.insert(op.end(), langop.begin(), langop.end());
+}
+*/
+
+void ScriptFunction::Read(fstream& f, unsigned int length, SteamLanguage lang) {
+	if (true) {
+		GetDebugLog() << "READ FIELD/ENTRY/FUNC " << (int)CurrentScriptReadField << "/" << (int)CurrentScriptReadEntry << "/" << (int)CurrentScriptReadFunction << endl;
+	}
+	vector<ScriptOperation> langop;
 	unsigned int len = 0;
-	op_amount = 0;
-	op.clear();
-	while (len<length) {
-		op.resize(op_amount+1);
-		op[op_amount].parent = this;
-		op[op_amount].ReadHWS(f);
-		len += op[op_amount++].size;
+	while (len < length) {
+		ScriptOperation newop;
+		newop.parent = this;
+		newop.Read(f);
+		langop.push_back(newop);
+		len += newop.size;
+	}
+	Import(langop, lang);
+}
+
+void ScriptFunction::Write(fstream& f, SteamLanguage lang) {
+	vector<int32_t>& routeindices = indices[lang];
+	for (unsigned int i = 0; i < indices[lang].size(); i++)
+		if (routeindices[i] >= 0)
+			op[indices[lang][i]].Write(f);
+}
+
+void ScriptFunction::WritePPF(fstream& f, SteamLanguage lang) {
+	vector<int32_t>& routeindices = indices[lang];
+	for (unsigned int i = 0; i < routeindices.size(); i++)
+		if (routeindices[i] >= 0)
+			op[routeindices[i]].WritePPF(f);
+}
+
+void ScriptFunction::ReadHWS(fstream& f, unsigned int length, SteamLanguage lang) {
+	if (lang == STEAM_LANGUAGE_AMOUNT) {
+		unsigned int i;
+		uint32_t count;
+		for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+			HWSReadLong(f, count);
+			indices[lang].resize(count);
+			for (i = 0; i < count; i++)
+				HWSReadFlexibleChar(f, indices[lang][i], true);
+		}
+		HWSReadLong(f, count);
+		op.resize(count);
+		for (i = 0; i < op.size(); i++) {
+			op[i].parent = this;
+			op[i].ReadHWS(f);
+		}
+	} else {
+		vector<ScriptOperation> langop;
+		unsigned int len = 0;
+		while (len < length) {
+			ScriptOperation newop;
+			newop.parent = this;
+			newop.Read(f);
+			langop.push_back(newop);
+			len += newop.size;
+		}
+		Import(langop, lang);
 	}
 }
 
 void ScriptFunction::WriteHWS(fstream& f) {
-	for (unsigned int i=0;i<op_amount;i++)
+	unsigned int i;
+	for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+		HWSWriteLong(f, indices[lang].size());
+		for (i = 0; i < indices[lang].size(); i++)
+			HWSWriteFlexibleChar(f, indices[lang][i], true);
+	}
+	HWSWriteLong(f, op.size());
+	for (i = 0; i < op.size(); i++)
 		op[i].WriteHWS(f);
+}
+
+void ScriptFunction::WriteSteam(fstream& f, SteamLanguage lang) {
+	vector<int32_t>& routeindices = indices[lang];
+	for (unsigned int i = 0; i < routeindices.size(); i++)
+		if (routeindices[i] >= 0)
+			op[routeindices[i]].WriteSteam(f);
+}
+
+unsigned int ScriptFunction::GetLength(SteamLanguage lang) {
+	vector<int32_t>& routeindices = indices[lang];
+	unsigned int length = 0;
+	for (unsigned int i = 0; i < routeindices.size(); i++)
+		if (routeindices[i] >= 0)
+			length += op[routeindices[i]].size;
+	return length;
+}
+
+unsigned int ScriptFunction::GetSubLength(const vector<unsigned int>& indices) {
+	unsigned int length = 0;
+	for (unsigned int i = 0; i < indices.size(); i++)
+		if (indices[i] >= 0)
+			length += op[indices[i]].size;
+	return length;
 }
 
 ScriptFunction& ScriptFunction::operator=(const ScriptFunction& from) {
 	parent = from.parent;
-	op_amount = from.op_amount;
-	length = from.length;
+	for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+		indices[lang] = from.indices[lang];
 	op = from.op;
-	for (unsigned int i=0;i<op_amount;i++)
+	function_point = from.function_point;
+	function_type = from.function_type;
+	for (unsigned int i = 0; i < op.size(); i++)
 		op[i].parent = this;
 	return *this;
 }
 
 ScriptFunction::ScriptFunction(const ScriptFunction& from) :
 	parent(from.parent),
-	op_amount(from.op_amount),
-	length(from.length),
-	op(from.op) {
-	for (unsigned int i=0;i<op_amount;i++)
+	op(from.op),
+	function_point(from.function_point),
+	function_type(from.function_type) {
+	for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+		indices[lang] = from.indices[lang];
+	for (unsigned int i = 0; i < op.size(); i++)
 		op[i].parent = this;
 }
 
@@ -514,45 +1139,36 @@ int ScriptDataStruct::SetName(FF9String& newvalue) {
 void ScriptDataStruct::AddFunction(int entryid, int funcidpos, uint16_t functype) {
 	ScriptFunction newfunc;
 	newfunc.parent = this;
-	newfunc.op_amount = 0;
-	newfunc.length = 0;
-	func[entryid].insert(func[entryid].begin()+funcidpos,newfunc);
-	function_type[entryid].insert(function_type[entryid].begin()+funcidpos,functype);
-	function_point[entryid].insert(function_point[entryid].begin()+funcidpos,0);
+	newfunc.function_point = 0;
+	newfunc.function_type = functype;
+	func[entryid].insert(func[entryid].begin() + funcidpos, newfunc);
 	entry_function_amount[entryid]++;
 }
 
-int ScriptDataStruct::RemoveFunction(int entryid, int funcid) {
-	int res = max((unsigned int)4,func[entryid][funcid].length); // Don't count the extra 4 bytes because of padding
+void ScriptDataStruct::RemoveFunction(int entryid, int funcid) {
 	entry_function_amount[entryid]--;
-	func[entryid].erase(func[entryid].begin()+funcid);
-	function_type[entryid].erase(function_type[entryid].begin()+funcid);
-	function_point[entryid].erase(function_point[entryid].begin()+funcid);
-	return res;
+	func[entryid].erase(func[entryid].begin() + funcid);
 }
 
 void ScriptDataStruct::AddEntry(int entrypos, uint8_t entrytype) {
 	unsigned int i, j, k, l, m;
-	bool isargentry;
 	int varargtype;
 	for (i = 0; i < entry_amount; i++)
 		for (j = 0; j < entry_function_amount[i]; j++)
-			for (k = 0; k < func[i][j].op_amount; k++)
+			for (k = 0; k < func[i][j].op.size(); k++)
 				if (func[i][j].op[k].opcode != 0x06 && func[i][j].op[k].opcode != 0x0B && func[i][j].op[k].opcode != 0x29)
 					for (l = 0; l < func[i][j].op[k].arg_amount; l++) {
-						isargentry = !func[i][j].op[k].arg[l].is_var && HADES_STRING_SCRIPT_OPCODE[func[i][j].op[k].opcode].arg_type[l] == AT_ENTRY;
-						isargentry = isargentry || (func[i][j].op[k].opcode == 0xB3 || func[i][j].op[k].opcode == 0xDA) && l == 2 && !func[i][j].op[k].arg[l].is_var && !func[i][j].op[k].arg[1].is_var && func[i][j].op[k].arg[1].value == 150;
-						if (isargentry && (int)func[i][j].op[k].arg[l].value >= entrypos && func[i][j].op[k].arg[l].value < entry_amount) {
+						if (!func[i][j].op[k].arg[l].is_var && IsScriptArgTypeEntry(func[i][j].op[k], l) && (int)func[i][j].op[k].arg[l].value >= entrypos && func[i][j].op[k].arg[l].value < ENTRY_MAX_VALID_ID) {
 							func[i][j].op[k].arg[l].value++;
 						} else if (func[i][j].op[k].arg[l].is_var) {
 							for (m = 0; m < func[i][j].op[k].arg[l].size; m++) {
 								varargtype = VarOpList[func[i][j].op[k].arg[l].var[m]].type;
 								if (varargtype == 55) {
-									if (func[i][j].op[k].arg[l].var[m + 1] >= entrypos && func[i][j].op[k].arg[l].var[m + 1] < entry_amount)
+									if (func[i][j].op[k].arg[l].var[m + 1] >= entrypos && func[i][j].op[k].arg[l].var[m + 1] < ENTRY_MAX_VALID_ID)
 										func[i][j].op[k].arg[l].var[m + 1]++;
 									m += 2;
 								} else if (varargtype == 3 || varargtype == 5 || (varargtype >= 10 && varargtype < 20)) {
-									if (func[i][j].op[k].arg[l].var[m] == 0x5F && func[i][j].op[k].arg[l].var[m + 1] >= entrypos && func[i][j].op[k].arg[l].var[m + 1] < entry_amount)
+									if (func[i][j].op[k].arg[l].var[m] == 0x5F && func[i][j].op[k].arg[l].var[m + 1] >= entrypos && func[i][j].op[k].arg[l].var[m + 1] < ENTRY_MAX_VALID_ID)
 										func[i][j].op[k].arg[l].var[m + 1]++;
 									m++;
 								} else if (varargtype == 6 || (varargtype >= 20 && varargtype < 30)) {
@@ -567,8 +1183,6 @@ void ScriptDataStruct::AddEntry(int entrypos, uint8_t entrytype) {
 					}
 	entry_amount++;
 	func.insert(func.begin() + entrypos, vector<ScriptFunction>());
-	function_type.insert(function_type.begin() + entrypos, vector<uint16_t>());
-	function_point.insert(function_point.begin() + entrypos, vector<uint16_t>());
 	entry_offset.insert(entry_offset.begin() + entrypos, 0);
 	entry_size.insert(entry_size.begin() + entrypos, 0);
 	entry_local_var.insert(entry_local_var.begin() + entrypos, 0);
@@ -580,25 +1194,21 @@ void ScriptDataStruct::AddEntry(int entrypos, uint8_t entrytype) {
 	local_data[entrypos].amount = 0;
 }
 
-int ScriptDataStruct::RemoveEntry(int entrypos, int* modifiedargamount) {
+int ScriptDataStruct::RemoveEntry(int entrypos) {
 	unsigned int i, j, k, l, m;
-	bool isargentry;
 	int varargtype;
 	int res = 0;
 	for (i = 0; i < entry_amount; i++)
 		if (i != entrypos)
 			for (j = 0; j < entry_function_amount[i]; j++)
-				for (k = 0; k < func[i][j].op_amount; k++)
+				for (k = 0; k < func[i][j].op.size(); k++)
 					if (func[i][j].op[k].opcode != 0x06 && func[i][j].op[k].opcode != 0x0B && func[i][j].op[k].opcode != 0x29)
 						for (l = 0; l < func[i][j].op[k].arg_amount; l++) {
-							isargentry = !func[i][j].op[k].arg[l].is_var && HADES_STRING_SCRIPT_OPCODE[func[i][j].op[k].opcode].arg_type[l] == AT_ENTRY;
-							isargentry = isargentry || (func[i][j].op[k].opcode == 0xB3 || func[i][j].op[k].opcode == 0xDA) && l == 2 && !func[i][j].op[k].arg[l].is_var && !func[i][j].op[k].arg[1].is_var && func[i][j].op[k].arg[1].value == 150;
-							if (isargentry) {
+							if (!func[i][j].op[k].arg[l].is_var && IsScriptArgTypeEntry(func[i][j].op[k], l)) {
 								if (func[i][j].op[k].arg[l].value == entrypos) {
 									func[i][j].op[k].arg[l].value = 0;
-									if (modifiedargamount)
-										(*modifiedargamount)++;
-								} else if ((int)func[i][j].op[k].arg[l].value > entrypos && func[i][j].op[k].arg[l].value < entry_amount) {
+									res++;
+								} else if ((int)func[i][j].op[k].arg[l].value > entrypos && func[i][j].op[k].arg[l].value < ENTRY_MAX_VALID_ID) {
 									func[i][j].op[k].arg[l].value--;
 								}
 							} else if (func[i][j].op[k].arg[l].is_var) {
@@ -607,9 +1217,8 @@ int ScriptDataStruct::RemoveEntry(int entrypos, int* modifiedargamount) {
 									if (varargtype == 55) {
 										if (func[i][j].op[k].arg[l].var[m + 1] == entrypos) {
 											func[i][j].op[k].arg[l].var[m + 1] = 0;
-											if (modifiedargamount)
-												(*modifiedargamount)++;
-										} else if (func[i][j].op[k].arg[l].var[m + 1] > entrypos && func[i][j].op[k].arg[l].var[m + 1] < entry_amount) {
+											res++;
+										} else if (func[i][j].op[k].arg[l].var[m + 1] > entrypos && func[i][j].op[k].arg[l].var[m + 1] < ENTRY_MAX_VALID_ID) {
 											func[i][j].op[k].arg[l].var[m + 1]--;
 										}
 										m += 2;
@@ -617,9 +1226,8 @@ int ScriptDataStruct::RemoveEntry(int entrypos, int* modifiedargamount) {
 										if (func[i][j].op[k].arg[l].var[m] == 0x5F) {
 											if (func[i][j].op[k].arg[l].var[m + 1] == entrypos) {
 												func[i][j].op[k].arg[l].var[m + 1] = 0;
-												if (modifiedargamount)
-													(*modifiedargamount)++;
-											} else if (func[i][j].op[k].arg[l].var[m + 1] > entrypos && func[i][j].op[k].arg[l].var[m + 1] < entry_amount) {
+												res++;
+											} else if (func[i][j].op[k].arg[l].var[m + 1] > entrypos && func[i][j].op[k].arg[l].var[m + 1] < ENTRY_MAX_VALID_ID) {
 												func[i][j].op[k].arg[l].var[m + 1]--;
 											}
 										}
@@ -634,13 +1242,8 @@ int ScriptDataStruct::RemoveEntry(int entrypos, int* modifiedargamount) {
 								}
 							}
 						}
-	for (i = 0; i < entry_function_amount[entrypos]; i++)
-		res += max((unsigned int)4, func[entrypos][i].length);
-	res += 0x10;
 	entry_amount--;
 	func.erase(func.begin() + entrypos);
-	function_type.erase(function_type.begin() + entrypos);
-	function_point.erase(function_point.begin() + entrypos);
 	entry_offset.erase(entry_offset.begin() + entrypos);
 	entry_size.erase(entry_size.begin() + entrypos);
 	entry_local_var.erase(entry_local_var.begin() + entrypos);
@@ -652,14 +1255,13 @@ int ScriptDataStruct::RemoveEntry(int entrypos, int* modifiedargamount) {
 }
 
 int ScriptDataStruct::ShiftArgument(int argtype, vector<pair<int, int>> shift) {
-	SteamLanguage lang;
 	unsigned int i, j;
 	int count = 0;
 	auto shifter = [](ScriptFunction& f, int argtype, vector<pair<int, int>>& sh) {
 		unsigned int k, m, n;
 		bool change;
 		int c = 0;
-		for (k = 0; k < f.op_amount; k++) {
+		for (k = 0; k < f.op.size(); k++) {
 			ScriptOperation& op = f.op[k];
 			SortedChoiceItemScriptOpcode& scriptop = HADES_STRING_SCRIPT_OPCODE[op.opcode];
 			for (m = 0; m < op.arg_amount; m++) {
@@ -682,386 +1284,142 @@ int ScriptDataStruct::ShiftArgument(int argtype, vector<pair<int, int>> shift) {
 	for (i = 0; i < entry_amount; i++)
 		for (j = 0; j < entry_function_amount[i]; j++)
 			count += shifter(func[i][j], argtype, shift);
-	if (multi_lang_script != NULL)
-		for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
-			if (multi_lang_script->is_loaded[lang])
-				for (i = 0; i < multi_lang_script->func[lang].size(); i++)
-					for (j = 0; j < multi_lang_script->func[lang][i].size(); j++)
-						if (shifter(multi_lang_script->func[lang][i][j], argtype, shift) > 0)
-							multi_lang_script->is_modified[lang] = true;
 	return count;
 }
 
-void ScriptDataStruct::ChangeSteamLanguage(SteamLanguage newlang) {
-	if (multi_lang_script==NULL)
-		return;
-	unsigned int i;
-	for (i=0;i<SCRIPT_NAME_MAX_LENGTH;i++)
-		multi_lang_script->header_name[current_language][i] = header_name[i];
-	for (i=0;i<SCRIPT_NAME_MAX_LENGTH;i++)
-		header_name[i] = multi_lang_script->header_name[newlang][i];
-	SteamLanguage oldlangbase = multi_lang_script->base_script_lang[current_language];
-	SteamLanguage newlangbase = multi_lang_script->base_script_lang[newlang];
-	multi_lang_script->func[oldlangbase] = func;
-	multi_lang_script->magic_number[oldlangbase] = magic_number;
-	multi_lang_script->header_unknown1[oldlangbase] = header_unknown1;
-	multi_lang_script->entry_amount[oldlangbase] = entry_amount;
-	for (i=0;i<20;i++) {
-		multi_lang_script->header_unknown2[oldlangbase][i] = header_unknown2[i];
-		multi_lang_script->header_unknown3[oldlangbase][i] = header_unknown3[i];
-	}
-	multi_lang_script->entry_offset[oldlangbase] = entry_offset;
-	multi_lang_script->entry_size[oldlangbase] = entry_size;
-	multi_lang_script->entry_local_var[oldlangbase] = entry_local_var;
-	multi_lang_script->entry_flag[oldlangbase] = entry_flag;
-	multi_lang_script->entry_type[oldlangbase] = entry_type;
-	multi_lang_script->entry_function_amount[oldlangbase] = entry_function_amount;
-	multi_lang_script->function_type[oldlangbase] = function_type;
-	multi_lang_script->function_point[oldlangbase] = function_point;
-	multi_lang_script->global_data[oldlangbase] = global_data;
-	multi_lang_script->local_data[oldlangbase] = local_data;
-	multi_lang_script->is_loaded[oldlangbase] = loaded;
-	multi_lang_script->is_modified[oldlangbase] = modified;
-	func = multi_lang_script->func[newlangbase];
-	magic_number = multi_lang_script->magic_number[newlangbase];
-	header_unknown1 = multi_lang_script->header_unknown1[newlangbase];
-	entry_amount = multi_lang_script->entry_amount[newlangbase];
-	for (i=0;i<20;i++) {
-		header_unknown2[i] = multi_lang_script->header_unknown2[newlangbase][i];
-		header_unknown3[i] = multi_lang_script->header_unknown3[newlangbase][i];
-	}
-	entry_offset = multi_lang_script->entry_offset[newlangbase];
-	entry_size = multi_lang_script->entry_size[newlangbase];
-	entry_local_var = multi_lang_script->entry_local_var[newlangbase];
-	entry_flag = multi_lang_script->entry_flag[newlangbase];
-	entry_type = multi_lang_script->entry_type[newlangbase];
-	entry_function_amount = multi_lang_script->entry_function_amount[newlangbase];
-	function_type = multi_lang_script->function_type[newlangbase];
-	function_point = multi_lang_script->function_point[newlangbase];
-	global_data = multi_lang_script->global_data[newlangbase];
-	local_data = multi_lang_script->local_data[newlangbase];
-	loaded = multi_lang_script->is_loaded[newlangbase];
-	modified = multi_lang_script->is_modified[newlangbase];
-	current_language = newlang;
-}
-
-void ScriptDataStruct::UpdateSteamMultiLanguage() {
-	if (multi_lang_script==NULL)
-		return;
-	unsigned int i;
-	for (i=0;i<SCRIPT_NAME_MAX_LENGTH;i++)
-		multi_lang_script->header_name[current_language][i] = header_name[i];
-	SteamLanguage curlangbase = multi_lang_script->base_script_lang[current_language];
-	multi_lang_script->func[curlangbase] = func;
-	multi_lang_script->magic_number[curlangbase] = magic_number;
-	multi_lang_script->header_unknown1[curlangbase] = header_unknown1;
-	multi_lang_script->entry_amount[curlangbase] = entry_amount;
-	for (i=0;i<20;i++) {
-		multi_lang_script->header_unknown2[curlangbase][i] = header_unknown2[i];
-		multi_lang_script->header_unknown3[curlangbase][i] = header_unknown3[i];
-	}
-	multi_lang_script->entry_offset[curlangbase] = entry_offset;
-	multi_lang_script->entry_size[curlangbase] = entry_size;
-	multi_lang_script->entry_local_var[curlangbase] = entry_local_var;
-	multi_lang_script->entry_flag[curlangbase] = entry_flag;
-	multi_lang_script->entry_type[curlangbase] = entry_type;
-	multi_lang_script->entry_function_amount[curlangbase] = entry_function_amount;
-	multi_lang_script->function_type[curlangbase] = function_type;
-	multi_lang_script->function_point[curlangbase] = function_point;
-	multi_lang_script->global_data[curlangbase] = global_data;
-	multi_lang_script->local_data[curlangbase] = local_data;
-	multi_lang_script->is_loaded[curlangbase] = loaded;
-	multi_lang_script->is_modified[curlangbase] = modified;
-}
-
-bool ScriptDataStruct::CheckLanguageSimilarity(SteamLanguage lang, SteamLanguage baselang, vector<uint16_t>* langtextid, vector<uint16_t>* baselangtextid) {
-	if (multi_lang_script == NULL || !multi_lang_script->is_loaded[lang] || !multi_lang_script->is_loaded[baselang])
-		return false;
-	baselang = multi_lang_script->base_script_lang[baselang];
-	if (multi_lang_script->base_script_lang[lang] == baselang) {
-		if (langtextid != NULL)
-			*langtextid = multi_lang_script->lang_script_text_id[lang];
-		if (baselangtextid != NULL)
-			*baselangtextid = multi_lang_script->base_script_text_id[lang];
-		return true;
-	}
-	if (multi_lang_script->base_script_lang[lang] != lang)
-		return false;
-	if (multi_lang_script->entry_amount[lang] != multi_lang_script->entry_amount[baselang])
-		return false;
-	unsigned int ei, fi, oi, ai, vai, tli;
-	vector<uint16_t> linktextid;
-	vector<uint16_t> linktextbaseid;
-	for (ei = 0; ei < multi_lang_script->entry_amount[lang]; ei++) {
-		if (multi_lang_script->entry_size[lang][ei] != multi_lang_script->entry_size[baselang][ei])
-			return false;
-		if (multi_lang_script->entry_function_amount[lang][ei] != multi_lang_script->entry_function_amount[baselang][ei])
-			return false;
-		for (fi = 0; fi < multi_lang_script->entry_function_amount[lang][ei]; fi++) {
-			ScriptFunction& f = multi_lang_script->func[lang][ei][fi];
-			ScriptFunction& bf = multi_lang_script->func[baselang][ei][fi];
-			if (f.op_amount != bf.op_amount)
-				return false;
-			for (oi = 0; oi < f.op_amount; oi++) {
-				ScriptOperation& op = f.op[oi];
-				ScriptOperation& bop = bf.op[oi];
-				if (op.opcode != bop.opcode || op.arg_amount != bop.arg_amount)
-					return false;
-				for (ai = 0; ai < op.arg_amount; ai++) {
-					ScriptArgument& a = op.arg[ai];
-					ScriptArgument& ba = bop.arg[ai];
-					if (a.is_var != ba.is_var)
-						return false;
-					if (a.is_var) {
-						if (a.size != ba.size)
-							return false;
-						for (vai = 0; vai < a.size; vai++)
-							if (a.var[vai] != ba.var[vai])
-								return false;
-					} else if ((int)ai >= HADES_STRING_SCRIPT_OPCODE[op.opcode].arg_amount || HADES_STRING_SCRIPT_OPCODE[op.opcode].arg_type[ai] != AT_TEXT) {
-						if (a.value != ba.value)
-							return false;
-					} else {
-						for (tli = 0; tli < linktextid.size(); tli++)
-							if (linktextid[tli] == a.value) {
-								if (linktextbaseid[tli] != ba.value)
-									return false;
-								break;
-							}
-						if (tli >= linktextid.size()) {
-							linktextid.push_back(a.value);
-							linktextbaseid.push_back(ba.value);
-						}
-					}
-				}
-			}
-		}
-	}
-	for (tli = 0; tli < linktextid.size();)
-		if (linktextbaseid[tli] == linktextid[tli]) {
-			linktextbaseid.erase(linktextbaseid.begin() + tli);
-			linktextid.erase(linktextid.begin() + tli);
-		} else {
-			tli++;
-		}
-	if (langtextid != NULL)
-		*langtextid = linktextid;
-	if (baselangtextid != NULL)
-		*baselangtextid = linktextbaseid;
-	return true;
-}
-
-void ScriptDataStruct::LinkLanguageScripts(SteamLanguage lang, SteamLanguage baselang, vector<uint16_t> langtextid, vector<uint16_t> baselangtextid, bool markmodified) {
-	if (multi_lang_script == NULL || !multi_lang_script->is_loaded[lang] || !multi_lang_script->is_loaded[baselang])
-		return;
-	unsigned int i, j;
-	SteamLanguage oldbaselang = multi_lang_script->base_script_lang[lang];
-	if (lang == baselang) {
-		if (oldbaselang == baselang)
-			return;
-		multi_lang_script->base_script_lang[lang] = lang;
-		multi_lang_script->func[lang] = multi_lang_script->func[oldbaselang];
-		multi_lang_script->function_type[lang] = multi_lang_script->function_type[oldbaselang];
-		multi_lang_script->function_point[lang] = multi_lang_script->function_point[oldbaselang];
-		multi_lang_script->entry_offset[lang] = multi_lang_script->entry_offset[oldbaselang];
-		multi_lang_script->entry_size[lang] = multi_lang_script->entry_size[oldbaselang];
-		multi_lang_script->entry_flag[lang] = multi_lang_script->entry_flag[oldbaselang];
-		multi_lang_script->entry_type[lang] = multi_lang_script->entry_type[oldbaselang];
-		multi_lang_script->entry_function_amount[lang] = multi_lang_script->entry_function_amount[oldbaselang];
-		multi_lang_script->local_data[lang] = multi_lang_script->local_data[oldbaselang];
-		multi_lang_script->lang_script_text_id[lang].clear();
-		multi_lang_script->base_script_text_id[lang].clear();
-	} else {
-		if (multi_lang_script->base_script_lang[lang] == lang) {
-			multi_lang_script->func[lang].clear();
-			multi_lang_script->function_type[lang].clear();
-			multi_lang_script->function_point[lang].clear();
-			multi_lang_script->entry_offset[lang].clear();
-			multi_lang_script->entry_size[lang].clear();
-			multi_lang_script->entry_flag[lang].clear();
-			multi_lang_script->entry_type[lang].clear();
-			multi_lang_script->entry_function_amount[lang].clear();
-			multi_lang_script->local_data[lang].clear();
-		}
-		multi_lang_script->base_script_lang[lang] = multi_lang_script->base_script_lang[baselang];
-		if (baselang == multi_lang_script->base_script_lang[baselang]) {
-			multi_lang_script->lang_script_text_id[lang] = langtextid;
-			multi_lang_script->base_script_text_id[lang] = baselangtextid;
-		} else {
-			multi_lang_script->lang_script_text_id[lang].clear();
-			multi_lang_script->base_script_text_id[lang].clear();
-			for (i = 0; i < langtextid.size(); i++)
-				for (j = 0; j < multi_lang_script->lang_script_text_id[baselang].size(); j++)
-					if (baselangtextid[j] == multi_lang_script->lang_script_text_id[baselang][j]) {
-						multi_lang_script->lang_script_text_id[lang].push_back(langtextid[i]);
-						multi_lang_script->base_script_text_id[lang].push_back(multi_lang_script->base_script_text_id[baselang][j]);
-						break;
-					}
-		}
-	}
-	if (markmodified)
-		multi_lang_script->is_modified[lang] = true;
-	if (oldbaselang == baselang)
-		return;
-	if (current_language == lang) {
-		SteamLanguage newlangbase = multi_lang_script->base_script_lang[lang];
-		func = multi_lang_script->func[newlangbase];
-		magic_number = multi_lang_script->magic_number[newlangbase];
-		header_unknown1 = multi_lang_script->header_unknown1[newlangbase];
-		entry_amount = multi_lang_script->entry_amount[newlangbase];
-		for (i = 0; i < 20; i++) {
-			header_unknown2[i] = multi_lang_script->header_unknown2[newlangbase][i];
-			header_unknown3[i] = multi_lang_script->header_unknown3[newlangbase][i];
-		}
-		entry_offset = multi_lang_script->entry_offset[newlangbase];
-		entry_size = multi_lang_script->entry_size[newlangbase];
-		entry_local_var = multi_lang_script->entry_local_var[newlangbase];
-		entry_flag = multi_lang_script->entry_flag[newlangbase];
-		entry_type = multi_lang_script->entry_type[newlangbase];
-		entry_function_amount = multi_lang_script->entry_function_amount[newlangbase];
-		function_type = multi_lang_script->function_type[newlangbase];
-		function_point = multi_lang_script->function_point[newlangbase];
-		global_data = multi_lang_script->global_data[newlangbase];
-		local_data = multi_lang_script->local_data[newlangbase];
-		loaded = multi_lang_script->is_loaded[newlangbase];
-		modified = multi_lang_script->is_modified[newlangbase];
-	}
-}
-
-void ScriptDataStruct::LinkSimilarLanguageScripts() {
-	if (multi_lang_script == NULL)
-		return;
-	SteamLanguage lang, baselang;
-	vector<uint16_t> langtextid;
-	vector<uint16_t> baselangtextid;
-	for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
-		if (!multi_lang_script->is_loaded[lang])
-			continue;
-		for (baselang = 0; baselang < lang; baselang++) {
-			if (!multi_lang_script->is_loaded[baselang] || multi_lang_script->base_script_lang[baselang] != baselang)
-				continue;
-			if (CheckLanguageSimilarity(lang, baselang, &langtextid, &baselangtextid)) {
-				LinkLanguageScripts(lang, baselang, langtextid, baselangtextid, false);
-				break;
-			}
-		}
-	}
-}
-
-void ScriptDataStruct::ApplyDialogLink(vector<uint16_t> langtextid, vector<uint16_t> baselangtextid) {
-	unsigned int i, j, k, l, m;
-	for (i = 0; i < entry_amount; i++)
-		for (j = 0; j < entry_function_amount[i]; j++)
-			for (k = 0; k < func[i][j].op_amount; k++)
-				for (l = 0; l < func[i][j].op[k].arg_amount; l++) {
-					ScriptArgument& arg = func[i][j].op[k].arg[l];
-					if (arg.typesize == 2 && !arg.is_signed && !arg.is_var && (int)l < HADES_STRING_SCRIPT_OPCODE[arg.parent->opcode].arg_amount && HADES_STRING_SCRIPT_OPCODE[arg.parent->opcode].arg_type[l] == AT_TEXT)
-						for (m = 0; m < baselangtextid.size(); m++)
-							if (arg.value == baselangtextid[m]) {
-								arg.value = langtextid[m];
-								break;
-							}
-				}
-}
-
-#define MACRO_SCRIPT_IOFUNCTION(IO,SEEK,READ,PPF,FUNC) \
-	unsigned int i,j; \
+// TODO: apply entry shift to the incoming function.Read when "entryprevamount > entry_amount"
+#define MACRO_SCRIPT_IOFUNCTION_PART1(IO, SEEK, READ, PPF) \
+	unsigned int i, j, k, entryi, funcj, entryprevamount; \
+	vector<uint16_t> funcpoint; \
+	vector<int> funcreorder; \
+	uint16_t functype; \
 	uint32_t entry_pos, local_entry_pos, function_pos; \
 	uint32_t zero32 = 0; \
 	uint16_t zero16 = 0; \
 	uint8_t zero8 = 0; \
 	if (PPF) PPFInitScanStep(f); \
-	IO ## Short(f,magic_number); \
-	IO ## Char(f,header_unknown1); \
-	IO ## Char(f,entry_amount); \
-	if (READ) { \
-		entry_offset.resize(entry_amount); \
-		entry_size.resize(entry_amount); \
-		entry_local_var.resize(entry_amount); \
-		entry_flag.resize(entry_amount); \
-		entry_type.resize(entry_amount); \
-		entry_function_amount.resize(entry_amount); \
-		function_type.resize(entry_amount); \
-		function_point.resize(entry_amount); \
-		func.resize(entry_amount); \
+	IO ## Short(f, magic_number); \
+	IO ## Char(f, header_unknown1); \
+	IO ## Char(f, entry_amount); \
+	entryprevamount = entry_offset.size(); \
+	EntryIdShift = (READ && entryprevamount >= SCRIPT_FIXED_ENTRY_AMOUNT && entryprevamount > entry_amount) ? entryprevamount - entry_amount : 0; \
+	EntryIdShift_Base = entry_amount - SCRIPT_FIXED_ENTRY_AMOUNT; \
+	if (READ && entry_amount > entryprevamount) { \
+		if (entryprevamount >= SCRIPT_FIXED_ENTRY_AMOUNT) { \
+			uint8_t extra_count = entry_amount - entryprevamount; \
+			entry_amount = entryprevamount; \
+			for (i = 0; i < extra_count; i++) \
+				AddEntry(entry_offset.size() - SCRIPT_FIXED_ENTRY_AMOUNT, 0); \
+		} else { \
+			entry_offset.resize(entry_amount); \
+			entry_size.resize(entry_amount); \
+			entry_local_var.resize(entry_amount); \
+			entry_flag.resize(entry_amount); \
+			entry_type.resize(entry_amount); \
+			entry_function_amount.resize(entry_amount); \
+			func.resize(entry_amount); \
+		} \
 	} \
-	for (i=0;i<20;i++) { \
-		IO ## Char(f,header_unknown2[i]); \
-		IO ## Char(f,header_unknown3[i]); \
+	for (i = 0; i < 20; i++) { \
+		IO ## Char(f, header_unknown2[i]); \
+		IO ## Char(f, header_unknown3[i]); \
 	} \
-	for (i=0;i<SCRIPT_NAME_MAX_LENGTH;i++) \
-		IO ## Char(f,header_name[i]); \
+	for (i = 0; i < SCRIPT_NAME_MAX_LENGTH; i++) \
+		IO ## Char(f, header_name[lang][i]); \
 	entry_pos = f.tellg(); \
-	for (i=0;i<entry_amount;i++) { \
-		IO ## Short(f,entry_offset[i]); \
-		IO ## Short(f,entry_size[i]); \
-		IO ## Char(f,entry_local_var[i]); \
-		IO ## Char(f,entry_flag[i]); \
-		IO ## Short(f,zero16); \
+	for (i = 0; i < entry_amount; i++) { \
+		entryi = i + SCRIPT_FIXED_ENTRY_AMOUNT < entry_amount ? i : i + entry_offset.size() - entry_amount; \
+		IO ## Short(f, entry_offset[entryi]); \
+		IO ## Short(f, entry_size[entryi]); \
+		IO ## Char(f, entry_local_var[entryi]); \
+		IO ## Char(f, entry_flag[entryi]); \
+		IO ## Short(f, zero16); \
 	} \
 	if (PPF) PPFEndScanStep(); \
-	for (i=0;i<entry_amount;i++) { \
-		if (entry_size[i]>0) { \
-			SEEK(f,entry_pos,entry_offset[i]); \
+	for (i = 0; i < entry_amount; i++) { \
+		entryi = i + SCRIPT_FIXED_ENTRY_AMOUNT < entry_amount ? i : i + entry_offset.size() - entry_amount; \
+		if (entry_size[entryi] > 0) { \
+			CurrentScriptReadEntry = entryi; \
+			SEEK(f, entry_pos, entry_offset[entryi]); \
 			local_entry_pos = f.tellg(); \
 			if (PPF) PPFInitScanStep(f); \
-			IO ## Char(f,entry_type[i]); \
-			IO ## Char(f,entry_function_amount[i]); \
-			if (READ) { \
-				function_type[i].resize(entry_function_amount[i]); \
-				function_point[i].resize(entry_function_amount[i]); \
-				func[i].resize(entry_function_amount[i]); \
-			} \
+			IO ## Char(f, entry_type[entryi]); \
+			IO ## Char(f, entry_function_amount[entryi]); \
+			funcreorder.clear(); \
+			funcpoint.resize(entry_function_amount[entryi]); \
 			function_pos = f.tellg(); \
-			for (j=0;j<entry_function_amount[i];j++) { \
-				IO ## Short(f,function_type[i][j]); \
-				IO ## Short(f,function_point[i][j]); \
+			for (j = 0; j < entry_function_amount[entryi]; j++) { \
+				if (READ) { \
+					IO ## Short(f, functype); \
+					IO ## Short(f, funcpoint[j]); \
+					for (funcj = 0; funcj < func[entryi].size(); funcj++) \
+						if (func[entryi][funcj].function_type == functype) \
+							break; \
+					if (funcj == func[entryi].size()) \
+						func[entryi].resize(funcj + 1); \
+					else \
+						for (k = 0; k < funcreorder.size(); k++) \
+							if (funcreorder[k] == funcj) \
+								funcreorder[k] = -1; \
+					funcreorder.push_back(funcj); \
+					func[entryi][funcj].function_type = functype; \
+					func[entryi][funcj].function_point = funcpoint[j]; \
+					func[entryi][funcj].parent = this; \
+				} else { \
+					IO ## Short(f, func[entryi][j].function_type); \
+					IO ## Short(f, func[entryi][j].function_point); \
+					funcpoint[j] = func[entryi][j].function_point; \
+				} \
 			} \
 			if (PPF) PPFEndScanStep(); \
-			if (READ) { \
-				for (j=0;j+1<entry_function_amount[i];j++) \
-					func[i][j].length = function_point[i][j+1]-function_point[i][j]; \
-				func[i][j].length = entry_size[i]-function_point[i][j]-2; \
+			for (j = 0; j < entry_function_amount[entryi]; j++) { \
+				if (READ && funcreorder[j] < 0) \
+					continue; \
+				funcj = READ ? funcreorder[j] : j; \
+				SEEK(f, function_pos, funcpoint[j]); \
+				CurrentScriptReadFunction = func[entryi][j].function_type; \
+				uint32_t length; \
+				if (j + 1 < entry_function_amount[entryi]) \
+					length = funcpoint[j + 1] - funcpoint[j]; \
+				else \
+					length = entry_size[entryi] - funcpoint[j] - 2;
+
+#define MACRO_SCRIPT_IOFUNCTION_PART2(IO, SEEK, READ, PPF) \
 			} \
-			for (j=0;j<entry_function_amount[i];j++) { \
-				if (READ) func[i][j].parent = this; \
-				SEEK(f,function_pos,function_point[i][j]); \
-				func[i][j].FUNC(f); \
-			} \
-			while (f.tellg()<local_entry_pos+entry_size[i]) \
-				IO ## Char(f,zero8); \
-		} else if (READ) { \
-			entry_type[i] = 0xFF; \
-			entry_function_amount[i] = 0; \
-			function_type[i].clear(); \
-			function_point[i].clear(); \
-			func[i].clear(); \
+			if (READ) entry_function_amount[entryi] = func[entryi].size(); \
+			while (f.tellg() < local_entry_pos + entry_size[entryi]) \
+				IO ## Char(f, zero8); \
+		} else if (READ && entry_function_amount[entryi] == 0) { \
+			entry_type[entryi] = 0xFF; \
 		} \
-	}
+	} \
+	if (READ) entry_amount = entry_offset.size(); 
 
-
+int dbgscriptcounter = 0;
 void ScriptDataStruct::Read(fstream& f, SteamLanguage lang) {
-	if (loaded && lang == STEAM_LANGUAGE_NONE)
-		return;
 	LoadCustomScriptUtility();
-	if (lang != STEAM_LANGUAGE_NONE && multi_lang_script == NULL) {
-		multi_lang_script = new MultiLanguageScriptDataStruct();
-		for (SteamLanguage lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++) {
-			multi_lang_script->is_loaded[lg] = false;
-			multi_lang_script->is_modified[lg] = false;
-			multi_lang_script->base_script_lang[lg] = lg;
-		}
+	CurrentScriptReadField = object_id;
+	//if (dbgscriptcounter++ > 800 * STEAM_LANGUAGE_AMOUNT) dbgscript = true;
+	if (dbgscript) {
+		GetDebugLog() << "FIELD " << (int)object_id << endl;
 	}
 	if (GetGameType() == GAME_TYPE_PSX && parent_cluster->parent_cluster && parent_cluster->parent_cluster->clus_type == CLUSTER_TYPE_WORLD_MAP && object_id >= 9100) {
 		ChunkChild::Read(f);
 	} else {
 		if (GetGameType() == GAME_TYPE_PSX) {
-			MACRO_SCRIPT_IOFUNCTION(FFIXRead, FFIXSeek, true, false, Read)
-			name.ReadFromChar(header_name);
+			MACRO_SCRIPT_IOFUNCTION_PART1(FFIXRead, FFIXSeek, true, false)
+			func[entryi][funcj].Read(f, length, lang);
+			MACRO_SCRIPT_IOFUNCTION_PART2(FFIXRead, FFIXSeek, true, false)
+			name.ReadFromChar(header_name[lang]);
 		} else {
-			MACRO_SCRIPT_IOFUNCTION(SteamRead, SteamSeek, true, false, Read)
+			MACRO_SCRIPT_IOFUNCTION_PART1(SteamRead, SteamSeek, true, false)
+			func[entryi][funcj].Read(f, length, lang);
+			MACRO_SCRIPT_IOFUNCTION_PART2(SteamRead, SteamSeek, true, false)
+			FF9String dummystr;
+			dummystr.ReadFromChar(header_name[lang]);
 			if (!name.created)
 				name.CreateEmpty();
+			name.SetValue(dummystr.str, lang);
 		}
 		local_data.resize(entry_amount);
 		for (unsigned int i = 0; i < entry_amount; i++) {
@@ -1070,227 +1428,217 @@ void ScriptDataStruct::Read(fstream& f, SteamLanguage lang) {
 		}
 		global_data.allocate_amount = 0;
 		global_data.amount = 0;
-		current_language = lang;
 		loaded = true;
-		if (lang != STEAM_LANGUAGE_NONE)
-			ChangeSteamLanguage(lang); // Setup the values and pointers of multi_lang_script's language
 	}
 	loaded = true;
 }
 
 void ScriptDataStruct::Write(fstream& f) {
-	if (parent_cluster->parent_cluster && parent_cluster->parent_cluster->clus_type==CLUSTER_TYPE_WORLD_MAP && object_id>=9100)
+	if (parent_cluster->parent_cluster && parent_cluster->parent_cluster->clus_type == CLUSTER_TYPE_WORLD_MAP && object_id >= 9100) {
 		ChunkChild::Write(f);
-	else {
-		MACRO_SCRIPT_IOFUNCTION(FFIXWrite,FFIXSeek,false,false,Write)
+	} else {
+		SteamLanguage lang = GetSteamLanguage();
+		MACRO_SCRIPT_IOFUNCTION_PART1(FFIXWrite, FFIXSeek, false, false)
+		func[entryi][funcj].Write(f, lang);
+		MACRO_SCRIPT_IOFUNCTION_PART2(FFIXWrite, FFIXSeek, false, false)
 	}
 	modified = false;
 }
 
 void ScriptDataStruct::WritePPF(fstream& f) {
-	if (parent_cluster->parent_cluster && parent_cluster->parent_cluster->clus_type==CLUSTER_TYPE_WORLD_MAP && object_id>=9100)
+	if (parent_cluster->parent_cluster && parent_cluster->parent_cluster->clus_type == CLUSTER_TYPE_WORLD_MAP && object_id >= 9100) {
 		ChunkChild::WritePPF(f);
-	else {
-		MACRO_SCRIPT_IOFUNCTION(PPFStepAdd,FFIXSeek,false,true,WritePPF)
+	} else {
+		SteamLanguage lang = GetSteamLanguage();
+		MACRO_SCRIPT_IOFUNCTION_PART1(PPFStepAdd, FFIXSeek, false, true)
+		func[entryi][funcj].WritePPF(f, lang);
+		MACRO_SCRIPT_IOFUNCTION_PART2(PPFStepAdd, FFIXSeek, false, true)
 	}
 }
 
 void ScriptDataStruct::ReadHWS(fstream& f, bool usetext, SteamLanguage lang) {
-	SteamLanguage oldlang = current_language;
-	if (lang==STEAM_LANGUAGE_NONE)
-		LinkLanguageScripts(oldlang,oldlang);
+	// TODO: all langs
+	MACRO_SCRIPT_IOFUNCTION_PART1(HWSRead, HWSSeek, true, false)
+	if (lang == STEAM_LANGUAGE_AMOUNT)
+		func[entryi][funcj].ReadHWS(f, length, lang);
 	else
-		LinkLanguageScripts(lang,lang);
-	if (lang!=STEAM_LANGUAGE_NONE && oldlang!=STEAM_LANGUAGE_NONE)
-		ChangeSteamLanguage(lang);
-	uint8_t oldentryamount = entry_amount;
-	MACRO_SCRIPT_IOFUNCTION(HWSRead,HWSSeek,true,false,ReadHWS)
-	if (usetext)
-		name.ReadFromChar(header_name);
-	if (oldentryamount!=entry_amount) {
-		unsigned int i;
-		local_data.resize(entry_amount);
-		for (i=0;i<entry_amount;i++)
-			local_data[i].allocate_amount = entry_local_var[i];
-		for (i=oldentryamount;i<entry_amount;i++)
-			local_data[i].amount = 0;
-	}
+		func[entryi][funcj].ReadHWS(f, length, lang);
+	MACRO_SCRIPT_IOFUNCTION_PART2(HWSRead, HWSSeek, true, false)
+	//if (usetext)
+	//	name.ReadFromChar(header_name);
 	MarkDataModified();
-	if (lang!=STEAM_LANGUAGE_NONE && oldlang!=STEAM_LANGUAGE_NONE)
-		ChangeSteamLanguage(oldlang);
 }
 
-void ScriptDataStruct::WriteHWS(fstream& f, SteamLanguage lang) {
-	SteamLanguage oldlang = current_language;
-	if (lang!=STEAM_LANGUAGE_NONE && oldlang!=STEAM_LANGUAGE_NONE)
-		ChangeSteamLanguage(lang);
-	MACRO_SCRIPT_IOFUNCTION(HWSWrite,HWSSeek,false,false,WriteHWS)
-	if (lang!=STEAM_LANGUAGE_NONE && oldlang!=STEAM_LANGUAGE_NONE)
-		ChangeSteamLanguage(oldlang);
+void ScriptDataStruct::WriteHWS(fstream& f) {
+	SteamLanguage lang = GetSteamLanguage();
+	// TODO: all langs
+	MACRO_SCRIPT_IOFUNCTION_PART1(HWSWrite, HWSSeek, false, false)
+	func[entryi][funcj].WriteHWS(f);
+	MACRO_SCRIPT_IOFUNCTION_PART2(HWSWrite, HWSSeek, false, false)
 }
 
-void ScriptDataStruct::ReadLocalHWS(fstream& f, SteamLanguage lang) {
-	SteamLanguage oldlang = current_language;
-	if (lang!=STEAM_LANGUAGE_NONE && oldlang!=STEAM_LANGUAGE_NONE)
-		ChangeSteamLanguage(lang);
-	unsigned int i,j;
+void ScriptDataStruct::WriteSteam(fstream& f, SteamLanguage lang) {
+	UpdateOffset(lang);
+	MACRO_SCRIPT_IOFUNCTION_PART1(HWSWrite, HWSSeek, false, false)
+	vector<int32_t>& langindices = func[entryi][funcj].indices[lang];
+	for (k = 0; k < langindices.size(); k++)
+		if (langindices[k] >= 0)
+			func[entryi][funcj].op[langindices[k]].WriteHWS(f);
+	MACRO_SCRIPT_IOFUNCTION_PART2(HWSWrite, HWSSeek, false, false)
+}
+
+void ScriptDataStruct::ReadLocalHWS(fstream& f) {
 	uint32_t localpos, entrypos, vardatapos, localsize;
 	uint16_t entryheadersize, vardatasize, tmp16;
 	uint8_t entryam, vardatatype, localam;
+	unsigned int i, j;
 	localpos = f.tellg();
-	HWSReadLong(f,localsize);
-	HWSReadChar(f,entryam);
-	for (i=0;i<entryam;i++) {
+	HWSReadLong(f, localsize);
+	HWSReadChar(f, entryam);
+	for (i = 0; i < entryam; i++) {
 		entrypos = f.tellg();
-		HWSReadShort(f,entryheadersize);
-		if (i<entry_amount) {
-			HWSReadChar(f,local_data[i].allocate_amount);
-			HWSReadChar(f,(uint8_t&)local_data[i].amount);
+		HWSReadShort(f, entryheadersize);
+		if (i < entry_amount) {
+			HWSReadChar(f, local_data[i].allocate_amount);
+			HWSReadChar(f, (uint8_t&)local_data[i].amount);
 			entry_local_var[i] = local_data[i].allocate_amount;
 		} else {
-			HWSReadChar(f,localam);
-			HWSReadChar(f,localam);
+			HWSReadChar(f, localam);
+			HWSReadChar(f, localam);
 		}
-		HWSSeek(f,entrypos,entryheadersize);
-		if (i<entry_amount) {
+		HWSSeek(f, entrypos, entryheadersize);
+		if (i < entry_amount) {
 			local_data[i].local_type.resize(local_data[i].amount);
 			local_data[i].type.resize(local_data[i].amount);
 			local_data[i].size.resize(local_data[i].amount);
 			local_data[i].name.resize(local_data[i].amount);
 			local_data[i].cat.resize(local_data[i].amount);
 			local_data[i].id.resize(local_data[i].amount);
-			for (j=0;j<local_data[i].amount;j++) {
-				HWSReadChar(f,local_data[i].local_type[j]);
-				HWSReadShort(f,(uint16_t&)local_data[i].type[j]);
-				HWSReadChar(f,local_data[i].size[j]);
-				HWSReadChar(f,local_data[i].cat[j]);
-				HWSReadShort(f,local_data[i].id[j]);
+			for (j = 0; j < local_data[i].amount; j++) {
+				HWSReadChar(f, local_data[i].local_type[j]);
+				HWSReadShort(f, (uint16_t&)local_data[i].type[j]);
+				HWSReadChar(f, local_data[i].size[j]);
+				HWSReadChar(f, local_data[i].cat[j]);
+				HWSReadShort(f, local_data[i].id[j]);
 				local_data[i].name[j].clear();
-				HWSReadShort(f,tmp16);
-				while (tmp16!=0) {
-					local_data[i].name[j].append(1,tmp16);
-					HWSReadShort(f,tmp16);
+				HWSReadShort(f, tmp16);
+				while (tmp16 != 0) {
+					local_data[i].name[j].append(1, tmp16);
+					HWSReadShort(f, tmp16);
 				}
-				HWSReadChar(f,vardatatype);
-				while (vardatatype!=0) {
+				HWSReadChar(f, vardatatype);
+				while (vardatatype != 0) {
 					vardatapos = f.tellg();
-					HWSReadShort(f,vardatasize);
+					HWSReadShort(f, vardatasize);
 					// Additional variable informations
 					// may appear here in a future version
-					HWSSeek(f,vardatapos,vardatasize);
-					HWSReadChar(f,vardatatype);
+					HWSSeek(f, vardatapos, vardatasize);
+					HWSReadChar(f, vardatatype);
 				}
 			}
 		} else {
-			for (j=0;j<localam;j++) {
-				HWSSeek(f,f.tellg(),7);
-				HWSReadShort(f,tmp16);
-				while (tmp16!=0)
-					HWSReadShort(f,tmp16);
-				HWSReadChar(f,vardatatype);
-				while (vardatatype!=0) {
+			for (j = 0; j < localam; j++) {
+				HWSSeek(f, f.tellg(), 7);
+				HWSReadShort(f, tmp16);
+				while (tmp16 != 0)
+					HWSReadShort(f, tmp16);
+				HWSReadChar(f, vardatatype);
+				while (vardatatype != 0) {
 					vardatapos = f.tellg();
-					HWSReadShort(f,vardatasize);
-					HWSSeek(f,vardatapos,vardatasize);
-					HWSReadChar(f,vardatatype);
+					HWSReadShort(f, vardatasize);
+					HWSSeek(f, vardatapos, vardatasize);
+					HWSReadChar(f, vardatatype);
 				}
 			}
 		}
 	}
-	if (localsize+localpos>f.tellg()) {
+	if (localsize + localpos > f.tellg()) {
 		entrypos = f.tellg();
-		HWSReadShort(f,entryheadersize);
-		HWSReadChar(f,global_data.allocate_amount);
-		HWSReadChar(f,(uint8_t&)global_data.amount);
-		HWSSeek(f,entrypos,entryheadersize);
+		HWSReadShort(f, entryheadersize);
+		HWSReadChar(f, global_data.allocate_amount);
+		HWSReadChar(f, (uint8_t&)global_data.amount);
+		HWSSeek(f, entrypos, entryheadersize);
 		global_data.local_type.resize(global_data.amount);
 		global_data.type.resize(global_data.amount);
 		global_data.size.resize(global_data.amount);
 		global_data.name.resize(global_data.amount);
 		global_data.cat.resize(global_data.amount);
 		global_data.id.resize(global_data.amount);
-		for (j=0;j<global_data.amount;j++) {
-			HWSReadChar(f,global_data.local_type[j]);
-			HWSReadShort(f,(uint16_t&)global_data.type[j]);
-			HWSReadChar(f,global_data.size[j]);
-			HWSReadChar(f,global_data.cat[j]);
-			HWSReadShort(f,global_data.id[j]);
+		for (j = 0; j < global_data.amount; j++) {
+			HWSReadChar(f, global_data.local_type[j]);
+			HWSReadShort(f, (uint16_t&)global_data.type[j]);
+			HWSReadChar(f, global_data.size[j]);
+			HWSReadChar(f, global_data.cat[j]);
+			HWSReadShort(f, global_data.id[j]);
 			global_data.name[j].clear();
-			HWSReadShort(f,tmp16);
-			while (tmp16!=0) {
-				global_data.name[j].append(1,tmp16);
-				HWSReadShort(f,tmp16);
+			HWSReadShort(f, tmp16);
+			while (tmp16 != 0) {
+				global_data.name[j].append(1, tmp16);
+				HWSReadShort(f, tmp16);
 			}
-			HWSReadChar(f,vardatatype);
-			while (vardatatype!=0) {
+			HWSReadChar(f, vardatatype);
+			while (vardatatype != 0) {
 				vardatapos = f.tellg();
-				HWSReadShort(f,vardatasize);
+				HWSReadShort(f, vardatasize);
 				// Additional variable informations
 				// may appear here in a future version
-				HWSSeek(f,vardatapos,vardatasize);
-				HWSReadChar(f,vardatatype);
+				HWSSeek(f, vardatapos, vardatasize);
+				HWSReadChar(f, vardatatype);
 			}
 		}
 	}
-	HWSSeek(f,localpos,localsize);
+	HWSSeek(f, localpos, localsize);
 	MarkDataModified();
-	if (lang!=STEAM_LANGUAGE_NONE && oldlang!=STEAM_LANGUAGE_NONE)
-		ChangeSteamLanguage(oldlang);
 }
 
-void ScriptDataStruct::WriteLocalHWS(fstream& f, SteamLanguage lang) {
-	SteamLanguage oldlang = current_language;
-	if (lang!=STEAM_LANGUAGE_NONE && oldlang!=STEAM_LANGUAGE_NONE)
-		ChangeSteamLanguage(lang);
-	unsigned int i,j,k;
+void ScriptDataStruct::WriteLocalHWS(fstream& f) {
+	unsigned int i, j, k;
 	uint32_t localpos, localsize = 0;
 	uint16_t zero16 = 0;
 	uint8_t zero8 = 0;
 	localpos = f.tellg();
-	HWSWriteLong(f,localsize);
-	HWSWriteChar(f,entry_amount);
-	for (i=0;i<entry_amount;i++) {
-		HWSWriteShort(f,0x4);
-		HWSWriteChar(f,local_data[i].allocate_amount);
-		HWSWriteChar(f,(uint8_t&)local_data[i].amount);
-		for (j=0;j<local_data[i].amount;j++) {
-			HWSWriteChar(f,local_data[i].local_type[j]);
-			HWSWriteShort(f,local_data[i].type[j]);
-			HWSWriteChar(f,local_data[i].size[j]);
-			HWSWriteChar(f,local_data[i].cat[j]);
-			HWSWriteShort(f,local_data[i].id[j]);
-			for (k=0;k<local_data[i].name[j].length();k++)
-				HWSWriteShort(f,local_data[i].name[j][k]);
-			HWSWriteShort(f,zero16);
-			HWSWriteChar(f,zero8);
+	HWSWriteLong(f, localsize);
+	HWSWriteChar(f, entry_amount);
+	for (i = 0; i < entry_amount; i++) {
+		HWSWriteShort(f, 0x4);
+		HWSWriteChar(f, local_data[i].allocate_amount);
+		HWSWriteChar(f, (uint8_t&)local_data[i].amount);
+		for (j = 0; j < local_data[i].amount; j++) {
+			HWSWriteChar(f, local_data[i].local_type[j]);
+			HWSWriteShort(f, local_data[i].type[j]);
+			HWSWriteChar(f, local_data[i].size[j]);
+			HWSWriteChar(f, local_data[i].cat[j]);
+			HWSWriteShort(f, local_data[i].id[j]);
+			for (k = 0; k < local_data[i].name[j].length(); k++)
+				HWSWriteShort(f, local_data[i].name[j][k]);
+			HWSWriteShort(f, zero16);
+			HWSWriteChar(f, zero8);
 		}
 	}
-	if (global_data.amount>0) {
-		HWSWriteShort(f,0x4);
-		HWSWriteChar(f,global_data.allocate_amount);
-		HWSWriteChar(f,(uint8_t&)global_data.amount);
-		for (j=0;j<global_data.amount;j++) {
-			HWSWriteChar(f,global_data.local_type[j]);
-			HWSWriteShort(f,global_data.type[j]);
-			HWSWriteChar(f,global_data.size[j]);
-			HWSWriteChar(f,global_data.cat[j]);
-			HWSWriteShort(f,global_data.id[j]);
-			for (k=0;k<global_data.name[j].length();k++)
-				HWSWriteShort(f,global_data.name[j][k]);
-			HWSWriteShort(f,zero16);
-			HWSWriteChar(f,zero8);
+	if (global_data.amount > 0) {
+		HWSWriteShort(f, 0x4);
+		HWSWriteChar(f, global_data.allocate_amount);
+		HWSWriteChar(f, (uint8_t&)global_data.amount);
+		for (j = 0; j < global_data.amount; j++) {
+			HWSWriteChar(f, global_data.local_type[j]);
+			HWSWriteShort(f, global_data.type[j]);
+			HWSWriteChar(f, global_data.size[j]);
+			HWSWriteChar(f, global_data.cat[j]);
+			HWSWriteShort(f, global_data.id[j]);
+			for (k = 0; k < global_data.name[j].length(); k++)
+				HWSWriteShort(f, global_data.name[j][k]);
+			HWSWriteShort(f, zero16);
+			HWSWriteChar(f, zero8);
 		}
 	}
-	localsize = (long long)f.tellg()-localpos;
+	localsize = (long long)f.tellg() - localpos;
 	f.seekg(localpos);
-	HWSWriteLong(f,localsize);
-	HWSSeek(f,localpos,localsize);
-	if (lang!=STEAM_LANGUAGE_NONE && oldlang!=STEAM_LANGUAGE_NONE)
-		ChangeSteamLanguage(oldlang);
+	HWSWriteLong(f, localsize);
+	HWSSeek(f, localpos, localsize);
 }
 
 ScriptDataStruct& ScriptDataStruct::operator=(const ScriptDataStruct& from) {
-	unsigned int i,j;
+	unsigned int i, j;
 	parent_cluster = from.parent_cluster;
 	parent_chunk = from.parent_chunk;
 	type = from.type;
@@ -1309,35 +1657,27 @@ ScriptDataStruct& ScriptDataStruct::operator=(const ScriptDataStruct& from) {
 	entry_flag = from.entry_flag;
 	entry_type = from.entry_type;
 	entry_function_amount = from.entry_function_amount;
-	function_type = from.function_type;
-	function_point = from.function_point;
 	global_data = from.global_data;
 	local_data = from.local_data;
-	multi_lang_script = from.multi_lang_script;
-	current_language = from.current_language;
 	related_charmap_id = from.related_charmap_id;
-	for (i=0;i<20;i++) {
+	for (i = 0; i < 20; i++) {
 		header_unknown2[i] = from.header_unknown2[i];
 		header_unknown3[i] = from.header_unknown3[i];
 	}
-	for (i=0;i<SCRIPT_NAME_MAX_LENGTH;i++)
-		header_name[i] = from.header_name[i];
-	for (i=0;i<entry_amount;i++)
-		for (j=0;j<entry_function_amount[i];j++)
+	for (i = 0; i < STEAM_LANGUAGE_AMOUNT; i++)
+		for (j = 0; j < SCRIPT_NAME_MAX_LENGTH; j++)
+			header_name[i][j] = from.header_name[i][j];
+	for (i = 0; i < entry_amount; i++)
+		for (j = 0; j < entry_function_amount[i]; j++)
 			func[i][j].parent = this;
 	return *this;
 }
 
 bool ScriptDataStruct::IsDataModified(SteamLanguage lang) {
-	if (multi_lang_script==NULL || lang==current_language)
-		return modified;
-	return multi_lang_script->is_modified[lang] || multi_lang_script->is_modified[multi_lang_script->base_script_lang[lang]];
+	return modified;
 }
 
 int ScriptDataStruct::GetDataSize(SteamLanguage lang) {
-	SteamLanguage oldlang = current_language;
-	if (lang != STEAM_LANGUAGE_NONE && oldlang != STEAM_LANGUAGE_NONE)
-		ChangeSteamLanguage(lang);
 	uint16_t funcpos, entrypos = 8 * entry_amount, lastentrypos = entrypos;
 	unsigned int i, j;
 	int res = 128;
@@ -1346,8 +1686,8 @@ int ScriptDataStruct::GetDataSize(SteamLanguage lang) {
 			entry_offset[i] = entrypos;
 			funcpos = 4 * entry_function_amount[i];
 			for (j = 0; j < entry_function_amount[i]; j++) {
-				function_point[i][j] = funcpos;
-				funcpos += func[i][j].length;
+				func[i][j].function_point = funcpos;
+				funcpos += func[i][j].GetLength(lang);
 			}
 			entry_size[i] = funcpos + 2;
 			if (entry_size[i] % 4)
@@ -1363,18 +1703,16 @@ int ScriptDataStruct::GetDataSize(SteamLanguage lang) {
 		for (i = entry_amount - 1; entry_size[i] == 0; i--)
 			entry_offset[i] = lastentrypos;
 	res += entrypos;
-	if (lang != STEAM_LANGUAGE_NONE && oldlang != STEAM_LANGUAGE_NONE)
-		ChangeSteamLanguage(oldlang);
 	return res;
 }
 
-void ScriptDataStruct::UpdateOffset() {
+void ScriptDataStruct::UpdateOffset(SteamLanguage lang) {
 	// Assume the size/length of ScriptFunction
 	// and structures under it are properly set
 	unsigned int i, j;
 	if (GetGameType() == GAME_TYPE_PSX) // No modif for Steam as this name is unused
 		for (i = 0; i < name.length && i < SCRIPT_NAME_MAX_LENGTH; i++)
-			header_name[i] = name.raw[i];
+			header_name[lang][i] = name.raw[i];
 	uint16_t funcpos, entrypos = 8 * entry_amount, lastentrypos = entrypos;
 	uint32_t totalsize = 128;
 	for (i = 0; i < entry_amount; i++) {
@@ -1382,8 +1720,8 @@ void ScriptDataStruct::UpdateOffset() {
 			entry_offset[i] = entrypos;
 			funcpos = 4 * entry_function_amount[i];
 			for (j = 0; j < entry_function_amount[i]; j++) {
-				function_point[i][j] = funcpos;
-				funcpos += func[i][j].length;
+				func[i][j].function_point = funcpos;
+				funcpos += func[i][j].GetLength(lang);
 			}
 			entry_size[i] = funcpos + 2;
 			if (entry_size[i] % 4)

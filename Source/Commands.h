@@ -35,9 +35,9 @@ public:
 	map<wxString, wxString> custom_field;
 
 	// Return 0 if success ; 1 if the value is too long
-	int SetName(wstring newvalue);
+	int SetName(wstring newvalue, SteamLanguage lang = GetSteamLanguage());
 	int SetName(FF9String& newvalue);
-	int SetHelp(wstring newvalue);
+	int SetHelp(wstring newvalue, SteamLanguage lang = GetSteamLanguage());
 	int SetHelp(FF9String& newvalue);
 	void SetPanel(uint8_t newvalue);
 	bool AddSpell(int spellid, int spellpos, bool uselimit = true); // Assume spellid < SPELL_AMOUNT and spellpos < spell_amount

@@ -1,12 +1,14 @@
 #include "File_Batching.h"
 
-#include <set>
+#include <wx/dir.h>
 #include "Gui_Manipulation.h"
 #include "Gui_LoadingDialog.h"
+#include "Gui_TextEditor.h"
 #include "Gui_ScriptEditor.h"
 #include "Hades_Strings.h"
 #include "Database_Text.h"
 #include "Database_Resource.h"
+#include "CommonUtility.h"
 #include "main.h"
 
 #define TXTBATCH_MAX_STRUCT 68
@@ -39,35 +41,81 @@ inline wxString FB_GetNextWord(wxString& str) {
 	return res;
 }
 
-inline unsigned int FB_GetCharCount(wstring& str, wchar_t c) {
-	unsigned int count = 0;
-	size_t pos = str.find(c);
-	while (pos != std::string::npos) {
-		pos = str.find(c, pos + 1);
-		count++;
-	}
-	return count;
-}
-
 //=============================//
 //           Texts             //
 //=============================//
 
-int BatchExportDialog::ExportText(TextDataSet& data, wxString path, bool* exportlist, bool splitfile) {
+// There are 3 different ways to index texts in these files:
+// - Using "#HW newtext ID", the ID there is the local text index + 1
+// - Using "#HW text ID", the ID there is the local text index
+// - Using "#HW universal ID", the ID there is the universal text index (taking into account texts that don't appear in all languages)
+// The last one is usually the best one
+void WriteTextBlockWithUniversalID(wxFile& output, TextDataStruct* td, wstring blockname, unsigned int areaid, SteamLanguage singlelang) {
 	bool* exportlang = hades::STEAM_LANGUAGE_SAVE_LIST;
-	SteamLanguage singlelang = STEAM_LANGUAGE_NONE;
-	SteamLanguage lang;
-	unsigned int i, j;
-	wxFile output;
-	for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
-		if (exportlang[lang]) {
-			if (singlelang == STEAM_LANGUAGE_NONE)
-				singlelang = lang;
-			else
-				break;
+	unsigned int textcount = max(td->base_amount, (unsigned int)td->text.size());
+	output.Write(wxString::Format(wxT("#HW fileid %u // %s\n"), areaid, blockname));
+	for (unsigned int i = 0; i < textcount; i++) {
+		if (GetGameType() == GAME_TYPE_PSX) {
+			output.Write(wxString::Format(wxT("#HW text %u\n"), i));
+			output.Write(_(td->text[i].txt.str) + _(L"\n\n"));
+		} else if (singlelang != STEAM_LANGUAGE_NONE) {
+			int localindex = GetTextIdFromUniversalId(singlelang, areaid, i);
+			if (localindex >= 0 && td->text[localindex].txt.multi_lang_init[singlelang]) {
+				output.Write(wxString::Format(wxT("#HW universal %u\n"), i));
+				output.Write(_(td->text[localindex].txt.multi_lang_str[singlelang]) + _(L"\n\n"));
+			}
+		} else {
+			output.Write(wxString::Format(wxT("#HW universal %u\n"), i));
+			for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+				if (exportlang[lang]) {
+					int localindex = GetTextIdFromUniversalId(lang, areaid, i);
+					if (localindex >= 0 && td->text[localindex].txt.multi_lang_init[lang]) {
+						output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[lang] + _(L"\n"));
+						output.Write(_(td->text[localindex].txt.multi_lang_str[lang]) + _(L"\n\n"));
+					}
+				}
+			}
 		}
-	if (lang < STEAM_LANGUAGE_AMOUNT)
-		singlelang = STEAM_LANGUAGE_NONE;
+	}
+}
+
+void WriteTextSingleEntry(wxFile& output, FF9String& text, wxString declaration, SteamLanguage singlelang) {
+	if (GetGameType() != GAME_TYPE_PSX && singlelang != STEAM_LANGUAGE_NONE && !text.multi_lang_init[singlelang])
+		return;
+	bool* exportlang = hades::STEAM_LANGUAGE_SAVE_LIST;
+	output.Write(declaration);
+	if (GetGameType() == GAME_TYPE_PSX) {
+		output.Write(_(text.str) + _(L"\n\n"));
+	} else if (singlelang != STEAM_LANGUAGE_NONE) {
+		output.Write(_(text.multi_lang_str[singlelang]) + _(L"\n\n"));
+	} else {
+		for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+			if (exportlang[lang] && text.multi_lang_init[lang]) {
+				output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[lang] + _(L"\n"));
+				output.Write(_(text.multi_lang_str[lang]) + _(L"\n\n"));
+			}
+		}
+	}
+}
+
+SteamLanguage GetSingleLanguageExport() {
+	SteamLanguage singlelang = STEAM_LANGUAGE_NONE;
+	bool* exportlang = hades::STEAM_LANGUAGE_SAVE_LIST;
+	for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+		if (exportlang[lang]) {
+			if (singlelang != STEAM_LANGUAGE_NONE) {
+				return STEAM_LANGUAGE_NONE;
+				break;
+			}
+			singlelang = lang;
+		}
+	}
+	return singlelang;
+}
+
+int BatchExportDialog::ExportText(TextDataSet& data, wxString path, bool* exportlist, bool splitfile) {
+	SteamLanguage singlelang = GetSingleLanguageExport();
+	wxFile output;
 	if (!splitfile) {
 		output.Open(path, wxFile::write);
 		if (!output.IsOpened())
@@ -76,7 +124,7 @@ int BatchExportDialog::ExportText(TextDataSet& data, wxString path, bool* export
 		if (GetGameType() != GAME_TYPE_PSX && singlelang != STEAM_LANGUAGE_NONE)
 			output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[singlelang] + _(L"\n"));
 	}
-	for (i = 0; i < data.amount; i++)
+	for (unsigned int i = 0; i < data.amount; i++)
 		if ((exportlist == NULL || exportlist[i]) && data.text_data[i]) {
 			if (splitfile) {
 				output.Open(path + wxString::Format(wxT("_%u.txt"), i + 1), wxFile::write);
@@ -86,437 +134,809 @@ int BatchExportDialog::ExportText(TextDataSet& data, wxString path, bool* export
 				if (GetGameType() != GAME_TYPE_PSX && singlelang != STEAM_LANGUAGE_NONE)
 					output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[singlelang] + _(L"\n"));
 			}
-			output.Write(_(L"#HW fileid ") + wxString::Format(wxT("%u"), data.struct_id[i]) + _(L" // ") + _(data.name[i]) + _(L"\n"));
-			for (j = 0; j < data.text_data[i]->amount; j++) {
-				if (GetGameType() != GAME_TYPE_PSX && singlelang != STEAM_LANGUAGE_NONE && !data.text_data[i]->text[j].multi_lang_init[singlelang])
-					continue;
-				output.Write(_(L"#HW newtext ") + wxString::Format(wxT("%u"), j) + _(L"\n"));
-				if (GetGameType() == GAME_TYPE_PSX)
-					output.Write(_(data.text_data[i]->text[j].str) + _(L"\n\n"));
-				else if (singlelang != STEAM_LANGUAGE_NONE)
-					output.Write(_(data.text_data[i]->text[j].multi_lang_str[singlelang]) + _(L"\n\n"));
-				else
-					for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
-						if (exportlang[lang] && data.text_data[i]->text[j].multi_lang_init[lang]) {
-							output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[lang] + _(L"\n"));
-							output.Write(_(data.text_data[i]->text[j].multi_lang_str[lang]) + _(L"\n\n"));
-						}
-			}
+			WriteTextBlockWithUniversalID(output, data.text_data[i], data.name[i], data.struct_id[i], singlelang);
 			if (splitfile)
 				output.Close();
 		}
 	return 0;
 }
 
-unsigned int tmptextstructid[TXTBATCH_MAX_STRUCT];
-int* tmptextid[TXTBATCH_MAX_STRUCT];
-FF9String* tmptextstr[TXTBATCH_MAX_STRUCT];
-LogStruct BatchImportDialog::ImportText(TextDataSet& data, wxString filetext, bool adjustsize, bool isjapan, bool fatalwarning) {
-	wxString line, linebuf, errstr, hwword, token, txtvalue, inputstr = filetext;
-	int currenttextstruct = -1, currenttext = -1;
-	SteamLanguage lang = GetSteamLanguage();
-	int nexttextstruct = 0, nexttext;
-	unsigned int i, j, linenum = 0;
-	bool end, filetypeok = false;
-	unsigned long value;
-	wstring strvalue;
-	LogStruct res = LogStruct();
-	while (!inputstr.IsEmpty() || currenttext >= 0) {
-		linenum++;
-		end = inputstr.IsEmpty();
-		line = FB_GetWxStringLine(inputstr);
-		linebuf = line;
-		hwword = FB_GetNextWord(linebuf);
-		if (hwword.IsSameAs(_(L"#HW")))
-			token = FB_GetNextWord(linebuf);
-		if (hwword.IsSameAs(_(L"#HW")) || end) {
-			if (currenttextstruct >= 0 && currenttext >= 0 && txtvalue.Len() > 0) {
-				if (txtvalue.Right(2).IsSameAs(_(L"\n\n")))
-					txtvalue = txtvalue.Mid(0, txtvalue.Len() - 2);
-				strvalue = txtvalue.ToStdWstring();
-				if (GetGameType() == GAME_TYPE_PSX || !hades::STEAM_SINGLE_LANGUAGE_MODE || lang == GetSteamLanguage())
-					tmptextstr[currenttextstruct][currenttext].SetValue(strvalue, lang);
-				tmptextid[currenttextstruct][nexttext] = -1;
-				if (GetGameType() == GAME_TYPE_PSX) {
-					value = FB_GetCharCount(strvalue, hades::SPECIAL_STRING_OPCODE_WCHAR);
-					if (value != data.text_data[tmptextstructid[currenttextstruct]]->text[tmptextid[currenttextstruct][currenttext]].code_amount) {
-						errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_MISSMATCH_CODE), tmptextstructid[currenttextstruct], tmptextid[currenttextstruct][currenttext], data.text_data[tmptextstructid[currenttextstruct]]->text[tmptextid[currenttextstruct][currenttext]].code_amount, value);
-						res.AddWarning(errstr.ToStdWstring());
-					}
-				}
-				txtvalue = _(L"");
-				if (!token.IsSameAs(_(L"language")))
-					currenttext = -1;
-			}
-		}
-		if (hwword.IsSameAs(_(L"#HW"))) {
-			if (token.IsSameAs(_(L"filetype"))) {
-				if (!filetypeok) {
-					token = FB_GetNextWord(linebuf);
-					if (!token.IsSameAs(_(L"TEXT"))) {
-						errstr.Printf(wxT(HADES_STRING_BATCH_WRONG_FILETYPE), linenum, L"TEXT");
-						res.AddError(errstr.ToStdWstring());
-						return res;
-					}
-					filetypeok = true;
-				} else {
-					errstr.Printf(wxT(HADES_STRING_BATCH_FILETYPE_TWICE), linenum);
-					res.AddWarning(errstr.ToStdWstring());
-				}
-			} else {
-				if (!filetypeok) {
-					errstr.Printf(wxT(HADES_STRING_BATCH_FILETYPE_NOTFIRST), linenum);
-					res.AddError(errstr.ToStdWstring());
-					return res;
-				}
-				if (token.IsSameAs(_(L"fileid"))) {
-					if (nexttextstruct >= TXTBATCH_MAX_STRUCT) {
-						errstr.Printf(wxT(HADES_STRING_BATCH_TOO_MANY), linenum, L"fileid");
-						res.AddError(errstr.ToStdWstring());
-						return res;
-					}
-					token = FB_GetNextWord(linebuf);
-					currenttextstruct = -1;
-					if (!token.ToULong(&value)) {
-						errstr.Printf(wxT(HADES_STRING_BATCH_MISSING_INTEGER), linenum, L"fileid");
-						res.AddError(errstr.ToStdWstring());
-					} else {
-						for (i = 0; i < data.amount; i++)
-							if (data.struct_id[i] == value) {
-								currenttextstruct = nexttextstruct++;
-								tmptextstructid[currenttextstruct] = i;
-								tmptextid[currenttextstruct] = new int[data.text_data[i]->amount + 1]; // +1 for terminating value
-								tmptextstr[currenttextstruct] = new FF9String[data.text_data[i]->amount];
-								tmptextid[currenttextstruct][0] = -1;
-								currenttext = -1;
-								nexttext = 0;
-								break;
-							}
-						if (i == data.amount) {
-							errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_UNUSED), value);
-							res.AddWarning(errstr.ToStdWstring());
-						}
-					}
-				} else if (token.IsSameAs(_(L"newtext"))) {
-					token = FB_GetNextWord(linebuf);
-					currenttext = -1;
-					if (!token.ToULong(&value)) {
-						errstr.Printf(wxT(HADES_STRING_BATCH_MISSING_INTEGER), linenum, L"newtext");
-						res.AddError(errstr.ToStdWstring());
-					} else if (currenttextstruct >= 0) {
-						if (value < 0 || value >= data.text_data[tmptextstructid[currenttextstruct]]->amount) {
-							errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_WRONG_ID), linenum, tmptextstructid[currenttextstruct], value);
-							res.AddError(errstr.ToStdWstring());
-						} else {
-							for (i = 0; (int)i < nexttext; i++)
-								if (tmptextid[currenttextstruct][i] == value) {
-									errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_REDEFINITION), linenum, value);
-									res.AddWarning(errstr.ToStdWstring());
-									currenttext = i;
-									break;
-								}
-							if (currenttext == -1)
-								currenttext = nexttext++;
-							tmptextid[currenttextstruct][currenttext] = value;
-							tmptextstr[currenttextstruct][currenttext] = FF9String(data.text_data[tmptextstructid[currenttextstruct]]->text[value]);
-							lang = GetSteamLanguage();
-							txtvalue = _(L"");
-						}
-					}
-				} else if (token.IsSameAs(_(L"language"))) {
-					token = FB_GetNextWord(linebuf);
-					for (i = 0; i < STEAM_LANGUAGE_AMOUNT; i++)
-						if (HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[i].IsSameAs(token)) {
-							lang = i;
-							break;
-						}
-					if (i >= STEAM_LANGUAGE_AMOUNT) {
-						errstr.Printf(wxT(HADES_STRING_BATCH_INVALID_LANGUAGE), linenum, token);
-						res.AddWarning(errstr.ToStdWstring());
-					}
-				}
-			}
-		} else if (currenttextstruct >= 0 && currenttext >= 0) {
-			txtvalue += line + _(L"\n");
-		}
-	}
+int BatchExportDialog::ExportWorldTexts(WorldMapDataSet& data, wxString path) {
+	SteamLanguage singlelang = GetSingleLanguageExport();
+	wxFile output;
+	output.Open(path, wxFile::write);
+	if (!output.IsOpened())
+		return 1;
+	output.Write(_(L"#HW filetype TEXT\n"));
+	if (GetGameType() != GAME_TYPE_PSX && singlelang != STEAM_LANGUAGE_NONE)
+		output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[singlelang] + _(L"\n"));
 	if (GetGameType() == GAME_TYPE_PSX) {
-		uint32_t blocksize;
-		for (currenttextstruct = 0; currenttextstruct < nexttextstruct; currenttextstruct++) {
-			blocksize = 4 + 8 * data.text_data[tmptextstructid[currenttextstruct]]->amount;
-			for (i = 0; i < data.text_data[tmptextstructid[currenttextstruct]]->amount; i++) {
-				for (j = 0; j < data.text_data[tmptextstructid[currenttextstruct]]->format_amount[i]; j++)
-					blocksize += data.text_data[tmptextstructid[currenttextstruct]]->format_data[i][j].length;
-				for (currenttext = 0; tmptextid[currenttextstruct][currenttext] >= 0; currenttext++)
-					if (tmptextid[currenttextstruct][currenttext] == i) {
-						blocksize += tmptextstr[currenttextstruct][currenttext].length;
+		for (unsigned int i = 0; i < data.amount; i++) {
+			if (data.text_data[i] != NULL && data.script[i] != NULL) {
+				wxString name = _(L"Unknown World Map");
+				for (unsigned int j = 0; j < HADES_STRING_WORLD_BLOCK_NAME.size(); j++) {
+					if (HADES_STRING_WORLD_BLOCK_NAME[j].id == data.script[i]->object_id) {
+						name = HADES_STRING_WORLD_BLOCK_NAME[j].label;
 						break;
 					}
-				if (tmptextid[currenttextstruct][currenttext] < 0)
-					blocksize += data.text_data[tmptextstructid[currenttextstruct]]->text[i].length;
-			}
-			if (blocksize > data.text_data[tmptextstructid[currenttextstruct]]->size + data.text_data[tmptextstructid[currenttextstruct]]->GetExtraSize()) {
-				errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_SIZE), tmptextstructid[currenttextstruct], blocksize - data.text_data[tmptextstructid[currenttextstruct]]->size - data.text_data[tmptextstructid[currenttextstruct]]->GetExtraSize());
-				res.AddError(errstr.ToStdWstring());
-			}
-		}
-	}
-	if (nexttextstruct == 0) {
-		errstr.Printf(wxT(HADES_STRING_BATCH_NOTHING));
-		res.AddError(errstr.ToStdWstring());
-	}
-	CharmapDataStruct* chmap = GetGameType() == GAME_TYPE_PSX ? data.charmap[data.main_charmap_index] : NULL;
-	CharmapDataStruct* chmapext;
-	uint16_t sizex, sizey;
-	wstring nullstr = L"";
-	if (fatalwarning && res.warning_amount > 0)
-		res.ok = false;
-	if (res.ok) {
-		for (currenttextstruct = 0; currenttextstruct < nexttextstruct; currenttextstruct++) {
-			chmapext = GetGameType() == GAME_TYPE_PSX ? data.charmap[tmptextstructid[currenttextstruct]] : NULL;
-			for (currenttext = 0; tmptextid[currenttextstruct][currenttext] >= 0; currenttext++)
-				data.text_data[tmptextstructid[currenttextstruct]]->SetText(tmptextid[currenttextstruct][currenttext], nullstr);
-			for (currenttext = 0; tmptextid[currenttextstruct][currenttext] >= 0; currenttext++) {
-				data.text_data[tmptextstructid[currenttextstruct]]->SetText(tmptextid[currenttextstruct][currenttext], tmptextstr[currenttextstruct][currenttext]);
-				if (adjustsize && GetGameType() == GAME_TYPE_PSX) { // TODO: implement the feature in Steam
-					chmap->CalculateTextSize(&data.text_data[tmptextstructid[currenttextstruct]]->text[tmptextid[currenttextstruct][currenttext]], chmapext, &sizex, &sizey);
-					data.text_data[tmptextstructid[currenttextstruct]]->SetDialogBoxSize(tmptextid[currenttextstruct][currenttext], sizex, sizey, !isjapan);
 				}
+				WriteTextBlockWithUniversalID(output, data.text_data[i], name.ToStdWstring(), data.script[i]->object_id, singlelang);
 			}
-			data.text_data[tmptextstructid[currenttextstruct]]->MarkDataModified();
 		}
+	} else {
+		WriteTextBlockWithUniversalID(output, data.text_data[0], L"World Map", STEAM_WORLD_MAP_TEXT_ID, singlelang);
 	}
-	for (currenttextstruct = 0; currenttextstruct < nexttextstruct; currenttextstruct++) {
-		delete[] tmptextid[currenttextstruct];
-		delete[] tmptextstr[currenttextstruct];
-	}
-	return res;
+	output.Close();
+	return 0;
 }
 
-int BatchExportDialog::ExportSpecialText(SpecialTextDataSet& data, wxString path, bool* exportlist, bool splitfile) {
-	bool* exportlang = hades::STEAM_LANGUAGE_SAVE_LIST;
-	SteamLanguage singlelang = STEAM_LANGUAGE_NONE;
-	SteamLanguage lang;
+int BatchExportDialog::ExportBattleTexts(EnemyDataSet& data, wxString path, bool* exportlist, bool splitfile) {
+	SteamLanguage singlelang = GetSingleLanguageExport();
 	unsigned int i, j;
 	wxFile output;
-	for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
-		if (exportlang[lang]) {
-			if (singlelang == STEAM_LANGUAGE_NONE)
-				singlelang = lang;
-			else
-				break;
-		}
-	if (lang < STEAM_LANGUAGE_AMOUNT)
-		singlelang = STEAM_LANGUAGE_NONE;
 	if (!splitfile) {
 		output.Open(path, wxFile::write);
-		output.Write(_(L"#HW filetype UITEXT\n\n"));
+		if (!output.IsOpened())
+			return 1;
+		output.Write(_(L"#HW filetype TEXT_BATTLE\n\n"));
+		if (GetGameType() != GAME_TYPE_PSX && singlelang != STEAM_LANGUAGE_NONE)
+			output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[singlelang] + _(L"\n"));
 	}
-	for (i = 0; i < data.amount; i++)
+	for (i = 0; i < data.battle_amount; i++)
 		if (exportlist == NULL || exportlist[i]) {
 			if (splitfile) {
 				output.Open(path + wxString::Format(wxT("_%u.txt"), i + 1), wxFile::write);
-				output.Write(_(L"#HW filetype UITEXT\n\n"));
+				if (!output.IsOpened())
+					return 1;
+				output.Write(_(L"#HW filetype TEXT_BATTLE\n\n"));
+				if (GetGameType() != GAME_TYPE_PSX && singlelang != STEAM_LANGUAGE_NONE)
+					output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[singlelang] + _(L"\n"));
 			}
-			output.Write(_(L"#HW fileid ") + wxString::Format(wxT("%u"), i));
+			output.Write(wxString::Format(wxT("#HW fileid %u // %s\n"), data.battle_data[i]->object_id, data.battle_name[i]));
+			TextDataStruct* td = data.text[i];
+			for (j = 0; j < td->text.size(); j++)
+				WriteTextSingleEntry(output, td->text[j].txt, wxString::Format(wxT("#HW text %u\n"), j), singlelang);
+			if (splitfile)
+				output.Close();
+		}
+	return 0;
+}
+
+int BatchExportDialog::ExportWorldPlaceNames(WorldMapDataStruct& data, wxString path) {
+	SteamLanguage singlelang = GetSingleLanguageExport();
+	wxFile output;
+	output.Open(path, wxFile::write);
+	if (!output.IsOpened())
+		return 1;
+	output.Write(_(L"#HW filetype TEXT_INTERFACE\n"));
+	if (GetGameType() != GAME_TYPE_PSX && singlelang != STEAM_LANGUAGE_NONE)
+		output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[singlelang] + _(L"\n"));
+	output.Write(_(L"#HW fileid 0\n\n"));
+	for (unsigned int i = 0; i < WORLD_MAP_PLACE_AMOUNT; i++)
+		WriteTextSingleEntry(output, data.place_name[i], wxString::Format(wxT("#HW text %u\n"), i), singlelang);
+	output.Close();
+	return 0;
+}
+
+int BatchExportDialog::ExportSpecialText(SpecialTextDataSet& data, wxString path, bool* exportlist, bool splitfile) {
+	SteamLanguage singlelang = GetSingleLanguageExport();
+	unsigned int i, j;
+	wxFile output;
+	if (!splitfile) {
+		output.Open(path, wxFile::write);
+		if (!output.IsOpened())
+			return 1;
+		output.Write(_(L"#HW filetype TEXT_INTERFACE\n\n"));
+		if (GetGameType() != GAME_TYPE_PSX && singlelang != STEAM_LANGUAGE_NONE)
+			output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[singlelang] + _(L"\n"));
+	}
+	for (i = 0; i < data.text_block.size(); i++)
+		if ((exportlist == NULL || exportlist[i]) && !data.text_block[i].is_localization) {
+			if (splitfile) {
+				output.Open(path + wxString::Format(wxT("_%u.txt"), i + 1), wxFile::write);
+				if (!output.IsOpened())
+					return 1;
+				output.Write(_(L"#HW filetype TEXT_INTERFACE\n\n"));
+				if (GetGameType() != GAME_TYPE_PSX && singlelang != STEAM_LANGUAGE_NONE)
+					output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[singlelang] + _(L"\n"));
+			}
+			output.Write(_(L"#HW fileid ") + wxString::Format(wxT("%u"), GetGameType() == GAME_TYPE_PSX ? i : i + 1));
 			if (GetGameType() == GAME_TYPE_PSX)
 				output.Write(_(L" // ") + HADES_STRING_SPECIAL_TEXT_BLOCK[i] + _(L"\n"));
 			else
 				output.Write(_(L" // ") + HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM[i] + _(L"\n"));
-			for (j = 0; j < data.text_block[i].amount; j++) {
-				if (GetGameType() != GAME_TYPE_PSX && singlelang != STEAM_LANGUAGE_NONE && !data.text_block[i].text[j].multi_lang_init[singlelang])
-					continue;
-				output.Write(_(L"#HW newtext ") + wxString::Format(wxT("%u"), j) + _(L"\n"));
-				if (GetGameType() == GAME_TYPE_PSX)
-					output.Write(_(data.text_block[i].text[j].str) + _(L"\n\n"));
-				else if (singlelang != STEAM_LANGUAGE_NONE)
-					output.Write(_(data.text_block[i].text[j].multi_lang_str[singlelang]) + _(L"\n\n"));
-				else
-					for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
-						if (exportlang[lang] && data.text_block[i].text[j].multi_lang_init[lang]) {
-							output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[lang] + _(L"\n"));
-							output.Write(_(data.text_block[i].text[j].multi_lang_str[lang]) + _(L"\n\n"));
-						}
-			}
+			SpecialTextDataStruct& td = data.text_block[i];
+			for (j = 0; j < td.text.size(); j++)
+				WriteTextSingleEntry(output, td.text[j].txt, wxString::Format(wxT("#HW text %d\n"), td.text[j].id), singlelang);
 			if (splitfile)
 				output.Close();
 		}
 	return 0;
 }
 
-LogStruct BatchImportDialog::ImportSpecialText(SpecialTextDataSet& data, wxString filetext, bool fatalwarning) {
-	wxString line, linebuf, errstr, hwword, token, txtvalue, inputstr = filetext;
-	int currenttextstruct = -1, currenttext = -1;
+int BatchExportDialog::ExportCardNames(CardDataSet& data, wxString path) {
+	SteamLanguage singlelang = GetSingleLanguageExport();
+	wxFile output;
+	output.Open(path, wxFile::write);
+	if (!output.IsOpened())
+		return 1;
+	output.Write(_(L"#HW filetype TEXT_INTERFACE\n"));
+	if (GetGameType() != GAME_TYPE_PSX && singlelang != STEAM_LANGUAGE_NONE)
+		output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[singlelang] + _(L"\n"));
+	output.Write(_(L"#HW fileid 6\n\n"));
+	for (unsigned int i = 0; i < data.card_amount; i++)
+		WriteTextSingleEntry(output, data.card[i].name, wxString::Format(wxT("#HW text %d\n"), data.card[i].id), singlelang);
+	output.Close();
+	return 0;
+}
+
+int BatchExportDialog::ExportLocalizationEntries(SpecialTextDataStruct& data, wxString path) {
+	SteamLanguage singlelang = GetSingleLanguageExport();
+	wxFile output;
+	output.Open(path, wxFile::write);
+	if (!output.IsOpened())
+		return 1;
+	output.Write(_(L"#HW filetype TEXT_LOCALIZATION\n\n"));
+	if (GetGameType() != GAME_TYPE_PSX && singlelang != STEAM_LANGUAGE_NONE)
+		output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[singlelang] + _(L"\n\n"));
+	for (unsigned int i = 0; i < data.text.size(); i++)
+		if (data.text[i].localization_field.length() > 0)
+			WriteTextSingleEntry(output, data.text[i].txt, wxString::Format(wxT("#HW entry %s\n"), data.text[i].localization_field), singlelang);
+	output.Close();
+	return 0;
+}
+
+int BatchExportDialog::ExportSpellNames(SpellDataSet& data, wxString path) {
+	SteamLanguage singlelang = GetSingleLanguageExport();
+	wxFile output;
+	output.Open(path, wxFile::write);
+	if (!output.IsOpened())
+		return 1;
+	output.Write(_(L"#HW filetype TEXT_ABILITY\n\n"));
+	if (GetGameType() != GAME_TYPE_PSX && singlelang != STEAM_LANGUAGE_NONE)
+		output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[singlelang] + _(L"\n\n"));
+	for (unsigned int i = 0; i < data.spell.size(); i++) {
+		WriteTextSingleEntry(output, data.spell[i].name, wxString::Format(wxT("#HW name %d\n"), data.spell[i].id), singlelang);
+		WriteTextSingleEntry(output, data.spell[i].help, wxString::Format(wxT("#HW help %d\n"), data.spell[i].id), singlelang);
+	}
+	output.Close();
+	return 0;
+}
+
+int BatchExportDialog::ExportSupportNames(SupportDataSet& data, wxString path) {
+	SteamLanguage singlelang = GetSingleLanguageExport();
+	wxFile output;
+	output.Open(path, wxFile::write);
+	if (!output.IsOpened())
+		return 1;
+	output.Write(_(L"#HW filetype TEXT_SUPPORT\n\n"));
+	if (GetGameType() != GAME_TYPE_PSX && singlelang != STEAM_LANGUAGE_NONE)
+		output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[singlelang] + _(L"\n\n"));
+	for (unsigned int i = 0; i < data.support.size(); i++) {
+		WriteTextSingleEntry(output, data.support[i].name, wxString::Format(wxT("#HW name %d\n"), data.support[i].id), singlelang);
+		WriteTextSingleEntry(output, data.support[i].help, wxString::Format(wxT("#HW help %d\n"), data.support[i].id), singlelang);
+	}
+	output.Close();
+	return 0;
+}
+
+int BatchExportDialog::ExportCommandNames(CommandDataSet& data, wxString path) {
+	SteamLanguage singlelang = GetSingleLanguageExport();
+	wxFile output;
+	output.Open(path, wxFile::write);
+	if (!output.IsOpened())
+		return 1;
+	output.Write(_(L"#HW filetype TEXT_COMMAND\n\n"));
+	if (GetGameType() != GAME_TYPE_PSX && singlelang != STEAM_LANGUAGE_NONE)
+		output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[singlelang] + _(L"\n\n"));
+	for (unsigned int i = 0; i < data.cmd.size(); i++) {
+		WriteTextSingleEntry(output, data.cmd[i].name, wxString::Format(wxT("#HW name %d\n"), data.cmd[i].id), singlelang);
+		WriteTextSingleEntry(output, data.cmd[i].help, wxString::Format(wxT("#HW help %d\n"), data.cmd[i].id), singlelang);
+	}
+	output.Close();
+	return 0;
+}
+
+int BatchExportDialog::ExportItemNames(ItemDataSet& data, wxString path) {
+	SteamLanguage singlelang = GetSingleLanguageExport();
+	wxFile output;
+	output.Open(path, wxFile::write);
+	if (!output.IsOpened())
+		return 1;
+	output.Write(_(L"#HW filetype TEXT_ITEM\n\n"));
+	if (GetGameType() != GAME_TYPE_PSX && singlelang != STEAM_LANGUAGE_NONE)
+		output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[singlelang] + _(L"\n\n"));
+	for (unsigned int i = 0; i < data.item.size(); i++) {
+		WriteTextSingleEntry(output, data.item[i].name, wxString::Format(wxT("#HW name %d\n"), data.item[i].id), singlelang);
+		WriteTextSingleEntry(output, data.item[i].help, wxString::Format(wxT("#HW help %d\n"), data.item[i].id), singlelang);
+		WriteTextSingleEntry(output, data.item[i].battle_help, wxString::Format(wxT("#HW battlehelp %d\n"), data.item[i].id), singlelang);
+	}
+	output.Close();
+	return 0;
+}
+
+int BatchExportDialog::ExportKeyItemNames(ItemDataSet& data, wxString path) {
+	SteamLanguage singlelang = GetSingleLanguageExport();
+	wxFile output;
+	output.Open(path, wxFile::write);
+	if (!output.IsOpened())
+		return 1;
+	output.Write(_(L"#HW filetype TEXT_KEY_ITEM\n\n"));
+	if (GetGameType() != GAME_TYPE_PSX && singlelang != STEAM_LANGUAGE_NONE)
+		output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[singlelang] + _(L"\n\n"));
+	for (unsigned int i = 0; i < data.key_item.size(); i++) {
+		WriteTextSingleEntry(output, data.key_item[i].name, wxString::Format(wxT("#HW name %d\n"), data.key_item[i].id), singlelang);
+		WriteTextSingleEntry(output, data.key_item[i].help, wxString::Format(wxT("#HW help %d\n"), data.key_item[i].id), singlelang);
+		WriteTextSingleEntry(output, data.key_item[i].description, wxString::Format(wxT("#HW description %d\n"), data.key_item[i].id), singlelang);
+	}
+	output.Close();
+	return 0;
+}
+
+int BatchExportDialog::ExportFieldNames(FieldDataSet& data, wxString path) {
+	SteamLanguage singlelang = GetSingleLanguageExport();
+	wxFile output;
+	output.Open(path, wxFile::write);
+	if (!output.IsOpened())
+		return 1;
+	output.Write(_(L"#HW filetype TEXT_LOCATION\n\n"));
+	if (GetGameType() != GAME_TYPE_PSX && singlelang != STEAM_LANGUAGE_NONE)
+		output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[singlelang] + _(L"\n\n"));
+	for (unsigned int i = 0; i < data.amount; i++)
+		WriteTextSingleEntry(output, data.script_data[i]->name, wxString::Format(wxT("#HW fieldname %d\n"), data.script_data[i]->object_id), singlelang);
+	output.Close();
+	return 0;
+}
+
+int BatchExportDialog::ExportCharacterNames(StatDataSet& data, wxString path) {
+	SteamLanguage singlelang = GetSingleLanguageExport();
+	wxFile output;
+	output.Open(path, wxFile::write);
+	if (!output.IsOpened())
+		return 1;
+	output.Write(_(L"#HW filetype TEXT_STAT\n\n"));
+	if (GetGameType() != GAME_TYPE_PSX && singlelang != STEAM_LANGUAGE_NONE)
+		output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[singlelang] + _(L"\n\n"));
+	for (unsigned int i = 0; i < data.initial_stat.size(); i++)
+		WriteTextSingleEntry(output, data.initial_stat[i].default_name, wxString::Format(wxT("#HW name %d\n"), data.initial_stat[i].id), singlelang);
+	output.Close();
+	return 0;
+}
+
+struct ImportTextStruct {
+	int fileid = -1;
+	int textid = -1;
+	int textkind = -1;
 	SteamLanguage lang = GetSteamLanguage();
-	int nexttextstruct = 0, nexttext;
-	unsigned int i, linenum = 0;
-	bool end, filetypeok = false;
+	wxString strkey = wxEmptyString;
+	wxString str = wxEmptyString;
+};
+
+void CheckExtraSpaceForPSX(vector<ImportTextStruct>& importedtexts, unsigned int& i, LogStruct& log, TextDataStruct* td, wstring blocktype, int currentfileid) {
+	unsigned int blockmaxsize = td->size + td->GetExtraSize();
+	unsigned int blocksize = 4 + 8 * td->text.size();
+	unsigned int j, k;
+	for (j = 0; j < td->text.size(); j++) {
+		blocksize += td->text[j].txt.length;
+		for (k = 0; k < td->text[j].format_amount; k++)
+			blocksize += td->text[j].format_data[k].length;
+	}
+	while (i < importedtexts.size() && importedtexts[i].fileid == currentfileid) {
+		FF9String str;
+		if (importedtexts[i].textid < (int)td->text.size())
+			str = FF9String(td->text[importedtexts[i].textid].txt);
+		else
+			str.CreateEmpty();
+		unsigned int opcount = CharCountInString(importedtexts[i].str, hades::SPECIAL_STRING_OPCODE_WCHAR);
+		if (opcount != str.code_amount)
+			log.AddWarning(wxString::Format(wxT(HADES_STRING_BATCH_TEXT_MISSMATCH_CODE), blocktype, currentfileid, importedtexts[i].textid, str.code_amount, opcount).ToStdWstring());
+		str.SetValue(importedtexts[i].str.ToStdWstring());
+		blocksize += str.length;
+		if (importedtexts[i].textid < (int)td->text.size())
+			blocksize -= td->text[importedtexts[i].textid].txt.length;
+		else
+			blocksize += 8;
+		i++;
+	}
+	i--;
+	if (blocksize > blockmaxsize)
+		log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_TEXT_SIZE), blocktype, currentfileid, blocksize - blockmaxsize).ToStdWstring());
+}
+
+FF9String CreateFF9StringToAdd(ImportTextStruct& txtdata, wstring nullstr) {
+	FF9String str;
+	str.CreateEmpty();
+	for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+		str.SetValue(nullstr, lang);
+	str.SetValue(txtdata.str.ToStdWstring(), txtdata.lang);
+	return str;
+}
+
+LogStruct BatchImportDialog::ImportText(SaveSet* dataset, set<int>& sectionmodified, wxString filetext, bool adjustsize, bool isjapan, bool fatalwarning) {
+	wxString line, linebuf, hwword, token;
+	vector<ImportTextStruct> result;
+	ImportTextStruct current;
 	unsigned long value;
-	wstring strvalue;
-	LogStruct res = LogStruct();
-	while (!inputstr.IsEmpty() || currenttext >= 0) {
+	int textcommand;
+	unsigned int i, linenum = 0;
+	LogStruct log = LogStruct();
+	bool legacycounter = false;
+	bool legacyuitext = false;
+	int filetypeid = -1;
+	bool end = false;
+	while (!filetext.IsEmpty() || current.textid >= 0 || current.strkey.Len() > 0) {
 		linenum++;
-		end = inputstr.IsEmpty();
-		line = FB_GetWxStringLine(inputstr);
+		end = filetext.IsEmpty();
+		line = FB_GetWxStringLine(filetext);
 		linebuf = line;
 		hwword = FB_GetNextWord(linebuf);
 		if (hwword.IsSameAs(_(L"#HW")))
 			token = FB_GetNextWord(linebuf);
 		if (hwword.IsSameAs(_(L"#HW")) || end) {
-			if (currenttextstruct >= 0 && currenttext >= 0 && txtvalue.Len() > 0) {
-				if (txtvalue.Right(2).IsSameAs(_(L"\n\n")))
-					txtvalue = txtvalue.Mid(0, txtvalue.Len() - 2);
-				strvalue = txtvalue.ToStdWstring();
-				if (GetGameType() == GAME_TYPE_PSX || !hades::STEAM_SINGLE_LANGUAGE_MODE || lang == GetSteamLanguage())
-					tmptextstr[currenttextstruct][currenttext].SetValue(strvalue, lang);
-				tmptextid[currenttextstruct][nexttext] = -1;
-				if (GetGameType() == GAME_TYPE_PSX) {
-					value = FB_GetCharCount(strvalue, hades::SPECIAL_STRING_OPCODE_WCHAR);
-					if (value != data.text_block[tmptextstructid[currenttextstruct]].text[tmptextid[currenttextstruct][currenttext]].code_amount) {
-						errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_MISSMATCH_CODE), tmptextstructid[currenttextstruct], tmptextid[currenttextstruct][currenttext], data.text_block[tmptextstructid[currenttextstruct]].text[tmptextid[currenttextstruct][currenttext]].code_amount, value);
-						res.AddWarning(errstr.ToStdWstring());
-					}
+			int currentfileid = current.fileid;
+			int currenttextid = current.textid;
+			int currenttextkind = current.textkind;
+			SteamLanguage currentlang = current.lang;
+			wxString currentstrkey = current.strkey;
+			if ((currenttextid >= 0 || currentstrkey.Len() > 0) && currentlang != STEAM_LANGUAGE_NONE) {
+				if (current.str.Right(2).IsSameAs(_(L"\n\n")))
+					current.str = current.str.Mid(0, current.str.Len() - 2);
+				if (filetypeid == 0 && currenttextkind == 2) {
+					current.textid = GetTextIdFromUniversalId(currentlang, currentfileid, currenttextid);
+					if (current.textid < 0)
+						log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_TEXT_INVALID_IN_LANGUAGE), L"Text Block", currentfileid, currenttextid, HADES_STRING_STEAM_LANGUAGE_LONG_NAME[current.lang]).ToStdWstring());
 				}
-				txtvalue = _(L"");
-				if (!token.IsSameAs(_(L"language")))
-					currenttext = -1;
+				if (current.textid >= 0 || current.strkey.Len() > 0)
+					result.push_back(current);
+				current = ImportTextStruct();
+				current.fileid = currentfileid;
+				if (token.IsSameAs(_(L"language"))) {
+					current.textkind = currenttextkind;
+					current.textid = currenttextid;
+					current.strkey = currentstrkey;
+				} else {
+					current.lang = currentlang;
+				}
+			} else if (end) {
+				current.textid = -1;
 			}
 		}
 		if (hwword.IsSameAs(_(L"#HW"))) {
 			if (token.IsSameAs(_(L"filetype"))) {
-				if (!filetypeok) {
+				if (filetypeid < 0) {
 					token = FB_GetNextWord(linebuf);
-					if (!token.IsSameAs(_(L"UITEXT"))) {
-						errstr.Printf(wxT(HADES_STRING_BATCH_WRONG_FILETYPE), linenum, L"UITEXT");
-						res.AddError(errstr.ToStdWstring());
-						return res;
+					if (token.IsSameAs(_(L"TEXT"))) {
+						if (!dataset->sectionloaded[DATA_SECTION_TEXT] || !dataset->sectionloaded[DATA_SECTION_WORLD_MAP]) {
+							log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_NOT_LOADED), L"Texts and World Maps").ToStdWstring());
+							return log;
+						}
+						filetypeid = 0;
+						legacycounter = true;
+					} else if (token.IsSameAs(_(L"TEXT_BATTLE"))) {
+						if (!dataset->sectionloaded[DATA_SECTION_TEXT] || !dataset->sectionloaded[DATA_SECTION_ENMY]) {
+							log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_NOT_LOADED), L"Texts and Enemies").ToStdWstring());
+							return log;
+						}
+						filetypeid = 1;
+					} else if (token.IsSameAs(_(L"TEXT_ABILITY"))) {
+						if (!dataset->sectionloaded[DATA_SECTION_SPELL]) {
+							log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_NOT_LOADED), L"Spells").ToStdWstring());
+							return log;
+						}
+						filetypeid = 2;
+						current.fileid = 0;
+					} else if (token.IsSameAs(_(L"TEXT_SUPPORT"))) {
+						if (!dataset->sectionloaded[DATA_SECTION_SUPPORT]) {
+							log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_NOT_LOADED), L"Supporting Abilities").ToStdWstring());
+							return log;
+						}
+						filetypeid = 2;
+						current.fileid = 1;
+					} else if (token.IsSameAs(_(L"TEXT_COMMAND"))) {
+						if (!dataset->sectionloaded[DATA_SECTION_CMD]) {
+							log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_NOT_LOADED), L"Commands").ToStdWstring());
+							return log;
+						}
+						filetypeid = 2;
+						current.fileid = 2;
+					} else if (token.IsSameAs(_(L"TEXT_ITEM"))) {
+						if (!dataset->sectionloaded[DATA_SECTION_ITEM]) {
+							log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_NOT_LOADED), L"Items").ToStdWstring());
+							return log;
+						}
+						filetypeid = 2;
+						current.fileid = 3;
+					} else if (token.IsSameAs(_(L"TEXT_KEY_ITEM"))) {
+						if (!dataset->sectionloaded[DATA_SECTION_ITEM]) {
+							log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_NOT_LOADED), L"Items").ToStdWstring());
+							return log;
+						}
+						filetypeid = 2;
+						current.fileid = 4;
+					} else if (token.IsSameAs(_(L"TEXT_LOCATION"))) {
+						if (!dataset->sectionloaded[DATA_SECTION_FIELD]) {
+							log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_NOT_LOADED), L"Fields").ToStdWstring());
+							return log;
+						}
+						filetypeid = 2;
+						current.fileid = 5;
+					} else if (token.IsSameAs(_(L"TEXT_STAT"))) {
+						if (!dataset->sectionloaded[DATA_SECTION_STAT]) {
+							log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_NOT_LOADED), L"Stats").ToStdWstring());
+							return log;
+						}
+						filetypeid = 2;
+						current.fileid = 6;
+					} else if (token.IsSameAs(_(L"TEXT_INTERFACE"))) {
+						if (!dataset->sectionloaded[DATA_SECTION_MENU_UI] || !dataset->sectionloaded[DATA_SECTION_WORLD_MAP] || !dataset->sectionloaded[DATA_SECTION_CARD]) {
+							log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_NOT_LOADED), L"UI Texts, Cards and World Maps").ToStdWstring());
+							return log;
+						}
+						filetypeid = 3;
+					} else if (token.IsSameAs(_(L"UITEXT"))) {
+						if (!dataset->sectionloaded[DATA_SECTION_MENU_UI]) {
+							log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_NOT_LOADED), L"UI Texts").ToStdWstring());
+							return log;
+						}
+						filetypeid = 3;
+						legacyuitext = true;
+					} else if (token.IsSameAs(_(L"TEXT_LOCALIZATION"))) {
+						if (!dataset->sectionloaded[DATA_SECTION_MENU_UI]) {
+							log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_NOT_LOADED), L"UI Texts").ToStdWstring());
+							return log;
+						}
+						filetypeid = 3;
+						current.fileid = 100;
+					} else {
+						log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_WRONG_FILETYPE), linenum, L"TEXT, TEXT_INTERFACE, TEXT_LOCALIZATION, TEXT_BATTLE, TEXT_ABILITY, TEXT_ITEM, TEXT_KEY_ITEM, TEXT_LOCATION, TEXT_SUPPORT, TEXT_COMMAND, TEXT_STAT or UITEXT").ToStdWstring());
+						return log;
 					}
-					filetypeok = true;
+					if (GetGameType() == GAME_TYPE_PSX && filetypeid >= 2) {
+						// TODO: add support for the PSX version (see TODO below)
+						log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_PSX_NOT_SUPPORTED), token).ToStdWstring());
+						return log;
+					}
 				} else {
-					errstr.Printf(wxT(HADES_STRING_BATCH_FILETYPE_TWICE), linenum);
-					res.AddWarning(errstr.ToStdWstring());
+					log.AddWarning(wxString::Format(wxT(HADES_STRING_BATCH_FILETYPE_TWICE), linenum).ToStdWstring());
 				}
 			} else {
-				if (!filetypeok) {
-					errstr.Printf(wxT(HADES_STRING_BATCH_FILETYPE_NOTFIRST), linenum);
-					res.AddError(errstr.ToStdWstring());
-					return res;
+				if (filetypeid < 0) {
+					log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_FILETYPE_NOTFIRST), linenum).ToStdWstring());
+					return log;
 				}
 				if (token.IsSameAs(_(L"fileid"))) {
-					if (nexttextstruct >= TXTBATCH_MAX_STRUCT) {
-						errstr.Printf(wxT(HADES_STRING_BATCH_TOO_MANY), linenum, L"fileid");
-						res.AddError(errstr.ToStdWstring());
-						return res;
-					}
-					token = FB_GetNextWord(linebuf);
-					currenttextstruct = -1;
-					if (!token.ToULong(&value)) {
-						errstr.Printf(wxT(HADES_STRING_BATCH_MISSING_INTEGER), linenum, L"fileid");
-						res.AddError(errstr.ToStdWstring());
+					current.fileid = -1;
+					if (filetypeid == 2 || (filetypeid == 3 && current.fileid == 100)) {
+						log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_COMMAND_IRRELEVANT), linenum, token).ToStdWstring());
+					} else if (!FB_GetNextWord(linebuf).ToULong(&value)) {
+						log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_MISSING_INTEGER), linenum, token).ToStdWstring());
+					} else if (filetypeid == 3 && value > 7) {
+						log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_WRONG_FILEID), linenum, 7).ToStdWstring());
 					} else {
-						if (value < data.amount) {
-							currenttextstruct = nexttextstruct++;
-							tmptextstructid[currenttextstruct] = value;
-							tmptextid[currenttextstruct] = new int[data.text_block[value].amount + 1];
-							tmptextstr[currenttextstruct] = new FF9String[data.text_block[value].amount];
-							tmptextid[currenttextstruct][0] = -1;
-							currenttext = -1;
-							nexttext = 0;
-						} else {
-							errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_UNUSED), value);
-							res.AddWarning(errstr.ToStdWstring());
+						if (legacyuitext) {
+							if (value == 5)			value = 7;
+							else if (value == 6)	value = 100;
+							else if (value == 7)	value = 6;
+							else					value++;
 						}
-					}
-				} else if (token.IsSameAs(_(L"newtext"))) {
-					token = FB_GetNextWord(linebuf);
-					currenttext = -1;
-					if (!token.ToULong(&value)) {
-						errstr.Printf(wxT(HADES_STRING_BATCH_MISSING_INTEGER), linenum, L"newtext");
-						res.AddError(errstr.ToStdWstring());
-					} else if (currenttextstruct >= 0) {
-						if (value < 0 || value >= data.text_block[tmptextstructid[currenttextstruct]].amount) {
-							errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_WRONG_ID), linenum, tmptextstructid[currenttextstruct], value);
-							res.AddError(errstr.ToStdWstring());
-						} else {
-							for (i = 0; (int)i < nexttext; i++)
-								if (tmptextid[currenttextstruct][i] == value) {
-									errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_REDEFINITION), linenum, value);
-									res.AddWarning(errstr.ToStdWstring());
-									currenttext = i;
-									break;
-								}
-							if (currenttext == -1)
-								currenttext = nexttext++;
-							tmptextid[currenttextstruct][currenttext] = value;
-							tmptextstr[currenttextstruct][currenttext] = FF9String(data.text_block[tmptextstructid[currenttextstruct]].text[value]);
-							lang = GetSteamLanguage();
-							txtvalue = _(L"");
-						}
+						current.fileid = value;
 					}
 				} else if (token.IsSameAs(_(L"language"))) {
+					current.lang = STEAM_LANGUAGE_NONE;
 					token = FB_GetNextWord(linebuf);
 					for (i = 0; i < STEAM_LANGUAGE_AMOUNT; i++)
-						if (HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[i].IsSameAs(token)) {
-							lang = i;
+						if (HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[i].IsSameAs(token) || HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[i].IsSameAs(token)) {
+							current.lang = i;
 							break;
 						}
-					if (i >= STEAM_LANGUAGE_AMOUNT) {
-						errstr.Printf(wxT(HADES_STRING_BATCH_INVALID_LANGUAGE), linenum, token);
-						res.AddWarning(errstr.ToStdWstring());
+					if (current.lang == STEAM_LANGUAGE_NONE)
+						log.AddWarning(wxString::Format(wxT(HADES_STRING_BATCH_INVALID_LANGUAGE), linenum, token).ToStdWstring());
+				} else {
+					textcommand = -1;
+					if (token.IsSameAs(_(L"newtext")))
+						textcommand = 0;
+					else if (token.IsSameAs(_(L"text")))
+						textcommand = 1;
+					else if (token.IsSameAs(_(L"universal")))
+						textcommand = 2;
+					else if (token.IsSameAs(_(L"name")))
+						textcommand = 3;
+					else if (token.IsSameAs(_(L"help")))
+						textcommand = 4;
+					else if (token.IsSameAs(_(L"battlehelp")))
+						textcommand = 5;
+					else if (token.IsSameAs(_(L"description")))
+						textcommand = 6;
+					else if (token.IsSameAs(_(L"fieldname")))
+						textcommand = 7;
+					else if (token.IsSameAs(_(L"entry")))
+						textcommand = 8;
+					if (textcommand < 0) {
+						log.AddWarning(wxString::Format(wxT(HADES_STRING_BATCH_COMMAND_UNKNOWN), linenum, token).ToStdWstring());
+						if ((current.textid >= 0 || current.strkey.Len() > 0) && current.lang != STEAM_LANGUAGE_NONE)
+							current.str += line + _(L"\n");
+					} else {
+						current.textid = -1;
+						current.strkey = wxEmptyString;
+						if ((filetypeid == 0 || filetypeid == 1) && textcommand != 0 && textcommand != 1 && textcommand != 2) {
+							log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_COMMAND_IRRELEVANT), linenum, token).ToStdWstring());
+						} else if (filetypeid == 2 && current.fileid <= 2 && textcommand != 3 && textcommand != 4) {
+							log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_COMMAND_IRRELEVANT), linenum, token).ToStdWstring());
+						} else if (filetypeid == 2 && current.fileid == 3 && textcommand != 3 && textcommand != 4 && textcommand != 5) {
+							log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_COMMAND_IRRELEVANT), linenum, token).ToStdWstring());
+						} else if (filetypeid == 2 && current.fileid == 4 && textcommand != 3 && textcommand != 4 && textcommand != 6) {
+							log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_COMMAND_IRRELEVANT), linenum, token).ToStdWstring());
+						} else if (filetypeid == 2 && current.fileid == 5 && textcommand != 7) {
+							log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_COMMAND_IRRELEVANT), linenum, token).ToStdWstring());
+						} else if (filetypeid == 2 && current.fileid == 6 && textcommand != 3) {
+							log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_COMMAND_IRRELEVANT), linenum, token).ToStdWstring());
+						} else if (filetypeid == 3 && current.fileid != 100 && textcommand != 0 && textcommand != 1) {
+							log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_COMMAND_IRRELEVANT), linenum, token).ToStdWstring());
+						} else if (filetypeid == 3 && current.fileid == 100 && textcommand != 0 && textcommand != 8) {
+							log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_COMMAND_IRRELEVANT), linenum, token).ToStdWstring());
+						} else {
+							if (textcommand == 8) {
+								current.strkey = FB_GetNextWord(linebuf);
+								for (i = 0; i < result.size(); i++) {
+									if (result[i].fileid == current.fileid && result[i].strkey.IsSameAs(current.strkey)) {
+										log.AddWarning(wxString::Format(wxT(HADES_STRING_BATCH_TEXT_REDEFINITION_KEY), linenum, current.strkey).ToStdWstring());
+										break;
+									}
+								}
+							} else if (current.fileid < 0) {
+								log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_TEXT_MISSING_FILEID), linenum).ToStdWstring());
+							} else if (!FB_GetNextWord(linebuf).ToULong(&value)) {
+								log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_MISSING_INTEGER), linenum, token).ToStdWstring());
+							} else {
+								if (legacycounter && (value == 0 || textcommand != 0))
+									legacycounter = false;
+								if (legacycounter)
+									value--;
+								current.textid = value;
+								current.textkind = textcommand;
+								for (i = 0; i < result.size(); i++) {
+									if (result[i].fileid == current.fileid && result[i].textid == current.textid && result[i].textkind == current.textkind) {
+										log.AddWarning(wxString::Format(wxT(HADES_STRING_BATCH_TEXT_REDEFINITION), linenum, value).ToStdWstring());
+										break;
+									}
+								}
+							}
+						}
 					}
 				}
 			}
-		} else if (currenttextstruct >= 0 && currenttext >= 0) {
-			txtvalue += line + _(L"\n");
+		} else if ((current.textid >= 0 || current.strkey.Len() > 0) && current.lang != STEAM_LANGUAGE_NONE) {
+			current.str += line + _(L"\n");
 		}
 	}
-	uint32_t blocksize;
-	for (currenttextstruct = 0; currenttextstruct < nexttextstruct; currenttextstruct++) {
-		blocksize = 4 * data.text_block[tmptextstructid[currenttextstruct]].amount;
-		for (i = 0; i < data.text_block[tmptextstructid[currenttextstruct]].amount; i++) {
-			for (currenttext = 0; tmptextid[currenttextstruct][currenttext] >= 0; currenttext++)
-				if (tmptextid[currenttextstruct][currenttext] == i) {
-					blocksize += tmptextstr[currenttextstruct][currenttext].length;
-					break;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		for (i = 0; i < result.size(); i++) {
+			int currentfileid = result[i].fileid;
+			if (filetypeid == 0 && currentfileid >= 9000) {
+				int textblockindex = dataset->worldset->GetIndexById(currentfileid);
+				if (textblockindex < 0) {
+					log.AddWarning(wxString::Format(wxT(HADES_STRING_BATCH_TEXT_UNUSED), L"World Map", currentfileid).ToStdWstring());
+					continue;
 				}
-			if (tmptextid[currenttextstruct][currenttext] < 0)
-				blocksize += data.text_block[tmptextstructid[currenttextstruct]].text[i].length;
-		}
-		if (blocksize > data.text_block[tmptextstructid[currenttextstruct]].space_total) {
-			errstr.Printf(wxT(HADES_STRING_BATCH_TEXT_SIZE), tmptextstructid[currenttextstruct], blocksize - data.text_block[tmptextstructid[currenttextstruct]].space_total);
-			res.AddError(errstr.ToStdWstring());
-		}
-	}
-	if (nexttextstruct == 0) {
-		errstr.Printf(wxT(HADES_STRING_BATCH_NOTHING));
-		res.AddError(errstr.ToStdWstring());
-	}
-	wstring nullstr = L"";
-	if (fatalwarning && res.warning_amount > 0)
-		res.ok = false;
-	if (res.ok) {
-		for (currenttextstruct = 0; currenttextstruct < nexttextstruct; currenttextstruct++) {
-			for (currenttext = 0; tmptextid[currenttextstruct][currenttext] >= 0; currenttext++)
-				data.text_block[tmptextstructid[currenttextstruct]].SetText(tmptextid[currenttextstruct][currenttext], nullstr);
-			for (currenttext = 0; tmptextid[currenttextstruct][currenttext] >= 0; currenttext++) {
-				data.text_block[tmptextstructid[currenttextstruct]].SetText(tmptextid[currenttextstruct][currenttext], tmptextstr[currenttextstruct][currenttext]);
+				CheckExtraSpaceForPSX(result, i, log, dataset->worldset->text_data[textblockindex], L"World Map", currentfileid);
+			} else if (filetypeid == 0 && currentfileid < 9000) {
+				int textblockindex = dataset->textset->GetIndexById(currentfileid);
+				if (textblockindex < 0) {
+					log.AddWarning(wxString::Format(wxT(HADES_STRING_BATCH_TEXT_UNUSED), L"Text Block", currentfileid).ToStdWstring());
+					continue;
+				}
+				CheckExtraSpaceForPSX(result, i, log, dataset->textset->text_data[textblockindex], L"Text Block", currentfileid);
+			} else if (filetypeid == 1) {
+				int textblockindex = dataset->enemyset->GetIndexById(currentfileid);
+				if (textblockindex < 0) {
+					log.AddWarning(wxString::Format(wxT(HADES_STRING_BATCH_TEXT_UNUSED), L"Enemy", currentfileid).ToStdWstring());
+					continue;
+				}
+				CheckExtraSpaceForPSX(result, i, log, dataset->enemyset->text[textblockindex], L"Enemy", currentfileid);
+			} else {
+				// TODO: support of these texts for the PSX version (see TODO above)
 			}
 		}
 	}
-	for (currenttextstruct = 0; currenttextstruct < nexttextstruct; currenttextstruct++) {
-		delete[] tmptextid[currenttextstruct];
-		delete[] tmptextstr[currenttextstruct];
+	if (result.size() == 0)
+		log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_NOTHING)).ToStdWstring());
+	if (fatalwarning && log.warning_amount > 0)
+		log.ok = false;
+	if (log.ok) {
+		// Avoid adding warnings from there, to be consistent with "fatalwarning"
+		CharmapDataStruct* chmap = GetGameType() == GAME_TYPE_PSX ? dataset->textset->charmap[dataset->textset->main_charmap_index] : NULL;
+		CharmapDataStruct* chmapext = NULL;
+		wstring nullstr = GetGameType() != GAME_TYPE_PSX && filetypeid < 2 ? L"[STRT=0,1]" : L"";
+		for (i = 0; i < result.size(); i++) {
+			int currentfileid = result[i].fileid;
+			if (GetGameType() == GAME_TYPE_PSX && filetypeid == 0 && currentfileid >= 9000) {
+				int textblockindex = dataset->worldset->GetIndexById(currentfileid);
+				chmapext = dataset->worldset->charmap[textblockindex];
+			} else if (GetGameType() == GAME_TYPE_PSX && filetypeid == 0 && currentfileid < 9000) {
+				int textblockindex = dataset->textset->GetIndexById(currentfileid);
+				chmapext = dataset->textset->charmap[textblockindex];
+			}
+			if (filetypeid == 0 && (currentfileid >= 9000 || currentfileid == STEAM_WORLD_MAP_TEXT_ID)) {
+				int textblockindex = currentfileid == STEAM_WORLD_MAP_TEXT_ID ? 0 : dataset->worldset->GetIndexById(currentfileid);
+				if (textblockindex < 0) {
+					//log.AddWarning(wxString::Format(wxT(HADES_STRING_BATCH_TEXT_UNUSED), L"World Map", currentfileid).ToStdWstring());
+					while (i < result.size() && result[i].fileid == currentfileid)
+						i++;
+					i--;
+					continue;
+				}
+				if (adjustsize && GetGameType() != GAME_TYPE_PSX)
+					TextSteamEditDialog::CalculateTextBestSize(GetTopWindow(), result[i].str);
+				int textindex = dataset->worldset->text_data[textblockindex]->GetTextIndexById(result[i].textid);
+				if (textindex >= 0)
+					dataset->worldset->text_data[textblockindex]->SetText(textindex, result[i].str.ToStdWstring(), result[i].lang);
+				else
+					dataset->worldset->text_data[textblockindex]->AddText(result[i].textid, CreateFF9StringToAdd(result[i], nullstr));
+				textindex = dataset->worldset->text_data[textblockindex]->GetTextIndexById(result[i].textid);
+				if (adjustsize && GetGameType() == GAME_TYPE_PSX) {
+					uint16_t sizex, sizey;
+					chmap->CalculateTextSize(&dataset->worldset->text_data[textblockindex]->text[textindex].txt, chmapext, &sizex, &sizey);
+					dataset->worldset->text_data[textblockindex]->text[textindex].SetDialogBoxSize(sizex, sizey, !isjapan);
+				}
+				sectionmodified.insert(DATA_SECTION_WORLD_MAP);
+				dataset->sectionmodified[DATA_SECTION_WORLD_MAP] = true;
+				dataset->worldset->text_data[textblockindex]->MarkDataModified();
+			} else if (filetypeid == 0) {
+				int textblockindex = dataset->textset->GetIndexById(currentfileid);
+				if (textblockindex < 0) {
+					//log.AddWarning(wxString::Format(wxT(HADES_STRING_BATCH_TEXT_UNUSED), L"Text Block", currentfileid).ToStdWstring());
+					while (i < result.size() && result[i].fileid == currentfileid)
+						i++;
+					i--;
+					continue;
+				}
+				if (adjustsize && GetGameType() != GAME_TYPE_PSX)
+					TextSteamEditDialog::CalculateTextBestSize(GetTopWindow(), result[i].str);
+				int textindex = dataset->textset->text_data[textblockindex]->GetTextIndexById(result[i].textid);
+				if (textindex >= 0)
+					dataset->textset->text_data[textblockindex]->SetText(textindex, result[i].str.ToStdWstring(), result[i].lang);
+				else
+					dataset->textset->text_data[textblockindex]->AddText(result[i].textid, CreateFF9StringToAdd(result[i], nullstr));
+				textindex = dataset->textset->text_data[textblockindex]->GetTextIndexById(result[i].textid);
+				if (adjustsize && GetGameType() == GAME_TYPE_PSX) {
+					uint16_t sizex, sizey;
+					chmap->CalculateTextSize(&dataset->textset->text_data[textblockindex]->text[textindex].txt, chmapext, &sizex, &sizey);
+					dataset->textset->text_data[textblockindex]->text[textindex].SetDialogBoxSize(sizex, sizey, !isjapan);
+				}
+				sectionmodified.insert(DATA_SECTION_TEXT);
+				dataset->sectionmodified[DATA_SECTION_TEXT] = true;
+				dataset->textset->text_data[textblockindex]->MarkDataModified();
+			} else if (filetypeid == 1) {
+				int textblockindex = dataset->enemyset->GetIndexById(currentfileid);
+				if (textblockindex < 0) {
+					//log.AddWarning(wxString::Format(wxT(HADES_STRING_BATCH_TEXT_UNUSED), L"Enemy", currentfileid).ToStdWstring());
+					while (i < result.size() && result[i].fileid == currentfileid)
+						i++;
+					i--;
+					continue;
+				}
+				if (adjustsize && GetGameType() != GAME_TYPE_PSX)
+					TextSteamEditDialog::CalculateTextBestSize(GetTopWindow(), result[i].str);
+				int textindex = dataset->enemyset->text[textblockindex]->GetTextIndexById(result[i].textid);
+				if (textindex >= 0)
+					dataset->enemyset->text[textblockindex]->SetText(textindex, result[i].str.ToStdWstring(), result[i].lang);
+				else
+					dataset->enemyset->text[textblockindex]->AddText(result[i].textid, CreateFF9StringToAdd(result[i], nullstr));
+				textindex = dataset->enemyset->text[textblockindex]->GetTextIndexById(result[i].textid);
+				if (adjustsize && GetGameType() == GAME_TYPE_PSX) {
+					uint16_t sizex, sizey;
+					chmap->CalculateTextSize(&dataset->enemyset->text[textblockindex]->text[textindex].txt, chmapext, &sizex, &sizey);
+					dataset->enemyset->text[textblockindex]->text[textindex].SetDialogBoxSize(sizex, sizey, !isjapan);
+				}
+				sectionmodified.insert(DATA_SECTION_ENMY);
+				dataset->sectionmodified[DATA_SECTION_ENMY] = true;
+				dataset->enemyset->text[textblockindex]->MarkDataModified();
+			} else if (filetypeid == 2) {
+				if (currentfileid == 0) {
+					int textindex = dataset->spellset->GetSpellIndexById(result[i].textid);
+					if (textindex >= 0 && result[i].textkind == 3)		dataset->spellset->spell[textindex].SetName(result[i].str.ToStdWstring(), result[i].lang);
+					else if (textindex >= 0 && result[i].textkind == 4)	dataset->spellset->spell[textindex].SetHelp(result[i].str.ToStdWstring(), result[i].lang);
+					//else												log.AddWarning(wxString::Format(wxT(HADES_STRING_BATCH_TEXT_WRONG_ID), L"Spell", result[i].textid).ToStdWstring());
+					sectionmodified.insert(DATA_SECTION_SPELL);
+					dataset->sectionmodified[DATA_SECTION_SPELL] = true;
+				} else if (currentfileid == 1) {
+					int textindex = dataset->supportset->GetSupportIndexById(result[i].textid);
+					if (textindex >= 0 && result[i].textkind == 3)		dataset->supportset->support[textindex].SetName(result[i].str.ToStdWstring(), result[i].lang);
+					else if (textindex >= 0 && result[i].textkind == 4)	dataset->supportset->support[textindex].SetHelp(result[i].str.ToStdWstring(), result[i].lang);
+					//else												log.AddWarning(wxString::Format(wxT(HADES_STRING_BATCH_TEXT_WRONG_ID), L"Support", result[i].textid).ToStdWstring());
+					sectionmodified.insert(DATA_SECTION_SUPPORT);
+					dataset->sectionmodified[DATA_SECTION_SUPPORT] = true;
+				} else if (currentfileid == 2) {
+					int textindex = dataset->cmdset->GetCommandIndexById(result[i].textid);
+					if (textindex >= 0 && result[i].textkind == 3)		dataset->cmdset->cmd[textindex].SetName(result[i].str.ToStdWstring(), result[i].lang);
+					else if (textindex >= 0 && result[i].textkind == 4)	dataset->cmdset->cmd[textindex].SetHelp(result[i].str.ToStdWstring(), result[i].lang);
+					//else												log.AddWarning(wxString::Format(wxT(HADES_STRING_BATCH_TEXT_WRONG_ID), L"Command", result[i].textid).ToStdWstring());
+					sectionmodified.insert(DATA_SECTION_CMD);
+					dataset->sectionmodified[DATA_SECTION_CMD] = true;
+				} else if (currentfileid == 3) {
+					int textindex = dataset->itemset->GetItemIndexById(result[i].textid);
+					if (textindex >= 0 && result[i].textkind == 3)		dataset->itemset->item[textindex].SetName(result[i].str.ToStdWstring(), result[i].lang);
+					else if (textindex >= 0 && result[i].textkind == 4)	dataset->itemset->item[textindex].SetHelp(result[i].str.ToStdWstring(), result[i].lang);
+					else if (textindex >= 0 && result[i].textkind == 5)	dataset->itemset->item[textindex].SetBattleHelp(result[i].str.ToStdWstring(), result[i].lang);
+					//else												log.AddWarning(wxString::Format(wxT(HADES_STRING_BATCH_TEXT_WRONG_ID), L"Item", result[i].textid).ToStdWstring());
+					sectionmodified.insert(DATA_SECTION_ITEM);
+					dataset->sectionmodified[DATA_SECTION_ITEM] = true;
+				} else if (currentfileid == 4) {
+					int textindex = dataset->itemset->GetKeyItemIndexById(result[i].textid);
+					if (textindex >= 0 && result[i].textkind == 3)		dataset->itemset->key_item[textindex].SetName(result[i].str.ToStdWstring(), result[i].lang);
+					else if (textindex >= 0 && result[i].textkind == 4)	dataset->itemset->key_item[textindex].SetHelp(result[i].str.ToStdWstring(), result[i].lang);
+					else if (textindex >= 0 && result[i].textkind == 6)	dataset->itemset->key_item[textindex].SetDescription(result[i].str.ToStdWstring(), result[i].lang);
+					//else												log.AddWarning(wxString::Format(wxT(HADES_STRING_BATCH_TEXT_WRONG_ID), L"Key Item", result[i].textid).ToStdWstring());
+					sectionmodified.insert(DATA_SECTION_ITEM);
+					dataset->sectionmodified[DATA_SECTION_ITEM] = true;
+				} else if (currentfileid == 5) {
+					int textindex = dataset->fieldset->GetIndexById(result[i].textid);
+					if (textindex >= 0)	dataset->fieldset->SetFieldName(textindex, result[i].str.ToStdWstring(), result[i].lang);
+					//else				log.AddWarning(wxString::Format(wxT(HADES_STRING_BATCH_TEXT_WRONG_ID), L"Field", result[i].textid).ToStdWstring());
+					sectionmodified.insert(DATA_SECTION_FIELD);
+					dataset->sectionmodified[DATA_SECTION_FIELD] = true;
+					if (textindex >= 0)
+						dataset->fieldset->script_data[textindex]->MarkDataModified();
+				} else if (currentfileid == 6) {
+					int textindex = dataset->statset->GetCharacterIndexById(result[i].textid);
+					if (textindex >= 0)	dataset->statset->initial_stat[textindex].SetDefaultName(result[i].str.ToStdWstring(), result[i].lang);
+					//else				log.AddWarning(wxString::Format(wxT(HADES_STRING_BATCH_TEXT_WRONG_ID), L"Character", result[i].textid).ToStdWstring());
+					sectionmodified.insert(DATA_SECTION_STAT);
+					dataset->sectionmodified[DATA_SECTION_STAT] = true;
+				}
+			} else if (filetypeid == 3) {
+				if (currentfileid == 0) {
+					if (result[i].textid < WORLD_MAP_PLACE_AMOUNT)	dataset->worldset->world_data->SetName(result[i].textid, result[i].str.ToStdWstring(), result[i].lang);
+					//else											log.AddWarning(wxString::Format(wxT(HADES_STRING_BATCH_TEXT_WRONG_ID), L"World Map Place", result[i].textid).ToStdWstring());
+					sectionmodified.insert(DATA_SECTION_WORLD_MAP);
+					dataset->sectionmodified[DATA_SECTION_WORLD_MAP] = true;
+					dataset->worldset->world_data->MarkDataModified();
+				} else if (currentfileid == 6) {
+					if (result[i].textid < CARD_AMOUNT)	dataset->cardset->card[result[i].textid].SetName(result[i].str.ToStdWstring(), result[i].lang);
+					//else								log.AddWarning(wxString::Format(wxT(HADES_STRING_BATCH_TEXT_WRONG_ID), L"Card", result[i].textid).ToStdWstring());
+					sectionmodified.insert(DATA_SECTION_CARD);
+					dataset->sectionmodified[DATA_SECTION_CARD] = true;
+				} else if (currentfileid == 100) {
+					int textindex = dataset->ffuiset->special_text->text_block[SPECIAL_TEXT_LOCALIZATION_INDEX_STEAM].GetTextIndexByKey(result[i].strkey.ToStdWstring());
+					if (textindex >= 0) {
+						dataset->ffuiset->special_text->text_block[SPECIAL_TEXT_LOCALIZATION_INDEX_STEAM].SetText(textindex, result[i].str.ToStdWstring(), result[i].lang);
+					} else {
+						FF9String newstr;
+						newstr.CreateEmpty(true);
+						newstr.SetValue(result[i].str.ToStdWstring(), result[i].lang);
+						dataset->ffuiset->special_text->text_block[SPECIAL_TEXT_LOCALIZATION_INDEX_STEAM].AddTextByKey(result[i].strkey.ToStdWstring(), newstr);
+					}
+					sectionmodified.insert(DATA_SECTION_MENU_UI);
+					dataset->sectionmodified[DATA_SECTION_MENU_UI] = true;
+					dataset->ffuiset->special_text->modified = true;
+				} else {
+					int specialblock = currentfileid - 1;
+					int textindex = dataset->ffuiset->special_text->text_block[specialblock].GetTextIndexById(result[i].textid);
+					if (textindex >= 0) {
+						dataset->ffuiset->special_text->text_block[specialblock].SetText(textindex, result[i].str.ToStdWstring(), result[i].lang);
+					} else {
+						FF9String newstr;
+						newstr.CreateEmpty(true);
+						newstr.SetValue(result[i].str.ToStdWstring(), result[i].lang);
+						dataset->ffuiset->special_text->text_block[specialblock].AddText(result[i].textid, newstr);
+					}
+					sectionmodified.insert(DATA_SECTION_MENU_UI);
+					dataset->sectionmodified[DATA_SECTION_MENU_UI] = true;
+					dataset->ffuiset->special_text->modified = true;
+				}
+			}
+		}
 	}
-	return res;
+	return log;
 }
 
 //=============================//
 //          Scripts            //
 //=============================//
 
+// TODO: check what works after update
 int BatchExportDialog::ExportEnemyScript(SaveSet* dataset, wxString path, bool* exportlist, bool splitfile, int addedinfo) {
 	EnemyDataSet& data = *dataset->enemyset;
-	SteamLanguage lang, sublang, curlang;
 	wxString line, tmprest, localstr;
 	unsigned int i, j, k;
 	wxFile output;
@@ -535,80 +955,40 @@ int BatchExportDialog::ExportEnemyScript(SaveSet* dataset, wxString path, bool* 
 			if (addedinfo & BATCHING_SCRIPT_INFO_FILENAME)
 				output.Write(_(L" // ") + _(data.battle_name[i]));
 			output.Write(_(L"\n"));
-			curlang = data.script[i]->current_language;
-			for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
-				if (GetGameType() != GAME_TYPE_PSX) {
-					if (data.script[i]->multi_lang_script == NULL) {
-						output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[GetSteamLanguage()] + _(L"\n"));
-						lang = STEAM_LANGUAGE_AMOUNT;
-					} else if (!hades::STEAM_LANGUAGE_SAVE_LIST[lang]) {
-						continue;
-					} else if (data.script[i]->multi_lang_script->base_script_lang[lang] != lang && hades::STEAM_LANGUAGE_SAVE_LIST[data.script[i]->multi_lang_script->base_script_lang[lang]]) {
-						continue;
-					} else {
-						output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[lang] + _(L"\n"));
-						for (sublang = 0; sublang < STEAM_LANGUAGE_AMOUNT; sublang++)
-							if (sublang != lang && data.script[i]->multi_lang_script->base_script_lang[sublang] == lang && hades::STEAM_LANGUAGE_SAVE_LIST[sublang]) {
-								unsigned int langtextlinkcount = data.script[i]->multi_lang_script->base_script_text_id[sublang].size();
-								uint16_t btextid, textid;
-								output.Write(_(L"#HW languagelink ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[sublang] + _(L"\n"));
-								if (langtextlinkcount > 0) {
-									output.Write(_(L"#HW languagetextlink ") + wxString::Format(wxT("%u"), langtextlinkcount) + _(L"\n"));
-									for (j = 0; j < langtextlinkcount; j++) {
-										btextid = data.script[i]->multi_lang_script->base_script_text_id[sublang][j];
-										textid = data.script[i]->multi_lang_script->lang_script_text_id[sublang][j];
-										wxString line = wxString::Format(wxT("%u %u"), btextid, textid);
-										if (addedinfo & BATCHING_SCRIPT_INFO_TEXT_LINK) {
-											line += _(L" // \"") + _(FF9String::RemoveOpcodes(data.text[i]->text[btextid].multi_lang_str[lang])) + _(L"\" = \"") + _(FF9String::RemoveOpcodes(data.text[i]->text[textid].multi_lang_str[sublang])) + _(L"\"");
-											line.Replace(_(L"\n"), _(L" "));
-										}
-										output.Write(line + _(L"\n"));
-									}
-									output.Write(_(L"\n"));
-								}
-							}
-						data.script[i]->ChangeSteamLanguage(lang);
-					}
-				} else {
-					lang = STEAM_LANGUAGE_AMOUNT;
+			ScriptEditHandler scpthand(*data.script[i], SCRIPT_TYPE_BATTLE, dataset, data.battle[i], data.text[i]);
+			for (j = 1; j < scpthand.script.entry_amount; j++)
+				if (j <= data.battle[i]->stat_amount) {
+					scpthand.entry_name[j] = _(data.battle[i]->stat[j - 1].name.GetStr(2));
+					scpthand.entry_name[j].Replace(_(L" "), _(L"_"));
 				}
-				ScriptEditHandler scpthand(*data.script[i], SCRIPT_TYPE_BATTLE, dataset, data.battle[i], data.text[i]);
-				for (j = 1; j < scpthand.script.entry_amount; j++)
-					if (j <= data.battle[i]->stat_amount) {
-						scpthand.entry_name[j] = _(data.battle[i]->stat[j - 1].name.GetStr(2));
-						scpthand.entry_name[j].Replace(_(L" "), _(L"_"));
+			scpthand.GenerateFunctionList();
+			scpthand.GenerateEntryNames();
+			scpthand.GenerateFunctionStrings(addedinfo & BATCHING_SCRIPT_INFO_ARGUMENT);
+			if (scpthand.script.global_data.amount > 0) {
+				output.Write(_(L"#HW globals\n"));
+				output.Write(scpthand.globalvar_str);
+				output.Write(_(L"#HW endglobals\n\n"));
+			}
+			for (j = 0; j < scpthand.script.entry_amount; j++) {
+				if (scpthand.script.entry_function_amount[j] > 0) {
+					output.Write(_(L"#HW newentry ") + wxString::Format(wxT("%u"), j) + _(L"\n"));
+					if (scpthand.script.local_data[j].allocate_amount > 0 || scpthand.script.local_data[j].amount > 0) {
+						localstr = scpthand.localvar_str[j];
+						output.Write(_(L"#HW locals\n"));
+						while (localstr.Len() > 0) {
+							line = localstr.BeforeFirst(L'\n', &tmprest);
+							localstr = tmprest;
+							if (!line.Mid(0, 7).IsSameAs(L"global "))
+								output.Write(line + _(L"\n"));
+						}
+						output.Write(_(L"#HW endlocals\n\n"));
 					}
-				scpthand.GenerateFunctionList();
-				scpthand.GenerateEntryNames();
-				scpthand.GenerateFunctionStrings(addedinfo & BATCHING_SCRIPT_INFO_ARGUMENT);
-				if (scpthand.script.global_data.amount > 0) {
-					output.Write(_(L"#HW globals\n"));
-					output.Write(scpthand.globalvar_str);
-					output.Write(_(L"#HW endglobals\n\n"));
-				}
-				for (j = 0; j < scpthand.script.entry_amount; j++) {
-					if (scpthand.script.entry_function_amount[j] > 0) {
-						output.Write(_(L"#HW newentry ") + wxString::Format(wxT("%u"), j) + _(L"\n"));
-						if (scpthand.script.local_data[j].allocate_amount > 0 || scpthand.script.local_data[j].amount > 0) {
-							localstr = scpthand.localvar_str[j];
-							output.Write(_(L"#HW locals\n"));
-							while (localstr.Len() > 0) {
-								line = localstr.BeforeFirst(L'\n', &tmprest);
-								localstr = tmprest;
-								if (!line.Mid(0, 7).IsSameAs(L"global "))
-									output.Write(line + _(L"\n"));
-							}
-							output.Write(_(L"#HW endlocals\n\n"));
-						}
-						for (k = 0; k < scpthand.script.entry_function_amount[j]; k++) {
-							output.Write(_(L"#HW newfunction ") + wxString::Format(wxT("%u"), scpthand.script.function_type[j][k]) + _(L"\n"));
-							output.Write(scpthand.func_str[j][k] + _(L"\n\n"));
-						}
+					for (k = 0; k < scpthand.script.entry_function_amount[j]; k++) {
+						output.Write(_(L"#HW newfunction ") + wxString::Format(wxT("%u"), scpthand.script.func[j][k].function_type) + _(L"\n"));
+						output.Write(scpthand.func_str[j][k] + _(L"\n\n"));
 					}
 				}
 			}
-			if (data.script[i]->current_language != curlang)
-				data.script[i]->ChangeSteamLanguage(curlang);
 			if (splitfile)
 				output.Close();
 			LoadingDialogUpdate(i + 1);
@@ -619,7 +999,6 @@ int BatchExportDialog::ExportEnemyScript(SaveSet* dataset, wxString path, bool* 
 
 int BatchExportDialog::ExportWorldScript(SaveSet* dataset, wxString path, bool* exportlist, bool splitfile, int addedinfo) {
 	WorldMapDataSet& data = *dataset->worldset;
-	SteamLanguage lang, sublang, curlang;
 	wxString line, tmprest, localstr;
 	unsigned int i, j, k;
 	wxFile output;
@@ -641,75 +1020,35 @@ int BatchExportDialog::ExportWorldScript(SaveSet* dataset, wxString path, bool* 
 						break;
 					}
 			output.Write(_(L"\n"));
-			curlang = data.script[i]->current_language;
-			for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
-				if (GetGameType() != GAME_TYPE_PSX) {
-					if (data.script[i]->multi_lang_script == NULL) {
-						output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[GetSteamLanguage()] + _(L"\n"));
-						lang = STEAM_LANGUAGE_AMOUNT;
-					} else if (!hades::STEAM_LANGUAGE_SAVE_LIST[lang]) {
-						continue;
-					} else if (data.script[i]->multi_lang_script->base_script_lang[lang] != lang && hades::STEAM_LANGUAGE_SAVE_LIST[data.script[i]->multi_lang_script->base_script_lang[lang]]) {
-						continue;
-					} else {
-						output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[lang] + _(L"\n"));
-						for (sublang = 0; sublang < STEAM_LANGUAGE_AMOUNT; sublang++)
-							if (sublang != lang && data.script[i]->multi_lang_script->base_script_lang[sublang] == lang && hades::STEAM_LANGUAGE_SAVE_LIST[sublang]) {
-								unsigned int langtextlinkcount = data.script[i]->multi_lang_script->base_script_text_id[sublang].size();
-								uint16_t btextid, textid;
-								output.Write(_(L"#HW languagelink ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[sublang] + _(L"\n"));
-								if (langtextlinkcount > 0) {
-									output.Write(_(L"#HW languagetextlink ") + wxString::Format(wxT("%u"), langtextlinkcount) + _(L"\n"));
-									for (j = 0; j < langtextlinkcount; j++) {
-										btextid = data.script[i]->multi_lang_script->base_script_text_id[sublang][j];
-										textid = data.script[i]->multi_lang_script->lang_script_text_id[sublang][j];
-										wxString line = wxString::Format(wxT("%u %u"), btextid, textid);
-										if (addedinfo & BATCHING_SCRIPT_INFO_TEXT_LINK) {
-											line += _(L" // \"") + _(FF9String::RemoveOpcodes(data.text_data[i]->text[btextid].multi_lang_str[lang])) + _(L"\" = \"") + _(FF9String::RemoveOpcodes(data.text_data[i]->text[textid].multi_lang_str[sublang])) + _(L"\"");
-											line.Replace(_(L"\n"), _(L" "));
-										}
-										output.Write(line + _(L"\n"));
-									}
-									output.Write(_(L"\n"));
-								}
-							}
-						data.script[i]->ChangeSteamLanguage(lang);
+			ScriptEditHandler scpthand(*data.script[i], SCRIPT_TYPE_WORLD, dataset, NULL, data.text_data[i]);
+			scpthand.GenerateFunctionList();
+			scpthand.GenerateEntryNames();
+			scpthand.GenerateFunctionStrings(addedinfo & BATCHING_SCRIPT_INFO_ARGUMENT);
+			if (scpthand.script.global_data.amount > 0) {
+				output.Write(_(L"#HW globals\n"));
+				output.Write(scpthand.globalvar_str);
+				output.Write(_(L"#HW endglobals\n\n"));
+			}
+			for (j = 0; j < scpthand.script.entry_amount; j++) {
+				if (scpthand.script.entry_function_amount[j] > 0) {
+					output.Write(_(L"#HW newentry ") + wxString::Format(wxT("%u"), j) + _(L"\n"));
+					if (scpthand.script.local_data[j].allocate_amount > 0 || scpthand.script.local_data[j].amount > 0) {
+						localstr = scpthand.localvar_str[j];
+						output.Write(_(L"#HW locals\n"));
+						while (localstr.Len() > 0) {
+							line = localstr.BeforeFirst(L'\n', &tmprest);
+							localstr = tmprest;
+							if (!line.Mid(0, 7).IsSameAs(L"global "))
+								output.Write(line + _(L"\n"));
+						}
+						output.Write(_(L"#HW endlocals\n\n"));
 					}
-				} else {
-					lang = STEAM_LANGUAGE_AMOUNT;
-				}
-				ScriptEditHandler scpthand(*data.script[i], SCRIPT_TYPE_WORLD, dataset, NULL, data.text_data[i]);
-				scpthand.GenerateFunctionList();
-				scpthand.GenerateEntryNames();
-				scpthand.GenerateFunctionStrings(addedinfo & BATCHING_SCRIPT_INFO_ARGUMENT);
-				if (scpthand.script.global_data.amount > 0) {
-					output.Write(_(L"#HW globals\n"));
-					output.Write(scpthand.globalvar_str);
-					output.Write(_(L"#HW endglobals\n\n"));
-				}
-				for (j = 0; j < scpthand.script.entry_amount; j++) {
-					if (scpthand.script.entry_function_amount[j] > 0) {
-						output.Write(_(L"#HW newentry ") + wxString::Format(wxT("%u"), j) + _(L"\n"));
-						if (scpthand.script.local_data[j].allocate_amount > 0 || scpthand.script.local_data[j].amount > 0) {
-							localstr = scpthand.localvar_str[j];
-							output.Write(_(L"#HW locals\n"));
-							while (localstr.Len() > 0) {
-								line = localstr.BeforeFirst(L'\n', &tmprest);
-								localstr = tmprest;
-								if (!line.Mid(0, 7).IsSameAs(L"global "))
-									output.Write(line + _(L"\n"));
-							}
-							output.Write(_(L"#HW endlocals\n\n"));
-						}
-						for (k = 0; k < scpthand.script.entry_function_amount[j]; k++) {
-							output.Write(_(L"#HW newfunction ") + wxString::Format(wxT("%u"), scpthand.script.function_type[j][k]) + _(L"\n"));
-							output.Write(_(scpthand.func_str[j][k]) + _(L"\n\n"));
-						}
+					for (k = 0; k < scpthand.script.entry_function_amount[j]; k++) {
+						output.Write(_(L"#HW newfunction ") + wxString::Format(wxT("%u"), scpthand.script.func[j][k].function_type) + _(L"\n"));
+						output.Write(_(scpthand.func_str[j][k]) + _(L"\n\n"));
 					}
 				}
 			}
-			if (data.script[i]->current_language != curlang)
-				data.script[i]->ChangeSteamLanguage(curlang);
 			if (splitfile)
 				output.Close();
 		}
@@ -718,7 +1057,6 @@ int BatchExportDialog::ExportWorldScript(SaveSet* dataset, wxString path, bool* 
 
 int BatchExportDialog::ExportFieldScript(SaveSet* dataset, wxString path, bool* exportlist, bool splitfile, int addedinfo) {
 	FieldDataSet& data = *dataset->fieldset;
-	SteamLanguage lang, sublang, curlang;
 	wxString line, tmprest, localstr;
 	unsigned int i, j, k;
 	set<uint16_t> functypecheck;
@@ -738,81 +1076,41 @@ int BatchExportDialog::ExportFieldScript(SaveSet* dataset, wxString path, bool* 
 			if (addedinfo & BATCHING_SCRIPT_INFO_FILENAME)
 				output.Write(_(L" // ") + _(data.script_data[i]->name.str_nice));
 			output.Write(_(L"\n"));
-			curlang = data.script_data[i]->current_language;
-			for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
-				if (GetGameType() != GAME_TYPE_PSX) {
-					if (data.script_data[i]->multi_lang_script == NULL) {
-						output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[GetSteamLanguage()] + _(L"\n"));
-						lang = STEAM_LANGUAGE_AMOUNT;
-					} else if (!hades::STEAM_LANGUAGE_SAVE_LIST[lang]) {
-						continue;
-					} else if (data.script_data[i]->multi_lang_script->base_script_lang[lang] != lang && hades::STEAM_LANGUAGE_SAVE_LIST[data.script_data[i]->multi_lang_script->base_script_lang[lang]]) {
-						continue;
-					} else {
-						output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[lang] + _(L"\n"));
-						for (sublang = 0; sublang < STEAM_LANGUAGE_AMOUNT; sublang++)
-							if (sublang != lang && data.script_data[i]->multi_lang_script->base_script_lang[sublang] == lang && hades::STEAM_LANGUAGE_SAVE_LIST[sublang]) {
-								unsigned int langtextlinkcount = data.script_data[i]->multi_lang_script->base_script_text_id[sublang].size();
-								uint16_t btextid, textid;
-								output.Write(_(L"#HW languagelink ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[sublang] + _(L"\n"));
-								if (langtextlinkcount > 0) {
-									output.Write(_(L"#HW languagetextlink ") + wxString::Format(wxT("%u"), langtextlinkcount) + _(L"\n"));
-									for (j = 0; j < langtextlinkcount; j++) {
-										btextid = data.script_data[i]->multi_lang_script->base_script_text_id[sublang][j];
-										textid = data.script_data[i]->multi_lang_script->lang_script_text_id[sublang][j];
-										wxString line = wxString::Format(wxT("%u %u"), btextid, textid);
-										if ((addedinfo & BATCHING_SCRIPT_INFO_TEXT_LINK) && data.related_text[i] != NULL) {
-											line += _(L" // \"") + _(FF9String::RemoveOpcodes(data.related_text[i]->text[btextid].multi_lang_str[lang])) + _(L"\" = \"") + _(FF9String::RemoveOpcodes(data.related_text[i]->text[textid].multi_lang_str[sublang])) + _(L"\"");
-											line.Replace(_(L"\n"), _(L" "));
-										}
-										output.Write(line + _(L"\n"));
-									}
-									output.Write(_(L"\n"));
-								}
-							}
-						data.script_data[i]->ChangeSteamLanguage(lang);
-					}
-				} else {
-					lang = STEAM_LANGUAGE_AMOUNT;
-				}
-				ScriptEditHandler scpthand(*data.script_data[i], SCRIPT_TYPE_FIELD, dataset, NULL, data.related_text[i]);
-				scpthand.GenerateFunctionList();
-				scpthand.GenerateEntryNames();
-				scpthand.GenerateFunctionStrings(addedinfo & BATCHING_SCRIPT_INFO_ARGUMENT);
-				if (scpthand.script.global_data.amount > 0) {
-					output.Write(_(L"#HW globals\n"));
-					output.Write(scpthand.globalvar_str);
-					output.Write(_(L"#HW endglobals\n\n"));
-				}
-				for (j = 0; j < scpthand.script.entry_amount; j++) {
-					if (scpthand.script.entry_function_amount[j] > 0) {
-						output.Write(_(L"#HW newentry ") + wxString::Format(wxT("%u"), j) + _(L"\n"));
-						if (scpthand.script.local_data[j].allocate_amount > 0 || scpthand.script.local_data[j].amount > 0) {
-							localstr = scpthand.localvar_str[j];
-							output.Write(_(L"#HW locals\n"));
-							while (localstr.Len() > 0) {
-								line = localstr.BeforeFirst(L'\n', &tmprest);
-								localstr = tmprest;
-								if (!line.Mid(0, 7).IsSameAs(L"global "))
-									output.Write(line + _(L"\n"));
-							}
-							output.Write(_(L"#HW endlocals\n\n"));
+			ScriptEditHandler scpthand(*data.script_data[i], SCRIPT_TYPE_FIELD, dataset, NULL, data.related_text[i]);
+			scpthand.GenerateFunctionList();
+			scpthand.GenerateEntryNames();
+			scpthand.GenerateFunctionStrings(addedinfo & BATCHING_SCRIPT_INFO_ARGUMENT);
+			if (scpthand.script.global_data.amount > 0) {
+				output.Write(_(L"#HW globals\n"));
+				output.Write(scpthand.globalvar_str);
+				output.Write(_(L"#HW endglobals\n\n"));
+			}
+			for (j = 0; j < scpthand.script.entry_amount; j++) {
+				if (scpthand.script.entry_function_amount[j] > 0) {
+					output.Write(_(L"#HW newentry ") + wxString::Format(wxT("%u"), j) + _(L"\n"));
+					if (scpthand.script.local_data[j].allocate_amount > 0 || scpthand.script.local_data[j].amount > 0) {
+						localstr = scpthand.localvar_str[j];
+						output.Write(_(L"#HW locals\n"));
+						while (localstr.Len() > 0) {
+							line = localstr.BeforeFirst(L'\n', &tmprest);
+							localstr = tmprest;
+							if (!line.Mid(0, 7).IsSameAs(L"global "))
+								output.Write(line + _(L"\n"));
 						}
-						functypecheck.clear();
-						for (k = 0; k < scpthand.script.entry_function_amount[j]; k++) {
-							if (functypecheck.count(scpthand.script.function_type[j][k]) > 0) {
-								output.Write(wxString::Format(wxT("// Duplicated function %u is discarded\n\n"), scpthand.script.function_type[j][k]));
-							} else {
-								output.Write(_(L"#HW newfunction ") + wxString::Format(wxT("%u"), scpthand.script.function_type[j][k]) + _(L"\n"));
-								output.Write(_(scpthand.func_str[j][k]) + _(L"\n\n"));
-								functypecheck.insert(scpthand.script.function_type[j][k]);
-							}
+						output.Write(_(L"#HW endlocals\n\n"));
+					}
+					functypecheck.clear();
+					for (k = 0; k < scpthand.script.entry_function_amount[j]; k++) {
+						if (functypecheck.count(scpthand.script.func[j][k].function_type) > 0) {
+							output.Write(wxString::Format(wxT("// Duplicated function %u is discarded\n\n"), scpthand.script.func[j][k].function_type));
+						} else {
+							output.Write(_(L"#HW newfunction ") + wxString::Format(wxT("%u"), scpthand.script.func[j][k].function_type) + _(L"\n"));
+							output.Write(_(scpthand.func_str[j][k]) + _(L"\n\n"));
+							functypecheck.insert(scpthand.script.func[j][k].function_type);
 						}
 					}
 				}
 			}
-			if (data.script_data[i]->current_language != curlang)
-				data.script_data[i]->ChangeSteamLanguage(curlang);
 			if (splitfile)
 				output.Close();
 			LoadingDialogUpdate(i + 1);
@@ -821,10 +1119,9 @@ int BatchExportDialog::ExportFieldScript(SaveSet* dataset, wxString path, bool* 
 	return 0;
 }
 
-LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, int scripttype, wxString filescript, bool fatalwarning, bool* datamodif) {
+LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, set<int>& sectionmodified, int scripttype, wxString filescript, bool fatalwarning, bool* datamodif) {
 	wxString line, linebuf, errstr, token, codevalue, globalcode, localcode, inputstr = filescript;
 	int filescripttype, currentbattle = -1, currententry = -1, currentfunction = -1;
-	SteamLanguage lang = GetSteamLanguage(), linklang = STEAM_LANGUAGE_NONE;
 	unsigned int i, codelinenum, linenum = 0;
 	bool updatecur = false, langlinkblock = false, localblock = false, globalblock = false;
 	bool end, tokencheck, filetypeok = false, nothingdone = true;
@@ -843,7 +1140,7 @@ LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, int scripttype, wxSt
 		linebuf = line;
 		token = FB_GetNextWord(linebuf);
 		if (token.IsSameAs(_(L"#HW")) || end) {
-			if (currentfunction >= 0 && (lang == GetSteamLanguage() || (current_handler != NULL && current_handler->script.multi_lang_script != NULL && current_handler->script.multi_lang_script->is_loaded[lang]))) {
+			if (currentfunction >= 0) {
 				current_handler->currentvar_str = globalcode + _(L"\n") + localcode;
 				tmplog = current_handler->ParseFunction(codevalue, currententry, currentfunction, codelinenum);
 				entrysizegap = current_script_ptr->GetExtraSize() + current_handler->script.entry_size[currententry] - current_handler->GetParsedEntryNewSize();
@@ -906,13 +1203,13 @@ LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, int scripttype, wxSt
 						}
 					}
 					if (filescripttype == SCRIPT_TYPE_FIELD && !dataset->sectionloaded[DATA_SECTION_FIELD]) {
-						res.AddError(HADES_STRING_BATCH_FIELD_NOT_LOADED);
+						res.AddError(wxString::Format(wxT(HADES_STRING_BATCH_NOT_LOADED), L"Fields").ToStdWstring());
 						return res;
 					} else if (filescripttype == SCRIPT_TYPE_BATTLE && !dataset->sectionloaded[DATA_SECTION_ENMY]) {
-						res.AddError(HADES_STRING_BATCH_ENEMY_NOT_LOADED);
+						res.AddError(wxString::Format(wxT(HADES_STRING_BATCH_NOT_LOADED), L"Enemies").ToStdWstring());
 						return res;
 					} else if (filescripttype == SCRIPT_TYPE_WORLD && !dataset->sectionloaded[DATA_SECTION_WORLD_MAP]) {
-						res.AddError(HADES_STRING_BATCH_WORLD_NOT_LOADED);
+						res.AddError(wxString::Format(wxT(HADES_STRING_BATCH_NOT_LOADED), L"World Maps").ToStdWstring());
 						return res;
 					}
 					filetypeok = true;
@@ -928,11 +1225,6 @@ LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, int scripttype, wxSt
 					res.AddError(errstr.ToStdWstring());
 					return res;
 				}
-				if (linklang != STEAM_LANGUAGE_NONE && !token.IsSameAs(_(L"languagetextlink"))) {
-					if (current_handler != NULL)
-						current_handler->script.LinkLanguageScripts(linklang, lang, langtextid, baselangtextid);
-					linklang = STEAM_LANGUAGE_NONE;
-				}
 				if (token.IsSameAs(_(L"endglobals")) && !globalblock) {
 					errstr.Printf(wxT(HADES_STRING_BATCH_SCRIPT_NOGLOBALS), linenum);
 					res.AddWarning(errstr.ToStdWstring());
@@ -943,8 +1235,6 @@ LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, int scripttype, wxSt
 				langlinkblock = globalblock = localblock = false;
 				if (token.IsSameAs(_(L"fileid"))) {
 					if (updatecur) {
-						if (current_handler->script.multi_lang_script != NULL && current_handler->script.current_language != GetSteamLanguage())
-							current_handler->script.ChangeSteamLanguage(GetSteamLanguage());
 						*current_script_ptr = current_handler->script;
 						current_script_ptr->MarkDataModified();
 						updatecur = false;
@@ -1038,13 +1328,13 @@ LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, int scripttype, wxSt
 						currentfunction = -1;
 					} else if (currententry >= 0) {
 						for (i = 0; i < current_handler->script.entry_function_amount[currententry]; i++)
-							if (current_handler->script.function_type[currententry][i] == value) {
+							if (current_handler->script.func[currententry][i].function_type == value) {
 								currentfunction = i;
 								break;
 							}
 						if (i == current_handler->script.entry_function_amount[currententry]) {
 							for (i = 0; i < current_handler->script.entry_function_amount[currententry]; i++)
-								if (current_handler->script.function_type[currententry][i] > value) {
+								if (current_handler->script.func[currententry][i].function_type > value) {
 									if (i > 0)
 										i--;
 									break;
@@ -1060,37 +1350,14 @@ LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, int scripttype, wxSt
 				} else if (token.IsSameAs(_(L"locals"))) {
 					localblock = true;
 				} else if (token.IsSameAs(_(L"languagetextlink"))) {
-					langlinkblock = true;
+					errstr.Printf(wxT(HADES_STRING_BATCH_UNSUPPORT_ANYMORE), linenum, token);
+					res.AddWarning(errstr.ToStdWstring());
 				} else if (token.IsSameAs(_(L"language"))) {
-					token = FB_GetNextWord(linebuf);
-					for (i = 0; i < STEAM_LANGUAGE_AMOUNT; i++)
-						if (HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[i].IsSameAs(token)) {
-							lang = i;
-							if (current_handler != NULL && current_handler->script.multi_lang_script != NULL) {
-								current_handler->script.LinkLanguageScripts(lang, lang);
-								current_handler->script.ChangeSteamLanguage(lang);
-								if (current_handler->script.multi_lang_script->is_loaded[lang])
-									current_handler->script.multi_lang_script->is_modified[lang] = true;
-							}
-							break;
-						}
-					if (i >= STEAM_LANGUAGE_AMOUNT) {
-						errstr.Printf(wxT(HADES_STRING_BATCH_INVALID_LANGUAGE), linenum, token);
-						res.AddWarning(errstr.ToStdWstring());
-					}
+					errstr.Printf(wxT(HADES_STRING_BATCH_UNSUPPORT_ANYMORE), linenum, token);
+					res.AddWarning(errstr.ToStdWstring());
 				} else if (token.IsSameAs(_(L"languagelink"))) {
-					baselangtextid.clear();
-					langtextid.clear();
-					token = FB_GetNextWord(linebuf);
-					for (i = 0; i < STEAM_LANGUAGE_AMOUNT; i++)
-						if (HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[i].IsSameAs(token)) {
-							linklang = i;
-							break;
-						}
-					if (i >= STEAM_LANGUAGE_AMOUNT) {
-						errstr.Printf(wxT(HADES_STRING_BATCH_INVALID_LANGUAGE), linenum, token);
-						res.AddWarning(errstr.ToStdWstring());
-					}
+					errstr.Printf(wxT(HADES_STRING_BATCH_UNSUPPORT_ANYMORE), linenum, token);
+					res.AddWarning(errstr.ToStdWstring());
 				}
 			}
 		} else {
@@ -1118,8 +1385,12 @@ LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, int scripttype, wxSt
 		}
 	}
 	if (updatecur) {
-		if (current_handler->script.multi_lang_script != NULL && current_handler->script.current_language != GetSteamLanguage())
-			current_handler->script.ChangeSteamLanguage(GetSteamLanguage());
+		if (filescripttype == SCRIPT_TYPE_FIELD)
+			sectionmodified.insert(DATA_SECTION_FIELD);
+		else if (filescripttype == SCRIPT_TYPE_BATTLE)
+			sectionmodified.insert(DATA_SECTION_ENMY);
+		else if (filescripttype == SCRIPT_TYPE_WORLD)
+			sectionmodified.insert(DATA_SECTION_WORLD_MAP);
 		*current_script_ptr = current_handler->script;
 		current_script_ptr->MarkDataModified();
 		updatecur = false;
@@ -1212,13 +1483,16 @@ int BatchExportDialog::ShowModal(int type, SaveSet* datas, wxArrayString objlist
 	m_exportlist->Append(objlist);
 	for (i = 0; i < objlist.Count(); i++)
 		m_exportlist->Check(i);
-	if (type == 3 || type == 4 || type == 5) {
+	if (type < 100) {
+		m_splitfile->SetValue(false);
+		m_splitfilepanel->Show(type == 1 || type == 3 || type == 5);
+	} else if (type >= 100 && type < 200) {
 		m_splitfilepanel->Show(false);
-		m_scriptpanel->Show();
-	} else if (type == 10) {
+		m_scriptpanel->Show(true);
+	} else if (type == 200) {
 		m_splitfilepanel->Show(false);
-		m_backgroundpanel->Show();
-	} else if (type == 11) {
+		m_backgroundpanel->Show(true);
+	} else if (type == 300) {
 		m_splitfilepanel->Show(false);
 	}
 	return wxDialog::ShowModal();
@@ -1226,17 +1500,21 @@ int BatchExportDialog::ShowModal(int type, SaveSet* datas, wxArrayString objlist
 
 void BatchExportDialog::OnFilePick(wxFileDirPickerEvent& event) {
 	wxString fname = event.GetPath();
-	if (datatype < 10) {
-		wxCheckBox* splitbox = (datatype == 1 || datatype == 2 ? m_splitfile : m_scriptsplitfile);
+	if (datatype < 200) {
+		wxCheckBox* splitbox = datatype >= 100 && datatype < 200 ? m_scriptsplitfile : m_splitfile;
 		bool suffix = fname.Right(4).IsSameAs(_(L".txt"));
 		if (splitbox->IsChecked() && suffix)
 			m_filepicker->SetPath(fname.Mid(0, fname.Len() - 4));
 		else if (!splitbox->IsChecked() && !suffix)
 			m_filepicker->SetPath(fname + _(L".txt"));
-	} else if (datatype < 20) {
+	} else if (datatype < 300) {
 		bool suffix = fname.Right(5).IsSameAs(_(L".tiff"));
 		if (suffix)
 			m_filepicker->SetPath(fname.Mid(0, fname.Len() - 5));
+	} else if (datatype < 400) {
+		bool suffix = fname.Right(4).IsSameAs(_(L".obj"));
+		if (suffix)
+			m_filepicker->SetPath(fname.Mid(0, fname.Len() - 4));
 	}
 }
 
@@ -1286,21 +1564,57 @@ void BatchExportDialog::OnButtonClick(wxCommandEvent& event) {
 			ExportText(*dataset->textset, m_filepicker->GetPath(), exportlist, m_splitfile->IsChecked());
 			break;
 		case 2:
-			ExportSpecialText(*dataset->ffuiset->special_text, m_filepicker->GetPath(), exportlist, m_splitfile->IsChecked());
+			ExportWorldTexts(*dataset->worldset, m_filepicker->GetPath());
 			break;
 		case 3:
-			ExportEnemyScript(dataset, m_filepicker->GetPath(), exportlist, m_scriptsplitfile->IsChecked(), BATCHING_SCRIPT_INFO_FILENAME | BATCHING_SCRIPT_INFO_TEXT_LINK | (m_scriptcomment->IsChecked() ? BATCHING_SCRIPT_INFO_ARGUMENT : 0));
+			ExportBattleTexts(*dataset->enemyset, m_filepicker->GetPath(), exportlist, m_splitfile->IsChecked());
 			break;
 		case 4:
-			ExportWorldScript(dataset, m_filepicker->GetPath(), exportlist, m_scriptsplitfile->IsChecked(), BATCHING_SCRIPT_INFO_FILENAME | BATCHING_SCRIPT_INFO_TEXT_LINK | (m_scriptcomment->IsChecked() ? BATCHING_SCRIPT_INFO_ARGUMENT : 0));
+			ExportWorldPlaceNames(*dataset->worldset->world_data, m_filepicker->GetPath());
 			break;
 		case 5:
-			ExportFieldScript(dataset, m_filepicker->GetPath(), exportlist, m_scriptsplitfile->IsChecked(), BATCHING_SCRIPT_INFO_FILENAME | BATCHING_SCRIPT_INFO_TEXT_LINK | (m_scriptcomment->IsChecked() ? BATCHING_SCRIPT_INFO_ARGUMENT : 0));
+			ExportSpecialText(*dataset->ffuiset->special_text, m_filepicker->GetPath(), exportlist, m_splitfile->IsChecked());
+			break;
+		case 6:
+			ExportCardNames(*dataset->cardset, m_filepicker->GetPath());
+			break;
+		case 7:
+			ExportLocalizationEntries(dataset->ffuiset->special_text->text_block[SPECIAL_TEXT_LOCALIZATION_INDEX_STEAM], m_filepicker->GetPath());
+			break;
+		case 8:
+			ExportSpellNames(*dataset->spellset, m_filepicker->GetPath());
+			break;
+		case 9:
+			ExportSupportNames(*dataset->supportset, m_filepicker->GetPath());
 			break;
 		case 10:
-			ExportImageBackground(*dataset->fieldset, m_filepicker->GetPath(), exportlist, m_mergetile->IsChecked(), m_exportorder->IsChecked(), m_languagetitle->GetSelection() - 1);
+			ExportCommandNames(*dataset->cmdset, m_filepicker->GetPath());
 			break;
 		case 11:
+			ExportItemNames(*dataset->itemset, m_filepicker->GetPath());
+			break;
+		case 12:
+			ExportKeyItemNames(*dataset->itemset, m_filepicker->GetPath());
+			break;
+		case 13:
+			ExportFieldNames(*dataset->fieldset, m_filepicker->GetPath());
+			break;
+		case 14:
+			ExportCharacterNames(*dataset->statset, m_filepicker->GetPath());
+			break;
+		case 100:
+			ExportEnemyScript(dataset, m_filepicker->GetPath(), exportlist, m_scriptsplitfile->IsChecked(), BATCHING_SCRIPT_INFO_FILENAME | BATCHING_SCRIPT_INFO_TEXT_LINK | (m_scriptcomment->IsChecked() ? BATCHING_SCRIPT_INFO_ARGUMENT : 0));
+			break;
+		case 101:
+			ExportWorldScript(dataset, m_filepicker->GetPath(), exportlist, m_scriptsplitfile->IsChecked(), BATCHING_SCRIPT_INFO_FILENAME | BATCHING_SCRIPT_INFO_TEXT_LINK | (m_scriptcomment->IsChecked() ? BATCHING_SCRIPT_INFO_ARGUMENT : 0));
+			break;
+		case 102:
+			ExportFieldScript(dataset, m_filepicker->GetPath(), exportlist, m_scriptsplitfile->IsChecked(), BATCHING_SCRIPT_INFO_FILENAME | BATCHING_SCRIPT_INFO_TEXT_LINK | (m_scriptcomment->IsChecked() ? BATCHING_SCRIPT_INFO_ARGUMENT : 0));
+			break;
+		case 200:
+			ExportImageBackground(*dataset->fieldset, m_filepicker->GetPath(), exportlist, m_mergetile->IsChecked(), m_exportorder->IsChecked(), m_languagetitle->GetSelection() - 1);
+			break;
+		case 300:
 			ExportWalkmesh(*dataset->fieldset, m_filepicker->GetPath(), exportlist);
 			break;
 		}
@@ -1327,27 +1641,29 @@ int BatchImportDialog::ShowModal(int type, SaveSet* datas, bool isjapan) {
 	dataset = datas;
 	japanversion = isjapan;
 	datamodified = false;
-	if (type != 1 || GetGameType() != GAME_TYPE_PSX) {
+	datasectionmodified.clear();
+	if (type != 1 || GetGameType() != GAME_TYPE_PSX)
 		m_adjustsizepanel->Show(false);
-	}
 	return wxDialog::ShowModal();
 }
 
 void BatchImportDialog::OnFilePick(wxFileDirPickerEvent& event) {
 	wxFileName fname = m_filepicker->GetFileName();
 	wxString fnamestr = event.GetPath();
-	unsigned int i = 0;
 	m_importlist->Clear();
-	if (fname.IsFileReadable()) {
+	if (fname.IsFileReadable() && !fname.IsDir() && !wxDir::Exists(fnamestr)) {
 		m_importlist->Append(fname.GetFullName());
 		m_importlist->Check(0);
 	} else {
-		wxFileName tmpname = wxFileName(fnamestr + wxString::Format(wxT("_%u.txt"), i + 1));
-		while (tmpname.IsFileReadable()) {
-			m_importlist->Append(tmpname.GetFullName());
-			m_importlist->Check(i);
-			i++;
-			tmpname = wxFileName(fnamestr + wxString::Format(wxT("_%u.txt"), i + 1));
+		wxArrayString filelist;
+		wxString dirpath = wxFileName(fnamestr).GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR);
+		wxString basename = wxFileName(fnamestr).GetName();
+		wxDir::GetAllFiles(dirpath, &filelist, basename + _(L"*.txt"), wxDIR_FILES);
+		for (unsigned int i = 0; i < filelist.GetCount(); i++) {
+			if (wxFileName(filelist[i]).IsFileReadable()) {
+				m_importlist->Append(wxFileName(filelist[i]).GetFullName());
+				m_importlist->Check(i);
+			}
 		}
 	}
 }
@@ -1374,24 +1690,22 @@ void BatchImportDialog::OnSelectRightClickMenu(wxCommandEvent& event) {
 
 void BatchImportDialog::OnButtonClick(wxCommandEvent& event) {
 	int id = event.GetId();
-	unsigned int i;
 	bool ret = true;
-	bool shownlog = false;
-	bool haschecked = false;
 	if (id == wxID_OK) {
-		for (i = 0; i < m_importlist->GetCount(); i++) {
+		bool shownlog = false;
+		bool haschecked = false;
+		for (unsigned int i = 0; i < m_importlist->GetCount(); i++) {
 			if (m_importlist->IsChecked(i)) {
 				haschecked = true;
-				wxString fname = m_filepicker->GetPath();
-				if (!wxFileName(fname).IsFileReadable())
-					fname = fname + wxString::Format(wxT("_%u.txt"), i + 1);
+				wxString dirpath = wxFileName(m_filepicker->GetPath()).GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR);
+				wxString fname = dirpath + m_importlist->GetString(i);
 				wxFile input(fname);
 				wxString filestr = _(L"");
 				if (input.IsOpened())
 					input.ReadAll(&filestr);
 				switch (datatype) {
 				case 1: {
-					LogStruct log = ImportText(*dataset->textset, filestr, m_adjustsize->IsChecked(), japanversion, m_fatalwarning->IsChecked());
+					LogStruct log = ImportText(dataset, datasectionmodified, filestr, m_adjustsize->IsChecked(), japanversion, m_fatalwarning->IsChecked());
 					if (log.ok) {
 						m_importlist->Check(i, false);
 						datamodified = true;
@@ -1406,24 +1720,8 @@ void BatchImportDialog::OnButtonClick(wxCommandEvent& event) {
 					}
 					break;
 				}
-				case 2: {
-					LogStruct log = ImportSpecialText(*dataset->ffuiset->special_text, filestr, m_fatalwarning->IsChecked());
-					if (log.ok) {
-						m_importlist->Check(i, false);
-						datamodified = true;
-					} else {
-						ret = false;
-					}
-					if (log.warning_amount > 0 || log.error_amount > 0) {
-						shownlog = true;
-						LogDialog dial(this, log);
-						dial.SetTitle(dial.GetTitle() + _(L" : ") + wxFileName(fname).GetName());
-						dial.ShowModal();
-					}
-					break;
-				}
-				case 3: {
-					LogStruct log = ImportScript(dataset, SCRIPT_TYPE_BATTLE, filestr, m_fatalwarning->IsChecked(), &datamodified);
+				case 100: {
+					LogStruct log = ImportScript(dataset, datasectionmodified, SCRIPT_TYPE_BATTLE, filestr, m_fatalwarning->IsChecked(), &datamodified);
 					if (log.ok)
 						m_importlist->Check(i, false);
 					else
@@ -1436,8 +1734,8 @@ void BatchImportDialog::OnButtonClick(wxCommandEvent& event) {
 					}
 					break;
 				}
-				case 4: {
-					LogStruct log = ImportScript(dataset, SCRIPT_TYPE_WORLD, filestr, m_fatalwarning->IsChecked(), &datamodified);
+				case 101: {
+					LogStruct log = ImportScript(dataset, datasectionmodified, SCRIPT_TYPE_WORLD, filestr, m_fatalwarning->IsChecked(), &datamodified);
 					if (log.ok)
 						m_importlist->Check(i, false);
 					else
@@ -1450,8 +1748,8 @@ void BatchImportDialog::OnButtonClick(wxCommandEvent& event) {
 					}
 					break;
 				}
-				case 5: {
-					LogStruct log = ImportScript(dataset, SCRIPT_TYPE_FIELD, filestr, m_fatalwarning->IsChecked(), &datamodified);
+				case 102: {
+					LogStruct log = ImportScript(dataset, datasectionmodified, SCRIPT_TYPE_FIELD, filestr, m_fatalwarning->IsChecked(), &datamodified);
 					if (log.ok)
 						m_importlist->Check(i, false);
 					else
@@ -1467,13 +1765,13 @@ void BatchImportDialog::OnButtonClick(wxCommandEvent& event) {
 				}
 			}
 		}
-	}
-	if (!shownlog) {
-		LogStruct log;
-		if (!haschecked)
-			log.AddError(_(HADES_STRING_BATCH_NOTHING).ToStdWstring());
-		LogDialog dial(this, log);
-		dial.ShowModal();
+		if (!shownlog) {
+			LogStruct log;
+			if (!haschecked)
+				log.AddError(_(HADES_STRING_BATCH_NOTHING).ToStdWstring());
+			LogDialog dial(this, log);
+			dial.ShowModal();
+		}
 	}
 	if (ret)
 		EndModal(id);

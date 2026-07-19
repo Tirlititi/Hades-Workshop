@@ -419,6 +419,8 @@ int SpellStatusDialog::ShowModal(CDDataStruct* data, StatusSetStruct& status) {
 	status_list = status.status_list;
 	status_set_id = status.id;
 	m_baseint->SetRange(0, cddata->gametype == GAME_TYPE_STEAM && cddata->config.dll_usage != 0 ? INT32_MAX : 31);
+	m_statuscustomformat->Enable(cddata->gametype == GAME_TYPE_STEAM && cddata->config.dll_usage != 0);
+	m_statuscustomfields->Enable(cddata->gametype == GAME_TYPE_STEAM && cddata->config.dll_usage != 0);
 	for (auto st = status_list.begin(); st != status_list.end(); st++)
 		m_list->Append(StatusDisplayName(*st), new int[1]{ *st });
 	return SpellStatusWindow::ShowModal();
@@ -568,6 +570,9 @@ int CharacterParameterDialog::ShowModal(CharBattleParameterStruct& btl, InitialS
 	m_attacksfx->SetValue(btl.attack_sfx);
 	m_attacksound1->SetValue(btl.attack_sound[0]);
 	m_attacksound2->SetValue(btl.attack_sound[1]);
+	m_attacksound1->Enable(!btl.attack_sound_disabled);
+	m_attacksound2->Enable(!btl.attack_sound_disabled);
+	m_attacksounddisable->SetValue(btl.attack_sound_disabled);
 	m_weaponbone->SetValue(btl.weapon_bone);
 	MACRO_DISPLAY_STATUS_PARAM(0)
 	MACRO_DISPLAY_STATUS_PARAM(1)
@@ -606,7 +611,8 @@ int CharacterParameterDialog::ShowModal(CharBattleParameterStruct& btl, InitialS
 	m_listanimchoice.resize(BATTLE_MOTION_AMOUNT);
 	m_listanimname.resize(BATTLE_MOTION_AMOUNT);
 	for (i = 0; i < BATTLE_MOTION_AMOUNT; i++) {
-		wxStaticText* label = new wxStaticText(m_animscrolled, wxID_ANY, _(SPELLANIM_ARGUMENT_STRING[saatindex + i].label), wxDefaultPosition, wxDefaultSize, 0);
+		wxStaticText* label = new wxStaticText(m_animscrolled, wxID_ANY, _(SPELLANIM_ARGUMENT_STRING[saatindex + i].label) + _(L"\n") + _(ANIMATION_INDEX_EXTRA_INFO[i].first), wxDefaultPosition, wxDefaultSize, 0);
+		label->SetToolTip(_(ANIMATION_INDEX_EXTRA_INFO[i].second));
 		m_listanimchoice[i] = new wxChoice(m_animscrolled, wxID_ANY, wxDefaultPosition, wxDefaultSize, animlabel);
 		m_listanimname[i] = new wxTextCtrl(m_animscrolled, wxID_ANY, _(btl.anim[i]), wxDefaultPosition, wxDefaultSize, 0);
 		m_animsizer->Add(label, 0, wxALL, 5);
@@ -646,6 +652,7 @@ void CharacterParameterDialog::ApplyModifications(CharBattleParameterStruct& btl
 	btl.attack_sfx = m_attacksfx->GetValue();
 	btl.attack_sound[0] = m_attacksound1->GetValue();
 	btl.attack_sound[1] = m_attacksound2->GetValue();
+	btl.attack_sound_disabled = m_attacksounddisable->IsChecked();
 	btl.weapon_bone = m_weaponbone->GetValue();
 	MACRO_RETRIEVE_STATUS_PARAM(0)
 	MACRO_RETRIEVE_STATUS_PARAM(1)
@@ -760,6 +767,12 @@ void CharacterParameterDialog::OnAnimKey(wxKeyEvent& event) {
 	event.Skip();
 }
 
+void CharacterParameterDialog::OnWeaponSoundCheck(wxCommandEvent& event) {
+	bool enablesounds = !event.GetInt();
+	m_attacksound1->Enable(enablesounds);
+	m_attacksound2->Enable(enablesounds);
+}
+
 void CharacterParameterDialog::OnButtonClick(wxCommandEvent& event) {
 	int id = event.GetId();
 	if (id == wxID_OK || id == wxID_CANCEL) {
@@ -777,7 +790,7 @@ EnemyResourceDialog::EnemyResourceDialog(wxWindow* parent) : EnemyResourceWindow
 
 int EnemyResourceDialog::ShowModal(EnemyStatDataStruct& es, BattleDataStruct& bd) {
 	unsigned int i, j;
-	unsigned int maxtextamount = es.parent->parent->text[es.parent->id]->amount - es.parent->stat_amount - es.parent->spell_amount;
+	unsigned int maxtextamount = es.parent->parent->text[es.parent->id]->text.size() - es.parent->stat_amount - es.parent->spell_amount;
 	for (i = 0; i < es.parent->stat_amount; i++)
 		if (i != es.id)
 			maxtextamount -= es.parent->stat[i].text_amount;

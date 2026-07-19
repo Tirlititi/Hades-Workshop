@@ -113,6 +113,7 @@ private:
 	void OnChangeModel(wxCommandEvent& event);
 	void OnAnimChoice(wxCommandEvent& event);
 	void OnAnimKey(wxKeyEvent& event);
+	void OnWeaponSoundCheck(wxCommandEvent& event);
 	void OnButtonClick(wxCommandEvent& event);
 };
 

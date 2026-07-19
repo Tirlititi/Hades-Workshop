@@ -64,7 +64,7 @@ void SpeedTextOp(TextEditDialogBase* dialog, uint8_t* args) {
 	}
 }
 void PartyNTextOp(TextEditDialogBase* dialog, uint8_t* args) {
-	dialog->preview_ctrl->WriteText(HADES_STRING_CHARACTER_DEFAULT_NAME[args[0]-0x10]);
+	dialog->preview_ctrl->WriteText(HADES_STRING_CHARACTER_DEFAULT_NAME[args[0] - 0x10][STEAM_LANGUAGE_US]);
 }
 void ColorTextOp(TextEditDialogBase* dialog, uint8_t* args) {
 	static uint8_t GTE_COLORS[][3] = { {255,255,255}, {220,220,220}, {127,127,127}, {255,0,0}, {255,255,0}, {0,127,255}, {255,0,127}, {0,255,0}, {0,0,0}, {255,0,0} };
@@ -106,32 +106,33 @@ void (*TextOp[128])(TextEditDialogBase* dialog, uint8_t* args) = {
 };
 
 
-TextEditDialog::TextEditDialog(wxWindow* parent, FF9String& str, unsigned int extrasize, int style, CharmapDataStruct* chmap, CharmapDataStruct* chmapext, int sizex, int sizey, uint16_t formatamount, TextFormatStruct* format) :
+TextEditDialog::TextEditDialog(wxWindow* parent, FF9String& str, unsigned int extrasize, int style, CharmapDataStruct* chmap, CharmapDataStruct* chmapext, int sizex, int sizey, uint16_t formatamount, vector<TextFormatStruct>* format) :
 	TextEditWindow(parent),
-	TextEditDialogBase(str,new wxTimer(this),m_richtextctrl,style),
+	TextEditDialogBase(str, new wxTimer(this), m_richtextctrl, style),
 	charmap(chmap),
 	charmap_Ext(chmapext),
 	op_dial(NULL) {
-	max_length = str.length+extrasize;
+	max_length = str.length + extrasize;
 	format_amount = formatamount;
 	format_data = new TextFormatStruct[format_amount];
 	format_removed = new bool[format_amount];
-	memcpy(format_data,format,format_amount*sizeof(TextFormatStruct));
-	for (unsigned int i=0;i<format_amount;i++)
+	if (format != NULL)
+		memcpy(format_data, format->data(), format_amount * sizeof(TextFormatStruct));
+	for (unsigned int i = 0; i < format_amount; i++)
 		format_removed[i] = false;
-	m_opcodeadd->Enable(text.length<max_length);
+	m_opcodeadd->Enable(text.length < max_length);
 	m_textcharmap->ChangeValue(HADES_STRING_PRINTABLE_CHAR_CHARMAP);
-	if (sizex>=0)
+	if (sizex >= 0)
 		m_sizex->SetValue(sizex);
 	else
 		m_sizex->Enable(false);
-	if (sizey>=0)
+	if (sizey >= 0)
 		m_sizey->SetValue(sizey);
 	else
 		m_sizey->Enable(false);
-	CalculateBestSize(sizex<0,sizey<0);
+	CalculateBestSize(sizex < 0, sizey < 0);
 	m_buttonbubble->Enable(m_sizex->IsEnabled() || m_sizey->IsEnabled());
-	Connect(wxEVT_TIMER,wxTimerEventHandler(TextEditDialog::OnTimer),NULL,this);
+	Connect(wxEVT_TIMER, wxTimerEventHandler(TextEditDialog::OnTimer), NULL, this);
 }
 
 TextEditDialog::~TextEditDialog() {
@@ -758,17 +759,17 @@ void ChooOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
 void EndnOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
 }
 void ImmeOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
-	dialog->display_immediate = op==6;
+	dialog->display_immediate = op == 6;
 	while (dialog->display_immediate && dialog->ProcessPreviewText()) {}
 }
 void SpedOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
 	int speed = wxAtoi(args.GetNextToken());
-	if (speed<0)	dialog->wait = DEFAULT_SPEED;
-	else			dialog->wait = speed!=0 ? 320/speed : 0xFFFF;
+	if (speed < 0)	dialog->wait = DEFAULT_SPEED;
+	else			dialog->wait = speed != 0 ? 320 / speed : 0xFFFF;
 	dialog->timer->Start(dialog->wait);
 }
 void PartySteamOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
-	dialog->preview_ctrl->WriteText(HADES_STRING_CHARACTER_DEFAULT_NAME[op-8]);
+	dialog->preview_ctrl->WriteText(HADES_STRING_CHARACTER_DEFAULT_NAME[op - 8][GetSteamLanguage() != STEAM_LANGUAGE_NONE ? GetSteamLanguage() : STEAM_LANGUAGE_US]);
 }
 void HshdOp(TextSteamEditDialog* dialog, int op, wxStringTokenizer& args) {
 //	dialog->preview_style.SetFlags(dialog->preview_style.GetFlags() | wxTEXT_ATTR_EFFECTS);
@@ -1038,8 +1039,8 @@ bool TextSteamEditDialog::ProcessPreviewText() {
 					}
 				}
 			}
-			if (!iscolor)
-				for (i = 0; i < HADES_STRING_TEXT_STEAM_OPCODE.size(); i++)
+			if (!iscolor) {
+				for (i = 0; i < HADES_STRING_TEXT_STEAM_OPCODE.size(); i++) {
 					if (opcode.IsSameAs(_(HADES_STRING_TEXT_STEAM_OPCODE[i].id))) {
 						TextSteamOp[i](this, i, opcodeargs);
 						break;
@@ -1047,9 +1048,25 @@ bool TextSteamEditDialog::ProcessPreviewText() {
 						TextSteamOp[i](this, i - TEXT_STEAM_OPCODE_CLOSING_TAG + G_N_ELEMENTS(HADES_STRING_TEXT_STEAM_OPCODE), opcodeargs);
 						break;
 					}
-					printnextchar = !must_reset_timer;
-		} else
+				}
+				if (i >= HADES_STRING_TEXT_STEAM_OPCODE.size() && GetGameType() != GAME_TYPE_PSX && GetGameSaveSet() != NULL && GetGameSaveSet()->sectionloaded[DATA_SECTION_STAT]) {
+					vector<InitialStatDataStruct>& islist = GetGameSaveSet()->statset->initial_stat;
+					for (i = 0; i < islist.size(); i++) {
+						if (opcode.IsSameAs(_(islist[i].name_keyword))) {
+							SteamLanguage lang = GetSteamLanguage() != STEAM_LANGUAGE_NONE ? GetSteamLanguage() : STEAM_LANGUAGE_US;
+							if (islist[i].default_name.multi_lang_init[lang])
+								preview_ctrl->WriteText(islist[i].default_name.multi_lang_str[lang]);
+							else
+								preview_ctrl->WriteText(islist[i].default_name.str_nice);
+							break;
+						}
+					}
+				}
+			}
+			printnextchar = !must_reset_timer;
+		} else {
 			preview_ctrl->WriteText(_(text.str[str_pos - 1]));
+		}
 	}
 	if (str_pos >= len) {
 		if (!must_reset_timer)
@@ -1104,30 +1121,16 @@ int TextSteamEditDialog::GetBubbleSizeY() {
 	return bubble_size_y*LINE_HEIGHT+4;
 }
 
-void TextSteamEditDialog::CalculateBestSize(SteamLanguage lang) {
-	unsigned int i, j, multilangindex;
-	bool addwdth = false;
-	wxString textstr;
-	if (lang == GetSteamLanguage()) {
-		textstr = m_textctrl->GetValue();
-	} else {
-		for (i = 0; i + 1 < STEAM_LANGUAGE_AMOUNT; i++)
-			if (multilang[i] == lang) {
-				multilangindex = i;
-				break;
-			}
-		if (i + 1 >= STEAM_LANGUAGE_AMOUNT)
-			return;
-		textstr = multilangctrl[multilangindex]->GetValue();
-	}
-	unsigned int linenum = 0, linecount = 0;
-	vector<uint16_t> sizex(1, 0);
+void TextSteamEditDialog::CalculateTextBestSize(wxWindow* dcsupport, wxString& textstr, unsigned int* textsizex, unsigned int* textlinecount) {
+	unsigned int currentsizex = 0, linecount = 0;
+	unsigned int i, j, linenum = 0;
+	vector<unsigned int> sizex(1, 0);
 	vector< vector<int> > sizedop(1);
-	uint16_t currentsizex = 0;
+	bool addwdth = false;
 	size_t opcodelen;
 	// DEBUG: Arial font size is not a very good approximation of FF9 font, especially for japanese characters
 	wxFont textfont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, _(L"Arial"));
-	wxClientDC dc(this);
+	wxClientDC dc(dcsupport);
 	dc.SetFont(textfont);
 	for (i = 0; i < textstr.Len(); i++) {
 		if (textstr[i] == L'[') {
@@ -1230,7 +1233,7 @@ void TextSteamEditDialog::CalculateBestSize(SteamLanguage lang) {
 					emptywdth = false;
 				else
 					wdthcode += _(L",");
-				wdthcode += wxString::Format(wxT("%d,%d,"), linenum, sizex[linenum]);
+				wdthcode += wxString::Format(wxT("%u,%u,"), linenum, sizex[linenum]);
 				for (i = 0; i < sizedop[linenum].size(); i++)
 					wdthcode += wxString::Format(wxT("%d,"), sizedop[linenum][i]);
 				wdthcode += _(L"-1");
@@ -1240,7 +1243,31 @@ void TextSteamEditDialog::CalculateBestSize(SteamLanguage lang) {
 	}
 	for (linenum = 0; linenum < linecount; linenum++)
 		currentsizex = max(currentsizex, sizex[linenum]);
-	textstr.Printf(wxT("[STRT=%d,%d]%s"), currentsizex, linecount, textstr); // DEBUG: If the x size is too small, the game computes the right size anyway...
+	textstr.Printf(wxT("[STRT=%u,%u]%s"), currentsizex, linecount, textstr);
+	if (textsizex != NULL)
+		*textsizex = currentsizex;
+	if (textlinecount != NULL)
+		*textlinecount = linecount;
+}
+
+void TextSteamEditDialog::CalculateBestSize(SteamLanguage lang) {
+	unsigned int multilangindex;
+	wxString textstr;
+	if (lang == GetSteamLanguage()) {
+		textstr = m_textctrl->GetValue();
+	} else {
+		unsigned int i;
+		for (i = 0; i + 1 < STEAM_LANGUAGE_AMOUNT; i++)
+			if (multilang[i] == lang) {
+				multilangindex = i;
+				break;
+			}
+		if (i + 1 >= STEAM_LANGUAGE_AMOUNT)
+			return;
+		textstr = multilangctrl[multilangindex]->GetValue();
+	}
+	CalculateTextBestSize(this, textstr);
+	// DEBUG: If the x size is too small, the game computes the right size anyway...
 	if (lang == GetSteamLanguage())
 		m_textctrl->SetValue(textstr);
 	else

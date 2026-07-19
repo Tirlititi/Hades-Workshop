@@ -172,9 +172,10 @@ extern vector<wstring> HADES_STRING_CSV_STATABIL_HEADER;
 										L"# String;Int32;Byte;Int32;String;Int32;Int32;Byte;Int32;Int16;Int16;Int32;String[]\n"\
 										L"# -----------------------------------------------\n"
 
-#define HADES_STRING_EQUIP_PATCH_FILE		"Data\\Items\\ItemEquipPatch.txt"
-#define HADES_STRING_SKILL_PATCH_FILE		"Data\\Items\\ItemAbilityPatch.txt"
-#define HADES_STRING_SHOP_PATCH_FILE		"Data\\Items\\ItemShopPatch.txt"
+#define HADES_STRING_LOCALIZATION_PATCH_FILE	"Data\\Text\\LocalizationPatch.txt"
+#define HADES_STRING_EQUIP_PATCH_FILE			"Data\\Items\\ItemEquipPatch.txt"
+#define HADES_STRING_SKILL_PATCH_FILE			"Data\\Items\\ItemAbilityPatch.txt"
+#define HADES_STRING_SHOP_PATCH_FILE			"Data\\Items\\ItemShopPatch.txt"
 
 // Unused anymore; BattleMap change is now written to HADES_STRING_DICTIONARY_PATCH_FILE
 #define HADES_STRING_CSV_BATTLEMAP_FILE		"Script\\Sources\\Incomplete\\BattleMap.cs"

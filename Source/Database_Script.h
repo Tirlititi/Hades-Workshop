@@ -23,6 +23,7 @@ struct SortedChoiceItemScriptOpcode {
 
 #define FIELD_ENDING_ID		16000
 #define FIELD_ENDING_NAME	L"SPECIAL: End Game"
+#define SCRIPT_FIXED_ENTRY_AMOUNT	9
 
 extern map<wstring, int> SCRIPT_ARG_TYPE_MAP;
 
@@ -152,6 +153,8 @@ extern vector<VariableOperationArgType> VarOpTypeList;
 								L"[MARTHYM_ON]\n"\
 								L"Fill the ATB bar and order the character to cast Marthym. The set value is the target."
 
+#define ARRAY_ADDITIONAL_INFO_MEMORIA	L"\n\nThe Memoria engine introduces these fields as well:\n"
+
 struct VariableName {
 	uint8_t cat;
 	uint16_t id;
@@ -213,7 +216,6 @@ struct ConstantNames {
 };
 
 extern vector<ConstantNames> ScriptFunctionType;
-extern vector<ConstantNames> ScriptCharacterField;
 extern vector<ConstantNames> EquipSetName;
 extern vector<ConstantNames> FMVNameList;
 extern vector<ConstantNames> BattleCodeName;
@@ -221,5 +223,15 @@ extern vector<ConstantNames> ModelCodeName;
 extern vector<ConstantNames> WorldCodeName;
 extern vector<ConstantNames> SoundCodeName;
 extern vector<ConstantNames> SpsCodeName;
+
+struct ConstantFieldNames {
+	uint16_t id;
+	wstring name;
+	int access_type; // 1: can retrieve the value, 2: can modify the value, 3: both
+};
+
+extern vector<wstring> ScriptFieldAccessType;
+extern vector<ConstantFieldNames> ScriptCharacterField;
+extern vector<ConstantFieldNames> ScriptCharacterFieldMemoria;
 
 #endif

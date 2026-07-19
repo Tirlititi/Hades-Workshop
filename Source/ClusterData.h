@@ -79,6 +79,7 @@ typedef uint8_t Chunk_Type;
 #define CHUNK_STEAM_FIELD_MULTINAME			0x81 // Steam field multi-language name
 #define CHUNK_STEAM_TEXT_MULTILANG			0x82 // Steam text block with multi-language support
 #define CHUNK_STEAM_SCRIPT_MULTILANG		0x83 // Steam script with multi-language support
+#define CHUNK_STEAM_SCRIPT_MERGED			0x84 // Steam unified language script
 #define CHUNK_SPECIAL_TYPE_LOCAL_MULTILANG	0xFD // Hades Workshop's custom type: local variables with multi-language support
 #define CHUNK_SPECIAL_TYPE_LOCAL			0xFE // Hades Workshop's custom type: local variables
 #define CHUNK_SPECIAL_END					0xFF // End of cluster

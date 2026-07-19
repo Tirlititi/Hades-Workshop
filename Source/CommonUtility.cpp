@@ -13,6 +13,16 @@ bool IsNumber(string s) {
 	return !s.empty() && find_if(s.begin(), s.end(), [](unsigned char c) { return !isdigit(c); }) == s.end();
 }
 
+unsigned int CharCountInString(wxString str, wxUniChar c) {
+	unsigned int count = 0;
+	size_t pos = str.find(c);
+	while (pos != wxString::npos) {
+		pos = str.find(c, pos + 1);
+		count++;
+	}
+	return count;
+}
+
 wxString GetStatusNameAndId(int statusid) {
 	static const wxString CSV_STATUS_NAME[STATUS_AMOUNT]{
 		L"Petrify",	L"Venom",	L"Virus",	L"Silence",	L"Blind",	L"Trouble",		L"Zombie",	L"EasyKill",
@@ -52,6 +62,18 @@ void SetupStatusList(set<int>& statuses, uint32_t statusbits) {
 			statuses.insert(i);
 }
 
+// Avoid refering to empty status sets that would not be generated in StatusSets.csv
+int RedirectEmptyStatusSetToNull(int statusset) {
+	if (statusset == 0)
+		return 0;
+	if (GetGameSaveSet() == NULL || !GetGameSaveSet()->sectionloaded[DATA_SECTION_SPELL])
+		return statusset;
+	StatusSetStruct& statuses = GetGameSaveSet()->spellset->GetStatusSetById(statusset);
+	if (statuses.status_list.size() == 0 && statuses.custom_field.size() == 0)
+		return 0;
+	return statusset;
+}
+
 void UpdateCustomFieldMap(map<wxString, wxString>& fields, map<wxString, wxString>& parentfields) {
 	set<wxString> removed;
 	for (auto f = fields.begin(); f != fields.end(); f++)
@@ -59,6 +81,73 @@ void UpdateCustomFieldMap(map<wxString, wxString>& fields, map<wxString, wxStrin
 			removed.insert(f->first);
 	for (auto f = removed.begin(); f != removed.end(); f++)
 		fields.erase(*f);
+}
+
+bool MemoriaUtility::ExportDictionaryPatchLines(wxString filename, wxString removeinstruction, wxString appendstr) {
+	wxString previouspatch = "";
+	if (wxFile::Exists(filename)) {
+		wxFile inpatchfile(filename, wxFile::OpenMode::read);
+		if (inpatchfile.IsOpened()) {
+			wxString wholepreviouspatch;
+			inpatchfile.ReadAll(&wholepreviouspatch);
+			inpatchfile.Close();
+			size_t prevpos = 0, battlemapentrypos = wholepreviouspatch.find(removeinstruction);
+			while (battlemapentrypos != wxString::npos) {
+				if (battlemapentrypos > 0 && wholepreviouspatch[battlemapentrypos - 1] != '\n') {
+					battlemapentrypos = wholepreviouspatch.find(removeinstruction, battlemapentrypos + 1);
+					continue;
+				}
+				if (battlemapentrypos > 0)
+					previouspatch += wholepreviouspatch.substr(prevpos, battlemapentrypos - prevpos);
+				prevpos = wholepreviouspatch.find("\n", battlemapentrypos + 1);
+				if (prevpos == wxString::npos)
+					break;
+				prevpos++;
+				battlemapentrypos = wholepreviouspatch.find(removeinstruction, prevpos);
+			}
+			previouspatch += wholepreviouspatch.substr(prevpos);
+			int newlinecount, newlineend;
+			for (prevpos = 0; prevpos < previouspatch.length(); prevpos++) {
+				newlinecount = 0;
+				newlineend = prevpos;
+				do {
+					if (previouspatch[newlineend] == '\n') {
+						newlinecount++;
+						newlineend++;
+					} else if (previouspatch[newlineend] == '\r') {
+						newlineend++;
+					} else {
+						newlineend++;
+						break;
+					}
+				} while (newlineend < (int)previouspatch.length());
+				if (newlinecount > 2)
+					previouspatch = previouspatch.Left(prevpos) + _(L"\n\n") + previouspatch.substr(newlineend - 1);
+			}
+			newlineend = previouspatch.length() - 1;
+			newlinecount = 0;
+			while (newlineend >= 0 && (previouspatch[newlineend] == '\n' || previouspatch[newlineend] == '\r')) {
+				if (previouspatch[newlineend] == '\n')
+					newlinecount++;
+				newlineend--;
+			}
+			if (newlinecount > 2) {
+				previouspatch = previouspatch.Left(newlineend + 1);
+				newlinecount = 0;
+			}
+			while (newlinecount < 2) {
+				previouspatch += "\n";
+				newlinecount++;
+			}
+		}
+	}
+	wxFile patchfile(filename, wxFile::OpenMode::write);
+	if (!patchfile.IsOpened())
+		return false;
+	patchfile.Write(previouspatch);
+	patchfile.Write(appendstr);
+	patchfile.Close();
+	return true;
 }
 
 wxArrayString MemoriaUtility::LoadCSVLines(wxString filename, wxArrayString* metadata) {

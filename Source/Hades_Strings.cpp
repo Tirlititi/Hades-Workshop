@@ -98,19 +98,19 @@ vector<vector<wxString>> HADES_STRING_SPELL_TARGET_INFO = {
 	{ L"Self targeting",	L""					}
 };
 
-vector<wxString> HADES_STRING_CHARACTER_DEFAULT_NAME = {
-	L"Zidane",
-	L"Vivi",
-	L"Dagger",
-	L"Steiner",
-	L"Freya",
-	L"Quina",
-	L"Eiko",
-	L"Amarant",
-	L"Cinna",
-	L"Marcus",
-	L"Blank",
-	L"Beatrix"
+vector<vector<wxString>> HADES_STRING_CHARACTER_DEFAULT_NAME = {
+	vector<wxString>{ L"Zidane", L"Zidane", L"ジタン", L"Zidane", L"Djidane", L"Gidan", L"Yitán" },
+	vector<wxString>{ L"Vivi", L"Vivi", L"ビビ", L"Vivi", L"Bibi", L"Vivi", L"Vivi" },
+	vector<wxString>{ L"Dagger", L"Dagger", L"ダガー", L"Lili", L"Dagga", L"Daga", L"Daga" },
+	vector<wxString>{ L"Steiner", L"Steiner", L"スタイナー", L"Steiner", L"Steiner", L"Steiner", L"Steiner" },
+	vector<wxString>{ L"Freya", L"Freya", L"フライヤ", L"Freya", L"Freyja", L"Freija", L"Freija" },
+	vector<wxString>{ L"Quina", L"Quina", L"クイナ", L"Quina", L"Kweena", L"Quina", L"Quina" },
+	vector<wxString>{ L"Eiko", L"Eiko", L"エーコ", L"Eiko", L"Eiko", L"Eiko", L"Eiko" },
+	vector<wxString>{ L"Amarant", L"Amarant", L"サラマンダー", L"Mahagon", L"Tarask", L"Amarant", L"Amarant" },
+	vector<wxString>{ L"Cinna", L"Cinna", L"シナ", L"Cinna", L"Cina", L"Er Cina", L"Cinna" },
+	vector<wxString>{ L"Marcus", L"Marcus", L"マーカス", L"Marcus", L"Markus", L"Marcus", L"Marcus" },
+	vector<wxString>{ L"Blank", L"Blank", L"ブランク", L"Blank", L"Frank", L"Blank", L"Blank" },
+	vector<wxString>{ L"Beatrix", L"Beatrix", L"ベアトリクス", L"Beatrix", L"Beate", L"Beatrix", L"Beatrix" }
 };
 
 vector<wxString> HADES_STRING_PARTY_SPECIAL_DATA = {

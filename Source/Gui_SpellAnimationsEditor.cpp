@@ -429,15 +429,15 @@ EnemyAnimSequenceEditDialog::EnemyAnimSequenceEditDialog(wxWindow* parent, Battl
 				texti += battle.parent->battle[battle.id]->stat[j].text_amount;
 			break;
 		}
-	unsigned int textamount = battle.parent->text[battle.id]->amount - texti + 1;
+	unsigned int textamount = battle.parent->text[battle.id]->text.size() - texti + 1;
 	arg_battletext_id = new uint32_t*[textamount];
 	arg_battletext.Alloc(textamount);
 	for (i = 0; i + 1 < textamount; i++) {
 		arg_battletext_id[i] = new uint32_t(i);
-		arg_battletext.Add(_(battle.parent->text[battle.id]->text[texti++].GetStr(hades::TEXT_PREVIEW_TYPE)));
+		arg_battletext.Add(_(battle.parent->text[battle.id]->text[texti++].txt.GetStr(hades::TEXT_PREVIEW_TYPE)));
 	}
 	arg_battletext_id[textamount - 1] = new uint32_t(0x81);
-	arg_battletext.Add(_(battle.parent->text[battle.id]->text[battle.parent->battle[battle.id]->stat_amount + anim_id].GetStr(hades::TEXT_PREVIEW_TYPE)));
+	arg_battletext.Add(_(battle.parent->text[battle.id]->text[battle.parent->battle[battle.id]->stat_amount + anim_id].txt.GetStr(hades::TEXT_PREVIEW_TYPE)));
 	arg_spellanim_id = new uint32_t*[HADES_STRING_SPELL_MODEL.size()];
 	arg_spellanim.Alloc(HADES_STRING_SPELL_MODEL.size());
 	for (i = 0; i < HADES_STRING_SPELL_MODEL.size(); i++) {

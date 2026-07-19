@@ -12,7 +12,7 @@
 
 const unsigned int steam_cmd_field_size[] = { 16, 16, 16, 8, 8, 32 };
 
-int CommandDataStruct::SetName(wstring newvalue) {
+int CommandDataStruct::SetName(wstring newvalue, SteamLanguage lang) {
 	if (GetGameType() == GAME_TYPE_PSX) {
 		FF9String tmp(name);
 		tmp.SetValue(newvalue);
@@ -22,7 +22,7 @@ int CommandDataStruct::SetName(wstring newvalue) {
 			return 1;
 		parent->name_space_used += newlen - oldlen;
 	}
-	name.SetValue(newvalue);
+	name.SetValue(newvalue, lang);
 	return 0;
 }
 
@@ -38,7 +38,7 @@ int CommandDataStruct::SetName(FF9String& newvalue) {
 	return 0;
 }
 
-int CommandDataStruct::SetHelp(wstring newvalue) {
+int CommandDataStruct::SetHelp(wstring newvalue, SteamLanguage lang) {
 	if (GetGameType() == GAME_TYPE_PSX) {
 		FF9String tmp(help);
 		tmp.SetValue(newvalue);
@@ -48,7 +48,7 @@ int CommandDataStruct::SetHelp(wstring newvalue) {
 			return 1;
 		parent->help_space_used += newlen - oldlen;
 	}
-	help.SetValue(newvalue);
+	help.SetValue(newvalue, lang);
 	return 0;
 }
 

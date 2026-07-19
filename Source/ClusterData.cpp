@@ -71,20 +71,20 @@ uint32_t ChunkChild::GetExtraSize() {
 }
 
 void ChunkChild::SetSize(uint32_t newsize) {
-	if (size==newsize)
+	if (size == newsize)
 		return;
-	if (GetGameType()!=GAME_TYPE_PSX) {
+	if (GetGameType() != GAME_TYPE_PSX) {
 		size = newsize;
 		return;
 	}
-	parent_chunk->size += newsize-size;
-	parent_cluster->size += newsize-size;
-	parent_cluster->extra_size += size-newsize;
+	parent_chunk->size += newsize - size;
+	parent_cluster->size += newsize - size;
+	parent_cluster->extra_size += size - newsize;
 	parent_cluster->size_modified = true;
 	if (parent_cluster->parent_cluster) {
-		parent_cluster->parent_cluster->size += newsize-size;
-//		if (this==&parent_chunk->GetObject(0))
-//			parent_cluster->parent_cluster->extra_size += size-newsize;
+		parent_cluster->parent_cluster->size += newsize - size;
+//		if (this == &parent_chunk->GetObject(0))
+//			parent_cluster->parent_cluster->extra_size += size - newsize;
 		parent_cluster->parent_cluster->size_modified = true;
 	}
 	size = newsize;

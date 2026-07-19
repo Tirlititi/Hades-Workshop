@@ -52,7 +52,7 @@ using namespace std;
 struct StatusDataStruct {
 public:
 	int id;
-	wxString name;
+	FF9String name;
 	int priority;
 	int tick = 0;
 	int duration = 0;

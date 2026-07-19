@@ -31,13 +31,6 @@
 #define LIST_MAX_AMOUNT 1000
 unsigned int OrderedIndex[LIST_MAX_AMOUNT];
 
-#define MACRO_MULTILANG_INCREASE_COUNTER(BASETEXT,NEWTEXT,BASETEXTARRAY,BASETEXTINDEX,DEFAULTTEXT) \
-	for (SteamLanguage macrolangi = 0;macrolangi<STEAM_LANGUAGE_AMOUNT;macrolangi++) \
-		if (NEWTEXT.multi_lang_init[macrolangi] && !BASETEXT.multi_lang_init[macrolangi]) \
-			for (int macrobackindex = BASETEXTINDEX-1;macrobackindex>=0 && !BASETEXTARRAY[macrobackindex].multi_lang_init[macrolangi];macrobackindex--) \
-				BASETEXTARRAY[macrobackindex].SetValue(DEFAULTTEXT,macrolangi);
-
-
 // Only return sorted indexes.
 unsigned int* SortStrings(wxArrayString str) {
 	unsigned int* res = new unsigned int[str.GetCount()];
@@ -208,7 +201,7 @@ void CDDataStruct::SynthesisShopDisplayNames(bool create) {
 }
 
 wxString CDDataStruct::GetMagicSwordName(FF9String& spellname) {
-	wxString swordtoken = _(ffuiset.special_text->text_block[SpecialTextDataSet::GetSpellNamingIndex()].text[0].GetStr(hades::TEXT_PREVIEW_TYPE));
+	wxString swordtoken = _(ffuiset.special_text->text_block[SpecialTextDataSet::GetSpellNamingIndex()].text[0].txt.GetStr(hades::TEXT_PREVIEW_TYPE));
 	wxString spellstr = _(spellname.GetStr(hades::TEXT_PREVIEW_TYPE));
 	if (swordtoken.Len() > 0 && swordtoken[swordtoken.Len() - 1] == L' ')
 		return swordtoken + spellstr;
@@ -447,8 +440,8 @@ void CDDataStruct::ChangeFF9StringCharmap(wchar_t* chmapdef, wchar_t* chmapa, wc
 	if (saveset.sectionloaded[DATA_SECTION_ENMY]) {
 		for (i = 0; i < enemyset.battle_amount; i++) {
 			wchar_t* txtchmapext = chmapext.GetCharmap(0);
-			for (j = 0; j < enemyset.text[i]->amount; j++)
-				enemyset.text[i]->text[j].SetCharmaps(chmapdef, chmapa, chmapb, txtchmapext);
+			for (j = 0; j < enemyset.text[i]->text.size(); j++)
+				enemyset.text[i]->text[j].txt.SetCharmaps(chmapdef, chmapa, chmapb, txtchmapext);
 			for (j = 0; j < enemyset.battle[i]->stat_amount; j++)
 				enemyset.battle[i]->stat[j].name.SetCharmaps(chmapdef, chmapa, chmapb, txtchmapext);
 			for (j = 0; j < enemyset.battle[i]->spell_amount; j++)
@@ -491,8 +484,8 @@ void CDDataStruct::ChangeFF9StringCharmap(wchar_t* chmapdef, wchar_t* chmapa, wc
 			else
 				txtchmapext = NULL;
 			if (textset.text_data[i]) {
-				for (j = 0; j < textset.text_data[i]->amount; j++) {
-					textset.text_data[i]->text[j].SetCharmaps(chmapdef, chmapa, chmapb, txtchmapext);
+				for (j = 0; j < textset.text_data[i]->text.size(); j++) {
+					textset.text_data[i]->text[j].txt.SetCharmaps(chmapdef, chmapa, chmapb, txtchmapext);
 				}
 			}
 		}
@@ -501,8 +494,8 @@ void CDDataStruct::ChangeFF9StringCharmap(wchar_t* chmapdef, wchar_t* chmapa, wc
 	if (saveset.sectionloaded[DATA_SECTION_WORLD_MAP]) {
 		for (i = 0; i < worldset.amount; i++) {
 			wchar_t* txtchmapext = chmapext.GetCharmap(worldset.script[i]->related_charmap_id);
-			for (j = 0; j < worldset.text_data[i]->amount; j++)
-				worldset.text_data[i]->text[j].SetCharmaps(chmapdef, chmapa, chmapb, txtchmapext);
+			for (j = 0; j < worldset.text_data[i]->text.size(); j++)
+				worldset.text_data[i]->text[j].txt.SetCharmaps(chmapdef, chmapa, chmapb, txtchmapext);
 		}
 		for (i = 0; i < WORLD_MAP_PLACE_AMOUNT; i++) {
 			worldset.world_data->place_name[i].SetCharmaps(chmapdef, chmapa, chmapb, NULL);
@@ -519,9 +512,9 @@ void CDDataStruct::ChangeFF9StringCharmap(wchar_t* chmapdef, wchar_t* chmapa, wc
 		DisplayField(m_fieldlist->GetSelection());
 	}
 	if (saveset.sectionloaded[DATA_SECTION_MENU_UI]) {
-		for (i = 0; i < ffuiset.special_text->amount; i++)
-			for (j = 0; j < ffuiset.special_text->text_block[i].amount; j++)
-				ffuiset.special_text->text_block[i].text[j].SetCharmaps(chmapdef, chmapa, chmapb, NULL);
+		for (i = 0; i < ffuiset.special_text->text_block.size(); i++)
+			for (j = 0; j < ffuiset.special_text->text_block[i].text.size(); j++)
+				ffuiset.special_text->text_block[i].text[j].txt.SetCharmaps(chmapdef, chmapa, chmapb, NULL);
 		DisplaySpecialText(m_specialtextlist->GetSelection());
 	}
 }
@@ -565,8 +558,8 @@ void CDDataStruct::ChangeFF9StringOpcodeChar(wchar_t newchar) {
 	}
 	if (saveset.sectionloaded[DATA_SECTION_ENMY]) {
 		for (i = 0; i < enemyset.battle_amount; i++) {
-			for (j = 0; j < enemyset.text[i]->amount; j++)
-				enemyset.text[i]->text[j].SetOpcodeChar(newchar);
+			for (j = 0; j < enemyset.text[i]->text.size(); j++)
+				enemyset.text[i]->text[j].txt.SetOpcodeChar(newchar);
 			for (j = 0; j < enemyset.battle[i]->stat_amount; j++)
 				enemyset.battle[i]->stat[j].name.SetOpcodeChar(newchar);
 			for (j = 0; j < enemyset.battle[i]->spell_amount; j++)
@@ -604,14 +597,14 @@ void CDDataStruct::ChangeFF9StringOpcodeChar(wchar_t newchar) {
 	if (saveset.sectionloaded[DATA_SECTION_TEXT]) {
 		for (i = 0; i < textset.amount; i++)
 			if (textset.text_data[i] != NULL)
-				for (j = 0; j < textset.text_data[i]->amount; j++)
-					textset.text_data[i]->text[j].SetOpcodeChar(newchar);
+				for (j = 0; j < textset.text_data[i]->text.size(); j++)
+					textset.text_data[i]->text[j].txt.SetOpcodeChar(newchar);
 		DisplayText(m_textlist->GetSelection());
 	}
 	if (saveset.sectionloaded[DATA_SECTION_WORLD_MAP]) {
 		for (i = 0; i < worldset.amount; i++)
-			for (j = 0; j < worldset.text_data[i]->amount; j++)
-				worldset.text_data[i]->text[j].SetOpcodeChar(newchar);
+			for (j = 0; j < worldset.text_data[i]->text.size(); j++)
+				worldset.text_data[i]->text[j].txt.SetOpcodeChar(newchar);
 		for (i = 0; i < WORLD_MAP_PLACE_AMOUNT; i++) {
 			worldset.world_data->place_name[i].SetOpcodeChar(newchar);
 			m_worldplacelist->SetString(i, _(worldset.world_data->place_name[i].GetStr(hades::TEXT_PREVIEW_TYPE)));
@@ -625,9 +618,9 @@ void CDDataStruct::ChangeFF9StringOpcodeChar(wchar_t newchar) {
 		DisplayField(m_fieldlist->GetSelection());
 	}
 	if (saveset.sectionloaded[DATA_SECTION_MENU_UI]) {
-		for (i = 0; i < ffuiset.special_text->amount; i++)
-			for (j = 0; j < ffuiset.special_text->text_block[i].amount; j++)
-				ffuiset.special_text->text_block[i].text[j].SetOpcodeChar(newchar);
+		for (i = 0; i < ffuiset.special_text->text_block.size(); i++)
+			for (j = 0; j < ffuiset.special_text->text_block[i].text.size(); j++)
+				ffuiset.special_text->text_block[i].text[j].txt.SetOpcodeChar(newchar);
 		DisplaySpecialText(m_specialtextlist->GetSelection());
 	}
 }
@@ -671,13 +664,12 @@ void CDDataStruct::ChangeFF9StringSteamLanguage(SteamLanguage newlang) {
 	}
 	if (saveset.sectionloaded[DATA_SECTION_ENMY]) {
 		for (i = 0; i < enemyset.battle_amount; i++) {
-			for (j = 0; j < enemyset.text[i]->amount; j++)
-				enemyset.text[i]->text[j].ChangeSteamLanguage(newlang);
+			for (j = 0; j < enemyset.text[i]->text.size(); j++)
+				enemyset.text[i]->text[j].txt.ChangeSteamLanguage(newlang);
 			for (j = 0; j < enemyset.battle[i]->stat_amount; j++)
 				enemyset.battle[i]->stat[j].name.ChangeSteamLanguage(newlang);
 			for (j = 0; j < enemyset.battle[i]->spell_amount; j++)
 				enemyset.battle[i]->spell[j].name.ChangeSteamLanguage(newlang);
-			enemyset.script[i]->ChangeSteamLanguage(newlang);
 			enemyset.UpdateBattleName(i);
 		}
 		EnemyDisplayNames();
@@ -711,16 +703,14 @@ void CDDataStruct::ChangeFF9StringSteamLanguage(SteamLanguage newlang) {
 	if (saveset.sectionloaded[DATA_SECTION_TEXT]) {
 		for (i = 0; i < textset.amount; i++)
 			if (textset.text_data[i] != NULL)
-				for (j = 0; j < textset.text_data[i]->amount; j++)
-					textset.text_data[i]->text[j].ChangeSteamLanguage(newlang);
+				for (j = 0; j < textset.text_data[i]->text.size(); j++)
+					textset.text_data[i]->text[j].txt.ChangeSteamLanguage(newlang);
 		DisplayText(m_textlist->GetSelection());
 	}
 	if (saveset.sectionloaded[DATA_SECTION_WORLD_MAP]) {
-		for (i = 0; i < worldset.amount; i++) {
-			for (j = 0; j < worldset.text_data[i]->amount; j++)
-				worldset.text_data[i]->text[j].ChangeSteamLanguage(newlang);
-			worldset.script[i]->ChangeSteamLanguage(newlang);
-		}
+		for (i = 0; i < worldset.amount; i++)
+			for (j = 0; j < worldset.text_data[i]->text.size(); j++)
+				worldset.text_data[i]->text[j].txt.ChangeSteamLanguage(newlang);
 		for (i = 0; i < WORLD_MAP_PLACE_AMOUNT; i++) {
 			worldset.world_data->place_name[i].ChangeSteamLanguage(newlang);
 			m_worldplacelist->SetString(i, _(worldset.world_data->place_name[i].GetStr(hades::TEXT_PREVIEW_TYPE)));
@@ -728,17 +718,15 @@ void CDDataStruct::ChangeFF9StringSteamLanguage(SteamLanguage newlang) {
 		DisplayWorldMap(m_worldlist->GetSelection());
 	}
 	if (saveset.sectionloaded[DATA_SECTION_FIELD]) {
-		for (i = 0; i < fieldset.amount; i++) {
+		for (i = 0; i < fieldset.amount; i++)
 			fieldset.script_data[i]->name.ChangeSteamLanguage(newlang);
-			fieldset.script_data[i]->ChangeSteamLanguage(newlang);
-		}
 		FieldDisplayNames();
 		DisplayField(m_fieldlist->GetSelection());
 	}
 	if (saveset.sectionloaded[DATA_SECTION_MENU_UI]) {
-		for (i = 0; i < ffuiset.special_text->amount; i++)
-			for (j = 0; j < ffuiset.special_text->text_block[i].amount; j++)
-				ffuiset.special_text->text_block[i].text[j].ChangeSteamLanguage(newlang);
+		for (i = 0; i < ffuiset.special_text->text_block.size(); i++)
+			for (j = 0; j < ffuiset.special_text->text_block[i].text.size(); j++)
+				ffuiset.special_text->text_block[i].text[j].txt.ChangeSteamLanguage(newlang);
 		DisplaySpecialText(m_specialtextlist->GetSelection());
 	}
 }
@@ -918,7 +906,7 @@ bool CDDataStruct::ExportPPF() {
 }
 
 wstring* CDDataStruct::ReadHWS(const char* fname, bool* section, bool* sectext, bool* localsec) {
-	copystring = NULL;
+	copystring.clear();
 	unsigned int i;
 	if (section[DATA_SECTION_SPELL])
 		InitSpell();
@@ -1072,6 +1060,79 @@ wstring* CDDataStruct::ReadHWS(const char* fname, bool* section, bool* sectext, 
 	return res;
 }
 
+void CDDataStruct::UpdateTextDisplays(int section, unsigned int spelloldamount, unsigned int supportoldamount, unsigned int cmdoldamount, unsigned int statoldamount, unsigned int itemoldamount) {
+	unsigned int i;
+	if (section == DATA_SECTION_SPELL) {
+		if (spelloldamount == 0)
+			spelloldamount = spellset.spell.size();
+		SpellDisplayNames();
+		for (i = 0; i < spellset.spell.size(); i++) {
+			if (i < spelloldamount)
+				UpdateSpellName(i);
+			else
+				RegisterSpellAdded(i);
+		}
+	}
+	if (section == DATA_SECTION_SUPPORT) {
+		if (supportoldamount == 0)
+			supportoldamount = supportset.support.size();
+		SupportDisplayNames();
+		for (i = 0; i < supportset.support.size(); i++) {
+			if (i < supportoldamount)
+				UpdateSupportName(i);
+			else
+				RegisterSupportAdded(i);
+		}
+	}
+	if (section == DATA_SECTION_CMD) {
+		if (cmdoldamount == 0)
+			cmdoldamount = cmdset.cmd.size();
+		CommandDisplayNames();
+		for (i = 0; i < cmdset.cmd.size(); i++) {
+			if (i < cmdoldamount)
+				UpdateCommandName(i);
+			else
+				RegisterCommandAdded(i);
+		}
+	}
+	if (section == DATA_SECTION_STAT) {
+		if (statoldamount == 0)
+			statoldamount = statset.initial_stat.size();
+		StatDisplayNames();
+		for (i = 0; i < statset.initial_stat.size(); i++) {
+			if (i < statoldamount)
+				UpdateStatName(i);
+			else
+				RegisterStatAdded(i);
+		}
+	}
+	if (section == DATA_SECTION_ITEM) {
+		if (itemoldamount == 0)
+			itemoldamount = itemset.item.size();
+		ItemDisplayNames();
+		KeyItemDisplayNames();
+		for (i = 0; i < itemset.item.size(); i++) {
+			if (i < itemoldamount)
+				UpdateItemName(i);
+			else
+				RegisterItemAdded(i);
+		}
+	}
+	if (section == DATA_SECTION_ENMY)
+		EnemyDisplayNames();
+	if (section == DATA_SECTION_CARD)
+		CardDisplayNames();
+	if (section == DATA_SECTION_TEXT)
+		TextDisplayNames();
+	if (section == DATA_SECTION_WORLD_MAP) {
+		WorldMapDisplayNames();
+		for (i = 0; i < WORLD_MAP_PLACE_AMOUNT; i++)
+			m_worldplacelist->SetString(i, _(worldset.world_data->place_name[i].GetStr(hades::TEXT_PREVIEW_TYPE)));
+	}
+	if (section == DATA_SECTION_FIELD)
+		FieldDisplayNames();
+}
+
 void CDDataStruct::MarkDataSpellModified() {
 	saveset.sectionmodified[DATA_SECTION_SPELL] = true;
 	GetTopWindow()->MarkDataModified();
@@ -1105,13 +1166,9 @@ void CDDataStruct::MarkDataEnemyModified(unsigned int battleid, Chunk_Type chunk
 		enemyset.battle_data[battleid]->MarkDataModified();
 	else if (chunktype==CHUNK_TYPE_TEXT)
 		enemyset.text[battleid]->MarkDataModified();
-	else if (chunktype==CHUNK_TYPE_SCRIPT) {
-		if (alllang && enemyset.script[battleid]->multi_lang_script!=NULL)
-			for (SteamLanguage lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-				if (enemyset.script[battleid]->multi_lang_script->is_loaded[lang])
-					enemyset.script[battleid]->multi_lang_script->is_modified[lang] = true;
+	else if (chunktype==CHUNK_TYPE_SCRIPT)
 		enemyset.script[battleid]->MarkDataModified();
-	} else if (chunktype==CHUNK_TYPE_IMAGE_MAP)
+	else if (chunktype==CHUNK_TYPE_IMAGE_MAP)
 		enemyset.preload[battleid]->MarkDataModified();
 	GetTopWindow()->MarkDataModified();
 }
@@ -1164,10 +1221,6 @@ void CDDataStruct::MarkDataWorldMapModified(unsigned int worldid, Chunk_Type chu
 
 void CDDataStruct::MarkDataWorldMapScriptModified(unsigned int worldid, bool alllang) {
 	saveset.sectionmodified[DATA_SECTION_WORLD_MAP] = true;
-	if (alllang && worldset.script[worldid]->multi_lang_script!=NULL)
-		for (SteamLanguage lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-			if (worldset.script[worldid]->multi_lang_script->is_loaded[lang])
-				worldset.script[worldid]->multi_lang_script->is_modified[lang] = true;
 	worldset.script[worldid]->MarkDataModified();
 	GetTopWindow()->MarkDataModified();
 }
@@ -1175,10 +1228,6 @@ void CDDataStruct::MarkDataWorldMapScriptModified(unsigned int worldid, bool all
 void CDDataStruct::MarkDataFieldModified(unsigned int fieldid, Chunk_Type chunktype, bool alllang) {
 	saveset.sectionmodified[DATA_SECTION_FIELD] = true;
 	if (chunktype==CHUNK_TYPE_SCRIPT) {
-		if (alllang && fieldset.script_data[fieldid]->multi_lang_script!=NULL)
-			for (SteamLanguage lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-				if (fieldset.script_data[fieldid]->multi_lang_script->is_loaded[lang])
-					fieldset.script_data[fieldid]->multi_lang_script->is_modified[lang] = true;
 		fieldset.script_data[fieldid]->MarkDataModified();
 	} else if (chunktype==CHUNK_TYPE_FIELD_ROLE) {
 		fieldset.role[fieldid]->MarkDataModified();
@@ -1447,7 +1496,7 @@ void CDDataStruct::OnSharedRightClickMenu(wxCommandEvent& event) {
 	}
 }
 
-FF9String* RightClickTextSelection = NULL;
+vector<FF9String*> RightClickTextSelection;
 void CDDataStruct::OnGenericTextRightClickMenu(wxCommandEvent& event) {
 	int id = event.GetId();
 	bool executesub = true;
@@ -1455,12 +1504,19 @@ void CDDataStruct::OnGenericTextRightClickMenu(wxCommandEvent& event) {
 		copystring = RightClickTextSelection;
 		executesub = false;
 	} else if (id == wxID_PASTE) {
-		if (RightClickTextSelection != NULL && copystring != NULL)
-			*RightClickTextSelection = *copystring;
-		else
+		if (RightClickTextSelection.size() > 0 && RightClickTextSelection.size() == copystring.size()) {
+			if (RightClickTextSelection.size() == 1) {
+				RightClickTextSelection[0]->SetValue(copystring[0]->str);
+			} else {
+				for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+					if (RightClickTextSelection[lang] != NULL && copystring[lang] != NULL)
+						RightClickTextSelection[lang]->SetValue(lang == GetSteamLanguage() ? copystring[lang]->str : copystring[lang]->multi_lang_str[lang], lang);
+			}
+		} else {
 			executesub = false;
+		}
 	} else {
-		copystring = NULL;
+		copystring.clear();
 	}
 	if (executesub) {
 		if (m_notebookmain->GetSelection() == 2) {
@@ -1527,21 +1583,22 @@ void CDDataStruct::DisplaySpell(int spellid) {
 	m_spellid->SetValue(sp.id);
 	m_spellname->ChangeValue(_(sp.name.str));
 	m_spellperformname->Clear();
+	SpecialTextDataStruct& spellnamingtexts = ffuiset.special_text->text_block[SpecialTextDataSet::GetSpellNamingIndex()];
 	wxArrayString perfname;
-	uint8_t** perfvalue = new uint8_t*[SPELL_AMOUNT + ffuiset.special_text->text_block[SpecialTextDataSet::GetSpellNamingIndex()].amount + 1];
-	perfname.Alloc(SPELL_AMOUNT + ffuiset.special_text->text_block[SpecialTextDataSet::GetSpellNamingIndex()].amount + 1);
+	int** perfvalue = new int*[SPELL_AMOUNT + spellnamingtexts.text.size() + 1];
+	perfname.Alloc(SPELL_AMOUNT + spellnamingtexts.text.size() + 1);
 	for (i = 0; i < SPELL_AMOUNT; i++) {
 		perfname.Add(_(spellset.spell[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
-		perfvalue[i] = new uint8_t(i);
+		perfvalue[i] = new int(i);
 	}
-	for (i = 1; i < ffuiset.special_text->text_block[SpecialTextDataSet::GetSpellNamingIndex()].amount; i++) {
-		perfname.Add(_(ffuiset.special_text->text_block[SpecialTextDataSet::GetSpellNamingIndex()].text[i].GetStr(hades::TEXT_PREVIEW_TYPE)));
-		perfvalue[SPELL_AMOUNT + i - 1] = new uint8_t(SPELL_AMOUNT + i - 1);
+	for (i = 1; i < spellnamingtexts.text.size(); i++) {
+		perfname.Add(_(spellnamingtexts.text[i].txt.GetStr(hades::TEXT_PREVIEW_TYPE)));
+		perfvalue[SPELL_AMOUNT + i - 1] = new int(SPELL_AMOUNT + spellnamingtexts.text[i].id - 1);
 	}
 	perfname.Add(GetMagicSwordName(sp.name));
-	perfvalue[perfname.GetCount() - 1] = new uint8_t(0xFE);
+	perfvalue[perfname.GetCount() - 1] = new int(0xFE);
 	perfname.Add(_(sp.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
-	perfvalue[perfname.GetCount() - 1] = new uint8_t(0xFF);
+	perfvalue[perfname.GetCount() - 1] = new int(0xFF);
 	m_spellperformname->Append(perfname, (void**)perfvalue);
 	for (i = 0; i < m_spellperformname->GetCount(); i++)
 		if (sp.perform_name == *perfvalue[i]) {
@@ -1687,7 +1744,7 @@ void CDDataStruct::OnSpellChangeChoice(wxCommandEvent& event) {
 	SpellDataStruct& sp = spellset.spell[*sortid];
 	int id = event.GetId();
 	if (id == wxID_PERFNAME) {
-		uint8_t* item = (uint8_t*)event.GetClientData();
+		int* item = (int*)event.GetClientData();
 		sp.perform_name = *item;
 	} else if (id == wxID_EFFECT) {
 		sp.effect = event.GetSelection();
@@ -2460,12 +2517,8 @@ void CDDataStruct::DisplayStat(int statid) {
 	m_statcustomformat->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 	m_statcustomfields->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 	m_statcustomkind->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
-	m_statchardefaultname->ChangeValue(_(is.default_name.str));
-	m_statchardefaultname->Enable(gametype == GAME_TYPE_PSX || is.id >= PLAYABLE_CHAR_AMOUNT);
-	m_statchardefaultname->SetToolTip(is.id >= PLAYABLE_CHAR_AMOUNT ? _(L"Only cosmetic for now\nSetup custom character names\nin your mod's \"DictionaryPatch.txt\"") : wxEmptyString); // TODO: externalise names automatically
-	m_statchardefaultnamebutton->Enable(gametype == GAME_TYPE_PSX || is.id >= PLAYABLE_CHAR_AMOUNT);
-	m_statcharadvanced->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
-	m_statcharadvancedkind->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_statcharadvanced->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0 && statset.battle_param.size() > 0);
+	m_statcharadvancedkind->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0 && statset.battle_param.size() > 0);
 	m_statcharcommandattack->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 	m_statcharcommanddefend->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 	m_statcharcommanditem->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
@@ -2480,19 +2533,22 @@ void CDDataStruct::DisplayStat(int statid) {
 	m_statcharmagic->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
 	m_statcharspirit->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
 	m_statcharmagicstone->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+	m_statchardefaultname->ChangeValue(_(is.default_name.str));
 	m_statcharspeed->SetValue(is.speed);
 	m_statcharstrength->SetValue(is.strength);
 	m_statcharmagic->SetValue(is.magic);
 	m_statcharspirit->SetValue(is.spirit);
 	m_statcharmagicstone->SetValue(is.magic_stone);
-	int* paramids = StatDataSet::GetCharacterBattleParametersIndices(statid, &paramcount);
 	m_statcharadvancedkind->Clear();
-	for (i = 0; i < paramcount; i++) {
-		stringstream paramlabel;
-		paramlabel << "Battle Parameters " << statset.battle_param[paramids[i]].id << ends;
-		m_statcharadvancedkind->Append(_(paramlabel.str()));
+	if (statset.battle_param.size() > 0) {
+		int* paramids = StatDataSet::GetCharacterBattleParametersIndices(statid, &paramcount);
+		for (i = 0; i < paramcount; i++) {
+			stringstream paramlabel;
+			paramlabel << "Battle Parameters " << statset.battle_param[paramids[i]].id << ends;
+			m_statcharadvancedkind->Append(_(paramlabel.str()));
+		}
+		m_statcharadvancedkind->SetSelection(0);
 	}
-	m_statcharadvancedkind->SetSelection(0);
 	int* cmdset = statset.GetCharacterCommandsIndices(statid, &cmdamount);
 	m_statcharabilityset->Clear();
 	for (i = 0; i < cmdamount; i++) {
@@ -3020,6 +3076,16 @@ void CDDataStruct::DisplayPartySpecial(int specialid) {
 		m_partyspecialmagicswordcaster->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 		m_partyspecialmagicswordwielder->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 		m_partyspecialmagicswordspell->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+		m_partyspecialmagicswordcasteraddstatus->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+		m_partyspecialmagicswordcasterremovestatus->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+		m_partyspecialmagicswordcasterstatusbaselist->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+		m_partyspecialmagicswordcasterstatusbaseint->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+		m_partyspecialmagicswordcasterstatuslist->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+		m_partyspecialmagicswordknightaddstatus->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+		m_partyspecialmagicswordknightremovestatus->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+		m_partyspecialmagicswordknightstatusbaselist->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+		m_partyspecialmagicswordknightstatusbaseint->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+		m_partyspecialmagicswordknightstatuslist->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 		m_partyspecialmagicswordcasterstatusbaseint->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 31);
 		m_partyspecialmagicswordknightstatusbaseint->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 31);
 		if (partyspecialset.magic_sword.size() == 0 || m_partyspecialmagicswordset->GetSelection() == wxNOT_FOUND)
@@ -5122,14 +5188,13 @@ void CDDataStruct::DisplayEnemy(int battleid) {
 		m_enemygrouplist->Append(_(groupname.str()));
 	}
 	m_enemytextlist->Clear();
-	for (i = eb.stat_amount + eb.spell_amount; i < td.amount; i++)
-		m_enemytextlist->Append(_(td.text[i].GetStr(hades::TEXT_PREVIEW_TYPE)));
+	for (i = eb.stat_amount + eb.spell_amount; i < td.text.size(); i++)
+		m_enemytextlist->Append(_(td.text[i].txt.GetStr(hades::TEXT_PREVIEW_TYPE)));
 	for (i = 0; i < G_V_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME); i++)
 		if (eb.scene_id == HADES_STRING_BATTLE_SCENE_NAME[i].id) {
 			m_enemyscene->SetSelection(i);
 			break;
 		}
-	m_enemyscriptlink->Enable(sc.multi_lang_script != NULL);
 	MACRO_FLAG_DISPLAY16(eb.flag, m_enemyflag)
 	m_enemystatlist->SetSelection(0);
 	DisplayEnemyStat(battleid, 0);
@@ -5180,22 +5245,26 @@ void CDDataStruct::OnListBoxEnemyText(wxCommandEvent& event) {
 	unsigned int sel = m_enemylist->GetSelection();
 	unsigned int* sortid = (unsigned int*)m_enemylist->GetClientData(sel);
 	unsigned int textsel = m_enemytextlist->GetSelection();
-	unsigned int id = textsel+enemyset.battle[*sortid]->stat_amount+enemyset.battle[*sortid]->spell_amount;
+	unsigned int id = textsel + enemyset.battle[*sortid]->stat_amount + enemyset.battle[*sortid]->spell_amount;
 	TextDataStruct& td = *enemyset.text[*sortid];
-	if (gametype==GAME_TYPE_PSX) {
-		TextEditDialog ted(this,td.text[id],td.GetExtraSize());
-		if (ted.ShowModal()==wxID_OK) {
-			td.SetText(id,ted.text);
-			MarkDataEnemyModified(*sortid,CHUNK_TYPE_TEXT);
-			m_enemytextlist->SetString(textsel,td.text[id].GetStr(hades::TEXT_PREVIEW_TYPE));
+	if (gametype == GAME_TYPE_PSX) {
+		TextEditDialog ted(this, td.text[id].txt, td.GetExtraSize());
+		if (ted.ShowModal() == wxID_OK) {
+			td.SetText(id, ted.text);
+			MarkDataEnemyModified(*sortid, CHUNK_TYPE_TEXT);
+			m_enemytextlist->SetString(textsel, td.text[id].txt.GetStr(hades::TEXT_PREVIEW_TYPE));
 		}
 	} else {
-		TextSteamEditDialog ted(this,&ffuiset,td.text[id]);
-		if (ted.ShowModal()==wxID_OK) {
-			MACRO_MULTILANG_INCREASE_COUNTER(td.text[id],ted.text,td.text,id,L"[STRT=0,1]")
-			td.SetText(id,ted.text);
-			MarkDataEnemyModified(*sortid,CHUNK_TYPE_TEXT);
-			m_enemytextlist->SetString(textsel,td.text[id].GetStr(hades::TEXT_PREVIEW_TYPE));
+		TextSteamEditDialog ted(this, &ffuiset, td.text[id].txt);
+		if (ted.ShowModal() == wxID_OK) {
+			if (!hades::STEAM_SINGLE_LANGUAGE_MODE)
+				for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+					if (ted.text.multi_lang_init[lang] && !td.text[id].txt.multi_lang_init[lang])
+						for (int i = id - 1; i >= 0 && !td.text[i].txt.multi_lang_init[lang]; i--)
+							td.text[i].txt.SetValue(L"[STRT=0,1]", lang);
+			td.SetText(id, ted.text);
+			MarkDataEnemyModified(*sortid, CHUNK_TYPE_TEXT);
+			m_enemytextlist->SetString(textsel, td.text[id].txt.GetStr(hades::TEXT_PREVIEW_TYPE));
 		}
 	}
 }
@@ -5488,16 +5557,16 @@ void CDDataStruct::OnEnemyChangeChoice(wxCommandEvent& event) {
 	int id = event.GetId();
 	if (id == wxID_SCENE) {
 		unsigned int* newscene = (unsigned int*)event.GetClientData();
-		if (gametype==GAME_TYPE_PSX) {
+		if (gametype == GAME_TYPE_PSX) {
 			ImageMapDataStruct& em = *enemyset.preload[*sortid];
-			int extrablock = em.RemoveData(MAP_OBJECT_SCENE,eb.scene_id);
-			em.AddData(MAP_OBJECT_SCENE,*newscene,&cluster.global_map,cluster.enemy_shared_map,em.GetExtraSize()/0x10+extrablock);
+			int extrablock = em.RemoveData(MAP_OBJECT_SCENE, eb.scene_id);
+			em.AddData(MAP_OBJECT_SCENE, *newscene, &cluster.global_map, cluster.enemy_shared_map, em.GetExtraSize() / 0x10 + extrablock);
 			em.UpdateOffset();
 		}
-		enemyset.ChangeBattleScene(enemyset.battle_data[*sortid]->object_id,*newscene);
-		MarkDataEnemyModified(*sortid,gametype==GAME_TYPE_PSX ? CHUNK_TYPE_IMAGE_MAP : CHUNK_TYPE_BATTLE_SCENE);
+		enemyset.ChangeBattleScene(enemyset.struct_id[*sortid], *newscene);
+		MarkDataEnemyModified(*sortid, gametype == GAME_TYPE_PSX ? CHUNK_TYPE_IMAGE_MAP : CHUNK_TYPE_ENEMY_STATS);
 		return;
-	} else if (m_enemystatlist->GetSelection()!=wxNOT_FOUND) {
+	} else if (m_enemystatlist->GetSelection() != wxNOT_FOUND) {
 		EnemyStatDataStruct& enmydata = eb.stat[m_enemystatlist->GetSelection()];
 		if (id == wxID_STEAL1) {
 			MACRO_ENEMY_CHANGE_DATA(Stat, item_steal[0], itemset.item[event.GetSelection()].id)
@@ -5522,17 +5591,17 @@ void CDDataStruct::OnEnemyChangeChoice(wxCommandEvent& event) {
 				MACRO_ENEMY_CHANGE_DATA(Stat, card_drop, event.GetSelection() - 1)
 			}
 		} else if (id == wxID_DEFATTACK) {
-			MACRO_ENEMY_CHANGE_DATA(Stat,default_attack,event.GetSelection())
+			MACRO_ENEMY_CHANGE_DATA(Stat, default_attack, event.GetSelection())
 		} else if (id == wxID_MODEL) {
 			SortedChoiceItem* item = (SortedChoiceItem*)event.GetClientData();
 			BattleModelLinks& linkeddata = BattleModelLinks::GetLinksByModel(item->id);
 			// Due to the need to change the spell sequences, it is not a good idea to use the "Edit Similar Enemies" feature
-			enemyset.ChangeBattleModel(*sortid,m_enemystatlist->GetSelection(),linkeddata);
-			MarkDataEnemyModified(*sortid,CHUNK_TYPE_BATTLE_DATA);
+			enemyset.ChangeBattleModel(*sortid, m_enemystatlist->GetSelection(), linkeddata);
+			MarkDataEnemyModified(*sortid, CHUNK_TYPE_BATTLE_DATA);
 			m_enemystatmodelid->SetValue(linkeddata.model);
 			if (GetTopWindow()->m_editsimilarenemy->IsChecked() && !DiscardSimilarEnemyUnaffected) {
-				DiscardableMessageWindow popup(wxGetApp().GetTopWindow(),HADES_STRING_NOGROUPEDIT);
-				if (popup.ShowModal()==wxID_DISCARD)
+				DiscardableMessageWindow popup(wxGetApp().GetTopWindow(), HADES_STRING_NOGROUPEDIT);
+				if (popup.ShowModal() == wxID_DISCARD)
 					DiscardSimilarEnemyUnaffected = true;
 			}
 		} else if (id == wxID_BLUEMAGIC) {
@@ -5543,7 +5612,7 @@ void CDDataStruct::OnEnemyChangeChoice(wxCommandEvent& event) {
 				blueid = AnyAbilityStruct::ConvertSupportIdToId(supportset.support[event.GetSelection() - spellset.spell.size()].id);
 			MACRO_ENEMY_CHANGE_DATA(Stat, blue_magic, blueid)
 		}
-	} else if (m_enemyspelllist->GetSelection()!=wxNOT_FOUND) {
+	} else if (m_enemyspelllist->GetSelection() != wxNOT_FOUND) {
 		EnemySpellDataStruct& enmydata = eb.spell[m_enemyspelllist->GetSelection()];
 		if (id == wxID_EFFECT) {
 			MACRO_ENEMY_CHANGE_DATA(Spell, effect, event.GetSelection())
@@ -5552,19 +5621,19 @@ void CDDataStruct::OnEnemyChangeChoice(wxCommandEvent& event) {
 				m_enemyspelleffecthelp->SetLabel(HADES_STRING_SPELL_EFFECT[enmydata.effect].help);
 			else
 				m_enemyspelleffecthelp->SetLabel(_(HADES_STRING_SPELL_EFFECT_UNUSED_DESCRIPTION));
-			int x,y;
-			m_enemyspelleffecthelp->GetSize(&x,&y);
-			m_enemyspelleffecthelpwindow->SetScrollbars(20,5,x/20,y/5);
+			int x, y;
+			m_enemyspelleffecthelp->GetSize(&x, &y);
+			m_enemyspelleffecthelpwindow->SetScrollbars(20, 5, x / 20, y / 5);
 		} else if (id == wxID_STATUS) {
-			MACRO_ENEMY_CHANGE_DATA(Spell,status,event.GetSelection())
+			MACRO_ENEMY_CHANGE_DATA(Spell, status, event.GetSelection())
 			m_enemyspellstatusint->SetValue(enmydata.status);
 		} else if (id == wxID_SEQANIM) {
 			enemyset.battle_data[*sortid]->sequence_stat_id[m_enemyspelllist->GetSelection()] = event.GetSelection();
 			enemyset.battle_data[*sortid]->sequence_base_anim[m_enemyspelllist->GetSelection()] = enemyset.battle[*sortid]->stat[event.GetSelection()].sequence_anim_base;
-			MarkDataEnemyModified(*sortid,CHUNK_TYPE_BATTLE_DATA);
+			MarkDataEnemyModified(*sortid, CHUNK_TYPE_BATTLE_DATA);
 			if (GetTopWindow()->m_editsimilarenemy->IsChecked() && !DiscardSimilarEnemyUnaffected) {
-				DiscardableMessageWindow popup(wxGetApp().GetTopWindow(),HADES_STRING_NOGROUPEDIT);
-				if (popup.ShowModal()==wxID_DISCARD)
+				DiscardableMessageWindow popup(wxGetApp().GetTopWindow(), HADES_STRING_NOGROUPEDIT);
+				if (popup.ShowModal() == wxID_DISCARD)
 					DiscardSimilarEnemyUnaffected = true;
 			}
 			return;
@@ -5575,18 +5644,18 @@ void CDDataStruct::OnEnemyChangeChoice(wxCommandEvent& event) {
 			m_enemyspelltargetpriority->SetSelection(enmydata.GetTargetPriority());
 			m_enemyspelltargetamount->Enable(tt != SPELL_TARGET_TYPE_EVERYONE && tt != SPELL_TARGET_TYPE_SELF && tt != SPELL_TARGET_TYPE_IRRELEVANT);
 			m_enemyspelltargetpriority->Enable(tt == SPELL_TARGET_TYPE_ANY);
-			MACRO_ENEMY_CHANGE_DATA(Spell,target_type,enmydata.target_type)
+			MACRO_ENEMY_CHANGE_DATA(Spell, target_type, enmydata.target_type)
 		} else if (id == wxID_TARGETAMOUNT) {
 			enmydata.SetTargetAmount(event.GetSelection());
-			MACRO_ENEMY_CHANGE_DATA(Spell,target_type,enmydata.target_type)
+			MACRO_ENEMY_CHANGE_DATA(Spell, target_type, enmydata.target_type)
 		} else if (id == wxID_TARGETPRIORITY) {
 			enmydata.SetTargetPriority(event.GetSelection());
-			MACRO_ENEMY_CHANGE_DATA(Spell,target_type,enmydata.target_type)
+			MACRO_ENEMY_CHANGE_DATA(Spell, target_type, enmydata.target_type)
 		} else if (id == wxID_TARGETPANEL) {
 			enmydata.SetPanel(event.GetSelection());
-			MACRO_ENEMY_CHANGE_DATA(Spell,target_type,enmydata.target_type)
+			MACRO_ENEMY_CHANGE_DATA(Spell, target_type, enmydata.target_type)
 		}
-	} else if (m_enemygrouplist->GetSelection()!=wxNOT_FOUND) {
+	} else if (m_enemygrouplist->GetSelection() != wxNOT_FOUND) {
 		EnemyGroupDataStruct& eg = eb.group[m_enemygrouplist->GetSelection()];
 		if (id == wxID_ENEMY1) {
 			eg.enemy_id[0] = event.GetSelection();
@@ -5598,7 +5667,7 @@ void CDDataStruct::OnEnemyChangeChoice(wxCommandEvent& event) {
 			eg.enemy_id[3] = event.GetSelection();
 		}
 	}
-	MarkDataEnemyModified(*sortid,CHUNK_TYPE_ENEMY_STATS);
+	MarkDataEnemyModified(*sortid, CHUNK_TYPE_ENEMY_STATS);
 }
 
 void CDDataStruct::OnEnemyChangeFlags(wxCommandEvent& event) {
@@ -5833,12 +5902,6 @@ void CDDataStruct::OnEnemyChangeButton(wxCommandEvent& event) {
 			dial.ApplyModifications(*enemyset.script[*sortid]);
 			MarkDataEnemyModified(*sortid, CHUNK_TYPE_SCRIPT);
 		}
-	} else if (id == wxID_SCRIPTLINK) {
-		ScriptEditLinkDialog dial(this, *enemyset.script[*sortid], *enemyset.text[*sortid]);
-		if (dial.ShowModal() == wxID_OK) {
-			dial.ApplyModifications(*enemyset.script[*sortid]);
-			MarkDataEnemyModified(*sortid, CHUNK_TYPE_SCRIPT, true);
-		}
 /*	} else if (id == wxID_PRELOAD) {
 		uint16_t battlescene = 0xFFFF, newscene = 0xFFFF;
 		unsigned int i;
@@ -5858,7 +5921,7 @@ void CDDataStruct::OnEnemyChangeButton(wxCommandEvent& event) {
 					break;
 				}
 			if (battlescene!=newscene)
-				enemyset.ChangeBattleScene(enemyset.battle_data[*sortid]->object_id,newscene);
+				enemyset.ChangeBattleScene(enemyset.struct_id[*sortid], newscene);
 		}*/
 	} else if (id == wxID_ANIM) {
 		int spellsel = m_enemyspelllist->GetSelection();
@@ -5957,20 +6020,23 @@ void CDDataStruct::OnEnemyGroupRightClick(wxMouseEvent& event) {
 
 void CDDataStruct::OnEnemyTextRightClick(wxMouseEvent& event) {
 	int newsel = m_enemytextlist->HitTest(event.GetPosition());
+	RightClickTextSelection.clear();
 	if (newsel != wxNOT_FOUND) {
 		m_enemytextlist->SetSelection(newsel);
 		int enmysel = m_enemylist->GetSelection();
 		unsigned int* sortid = (unsigned int*)m_enemylist->GetClientData(enmysel);
 		EnemyDataStruct& eb = *enemyset.battle[*sortid];
 		TextDataStruct& td = *enemyset.text[*sortid];
-		RightClickTextSelection = &td.text[eb.stat_amount + eb.spell_amount + newsel];
-	} else {
-		RightClickTextSelection = NULL;
+		if (GetGameType() == GAME_TYPE_PSX || hades::STEAM_SINGLE_LANGUAGE_MODE)
+			RightClickTextSelection.push_back(&td.text[eb.stat_amount + eb.spell_amount + newsel].txt);
+		else
+			for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+				RightClickTextSelection.push_back(&td.text[eb.stat_amount + eb.spell_amount + newsel].txt);
 	}
 	textmenuadd->Enable(true);
 	textmenuremove->Enable(newsel != wxNOT_FOUND);
-	textmenucopy->Enable(newsel != wxNOT_FOUND);
-	textmenupaste->Enable(newsel != wxNOT_FOUND && copystring != NULL);
+	textmenucopy->Enable(RightClickTextSelection.size() > 0);
+	textmenupaste->Enable(RightClickTextSelection.size() > 0 && copystring.size() > 0);
 	m_enemytextlist->PopupMenu(textmenu);
 }
 
@@ -5994,11 +6060,14 @@ void CDDataStruct::OnEnemyStatRightClickMenu(wxCommandEvent& event) {
 				if (popup.ShowModal() == wxID_DISCARD)
 					DiscardEnemySizeLimit = true;
 			}
-		} else if (eb.stat_amount >= 4 && (gametype != GAME_TYPE_STEAM || config.dll_usage == 0)) {
-			if (!DiscardEnemyNumberLimit) {
-				DiscardableMessageWindow popup(wxGetApp().GetTopWindow(), HADES_STRING_STAT_WARN_LIMIT);
-				if (popup.ShowModal() == wxID_DISCARD)
-					DiscardEnemyNumberLimit = true;
+		} else {
+			enemyset.script[*sortid]->ShiftArgument(AT_TEXT, { { newsel, 1 } }); // TODO: check
+			if (eb.stat_amount >= 4 && (gametype != GAME_TYPE_STEAM || config.dll_usage == 0)) {
+				if (!DiscardEnemyNumberLimit) {
+					DiscardableMessageWindow popup(wxGetApp().GetTopWindow(), HADES_STRING_STAT_WARN_LIMIT);
+					if (popup.ShowModal() == wxID_DISCARD)
+						DiscardEnemyNumberLimit = true;
+				}
 			}
 		}
 	} else if (id == wxID_REMOVE && eb.stat_amount > 1) {
@@ -6012,6 +6081,7 @@ void CDDataStruct::OnEnemyStatRightClickMenu(wxCommandEvent& event) {
 				copyenemystat_statid--;
 			}
 		}
+		enemyset.script[*sortid]->ShiftArgument(AT_TEXT, { { objid, -1 } }); // TODO: check
 	}
 	if (newsel >= 0) {
 		DisplayEnemy(m_enemylist->GetSelection());
@@ -6047,11 +6117,14 @@ void CDDataStruct::OnEnemySpellRightClickMenu(wxCommandEvent& event) {
 				if (popup.ShowModal() == wxID_DISCARD)
 					DiscardEnemySizeLimit = true;
 			}
-		} else if (eb.spell_amount >= 19 && (gametype != GAME_TYPE_STEAM || config.dll_usage == 0)) {
-			if (!DiscardEnemyNumberLimit) {
-				DiscardableMessageWindow popup(wxGetApp().GetTopWindow(), HADES_STRING_SPELL_WARN_LIMIT);
-				if (popup.ShowModal() == wxID_DISCARD)
-					DiscardEnemyNumberLimit = true;
+		} else {
+			enemyset.script[*sortid]->ShiftArgument(AT_TEXT, { { eb.stat_amount + newsel, 1 } }); // TODO: check
+			if (eb.spell_amount >= 19 && (gametype != GAME_TYPE_STEAM || config.dll_usage == 0)) {
+				if (!DiscardEnemyNumberLimit) {
+					DiscardableMessageWindow popup(wxGetApp().GetTopWindow(), HADES_STRING_SPELL_WARN_LIMIT);
+					if (popup.ShowModal() == wxID_DISCARD)
+						DiscardEnemyNumberLimit = true;
+				}
 			}
 		}
 	} else if (id == wxID_REMOVE && eb.spell_amount > 1) {
@@ -6065,6 +6138,7 @@ void CDDataStruct::OnEnemySpellRightClickMenu(wxCommandEvent& event) {
 				copyenemyspell_spellid--;
 			}
 		}
+		enemyset.script[*sortid]->ShiftArgument(AT_TEXT, { { eb.stat_amount + objid, -1 } }); // TODO: check
 	}
 	if (newsel >= 0) {
 		DisplayEnemy(m_enemylist->GetSelection());
@@ -6121,27 +6195,30 @@ void CDDataStruct::OnEnemyTextRightClickMenu(wxCommandEvent& event) {
 	unsigned int i;
 	int newsel = -1;
 	if (id == wxID_ADD) {
-		newsel = td.amount;
+		newsel = td.text.size();
 		FF9String newstr;
 		newstr.CreateEmpty();
 		if (gametype != GAME_TYPE_PSX)
-			newstr.SetValue(L"[STRT=0,1]");
-		if (td.AddText(td.amount, newstr)) {
+			for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+				if (!hades::STEAM_SINGLE_LANGUAGE_MODE || lang == GetSteamLanguage())
+					newstr.SetValue(L"[STRT=0,1]", lang);
+		if (td.AddText(-1, newstr)) {
 			newsel = -1;
 			TextReachLimit();
 		}
 	} else if (id == wxID_REMOVE && objid != wxNOT_FOUND) {
 		td.RemoveText(eb.stat_amount + eb.spell_amount + objid);
-		newsel = min(td.amount - eb.stat_amount - eb.spell_amount - 1, objid);
+		newsel = min<int>(td.text.size() - eb.stat_amount - eb.spell_amount - 1, objid);
 		if (newsel < 0)
 			m_enemytextlist->Clear();
+		enemyset.script[*sortid]->ShiftArgument(AT_TEXT, { { eb.stat_amount + eb.spell_amount + objid, -1 } }); // TODO: check
 	} else if (id == wxID_PASTE) {
 		newsel = objid;
 	}
 	if (newsel >= 0) {
 		m_enemytextlist->Clear();
-		for (i = eb.stat_amount + eb.spell_amount; i < td.amount; i++)
-			m_enemytextlist->Append(_(td.text[i].GetStr(hades::TEXT_PREVIEW_TYPE)));
+		for (i = eb.stat_amount + eb.spell_amount; i < td.text.size(); i++)
+			m_enemytextlist->Append(_(td.text[i].txt.GetStr(hades::TEXT_PREVIEW_TYPE)));
 		m_enemytextlist->SetSelection(newsel);
 	}
 	MarkDataEnemyModified(*sortid, CHUNK_TYPE_TEXT);
@@ -6166,42 +6243,47 @@ void CDDataStruct::OnEnemyTextRightClickMenu(wxCommandEvent& event) {
 void CDDataStruct::DisplayText(int textid) {
 	unsigned int* sortid = (unsigned int*)m_textlist->GetClientData(textid);
 	TextDataStruct* td = textset.text_data[*sortid];
-	unsigned int i,tamount;
-	tamount = td ? td->amount : 0;
+	unsigned int i;
 	m_textdatalist->Clear();
-	for (i=0;i<tamount;i++)
-		m_textdatalist->Append(_(td->text[i].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
+	if (td != NULL)
+		for (i = 0; i < td->text.size(); i++)
+			m_textdatalist->Append(_(td->GetTextByFullListIndex(i, hades::TEXT_PREVIEW_TYPE).substr(0, 100)));
+	m_textidwarning->SetLabel(wxEmptyString);
+	m_textid->SetRange(-1, INT32_MAX);
+	m_textid->Enable(false);
+	m_textid->SetValue(0);
+	m_textuniversalid->SetValue(0);
 	m_textcharmaplist->Clear();
-	for (i=0;i<textset.tim_amount[*sortid];i++) {
+	for (i = 0; i < textset.tim_amount[*sortid]; i++) {
 		wstringstream buffer;
-		buffer << "Picture " << i+1 << ends;
+		buffer << "Picture " << i + 1 << ends;
 		m_textcharmaplist->Append(_(buffer.str()));
 	}
-	m_textdatalistlabel->Show(td!=NULL);
-	m_textdatalist->Show(td!=NULL);
-	m_textexportlabel->Show(td!=NULL);
-	m_textexport->Show(td!=NULL);
-	m_textcharmaptexturelistlabel->Show(textset.tim_amount[*sortid]>0);
-	m_textmanagecharmapbutton->Show(textset.tim_amount[*sortid]>0);
-	m_textcharmappallabel->Show(textset.tim_amount[*sortid]>0);
-	m_textcharmaplist->Show(textset.tim_amount[*sortid]>0);
-	m_textcharmappalchoice->Show(textset.tim_amount[*sortid]>0);
-	m_textcharmapexportlabel->Show(textset.tim_amount[*sortid]>0);
-	m_textcharmapexport->Show(textset.tim_amount[*sortid]>0);
-	m_textcharmapwindowlabel->Show(textset.tim_amount[*sortid]>0);
-	m_textcharmapwindow->Show(textset.tim_amount[*sortid]>0);
-	if (textset.tim_amount[*sortid]>0) {
+	m_textdatalistlabel->Show(td != NULL);
+	m_textdatalist->Show(td != NULL);
+	m_textexportlabel->Show(td != NULL);
+	m_textexport->Show(td != NULL);
+	m_textcharmaptexturelistlabel->Show(textset.tim_amount[*sortid] > 0);
+	m_textmanagecharmapbutton->Show(textset.tim_amount[*sortid] > 0);
+	m_textcharmappallabel->Show(textset.tim_amount[*sortid] > 0);
+	m_textcharmaplist->Show(textset.tim_amount[*sortid] > 0);
+	m_textcharmappalchoice->Show(textset.tim_amount[*sortid] > 0);
+	m_textcharmapexportlabel->Show(textset.tim_amount[*sortid] > 0);
+	m_textcharmapexport->Show(textset.tim_amount[*sortid] > 0);
+	m_textcharmapwindowlabel->Show(textset.tim_amount[*sortid] > 0);
+	m_textcharmapwindow->Show(textset.tim_amount[*sortid] > 0);
+	if (textset.tim_amount[*sortid] > 0) {
 		TIMImageDataStruct& tdtex = textset.chartim[*sortid][0];
 		m_textcharmappalchoice->Clear();
-		for (i=0;i<tdtex.pal_height;i++) {
+		for (i = 0; i < tdtex.pal_height; i++) {
 			wstringstream buffer;
-			buffer << L"Palette " << i+1 << ends;
+			buffer << L"Palette " << i + 1 << ends;
 			m_textcharmappalchoice->Append(_(buffer.str()));
 		}
 		m_textcharmaplist->SetSelection(0);
 		m_textcharmappalchoice->SetSelection(0);
-		wxImage img = ConvertFullTIMToImage(tdtex,NULL,0,false);
-		MACRO_TEXT_DISPLAYTEXTURE(img,m_textcharmapwindow,&chartexpreview)
+		wxImage img = ConvertFullTIMToImage(tdtex, NULL, 0, false);
+		MACRO_TEXT_DISPLAYTEXTURE(img, m_textcharmapwindow, &chartexpreview)
 	}
 	m_textscrolledwindow->Layout();
 	m_textscrolledwindow->GetParent()->GetSizer()->Layout();
@@ -6212,6 +6294,40 @@ void CDDataStruct::OnListBoxText(wxCommandEvent& event) {
 	DisplayText(m_textlist->GetSelection());
 }
 
+void CDDataStruct::OnTextSelectText(wxCommandEvent& event) {
+	bool istext = event.GetId() == wxID_TEXT;
+	if (!istext && event.GetId() != wxID_WORLD)
+		return;
+	wxListBox* itemlist = istext ? m_textlist : m_worldlist;
+	int sel = itemlist->GetSelection();
+	int textsel = event.GetSelection();
+	vector<TextDataStruct*> strlist = istext ? textset.text_data : worldset.text_data;
+	unsigned int* sortid = (unsigned int*)itemlist->GetClientData(sel);
+	int fieldareaid = istext ? textset.struct_id[*sortid] : TEXT_BLOCK_WORLD_MAP;
+	wxStaticText* warninglabel = istext ? m_textidwarning : m_worldtextidwarning;
+	wxSpinCtrl* uidctrl = istext ? m_textuniversalid : m_worldtextuniversalid;
+	wxSpinCtrl* idctrl = istext ? m_textid : m_worldtextid;
+	TextDataStruct& td = *strlist[*sortid];
+	warninglabel->SetLabel(wxEmptyString);
+	if (textsel < (int)td.base_amount) {
+		int localid = GetTextIdFromUniversalId(GetSteamLanguage(), fieldareaid, textsel);
+		idctrl->SetRange(-1, INT32_MAX);
+		idctrl->Enable(false);
+		idctrl->SetValue(localid);
+		uidctrl->SetValue(textsel);
+	} else {
+		idctrl->SetRange(td.base_amount, INT32_MAX);
+		idctrl->Enable(GetGameType() != GAME_TYPE_PSX);
+		idctrl->SetValue(td.text[textsel].id);
+		uidctrl->SetValue(td.text[textsel].id);
+		for (unsigned int i = 0; i < td.text.size(); i++)
+			if (i != textsel && td.text[textsel].id == td.text[i].id) {
+				warninglabel->SetLabel(_(HADES_STRING_TEXT_WARNING_ID));
+				break;
+			}
+	}
+}
+
 void CDDataStruct::OnTextEditText(wxCommandEvent& event) {
 	bool istext = event.GetId() == wxID_TEXT;
 	if (!istext && event.GetId() != wxID_WORLD)
@@ -6219,57 +6335,73 @@ void CDDataStruct::OnTextEditText(wxCommandEvent& event) {
 	wxListBox* itemlist = istext ? m_textlist : m_worldlist;
 	wxListBox* subitemlist = istext ? m_textdatalist : m_worldtextlist;
 	vector<TextDataStruct*> strlist = istext ? textset.text_data : worldset.text_data;
-	void (CDDataStruct::*markmodified)(unsigned int, Chunk_Type, unsigned int) = istext ? &CDDataStruct::MarkDataTextModified : &CDDataStruct::MarkDataWorldMapModified;
+	void (CDDataStruct:: * markmodified)(unsigned int, Chunk_Type, unsigned int) = istext ? &CDDataStruct::MarkDataTextModified : &CDDataStruct::MarkDataWorldMapModified;
 	CharmapDataStruct* chmap = NULL, * chmapext = NULL;
 	int sel = itemlist->GetSelection();
 	int textsel = subitemlist->GetSelection();
 	unsigned int* sortid = (unsigned int*)itemlist->GetClientData(sel);
+	int fieldareaid = istext ? textset.struct_id[*sortid] : TEXT_BLOCK_WORLD_MAP;
 	TextDataStruct& td = *strlist[*sortid];
-	FF9String& text = td.text[textsel];
 	int sizex = -1, sizey = -1;
 	uint16_t formatamount = 0;
-	TextFormatStruct* formatdata = NULL;
-	if (gametype==GAME_TYPE_PSX) {
+	vector<TextFormatStruct>* formatdata = NULL;
+	if (gametype == GAME_TYPE_PSX) {
 		chmap = textset.charmap[textset.main_charmap_index];
-		if (event.GetId()==wxID_TEXT)
+		if (event.GetId() == wxID_TEXT)
 			chmapext = textset.charmap[*sortid];
-		else if (event.GetId()==wxID_WORLD)
+		else if (event.GetId() == wxID_WORLD)
 			chmapext = worldset.charmap[*sortid];
-		sizex = td.size_x[textsel] & 0xFFF;
-		sizey = td.size_y[textsel] & 0x7F;
+		sizex = td.text[textsel].size_x & 0xFFF;
+		sizey = td.text[textsel].size_y & 0x7F;
 		if (config.language & LANGUAGE_VERSION_JAPAN)
 			sizey = -1;
-		formatamount = td.format_amount[textsel];
-		formatdata = td.format_data[textsel];
+		formatamount = td.text[textsel].format_amount;
+		formatdata = &td.text[textsel].format_data;
 	}
 	bool modified = false;
-	if (gametype==GAME_TYPE_PSX) {
-		TextEditDialog ted(this,text,td.GetExtraSize(),TEXT_STYLE_DEFAULT,chmap,chmapext,sizex,sizey,formatamount,formatdata);
-		if (ted.ShowModal()==wxID_OK) {
-			td.SetText(textsel,ted.text);
-			td.SetDialogBoxSize(textsel,ted.m_sizex->GetValue(),ted.m_sizey->GetValue(),!(config.language & LANGUAGE_VERSION_JAPAN));
-			unsigned int i,j = 0;
-			unsigned int famount = td.format_amount[textsel];
-			for (i=0;i<famount;i++) {
+	wstring newstr = L"";
+	if (gametype == GAME_TYPE_PSX) {
+		FF9String& text = td.text[textsel].txt;
+		TextEditDialog ted(this, text, td.GetExtraSize(), TEXT_STYLE_DEFAULT, chmap, chmapext, sizex, sizey, formatamount, formatdata);
+		if (ted.ShowModal() == wxID_OK) {
+			td.SetText(textsel, ted.text);
+			td.text[textsel].SetDialogBoxSize(ted.m_sizex->GetValue(), ted.m_sizey->GetValue(), !(config.language & LANGUAGE_VERSION_JAPAN));
+			unsigned int i, j = 0;
+			unsigned int famount = td.text[textsel].format_amount;
+			for (i = 0; i < famount; i++) {
 				if (ted.format_removed[i])
-					td.RemoveFormatCode(textsel,j);
+					td.RemoveFormatCode(textsel, j);
 				else
 					j++;
 			}
-//			td.format_amount[textsel] = ted.format_amount;
+//			td.text[textsel].format_amount = ted.format_amount;
+			newstr = td.text[textsel].txt.GetStr(hades::TEXT_PREVIEW_TYPE);
 			modified = true;
 		}
 	} else {
-		TextSteamEditDialog ted(this,&ffuiset,text);
-		if (ted.ShowModal()==wxID_OK) {
-			MACRO_MULTILANG_INCREASE_COUNTER(text,ted.text,td.text,textsel,L"[STRT=0,1]")
-			td.SetText(textsel,ted.text);
-			modified = true;
+		FF9String matchupstr = td.GetTextByFullListIndex(textsel);
+		TextSteamEditDialog ted(this, &ffuiset, matchupstr);
+		if (ted.ShowModal() == wxID_OK) {
+			newstr = HADES_STRING_TEXT_INVALID_LANG;
+			for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+				if (ted.text.multi_lang_init[lang]) {
+					int textindex = textsel < (int)td.base_amount ? GetTextIdFromUniversalId(lang, fieldareaid, textsel) : textsel;
+					if (textindex >= 0) {
+						if (lang == GetSteamLanguage()) {
+							td.SetText(textindex, ted.text.str, lang);
+							newstr = td.text[textindex].txt.GetStr(hades::TEXT_PREVIEW_TYPE);
+						} else {
+							td.SetText(textindex, ted.text.multi_lang_str[lang], lang);
+						}
+						modified = true;
+					}
+				}
+			}
 		}
 	}
 	if (modified) {
-		subitemlist->SetString(textsel,_(text.GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
-		(this->*markmodified)(*sortid,CHUNK_TYPE_TEXT,0);
+		subitemlist->SetString(textsel, _(newstr.substr(0, 100)));
+		(this->*markmodified)(*sortid, CHUNK_TYPE_TEXT, 0);
 	}
 }
 
@@ -6302,13 +6434,48 @@ void CDDataStruct::OnTextExportText(wxCommandEvent& event) {
 		wsprintf(tmpstr, TheTextExportDialog->m_textheader->GetValue().wc_str(), tmpheader);
 		txtfile.Write(_(tmpstr) + _(L'\n'));
 		TextDataStruct& td = *strlist[*sortid];
-		for (i = 0; i < td.amount; i++) {
+		for (i = 0; i < td.text.size(); i++) {
 			wsprintf(tmpstr, TheTextExportDialog->m_textseparator->GetValue().wc_str(), i);
-			txtfile.Write(_(tmpstr) + _(L'\n') + _(td.text[i].GetStr(TheTextExportDialog->m_strtype->GetSelection())) + _(L'\n'));
+			txtfile.Write(_(tmpstr) + _(L'\n') + _(td.text[i].txt.GetStr(TheTextExportDialog->m_strtype->GetSelection())) + _(L'\n'));
 		}
 		txtfile.Close();
 		wxMessageDialog popupsuccess(this, HADES_STRING_TXT_SAVE_SUCCESS, HADES_STRING_SUCCESS, wxOK | wxCENTRE);
 		popupsuccess.ShowModal();
+	}
+}
+
+void CDDataStruct::OnTextChangeSpin(wxSpinEvent& event) {
+	int id = event.GetId();
+	if (id == wxID_ID) {
+		if (m_textlist->GetSelection() == wxNOT_FOUND)
+			return;
+		unsigned int* sortid = (unsigned int*)m_textlist->GetClientData(m_textlist->GetSelection());
+		TextDataStruct* textblock = textset.text_data[*sortid];
+		int textsel = m_textdatalist->GetSelection();
+		textblock->text[textsel].id = event.GetPosition();
+		m_textuniversalid->SetValue(event.GetPosition());
+		m_textidwarning->SetLabel(wxEmptyString);
+		for (unsigned int i = 0; i < textblock->text.size(); i++)
+			if (i != textsel && textblock->text[textsel].id == textblock->text[i].id) {
+				m_textidwarning->SetLabel(_(HADES_STRING_TEXT_WARNING_ID));
+				break;
+			}
+		MarkDataTextModified(*sortid, CHUNK_TYPE_TEXT);
+	} else if (id == wxID_WORLDID) {
+		if (m_worldlist->GetSelection() == wxNOT_FOUND)
+			return;
+		unsigned int* sortid = (unsigned int*)m_worldlist->GetClientData(m_worldlist->GetSelection());
+		TextDataStruct* textblock = worldset.text_data[*sortid];
+		int textsel = m_worldtextlist->GetSelection();
+		worldset.text_data[*sortid]->text[textsel].id = event.GetPosition();
+		m_worldtextuniversalid->SetValue(event.GetPosition());
+		m_worldtextidwarning->SetLabel(wxEmptyString);
+		for (unsigned int i = 0; i < textblock->text.size(); i++)
+			if (i != textsel && textblock->text[textsel].id == textblock->text[i].id) {
+				m_worldtextidwarning->SetLabel(_(HADES_STRING_TEXT_WARNING_ID));
+				break;
+			}
+		MarkDataWorldMapModified(*sortid, CHUNK_TYPE_TEXT);
 	}
 }
 
@@ -6328,14 +6495,14 @@ void CDDataStruct::OnTextCharmapListSelection(wxCommandEvent& event) {
 	unsigned int i;
 	TIMImageDataStruct& tdtex = timlist[*sortid][texsel];
 	palchoice->Clear();
-	for (i=0;i<tdtex.pal_height;i++) {
+	for (i = 0; i < tdtex.pal_height; i++) {
 		wstringstream buffer;
-		buffer << L"Palette " << i+1 << ends;
+		buffer << L"Palette " << i + 1 << ends;
 		palchoice->Append(_(buffer.str()));
 	}
 	palchoice->SetSelection(0);
-	wxImage img = ConvertFullTIMToImage(tdtex,NULL,0,false);
-	MACRO_TEXT_DISPLAYTEXTURE(img,previewwindow,previewbmp)
+	wxImage img = ConvertFullTIMToImage(tdtex, NULL, 0, false);
+	MACRO_TEXT_DISPLAYTEXTURE(img, previewwindow, previewbmp)
 }
 
 void CDDataStruct::OnTextCharmapPaletteChoice(wxCommandEvent& event) {
@@ -6350,12 +6517,12 @@ void CDDataStruct::OnTextCharmapPaletteChoice(wxCommandEvent& event) {
 	vector<TIMImageDataStruct*> timlist = istext ? textset.chartim : worldset.chartim;
 	int sel = itemlist->GetSelection();
 	int texsel = subitemlist->GetSelection();
-	if (texsel==wxNOT_FOUND)
+	if (texsel == wxNOT_FOUND)
 		return;
 	unsigned int* sortid = (unsigned int*)itemlist->GetClientData(sel);
 	TIMImageDataStruct& tdtex = timlist[*sortid][texsel];
-	wxImage img = ConvertFullTIMToImage(tdtex,NULL,palchoice->GetSelection(),false);
-	MACRO_TEXT_DISPLAYTEXTURE(img,previewwindow,previewbmp)
+	wxImage img = ConvertFullTIMToImage(tdtex, NULL, palchoice->GetSelection(), false);
+	MACRO_TEXT_DISPLAYTEXTURE(img, previewwindow, previewbmp)
 //	previewwindow->Layout(); // For some reasons, m_textcharmappalchoice has difficulties to validate its selection...
 //	previewwindow->Refresh();
 }
@@ -6373,18 +6540,18 @@ void CDDataStruct::OnTextExportCharmap(wxCommandEvent& event) {
 		TheCharmapTextureExportDialog = new CharmapTextureExportWindow(GetTopWindow());
 	int sel = itemlist->GetSelection();
 	int texsel = subitemlist->GetSelection();
-	if (texsel==wxNOT_FOUND)
+	if (texsel == wxNOT_FOUND)
 		return;
 	unsigned int* sortid = (unsigned int*)itemlist->GetClientData(sel);
-	if (TheCharmapTextureExportDialog->ShowModal()==wxID_OK) {
+	if (TheCharmapTextureExportDialog->ShowModal() == wxID_OK) {
 		TIMImageDataStruct& im = timlist[*sortid][texsel];
-		int res = im.Export(TheCharmapTextureExportDialog->m_filepicker->GetPath().mb_str(),true,0,NULL,palchoice->GetSelection(),false);
-		if (res==1)
+		int res = im.Export(TheCharmapTextureExportDialog->m_filepicker->GetPath().mb_str(), true, 0, NULL, palchoice->GetSelection(), false);
+		if (res == 1)
 			wxLogError(HADES_STRING_OPEN_ERROR_CREATE, TheCharmapTextureExportDialog->m_filepicker->GetPath().c_str());
-		else if (res==2)
+		else if (res == 2)
 			wxLogError(HADES_STRING_ERROR_UNKNOWN);
 		else {
-			wxMessageDialog popupsuccess(this,HADES_STRING_TEXTURE_SAVE_SUCCESS,HADES_STRING_SUCCESS,wxOK|wxCENTRE);
+			wxMessageDialog popupsuccess(this, HADES_STRING_TEXTURE_SAVE_SUCCESS, HADES_STRING_SUCCESS, wxOK | wxCENTRE);
 			popupsuccess.ShowModal();
 		}
 	}
@@ -6495,35 +6662,65 @@ void CDDataStruct::OnTextManageCharmap(wxCommandEvent& event) {
 void CDDataStruct::OnTextRightClick(wxMouseEvent& event) {
 	if (event.GetId() == wxID_TEXT) {
 		int newsel = m_textdatalist->HitTest(event.GetPosition());
+		bool canremove = false;
+		RightClickTextSelection.clear();
 		if (newsel != wxNOT_FOUND) {
 			m_textdatalist->SetSelection(newsel);
 			int textsel = m_textlist->GetSelection();
 			unsigned int* sortid = (unsigned int*)m_textlist->GetClientData(textsel);
 			TextDataStruct& td = *textset.text_data[*sortid];
-			RightClickTextSelection = &td.text[newsel];
-		} else {
-			RightClickTextSelection = NULL;
+			if (GetGameType() != GAME_TYPE_PSX) {
+				canremove = newsel >= (int)td.base_amount;
+				if (hades::STEAM_SINGLE_LANGUAGE_MODE) {
+					RightClickTextSelection.push_back(&td.text[newsel].txt);
+				} else {
+					for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+						int localid = GetTextIdFromUniversalId(lang, textset.struct_id[*sortid], newsel);
+						if (localid >= 0)
+							RightClickTextSelection.push_back(&td.text[localid].txt);
+						else
+							RightClickTextSelection.push_back(NULL);
+					}
+				}
+			} else {
+				RightClickTextSelection.push_back(&td.text[newsel].txt);
+			}
 		}
 		textmenuadd->Enable(true);
-		textmenuremove->Enable(newsel != wxNOT_FOUND);
-		textmenucopy->Enable(newsel != wxNOT_FOUND);
-		textmenupaste->Enable(newsel != wxNOT_FOUND && copystring != NULL);
+		textmenuremove->Enable(canremove || GetGameType() == GAME_TYPE_PSX);
+		textmenucopy->Enable(RightClickTextSelection.size() > 0);
+		textmenupaste->Enable(RightClickTextSelection.size() > 0 && copystring.size() > 0);
 		m_textdatalist->PopupMenu(textmenu);
 	} else if (event.GetId() == wxID_WORLD) {
 		int newsel = m_worldtextlist->HitTest(event.GetPosition());
+		bool canremove = false;
+		RightClickTextSelection.clear();
 		if (newsel != wxNOT_FOUND) {
 			m_worldtextlist->SetSelection(newsel);
-			int worldsel = m_worldlist->GetSelection();
-			unsigned int* sortid = (unsigned int*)m_worldlist->GetClientData(worldsel);
+			int textsel = m_worldlist->GetSelection();
+			unsigned int* sortid = (unsigned int*)m_worldlist->GetClientData(textsel);
 			TextDataStruct& td = *worldset.text_data[*sortid];
-			RightClickTextSelection = &td.text[newsel];
-		} else {
-			RightClickTextSelection = NULL;
+			if (GetGameType() != GAME_TYPE_PSX) {
+				canremove = newsel >= (int)td.base_amount;
+				if (hades::STEAM_SINGLE_LANGUAGE_MODE) {
+					RightClickTextSelection.push_back(&td.text[newsel].txt);
+				} else {
+					for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+						int localid = GetTextIdFromUniversalId(lang, STEAM_WORLD_MAP_TEXT_ID, newsel);
+						if (localid >= 0)
+							RightClickTextSelection.push_back(&td.text[localid].txt);
+						else
+							RightClickTextSelection.push_back(NULL);
+					}
+				}
+			} else {
+				RightClickTextSelection.push_back(&td.text[newsel].txt);
+			}
 		}
 		textmenuadd->Enable(true);
-		textmenuremove->Enable(newsel != wxNOT_FOUND);
-		textmenucopy->Enable(newsel != wxNOT_FOUND);
-		textmenupaste->Enable(newsel != wxNOT_FOUND && copystring != NULL);
+		textmenuremove->Enable(canremove || GetGameType() == GAME_TYPE_PSX);
+		textmenucopy->Enable(RightClickTextSelection.size() > 0);
+		textmenupaste->Enable(RightClickTextSelection.size() > 0 && copystring.size() > 0);
 		m_worldtextlist->PopupMenu(textmenu);
 	}
 }
@@ -6537,26 +6734,29 @@ void CDDataStruct::OnTextRightClickMenu(wxCommandEvent& event) {
 	unsigned int i;
 	int newsel = -1;
 	if (id == wxID_ADD) {
-		newsel = td.amount;
+		newsel = td.text.size();
 		FF9String newstr;
 		newstr.CreateEmpty();
 		if (gametype != GAME_TYPE_PSX)
-			newstr.SetValue(L"[STRT=0,1]");
-		if (td.AddText(td.amount, newstr)) {
+			for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+				if (!hades::STEAM_SINGLE_LANGUAGE_MODE || lang == GetSteamLanguage())
+					newstr.SetValue(L"[STRT=0,1]", lang);
+		if (td.AddText(-1, newstr)) {
 			newsel = -1;
 			TextReachLimit();
 		}
 	} else if (id == wxID_REMOVE && objid != wxNOT_FOUND) {
 		td.RemoveText(objid);
-		newsel = min(td.amount - 1, objid);
+		newsel = min((int)td.text.size() - 1, objid);
 	} else if (id == wxID_PASTE) {
-		newsel = objid;
+		m_textdatalist->SetString(objid, _(td.GetTextByFullListIndex(objid, hades::TEXT_PREVIEW_TYPE).substr(0, 100)));
 	}
 	if (newsel >= 0) {
 		m_textdatalist->Clear();
-		for (i = 0; i < td.amount; i++)
-			m_textdatalist->Append(_(td.text[i].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0, 100)));
+		for (i = 0; i < td.text.size(); i++)
+			m_textdatalist->Append(_(td.GetTextByFullListIndex(i, hades::TEXT_PREVIEW_TYPE).substr(0, 100)));
 		m_textdatalist->SetSelection(newsel);
+		m_textdatalist->SendSelectionChangedEvent(wxEVT_COMMAND_LISTBOX_SELECTED);
 	}
 	MarkDataTextModified(*sortid, CHUNK_TYPE_TEXT);
 }
@@ -6605,7 +6805,6 @@ void CDDataStruct::DisplayField(int fieldid) {
 	}
 	m_fieldname->ChangeValue(_(fieldset.script_data[fieldselection]->name.str));
 	m_fieldpreload->Enable(fieldset.preload[fieldselection] != NULL);
-	m_fieldscriptlink->Enable(fieldset.script_data[fieldselection]->multi_lang_script != NULL);
 	m_fieldtexturechoice->Enable(fieldset.background_data[fieldselection] != NULL);
 	m_fieldtexturemanage->Enable(fieldset.background_data[fieldselection] != NULL);
 	m_fieldtexturechoice->Clear();
@@ -6736,12 +6935,6 @@ walkbmp.SaveFile(_(L"aaaa.bmp"),wxBITMAP_TYPE_BMP);*/
 		if (dial.ShowModal()==wxID_OK) {
 			dial.ApplyModifications(*sc);
 			MarkDataFieldModified(*sortid,CHUNK_TYPE_SCRIPT);
-		}
-	} else if (id == wxID_SCRIPTLINK) {
-		ScriptEditLinkDialog dial(this,*sc,*fieldset.related_text[*sortid]);
-		if (dial.ShowModal()==wxID_OK) {
-			dial.ApplyModifications(*sc);
-			MarkDataFieldModified(*sortid,CHUNK_TYPE_SCRIPT,true);
 		}
 	} else if (id == wxID_PRELOAD) {
 		if (gametype==GAME_TYPE_PSX) {
@@ -6903,7 +7096,7 @@ void CDDataStruct::DisplayWorldBattleHelp(int spotversion, int whichbattle) {
 		return;
 	}
 	uint16_t bsceneid = enemyset.battle[choicectrl->GetSelection()]->scene_id;
-	uint16_t bid = enemyset.battle_data[choicectrl->GetSelection()]->object_id;
+	uint16_t bid = enemyset.struct_id[choicectrl->GetSelection()];
 	wxString label = _(L"");
 	for (i = 0; i < G_V_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME); i++)
 		if (HADES_STRING_BATTLE_SCENE_NAME[i].id == bsceneid) {
@@ -6929,39 +7122,43 @@ void CDDataStruct::DisplayWorldMap(int worldid) {
 	unsigned int* sortid = (unsigned int*)m_worldlist->GetClientData(worldid);
 	TextDataStruct& td = *worldset.text_data[*sortid];
 	unsigned int i;
-	m_worldscriptedit->Enable(!(worldset.script[*sortid]->object_id>=9100));
+	m_worldscriptedit->Enable(worldset.script[*sortid]->object_id < 9100);
 	m_worldtextlist->Clear();
-	for (i=0;i<td.amount;i++)
-		m_worldtextlist->Append(_(td.text[i].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
-	m_worldpreload->Enable(gametype==GAME_TYPE_PSX);
-	m_worldscriptlink->Enable(worldset.script[*sortid]->multi_lang_script!=NULL);
+	for (i = 0; i < td.text.size(); i++)
+		m_worldtextlist->Append(_(td.GetTextByFullListIndex(i, hades::TEXT_PREVIEW_TYPE).substr(0, 100)));
+	m_worldtextidwarning->SetLabel(wxEmptyString);
+	m_worldtextid->SetRange(-1, INT32_MAX);
+	m_worldtextid->Enable(false);
+	m_worldtextid->SetValue(0);
+	m_worldtextuniversalid->SetValue(0);
+	m_worldpreload->Enable(gametype == GAME_TYPE_PSX);
 	m_worldtextcharmaplist->Clear();
-	for (i=0;i<worldset.tim_amount[*sortid];i++) {
+	for (i = 0; i < worldset.tim_amount[*sortid]; i++) {
 		wstringstream buffer;
-		buffer << "Picture " << i+1 << ends;
+		buffer << "Picture " << i + 1 << ends;
 		m_worldtextcharmaplist->Append(_(buffer.str()));
 	}
-	m_worldtextcharmaptexturelistlabel->Show(worldset.tim_amount[*sortid]>0);
-	m_worldtextmanagecharmapbutton->Show(worldset.tim_amount[*sortid]>0);
-	m_worldtextcharmappallabel->Show(worldset.tim_amount[*sortid]>0);
-	m_worldtextcharmaplist->Show(worldset.tim_amount[*sortid]>0);
-	m_worldtextcharmappalchoice->Show(worldset.tim_amount[*sortid]>0);
-	m_worldtextcharmapexportlabel->Show(worldset.tim_amount[*sortid]>0);
-	m_worldtextcharmapexport->Show(worldset.tim_amount[*sortid]>0);
-	m_worldtextcharmapwindowlabel->Show(worldset.tim_amount[*sortid]>0);
-	m_worldtextcharmapwindow->Show(worldset.tim_amount[*sortid]>0);
-	if (worldset.tim_amount[*sortid]>0) {
+	m_worldtextcharmaptexturelistlabel->Show(worldset.tim_amount[*sortid] > 0);
+	m_worldtextmanagecharmapbutton->Show(worldset.tim_amount[*sortid] > 0);
+	m_worldtextcharmappallabel->Show(worldset.tim_amount[*sortid] > 0);
+	m_worldtextcharmaplist->Show(worldset.tim_amount[*sortid] > 0);
+	m_worldtextcharmappalchoice->Show(worldset.tim_amount[*sortid] > 0);
+	m_worldtextcharmapexportlabel->Show(worldset.tim_amount[*sortid] > 0);
+	m_worldtextcharmapexport->Show(worldset.tim_amount[*sortid] > 0);
+	m_worldtextcharmapwindowlabel->Show(worldset.tim_amount[*sortid] > 0);
+	m_worldtextcharmapwindow->Show(worldset.tim_amount[*sortid] > 0);
+	if (worldset.tim_amount[*sortid] > 0) {
 		TIMImageDataStruct& tdtex = worldset.chartim[*sortid][0];
 		m_worldtextcharmappalchoice->Clear();
-		for (i=0;i<tdtex.pal_height;i++) {
+		for (i = 0; i < tdtex.pal_height; i++) {
 			wstringstream buffer;
-			buffer << L"Palette " << i+1 << ends;
+			buffer << L"Palette " << i + 1 << ends;
 			m_worldtextcharmappalchoice->Append(_(buffer.str()));
 		}
 		m_worldtextcharmaplist->SetSelection(0);
 		m_worldtextcharmappalchoice->SetSelection(0);
-		wxImage img = ConvertFullTIMToImage(tdtex,NULL,0,false);
-		MACRO_TEXT_DISPLAYTEXTURE(img,m_worldtextcharmapwindow,&worldchartexpreview)
+		wxImage img = ConvertFullTIMToImage(tdtex, NULL, 0, false);
+		MACRO_TEXT_DISPLAYTEXTURE(img, m_worldtextcharmapwindow, &worldchartexpreview)
 	}
 	m_worldscrolledwindow->Layout();
 	m_worldscrolledwindow->GetParent()->GetSizer()->Layout();
@@ -7079,59 +7276,51 @@ void CDDataStruct::OnWorldChangeButton(wxCommandEvent& event) {
 		unsigned int sel = m_worldlist->GetSelection();
 		unsigned int* sortid = (unsigned int*)m_worldlist->GetClientData(sel);
 		ScriptDataStruct* sc = worldset.script[*sortid];
-		ScriptEditDialog dial(this,*sc,SCRIPT_TYPE_WORLD,&saveset,NULL,worldset.text_data[*sortid]);
-		if (dial.ShowModal()==wxID_OK) {
+		ScriptEditDialog dial(this, *sc, SCRIPT_TYPE_WORLD, &saveset, NULL, worldset.text_data[*sortid]);
+		if (dial.ShowModal() == wxID_OK) {
 			*sc = dial.script;
-			MarkDataWorldMapModified(*sortid,CHUNK_TYPE_SCRIPT);
+			MarkDataWorldMapModified(*sortid, CHUNK_TYPE_SCRIPT);
 		}
 	} else if (id == wxID_ENTRY) {
 		unsigned int sel = m_worldlist->GetSelection();
 		unsigned int* sortid = (unsigned int*)m_worldlist->GetClientData(sel);
-		ScriptEditEntryDialog dial(this,*worldset.script[*sortid],SCRIPT_TYPE_WORLD);
-		if (dial.ShowModal()==wxID_OK) {
+		ScriptEditEntryDialog dial(this, *worldset.script[*sortid], SCRIPT_TYPE_WORLD);
+		if (dial.ShowModal() == wxID_OK) {
 			dial.ApplyModifications(*worldset.script[*sortid]);
-			MarkDataWorldMapModified(*sortid,CHUNK_TYPE_SCRIPT);
-		}
-	} else if (id == wxID_SCRIPTLINK) {
-		unsigned int sel = m_worldlist->GetSelection();
-		unsigned int* sortid = (unsigned int*)m_worldlist->GetClientData(sel);
-		ScriptEditLinkDialog dial(this,*worldset.script[*sortid],*worldset.text_data[*sortid]);
-		if (dial.ShowModal()==wxID_OK) {
-			dial.ApplyModifications(*worldset.script[*sortid]);
-			MarkDataWorldMapScriptModified(*sortid,true);
+			MarkDataWorldMapModified(*sortid, CHUNK_TYPE_SCRIPT);
 		}
 	} else if (id == wxID_PRELOAD) {
 		unsigned int sel = m_worldlist->GetSelection();
 		unsigned int* sortid = (unsigned int*)m_worldlist->GetClientData(sel);
-		if (gametype==GAME_TYPE_PSX) {
-			ImageMapEditDialog dial(this,worldset.preload[*sortid],cluster.enemy_shared_map,&cluster.global_map,saveset);
-			if (dial.ShowModal()==wxID_OK) {
+		if (gametype == GAME_TYPE_PSX) {
+			ImageMapEditDialog dial(this, worldset.preload[*sortid], cluster.enemy_shared_map, &cluster.global_map, saveset);
+			if (dial.ShowModal() == wxID_OK) {
 				worldset.preload[*sortid]->Copy(dial.map);
 				worldset.preload[*sortid]->UpdateOffset();
-				MarkDataWorldMapModified(*sortid,CHUNK_TYPE_IMAGE_MAP);
+				MarkDataWorldMapModified(*sortid, CHUNK_TYPE_IMAGE_MAP);
 			}
 		} else {
-			SteamImageMapEditDialog dial(this,worldset.preload[*sortid]);
-			if (dial.ShowModal()==wxID_OK) {
+			SteamImageMapEditDialog dial(this, worldset.preload[*sortid]);
+			if (dial.ShowModal() == wxID_OK) {
 				worldset.preload[*sortid]->Copy(dial.map);
 				worldset.preload[*sortid]->UpdateOffset();
-				MarkDataWorldMapModified(*sortid,CHUNK_TYPE_IMAGE_MAP);
+				MarkDataWorldMapModified(*sortid, CHUNK_TYPE_IMAGE_MAP);
 			}
 		}
 	} else if (id == wxID_NAME) {
 		unsigned int sel = m_worldplacelist->GetSelection();
 		WorldMapDataStruct& wm = *worldset.world_data;
-		if (gametype==GAME_TYPE_PSX) {
+		if (gametype == GAME_TYPE_PSX) {
 			CharmapDataStruct* chmap = worldset.charmap[0];
-			TextEditDialog ted(this,wm.place_name[sel],wm.place_name_extra_size,TEXT_STYLE_DEFAULT,chmap);
-			if (ted.ShowModal()==wxID_OK) {
-				wm.SetName(sel,ted.text);
+			TextEditDialog ted(this, wm.place_name[sel], wm.place_name_extra_size, TEXT_STYLE_DEFAULT, chmap);
+			if (ted.ShowModal() == wxID_OK) {
+				wm.SetName(sel, ted.text);
 				m_worldplacename->SetValue(wm.place_name[sel].str);
 			}
 		} else {
-			TextSteamEditDialog ted(this,&ffuiset,wm.place_name[sel]);
-			if (ted.ShowModal()==wxID_OK) {
-				wm.SetName(sel,ted.text);
+			TextSteamEditDialog ted(this, &ffuiset, wm.place_name[sel]);
+			if (ted.ShowModal() == wxID_OK) {
+				wm.SetName(sel, ted.text);
 				m_worldplacename->SetValue(wm.place_name[sel].str);
 			}
 		}
@@ -7216,26 +7405,29 @@ void CDDataStruct::OnWorldTextRightClickMenu(wxCommandEvent& event) {
 	unsigned int i;
 	int newsel = -1;
 	if (id == wxID_ADD) {
-		newsel = td.amount;
+		newsel = td.text.size();
 		FF9String newstr;
 		newstr.CreateEmpty();
 		if (gametype != GAME_TYPE_PSX)
-			newstr.SetValue(L"[STRT=0,1]");
-		if (td.AddText(td.amount, newstr)) {
+			for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+				if (!hades::STEAM_SINGLE_LANGUAGE_MODE || lang == GetSteamLanguage())
+					newstr.SetValue(L"[STRT=0,1]", lang);
+		if (td.AddText(-1, newstr)) {
 			newsel = -1;
 			TextReachLimit();
 		}
 	} else if (id == wxID_REMOVE && objid != wxNOT_FOUND) {
 		td.RemoveText(objid);
-		newsel = min(td.amount - 1, objid);
+		newsel = min((int)td.text.size() - 1, objid);
 	} else if (id == wxID_PASTE) {
-		newsel = objid;
+		m_worldtextlist->SetString(objid, _(td.GetTextByFullListIndex(objid, hades::TEXT_PREVIEW_TYPE).substr(0, 100)));
 	}
 	if (newsel >= 0) {
 		m_worldtextlist->Clear();
-		for (i = 0; i < td.amount; i++)
-			m_worldtextlist->Append(_(td.text[i].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0, 100)));
+		for (i = 0; i < td.text.size(); i++)
+			m_worldtextlist->Append(_(td.GetTextByFullListIndex(i, hades::TEXT_PREVIEW_TYPE).substr(0, 100)));
 		m_worldtextlist->SetSelection(newsel);
+		m_worldtextlist->SendSelectionChangedEvent(wxEVT_COMMAND_LISTBOX_SELECTED);
 	}
 	MarkDataWorldMapModified(*sortid, CHUNK_TYPE_TEXT);
 }
@@ -7636,11 +7828,16 @@ void CDDataStruct::DisplaySpecialText(int textblockid) {
 	unsigned int i;
 	m_specialtextdatalist->Clear();
 	if (st.is_localization)
-		for (i=0;i<st.amount;i++)
-			m_specialtextdatalist->Append(_(st.localization_field[i])+_(L": ")+_(st.text[i].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
+		for (i = 0; i < st.text.size(); i++)
+			m_specialtextdatalist->Append(_(st.text[i].localization_field) + _(L": ") + _(st.text[i].txt.GetStr(hades::TEXT_PREVIEW_TYPE).substr(0, 100)));
 	else
-		for (i=0;i<st.amount;i++)
-			m_specialtextdatalist->Append(_(st.text[i].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
+		for (i = 0; i < st.text.size(); i++)
+			m_specialtextdatalist->Append(_(st.text[i].txt.GetStr(hades::TEXT_PREVIEW_TYPE).substr(0, 100)));
+	m_specialtextidwarning->SetLabel(wxEmptyString);
+	m_specialtextid->SetValue(0);
+	m_specialtextid->Enable(false);
+	m_specialtextkey->ChangeValue(wxEmptyString);
+	m_specialtextkey->Enable(false);
 	m_textscrolledwindow->Layout();
 	m_textscrolledwindow->GetParent()->GetSizer()->Layout();
 	m_textscrolledwindow->Refresh();
@@ -7650,40 +7847,115 @@ void CDDataStruct::OnListBoxSpecialText(wxCommandEvent& event) {
 	DisplaySpecialText(m_specialtextlist->GetSelection());
 }
 
+void CDDataStruct::OnSpecialTextSelectText(wxCommandEvent& event) {
+	int sel = m_specialtextlist->GetSelection();
+	int textsel = event.GetSelection();
+	SpecialTextDataStruct& textblock = ffuiset.special_text->text_block[sel];
+	m_specialtextid->SetValue(textblock.text[textsel].id);
+	m_specialtextidwarning->SetLabel(wxEmptyString);
+	if (textblock.is_localization) {
+		m_specialtextid->Enable(false);
+		m_specialtextkey->Enable(true);
+		m_specialtextkey->ChangeValue(_(textblock.text[textsel].localization_field));
+		if (textblock.text[textsel].localization_field.size() > 0)
+			for (unsigned int i = 0; i < textblock.text.size(); i++)
+				if (i != textsel && textblock.text[textsel].localization_field.compare(textblock.text[i].localization_field) == 0) {
+					m_specialtextidwarning->SetLabel(_(HADES_STRING_TEXT_WARNING_KEY));
+					break;
+				}
+	} else {
+		m_specialtextid->Enable(GetGameType() != GAME_TYPE_PSX && textsel >= (int)textblock.base_amount);
+		m_specialtextkey->Enable(false);
+		m_specialtextkey->ChangeValue(wxEmptyString);
+		for (unsigned int i = 0; i < textblock.text.size(); i++)
+			if (i != textsel && textblock.text[textsel].id == textblock.text[i].id) {
+				m_specialtextidwarning->SetLabel(_(HADES_STRING_TEXT_WARNING_ID));
+				break;
+			}
+	}
+}
+
 void CDDataStruct::OnSpecialTextEditText(wxCommandEvent& event) {
 	int textsel = m_specialtextdatalist->GetSelection();
 	SpecialTextDataStruct& st = ffuiset.special_text->text_block[m_specialtextlist->GetSelection()];
-	if (gametype==GAME_TYPE_PSX) {
+	if (gametype == GAME_TYPE_PSX) {
 		CharmapDataStruct* chmap = NULL;
 		if (saveset.sectionloaded[DATA_SECTION_TEXT])
 			chmap = textset.charmap[textset.main_charmap_index];
-		TextEditDialog ted(this,st.text[textsel],st.space_total-st.space_used,TEXT_STYLE_DESCRIPTION,chmap);
-		if (ted.ShowModal()==wxID_OK) {
-			st.SetText(textsel,ted.text);
+		TextEditDialog ted(this, st.text[textsel].txt, st.space_total - st.space_used, TEXT_STYLE_DESCRIPTION, chmap);
+		if (ted.ShowModal() == wxID_OK) {
+			st.SetText(textsel, ted.text);
 			if (st.is_localization)
-				m_specialtextdatalist->SetString(textsel,_(st.localization_field[textsel])+_(L": ")+_(st.text[textsel].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
+				m_specialtextdatalist->SetString(textsel, _(st.text[textsel].localization_field) + _(L": ") + _(st.text[textsel].txt.GetStr(hades::TEXT_PREVIEW_TYPE).substr(0, 100)));
 			else
-				m_specialtextdatalist->SetString(textsel,_(st.text[textsel].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
+				m_specialtextdatalist->SetString(textsel, _(st.text[textsel].txt.GetStr(hades::TEXT_PREVIEW_TYPE).substr(0, 100)));
 			MarkDataMenuUIModified();
 		}
 	} else {
-		TextSteamEditDialog ted(this,&ffuiset,st.text[textsel],TEXT_STYLE_DESCRIPTION);
-		if (ted.ShowModal()==wxID_OK) {
-			MACRO_MULTILANG_INCREASE_COUNTER(st.text[textsel],ted.text,st.text,textsel,L"")
-			st.SetText(textsel,ted.text);
+		TextSteamEditDialog ted(this, &ffuiset, st.text[textsel].txt, TEXT_STYLE_DESCRIPTION);
+		if (ted.ShowModal() == wxID_OK) {
+			if (!hades::STEAM_SINGLE_LANGUAGE_MODE)
+				for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+					if (ted.text.multi_lang_init[lang] && !st.text[textsel].txt.multi_lang_init[lang])
+						for (int i = textsel - 1; i >= 0 && !st.text[i].txt.multi_lang_init[lang]; i--)
+							st.text[i].txt.SetValue(L"", lang);
+			st.SetText(textsel, ted.text);
 			if (st.is_localization)
-				m_specialtextdatalist->SetString(textsel,_(st.localization_field[textsel])+_(L": ")+_(st.text[textsel].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
+				m_specialtextdatalist->SetString(textsel, _(st.text[textsel].localization_field) + _(L": ") + _(st.text[textsel].txt.GetStr(hades::TEXT_PREVIEW_TYPE).substr(0, 100)));
 			else
-				m_specialtextdatalist->SetString(textsel,_(st.text[textsel].GetStr(hades::TEXT_PREVIEW_TYPE).substr(0,100)));
+				m_specialtextdatalist->SetString(textsel, _(st.text[textsel].txt.GetStr(hades::TEXT_PREVIEW_TYPE).substr(0, 100)));
 			MarkDataMenuUIModified();
 		}
 	}
 }
 
+void CDDataStruct::OnSpecialTextEditKey(wxCommandEvent& event) {
+	int id = event.GetId();
+	int sel = m_specialtextlist->GetSelection();
+	int textsel = m_specialtextdatalist->GetSelection();
+	if (sel == wxNOT_FOUND || textsel == wxNOT_FOUND)
+		return;
+	if (id == wxID_KEY) {
+		SpecialTextDataStruct& textblock = ffuiset.special_text->text_block[sel];
+		SpecialTextDataEntry& entry = textblock.text[textsel];
+		entry.localization_field = m_specialtextkey->GetValue().ToStdWstring();
+		m_specialtextdatalist->SetString(textsel, _(entry.localization_field) + _(L": ") + _(entry.txt.GetStr(hades::TEXT_PREVIEW_TYPE).substr(0, 100)));
+		m_specialtextidwarning->SetLabel(wxEmptyString);
+		if (entry.localization_field.size() > 0)
+			for (unsigned int i = 0; i < textblock.text.size(); i++)
+				if (i != textsel && entry.localization_field.compare(textblock.text[i].localization_field) == 0) {
+					m_specialtextidwarning->SetLabel(_(HADES_STRING_TEXT_WARNING_KEY));
+					break;
+				}
+		MarkDataMenuUIModified();
+	}
+}
+
+void CDDataStruct::OnSpecialTextChangeSpin(wxSpinEvent& event) {
+	int id = event.GetId();
+	int sel = m_specialtextlist->GetSelection();
+	int textsel = m_specialtextdatalist->GetSelection();
+	if (sel == wxNOT_FOUND || textsel == wxNOT_FOUND)
+		return;
+	if (id == wxID_ID) {
+		SpecialTextDataStruct& textblock = ffuiset.special_text->text_block[sel];
+		textblock.text[textsel].id = event.GetPosition();
+		m_specialtextidwarning->SetLabel(wxEmptyString);
+		for (unsigned int i = 0; i < textblock.text.size(); i++)
+			if (i != textsel && textblock.text[textsel].id == textblock.text[i].id) {
+				m_specialtextidwarning->SetLabel(_(HADES_STRING_TEXT_WARNING_ID));
+				break;
+			}
+		MarkDataMenuUIModified();
+	}
+}
+
 void CDDataStruct::OnSpecialTextRightClick(wxMouseEvent& event) {
+	int blocksel = m_specialtextlist->GetSelection();
 	int newsel = m_specialtextdatalist->HitTest(event.GetPosition());
-	if (newsel!=wxNOT_FOUND)
+	if (newsel != wxNOT_FOUND)
 		m_specialtextdatalist->SetSelection(newsel);
+	specialtextmenuremove->Enable((newsel != wxNOT_FOUND && blocksel == SPECIAL_TEXT_LOCALIZATION_INDEX_STEAM) || newsel >= (int)ffuiset.special_text->text_block[blocksel].base_amount);
 	m_specialtextdatalist->PopupMenu(specialtextmenu);
 }
 
@@ -7694,23 +7966,25 @@ void CDDataStruct::OnSpecialTextRightClickMenu(wxCommandEvent& event) {
 	int objid = m_specialtextdatalist->GetSelection();
 	int newsel = -1;
 	if (id == wxID_ADD) {
-		newsel = td.amount;
+		newsel = td.text.size();
 		FF9String newstr;
 		newstr.CreateEmpty();
-		if (gametype!=GAME_TYPE_PSX)
-			for (SteamLanguage lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-				newstr.SetValue(L"",lang);
-		if (td.AddText(td.amount,newstr)) {
+		if (gametype != GAME_TYPE_PSX)
+			for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+				if (!hades::STEAM_SINGLE_LANGUAGE_MODE || lang == GetSteamLanguage())
+					newstr.SetValue(L"", lang);
+		if (td.AddText(-1, newstr)) {
 			newsel = -1;
 			TextReachLimit();
 		}
-	} else if (id == wxID_REMOVE && objid!=wxNOT_FOUND) {
+	} else if (id == wxID_REMOVE && objid != wxNOT_FOUND) {
 		td.RemoveText(objid);
-		newsel = min((int)td.amount-1,objid);
+		newsel = min((int)td.text.size() - 1, objid);
 	}
-	if (newsel>=0) {
+	if (newsel >= 0) {
 		DisplaySpecialText(sel);
 		m_specialtextdatalist->SetSelection(newsel);
+		m_specialtextdatalist->SendSelectionChangedEvent(wxEVT_COMMAND_LISTBOX_SELECTED);
 	}
 	MarkDataMenuUIModified();
 }
@@ -7744,34 +8018,34 @@ void CDDataStruct::OnListBoxMipsBattle(wxCommandEvent& event) {
 }
 
 void CDDataStruct::OnMipsBattleButton(wxCommandEvent& event) {
-	bool customfunc = m_mipsbattlelist->GetSelection()==0;
+	bool customfunc = m_mipsbattlelist->GetSelection() == 0;
 	MipsFunction* func;
 	if (customfunc) {
 		unsigned int instindex, i;
 		wstringstream hexstr;
 		func = new MipsFunction;
 		func->amount = m_mipsbattleramlengthgen->GetValue();
-		func->instruction = new MipsInstruction*[func->amount];
+		func->instruction = new MipsInstruction * [func->amount];
 		hexstr << std::hex << m_mipsbattleramposgen->GetValue().ToStdWstring();
 		hexstr >> instindex;
 		instindex &= 0x7FFFFFFF;
-		if (instindex<(mipsset.battle_code.ram_pos & 0x7FFFFFFF) || instindex>=(mipsset.battle_code.ram_pos & 0x7FFFFFFF)+(mipsset.battle_code.amount << 2)) {
-			wxString oobstr = wxString::Format(wxT(HADES_STRING_MIPS_OOB),mipsset.battle_code.ram_pos & 0x7FFFFFFF,(mipsset.battle_code.ram_pos & 0x7FFFFFFF)+(mipsset.battle_code.amount << 2));
-			wxMessageDialog popup(NULL,oobstr,HADES_STRING_ERROR,wxOK|wxCENTRE);
+		if (instindex < (mipsset.battle_code.ram_pos & 0x7FFFFFFF) || instindex >= (mipsset.battle_code.ram_pos & 0x7FFFFFFF) + (mipsset.battle_code.amount << 2)) {
+			wxString oobstr = wxString::Format(wxT(HADES_STRING_MIPS_OOB), mipsset.battle_code.ram_pos & 0x7FFFFFFF, (mipsset.battle_code.ram_pos & 0x7FFFFFFF) + (mipsset.battle_code.amount << 2));
+			wxMessageDialog popup(NULL, oobstr, HADES_STRING_ERROR, wxOK | wxCENTRE);
 			popup.ShowModal();
 			delete[] func->instruction;
 			delete func;
 			return;
 		}
-		instindex = (instindex-(mipsset.battle_code.ram_pos & 0x7FFFFFFF)) >> 2;
-		for (i=0;i<func->amount && instindex+i<mipsset.battle_code.amount;i++)
-			func->instruction[i] = &mipsset.battle_code.instruction[instindex+i];
+		instindex = (instindex - (mipsset.battle_code.ram_pos & 0x7FFFFFFF)) >> 2;
+		for (i = 0; i < func->amount && instindex + i < mipsset.battle_code.amount; i++)
+			func->instruction[i] = &mipsset.battle_code.instruction[instindex + i];
 		func->amount = i;
 	} else
-		func = &mipsset.battle_spell_effect[m_mipsbattlelist->GetSelection()-1];
-	MipsScriptEditDialog dial(this,func);
-	if (dial.ShowModal()==wxID_OK) {
-		for (unsigned int i=0;i<func->amount;i++)
+		func = &mipsset.battle_spell_effect[m_mipsbattlelist->GetSelection() - 1];
+	MipsScriptEditDialog dial(this, func);
+	if (dial.ShowModal() == wxID_OK) {
+		for (unsigned int i = 0; i < func->amount; i++)
 			func->instruction[i]->CopyValue(*dial.function.instruction[i]);
 		MarkDataMipsModified(1);
 	}
@@ -8083,7 +8357,7 @@ void CDDataStruct::InitItem(void) {
 	}
 	for (i = 0; i < STATUS_SET_AMOUNT; i++)
 		m_itemweaponstatus->Append(spellset.status_set[i].name);
-	for (int i = 0; i < STATUS_AMOUNT; i++)
+	for (i = 0; i < STATUS_AMOUNT; i++)
 		m_itemusablestatusbaselist->Append(HADES_STRING_STATUS_NAME[i]);
 	for (i = 0; i < ITEM_WEAPON_AMOUNT; i++)
 		m_itemweaponsfx->Append(_(itemset.item[i].name.GetStr(hades::TEXT_PREVIEW_TYPE)));
@@ -8215,8 +8489,6 @@ void CDDataStruct::InitEnemy(void) {
 		DisplayWorldBattle(m_worldbattlelist->GetSelection());
 	}
 	m_enemylist->SetSelection(0);
-	GetTopWindow()->m_exportenemyscript->Enable();
-	GetTopWindow()->m_importenemyscript->Enable();
 }
 
 void CDDataStruct::InitCard(void) {
@@ -8244,14 +8516,12 @@ void CDDataStruct::InitText(void) {
 	if (saveset.sectionloaded[DATA_SECTION_TEXT])
 		return;
 	fstream f;
-	if (gametype==GAME_TYPE_PSX) f.open(filename.c_str(),ios::in | ios::binary);
-	textset.Load(f,cluster);
-	if (gametype==GAME_TYPE_PSX) f.close();
+	if (gametype == GAME_TYPE_PSX) f.open(filename.c_str(), ios::in | ios::binary);
+	textset.Load(f, cluster);
+	if (gametype == GAME_TYPE_PSX) f.close();
 	TextDisplayNames(true);
 	saveset.sectionloaded[DATA_SECTION_TEXT] = true;
 	m_textlist->SetSelection(0);
-	GetTopWindow()->m_exporttext->Enable();
-	GetTopWindow()->m_importtext->Enable();
 }
 
 void CDDataStruct::InitWorldMap(void) {
@@ -8261,18 +8531,18 @@ void CDDataStruct::InitWorldMap(void) {
 		InitText();
 	unsigned int i;
 	fstream f;
-	if (gametype==GAME_TYPE_PSX) f.open(filename.c_str(),ios::in | ios::binary);
-	worldset.Load(f,cluster);
-	if (gametype==GAME_TYPE_PSX) f.close();
+	if (gametype == GAME_TYPE_PSX) f.open(filename.c_str(), ios::in | ios::binary);
+	worldset.Load(f, cluster);
+	if (gametype == GAME_TYPE_PSX) f.close();
 	WorldMapDisplayNames(true);
-	for (i=0;i<WORLD_MAP_PLACE_AMOUNT;i++)
+	for (i = 0; i < WORLD_MAP_PLACE_AMOUNT; i++)
 		m_worldplacelist->Append(_(worldset.world_data->place_name[i].GetStr(hades::TEXT_PREVIEW_TYPE)));
-	for (i=0;i<WORLD_MAP_BATTLE_SPOT_AMOUNT;i++)
-		m_worldbattlelist->Append(wxString::Format(wxT(HADES_STRING_WORLD_BATTLE_NAME),i+1)); 
+	for (i = 0; i < WORLD_MAP_BATTLE_SPOT_AMOUNT; i++)
+		m_worldbattlelist->Append(wxString::Format(wxT(HADES_STRING_WORLD_BATTLE_NAME), i + 1));
 	if (saveset.sectionloaded[DATA_SECTION_ENMY]) {
 		wxArrayString battlenames;
 		battlenames.Alloc(enemyset.battle_amount);
-		for (i=0;i<enemyset.battle_amount;i++)
+		for (i = 0; i < enemyset.battle_amount; i++)
 			battlenames.Add(GetEnemyBattleName(i));
 		m_worldbattlebattlechoice11->Append(battlenames);
 		m_worldbattlebattlechoice12->Append(battlenames);
@@ -8303,8 +8573,6 @@ void CDDataStruct::InitWorldMap(void) {
 	m_worldlist->SetSelection(0);
 	m_worldplacelist->SetSelection(0);
 	m_worldbattlelist->SetSelection(0);
-	GetTopWindow()->m_exportworldscript->Enable();
-	GetTopWindow()->m_importworldscript->Enable();
 }
 
 void CDDataStruct::InitField(void) {
@@ -8313,29 +8581,25 @@ void CDDataStruct::InitField(void) {
 	if (!saveset.sectionloaded[DATA_SECTION_TEXT])
 		InitText();
 	fstream f;
-	if (gametype==GAME_TYPE_PSX) {
-		f.open(filename.c_str(),ios::in | ios::binary);
-		fieldset.Load(f,cluster);
+	if (gametype == GAME_TYPE_PSX) {
+		f.open(filename.c_str(), ios::in | ios::binary);
+		fieldset.Load(f, cluster);
 		f.close();
 	} else {
-		fieldset.Load(f,cluster,&textset);
+		fieldset.Load(f, cluster, &textset);
 	}
 	FieldDisplayNames(true);
 	saveset.sectionloaded[DATA_SECTION_FIELD] = true;
 	m_fieldlist->SetSelection(0);
-	GetTopWindow()->m_exportfieldscript->Enable();
-	GetTopWindow()->m_importfieldscript->Enable();
-	GetTopWindow()->m_exportfieldbackground->Enable();
-	GetTopWindow()->m_exportfieldwalkmesh->Enable();
 }
 
 void CDDataStruct::InitBattleScene(void) {
-	if (saveset.sectionloaded[DATA_SECTION_BATTLE_SCENE] || gametype!=GAME_TYPE_PSX)
+	if (saveset.sectionloaded[DATA_SECTION_BATTLE_SCENE] || gametype != GAME_TYPE_PSX)
 		return;
 	fstream f;
-	if (gametype==GAME_TYPE_PSX) f.open(filename.c_str(),ios::in | ios::binary);
-	sceneset.Load(f,cluster);
-	if (gametype==GAME_TYPE_PSX) f.close();
+	if (gametype == GAME_TYPE_PSX) f.open(filename.c_str(), ios::in | ios::binary);
+	sceneset.Load(f, cluster);
+	if (gametype == GAME_TYPE_PSX) f.close();
 	BattleSceneDisplayNames(true);
 	saveset.sectionloaded[DATA_SECTION_BATTLE_SCENE] = true;
 	m_battlescenelist->SetSelection(0);
@@ -8345,9 +8609,9 @@ void CDDataStruct::InitSpellAnimation(void) {
 	if (saveset.sectionloaded[DATA_SECTION_SPELL_ANIM])
 		return;
 	fstream f;
-	if (gametype==GAME_TYPE_PSX) f.open(filename.c_str(),ios::in | ios::binary);
-	spellanimset.Load(f,config,cluster.global_map);
-	if (gametype==GAME_TYPE_PSX) f.close();
+	if (gametype == GAME_TYPE_PSX) f.open(filename.c_str(), ios::in | ios::binary);
+	spellanimset.Load(f, config, cluster.global_map);
+	if (gametype == GAME_TYPE_PSX) f.close();
 	SpellAnimationDisplayNames(true);
 	saveset.sectionloaded[DATA_SECTION_SPELL_ANIM] = true;
 	m_spellanimlist->SetSelection(0);
@@ -8358,19 +8622,17 @@ void CDDataStruct::InitMenuUI(void) {
 		return;
 	unsigned int i;
 	fstream f;
-	if (gametype==GAME_TYPE_PSX) f.open(filename.c_str(),ios::in | ios::binary);
-	ffuiset.Load(f,config);
-	if (gametype==GAME_TYPE_PSX) f.close();
-	if (gametype==GAME_TYPE_PSX)
-		for (i=0;i<ffuiset.special_text->amount;i++)
+	if (gametype == GAME_TYPE_PSX) f.open(filename.c_str(), ios::in | ios::binary);
+	ffuiset.Load(f, config);
+	if (gametype == GAME_TYPE_PSX) f.close();
+	if (gametype == GAME_TYPE_PSX)
+		for (i = 0; i < ffuiset.special_text->text_block.size(); i++)
 			m_specialtextlist->Append(HADES_STRING_SPECIAL_TEXT_BLOCK[i]);
 	else
-		for (i=0;i<ffuiset.special_text->amount;i++)
+		for (i = 0; i < ffuiset.special_text->text_block.size(); i++)
 			m_specialtextlist->Append(HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM[i]);
 	saveset.sectionloaded[DATA_SECTION_MENU_UI] = true;
 	m_specialtextlist->SetSelection(0);
-	GetTopWindow()->m_exportuitext->Enable();
-	GetTopWindow()->m_importuitext->Enable();
 }
 
 void CDDataStruct::InitMips(void) {
@@ -8774,6 +9036,7 @@ void CDDataStruct::OnNotebookMain(wxNotebookEvent& event) {
 			DisplayCilStruct(m_ciltypelist->GetSelection());
 		}
 	}
+	GetTopWindow()->UpdateMenuAvailability();
 }
 
 void CDDataStruct::OnNotebookParty(wxNotebookEvent& event) {
@@ -8794,6 +9057,7 @@ void CDDataStruct::OnNotebookParty(wxNotebookEvent& event) {
 		InitPartySpecial();
 		DisplayPartySpecial(m_partyspeciallist->GetSelection());
 	}
+	GetTopWindow()->UpdateMenuAvailability();
 }
 
 void CDDataStruct::OnNotebookInventory(wxNotebookEvent& event) {
@@ -8807,6 +9071,7 @@ void CDDataStruct::OnNotebookInventory(wxNotebookEvent& event) {
 		DisplayShop(m_shoplist->GetSelection());
 		DisplaySynthesisShop(m_synthshoplist->GetSelection());
 	}
+	GetTopWindow()->UpdateMenuAvailability();
 }
 
 void CDDataStruct::OnNotebookCard(wxNotebookEvent& event) {
@@ -8818,6 +9083,7 @@ void CDDataStruct::OnNotebookCard(wxNotebookEvent& event) {
 		InitCard();
 		DisplayCardDeck(m_carddecklist->GetSelection());
 	}
+	GetTopWindow()->UpdateMenuAvailability();
 }
 
 void CDDataStruct::OnNotebookEnvironment(wxNotebookEvent& event) {
@@ -8846,6 +9112,7 @@ void CDDataStruct::OnNotebookEnvironment(wxNotebookEvent& event) {
 		InitSpellAnimation();
 		DisplaySpellAnimation(m_spellanimlist->GetSelection());
 	}
+	GetTopWindow()->UpdateMenuAvailability();
 }
 
 void CDDataStruct::OnNotebookInterface(wxNotebookEvent& event) {
@@ -8854,6 +9121,7 @@ void CDDataStruct::OnNotebookInterface(wxNotebookEvent& event) {
 		InitMenuUI();
 		DisplaySpecialText(m_specialtextlist->GetSelection());
 	}
+	GetTopWindow()->UpdateMenuAvailability();
 }
 
 void CDDataStruct::OnNotebookMips(wxNotebookEvent& event) {
@@ -8862,6 +9130,7 @@ void CDDataStruct::OnNotebookMips(wxNotebookEvent& event) {
 		InitMips();
 		DisplayMipsBattle(m_mipsbattlelist->GetSelection());
 	}
+	GetTopWindow()->UpdateMenuAvailability();
 }
 
 void CDDataStruct::OnNotebookCil(wxNotebookEvent& event) {
@@ -8872,6 +9141,7 @@ void CDDataStruct::OnNotebookCil(wxNotebookEvent& event) {
 	} else if (sel == 1) {
 		DisplayCilMacro(m_cilmacrolist->GetSelection());
 	}
+	GetTopWindow()->UpdateMenuAvailability();
 }
 
 bool DiscardTextLimit = false;
@@ -8908,7 +9178,6 @@ CDDataStruct::CDDataStruct(wxWindow* parent, string fname, ConfigurationSet& cfg
 	copyenemystat_statid(-1),
 	copyenemyspell_battleid(-1),
 	copyenemyspell_spellid(-1),
-	copystring(NULL),
 	scenetexpreview(wxNullBitmap),
 	scenetexlinkpreview(wxNullBitmap),
 	fieldtexpreview(wxNullBitmap) {
@@ -8974,8 +9243,10 @@ CDDataStruct::CDDataStruct(wxWindow* parent, string fname, ConfigurationSet& cfg
 	textmenu->Append(textmenupaste);
 	textmenu->Connect(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(CDDataStruct::OnGenericTextRightClickMenu), NULL, this);
 	specialtextmenu = new wxMenu();
-	specialtextmenu->Append(wxID_ADD, HADES_STRING_GENERIC_ADD);
-	specialtextmenu->Append(wxID_REMOVE, HADES_STRING_GENERIC_REMOVE);
+	specialtextmenuadd = new wxMenuItem(specialtextmenu, wxID_ADD, HADES_STRING_GENERIC_ADD);
+	specialtextmenuremove = new wxMenuItem(specialtextmenu, wxID_REMOVE, HADES_STRING_GENERIC_REMOVE);
+	specialtextmenu->Append(specialtextmenuadd);
+	specialtextmenu->Append(specialtextmenuremove);
 	specialtextmenu->Connect(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(CDDataStruct::OnSpecialTextRightClickMenu), NULL, this);
 	commandchoicelist.push_back(m_statcharcommandattack);
 	commandchoicelist.push_back(m_statcharcommanddefend);

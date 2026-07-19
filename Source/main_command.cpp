@@ -424,7 +424,7 @@ void InitConstEditableField() {
 		new editable_field_numerical(L"world_spot.flag", [](SaveSet& sv, FieldSelector& sel) { return sel.world_spot_index < WORLD_MAP_BATTLE_GROUND_AMOUNT; }, [](SaveSet& sv, FieldSelector& sel, long long val) { sv.worldset->world_data->battle_flag[sel.world_spot_index] = val; sv.worldset->world_data->MarkDataModified(); sv.sectionmodified[DATA_SECTION_WORLD_MAP] = true; }, [](SaveSet& sv, FieldSelector& sel) { return sv.worldset->world_data->battle_flag[sel.world_spot_index]; }),
 		new editable_field_numerical(L"world_spot.battle.id", [](SaveSet& sv, FieldSelector& sel) { return sel.world_spot_index < WORLD_MAP_BATTLE_GROUND_AMOUNT && sel.world_spot__battle_index < WORLD_MAP_BATTLE_SET_AMOUNT; }, [](SaveSet& sv, FieldSelector& sel, long long val) { sv.worldset->world_data->battle_id[sel.world_spot_index][sel.world_spot__battle_index] = val; sv.worldset->world_data->MarkDataModified(); sv.sectionmodified[DATA_SECTION_WORLD_MAP] = true; }, [](SaveSet& sv, FieldSelector& sel) { return sv.worldset->world_data->battle_id[sel.world_spot_index][sel.world_spot__battle_index]; }),
 		new editable_field_numerical(L"world_friendly.spot.area", [](SaveSet& sv, FieldSelector& sel) { return sel.world_friendly_index < WORLD_MAP_FRIENDLY_AMOUNT && sel.world_friendly__spot_index < WORLD_MAP_FRIENDLY_AREA_AMOUNT; }, [](SaveSet& sv, FieldSelector& sel, long long val) { sv.worldset->world_data->friendly_area[sel.world_friendly_index][sel.world_friendly__spot_index] = val; sv.worldset->world_data->MarkDataModified(); sv.sectionmodified[DATA_SECTION_WORLD_MAP] = true; }, [](SaveSet& sv, FieldSelector& sel) { return sv.worldset->world_data->friendly_area[sel.world_friendly_index][sel.world_friendly__spot_index]; }),
-		new editable_field_string(L"text_block.slot.text", [](SaveSet& sv, FieldSelector& sel) { int index = sv.textset->GetIndexById(sel.text_block_id); if (index < 0) return false; return sel.text_block__slot_index < sv.textset->text_data[index]->amount; }, [](SaveSet& sv, FieldSelector& sel, wxString val) { int index = sv.textset->GetIndexById(sel.text_block_id); sv.textset->text_data[index]->SetText(sel.text_block__slot_index, ConvertArgToFF9String(val)); sv.textset->text_data[index]->MarkDataModified(); sv.sectionmodified[DATA_SECTION_TEXT] = true; }, [](SaveSet& sv, FieldSelector& sel) { return ConvertFF9StringToArg(sv.textset->text_data[sv.textset->GetIndexById(sel.text_block_id)]->text[sel.text_block__slot_index].str); }),
+		new editable_field_string(L"text_block.slot.text", [](SaveSet& sv, FieldSelector& sel) { int index = sv.textset->GetIndexById(sel.text_block_id); if (index < 0) return false; return sel.text_block__slot_index < sv.textset->text_data[index]->text.size(); }, [](SaveSet& sv, FieldSelector& sel, wxString val) { int index = sv.textset->GetIndexById(sel.text_block_id); sv.textset->text_data[index]->SetText(sel.text_block__slot_index, ConvertArgToFF9String(val)); sv.textset->text_data[index]->MarkDataModified(); sv.sectionmodified[DATA_SECTION_TEXT] = true; }, [](SaveSet& sv, FieldSelector& sel) { return ConvertFF9StringToArg(sv.textset->text_data[sv.textset->GetIndexById(sel.text_block_id)]->text[sel.text_block__slot_index].txt.str); }),
 		new editable_field_numerical(L"text_block.charmap_unknown1", [](SaveSet& sv, FieldSelector& sel) { if (sv.textset->charmap.size() == 0) return false; int index = sv.textset->GetIndexById(sel.text_block_id); return index >= 0 && sv.textset->charmap[index] != NULL; }, [](SaveSet& sv, FieldSelector& sel, long long val) { int index = sv.textset->GetIndexById(sel.text_block_id); sv.textset->charmap[index]->unknown1 = val; sv.textset->charmap[index]->MarkDataModified(); sv.sectionmodified[DATA_SECTION_TEXT] = true; }, [](SaveSet& sv, FieldSelector& sel) { return sv.textset->charmap[sv.textset->GetIndexById(sel.text_block_id)]->unknown1; }),
 		new editable_field_numerical(L"text_block.charmap_unknown2", [](SaveSet& sv, FieldSelector& sel) { if (sv.textset->charmap.size() == 0) return false; int index = sv.textset->GetIndexById(sel.text_block_id); return index >= 0 && sv.textset->charmap[index] != NULL; }, [](SaveSet& sv, FieldSelector& sel, long long val) { int index = sv.textset->GetIndexById(sel.text_block_id); sv.textset->charmap[index]->unknown2 = val; sv.textset->charmap[index]->MarkDataModified(); sv.sectionmodified[DATA_SECTION_TEXT] = true; }, [](SaveSet& sv, FieldSelector& sel) { return sv.textset->charmap[sv.textset->GetIndexById(sel.text_block_id)]->unknown2; }),
 		new editable_field_numerical(L"text_block.charmap_unknown3", [](SaveSet& sv, FieldSelector& sel) { if (sv.textset->charmap.size() == 0) return false; int index = sv.textset->GetIndexById(sel.text_block_id); return index >= 0 && sv.textset->charmap[index] != NULL; }, [](SaveSet& sv, FieldSelector& sel, long long val) { int index = sv.textset->GetIndexById(sel.text_block_id); sv.textset->charmap[index]->unknown3 = val; sv.textset->charmap[index]->MarkDataModified(); sv.sectionmodified[DATA_SECTION_TEXT] = true; }, [](SaveSet& sv, FieldSelector& sel) { return sv.textset->charmap[sv.textset->GetIndexById(sel.text_block_id)]->unknown3; }),
@@ -504,7 +504,7 @@ void InitConstIndexParameter() {
 		{ L"world_spot.battle", DATA_SECTION_WORLD_MAP, [](FieldSelector& sel) { return sel.world_spot__battle_index; }, [](FieldSelector& sel, unsigned int val) { sel.world_spot__battle_index = val; }, [](SaveSet& sv, FieldSelector& sel, unsigned int i) { return (sel.world_spot__battle_index = i) < WORLD_MAP_BATTLE_SET_AMOUNT; } },
 		{ L"world_friendly", DATA_SECTION_WORLD_MAP, [](FieldSelector& sel) { return sel.world_friendly_index; }, [](FieldSelector& sel, unsigned int val) { sel.world_friendly_index = val; }, [](SaveSet& sv, FieldSelector& sel, unsigned int i) { return (sel.world_friendly_index = i) < WORLD_MAP_FRIENDLY_AMOUNT; } },
 		{ L"world_friendly.spot", DATA_SECTION_WORLD_MAP, [](FieldSelector& sel) { return sel.world_friendly__spot_index; }, [](FieldSelector& sel, unsigned int val) { sel.world_friendly__spot_index = val; }, [](SaveSet& sv, FieldSelector& sel, unsigned int i) { return (sel.world_friendly__spot_index = i) < WORLD_MAP_FRIENDLY_AREA_AMOUNT; } },
-		{ L"text_block.slot", DATA_SECTION_TEXT, [](FieldSelector& sel) { return sel.text_block__slot_index; }, [](FieldSelector& sel, unsigned int val) { sel.text_block__slot_index = val; }, [](SaveSet& sv, FieldSelector& sel, unsigned int i) { int index = sv.textset->GetIndexById(sel.text_block_id); if (index < 0) return false; return (sel.text_block__slot_index = i) < sv.textset->text_data[index]->amount; } },
+		{ L"text_block.slot", DATA_SECTION_TEXT, [](FieldSelector& sel) { return sel.text_block__slot_index; }, [](FieldSelector& sel, unsigned int val) { sel.text_block__slot_index = val; }, [](SaveSet& sv, FieldSelector& sel, unsigned int i) { int index = sv.textset->GetIndexById(sel.text_block_id); if (index < 0) return false; return (sel.text_block__slot_index = i) < sv.textset->text_data[index]->text.size(); } },
 		{ L"text_block.charmap_glyph", DATA_SECTION_TEXT, [](FieldSelector& sel) { return sel.text_block__charmap_glyph_index; }, [](FieldSelector& sel, unsigned int val) { sel.text_block__charmap_glyph_index = val; }, [](SaveSet& sv, FieldSelector& sel, unsigned int i) { int index = sv.textset->GetIndexById(sel.text_block_id); if (index < 0 || (unsigned int)index >= sv.textset->charmap.size() || sv.textset->charmap[index] == NULL) return false; return (sel.text_block__charmap_glyph_index = i) < sv.textset->charmap[index]->amount; } },
 	};
 }
@@ -1153,7 +1153,8 @@ bool CommandFrame::ProcessCommandImport(wxArrayString args) {
 				if (!input.IsOpened() || !input.ReadAll(&filestr))
 					return RaiseError(wxString::Format(wxT("cannot open the file '%s'\n"), args[1]));
 				WriteToOutput(_("importing text blocks..."));
-				LogStruct res = BatchImportDialog::ImportText(dataset[i].textset, filestr, true, dataset[i].gametype == GAME_TYPE_PSX && (dataset[i].config.language & LANGUAGE_VERSION_JAPAN) != 0, warning_stop);
+				set<int> sectionmodified;
+				LogStruct res = BatchImportDialog::ImportText(&dataset[i].saveset, sectionmodified, filestr, true, dataset[i].gametype == GAME_TYPE_PSX && (dataset[i].config.language & LANGUAGE_VERSION_JAPAN) != 0, warning_stop);
 				WriteToOutput(res.ok ? _(L" done\n") : _(L" fail\n"));
 				if (res.error_amount > 0 && !RaiseError(res.error))
 					return false;
@@ -1172,8 +1173,9 @@ bool CommandFrame::ProcessCommandImport(wxArrayString args) {
 				wxString filestr;
 				if (!input.IsOpened() || !input.ReadAll(&filestr))
 					return RaiseError(wxString::Format(wxT("cannot open the file '%s'\n"), args[1]));
-				WriteToOutput(_("importing UI text blocks..."));
-				LogStruct res = BatchImportDialog::ImportSpecialText(*dataset[i].ffuiset.special_text, filestr, warning_stop);
+				WriteToOutput(_("importing text blocks..."));
+				set<int> sectionmodified;
+				LogStruct res = BatchImportDialog::ImportText(&dataset[i].saveset, sectionmodified, filestr, warning_stop);
 				WriteToOutput(res.ok ? _(L" done\n") : _(L" fail\n"));
 				if (res.error_amount > 0 && !RaiseError(res.error))
 					return false;
@@ -1185,21 +1187,22 @@ bool CommandFrame::ProcessCommandImport(wxArrayString args) {
 				if (!input.IsOpened() || !input.ReadAll(&filestr))
 					return RaiseError(wxString::Format(wxT("cannot open the file '%s'\n"), args[1]));
 				WriteToOutput(_("importing scripts..."));
-				LogStruct res = BatchImportDialog::ImportScript(&dataset[i].saveset, SCRIPT_TYPE_ANY, filestr, warning_stop);
+				set<int> sectionmodified;
+				LogStruct res = BatchImportDialog::ImportScript(&dataset[i].saveset, sectionmodified, SCRIPT_TYPE_ANY, filestr, warning_stop);
 				WriteToOutput(res.ok ? _(L" done\n") : _(L" fail\n"));
 				bool keeploading = true;
 				while (!res.ok && auto_load && keeploading) {
-					if (res.error.compare(HADES_STRING_BATCH_FIELD_NOT_LOADED) == 0)
+					if (wxString::Format(wxT(HADES_STRING_BATCH_NOT_LOADED), L"Fields").IsSameAs(res.error))
 						keeploading = ProcessCommandLoad(wxArrayString(1, { const_section_name[DATA_SECTION_FIELD] }));
-					else if (res.error.compare(HADES_STRING_BATCH_WORLD_NOT_LOADED) == 0)
+					else if (wxString::Format(wxT(HADES_STRING_BATCH_NOT_LOADED), L"World Maps").IsSameAs(res.error))
 						keeploading = ProcessCommandLoad(wxArrayString(1, { const_section_name[DATA_SECTION_WORLD_MAP] }));
-					else if (res.error.compare(HADES_STRING_BATCH_ENEMY_NOT_LOADED) == 0)
+					else if (wxString::Format(wxT(HADES_STRING_BATCH_NOT_LOADED), L"Enemies").IsSameAs(res.error))
 						keeploading = ProcessCommandLoad(wxArrayString(1, { const_section_name[DATA_SECTION_ENMY] }));
 					else
 						keeploading = false;
 					if (keeploading) {
 						WriteToOutput(_("retrying to import scripts..."));
-						res = BatchImportDialog::ImportScript(&dataset[i].saveset, SCRIPT_TYPE_ANY, args[1], warning_stop);
+						res = BatchImportDialog::ImportScript(&dataset[i].saveset, sectionmodified, SCRIPT_TYPE_ANY, args[1], warning_stop);
 						WriteToOutput(res.ok ? _(L" done\n") : _(L" fail\n"));
 					}
 				}
@@ -1422,7 +1425,7 @@ bool CommandFrame::ProcessCommandExport(wxArrayString args) {
 			}
 			if (!dataset[0].saveset.sectionloaded[DATA_SECTION_MENU_UI] && !auto_load)
 				return true;
-			unsigned int amount = dataset[0].ffuiset.special_text->amount;
+			unsigned int amount = dataset[0].ffuiset.special_text->text_block.size();
 			if (args.GetCount() == 2) {
 				WriteToOutput(wxString::Format(wxT("exporting %d UI text blocks..."), amount));
 				int res = BatchExportDialog::ExportSpecialText(*dataset[0].ffuiset.special_text, args[1], NULL, false);

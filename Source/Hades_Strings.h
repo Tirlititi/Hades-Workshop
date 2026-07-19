@@ -174,10 +174,12 @@ extern vector<wxString> HADES_STRING_PRINTABLE_CHARTABLE;
 #define HADES_STRING_PRINTABLE_CHAR_CHARMAP	L"Á  À  Â  Ä  É  È  Ê  Ë  Í  Ì  Î  Ï  Ó  Ò  Ô  Ö  Ú  Ù  Û  Ü  á  à  â  ä  é  è  ê  ë  í  ì  î  ï  ó  ò  ô  ö  ú  ù  û  ü  Ç  Ñ  ç  ñ  Œ  ß\n"\
 											L"“  ”  „  ‘  «  »  ¡  ¿  ×  ―  ∞  ∴  ∵  ∈  ∋  §  ♪  ♦  ♥  ★  ※  ☺  ♂  ♀  △  □  ↑  ↓  →  ←  ¶  \t"
 
+#define HADES_STRING_TEXT_WARNING_ID	L"Warning: this ID is already used by another text"
+#define HADES_STRING_TEXT_WARNING_KEY	L"Warning: this key is already used by another text"
+#define HADES_STRING_TEXT_INVALID_LANG	L""
 #define HADES_STRING_TEXT_REACH_LIMIT	L"The text size has reached his limit.\n"\
 										L"Maybe you can try to remove unused text\n"\
 										L"to increase the limit here."
-
 #define HADES_STRING_DATA_REACH_LIMIT	L"The data size has reached his limit."
 #define HADES_STRING_SPECIAL_CHAR_VALIDATE		L"✔"
 #define HADES_STRING_SPECIAL_CHAR_INVALIDATE	L"✘"
@@ -202,7 +204,7 @@ extern vector<vector<wxString>> HADES_STRING_SPELL_TARGET_INFO;
 
 //-- Stat Panel
 #define HADES_STRING_STAT_LEVEL	L"Level Progression"
-extern vector<wxString> HADES_STRING_CHARACTER_DEFAULT_NAME;
+extern vector<vector<wxString>> HADES_STRING_CHARACTER_DEFAULT_NAME;
 
 //-- Party Special
 extern vector<wxString> HADES_STRING_PARTY_SPECIAL_DATA;
@@ -269,18 +271,25 @@ extern vector<wxString> HADES_STRING_SYNTH_NAME;
 #define HADES_STRING_SCRIPT_EXPECT				" - Line %u: Expected '%s'\n"
 #define HADES_STRING_SCRIPT_UNEXPECT			" - Line %u: Unexpected '%s'\n"
 #define HADES_STRING_SCRIPT_NUMBER				" - Line %u: Expected a number\n"
+#define HADES_STRING_SCRIPT_INVALID_LANGUAGE	" - Line %u: Lang specification '%s' not recognised\n"
+#define HADES_STRING_SCRIPT_DUPLICATE_LANGUAGE	" - Line %u: Lang specification '%s' provided multiple times\n"
+#define HADES_STRING_SCRIPT_OOC_LANGUAGE		" - Line %u: Lang specification '%s' is ruled out from the context\n"
+#define HADES_STRING_SCRIPT_FALLBACK_LANGUAGE	" - Line %u: Lang specification '%s' is provided in multiple fallbacks\n"
+#define HADES_STRING_SCRIPT_UNEXPECT_LANGUAGE	" - Line %u: Unexpected lang specification before a '%s'\n"
+#define HADES_STRING_SCRIPT_EXPECT_LANGUAGE		" - Line %u: Expected a lang specification as fallback from previous line\n"
 #define HADES_STRING_SCRIPT_EMPTY				" - Line %u: Empty argument\n"
 #define HADES_STRING_SCRIPT_NOT_AN_OPCODE		" - Line %u: The code '%s' cannot be an opcode because its ID 0x%x ends with 0xff\n"
 #define HADES_STRING_SCRIPT_ARGAMOUNT			" - Line %u: Opcode '%s' takes %u arguments; got %u\n"
 #define HADES_STRING_SCRIPT_NOVARARG			" - Line %u: Opcode '%s' accepts numerical arguments only\n"
 #define HADES_STRING_SCRIPT_UNKNOWN				" - Line %u: Unknown word '%s'\n"
+#define HADES_STRING_SCRIPT_SWITCH_MISMATCH		" - Line %u: Lang specificated switch variants must have the same number of cases and the same starting number\n"
 #define HADES_STRING_SCRIPT_NOTSWITCH			" - Line %u: Using the keyword '%s' out of a switch\n"
 #define HADES_STRING_SCRIPT_NOBREAK				" - Line %u: Using the keyword '%s' out of a breakable block\n"
 #define HADES_STRING_SCRIPT_CASE				" - Line %u: Cases amount doesn't match\n"
 #define HADES_STRING_SCRIPT_CASE_TWICE			" - Line %u: Case '%s' handled twice\n"
 #define HADES_STRING_SCRIPT_CASE_RANGE			" - Line %u: Case is not in range\n"
 #define HADES_STRING_SCRIPT_LOOP				" - Line %u: Looping functions can only be made in top-level blocks\n"
-#define HADES_STRING_SCRIPT_FORWARD				" - Line %u: When the keyword '%s' is used, it must be used the function's only line\n"
+#define HADES_STRING_SCRIPT_FORWARD				" - Line %u: When the keyword '%s' is used, it must be the function's only line\n"
 #define HADES_STRING_SCRIPT_FORWARD_END			" - Line %u: There is no function next to forward to\n"
 #define HADES_STRING_SCRIPT_VARARG_MAIN			" - Line %u: %s"
 #define HADES_STRING_SCRIPT_VARARG_EMPTY		"Empty argument\n"
@@ -297,9 +306,10 @@ extern vector<wxString> HADES_STRING_SYNTH_NAME;
 #define HADES_STRING_SCRIPT_VARARG_BRACKETS		"Expected ']' in argument\n"
 #define HADES_STRING_SCRIPT_VARARG_OPVAMISMATCH	"Amount of operations and values don't match\n"
 #define HADES_STRING_SCRIPT_VARARG_TOO_HIGH		"Number '%s' exceeds the limit (%u) in argument\n"
-#define HADES_STRING_SCRIPT_VARARG_UNKNOWN		"Unrecognized '%s' in argument\n"
+#define HADES_STRING_SCRIPT_VARARG_UNKNOWN		"Unrecognised '%s' in argument\n"
 #define HADES_STRING_SCRIPT_IGNORE				" - Line %u: Ignored trailing '%s'\n"
 #define HADES_STRING_SCRIPT_IGNORE_POSTRET		" - Line %u: Unexpected code after the end of the function\n"
+#define HADES_STRING_SCRIPT_IGNORE_POSTLANGRET	" - Line %u: Unexpected lang specification '%s' after the end of the function in that language\n"
 #define HADES_STRING_LSCRIPT_ALLOC_NUMBER		L" - Local Variable: Expected a number after 'allocate'\n"
 #define HADES_STRING_LSCRIPT_MISS_NAME			L" - Local Variable: Expected a name for local variable\n"
 #define HADES_STRING_LSCRIPT_UNEXPECTED			" - Local Variable: Unexpected '%s'\n"
@@ -314,21 +324,27 @@ extern vector<wxString> HADES_STRING_SYNTH_NAME;
 
 //-- File Batching
 #define HADES_STRING_BATCH_NOTHING					" - Nothing done\n"
-#define HADES_STRING_BATCH_FIELD_NOT_LOADED			L" - It is a field script and fields are not loaded\n"
-#define HADES_STRING_BATCH_WORLD_NOT_LOADED			L" - It is a world script and worlds are not loaded\n"
-#define HADES_STRING_BATCH_ENEMY_NOT_LOADED			L" - It is a battle script and battles are not loaded\n"
-#define HADES_STRING_BATCH_WRONG_FILETYPE			" - Line %u: Expected a %s filetype\n"
+#define HADES_STRING_BATCH_NOT_LOADED				" - You need to load the section(s) %s to import this file\n"
+#define HADES_STRING_BATCH_PSX_NOT_SUPPORTED		" - Text importing of %s is not supported for the PSX version\n"
+#define HADES_STRING_BATCH_WRONG_FILETYPE			" - Line %u: Expected a filetype amongst %s\n"
+#define HADES_STRING_BATCH_WRONG_FILEID				" - Line %u: Expected a fileid %d or lower\n"
 #define HADES_STRING_BATCH_INVALID_FILETYPE			" - Line %u: Invalid filetype\n"
 #define HADES_STRING_BATCH_FILETYPE_TWICE			" - Line %u: Can't define typefile twice\n"
 #define HADES_STRING_BATCH_FILETYPE_NOTFIRST		" - Line %u: First command must be the filetype\n"
+#define HADES_STRING_BATCH_COMMAND_UNKNOWN			" - Line %u: '#HW %s' is not recognised as a valid command so it is assumed to actually be part of the text\n"
+#define HADES_STRING_BATCH_COMMAND_IRRELEVANT		" - Line %u: The command '%s' is irrelevant in this context\n"
 #define HADES_STRING_BATCH_MISSING_INTEGER			" - Line %u: '%s' takes an integral argument\n"
 #define HADES_STRING_BATCH_TOO_MANY					" - Line %u: Too many %s declarations\n"
-#define HADES_STRING_BATCH_TEXT_WRONG_ID			" - Line %u: Text Block %u doesn't have a text n°%u\n"
 #define HADES_STRING_BATCH_TEXT_REDEFINITION		" - Line %u: Redefinition of text n°%u\n"
-#define HADES_STRING_BATCH_INVALID_LANGUAGE			" - Line %u: '%s' is not recognized as a language\n"
-#define HADES_STRING_BATCH_TEXT_UNUSED				" - Text Block %u unused in this disc\n"
-#define HADES_STRING_BATCH_TEXT_SIZE				" - Text Block %u capacity is %u bytes too short\n"
-#define HADES_STRING_BATCH_TEXT_MISSMATCH_CODE		" - Text Block %u, Text %u: Expected %u opcode characters, got %u\n"
+#define HADES_STRING_BATCH_TEXT_REDEFINITION_KEY	" - Line %u: Redefinition of entry %s\n"
+#define HADES_STRING_BATCH_TEXT_MISSING_FILEID		" - Line %u: Expected a command 'fileid' before defining texts\n"
+#define HADES_STRING_BATCH_INVALID_LANGUAGE			" - Line %u: '%s' is not recognised as a language\n"
+#define HADES_STRING_BATCH_UNSUPPORT_ANYMORE		" - Line %u: '#HW %s' is not supported anymore in this context\n"
+#define HADES_STRING_BATCH_TEXT_WRONG_ID			" - %s %d doesn't exist and cannot be attributed texts\n"
+#define HADES_STRING_BATCH_TEXT_UNUSED				" - %s %d unused in this disc\n"
+#define HADES_STRING_BATCH_TEXT_SIZE				" - %s %d capacity is %u bytes too short\n"
+#define HADES_STRING_BATCH_TEXT_MISSMATCH_CODE		" - %s %d, Text %d: Expected %u opcode characters, got %u\n"
+#define HADES_STRING_BATCH_TEXT_INVALID_IN_LANGUAGE	" - %s %d: The universal ID %d cannot be used in language %s\n"
 #define HADES_STRING_BATCH_FIELD_UNUSED				" - Line %u: Field %u is unknown\n"
 #define HADES_STRING_BATCH_BATTLE_UNUSED			" - Line %u: Battle %u is unknown\n"
 #define HADES_STRING_BATCH_WORLD_UNUSED				" - Line %u: World Map %u is unknown\n"

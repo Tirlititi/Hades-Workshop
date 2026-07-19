@@ -533,11 +533,8 @@ wxString ToolUnityViewer::GetInfoString(wxString filename, uint32_t filetype, Un
 			if (patharray[3].IsSameAs(L"field", false)) {
 				unsigned int id = wxAtoi(name.BeforeFirst(L'.'));
 				wxString partstr = _(L"[Unknown Text Block]");
-				for (unsigned int i = 0; i < G_V_ELEMENTS(HADES_STRING_TEXT_BLOCK_NAME); i++)
-					if (HADES_STRING_TEXT_BLOCK_NAME[i].id == id) {
-						partstr = HADES_STRING_TEXT_BLOCK_NAME[i].label;
-						break;
-					}
+				if (auto search = HADES_STRING_TEXT_BLOCK_NAME.find(id); search != HADES_STRING_TEXT_BLOCK_NAME.end())
+					partstr = search->second.label;
 				return _(L"Dialogs and Texts of ") + partstr;
 			} else if (patharray[3].IsSameAs(L"battle", false)) {
 				unsigned int id = wxAtoi(name.BeforeFirst(L'.'));
@@ -1000,9 +997,9 @@ bool ToolUnityViewer::PerformImportOfAsset(bool isnewfile, fstream& filebase, fs
 		filedest.write(buffer,filenewsize);
 		delete[] buffer;
 	} else if (!isnewfile && ftype==49 && path.Len()>=10 && path.Mid(path.Len()-10).IsSameAs(L".akb.bytes",false) && !m_menuconvertaudionone->IsChecked()) {
-		fstream fileasset((const char*)path.c_str(),ios::in|ios::binary);
+		fstream fileasset((const char*)path.c_str(), ios::in | ios::binary);
 		if (!fileasset.is_open()) {
-			wxLogError(HADES_STRING_OPEN_ERROR_FAIL,path);
+			wxLogError(HADES_STRING_OPEN_ERROR_FAIL, path);
 			return false;
 		}
 		uint32_t loopstart = 0;
@@ -1010,39 +1007,43 @@ bool ToolUnityViewer::PerformImportOfAsset(bool isnewfile, fstream& filebase, fs
 		uint32_t secondaryloopstart = 0;
 		uint32_t secondaryloopend = 0;
 		uint32_t newsizeogg;
-		fileasset.seekg(0,ios::end);
+		fileasset.seekg(0, ios::end);
 		newsizeogg = fileasset.tellg();
-		filenewsize = newsizeogg+0x130;
+		filenewsize = newsizeogg + 0x130;
 		fileasset.seekg(0);
 		filedest.seekg(newmetadata.GetFileOffsetByIndex(impfileid));
 		filebase.seekg(meta_data[current_archive].GetFileOffsetByIndex(impfileid));
 		buffer = new char[filenewsize];
-		filebase.read(buffer,0x130);
-		fileasset.read(&buffer[0x130],newsizeogg);
-		for (i=newsizeogg+0x130;i<filenewsize;i++)
+		filebase.read(buffer, 0x130);
+		fileasset.read(&buffer[0x130], newsizeogg);
+		for (i = newsizeogg + 0x130; i < filenewsize; i++)
 			buffer[i] = 0;
-		for (i=0x130;i<newsizeogg;i++) {
-			if (i+10<newsizeogg && strncmp(&buffer[i],"LoopStart=",10)==0)
-				loopstart = atoi(&buffer[i+10]);
-			else if (i+8<newsizeogg && strncmp(&buffer[i],"LoopEnd=",8)==0)
-				loopend = atoi(&buffer[i+8]);
-			if (i+11<newsizeogg && strncmp(&buffer[i],"LoopStart2=",11)==0)
-				secondaryloopstart = atoi(&buffer[i+11]);
-			else if (i+9<newsizeogg && strncmp(&buffer[i],"LoopEnd2=",9)==0)
-				secondaryloopend = atoi(&buffer[i+9]);
+		for (i = 0x130; i < newsizeogg; i++) {
+			if (i + 10 < newsizeogg && strncmp(&buffer[i], "LoopStart=", 10) == 0)
+				loopstart = atoi(&buffer[i + 10]);
+			else if (i + 8 < newsizeogg && strncmp(&buffer[i], "LoopEnd=", 8) == 0)
+				loopend = atoi(&buffer[i + 8]);
+			else if (i + 11 < newsizeogg && strncmp(&buffer[i], "LoopStart2=", 11) == 0)
+				secondaryloopstart = atoi(&buffer[i + 11]);
+			else if (i + 9 < newsizeogg && strncmp(&buffer[i], "LoopEnd2=", 9) == 0)
+				secondaryloopend = atoi(&buffer[i + 9]);
+			else if (i + 19 < newsizeogg && strncmp(&buffer[i], "LoopStartAlternate=", 19) == 0)
+				secondaryloopstart = atoi(&buffer[i + 19]);
+			else if (i + 17 < newsizeogg && strncmp(&buffer[i], "LoopEndAlternate=", 17) == 0)
+				secondaryloopend = atoi(&buffer[i + 17]);
 		}
-		BufferInitPosition(8);		BufferWriteLong((uint8_t*)buffer,filenewsize);
-//		BufferInitPosition(0x28);	BufferWriteLong((uint8_t*)buffer,akbid); // ToDo: be able to retrieve this kind of info without the old file
-//		BufferInitPosition(0xE2);	BufferWriteShort((uint8_t*)buffer,sound/music?);
-//		BufferInitPosition(0xE6);	BufferWriteShort((uint8_t*)buffer,samplerate at 0x28 of Ogg);
-		BufferInitPosition(0xE8);	BufferWriteLong((uint8_t*)buffer,newsizeogg);
-//		BufferWriteLong((uint8_t*)buffer,samplecount);
-		BufferInitPosition(0xF0);	BufferWriteLong((uint8_t*)buffer,loopstart);
-		BufferWriteLong((uint8_t*)buffer,loopend);
-		BufferInitPosition(0xFC);	BufferWriteLong((uint8_t*)buffer,secondaryloopstart); // For the music "Final Battle"
-		BufferWriteLong((uint8_t*)buffer,secondaryloopend);
-//		BufferInitPosition(0x124);	BufferWriteLong((uint8_t*)buffer,???);
-		filedest.write(buffer,filenewsize);
+		BufferInitPosition(8);		BufferWriteLong((uint8_t*)buffer, filenewsize);
+//		BufferInitPosition(0x28);	BufferWriteLong((uint8_t*)buffer, akbid); // ToDo: be able to retrieve this kind of info without the old file
+//		BufferInitPosition(0xE2);	BufferWriteShort((uint8_t*)buffer, sound/music?);
+//		BufferInitPosition(0xE6);	BufferWriteShort((uint8_t*)buffer, samplerate at 0x28 of Ogg);
+		BufferInitPosition(0xE8);	BufferWriteLong((uint8_t*)buffer, newsizeogg);
+//		BufferWriteLong((uint8_t*)buffer, samplecount);
+		BufferInitPosition(0xF0);	BufferWriteLong((uint8_t*)buffer, loopstart);
+		BufferWriteLong((uint8_t*)buffer, loopend);
+		BufferInitPosition(0xFC);	BufferWriteLong((uint8_t*)buffer, secondaryloopstart); // For the music "Final Battle"
+		BufferWriteLong((uint8_t*)buffer, secondaryloopend);
+//		BufferInitPosition(0x124);	BufferWriteLong((uint8_t*)buffer, ???);
+		filedest.write(buffer, filenewsize);
 		fileasset.close();
 		delete[] buffer;
 	} else if (ftype==1 && (path.AfterLast(L'.').IsSameAs(L"fbx",false) || path.AfterLast(L'.').IsSameAs(L"prefab",false)) && !m_menuconvertmodelnone->IsChecked()) {
@@ -1082,49 +1083,49 @@ bool ToolUnityViewer::PerformImportOfAsset(bool isnewfile, fstream& filebase, fs
 }
 
 int ToolUnityViewer::PerformImportOfAnimations(vector<ModelDataStruct>& importmodel) {
-	int modelmergepolicy =	m_menuimportmodelexistingfiles->IsChecked() ? 0 :
+	int modelmergepolicy = m_menuimportmodelexistingfiles->IsChecked() ? 0 :
 		m_menuimportmodelmerge->IsChecked() ? 1 :
 		m_menuimportmodelimportall->IsChecked() ? 2 : -1;
-	wxString animarchivename = root_path+_(UnityArchiveMetaData::GetArchiveName(UNITY_ARCHIVE_DATA5,use_x86));
-	unsigned int i,j,k,importmodelcounter;
+	wxString animarchivename = root_path + _(UnityArchiveMetaData::GetArchiveName(UNITY_ARCHIVE_DATA5, use_x86));
+	unsigned int i, j, k, importmodelcounter;
 	int nbanimtoupdate = 0;
-	if (modelmergepolicy<0 || current_archive==UNITY_ARCHIVE_DATA5 || !m_menuimportmodelanims->IsChecked())
+	if (modelmergepolicy < 0 || current_archive == UNITY_ARCHIVE_DATA5 || !m_menuimportmodelanims->IsChecked())
 		return 0;
-	for (i=0;i<importmodel.size();i++)
-		for (j=0;j<importmodel[i].animation.size();j++)
-			if ((modelmergepolicy!=0 && (importmodel[i].animation[j].anim_id!=0xFFFFFFFF || importmodel[i].animation[j].file_id<0))
-			 || (modelmergepolicy==0 && importmodel[i].animation[j].anim_id!=0xFFFFFFFF && importmodel[i].animation[j].file_id<0))
+	for (i = 0; i < importmodel.size(); i++)
+		for (j = 0; j < importmodel[i].animation.size(); j++)
+			if ((modelmergepolicy != 0 && (importmodel[i].animation[j].anim_id != 0xFFFFFFFF || importmodel[i].animation[j].file_id < 0))
+				|| (modelmergepolicy == 0 && importmodel[i].animation[j].anim_id != 0xFFFFFFFF && importmodel[i].animation[j].file_id < 0))
 				nbanimtoupdate++;
-	if (nbanimtoupdate==0)
+	if (nbanimtoupdate == 0)
 		return 0;
-	fstream filebaseanim((const char*)(animarchivename.c_str()),ios::in|ios::binary);
-	fstream filedestanim((const char*)(animarchivename+_(L".tmp")).c_str(),ios::out|ios::binary);
+	fstream filebaseanim((const char*)(animarchivename.c_str()), ios::in | ios::binary);
+	fstream filedestanim((const char*)(animarchivename + _(L".tmp")).c_str(), ios::out | ios::binary);
 	if (!filebaseanim.is_open())
 		return -1;
 	if (!filedestanim.is_open())
 		return -2;
 	vector<bool> copylistanim(meta_data[UNITY_ARCHIVE_DATA5].header_file_amount);
 	vector<uint32_t> filenewsizeanim(meta_data[UNITY_ARCHIVE_DATA5].header_file_amount);
-	for (i=0;i<meta_data[UNITY_ARCHIVE_DATA5].header_file_amount;i++) {
+	for (i = 0; i < meta_data[UNITY_ARCHIVE_DATA5].header_file_amount; i++) {
 		copylistanim[i] = true;
 		filenewsizeanim[i] = meta_data[UNITY_ARCHIVE_DATA5].file_size[i];
 	}
 	UnityArchiveFileCreator filestoaddanim(&meta_data[UNITY_ARCHIVE_DATA5]);
-	UnityAddFileDialog adddial(this,meta_data,UNITY_ARCHIVE_DATA5);
+	UnityAddFileDialog adddial(this, meta_data, UNITY_ARCHIVE_DATA5);
 	adddial.m_buttonadd->Enable(false);
 	int animtypechoice = 0;
-	for (i=0;i<adddial.file_type_choice.size();i++)
-		if (adddial.file_type_choice[i]==74) {
+	for (i = 0; i < adddial.file_type_choice.size(); i++)
+		if (adddial.file_type_choice[i] == 74) {
 			animtypechoice = i;
 			break;
 		}
-	for (importmodelcounter=0;importmodelcounter<importmodel.size();importmodelcounter++) {
+	for (importmodelcounter = 0; importmodelcounter < importmodel.size(); importmodelcounter++) {
 		ModelDataStruct& model = importmodel[importmodelcounter];
-		for (i=0;i<model.animation.size();i++)
-			if (model.animation[i].anim_id!=0xFFFFFFFF || model.animation[i].file_id<0) {
-				if ((modelmergepolicy!=0 && model.animation[i].file_id<0) || modelmergepolicy==2) { // New animation: ask the import properties to the user
+		for (i = 0; i < model.animation.size(); i++)
+			if (model.animation[i].anim_id != 0xFFFFFFFF || model.animation[i].file_id < 0) {
+				if ((modelmergepolicy != 0 && model.animation[i].file_id < 0) || modelmergepolicy == 2) { // New animation: ask the import properties to the user
 					UnityAddFilePanelDialog* newanimpanel = adddial.AddPanel();
-					adddial.m_filebook->SetPageText(adddial.m_filebook->GetPageCount()-1,_(model.animation[i].name));
+					adddial.m_filebook->SetPageText(adddial.m_filebook->GetPageCount() - 1, _(model.animation[i].name));
 					newanimpanel->m_filepicker->SetPath(_(model.animation[i].name));
 					newanimpanel->m_filepicker->Enable(false);
 					newanimpanel->m_filetype->SetSelection(animtypechoice);
@@ -1133,65 +1134,65 @@ int ToolUnityViewer::PerformImportOfAnimations(vector<ModelDataStruct>& importmo
 					if (adddial.has_bundle) {
 						newanimpanel->m_addbundleinfo->SetValue(true);
 						newanimpanel->EnableBundlePanel(true);
-						newanimpanel->m_filename->SetValue(_(L"assets/resources/animations/")+_(model.steam_name)+(model.steam_name.length()>0 ? _("/") : _(L""))+_(model.animation[i].name)+_(L".anim"));
+						newanimpanel->m_filename->SetValue(_(L"assets/resources/animations/") + _(model.steam_name) + (model.steam_name.length() > 0 ? _("/") : _(L"")) + _(model.animation[i].name) + _(L".anim"));
 					}
-				} else if (model.animation[i].file_id>=0) { // Update existing animation
+				} else if (model.animation[i].file_id >= 0) { // Update existing animation
 					copylistanim[model.animation[i].file_id] = false;
 					filenewsizeanim[model.animation[i].file_id] = model.animation[i].GetDataSize();
 				}
 			}
 	}
-	if (adddial.panel_amount>0)
+	if (adddial.panel_amount > 0)
 		adddial.m_filebook->SetSelection(0);
-	if (adddial.panel_amount>0 && adddial.ShowModal()!=wxID_OK) {
+	if (adddial.panel_amount > 0 && adddial.ShowModal() != wxID_OK) {
 		filebaseanim.close();
 		filedestanim.close();
 		return -3;
 	}
 	j = 0;
-	int32_t bundleindexanim = meta_data[UNITY_ARCHIVE_DATA5].GetFileIndex("",142);
-	for (importmodelcounter=0;importmodelcounter<importmodel.size();importmodelcounter++) {
+	int32_t bundleindexanim = meta_data[UNITY_ARCHIVE_DATA5].GetFileIndex("", 142);
+	for (importmodelcounter = 0; importmodelcounter < importmodel.size(); importmodelcounter++) {
 		ModelDataStruct& model = importmodel[importmodelcounter];
-		for (i=0;i<model.animation.size();i++)
-			if (model.animation[i].anim_id!=0xFFFFFFFF || model.animation[i].file_id<0) {
-				if ((modelmergepolicy!=0 && model.animation[i].file_id<0) || modelmergepolicy==2) {
+		for (i = 0; i < model.animation.size(); i++)
+			if (model.animation[i].anim_id != 0xFFFFFFFF || model.animation[i].file_id < 0) {
+				if ((modelmergepolicy != 0 && model.animation[i].file_id < 0) || modelmergepolicy == 2) {
 					UnityAddFilePanelDialog* panel = static_cast<UnityAddFilePanelDialog*>(adddial.m_filebook->GetPage(j++));
 					uint32_t ftype = adddial.file_type_choice[panel->m_filetype->GetSelection()];
 					int64_t newfileinfo = ConvertStringToLong(panel->m_fileinfo->GetValue());
 					string newfilename = panel->m_fileinternalname->IsEnabled() ? panel->m_fileinternalname->GetValue() : "";
 					string newfilepath = panel->m_addbundleinfo->IsChecked() ? panel->m_filename->GetValue() : "";
-					filestoaddanim.Add(ftype,model.animation[i].GetDataSize(),newfileinfo);
-					if (newfilepath.length()>0) {
-						bundle_data[UNITY_ARCHIVE_DATA5-UNITY_ARCHIVE_DATA11].AddFile(newfilepath,filestoaddanim.file_index[filestoaddanim.file_index.size()-1],newfileinfo);
-						bundle_data[UNITY_ARCHIVE_DATA5-UNITY_ARCHIVE_DATA11].AddFileToBundle(newfileinfo);
+					filestoaddanim.Add(ftype, model.animation[i].GetDataSize(), newfileinfo);
+					if (newfilepath.length() > 0) {
+						bundle_data[UNITY_ARCHIVE_DATA5 - UNITY_ARCHIVE_DATA11].AddFile(newfilepath, filestoaddanim.file_index[filestoaddanim.file_index.size() - 1], newfileinfo);
+						bundle_data[UNITY_ARCHIVE_DATA5 - UNITY_ARCHIVE_DATA11].AddFileToBundle(newfileinfo);
 						copylistanim[bundleindexanim] = false;
 					}
 				}
 			}
 	}
-	if (bundleindexanim>=0 && !copylistanim[bundleindexanim])
-		filenewsizeanim[bundleindexanim] = bundle_data[UNITY_ARCHIVE_DATA5-UNITY_ARCHIVE_DATA11].GetDataSize();
+	if (bundleindexanim >= 0 && !copylistanim[bundleindexanim])
+		filenewsizeanim[bundleindexanim] = bundle_data[UNITY_ARCHIVE_DATA5 - UNITY_ARCHIVE_DATA11].GetDataSize();
 	filebaseanim.seekg(0);
 	UnityArchiveMetaData newmetadataanim;
-	meta_data[UNITY_ARCHIVE_DATA5].Duplicate(filebaseanim,filedestanim,copylistanim,filenewsizeanim,&filestoaddanim,&newmetadataanim);
-	if (bundleindexanim>=0 && !copylistanim[bundleindexanim]) {
-		for (k=0;k<filestoaddanim.file_index.size();k++)
-			if (filestoaddanim.file_index[k]<=bundleindexanim)
+	meta_data[UNITY_ARCHIVE_DATA5].Duplicate(filebaseanim, filedestanim, copylistanim, filenewsizeanim, &filestoaddanim, &newmetadataanim);
+	if (bundleindexanim >= 0 && !copylistanim[bundleindexanim]) {
+		for (k = 0; k < filestoaddanim.file_index.size(); k++)
+			if ((int)filestoaddanim.file_index[k] <= bundleindexanim)
 				bundleindexanim++;
 		filedestanim.seekg(newmetadataanim.GetFileOffsetByIndex(bundleindexanim));
-		bundle_data[UNITY_ARCHIVE_DATA5-UNITY_ARCHIVE_DATA11].Write(filedestanim);
+		bundle_data[UNITY_ARCHIVE_DATA5 - UNITY_ARCHIVE_DATA11].Write(filedestanim);
 	}
 	j = 0;
-	for (importmodelcounter=0;importmodelcounter<importmodel.size();importmodelcounter++) {
+	for (importmodelcounter = 0; importmodelcounter < importmodel.size(); importmodelcounter++) {
 		ModelDataStruct& model = importmodel[importmodelcounter];
-		for (i=0;i<model.animation.size();i++)
-			if (model.animation[i].anim_id!=0xFFFFFFFF || model.animation[i].file_id<0) {
-				if ((modelmergepolicy!=0 && model.animation[i].file_id<0) || modelmergepolicy==2) {
+		for (i = 0; i < model.animation.size(); i++)
+			if (model.animation[i].anim_id != 0xFFFFFFFF || model.animation[i].file_id < 0) {
+				if ((modelmergepolicy != 0 && model.animation[i].file_id < 0) || modelmergepolicy == 2) {
 					filedestanim.seekg(newmetadataanim.GetFileOffsetByIndex(filestoaddanim.file_index[j++]));
 					model.animation[i].Write(filedestanim);
-				} else if (model.animation[i].file_id>=0) {
-					for (k=0;k<filestoaddanim.file_index.size();k++)
-						if (filestoaddanim.file_index[k]<=model.animation[i].file_id)
+				} else if (model.animation[i].file_id >= 0) {
+					for (k = 0; k < filestoaddanim.file_index.size(); k++)
+						if ((int)filestoaddanim.file_index[k] <= model.animation[i].file_id)
 							model.animation[i].file_id++;
 					filedestanim.seekg(newmetadataanim.GetFileOffsetByIndex(model.animation[i].file_id));
 					model.animation[i].Write(filedestanim);
@@ -1200,7 +1201,7 @@ int ToolUnityViewer::PerformImportOfAnimations(vector<ModelDataStruct>& importmo
 	}
 	filebaseanim.close();
 	filedestanim.close();
-	wxRenameFile(animarchivename+_(L".tmp"),animarchivename,true);
+	wxRenameFile(animarchivename + _(L".tmp"), animarchivename, true);
 	meta_data[UNITY_ARCHIVE_DATA5].Flush();
 	meta_data[UNITY_ARCHIVE_DATA5].Copy(&newmetadataanim);
 	return nbanimtoupdate;
@@ -1777,7 +1778,7 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 			else
 				filedest << modelhierarchy.PrintHierarchy(current_archive, NULL, &list_data);
 			filedest.close();
-			for (i = 0; i < modelhierarchy.node_list.size(); i++)
+			for (i = 0; i < (int)modelhierarchy.node_list.size(); i++)
 				if (modelhierarchy.node_list[i] != NULL)
 					itemtoselect.push_back(modelhierarchy.node_list[i]->file_index);
 		}
@@ -1786,7 +1787,7 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 		for (;;) {
 			it = m_assetlist->GetNextItem(it);
 			if (it == -1) break;
-			for (j = 0; j < itemtoselect.size(); j++)
+			for (j = 0; j < (int)itemtoselect.size(); j++)
 				if (itemtoselect[j] == wxAtoi(m_assetlist->GetItemText(it, 0)) - 1) {
 					m_assetlist->SetItemState(it, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
 					break;
@@ -1925,9 +1926,9 @@ void ToolUnityViewer::OnAssetRightClick(wxListEvent& event) {
 void ToolUnityViewer::OnSortColumn(wxListEvent& event) {
 	int col = event.GetColumn();
 	SortItemInfo info;
-	unsigned int i;
 	long it;
-	if (col==column_sort)
+	int i;
+	if (col == column_sort)
 		column_sort_ascending = !column_sort_ascending;
 	else
 		column_sort_ascending = true;
@@ -1935,10 +1936,10 @@ void ToolUnityViewer::OnSortColumn(wxListEvent& event) {
 	info.assetlist = (wxListCtrl*)m_assetlist;
 	info.column = column_sort;
 	info.ascending = column_sort_ascending;
-	m_assetlist->SortItems(SortItemCompare,(wxIntPtr)&info);
+	m_assetlist->SortItems(SortItemCompare, (wxIntPtr)&info);
 	it = m_assetlist->GetTopItem();
-	for (i=0;i<m_assetlist->GetItemCount();i++) {
-		m_assetlist->SetItemData(it,it);
+	for (i = 0; i < m_assetlist->GetItemCount(); i++) {
+		m_assetlist->SetItemData(it, it);
 		it = m_assetlist->GetNextItem(it);
 	}
 }

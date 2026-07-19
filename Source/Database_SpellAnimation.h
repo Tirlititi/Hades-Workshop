@@ -60,6 +60,7 @@ struct SpellAnimSequenceArgumentString {
 };
 
 extern vector<SpellAnimSequenceArgumentString> SPELLANIM_ARGUMENT_STRING;
+extern vector<pair<wstring, wstring>> ANIMATION_INDEX_EXTRA_INFO;
 
 //====================================//
 //       Enemy Animation Sequence     //

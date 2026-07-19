@@ -29,7 +29,7 @@ const unsigned int steam_stat_field_size[] = { 8, 8, 8, 8, 8, 8, 8, 8, 32 };
 const unsigned int steam_weapon_field_size[] = { 8, 8, 16, 8, 8, 8, 8, 16, 16 };
 const unsigned int steam_weapon_field_array[] = { 0, 0, 0, 0, 0, 0, 0, 2, 0 };
 
-int ItemDataStruct::SetName(wstring newvalue) {
+int ItemDataStruct::SetName(wstring newvalue, SteamLanguage lang) {
 	if (GetGameType() == GAME_TYPE_PSX) {
 		FF9String tmp(name);
 		tmp.SetValue(newvalue);
@@ -39,7 +39,7 @@ int ItemDataStruct::SetName(wstring newvalue) {
 			return 1;
 		parent->name_space_used += newlen - oldlen;
 	}
-	name.SetValue(newvalue);
+	name.SetValue(newvalue, lang);
 	return 0;
 }
 
@@ -55,7 +55,7 @@ int ItemDataStruct::SetName(FF9String& newvalue) {
 	return 0;
 }
 
-int ItemDataStruct::SetHelp(wstring newvalue) {
+int ItemDataStruct::SetHelp(wstring newvalue, SteamLanguage lang) {
 	if (GetGameType() == GAME_TYPE_PSX) {
 		FF9String tmp(help);
 		tmp.SetValue(newvalue);
@@ -65,7 +65,7 @@ int ItemDataStruct::SetHelp(wstring newvalue) {
 			return 1;
 		parent->help_space_used += newlen - oldlen;
 	}
-	help.SetValue(newvalue);
+	help.SetValue(newvalue, lang);
 	return 0;
 }
 
@@ -81,7 +81,7 @@ int ItemDataStruct::SetHelp(FF9String& newvalue) {
 	return 0;
 }
 
-int ItemDataStruct::SetBattleHelp(wstring newvalue) {
+int ItemDataStruct::SetBattleHelp(wstring newvalue, SteamLanguage lang) {
 	if (GetGameType() == GAME_TYPE_PSX) {
 		FF9String tmp(battle_help);
 		tmp.SetValue(newvalue);
@@ -91,7 +91,7 @@ int ItemDataStruct::SetBattleHelp(wstring newvalue) {
 			return 1;
 		parent->help2_space_used += newlen - oldlen;
 	}
-	battle_help.SetValue(newvalue);
+	battle_help.SetValue(newvalue, lang);
 	return 0;
 }
 
@@ -184,7 +184,7 @@ wxString ItemDataStruct::GetFieldValue(wxString fieldname) {
 	if (fieldname.StartsWith("weapon_") && parent->GetWeaponIndexById(weapon_id) >= 0) {
 		ItemWeaponDataStruct& weap = parent->GetWeaponById(weapon_id);
 		if (fieldname.IsSameAs("weapon_category")) return wxString::Format(wxT("%d"), weap.flag);
-		if (fieldname.IsSameAs("weapon_status")) return wxString::Format(wxT("%d"), weap.status);
+		if (fieldname.IsSameAs("weapon_status")) return wxString::Format(wxT("%d"), RedirectEmptyStatusSetToNull(weap.status));
 		if (fieldname.IsSameAs("weapon_model")) return wxString::Format(wxT("%s"), weap.model_name);
 		if (fieldname.IsSameAs("weapon_model_id")) return wxString::Format(wxT("%d"), weap.model);
 		if (fieldname.IsSameAs("weapon_script")) return wxString::Format(wxT("%d"), weap.damage_formula);
@@ -217,7 +217,12 @@ wxString ItemDataStruct::GetFieldValue(wxString fieldname) {
 		if (fieldname.IsSameAs("usable_power")) return wxString::Format(wxT("%d"), usable.power);
 		if (fieldname.IsSameAs("usable_accuracy")) return wxString::Format(wxT("%d"), usable.accuracy);
 		if (fieldname.IsSameAs("usable_element")) return wxString::Format(wxT("%d"), usable.element);
-		if (fieldname.IsSameAs("usable_status")) return FormatStatusSet(usable.status); // TODO: https://github.com/Albeoris/Memoria/blob/main/Assembly-CSharp/Memoria/Data/Items/ItemEffect.cs / https://github.com/Albeoris/Memoria/blob/main/Assembly-CSharp/Global/BTL_SCENE.cs
+		if (fieldname.IsSameAs("usable_status")) return FormatStatusSet(usable.status);
+		// TODO: https://github.com/Albeoris/Memoria/blob/main/Assembly-CSharp/Memoria/Data/Items/ItemEffect.cs
+		// TODO: https://github.com/Albeoris/Memoria/blob/main/Assembly-CSharp/Global/BTL_SCENE.cs (including bbg?)
+		// TODO: https://github.com/Albeoris/Memoria/blob/main/Assembly-CSharp/Global/AA_DATA.cs (perform name)
+		// TODO: Make sure that "loc_names.mes" can be imported as patch
+		// TODO: [Export] Translations: Tetra Master Menu
 	}
 	if (fieldname.StartsWith("stat_") && parent->GetStatIndexById(stat_id) >= 0) {
 		ItemStatDataStruct& stat = parent->GetStatById(stat_id);
@@ -270,7 +275,7 @@ bool ItemDataStruct::CompareWithCSV(wxArrayString entries) {
 	return false;
 }
 
-int KeyItemDataStruct::SetName(wstring newvalue) {
+int KeyItemDataStruct::SetName(wstring newvalue, SteamLanguage lang) {
 	if (GetGameType() == GAME_TYPE_PSX) {
 		FF9String tmp(name);
 		tmp.SetValue(newvalue);
@@ -280,7 +285,7 @@ int KeyItemDataStruct::SetName(wstring newvalue) {
 			return 1;
 		parent->key_name_space_used += newlen - oldlen;
 	}
-	name.SetValue(newvalue);
+	name.SetValue(newvalue, lang);
 	return 0;
 }
 
@@ -296,7 +301,7 @@ int KeyItemDataStruct::SetName(FF9String& newvalue) {
 	return 0;
 }
 
-int KeyItemDataStruct::SetHelp(wstring newvalue) {
+int KeyItemDataStruct::SetHelp(wstring newvalue, SteamLanguage lang) {
 	if (GetGameType() == GAME_TYPE_PSX) {
 		FF9String tmp(help);
 		tmp.SetValue(newvalue);
@@ -306,7 +311,7 @@ int KeyItemDataStruct::SetHelp(wstring newvalue) {
 			return 1;
 		parent->key_help_space_used += newlen - oldlen;
 	}
-	help.SetValue(newvalue);
+	help.SetValue(newvalue, lang);
 	return 0;
 }
 
@@ -322,7 +327,7 @@ int KeyItemDataStruct::SetHelp(FF9String& newvalue) {
 	return 0;
 }
 
-int KeyItemDataStruct::SetDescription(wstring newvalue) {
+int KeyItemDataStruct::SetDescription(wstring newvalue, SteamLanguage lang) {
 	if (GetGameType() == GAME_TYPE_PSX) {
 		if (description_out_of_bounds)
 			return 2;
@@ -334,7 +339,7 @@ int KeyItemDataStruct::SetDescription(wstring newvalue) {
 			return 1;
 		parent->key_desc_space_used += newlen - oldlen;
 	}
-	description.SetValue(newvalue);
+	description.SetValue(newvalue, lang);
 	return 0;
 }
 

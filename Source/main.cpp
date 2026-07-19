@@ -130,10 +130,10 @@ MainFrame::~MainFrame() {
 
 void MainFrame::MarkDataModified() {
 	int currentpanel = m_cdbook->GetSelection();
-	if (currentpanel==wxNOT_FOUND || CDModifiedState[currentpanel])
+	if (currentpanel == wxNOT_FOUND || CDModifiedState[currentpanel])
 		return;
 	CDModifiedState[currentpanel] = true;
-	m_cdbook->SetPageText(currentpanel,'*'+m_cdbook->GetPageText(currentpanel));
+	m_cdbook->SetPageText(currentpanel, '*' + m_cdbook->GetPageText(currentpanel));
 	UpdateMenuAvailability(currentpanel);
 }
 
@@ -325,21 +325,22 @@ void MainFrame::OnOpenHWSClick(wxCommandEvent& event) {
 		TheIOHWSMessageIn = new IOHWSMessage(this);
 	bool* section = new bool[DATA_SECTION_AMOUNT];
 	bool* sectext = new bool[DATA_SECTION_AMOUNT];
-	if (TheIOHWSMessageIn->ShowModal(false,section,sectext,NULL)==wxID_OK) {
+	if (TheIOHWSMessageIn->ShowModal(false, section, sectext, NULL) == wxID_OK) {
 		int hwslen = TheIOHWSMessageIn->m_hwspicker->GetPath().Length();
-		char* hwsname = new char[hwslen+1];
+		char* hwsname = new char[hwslen + 1];
 		bool localsec[3];
 		localsec[0] = TheIOHWSMessageIn->m_enemylocal->GetValue() && TheIOHWSMessageIn->m_enemylocal->IsEnabled();
 		localsec[1] = TheIOHWSMessageIn->m_worldlocal->GetValue() && TheIOHWSMessageIn->m_worldlocal->IsEnabled();
 		localsec[2] = TheIOHWSMessageIn->m_fieldlocal->GetValue() && TheIOHWSMessageIn->m_fieldlocal->IsEnabled();
 		hwsname[hwslen] = 0;
 		strncpy(hwsname, (const char*)TheIOHWSMessageIn->m_hwspicker->GetPath().mb_str(), hwslen);
-		wstring* res = CDPanel[currentpanel]->ReadHWS(hwsname,section,sectext,localsec);
+		wstring* res = CDPanel[currentpanel]->ReadHWS(hwsname, section, sectext, localsec);
 		delete[] hwsname;
 		delete[] section;
 		delete[] sectext;
-		wxMessageDialog popupsuccess(this,_(res[0]),_(res[1]),wxOK|wxCENTRE);
+		wxMessageDialog popupsuccess(this, _(res[0]), _(res[1]), wxOK | wxCENTRE);
 		popupsuccess.ShowModal();
+		UpdateMenuAvailability(m_cdbook->GetSelection());
 		delete[] res;
 	}
 }
@@ -695,64 +696,77 @@ void MainFrame::OnPreferencesClick(wxCommandEvent& event) {
 void MainFrame::OnBatchExportClick(wxCommandEvent& event) {
 	unsigned int currentpanel = m_cdbook->GetSelection();
 	int id = event.GetId();
+	BatchExportDialog dial(this);
 	if (id == wxID_TEXT) {
-		BatchExportDialog dial(this);
 		dial.ShowModal(1, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->m_textlist->GetStrings(), CDPanel[currentpanel]->textsorted);
-	} else if (id == wxID_UITEXT) {
-		BatchExportDialog dial(this);
-		dial.ShowModal(2, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->m_specialtextlist->GetStrings(), NULL);
-	} else if (id == wxID_ENMYSCRIPT) {
-		BatchExportDialog dial(this);
+	} else if (id == wxID_WORLDTEXT) {
+		dial.ShowModal(2, &CDPanel[currentpanel]->saveset, wxArrayString(1, L"World Maps"), NULL);
+	} else if (id == wxID_ENMYTEXT) {
 		dial.ShowModal(3, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->m_enemylist->GetStrings(), CDPanel[currentpanel]->enemysorted);
+	} else if (id == wxID_PLACETEXT) {
+		dial.ShowModal(4, &CDPanel[currentpanel]->saveset, wxArrayString(1, L"World Map Places"), NULL);
+	} else if (id == wxID_UITEXT) {
+		dial.ShowModal(5, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->m_specialtextlist->GetStrings(), NULL);
+	} else if (id == wxID_CARDTEXT) {
+		dial.ShowModal(6, &CDPanel[currentpanel]->saveset, wxArrayString(1, L"Card Names"), NULL);
+	} else if (id == wxID_LOCTEXT) {
+		dial.ShowModal(7, &CDPanel[currentpanel]->saveset, wxArrayString(1, L"Localization"), NULL);
+	} else if (id == wxID_SPELLTEXT) {
+		dial.ShowModal(8, &CDPanel[currentpanel]->saveset, wxArrayString(1, L"Spells"), NULL);
+	} else if (id == wxID_SUPPORTTEXT) {
+		dial.ShowModal(9, &CDPanel[currentpanel]->saveset, wxArrayString(1, L"Supporting Abilities"), NULL);
+	} else if (id == wxID_CMDTEXT) {
+		dial.ShowModal(10, &CDPanel[currentpanel]->saveset, wxArrayString(1, L"Commands"), NULL);
+	} else if (id == wxID_ITEMTEXT) {
+		dial.ShowModal(11, &CDPanel[currentpanel]->saveset, wxArrayString(1, L"Items"), NULL);
+	} else if (id == wxID_KEYTEXT) {
+		dial.ShowModal(12, &CDPanel[currentpanel]->saveset, wxArrayString(1, L"Key Items"), NULL);
+	} else if (id == wxID_FIELDTEXT) {
+		dial.ShowModal(13, &CDPanel[currentpanel]->saveset, wxArrayString(1, L"Field Names"), NULL);
+	} else if (id == wxID_STATTEXT) {
+		dial.ShowModal(14, &CDPanel[currentpanel]->saveset, wxArrayString(1, L"Character Names"), NULL);
+	} else if (id == wxID_ENMYSCRIPT) {
+		dial.ShowModal(100, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->m_enemylist->GetStrings(), CDPanel[currentpanel]->enemysorted);
 	} else if (id == wxID_WORLDSCRIPT) {
-		BatchExportDialog dial(this);
-		dial.ShowModal(4, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->m_worldlist->GetStrings(), NULL);
+		dial.ShowModal(101, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->m_worldlist->GetStrings(), NULL);
 	} else if (id == wxID_FIELDSCRIPT) {
-		BatchExportDialog dial(this);
-		dial.ShowModal(5, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->m_fieldlist->GetStrings(), CDPanel[currentpanel]->fieldsorted);
+		dial.ShowModal(102, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->m_fieldlist->GetStrings(), CDPanel[currentpanel]->fieldsorted);
 	} else if (id == wxID_BACKGROUND) {
-		BatchExportDialog dial(this);
-		dial.ShowModal(10, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->m_fieldlist->GetStrings(), CDPanel[currentpanel]->fieldsorted);
+		dial.ShowModal(200, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->m_fieldlist->GetStrings(), CDPanel[currentpanel]->fieldsorted);
 	} else if (id == wxID_WALKMESH) {
-		BatchExportDialog dial(this);
-		dial.ShowModal(11, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->m_fieldlist->GetStrings(), CDPanel[currentpanel]->fieldsorted);
+		dial.ShowModal(300, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->m_fieldlist->GetStrings(), CDPanel[currentpanel]->fieldsorted);
 	}
 }
 
-void MainFrame::OnBatchImportClick( wxCommandEvent& event ) {
+void MainFrame::OnBatchImportClick(wxCommandEvent& event) {
 	unsigned int currentpanel = m_cdbook->GetSelection();
 	int id = event.GetId();
-	if (id==wxID_IMPTEXT) {
+	if (id == wxID_IMPTEXT) {
 		BatchImportDialog dial(this);
-		dial.ShowModal(1,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->config.language & LANGUAGE_VERSION_JAPAN);
+		dial.ShowModal(1, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->config.language & LANGUAGE_VERSION_JAPAN);
 		if (dial.datamodified) {
-			CDPanel[currentpanel]->saveset.sectionmodified[DATA_SECTION_TEXT] = true;
+			for (auto section = dial.datasectionmodified.begin(); section != dial.datasectionmodified.end(); section++)
+				CDPanel[currentpanel]->UpdateTextDisplays(*section);
+			CDPanel[currentpanel]->DisplayCurrentData();
 			MarkDataModified();
 		}
-	} else if (id==wxID_IMPUITEXT) {
+	} else if (id == wxID_IMPENMYSCRIPT) {
 		BatchImportDialog dial(this);
-		dial.ShowModal(2,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->config.language & LANGUAGE_VERSION_JAPAN);
-		if (dial.datamodified) {
-			CDPanel[currentpanel]->saveset.sectionmodified[DATA_SECTION_MENU_UI] = true;
-			MarkDataModified();
-		}
-	} else if (id==wxID_IMPENMYSCRIPT) {
-		BatchImportDialog dial(this);
-		dial.ShowModal(3,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->config.language & LANGUAGE_VERSION_JAPAN);
+		dial.ShowModal(100, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->config.language & LANGUAGE_VERSION_JAPAN);
 		if (dial.datamodified) {
 			CDPanel[currentpanel]->saveset.sectionmodified[DATA_SECTION_ENMY] = true;
 			MarkDataModified();
 		}
-	} else if (id==wxID_IMPWORLDSCRIPT) {
+	} else if (id == wxID_IMPWORLDSCRIPT) {
 		BatchImportDialog dial(this);
-		dial.ShowModal(4,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->config.language & LANGUAGE_VERSION_JAPAN);
+		dial.ShowModal(101, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->config.language & LANGUAGE_VERSION_JAPAN);
 		if (dial.datamodified) {
 			CDPanel[currentpanel]->saveset.sectionmodified[DATA_SECTION_WORLD_MAP] = true;
 			MarkDataModified();
 		}
-	} else if (id==wxID_IMPFIELDSCRIPT) {
+	} else if (id == wxID_IMPFIELDSCRIPT) {
 		BatchImportDialog dial(this);
-		dial.ShowModal(5,&CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->config.language & LANGUAGE_VERSION_JAPAN);
+		dial.ShowModal(102, &CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->config.language & LANGUAGE_VERSION_JAPAN);
 		if (dial.datamodified) {
 			CDPanel[currentpanel]->saveset.sectionmodified[DATA_SECTION_FIELD] = true;
 			MarkDataModified();
@@ -902,9 +916,9 @@ void MainFrame::RepaintBackground() {
 	dc.Blit(wxPoint(0,0),mdc.GetSize(),&mdc,wxPoint(0,0));
 }
 
-void MainFrame::OnFramePaint( wxPaintEvent& event ) {
+void MainFrame::OnFramePaint(wxPaintEvent& event) {
 	wxPaintDC udc(this);
-	if (CDPanelAmount==0)
+	if (CDPanelAmount == 0)
 		RepaintBackground();
 }
 
@@ -913,7 +927,9 @@ MainFrame* GetTopWindow() {
 }
 
 void MainFrame::UpdateMenuAvailability(int panel) {
-	if (panel==wxNOT_FOUND) {
+	if (panel == wxNOT_FOUND)
+		panel = m_cdbook->GetSelection();
+	if (panel == wxNOT_FOUND) {
 		m_openhws->Enable(false);
 		m_close->Enable(false);
 		m_closeall->Enable(false);
@@ -922,9 +938,20 @@ void MainFrame::UpdateMenuAvailability(int panel) {
 		m_exportppf->Enable(false);
 		m_savebin->Enable(false);
 		m_exporttext->Enable(false);
+		m_exportworldtext->Enable(false);
+		m_exportbattletext->Enable(false);
+		m_exportfieldtext->Enable(false);
+		m_exportplacetext->Enable(false);
+		m_exportspecialtext->Enable(false);
+		m_exportlocalizationtext->Enable(false);
+		m_exportcardtext->Enable(false);
+		m_exportspelltext->Enable(false);
+		m_exportsupporttext->Enable(false);
+		m_exportcmdtext->Enable(false);
+		m_exportitemtext->Enable(false);
+		m_exportkeytext->Enable(false);
+		m_exportstattext->Enable(false);
 		m_importtext->Enable(false);
-		m_exportuitext->Enable(false);
-		m_importuitext->Enable(false);
 		m_exportenemyscript->Enable(false);
 		m_importenemyscript->Enable(false);
 		m_exportworldscript->Enable(false);
@@ -952,13 +979,24 @@ void MainFrame::UpdateMenuAvailability(int panel) {
 	m_damagecalculator->Enable(true);
 	m_backgroundeditor->Enable(true);
 	m_savehws->Enable(CDModifiedState[panel]);
-	m_savesteam->Enable(CDModifiedState[panel] && GetGameType()!=GAME_TYPE_PSX);
-	m_exportppf->Enable(CDModifiedState[panel] && GetGameType()==GAME_TYPE_PSX);
-	m_savebin->Enable(CDModifiedState[panel] && GetGameType()==GAME_TYPE_PSX);
+	m_savesteam->Enable(CDModifiedState[panel] && GetGameType() != GAME_TYPE_PSX);
+	m_exportppf->Enable(CDModifiedState[panel] && GetGameType() == GAME_TYPE_PSX);
+	m_savebin->Enable(CDModifiedState[panel] && GetGameType() == GAME_TYPE_PSX);
 	m_exporttext->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_TEXT]);
-	m_importtext->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_TEXT]);
-	m_exportuitext->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_MENU_UI]);
-	m_importuitext->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_MENU_UI]);
+	m_exportworldtext->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_WORLD_MAP]);
+	m_exportbattletext->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_ENMY]);
+	m_exportfieldtext->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_FIELD]);
+	m_exportplacetext->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_WORLD_MAP]);
+	m_exportspecialtext->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_MENU_UI]);
+	m_exportlocalizationtext->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_MENU_UI]);
+	m_exportcardtext->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_CARD]);
+	m_exportspelltext->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_SPELL]);
+	m_exportsupporttext->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_SUPPORT]);
+	m_exportcmdtext->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_CMD]);
+	m_exportitemtext->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_ITEM]);
+	m_exportkeytext->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_ITEM]);
+	m_exportstattext->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_STAT]);
+	m_importtext->Enable(true);
 	m_exportenemyscript->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_ENMY]);
 	m_importenemyscript->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_ENMY]);
 	m_exportworldscript->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_WORLD_MAP]);

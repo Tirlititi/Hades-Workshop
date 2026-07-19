@@ -61,8 +61,10 @@ bool MagicSwordDataStruct::CompareWithCSV(wxArrayString entries) {
 		if (useextendedtype) IO ## FlexibleChar(ffbin, mgswd.unlocked[i], useextendedtype); \
 		IO ## FlexibleChar(ffbin, mgswd.requirement[i], useextendedtype); \
 	} \
-	MACRO_IOFUNCTIONGENERIC_STATUS(ffbin, useextendedtype2, IO, READ, mgswd.supporter_status_blocker) \
-	MACRO_IOFUNCTIONGENERIC_STATUS(ffbin, useextendedtype2, IO, READ, mgswd.beneficiary_status_blocker) \
+	if (useextendedtype2) { \
+		MACRO_IOFUNCTIONGENERIC_STATUS(ffbin, true, IO, READ, mgswd.supporter_status_blocker) \
+		MACRO_IOFUNCTIONGENERIC_STATUS(ffbin, true, IO, READ, mgswd.beneficiary_status_blocker) \
+	} \
 	if (useextendedtype2) IO ## CSVFields(ffbin, mgswd.custom_field); \
 	if (PPF) PPFEndScanStep();
 

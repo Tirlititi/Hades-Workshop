@@ -73,9 +73,9 @@ ExtendedCharmap ExtendedCharmap::CreateEmpty() {
 }
 
 void ExtendedCharmap::Delete() {
-	if (amount>0) {
+	if (amount > 0) {
 		delete[] id;
-		for (unsigned int i=0;i<amount;i++)
+		for (unsigned int i = 0; i < amount; i++)
 			delete[] letter[i];
 		delete[] letter;
 	}
@@ -87,13 +87,13 @@ void ExtendedCharmap::Delete() {
 ExtendedCharmap ExtendedCharmap::Copy() {
 	ExtendedCharmap res;
 	res.amount = amount;
-	if (amount>0) {
+	if (amount > 0) {
 		res.id = new uint16_t[amount];
 		res.letter = new wchar_t*[amount];
-		memcpy(res.id,id,amount*sizeof(uint16_t));
-		for (unsigned int i=0;i<amount;i++) {
+		memcpy(res.id, id, amount * sizeof(uint16_t));
+		for (unsigned int i = 0; i < amount; i++) {
 			res.letter[i] = new wchar_t[256];
-			memcpy(res.letter[i],letter[i],256*sizeof(wchar_t));
+			memcpy(res.letter[i], letter[i], 256 * sizeof(wchar_t));
 		}
 	} else {
 		res.id = NULL;
@@ -103,15 +103,15 @@ ExtendedCharmap ExtendedCharmap::Copy() {
 }
 
 wchar_t* ExtendedCharmap::GetCharmap(uint16_t chmapid) {
-	for (unsigned int i=0;i<amount;i++)
-		if (chmapid==id[i])
+	for (unsigned int i = 0; i < amount; i++)
+		if (chmapid == id[i])
 			return letter[i];
 	return NULL;
 }
 
 inline void JumpIfNeeded(fstream& f) {
-	if (((uint32_t)f.tellg()-FILE_IGNORE_DATA_FIRST)%FILE_IGNORE_DATA_PERIOD==0)
-		f.seekg(FILE_IGNORE_DATA_AMOUNT,ios_base::cur);
+	if (((uint32_t)f.tellg() - FILE_IGNORE_DATA_FIRST) % FILE_IGNORE_DATA_PERIOD == 0)
+		f.seekg(FILE_IGNORE_DATA_AMOUNT, ios_base::cur);
 }
 
 wstring FF9String::GetUTF8FromByteCode(char* raw) {
@@ -120,35 +120,35 @@ wstring FF9String::GetUTF8FromByteCode(char* raw) {
 }
 
 wstring FF9String::RemoveOpcodes(wstring str, int charlim) {
-	uint16_t i,len = str.length();
+	uint16_t i, len = str.length();
 	wstring res = L"";
-	if (GetGameType()==GAME_TYPE_PSX) {
-		for (i=0;i<len;i++)
-			if (str[i]!=OPCODE_WCHAR) {
-				if (charlim==0)
+	if (GetGameType() == GAME_TYPE_PSX) {
+		for (i = 0; i < len; i++)
+			if (str[i] != OPCODE_WCHAR) {
+				if (charlim == 0)
 					break;
-				else if (charlim>0)
+				else if (charlim > 0)
 					charlim--;
 				res += str[i];
 			}
 	} else {
-		for (i=0;i<len;i++) {
-			if (str[i]==L'[') {
+		for (i = 0; i < len; i++) {
+			if (str[i] == L'[') {
 				i++;
-				while (i<len && str[i]!=L']' && str[i]!=L'=')
+				while (i < len && str[i] != L']' && str[i] != L'=')
 					i++;
-				while (i<len && str[i]!=L']')
+				while (i < len && str[i] != L']')
 					i++;
 			} else {
-				if (charlim==0)
+				if (charlim == 0)
 					break;
-				else if (charlim>0)
+				else if (charlim > 0)
 					charlim--;
 				res += str[i];
 			}
 		}
 	}
-	if (charlim==0 && i<len)
+	if (charlim == 0 && i < len)
 		res += L"...";
 	return res;
 }
@@ -161,7 +161,7 @@ FF9String::FF9String() :
 	charmap_B(hades::SPECIAL_STRING_CHARMAP_B),
 	charmap_Ext(hades::SPECIAL_STRING_CHARMAP_EXT.GetCharmap(0)),
 	opcode_wchar(hades::SPECIAL_STRING_OPCODE_WCHAR) {
-	for (unsigned int i=0;i<STEAM_LANGUAGE_AMOUNT;i++) {
+	for (unsigned int i = 0; i < STEAM_LANGUAGE_AMOUNT; i++) {
 		multi_lang_init[i] = false;
 		multi_lang_str[i] = L"";
 	}
@@ -180,20 +180,20 @@ FF9String::FF9String(const FF9String& cp) :
 	charmap_B(cp.charmap_B),
 	charmap_Ext(cp.charmap_Ext),
 	opcode_wchar(cp.opcode_wchar) {
-	if (GetGameType()==GAME_TYPE_PSX) { // DEBUG ; maybe use a check on the str instead
+	if (GetGameType() == GAME_TYPE_PSX) { // DEBUG ; maybe use a check on the str instead
 		raw = new uint8_t[length];
 		code_arg_length = new uint8_t[code_amount];
-		code_arg = new uint8_t*[code_amount];
-		copy(cp.raw,cp.raw+length,raw);
-		copy(cp.code_arg_length,cp.code_arg_length+code_amount,code_arg_length);
-		for (unsigned int i=0;i<code_amount;i++) {
+		code_arg = new uint8_t * [code_amount];
+		copy(cp.raw, cp.raw + length, raw);
+		copy(cp.code_arg_length, cp.code_arg_length + code_amount, code_arg_length);
+		for (unsigned int i = 0; i < code_amount; i++) {
 			code_arg[i] = new uint8_t[code_arg_length[i]];
-			copy(cp.code_arg[i],cp.code_arg[i]+code_arg_length[i],code_arg[i]);
+			copy(cp.code_arg[i], cp.code_arg[i] + code_arg_length[i], code_arg[i]);
 		}
 	} else {
 		raw = NULL;
 	}
-	for (unsigned int i=0;i<STEAM_LANGUAGE_AMOUNT;i++) {
+	for (unsigned int i = 0; i < STEAM_LANGUAGE_AMOUNT; i++) {
 		multi_lang_init[i] = cp.multi_lang_init[i];
 		if (multi_lang_init[i])
 			multi_lang_str[i] = cp.multi_lang_str[i];
@@ -206,7 +206,7 @@ FF9String::~FF9String() {
 /*	if (raw) {
 		delete[] raw;
 		delete[] code_arg_length;
-		for (unsigned int i=0;i<code_amount;i++)
+		for (unsigned int i = 0; i < code_amount; i++)
 			delete[] code_arg[i];
 		delete[] code_arg;
 	}*/
@@ -257,7 +257,7 @@ void FF9String::Read(fstream& ffbin, void (*ReadCharFunc)(fstream& fs, uint8_t& 
 				i = 0;
 				tmparg[code_amount][i++] = tmpstr[length - 1];
 				opcode = tmpstr[length - 1];
-				if (HADES_STRING_TEXT_OPCODE[opcode].length != -1) {
+				if (HADES_STRING_TEXT_OPCODE[opcode].length >= 0) {
 					tmparglen[code_amount] = HADES_STRING_TEXT_OPCODE[opcode].length + 1;
 				} else if (opcode == 0x04) { // TOKENIZE
 					ReadCharFunc(ffbin, tmpstr[length++]);
@@ -309,7 +309,7 @@ void FF9String::Read(fstream& ffbin, void (*ReadCharFunc)(fstream& fs, uint8_t& 
 	}
 	raw = new uint8_t[length];
 	code_arg_length = new uint8_t[code_amount];
-	code_arg = new uint8_t * [code_amount];
+	code_arg = new uint8_t*[code_amount];
 	copy(tmpstr, tmpstr + length, raw);
 	copy(tmparglen, tmparglen + code_amount, code_arg_length);
 	for (i = 0; i < code_amount; i++) {
@@ -328,37 +328,37 @@ void ReadCharFuncDummy(fstream& fs, uint8_t& ch) {
 }
 void FF9String::ReadFromChar(uint8_t* rawvalue) {
 	unsigned int len = 0;
-	while (rawvalue[len]!=0xFF)
+	while (rawvalue[len] != 0xFF)
 		len++;
-	memcpy(tmpstr,rawvalue,len+1);
+	memcpy(tmpstr, rawvalue, len + 1);
 	fstream dummystream;
-	Read(dummystream,&ReadCharFuncDummy);
+	Read(dummystream, &ReadCharFuncDummy);
 }
 
 void FF9String::SetValue(wstring value, SteamLanguage lang) {
-	if (GetGameType()!=GAME_TYPE_PSX && hades::STEAM_SINGLE_LANGUAGE_MODE && lang!=GetSteamLanguage())
+	if (GetGameType() != GAME_TYPE_PSX && hades::STEAM_SINGLE_LANGUAGE_MODE && lang != GetSteamLanguage())
 		return;
 	uint16_t len = value.length();
-	if (len==0) {
-		if (lang<STEAM_LANGUAGE_AMOUNT && GetGameType()!=GAME_TYPE_PSX) {
+	if (len == 0) {
+		if (lang < STEAM_LANGUAGE_AMOUNT && GetGameType() != GAME_TYPE_PSX) {
 			multi_lang_init[lang] = true;
 			multi_lang_str[lang] = L"";
 		}
-		if (lang==GetSteamLanguage())
+		if (lang == GetSteamLanguage())
 			CreateEmpty();
 		return;
 	}
-	if (GetGameType()==GAME_TYPE_PSX) {
-		uint16_t i,j,rawi = 0,codei = 0;
+	if (GetGameType() == GAME_TYPE_PSX) {
+		uint16_t i, j, rawi = 0, codei = 0;
 		bool identified, kept;
 		str = L"";
-		for (i=0;i<len;i++) {
+		for (i = 0; i < len; i++) {
 			identified = false;
 			kept = true;
-			if (value[i]==opcode_wchar) {
-				if (codei<code_amount) {
+			if (value[i] == opcode_wchar) {
+				if (codei < code_amount) {
 					tmpstr[rawi++] = OPCODE_CHAR;
-					for (j=0;j<code_arg_length[codei];j++)
+					for (j = 0; j < code_arg_length[codei]; j++)
 						tmpstr[rawi++] = code_arg[codei][j];
 					codei++;
 				} else
@@ -366,31 +366,31 @@ void FF9String::SetValue(wstring value, SteamLanguage lang) {
 				identified = true;
 			}
 			if (!identified)
-				for (j=0;j<0x100;j++)
-					if (charmap[j]==value[i]) {
+				for (j = 0; j < 0x100; j++)
+					if (charmap[j] == value[i]) {
 						tmpstr[rawi++] = j;
 						identified = true;
 						break;
 					}
 			if (!identified)
-				for (j=0;j<0x100;j++)
-					if (charmap_A[j]==value[i]) {
+				for (j = 0; j < 0x100; j++)
+					if (charmap_A[j] == value[i]) {
 						tmpstr[rawi++] = CHARMAP_A_CODECHAR;
 						tmpstr[rawi++] = j;
 						identified = true;
 						break;
 					}
 			if (!identified)
-				for (j=0;j<0x100;j++)
-					if (charmap_B[j]==value[i]) {
+				for (j = 0; j < 0x100; j++)
+					if (charmap_B[j] == value[i]) {
 						tmpstr[rawi++] = CHARMAP_B_CODECHAR;
 						tmpstr[rawi++] = j;
 						identified = true;
 						break;
 					}
 			if (!identified && charmap_Ext)
-				for (j=0;j<0x100;j++)
-					if (charmap_Ext[j]==value[i]) {
+				for (j = 0; j < 0x100; j++)
+					if (charmap_Ext[j] == value[i]) {
 						tmpstr[rawi++] = CHARMAP_EXT_CODECHAR;
 						tmpstr[rawi++] = j;
 						identified = true;
@@ -399,39 +399,53 @@ void FF9String::SetValue(wstring value, SteamLanguage lang) {
 			if (identified && kept)
 				str += value[i];
 		}
-		code_amount = min(code_amount,codei);
-		null_terminated = (code_amount>0 && (code_arg[code_amount-1][0]==0x01 || code_arg[code_amount-1][0]==0x09)) ? 0 : 1;
+		code_amount = min(code_amount, codei);
+		null_terminated = (code_amount > 0 && (code_arg[code_amount - 1][0] == 0x01 || code_arg[code_amount - 1][0] == 0x09)) ? 0 : 1;
 		if (null_terminated)
 			tmpstr[rawi++] = 0xFF;
 		if (raw)
 			delete[] raw;
 		length = rawi;
 		raw = new uint8_t[length];
-		copy(tmpstr,tmpstr+length,raw);
+		copy(tmpstr, tmpstr + length, raw);
 		GenerateStrExt();
 	} else {
 		if (raw)
 			delete[] raw;
 		raw = NULL;
-		if (lang>=STEAM_LANGUAGE_AMOUNT || (lang<STEAM_LANGUAGE_AMOUNT && GetSteamLanguage()==lang)) {
-			wxString wxstr(value);
+		wxString wxstr(value);
+		wxString timetag = wxEmptyString;
+		int timetagindex = wxstr.find(L"[TIME=");
+		bool hastimetag = false;
+		while (timetagindex != wxNOT_FOUND) {
+			hastimetag = true;
+			int timetagendindex = wxstr.find(L']', timetagindex + 6);
+			if (timetagendindex == wxNOT_FOUND) {
+				wxstr = wxstr.Mid(0, timetagindex);
+				break;
+			}
+			timetag = wxstr.Mid(timetagindex, timetagendindex - timetagindex + 1);
+			wxstr = wxstr.Mid(0, timetagindex) + wxstr.Mid(timetagendindex + 1);
+			timetagindex = wxstr.find(L"[TIME=", timetagindex);
+		}
+		if (hastimetag) {
+			wxstr += timetag;
+			value = wxstr.wc_str();
+		}
+		if (lang >= STEAM_LANGUAGE_AMOUNT || (lang < STEAM_LANGUAGE_AMOUNT && GetSteamLanguage() == lang)) {
 			wxCharBuffer buffer = wxstr.mb_str(wxConvUTF8);
-			null_terminated = 1;
 			code_amount = 0;
-			length = buffer.length()+6;
-			if (value[len-1]==L']') {
-				size_t lastopposbeg = value.find_last_of(L'[');
-				if (lastopposbeg!=string::npos && lastopposbeg+6<=value.length()) {
-					if (value.substr(lastopposbeg+1,4).compare(L"TIME")==0) {
-						null_terminated = 0;
-						length = buffer.length();
-					}
-				}
+			if (timetag.IsEmpty()) {
+				length = buffer.length() + 6;
+				null_terminated = 1;
+			} else {
+				length = buffer.length();
+				null_terminated = 0;
 			}
 			str = value;
 			GenerateStrExt();
 		}
-		if (lang<STEAM_LANGUAGE_AMOUNT) {
+		if (lang < STEAM_LANGUAGE_AMOUNT) {
 			multi_lang_init[lang] = true;
 			multi_lang_str[lang] = value;
 		}
@@ -439,21 +453,21 @@ void FF9String::SetValue(wstring value, SteamLanguage lang) {
 }
 
 void FF9String::SetCharmaps(wchar_t* newmapdef, wchar_t* newmapa, wchar_t* newmapb, wchar_t* newmapext) {
-	uint16_t i,codei = 0;
+	uint16_t i, codei = 0;
 	charmap = newmapdef;
 	charmap_A = newmapa;
 	charmap_B = newmapb;
 	charmap_Ext = newmapext;
 	str = L"";
-	for (i=0;i+null_terminated<length;i++) {
-		if (raw[i]==OPCODE_CHAR) {
+	for (i = 0; i + null_terminated < length; i++) {
+		if (raw[i] == OPCODE_CHAR) {
 			str += opcode_wchar;
 			i += code_arg_length[codei++];
-		} else if (raw[i]==CHARMAP_A_CODECHAR)
+		} else if (raw[i] == CHARMAP_A_CODECHAR)
 			str += charmap_A[raw[++i]];
-		else if (raw[i]==CHARMAP_B_CODECHAR)
+		else if (raw[i] == CHARMAP_B_CODECHAR)
 			str += charmap_B[raw[++i]];
-		else if (raw[i]==CHARMAP_EXT_CODECHAR) {
+		else if (raw[i] == CHARMAP_EXT_CODECHAR) {
 			if (charmap_Ext)
 				str += charmap_Ext[raw[++i]];
 			else {
@@ -467,9 +481,9 @@ void FF9String::SetCharmaps(wchar_t* newmapdef, wchar_t* newmapa, wchar_t* newma
 }
 
 void FF9String::SetOpcodeChar(wchar_t newchar) {
-	uint16_t i,len = str.length();
-	for (i=0;i<len;i++)
-		if (str[i]==opcode_wchar)
+	uint16_t i, len = str.length();
+	for (i = 0; i < len; i++)
+		if (str[i] == opcode_wchar)
 			str[i] = newchar;
 	opcode_wchar = newchar;
 }
@@ -486,6 +500,8 @@ void FF9String::ChangeSteamLanguage(SteamLanguage newlang) {
 }
 
 void FF9String::PermuteCode(uint16_t code1, uint16_t code2) {
+	if ((code_arg_length[code1] > 0 && (code_arg[code1][0] == 0x01 || code_arg[code1][0] == 0x09)) || (code_arg_length[code2] > 0 && (code_arg[code2][0] == 0x01 || code_arg[code2][0] == 0x09)))
+		return;
 	uint8_t tmp = code_arg_length[code1];
 	code_arg_length[code1] = code_arg_length[code2];
 	code_arg_length[code2] = tmp;
@@ -495,30 +511,34 @@ void FF9String::PermuteCode(uint16_t code1, uint16_t code2) {
 }
 
 void FF9String::AddCode(uint8_t* codearg, uint8_t codelength, uint16_t pos) {
+	if (codelength == 0)
+		return;
+	if ((codearg[0] == 0x01 || codearg[0] == 0x09) && pos < code_amount)
+		return;
 	code_amount++;
 	uint8_t* arglen = new uint8_t[code_amount];
 	uint8_t** arg = new uint8_t*[code_amount];
-	copy(code_arg_length,code_arg_length+pos,arglen);
-	copy(code_arg,code_arg+pos,arg);
+	copy(code_arg_length, code_arg_length + pos, arglen);
+	copy(code_arg, code_arg + pos, arg);
 	arglen[pos] = codelength;
 	arg[pos] = new uint8_t[codelength];
-	memcpy(arg[pos],codearg,codelength);
-	copy(code_arg_length+pos,code_arg_length+code_amount-1,arglen+pos+1);
-	copy(code_arg+pos,code_arg+code_amount-1,arg+pos+1);
+	memcpy(arg[pos], codearg, codelength);
+	copy(code_arg_length + pos, code_arg_length + code_amount - 1, arglen + pos + 1);
+	copy(code_arg + pos, code_arg + code_amount - 1, arg + pos + 1);
 	delete[] code_arg_length;
 	delete[] code_arg;
 	code_arg_length = arglen;
 	code_arg = arg;
-	if (pos==0) {
-		str = opcode_wchar+str;
+	if (pos == 0) {
+		str = opcode_wchar + str;
 	} else {
 		uint16_t codei = 0;
 		uint16_t len = str.length();
-		for (unsigned int i=0;i<len;i++)
-			if (str[i]==opcode_wchar) {
+		for (unsigned int i = 0; i < len; i++)
+			if (str[i] == opcode_wchar) {
 				codei++;
-				if (codei==pos) {
-					str = str.substr(0,i)+opcode_wchar+str.substr(i+1);
+				if (codei == pos) {
+					str = str.substr(0, i) + opcode_wchar + str.substr(i + 1);
 					break;
 				}
 			}
@@ -530,55 +550,55 @@ void FF9String::SetCode(uint16_t codeid, uint8_t* codearg, uint8_t codelength) {
 	delete[] code_arg[codeid];
 	code_arg_length[codeid] = codelength;
 	code_arg[codeid] = new uint8_t[codelength];
-	memcpy(code_arg[codeid],codearg,codelength);
+	memcpy(code_arg[codeid], codearg, codelength);
 }
 
 void FF9String::RemoveCode(uint16_t codeid) {
 	code_amount--;
-	for (unsigned int i=codeid;i<code_amount;i++) {
-		code_arg_length[i] = code_arg_length[i+1];
-		code_arg[i] = code_arg[i+1];
+	for (unsigned int i = codeid; i < code_amount; i++) {
+		code_arg_length[i] = code_arg_length[i + 1];
+		code_arg[i] = code_arg[i + 1];
 	}
 	SetValue(str);
 }
 
 wstring& FF9String::GetStr(int strtype) {
-	if (strtype==1)
+	if (strtype == 1)
 		return str_ext;
-	if (strtype==2)
+	if (strtype == 2)
 		return str_nice;
 	return str;
 }
 
 uint16_t FF9String::GetLength(SteamLanguage lang, bool withend) {
-	if (lang==GetSteamLanguage() && !multi_lang_init[lang])
+	if (lang == GetSteamLanguage() && !multi_lang_init[lang])
 		return 0;
-	if (lang>=STEAM_LANGUAGE_AMOUNT || lang==GetSteamLanguage())
-		return length-(!withend && null_terminated==1 ? (GetGameType()==GAME_TYPE_PSX ? 1 : 6) : 0);
+	if (lang >= STEAM_LANGUAGE_AMOUNT || lang == GetSteamLanguage())
+		return length - (!withend && null_terminated == 1 ? (GetGameType() == GAME_TYPE_PSX ? 1 : 6) : 0);
 	if (!multi_lang_init[lang])
 		return 0;
 	wxString wxstr(multi_lang_str[lang]);
 	wxCharBuffer buffer = wxstr.mb_str(wxConvUTF8);
-	if (withend && wxstr[wxstr.Length()-1]==L']') {
+	if (withend && wxstr[wxstr.Length() - 1] == L']') {
 		size_t lastopposbeg = wxstr.find_last_of(L'[');
-		if (lastopposbeg!=string::npos && lastopposbeg+6<=wxstr.Length()) {
-			if (wxstr.substr(lastopposbeg+1,4).compare(L"TIME")==0) {
+		if (lastopposbeg != string::npos && lastopposbeg + 6 <= wxstr.Length()) {
+			if (wxstr.substr(lastopposbeg + 1, 4).compare(L"TIME") == 0) {
 				return buffer.length();
 			}
 		}
 	}
-	return buffer.length()+(withend ? 6 : 0);
+	return buffer.length() + (withend ? 6 : 0);
 }
 
 void FF9String::GenerateStrExt() {
-	uint16_t i,len = str.length();
+	uint16_t i, len = str.length();
 	uint16_t codei = 0;
-	if (GetGameType()==GAME_TYPE_PSX) {
+	if (GetGameType() == GAME_TYPE_PSX) {
 		str_ext = L"";
 		str_nice = L"";
-		for (i=0;i<len;i++) {
-			if (str[i]==opcode_wchar) {
-				str_ext += L"["+HADES_STRING_TEXT_OPCODE[code_arg[codei][0]].label+L"]";
+		for (i = 0; i < len; i++) {
+			if (str[i] == opcode_wchar) {
+				str_ext += L"[" + HADES_STRING_TEXT_OPCODE[code_arg[codei][0]].label + L"]";
 				str_nice += HADES_STRING_TEXT_OPCODE[code_arg[codei++][0]].converted;
 			} else {
 				str_ext += str[i];
@@ -590,21 +610,30 @@ void FF9String::GenerateStrExt() {
 		unsigned int j;
 		str_ext = str;
 		str_nice = L"";
-		for (i=0;i<len;i++) {
-			if (str[i]==L'[') {
+		for (i = 0; i < len; i++) {
+			if (str[i] == L'[') {
 				opcodestr = L"";
 				i++;
-				while (i<len && str[i]!=L']' && str[i]!=L'=')
+				while (i < len && str[i] != L']' && str[i] != L'=')
 					opcodestr += str[i++];
-				while (i<len && str[i]!=L']')
+				while (i < len && str[i] != L']')
 					i++;
-				if (i>=len)
+				if (i >= len)
 					break;
-				for (j=0;j<TEXT_STEAM_OPCODE_CLOSING_TAG;j++)
-					if (opcodestr.compare(HADES_STRING_TEXT_STEAM_OPCODE[j].id)==0) {
+				for (j = 0; j < TEXT_STEAM_OPCODE_CLOSING_TAG; j++)
+					if (opcodestr.compare(HADES_STRING_TEXT_STEAM_OPCODE[j].id) == 0) {
 						str_nice += HADES_STRING_TEXT_STEAM_OPCODE[j].converted;
 						break;
 					}
+				if (j >= TEXT_STEAM_OPCODE_CLOSING_TAG && GetGameSaveSet() != NULL && GetGameSaveSet()->sectionloaded[DATA_SECTION_STAT]) {
+					vector<InitialStatDataStruct>& islist = GetGameSaveSet()->statset->initial_stat;
+					for (j = 0; j < islist.size(); j++) {
+						if (opcodestr.compare(islist[j].name_keyword) == 0) {
+							str_nice += islist[j].default_name.str_nice;
+							break;
+						}
+					}
+				}
 			} else {
 				str_nice += str[i];
 			}
@@ -867,7 +896,7 @@ uint32_t GetFFIXNextIgnore(uint32_t fromoffset) {
 void SteamReadFF9String(fstream& f, FF9String& deststr, SteamLanguage lang) {
 	unsigned int i = 0;
 	bool reachend = false;
-	bool mainstr = lang==STEAM_LANGUAGE_NONE || lang==GetSteamLanguage();
+	bool mainstr = lang == STEAM_LANGUAGE_NONE || lang == GetSteamLanguage();
 	if (mainstr) {
 		deststr.code_amount = 0;
 		if (deststr.raw)
@@ -876,23 +905,23 @@ void SteamReadFF9String(fstream& f, FF9String& deststr, SteamLanguage lang) {
 	}
 	while (!reachend) {
 		tmpstr[i] = f.get();
-		if (tmpstr[i]==0) {
+		if (tmpstr[i] == 0) {
 			reachend = true;
 			if (mainstr) {
 				deststr.null_terminated = 1;
-				deststr.length = i+6;
+				deststr.length = i + 6;
 			}
-		} else if (i>=5 && tmpstr[i-5]=='[' && tmpstr[i-4]=='E' && tmpstr[i-3]=='N' && tmpstr[i-2]=='D' && tmpstr[i-1]=='N' && tmpstr[i]==']') {
+		} else if (i >= 5 && tmpstr[i - 5] == '[' && tmpstr[i - 4] == 'E' && tmpstr[i - 3] == 'N' && tmpstr[i - 2] == 'D' && tmpstr[i - 1] == 'N' && tmpstr[i] == ']') {
 			reachend = true;
 			i -= 5;
 			if (mainstr) {
 				deststr.null_terminated = 1;
-				deststr.length = i+6;
+				deststr.length = i + 6;
 			}
-		} else if (i>=5 && tmpstr[i-5]=='[' && tmpstr[i-4]=='T' && tmpstr[i-3]=='I' && tmpstr[i-2]=='M' && tmpstr[i-1]=='E' && tmpstr[i]=='=') {
+		} else if (i >= 5 && tmpstr[i - 5] == '[' && tmpstr[i - 4] == 'T' && tmpstr[i - 3] == 'I' && tmpstr[i - 2] == 'M' && tmpstr[i - 1] == 'E' && tmpstr[i] == '=') {
 			reachend = true;
 			tmpstr[++i] = f.get();
-			while (tmpstr[i]!=L']')
+			while (tmpstr[i] != L']')
 				tmpstr[++i] = f.get();
 			i++;
 			if (mainstr) {
@@ -904,13 +933,13 @@ void SteamReadFF9String(fstream& f, FF9String& deststr, SteamLanguage lang) {
 		}
 	}
 	tmpstr[i] = 0;
-	if (lang==STEAM_LANGUAGE_NONE) {
+	if (lang == STEAM_LANGUAGE_NONE) {
 		deststr.str = FF9String::GetUTF8FromByteCode((char*)tmpstr);
 		deststr.GenerateStrExt();
 	} else {
 		deststr.multi_lang_init[lang] = true;
 		deststr.multi_lang_str[lang] = FF9String::GetUTF8FromByteCode((char*)tmpstr);
-		if (lang==GetSteamLanguage()) {
+		if (lang == GetSteamLanguage()) {
 			deststr.str = deststr.multi_lang_str[lang];
 			deststr.GenerateStrExt();
 		}
@@ -918,42 +947,41 @@ void SteamReadFF9String(fstream& f, FF9String& deststr, SteamLanguage lang) {
 	deststr.created = true;
 }
 
-void SteamWriteFF9String(fstream& f, FF9String& str, SteamLanguage lang, bool writeend) {
-	bool mainstr = lang==STEAM_LANGUAGE_NONE || lang==GetSteamLanguage();
-	if (str.GetLength(lang)==0)
+void SteamWriteFF9String(fstream& f, FF9String& str, SteamLanguage lang) {
+	bool mainstr = lang == STEAM_LANGUAGE_NONE || lang == GetSteamLanguage();
+	if (str.GetLength(lang) == 0)
 		return;
-	wxString wxstr;
-	if (mainstr)
-		wxstr = _(str.str);
-	else
-		wxstr = _(str.multi_lang_str[lang]);
+	wxString wxstr = mainstr ? _(str.str) : _(str.multi_lang_str[lang]);
 	wxCharBuffer buffer = wxstr.mb_str(wxConvUTF8);
-	unsigned int i;
-	for (i=0;i<buffer.length();i++)
+	for (unsigned int i = 0; i < buffer.length(); i++)
 		f.put(buffer[i]);
-	if (writeend) {
-		uint8_t nt;
-		if (mainstr) {
-			nt = str.null_terminated;
-		} else {
-			wstring& strval = str.multi_lang_str[lang];
-			nt = 1;
-			if (strval.length()>0 && strval[strval.length()-1]==L']') {
-				size_t lastopposbeg = strval.find_last_of(L'[');
-				if (lastopposbeg!=string::npos && lastopposbeg+6<=strval.length())
-					if (strval.substr(lastopposbeg+1,4).compare(L"TIME")==0)
-						nt = 0;
-			}
-		}
-		if (nt==1) {
-			f.put('[');
-			f.put('E');
-			f.put('N');
-			f.put('D');
-			f.put('N');
-			f.put(']');
+	uint8_t nt;
+	if (mainstr) {
+		nt = str.null_terminated;
+	} else {
+		wstring& strval = str.multi_lang_str[lang];
+		nt = 1;
+		if (strval.length() > 0 && strval[strval.length() - 1] == L']') {
+			size_t lastopposbeg = strval.find_last_of(L'[');
+			if (lastopposbeg != string::npos && lastopposbeg + 6 <= strval.length())
+				if (strval.substr(lastopposbeg + 1, 4).compare(L"TIME") == 0)
+					nt = 0;
 		}
 	}
+	if (nt == 1) {
+		f.put('[');
+		f.put('E');
+		f.put('N');
+		f.put('D');
+		f.put('N');
+		f.put(']');
+	}
+}
+
+void SteamWriteFF9StringLight(fstream& f, wstring str) {
+	wxCharBuffer buffer = _(str).mb_str(wxConvUTF8);
+	for (unsigned int i = 0; i < buffer.length(); i++)
+		f.put(buffer[i]);
 }
 
 uint32_t SteamReadLong(fstream& f, uint32_t& destvalue) {

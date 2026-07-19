@@ -16,7 +16,6 @@
 #define POSITION_PANEL_SIZE			200
 #define WORLDMAP_PANEL_WIDTH		256
 #define WORLDMAP_PANEL_HEIGHT		216
-#define SCRIPT_FIXED_ENTRY_AMOUNT	9
 
 const static wxColour FUNCTION_COLOR_NORMAL(255, 255, 255);
 const static wxColour FUNCTION_COLOR_MODIFIED(255, 200, 0);
@@ -59,9 +58,9 @@ const static wxColour POSITION_REGION_COLOR(255, 0, 180);
  * 03 Jump -------/				*
  * 								*
  * ************************* do/while ********************************
- * CODE_A <------\				* do {
+ * CODE_A <------\				* dowhile (Condition) {
  * 05 Condition  |				*   CODE_A()
- * 03 Jump ------/				* } while (Condition)
+ * 03 Jump ------/				* }
  * 								*
  * ************************ switch(ex) *******************************
  * 05 Condition					* switch (Condition) from X {
@@ -101,7 +100,6 @@ const static wxColour POSITION_REGION_COLOR(255, 0, 180);
 #define TIMER_TIMEOUT	5
 
 #define SCRPT_MAX_OPERAND 0x100		// Max operand amount in variable code expressions
-#define SCRPT_MAX_FUNC_LINE 0x10000	// Max line amount in one function
 #define SCRPT_MAX_SWITCH_CASE 0x100	// Max case amount in a switch or switchex block
 
 #define ARG_CONTROL_TEXT		0
@@ -114,6 +112,7 @@ const static wxColour POSITION_REGION_COLOR(255, 0, 180);
 #define ARG_CONTROL_POSITION	7
 #define ARG_CONTROL_COLOR_CMY	8
 #define ARG_CONTROL_COLOR_RGB	9
+#define ARG_CONTROL_MULTI_DIAL	10
 
 #define SCRIPT_TEXT_LINK_PREVIEW_LENGTH	100
 
@@ -121,32 +120,96 @@ const static wxColour POSITION_REGION_COLOR(255, 0, 180);
 //          Generic            //
 //=============================//
 
+bool DoesOpcodeUseText(uint16_t opcode) {
+	return opcode == 0x1F || opcode == 0x20 || opcode == 0x95 || opcode == 0x96 || opcode == 0xD0 || opcode == 0xDE;
+}
+
 void RemoveSurroundingSpaces(wxString& str) {
 	size_t pos = str.find_first_not_of(" \t");
-	if (pos==string::npos) {
+	if (pos == string::npos) {
 		str = wxEmptyString;
 		return;
 	}
 	str = str.Mid(pos);
 	pos = str.find_last_of(" \t");
-	if (pos!=string::npos)
-		str = str.Mid(0,pos);
+	if (pos != string::npos)
+		str = str.Mid(0, pos);
+}
+
+// Expect a well formed lang selector (eg. "[us,fr]" or "[uk, jp, it]")
+void ParseLangSelector(wxString selector, vector<SteamLanguage>& vec, LogStruct* log = NULL, unsigned int linenum = 0) {
+	selector = selector.Mid(1, selector.Len() - 2);
+	size_t langsplit = selector.find(L',');
+	SteamLanguage lang;
+	wxString langtok;
+	bool validlang, loop = true;
+	bool langadded[STEAM_LANGUAGE_AMOUNT];
+	for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+		langadded[lang] = false;
+	while (loop) {
+		if (langsplit != string::npos) {
+			langtok = selector.Mid(0, langsplit).Trim(false);
+			selector = selector.Mid(langsplit + 1);
+			langsplit = selector.find(L',');
+		} else {
+			langtok = selector.Trim(false);
+			loop = false;
+		}
+		validlang = false;
+		for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+			if (langtok.IsSameAs(HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[lang], false)) {
+				if (langadded[lang]) {
+					if (log != NULL)
+						log->AddWarning(wxString::Format(wxT(HADES_STRING_SCRIPT_DUPLICATE_LANGUAGE), linenum, langtok).ToStdWstring());
+				} else {
+					vec.push_back(lang);
+					langadded[lang] = true;
+				}
+				validlang = true;
+				break;
+			}
+		}
+		if (!validlang && log != NULL)
+			log->AddWarning(wxString::Format(wxT(HADES_STRING_SCRIPT_INVALID_LANGUAGE), linenum, langtok).ToStdWstring());
+	}
+}
+
+bool IsLineInLang(const vector<SteamLanguage>& langlist, SteamLanguage lang) {
+	if (langlist.size() == 0)
+		return true;
+	for (unsigned int i = 0; i < langlist.size(); i++)
+		if (langlist[i] == lang)
+			return true;
+	return false;
 }
 
 wxString GetNextWord(wxString& line) {
 	wxString res;
 	size_t pos = line.find_first_not_of(L" \t");
-	if (pos==string::npos)
+	if (pos == string::npos)
 		return wxEmptyString;
 	size_t lineshift = pos;
 	res = line.Mid(pos);
+	if (line[pos] == L'[') {
+		pos = res.find(L']');
+		if (pos != string::npos) {
+			pos++;
+			res = res.Mid(0, pos);
+			lineshift += pos;
+			line = line.Mid(lineshift);
+		} else {
+			line = wxEmptyString;
+		}
+		return res;
+	}
 	pos = res.find_first_of(L" ,():;{}\t");
-	if (pos!=string::npos) {
-		res = res.Mid(0,pos);
+	if (pos != string::npos) {
+		res = res.Mid(0, pos);
 		lineshift += pos;
 		line = line.Mid(lineshift);
-	} else
+	} else {
 		line = wxEmptyString;
+	}
 	return res;
 }
 
@@ -221,24 +284,37 @@ wxString GetNextPunc(wxString& line) {
 wxString GetNextThing(wxString& line) {
 	wxString res;
 	size_t pos = line.find_first_not_of(" \t");
-	if (pos==string::npos)
+	if (pos == string::npos)
 		return wxEmptyString;
 	res = line.Mid(pos);
 	static wxString punclist = L",():;{}";
-	for (unsigned int i=0;i<punclist.Length();i++)
-		if (res[0]==punclist[i]) {
-			res = res.Mid(0,1);
-			line = line.Mid(pos+1);
+	for (unsigned int i = 0; i < punclist.Length(); i++)
+		if (res[0] == punclist[i]) {
+			res = res.Mid(0, 1);
+			line = line.Mid(pos + 1);
 			return res;
 		}
 	size_t lineshift = pos;
+	if (res[0] == L'[') {
+		pos = res.find(L']');
+		if (pos != string::npos) {
+			pos++;
+			res = res.Mid(0, pos);
+			lineshift += pos;
+			line = line.Mid(lineshift);
+		} else {
+			line = wxEmptyString;
+		}
+		return res;
+	}
 	pos = res.find_first_of(L" ,():;{}\t");
-	if (pos!=string::npos) {
-		res = res.Mid(0,pos);
+	if (pos != string::npos) {
+		res = res.Mid(0, pos);
 		lineshift += pos;
 		line = line.Mid(lineshift);
-	} else
+	} else {
 		line = wxEmptyString;
+	}
 	return res;
 }
 
@@ -247,9 +323,10 @@ wxString ScriptEditHandler::GetArgumentDescription(int64_t argvalue, uint8_t arg
 	switch (argtype) {
 	case AT_TEXT:
 		if (use_text) {
-			if (argvalue >= text->amount) return _(L"[Invalid Text ID]");
-			wxString onelinestr = _(text->text[argvalue].str_nice);
+			if (argvalue >= text->text.size()) return _(L"[Invalid Text ID]");
+			wxString onelinestr = _(text->text[argvalue].txt.str_nice);
 			onelinestr.Replace(_(L"\n"), _(L" "));
+			onelinestr.Replace(_(L"\r"), _(L""));
 			return _(L"\"") + onelinestr + _(L"\"");
 		}
 		break;
@@ -551,9 +628,12 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 			command_str.Add(_(CommandAddendaName[i]));
 	}
 	if (use_text) {
-		text_str.Alloc(text->amount);
-		for (i = 0; i < text->amount; i++)
-			text_str.Add(_(text->text[i].str_nice.substr(0, 30)));
+		text_str.Alloc(text->text.size());
+		text_id.resize(text->text.size());
+		for (i = 0; i < text->text.size(); i++) {
+			text_str.Add(_(text->text[i].txt.str_nice.substr(0, 30)));
+			text_id[i] = new uint16_t(text->text[i].id);
+		}
 	}
 	defaultbool_str.Alloc(SS_ARGBOX_MAXID);
 	for (i = 0; i < SS_ARGBOX_MAXID; i++)
@@ -656,6 +736,10 @@ ScriptEditDialog::~ScriptEditDialog() {
 		for (i = 0; i < item_id.size(); i++)
 			delete item_id[i];
 	}
+	if (use_text) {
+		for (i = 0; i < text_id.size(); i++)
+			delete text_id[i];
+	}
 	for (i = 0; i < equipset_id.size(); i++)
 		delete equipset_id[i];
 	for (i = 0; i < fmv_id.size(); i++)
@@ -740,8 +824,8 @@ void ScriptEditHandler::GenerateFunctionList() {
 	funcamount = 0;
 	for (i = 0; i < script.entry_amount; i++) {
 		for (j = 0; j < script.entry_function_amount[i]; j++) {
-			functionlist_id[funcamount] = new uint16_t(script.function_type[i][j]);
-			functionlist_str[funcamount] = GetFunctionName(i, script.function_type[i][j]);
+			functionlist_id[funcamount] = new uint16_t(script.func[i][j].function_type);
+			functionlist_str[funcamount] = GetFunctionName(i, script.func[i][j].function_type);
 			funcamount++;
 		}
 	}
@@ -814,8 +898,10 @@ void ScriptEditDialog::DisplayFunctionList(int newfunc, int removedfunc) {
 }
 
 wxString operandtmp[SCRPT_MAX_OPERAND];
-unsigned int funcpostrack[SCRPT_MAX_FUNC_LINE];
+vector<int> funcpostrack[STEAM_LANGUAGE_AMOUNT];
 unsigned int functrackline;
+unsigned int opposprogress;
+vector<unsigned int> oppossecondpass;
 wxString ScriptEditHandler::ConvertVarArgument(ScriptArgument& arg, wxArrayString* argcomment, bool* ignorenulljump) {
 	if (!arg.is_var)
 		return wxEmptyString;
@@ -825,24 +911,24 @@ wxString ScriptEditHandler::ConvertVarArgument(ScriptArgument& arg, wxArrayStrin
 	uint16_t varid;
 
 	#define MACRO_SEARCHVARNAME(STRING) \
-		for (macroi=0;macroi<VarNameList.size();macroi++) \
-			if (VarNameList[macroi].cat==varcat && VarNameList[macroi].id==varid) { \
+		for (macroi = 0; macroi < VarNameList.size(); macroi++) \
+			if (VarNameList[macroi].cat == varcat && VarNameList[macroi].id == varid) { \
 				STRING = _(VarNameList[macroi].name); \
 				break; \
 			} \
-		if (macroi==VarNameList.size()) { \
-			for (macroi=0;macroi<script.local_data[entry_selection].amount;macroi++) \
-				if (script.local_data[entry_selection].cat[macroi]==varcat && script.local_data[entry_selection].id[macroi]==varid) { \
+		if (macroi == VarNameList.size()) { \
+			for (macroi = 0; macroi < script.local_data[entry_selection].amount; macroi++) \
+				if (script.local_data[entry_selection].cat[macroi] == varcat && script.local_data[entry_selection].id[macroi] == varid) { \
 					STRING = _(script.local_data[entry_selection].name[macroi]); \
 					break; \
 				} \
-			if (macroi==script.local_data[entry_selection].amount) { \
-				for (macroi=0;macroi<script.global_data.amount;macroi++) \
-					if (script.global_data.cat[macroi]==varcat && script.global_data.id[macroi]==varid) { \
+			if (macroi == script.local_data[entry_selection].amount) { \
+				for (macroi = 0; macroi < script.global_data.amount; macroi++) \
+					if (script.global_data.cat[macroi] == varcat && script.global_data.id[macroi] == varid) { \
 						STRING = _(script.global_data.name[macroi]); \
 						break; \
 					} \
-				if (macroi==script.global_data.amount) { \
+				if (macroi == script.global_data.amount) { \
 					STRING = _(VarOpList[varcat].opstring); \
 					STRING << (int)varid; \
 				} \
@@ -884,14 +970,22 @@ wxString ScriptEditHandler::ConvertVarArgument(ScriptArgument& arg, wxArrayStrin
 					operandtmp[operand - 1] << _(ScriptCharacterField[j].name);
 					break;
 				}
-			if (j == G_V_ELEMENTS(ScriptCharacterField))
-				operandtmp[operand - 1] << (int)arg.var[i];
+			if (j == G_V_ELEMENTS(ScriptCharacterField)) {
+				for (j = 0; j < G_V_ELEMENTS(ScriptCharacterFieldMemoria); j++)
+					if (ScriptCharacterFieldMemoria[j].id == arg.var[i]) {
+						operandtmp[operand - 1] << _(ScriptCharacterFieldMemoria[j].name);
+						break;
+					}
+				if (j == G_V_ELEMENTS(ScriptCharacterFieldMemoria)) {
+					operandtmp[operand - 1] << (int)arg.var[i];
+				}
+			}
 			i++;
 			operandtmp[operand - 1] += _(L"]");
 		} else if (vartype == 5) {
 			operandtmp[operand].Empty();
 			operandtmp[operand] << (unsigned int)arg.var[i++];
-			operandtmp[operand++] += L"S";
+			operandtmp[operand++] += _(L"S");
 		} else if (vartype == 6) {
 			operandtmp[operand].Empty();
 			operandtmp[operand++] << (unsigned int)(arg.var[i] | (arg.var[i + 1] << 8));
@@ -899,7 +993,7 @@ wxString ScriptEditHandler::ConvertVarArgument(ScriptArgument& arg, wxArrayStrin
 		} else if (vartype == 7) {
 			operandtmp[operand].Empty();
 			operandtmp[operand] << (unsigned int)(arg.var[i] | (arg.var[i + 1] << 8) | (arg.var[i + 2] << 16) | (arg.var[i + 3] << 24));
-			operandtmp[operand++] += L"L";
+			operandtmp[operand++] += _(L"L");
 			i += 4;
 		} else if (vartype >= 10 && vartype < 30) {
 			varcat = varbyte;
@@ -953,6 +1047,36 @@ wxString ScriptEditHandler::ConvertVarArgument(ScriptArgument& arg, wxArrayStrin
 	return wxEmptyString;
 }
 
+void ScriptEditHandler::GenerateStandardLine(wxString& str, ScriptOperation* op, wxArrayString* argcommentptr) {
+	unsigned int i;
+	str += _(HADES_STRING_SCRIPT_OPCODE[op->opcode].label) + _(L"( ");
+	for (i = 0; i < op->arg_amount; i++) {
+		ScriptArgument& arg = op->arg[i];
+		if (arg.is_var)
+			str += ConvertVarArgument(arg, argcommentptr);
+		else if (op->opcode == 0x29)
+			str << L"( " << (int16_t)(arg.GetValue() & 0xFFFF) << L", " << (int16_t)((arg.GetValue() >> 16) & 0xFFFF) << L" )";
+		else
+			str << arg.GetValue();
+		if (i + 1 < op->arg_amount)
+			str += _(L", ");
+		if (argcommentptr != NULL && !arg.is_var) {
+			wxString argcommenttoken = GetArgumentDescription(arg.GetValue(), HADES_STRING_SCRIPT_OPCODE[op->opcode].arg_type[i]);
+			if (argcommenttoken.Len() > 0)
+				argcommentptr->Add(argcommenttoken);
+		}
+	}
+	str += _(L" )");
+	if (argcommentptr != NULL && argcommentptr->GetCount() > 0) {
+		str += _(L" // ") + (*argcommentptr)[0];
+		for (i = 1; i < argcommentptr->GetCount(); i++)
+			str += _(L" ; ") + (*argcommentptr)[i];
+		argcommentptr->Empty();
+	}
+	str += _(L"\n");
+}
+
+bool debuglog = false;
 #define BLOCK_TYPE_ROOT			0
 #define BLOCK_TYPE_IF			1
 #define BLOCK_TYPE_IFN			2
@@ -962,26 +1086,88 @@ wxString ScriptEditHandler::ConvertVarArgument(ScriptArgument& arg, wxArrayStrin
 #define BLOCK_TYPE_SWITCHDEF	6
 #define BLOCK_TYPE_SWITCHEX		7
 #define BLOCK_TYPE_SWITCHEXDEF	8
-bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunction& func, unsigned int& funcpos, unsigned int& oppos, int endfuncpos, unsigned int tabpos, int blocktype, int endblockpos, bool appendcomment) {
-	int macroop,macropos;
+#define BLOCK_TYPE_LANG			9
+bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunction& func, unsigned int* funcpos, unsigned int& oppos, bool* contextlangsbase, unsigned int tabpos, int blocktype, unsigned int* endfuncpos, unsigned int* endblockpos, bool appendcomment) {
+	int macroop, macropos;
+	bool macrohaslangspec;
 	#define MACRO_FINDOP(OFFSET) \
-		macroop = oppos+1; \
+		macroop = oppos + 1; \
 		macropos = 0; \
-		if (OFFSET>=0) \
-			while (macropos<OFFSET) \
-				macropos += func.op[macroop++].size; \
-		else \
-			while (macropos>OFFSET) \
-				macropos -= func.op[--macroop].size;
-	
+		if (OFFSET >= 0) { \
+			while (macropos < OFFSET) \
+				if (langindices[macroop++] >= 0) \
+					macropos += func.op[langindices[macroop - 1]].size; \
+			while (langindices[macroop] < 0) \
+				macroop++; \
+		} else { \
+			while (macropos > OFFSET) \
+				if (langindices[--macroop] >= 0) \
+					macropos -= func.op[langindices[macroop]].size; \
+		}
+
 	#define MACRO_WRITECEOL() \
-		if (argcomment.GetCount()>0) { \
-			str += _(L" // ")+argcomment[0]; \
-			for (i=1;i<argcomment.GetCount();i++) \
-				str += _(L" ; ")+argcomment[i]; \
+		if (argcomment.GetCount() > 0) { \
+			str += _(L" // ") + argcomment[0]; \
+			for (i = 1; i < argcomment.GetCount(); i++) \
+				str += _(L" ; ") + argcomment[i]; \
 			argcomment.Empty(); \
 		} \
 		str += _(L"\n");
+
+	#define MACRO_SET_FUNCPOS(FORMULA) \
+		for (macrolang = 0; macrolang < STEAM_LANGUAGE_AMOUNT; macrolang++) \
+			if (langproceednow[macrolang]) \
+				funcpos[macrolang] = FORMULA;
+
+	#define MACRO_ADVANCE_FUNCPOS_OPPOS() \
+		MACRO_SET_FUNCPOS(funcpos[macrolang] + (func.indices[macrolang][oppos] < 0 ? 0 : func.op[func.indices[macrolang][oppos]].size)) \
+		oppos++;
+
+	#define MACRO_REGISTER_FUNCPOSTRACK(FORMULA) \
+		for (macrolang = 0; macrolang < STEAM_LANGUAGE_AMOUNT; macrolang++) \
+			funcpostrack[macrolang].push_back(FORMULA); \
+		functrackline++;
+
+	#define MACRO_SETUP_ENDPOS(FUNCPOS, BLOCKPOS) \
+		for (macrolang = 0; macrolang < STEAM_LANGUAGE_AMOUNT; macrolang++) { \
+			if (langproceednow[macrolang]) { \
+				endfuncposrec[macrolang] = FUNCPOS; \
+				endblockposrec[macrolang] = BLOCKPOS; \
+			} \
+		}
+
+	#define MACRO_CONTROL_LANGSPEC(OPPOS, BEFOREVARARG, AFTERVARARG, OPENINGBRACKET) \
+		for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++) \
+			langproceedcontrol[olang] = langproceednow[olang]; \
+		for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++) { \
+			if (!langproceedcontrol[olang]) \
+				continue; \
+			langstr = wxEmptyString; \
+			macrohaslangspec = false; \
+			for (macrolang = 0; macrolang < STEAM_LANGUAGE_AMOUNT; macrolang++) { \
+				if (langproceedcontrol[macrolang]) { \
+					if (func.indices[olang][OPPOS] == func.indices[macrolang][OPPOS]) { \
+						langproceedcontrol[macrolang] = false; \
+						if (langstr.Len() > 0) \
+							langstr += _(L","); \
+						langstr += HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[macrolang]; \
+					} else { \
+						haslangspec = true; \
+						macrohaslangspec = true; \
+					} \
+				} \
+			} \
+			if (haslangspec || macrohaslangspec) \
+				langstr = _(L"[") + langstr + _(L"] "); \
+			else \
+				langstr = wxEmptyString; \
+			str += tabstr + langstr + BEFOREVARARG; \
+			str += ConvertVarArgument(func.op[func.indices[olang][OPPOS]].arg[0], argcommentptr); \
+			str += AFTERVARARG; \
+			if (OPENINGBRACKET && !macrohaslangspec) \
+				str += _(L" {"); \
+			MACRO_WRITECEOL() \
+		}
 
 	// ignorenulljump's purpose is to avoid adding a "break" in some situations
 	// The functions that lead to World Maps are examples of a situation that can occur
@@ -992,410 +1178,650 @@ bool ScriptEditHandler::GenerateFunctionStrings_Rec(wxString& str, ScriptFunctio
 	// In that situation, the script simply discards the "default" case and end the switch instead, which has an equivalent effect,
 	// except that the "default" case's "break" (ie. a "JUMP 0" code) must be discarded as well
 	bool ignorenulljump = false;
+	SteamLanguage lang, olang, macrolang;
 	unsigned int i;
-	wxString tabstr = L"";
+	wxString tabstr = wxEmptyString;
+	wxString langstr = wxEmptyString;
 	wxArrayString argcomment;
 	wxArrayString* argcommentptr = appendcomment ? &argcomment : NULL;
+	bool contextlangs[STEAM_LANGUAGE_AMOUNT];
+	bool langproceed[STEAM_LANGUAGE_AMOUNT];
+	bool langproceednow[STEAM_LANGUAGE_AMOUNT];
+	bool langproceedcontrol[STEAM_LANGUAGE_AMOUNT];
+	unsigned int endfuncposrec[STEAM_LANGUAGE_AMOUNT];
+	unsigned int endblockposrec[STEAM_LANGUAGE_AMOUNT];
+	bool returncode = false;
+	for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+		contextlangs[lang] = contextlangsbase[lang];
 	for (i = 0; i < tabpos; i++)
 		tabstr += _(TAB_STR);
-	if (endfuncpos == -1)
-		endfuncpos = func.length;
-	if (endblockpos == -1)
-		endblockpos = func.length;
-	while ((int)funcpos<endfuncpos) {
-		// Assume there are 0x05 opcodes before jump opcodes recquiring a stack value
-		switch (func.op[oppos].opcode) {
-		case 0x01: {
-			if (blocktype==BLOCK_TYPE_ROOT && funcpos+3+func.op[oppos].arg[0].GetValue()==0) {
-				str += tabstr+_(L"loop\n");
-				funcpostrack[functrackline++] = funcpos;
-				funcpos += func.length;
-				return false;
-			} else if (funcpos+3+func.op[oppos].arg[0].GetValue()<endblockpos) {
-				MACRO_FINDOP(func.op[oppos].arg[0].GetValue());
-				if (macroop+1 < (int)func.op_amount && func.op[macroop+1].opcode==0x03 && 3+macropos+func.op[macroop].size+func.op[macroop+1].arg[0].GetValue()==0) {
-					str += tabstr+_(L"while ( ");
-					str += ConvertVarArgument(func.op[macroop].arg[0],argcommentptr);
-					str += _(L" ) {");
-					MACRO_WRITECEOL()
-					funcpostrack[functrackline++] = funcpos;
-					funcpos += func.op[oppos++].size;
-					GenerateFunctionStrings_Rec(str,func,funcpos,oppos,funcpos+macropos,tabpos+1,BLOCK_TYPE_WHILE,funcpos+macropos,appendcomment);
-					str += tabstr+_(L"}\n");
-					funcpostrack[functrackline] = funcpostrack[functrackline-1];
-					functrackline++;
-					funcpos += func.op[oppos++].size;
-					funcpos += func.op[oppos++].size;
-				} else if (blocktype==BLOCK_TYPE_IF && funcpos+3==endfuncpos) {
-					funcpos += func.op[oppos++].size;
-					return true;
-				} else if (func.op[oppos].arg[0].GetValue() == 0 && ignorenulljump && endfuncpos > (int)(funcpos + func.op[oppos].size)) {
-					funcpos += func.op[oppos++].size;
-					ignorenulljump = false;
-					str += tabstr + _(L"// JMP(0)\n");
+	if (debuglog) {
+		lang = 0;
+		while (lang < STEAM_LANGUAGE_AMOUNT && !contextlangs[lang])
+			lang++;
+		if (lang >= STEAM_LANGUAGE_AMOUNT)
+			lang = 0;
+		GetDebugLog() << "FUNCTION PIECE " << blocktype << " (" << HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[lang].c_str() << "):\t" << endfuncpos[lang] << " ~ " << endblockpos[lang] << " ~ " << (int)func.indices[lang].size() << endl;
+	}
+	unsigned int oppossecondpassindex = 0;
+	bool keeplooping = true;
+	while (keeplooping) {
+		if (debuglog) {
+			GetDebugLog() << "Keep looping: " << oppos;
+			for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+				GetDebugLog() << " ; " << HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[lang].c_str() << ": " << (contextlangs[lang] ? "context" : "nocontext") << " " << (int)func.indices[lang].size() << " " << funcpos[lang] << "/" << endfuncpos[lang];
+			GetDebugLog() << endl;
+		}
+		keeplooping = false;
+		bool haslangspec = false;
+		for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+			langproceed[lang] = false;
+		unsigned int opposbackup = oppos;
+		unsigned int nextoppos = UINT32_MAX;
+		for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+			oppos = opposbackup;
+			vector<int32_t>& langindices = func.indices[lang];
+			if (oppos >= langindices.size() || funcpos[lang] >= endfuncpos[lang] || !contextlangs[lang] || langproceed[lang])
+				continue;
+			keeplooping = true;
+			if (langindices[oppos] < 0)
+				continue;
+			langstr = wxEmptyString;
+			ScriptOperation* op = &func.op[langindices[oppos]];
+			bool iscontrolvararg = op->opcode == 0x05 && oppos + 1 < langindices.size() && (func.op[langindices[oppos + 1]].opcode == 0x02 || func.op[langindices[oppos + 1]].opcode == 0x03 || func.op[langindices[oppos + 1]].opcode == 0x06 || func.op[langindices[oppos + 1]].opcode == 0x0B);
+			for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++) {
+				langproceednow[olang] = false;
+				if (contextlangs[olang] && oppos < func.indices[olang].size()) {
+					if (olang == lang) {
+						langproceednow[olang] = true;
+					} else if (func.indices[olang][oppos] == func.indices[lang][oppos]) {
+						langproceednow[olang] = true;
+					} else if (func.indices[olang][oppos] >= 0 && (op->opcode == 0x01 || op->opcode == 0x02 || op->opcode == 0x03 || op->opcode == 0x06 || op->opcode == 0x0B)) {
+						langproceednow[olang] = true;
+					} else if (func.indices[olang][oppos] >= 0 && iscontrolvararg) {
+						langproceednow[olang] = true;
+					}
+					if (langproceednow[olang]) {
+						langproceed[olang] = true;
+						if (langstr.Len() > 0)
+							langstr += _(L",");
+						langstr += HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[olang];
+					} else {
+						haslangspec = true;
+					}
+				} else if (contextlangsbase[olang]) {
+					haslangspec = true;
+				}
+			}
+			if (haslangspec)
+				langstr = _(L"[") + langstr + _(L"] ");
+			else
+				langstr = wxEmptyString;
+			if (debuglog) {
+				SortedChoiceItemScriptOpcode& opcodekind = HADES_STRING_SCRIPT_OPCODE[op->opcode];
+				GetDebugLog() << funcpos[lang] << "\t\t" << oppos << "\t\t" << ConvertWStrToStr(opcodekind.label).c_str();
+				if (opcodekind.arg_amount >= 0)
+					for (i = 0; (int)i < opcodekind.arg_amount; i++)
+						if (opcodekind.arg_type[i] == AT_JUMP)
+							GetDebugLog() << " " << (int)op->arg[i].GetValue();
+				GetDebugLog() << endl;
+			}
+			// Assume there are 0x05 opcodes before jump opcodes recquiring a stack value
+			switch (op->opcode) {
+			case 0x01: {
+				if (blocktype == BLOCK_TYPE_ROOT && funcpos[lang] + 3 + op->arg[0].GetValue() == 0) {
+					str += tabstr + langstr + _(L"loop\n");
+					MACRO_REGISTER_FUNCPOSTRACK(funcpos[macrolang])
+					MACRO_ADVANCE_FUNCPOS_OPPOS()
+					returncode = false;
+					for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++)
+						if (langproceednow[olang])
+							contextlangs[olang] = false;
+					if (debuglog) {
+						GetDebugLog() << "LOOP: " << (langstr + _(L"loop")).c_str() << " of";
+						for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++)
+							if (langproceednow[olang])
+								GetDebugLog() << " " << HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[olang];
+						GetDebugLog() << endl;
+					}
+				} else if (funcpos[lang] + 3 + op->arg[0].GetValue() < endblockpos[lang]) {
+					MACRO_FINDOP(op->arg[0].GetValue())
+					if (macroop + 1 < (int)langindices.size() && langindices[macroop + 1] >= 0 && func.op[langindices[macroop + 1]].opcode == 0x03 && 3 + macropos + func.op[langindices[macroop]].size + func.op[langindices[macroop + 1]].arg[0].GetValue() == 0) {
+						MACRO_CONTROL_LANGSPEC(macroop, _(L"while ( "), _(L" )"), true)
+						MACRO_REGISTER_FUNCPOSTRACK(funcpos[macrolang])
+						MACRO_ADVANCE_FUNCPOS_OPPOS()
+						MACRO_SETUP_ENDPOS(funcpos[macrolang] + func.op[func.indices[macrolang][oppos - 1]].arg[0].GetValue(), funcpos[macrolang] + func.op[func.indices[macrolang][oppos - 1]].arg[0].GetValue())
+						GenerateFunctionStrings_Rec(str, func, funcpos, oppos, langproceednow, tabpos + 1, BLOCK_TYPE_WHILE, endfuncposrec, endfuncposrec, appendcomment);
+						str += tabstr + _(L"}\n");
+						MACRO_REGISTER_FUNCPOSTRACK(funcpostrack[macrolang][functrackline - 1])
+						MACRO_ADVANCE_FUNCPOS_OPPOS()
+						MACRO_ADVANCE_FUNCPOS_OPPOS()
+					} else if (blocktype == BLOCK_TYPE_IF && funcpos[lang] + 3 == endfuncpos[lang]) {
+						MACRO_ADVANCE_FUNCPOS_OPPOS()
+						returncode = true;
+						for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++)
+							if (langproceednow[olang])
+								contextlangs[olang] = false;
+					} else if (op->arg[0].GetValue() == 0 && ignorenulljump && endfuncpos[lang] > (int)(funcpos[lang] + op->size)) {
+						MACRO_ADVANCE_FUNCPOS_OPPOS()
+						ignorenulljump = false;
+						str += tabstr + _(L"// JMP(0)\n");
+					} else {
+						str += tabstr + langstr + _(L"break\n");
+						MACRO_REGISTER_FUNCPOSTRACK(funcpos[macrolang])
+						MACRO_ADVANCE_FUNCPOS_OPPOS()
+						returncode = false;
+						for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++)
+							if (langproceednow[olang])
+								contextlangs[olang] = false;
+					}
+				} else if (blocktype == BLOCK_TYPE_IF && funcpos[lang] + 3 == endfuncpos[lang] && funcpos[lang] + 3 + op->arg[0].GetValue() <= endblockpos[lang]) {
+					MACRO_ADVANCE_FUNCPOS_OPPOS()
+					returncode = true;
+					for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++)
+						if (langproceednow[olang])
+							contextlangs[olang] = false;
 				} else {
-					str += tabstr+_(L"break\n");
-					funcpostrack[functrackline++] = funcpos;
-					funcpos += func.op[oppos++].size;
-					return false;
-				}
-			} else if (blocktype==BLOCK_TYPE_IF && funcpos+3==endfuncpos && funcpos+3+func.op[oppos].arg[0].GetValue()<=endblockpos) {
-				funcpos += func.op[oppos++].size;
-				return true;
-			} else {
-				str += tabstr+_(L"break\n");
-				funcpostrack[functrackline++] = funcpos;
-				funcpos += func.op[oppos++].size;
-				if (blocktype==BLOCK_TYPE_IF && funcpos+3==endfuncpos && func.op[oppos].opcode==0x01) {
-					funcpos += func.op[oppos++].size;
-					return true;
-				}
-				return false;
-			}
-			break;
-		}
-		case 0x02: {
-			str += tabstr+_(L"if ( ");
-			str += ConvertVarArgument(func.op[oppos-1].arg[0],argcommentptr);
-			str += _(L" ) {");
-			MACRO_WRITECEOL()
-			funcpostrack[functrackline++] = funcpos;
-			funcpos += func.op[oppos++].size;
-			if (GenerateFunctionStrings_Rec(str,func,funcpos,oppos,funcpos+func.op[oppos-1].arg[0].GetValue(),tabpos+1,BLOCK_TYPE_IF,endblockpos,appendcomment)) {
-				str += tabstr+_(L"} else {\n");
-				funcpostrack[functrackline++] = funcpos;
-				bool allreturn = GenerateFunctionStrings_Rec(str,func,funcpos,oppos,funcpos+func.op[oppos-1].arg[0].GetValue(),tabpos+1,BLOCK_TYPE_ELSE,endblockpos,appendcomment);
-				str += tabstr+_(L"}\n");
-				funcpostrack[functrackline] = funcpostrack[functrackline-1];
-				functrackline++;
-			} else {
-				str += tabstr+_(L"}\n");
-				funcpostrack[functrackline] = funcpostrack[functrackline-1];
-				functrackline++;
-			}
-			break;
-		}
-		case 0x03: {
-			if (func.op[oppos].arg[0].GetValue()>=0) {
-				str += tabstr+_(L"ifnot ( ");
-				str += ConvertVarArgument(func.op[oppos-1].arg[0],argcommentptr);
-				str += _(L" ) {");
-				MACRO_WRITECEOL()
-				funcpostrack[functrackline++] = funcpos;
-				funcpos += func.op[oppos++].size;
-				GenerateFunctionStrings_Rec(str,func,funcpos,oppos,funcpos+func.op[oppos-1].arg[0].GetValue(),tabpos+1,BLOCK_TYPE_IFN,endblockpos,appendcomment);
-				str += tabstr+_(L"}\n");
-				funcpostrack[functrackline] = funcpostrack[functrackline-1];
-				functrackline++;
-			} else {
-				unsigned int j;
-				wxString lstr = str, rstr, keywordcheck;
-				str = L"";
-				funcpostrack[functrackline] = funcpostrack[functrackline-1];
-				lstr = lstr.BeforeLast(L'\n',&rstr);
-				for (j=functrackline-1;j>0 && funcpostrack[j]>=funcpos+3+func.op[oppos].arg[0].GetValue();j--) {
-					if (funcpostrack[j] == funcpos + 3 + func.op[oppos].arg[0].GetValue()) {
-						keywordcheck = lstr.AfterLast(L'\n');
-						keywordcheck = GetNextThing(keywordcheck);
-						if (keywordcheck.IsSameAs(L"case") || keywordcheck.IsSameAs(L"default"))
-							break; // "do while" loop immediately after a switch case: keep the "case" or "default" line out of the loop
+					str += tabstr + langstr + _(L"break\n");
+					MACRO_REGISTER_FUNCPOSTRACK(funcpos[macrolang])
+					MACRO_ADVANCE_FUNCPOS_OPPOS()
+					if (blocktype == BLOCK_TYPE_IF && funcpos[lang] + 3 == endfuncpos[lang] && op->opcode == 0x01) {
+						MACRO_ADVANCE_FUNCPOS_OPPOS()
+						returncode = true;
+					} else {
+						returncode = false;
 					}
-					funcpostrack[j] = funcpostrack[j-1];
-					lstr = lstr.BeforeLast(L'\n',&rstr);
-					str = _(L"\n")+_(TAB_STR)+rstr+str;
+					for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++)
+						if (langproceednow[olang])
+							contextlangs[olang] = false;
 				}
-				funcpostrack[j+1] = funcpostrack[j+2];
-				str = lstr+_(L"\n")+tabstr+_(L"do {")+str+_(L"\n");
-				str += tabstr+_(L"} while ( ");
-				str += ConvertVarArgument(func.op[oppos-1].arg[0],argcommentptr);
-				str += _(L" )");
-				MACRO_WRITECEOL()
-				functrackline++;
-				funcpostrack[functrackline++] = funcpos;
-				funcpos += func.op[oppos++].size;
+				break;
 			}
-			break;
-		}
-		case 0x04: {
-			str += tabstr+_(HADES_STRING_SCRIPT_OPCODE[func.op[oppos].opcode].label)+_(L"\n");
-			funcpostrack[functrackline++] = funcpos;
-			if (blocktype==BLOCK_TYPE_ROOT) {
-				funcpos = func.length;
-				return false;
+			case 0x02: {
+				MACRO_CONTROL_LANGSPEC(oppos - 1, _(L"if ( "), _(L" )"), true)
+				MACRO_REGISTER_FUNCPOSTRACK(funcpos[macrolang])
+				MACRO_ADVANCE_FUNCPOS_OPPOS()
+				MACRO_SETUP_ENDPOS(funcpos[macrolang] + func.op[func.indices[macrolang][oppos - 1]].arg[0].GetValue(), endblockpos[macrolang])
+				if (GenerateFunctionStrings_Rec(str, func, funcpos, oppos, langproceednow, tabpos + 1, BLOCK_TYPE_IF, endfuncposrec, endblockpos, appendcomment)) {
+					str += tabstr + _(L"} else {\n");
+					MACRO_REGISTER_FUNCPOSTRACK(funcpos[macrolang])
+					MACRO_SETUP_ENDPOS(funcpos[macrolang] + func.op[func.indices[macrolang][oppos - 1]].arg[0].GetValue(), endblockpos[macrolang])
+					bool allreturn = GenerateFunctionStrings_Rec(str, func, funcpos, oppos, langproceednow, tabpos + 1, BLOCK_TYPE_ELSE, endfuncposrec, endblockpos, appendcomment);
+					str += tabstr + _(L"}\n");
+					MACRO_REGISTER_FUNCPOSTRACK(funcpostrack[macrolang][functrackline - 1])
+				} else {
+					str += tabstr + _(L"}\n");
+					MACRO_REGISTER_FUNCPOSTRACK(funcpostrack[macrolang][functrackline - 1])
+				}
+				break;
 			}
-			funcpos += func.op[oppos++].size;
-			if (funcpos<func.length && func.op[oppos].opcode==0x01) {
-				if (funcpos+3+func.op[oppos].arg[0].GetValue()<endblockpos) {
-					MACRO_FINDOP(func.op[oppos].arg[0].GetValue());
-					if (macroop + 1 <= (int)func.op_amount && func.op[macroop + 1].opcode == 0x03 && 3 + macropos + func.op[macroop].size + func.op[macroop + 1].arg[0].GetValue() == 0) {
-						return blocktype == BLOCK_TYPE_ELSE;
-					} else if (funcpos + 3 == endfuncpos) {
-						funcpos += func.op[oppos++].size;
-						return true;
+			case 0x03: {
+				if (op->arg[0].GetValue() >= 0) {
+					MACRO_CONTROL_LANGSPEC(oppos - 1, _(L"ifnot ( "), _(L" )"), true)
+					MACRO_REGISTER_FUNCPOSTRACK(funcpos[macrolang])
+					MACRO_ADVANCE_FUNCPOS_OPPOS()
+					MACRO_SETUP_ENDPOS(funcpos[macrolang] + func.op[func.indices[macrolang][oppos - 1]].arg[0].GetValue(), endblockpos[macrolang])
+					GenerateFunctionStrings_Rec(str, func, funcpos, oppos, langproceednow, tabpos + 1, BLOCK_TYPE_IFN, endfuncposrec, endblockpos, appendcomment);
+					str += tabstr + _(L"}\n");
+					MACRO_REGISTER_FUNCPOSTRACK(funcpostrack[macrolang][functrackline - 1])
+				} else {
+					wxString lstr = str, rstr, keywordcheck;
+					unsigned int j;
+					str = L"";
+					MACRO_REGISTER_FUNCPOSTRACK(funcpostrack[macrolang][functrackline - 1])
+					lstr = lstr.BeforeLast(L'\n', &rstr);
+					for (j = functrackline - 2; j > 0 && funcpostrack[lang][j] >= funcpos[lang] + 3 + op->arg[0].GetValue(); j--) {
+						if (funcpostrack[lang][j] == funcpos[lang] + 3 + op->arg[0].GetValue()) {
+							keywordcheck = lstr.AfterLast(L'\n');
+							keywordcheck = GetNextThing(keywordcheck);
+							if (keywordcheck.IsSameAs(L"case") || keywordcheck.IsSameAs(L"default"))
+								break; // "do while" loop immediately after a switch case: keep the "case" or "default" line out of the loop
+						}
+						funcpostrack[lang][j] = funcpostrack[lang][j - 1];
+						lstr = lstr.BeforeLast(L'\n', &rstr);
+						str = _(TAB_STR) + rstr + _(L"\n") + str;
 					}
-				} else if (funcpos+3==endfuncpos && funcpos+3+func.op[oppos].arg[0].GetValue()<=endblockpos) {
-					funcpos += func.op[oppos++].size;
-					return true;
+					funcpostrack[lang][j + 1] = funcpostrack[lang][j + 2];
+					rstr = str;
+					str = lstr + (lstr.Len() > 0 ? _(L"\n") : _(L""));
+					MACRO_CONTROL_LANGSPEC(oppos - 1, _(L"dowhile ( "), _(L" )"), true)
+					str += rstr + tabstr + _(L"}\n");
+					MACRO_REGISTER_FUNCPOSTRACK(funcpos[macrolang])
+					MACRO_ADVANCE_FUNCPOS_OPPOS()
 				}
+				break;
 			}
-			return blocktype==BLOCK_TYPE_ELSE;
-		}
-		case 0x05: {
-			if (func.op[oppos + 1].opcode != 0x02 && func.op[oppos + 1].opcode != 0x03 && func.op[oppos + 1].opcode != 0x06 && func.op[oppos + 1].opcode != 0x0B) {
-				str += tabstr + _(HADES_STRING_SCRIPT_OPCODE[func.op[oppos].opcode].label) + _(L" ") + ConvertVarArgument(func.op[oppos].arg[0], argcommentptr, &ignorenulljump);
-				MACRO_WRITECEOL()
-				funcpostrack[functrackline++] = funcpos;
-			}
-			funcpos += func.op[oppos++].size;
-			break;
-		}
-		case 0x06: {
-			ScriptOperation& swop = func.op[oppos];
-			funcpostrack[functrackline++] = funcpos;
-			unsigned int nbcasedone = 0;
-			unsigned int swoppos = oppos;
-			unsigned int swpos = funcpos + 4;
-			unsigned int swdefpos = swop.arg[0].GetValue();
-			int swendofdefpos = -1;
-			int swendpos = -1;
-			unsigned int highestpos = swdefpos;
-			unsigned int highestendpos = swpos + swdefpos;
-			unsigned int currentcasepos = 0xFFFF;
-			int currentcaseendpos = -1;
-			bool casedone[SCRPT_MAX_SWITCH_CASE];
-			bool defislastcase = true;
-			for (i = 0; i < swop.size_byte; i++) {
-				casedone[i] = swop.arg[2 + i * 2].GetValue() == swdefpos;
-				if (casedone[i])
-					nbcasedone++;
-				if (highestpos < swop.arg[2 + i * 2].GetValue())
-					highestpos = swop.arg[2 + i * 2].GetValue();
-				// Default position may be one of the case position
-				// It's problematic if that is not the last case because it removes info on case's limits
-				// Cases are then re-ordered
-				if (swop.arg[2 + i * 2].GetValue() > swdefpos) {
-					defislastcase = false;
-					if (swendofdefpos == -1 || swendofdefpos < swpos + swop.arg[2 + i * 2].GetValue())
-						swendofdefpos = swpos + swop.arg[2 + i * 2].GetValue();
-				}
-			}
-			str += tabstr + _(L"switchex ");
-			str << (unsigned int)(swop.size_byte - nbcasedone);
-			str += _(L" ( ") + ConvertVarArgument(func.op[oppos - 1].arg[0], argcommentptr);
-			str += _(L" ) {");
-			MACRO_WRITECEOL()
-			while (nbcasedone < swop.size_byte) {
-				currentcasepos = 0xFFFF;
-				for (i = 0; i < swop.size_byte; i++)
-					if (!casedone[i] && currentcasepos > swop.arg[2 + i * 2].GetValue())
-						currentcasepos = swop.arg[2 + i * 2].GetValue();
-				if (currentcasepos == 0xFFFF || (swendpos >= 0 && swpos + currentcasepos >= (unsigned int)swendpos))
-					break;
-				currentcaseendpos = -1;
-				for (i = 0; i < swop.size_byte; i++)
-					if ((currentcaseendpos == -1 || currentcaseendpos > swpos + swop.arg[2 + i * 2].GetValue()) && swop.arg[2 + i * 2].GetValue() > currentcasepos)
-						currentcaseendpos = swpos + swop.arg[2 + i * 2].GetValue();
-				if (currentcaseendpos == -1) {
-					if (swdefpos > currentcasepos)
-						currentcaseendpos = (int)(swpos + swdefpos);
-					else
-						currentcaseendpos = swendpos;
-				}
-				bool needsemicolon = false;
-				str += tabstr + _(L"case ");
-				for (i = 0; i < swop.size_byte; i++)
-					if (currentcasepos == swop.arg[2 + i * 2].GetValue()) {
-						if (needsemicolon)
-							str << _(L" ; ");
-						else
-							needsemicolon = true;
-						str << (int)swop.arg[1 + i * 2].GetValue();
-						casedone[i] = true;
-						nbcasedone++;
-					}
-				str += _(L":\n");
-				funcpos = swpos + swop.size - 4;
-				oppos = swoppos + 1;
-				while (funcpos < swpos + currentcasepos) {
-					funcpos += func.op[oppos].size;
+			case 0x04: {
+				str += tabstr + langstr + _(HADES_STRING_SCRIPT_OPCODE[op->opcode].label) + _(L"\n");
+				MACRO_REGISTER_FUNCPOSTRACK(funcpos[macrolang])
+				if (blocktype == BLOCK_TYPE_ROOT) {
+					MACRO_SET_FUNCPOS(endfuncpos[macrolang])
 					oppos++;
-				}
-				funcpostrack[functrackline++] = funcpos;
-				GenerateFunctionStrings_Rec(str, func, funcpos, oppos, currentcaseendpos, tabpos + 1, BLOCK_TYPE_SWITCHEX, currentcaseendpos, appendcomment);
-				if (highestendpos < funcpos)
-					highestendpos = funcpos;
-				if (func.op[oppos - 1].opcode == 0x01 && swendpos == -1 && func.op[oppos - 1].arg[0].GetValue() >= 0) {
-					swendpos = funcpos + func.op[oppos - 1].arg[0].GetValue();
-					if (defislastcase)
-						swendofdefpos = swendpos;
-				}
-			}
-			if ((int)highestendpos < swendofdefpos)
-				highestendpos = swendofdefpos;
-			funcpos = swpos + swop.size - 4;
-			oppos = swoppos + 1;
-			while (funcpos < swpos + swdefpos) {
-				funcpos += func.op[oppos].size;
-				oppos++;
-			}
-			if (swendofdefpos >= 0 && (int)funcpos < swendofdefpos) {
-				str += tabstr + _(L"default:\n");
-				funcpostrack[functrackline++] = funcpos;
-				GenerateFunctionStrings_Rec(str, func, funcpos, oppos, swendofdefpos, tabpos + 1, BLOCK_TYPE_SWITCHEXDEF, swendofdefpos, appendcomment);
-			} else if (swendofdefpos < 0 && (int)funcpos < endblockpos && func.op[oppos - 1].opcode != 0x01) {
-				ignorenulljump = true;
-			}
-			while (funcpos < highestendpos) {
-				funcpos += func.op[oppos].size;
-				oppos++;
-			}
-			str += tabstr + _(L"}\n");
-			funcpostrack[functrackline] = funcpostrack[functrackline - 1];
-			functrackline++;
-			break;
-		}
-		case 0x0B: {
-			ScriptOperation& swop = func.op[oppos];
-			str += tabstr + _(L"switch ");
-			str << (unsigned int)swop.size_byte;
-			str += _(L" ( ") + ConvertVarArgument(func.op[oppos - 1].arg[0], argcommentptr);
-			str += _(L" ) from ");
-			str << (unsigned int)swop.arg[0].GetValue();
-			str += _(" {");
-			MACRO_WRITECEOL()
-			funcpostrack[functrackline++] = funcpos;
-			unsigned int nbcasedone = 0;
-			unsigned int swoppos = oppos;
-			unsigned int swpos = funcpos + 1;
-			unsigned int swdefpos = swop.arg[1].GetValue();
-			int swendofdefpos = -1;
-			int swendpos = -1;
-			unsigned int highestpos = swdefpos;
-			unsigned int highestendpos = swpos + swdefpos;
-			unsigned int currentcasepos = 0xFFFF;
-			int currentcaseendpos = -1;
-			bool casedone[SCRPT_MAX_SWITCH_CASE];
-			bool defislastcase = true;
-			for (i = 0; i < swop.size_byte; i++) {
-				casedone[i] = swop.arg[2 + i].GetValue() == swdefpos;
-				if (casedone[i])
-					nbcasedone++;
-				if (highestpos < swop.arg[2 + i].GetValue())
-					highestpos = swop.arg[2 + i].GetValue();
-				// Default position may be one of the case position
-				// It's problematic if that is not the last case because it removes info on case's limits
-				// Cases are then re-ordered
-				if (swop.arg[2 + i].GetValue() > swdefpos) {
-					defislastcase = false;
-					if (swendofdefpos == -1 || swendofdefpos < swpos + swop.arg[2 + i].GetValue())
-						swendofdefpos = swpos + swop.arg[2 + i].GetValue();
-				}
-			}
-			while (nbcasedone < swop.size_byte) {
-				currentcasepos = 0xFFFF;
-				for (i = 0; i < swop.size_byte; i++)
-					if (!casedone[i] && currentcasepos > swop.arg[2 + i].GetValue())
-						currentcasepos = swop.arg[2 + i].GetValue();
-				if (currentcasepos == 0xFFFF || (swendpos >= 0 && swpos + currentcasepos >= (unsigned int)swendpos))
+					returncode = false;
+					for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++)
+						if (langproceednow[olang])
+							contextlangs[olang] = false;
 					break;
-				currentcaseendpos = -1;
-				for (i = 0; i < swop.size_byte; i++)
-					if ((currentcaseendpos == -1 || currentcaseendpos > swpos + swop.arg[2 + i].GetValue()) && swop.arg[2 + i].GetValue() > currentcasepos)
-						currentcaseendpos = swpos + swop.arg[2 + i].GetValue();
-				if (currentcaseendpos == -1) {
-					if (swdefpos > currentcasepos)
-						currentcaseendpos = (int)(swpos + swdefpos);
-					else
-						currentcaseendpos = swendpos;
 				}
-				bool needsemicolon = false;
-				str += tabstr + _(L"case +");
-				for (i = 0; i < swop.size_byte; i++)
-					if (currentcasepos == swop.arg[2 + i].GetValue()) {
-						if (needsemicolon)
-							str << _(L" ; +");
-						else
-							needsemicolon = true;
-						str << (int)i;
-						casedone[i] = true;
-						nbcasedone++;
+				MACRO_ADVANCE_FUNCPOS_OPPOS()
+				if (funcpos[lang] < endfuncpos[lang] && func.op[langindices[oppos]].opcode == 0x01) {
+					op = &func.op[langindices[oppos]];
+					if (funcpos[lang] + 3 + op->arg[0].GetValue() < endblockpos[lang]) {
+						MACRO_FINDOP(op->arg[0].GetValue())
+						if (macroop + 1 < (int)langindices.size() && langindices[macroop + 1] >= 0 && func.op[langindices[macroop + 1]].opcode == 0x03 && 3 + macropos + func.op[langindices[macroop]].size + func.op[langindices[macroop + 1]].arg[0].GetValue() == 0) {
+							returncode = blocktype == BLOCK_TYPE_ELSE;
+						} else if (funcpos[lang] + 3 == endfuncpos[lang]) {
+							MACRO_ADVANCE_FUNCPOS_OPPOS()
+							returncode = true;
+						}
+					} else if (funcpos[lang] + 3 == endfuncpos[lang] && funcpos[lang] + 3 + op->arg[0].GetValue() <= endblockpos[lang]) {
+						MACRO_ADVANCE_FUNCPOS_OPPOS()
+						returncode = true;
 					}
-				str += _(L":\n");
-				funcpos = swpos + swop.size - 1;
+				} else {
+					returncode = blocktype == BLOCK_TYPE_ELSE;
+				}
+				for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++)
+					if (langproceednow[olang])
+						contextlangs[olang] = false;
+				break;
+			}
+			case 0x05: {
+				ScriptOperation& nextop = func.op[langindices[oppos + 1]];
+				if (nextop.opcode != 0x02 && nextop.opcode != 0x03 && nextop.opcode != 0x06 && nextop.opcode != 0x0B) {
+					str += tabstr + langstr + _(HADES_STRING_SCRIPT_OPCODE[op->opcode].label) + _(L" ") + ConvertVarArgument(op->arg[0], argcommentptr, &ignorenulljump);
+					MACRO_WRITECEOL()
+					MACRO_REGISTER_FUNCPOSTRACK(funcpos[macrolang])
+				}
+				MACRO_ADVANCE_FUNCPOS_OPPOS()
+				break;
+			}
+			case 0x06: {
+				unsigned int nbcasedone = 0;
+				unsigned int swoppos = oppos;
+				ScriptOperation* swop[STEAM_LANGUAGE_AMOUNT];
+				unsigned int swpos[STEAM_LANGUAGE_AMOUNT];
+				unsigned int swdefpos[STEAM_LANGUAGE_AMOUNT];
+				int swendofdefpos[STEAM_LANGUAGE_AMOUNT];
+				int swendpos[STEAM_LANGUAGE_AMOUNT];
+				unsigned int highestpos[STEAM_LANGUAGE_AMOUNT];
+				unsigned int highestendpos[STEAM_LANGUAGE_AMOUNT];
+				unsigned int currentcasepos[STEAM_LANGUAGE_AMOUNT];
+				int currentcaseendpos[STEAM_LANGUAGE_AMOUNT];
+				bool casedone[SCRPT_MAX_SWITCH_CASE];
+				bool defislastcase = true;
+				for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++) {
+					langproceed[olang] = contextlangs[olang] && oppos - 1 < func.indices[olang].size() && func.indices[olang][oppos - 1] >= 0;
+					if (langproceed[olang]) {
+						swop[olang] = &func.op[func.indices[olang][oppos]];
+						swpos[olang] = funcpos[olang] + 4;
+						swdefpos[olang] = swop[olang]->arg[0].GetValue();
+						swendofdefpos[olang] = -1;
+						swendpos[olang] = -1;
+						highestpos[olang] = swdefpos[olang];
+						highestendpos[olang] = swpos[olang] + swdefpos[olang];
+						currentcasepos[olang] = 0xFFFF;
+						currentcaseendpos[olang] = -1;
+					}
+				}
+				for (i = 0; i < swop[lang]->size_byte; i++) {
+					casedone[i] = swop[lang]->arg[2 + i * 2].GetValue() == swdefpos[lang];
+					if (casedone[i])
+						nbcasedone++;
+					for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++) {
+						if (langproceed[olang]) {
+							if (highestpos[olang] < swop[olang]->arg[2 + i * 2].GetValue())
+								highestpos[olang] = swop[olang]->arg[2 + i * 2].GetValue();
+							// Default position may be one of the case position
+							// It's problematic if that is not the last case because it removes info on case's limits
+							// Cases are then re-ordered
+							if (swop[olang]->arg[2 + i * 2].GetValue() > swdefpos[olang]) {
+								defislastcase = false;
+								if (swendofdefpos[olang] < 0 || swendofdefpos[olang] < swpos[olang] + swop[olang]->arg[2 + i * 2].GetValue())
+									swendofdefpos[olang] = swpos[olang] + swop[olang]->arg[2 + i * 2].GetValue();
+							}
+						}
+					}
+				}
+				wxString switchstr = _(L"switchex ");
+				switchstr << (unsigned int)(swop[lang]->size_byte - nbcasedone);
+				switchstr += _(L" ( ");
+				MACRO_CONTROL_LANGSPEC(oppos - 1, switchstr, _(L" )"), true)
+				MACRO_REGISTER_FUNCPOSTRACK(funcpos[macrolang])
+				while (nbcasedone < swop[lang]->size_byte) {
+					for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++) {
+						if (langproceed[olang]) {
+							currentcasepos[olang] = 0xFFFF;
+							for (i = 0; i < swop[lang]->size_byte; i++)
+								if (!casedone[i] && currentcasepos[olang] > swop[olang]->arg[2 + i * 2].GetValue())
+									currentcasepos[olang] = swop[olang]->arg[2 + i * 2].GetValue();
+							if (currentcasepos[olang] == 0xFFFF || (swendpos[olang] >= 0 && swpos[olang] + currentcasepos[olang] >= (unsigned int)swendpos[olang])) {
+								nbcasedone = swop[lang]->size_byte;
+								break;
+							}
+							currentcaseendpos[olang] = -1;
+							for (i = 0; i < swop[lang]->size_byte; i++)
+								if ((currentcaseendpos[olang] < 0 || currentcaseendpos[olang] > swpos[olang] + swop[olang]->arg[2 + i * 2].GetValue()) && swop[olang]->arg[2 + i * 2].GetValue() > currentcasepos[olang])
+									currentcaseendpos[olang] = swpos[olang] + swop[olang]->arg[2 + i * 2].GetValue();
+							if (currentcaseendpos[olang] < 0) {
+								if (swdefpos[olang] > currentcasepos[olang])
+									currentcaseendpos[olang] = (int)(swpos[olang] + swdefpos[olang]);
+								else
+									currentcaseendpos[olang] = swendpos[olang];
+							}
+						}
+					}
+					if (nbcasedone >= swop[lang]->size_byte)
+						break;
+					bool needsemicolon = false;
+					str += tabstr + _(L"case ");
+					for (i = 0; i < swop[lang]->size_byte; i++) {
+						if (currentcasepos[lang] == swop[lang]->arg[2 + i * 2].GetValue()) {
+							if (needsemicolon)
+								str << _(L" ; ");
+							else
+								needsemicolon = true;
+							str << (int)swop[lang]->arg[1 + i * 2].GetValue();
+							casedone[i] = true;
+							nbcasedone++;
+						}
+					}
+					str += _(L":\n");
+					MACRO_SET_FUNCPOS(swpos[macrolang] + swop[lang]->size - 4)
+					oppos = swoppos + 1;
+					for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++) {
+						if (langproceed[olang]) {
+							while (funcpos[olang] < swpos[olang] + currentcasepos[olang]) {
+								MACRO_ADVANCE_FUNCPOS_OPPOS()
+							}
+						}
+					}
+					MACRO_REGISTER_FUNCPOSTRACK(funcpos[macrolang])
+					MACRO_SETUP_ENDPOS(currentcaseendpos[macrolang], currentcaseendpos[macrolang])
+					GenerateFunctionStrings_Rec(str, func, funcpos, oppos, langproceednow, tabpos + 1, BLOCK_TYPE_SWITCHEX, endfuncposrec, endfuncposrec, appendcomment);
+					for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++) {
+						if (langproceed[olang]) {
+							if (highestendpos[olang] < funcpos[olang])
+								highestendpos[olang] = funcpos[olang];
+							unsigned int prevoppos = oppos - 1;
+							while (prevoppos > 0 && func.indices[olang][prevoppos] < 0)
+								prevoppos--;
+							if (func.indices[olang][prevoppos] >= 0 && func.op[func.indices[olang][prevoppos]].opcode == 0x01 && swendpos[olang] < 0 && func.op[func.indices[olang][prevoppos]].arg[0].GetValue() >= 0) {
+								swendpos[olang] = funcpos[olang] + func.op[func.indices[olang][prevoppos]].arg[0].GetValue();
+								if (defislastcase)
+									swendofdefpos[olang] = swendpos[olang];
+							}
+						}
+					}
+				}
+				for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++)
+					if (langproceed[olang])
+						if ((int)highestendpos[olang] < swendofdefpos[olang])
+							highestendpos[olang] = swendofdefpos[olang];
+				MACRO_SET_FUNCPOS(swpos[macrolang] + swop[lang]->size - 4)
 				oppos = swoppos + 1;
-				while (funcpos < swpos + currentcasepos) {
-					funcpos += func.op[oppos].size;
-					oppos++;
+				for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++) {
+					if (langproceed[olang]) {
+						while (funcpos[olang] < swpos[olang] + swdefpos[olang]) {
+							MACRO_ADVANCE_FUNCPOS_OPPOS()
+						}
+					}
 				}
-				funcpostrack[functrackline++] = funcpos;
-				GenerateFunctionStrings_Rec(str, func, funcpos, oppos, currentcaseendpos, tabpos + 1, BLOCK_TYPE_SWITCH, currentcaseendpos, appendcomment);
-				if (highestendpos < funcpos)
-					highestendpos = funcpos;
-				if (func.op[oppos - 1].opcode == 0x01 && swendpos == -1 && func.op[oppos - 1].arg[0].GetValue() >= 0) {
-					swendpos = funcpos + func.op[oppos - 1].arg[0].GetValue();
-					if (defislastcase)
-						swendofdefpos = swendpos;
+				if (swendofdefpos[lang] >= 0 && (int)funcpos[lang] < swendofdefpos[lang]) {
+					str += tabstr + _(L"default:\n");
+					MACRO_REGISTER_FUNCPOSTRACK(funcpos[macrolang])
+					MACRO_SETUP_ENDPOS(swendofdefpos[macrolang], swendofdefpos[macrolang])
+					GenerateFunctionStrings_Rec(str, func, funcpos, oppos, langproceednow, tabpos + 1, BLOCK_TYPE_SWITCHEXDEF, endfuncposrec, endfuncposrec, appendcomment);
+				} else if (swendofdefpos[lang] < 0 && (int)funcpos[lang] < endblockpos[lang] && func.op[langindices[oppos - 1]].opcode != 0x01) {
+					ignorenulljump = true;
 				}
+				for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++) {
+					if (langproceed[olang]) {
+						while (funcpos[olang] < highestendpos[olang]) {
+							MACRO_ADVANCE_FUNCPOS_OPPOS()
+						}
+					}
+				}
+				str += tabstr + _(L"}\n");
+				MACRO_REGISTER_FUNCPOSTRACK(funcpostrack[macrolang][functrackline - 1])
+				break;
 			}
-			if ((int)highestendpos < swendofdefpos)
-				highestendpos = swendofdefpos;
-			funcpos = swpos + swop.size - 1;
-			oppos = swoppos + 1;
-			while (funcpos < swpos + swdefpos) {
-				funcpos += func.op[oppos].size;
-				oppos++;
+			case 0x0B: {
+				unsigned int nbcasedone = 0;
+				unsigned int swoppos = oppos;
+				ScriptOperation* swop[STEAM_LANGUAGE_AMOUNT];
+				unsigned int swpos[STEAM_LANGUAGE_AMOUNT];
+				unsigned int swdefpos[STEAM_LANGUAGE_AMOUNT];
+				int swendofdefpos[STEAM_LANGUAGE_AMOUNT];
+				int swendpos[STEAM_LANGUAGE_AMOUNT];
+				unsigned int highestpos[STEAM_LANGUAGE_AMOUNT];
+				unsigned int highestendpos[STEAM_LANGUAGE_AMOUNT];
+				unsigned int currentcasepos[STEAM_LANGUAGE_AMOUNT];
+				int currentcaseendpos[STEAM_LANGUAGE_AMOUNT];
+				bool casedone[SCRPT_MAX_SWITCH_CASE];
+				bool defislastcase = true;
+				for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++) {
+					langproceed[olang] = contextlangs[olang] && oppos - 1 < func.indices[olang].size() && func.indices[olang][oppos - 1] >= 0;
+					if (langproceed[olang]) {
+						swop[olang] = &func.op[func.indices[olang][oppos]];
+						swpos[olang] = funcpos[olang] + 1;
+						swdefpos[olang] = swop[olang]->arg[1].GetValue();
+						swendofdefpos[olang] = -1;
+						swendpos[olang] = -1;
+						highestpos[olang] = swdefpos[olang];
+						highestendpos[olang] = swpos[olang] + swdefpos[olang];
+						currentcasepos[olang] = 0xFFFF;
+						currentcaseendpos[olang] = -1;
+					}
+				}
+				for (i = 0; i < swop[lang]->size_byte; i++) {
+					casedone[i] = swop[lang]->arg[2 + i].GetValue() == swdefpos[lang];
+					if (casedone[i])
+						nbcasedone++;
+					for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++) {
+						if (langproceed[olang]) {
+							if (highestpos[olang] < swop[olang]->arg[2 + i].GetValue())
+								highestpos[olang] = swop[olang]->arg[2 + i].GetValue();
+							// Default position may be one of the case position
+							// It's problematic if that is not the last case because it removes info on case's limits
+							// Cases are then re-ordered
+							if (swop[olang]->arg[2 + i].GetValue() > swdefpos[olang]) {
+								defislastcase = false;
+								if (swendofdefpos[olang] < 0 || swendofdefpos[olang] < swpos[olang] + swop[olang]->arg[2 + i].GetValue())
+									swendofdefpos[olang] = swpos[olang] + swop[olang]->arg[2 + i].GetValue();
+							}
+						}
+					}
+				}
+				wxString switchstr1 = _(L"switch ");
+				switchstr1 << (unsigned int)swop[lang]->size_byte;
+				switchstr1 += _(L" ( ");
+				wxString switchstr2 = _(L" ) from ");
+				switchstr2 << (unsigned int)swop[lang]->arg[0].GetValue();
+				MACRO_CONTROL_LANGSPEC(oppos - 1, switchstr1, switchstr2, true)
+				MACRO_REGISTER_FUNCPOSTRACK(funcpos[macrolang])
+				while (nbcasedone < swop[lang]->size_byte) {
+					for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++) {
+						if (langproceed[olang]) {
+							currentcasepos[olang] = 0xFFFF;
+							for (i = 0; i < swop[lang]->size_byte; i++)
+								if (!casedone[i] && currentcasepos[olang] > swop[olang]->arg[2 + i].GetValue())
+									currentcasepos[olang] = swop[olang]->arg[2 + i].GetValue();
+							if (currentcasepos[olang] == 0xFFFF || (swendpos[olang] >= 0 && swpos[olang] + currentcasepos[olang] >= (unsigned int)swendpos[olang])) {
+								nbcasedone = swop[lang]->size_byte;
+								break;
+							}
+							currentcaseendpos[olang] = -1;
+							for (i = 0; i < swop[lang]->size_byte; i++)
+								if ((currentcaseendpos[olang] < 0 || currentcaseendpos[olang] > swpos[olang] + swop[olang]->arg[2 + i].GetValue()) && swop[olang]->arg[2 + i].GetValue() > currentcasepos[olang])
+									currentcaseendpos[olang] = swpos[olang] + swop[olang]->arg[2 + i].GetValue();
+							if (currentcaseendpos[olang] < 0) {
+								if (swdefpos[olang] > currentcasepos[olang])
+									currentcaseendpos[olang] = (int)(swpos[olang] + swdefpos[olang]);
+								else
+									currentcaseendpos[olang] = swendpos[olang];
+							}
+						}
+					}
+					if (nbcasedone >= swop[lang]->size_byte)
+						break;
+					bool needsemicolon = false;
+					str += tabstr + _(L"case +");
+					for (i = 0; i < swop[lang]->size_byte; i++) {
+						if (currentcasepos[lang] == swop[lang]->arg[2 + i].GetValue()) {
+							if (needsemicolon)
+								str << _(L" ; +");
+							else
+								needsemicolon = true;
+							str << (int)i;
+							casedone[i] = true;
+							nbcasedone++;
+						}
+					}
+					str += _(L":\n");
+					MACRO_SET_FUNCPOS(swpos[macrolang] + swop[lang]->size - 1)
+					oppos = swoppos + 1;
+					for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++) {
+						if (langproceed[olang]) {
+							while (funcpos[olang] < swpos[olang] + currentcasepos[olang]) {
+								MACRO_ADVANCE_FUNCPOS_OPPOS()
+							}
+						}
+					}
+					MACRO_REGISTER_FUNCPOSTRACK(funcpos[macrolang])
+					MACRO_SETUP_ENDPOS(currentcaseendpos[macrolang], currentcaseendpos[macrolang])
+					GenerateFunctionStrings_Rec(str, func, funcpos, oppos, langproceednow, tabpos + 1, BLOCK_TYPE_SWITCH, endfuncposrec, endfuncposrec, appendcomment);
+					for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++) {
+						if (langproceed[olang]) {
+							if (highestendpos[olang] < funcpos[olang])
+								highestendpos[olang] = funcpos[olang];
+							unsigned int prevoppos = oppos - 1;
+							while (prevoppos > 0 && func.indices[olang][prevoppos] < 0)
+								prevoppos--;
+							if (func.indices[olang][prevoppos] >= 0 && func.op[func.indices[olang][prevoppos]].opcode == 0x01 && swendpos[olang] < 0 && func.op[func.indices[olang][prevoppos]].arg[0].GetValue() >= 0) {
+								swendpos[olang] = funcpos[olang] + func.op[func.indices[olang][prevoppos]].arg[0].GetValue();
+								if (defislastcase)
+									swendofdefpos[olang] = swendpos[olang];
+							}
+						}
+					}
+				}
+				for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++)
+					if (langproceed[olang])
+						if ((int)highestendpos[olang] < swendofdefpos[olang])
+							highestendpos[olang] = swendofdefpos[olang];
+				MACRO_SET_FUNCPOS(swpos[macrolang] + swop[lang]->size - 1)
+				oppos = swoppos + 1;
+				for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++) {
+					if (langproceed[olang]) {
+						while (funcpos[olang] < swpos[olang] + swdefpos[olang]) {
+							MACRO_ADVANCE_FUNCPOS_OPPOS()
+						}
+					}
+				}
+				if (swendofdefpos[lang] >= 0 && (int)funcpos[lang] < swendofdefpos[lang]) {
+					str += tabstr + _(L"default:\n");
+					MACRO_REGISTER_FUNCPOSTRACK(funcpos[macrolang])
+					MACRO_SETUP_ENDPOS(swendofdefpos[macrolang], swendofdefpos[macrolang])
+					GenerateFunctionStrings_Rec(str, func, funcpos, oppos, langproceednow, tabpos + 1, BLOCK_TYPE_SWITCHDEF, endfuncposrec, endfuncposrec, appendcomment);
+				} else if (swendofdefpos[lang] < 0 && (int)funcpos[lang] < endblockpos[lang] && func.op[langindices[oppos - 1]].opcode != 0x01) {
+					ignorenulljump = true;
+				}
+				for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++) {
+					if (langproceed[olang]) {
+						while (funcpos[olang] < highestendpos[olang]) {
+							MACRO_ADVANCE_FUNCPOS_OPPOS()
+						}
+					}
+				}
+				str += tabstr + _(L"}\n");
+				MACRO_REGISTER_FUNCPOSTRACK(funcpostrack[macrolang][functrackline - 1])
+				break;
 			}
-			if (swendofdefpos >= 0 && (int)funcpos < swendofdefpos) {
-				str += tabstr + _(L"default:\n");
-				funcpostrack[functrackline++] = funcpos;
-				GenerateFunctionStrings_Rec(str, func, funcpos, oppos, swendofdefpos, tabpos + 1, BLOCK_TYPE_SWITCHDEF, swendofdefpos, appendcomment);
-			} else if (swendofdefpos < 0 && (int)funcpos < endblockpos && func.op[oppos - 1].opcode != 0x01) {
-				ignorenulljump = true;
+			default:
+				if (DoesOpcodeUseText(op->opcode) && !haslangspec && GetGameType() == GAME_TYPE_STEAM && !hades::STEAM_SINGLE_LANGUAGE_MODE) {
+					bool forcelangstr = false;
+					langstr = wxEmptyString;
+					for (olang = 0; olang < STEAM_LANGUAGE_AMOUNT; olang++) {
+						if (langproceednow[olang]) {
+							if (langstr.Len() > 0)
+								langstr += _(L",");
+							langstr += HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[olang];
+						} else {
+							forcelangstr = true;
+						}
+					}
+					if (forcelangstr)
+						langstr = _(L"[") + langstr + _(L"] ");
+					else
+						langstr = wxEmptyString;
+				}
+				str += tabstr + langstr;
+				GenerateStandardLine(str, op, argcommentptr);
+				MACRO_REGISTER_FUNCPOSTRACK(funcpos[macrolang])
+				MACRO_ADVANCE_FUNCPOS_OPPOS()
 			}
-			while (funcpos < highestendpos) {
-				funcpos += func.op[oppos].size;
-				oppos++;
-			}
-			str += tabstr + _(L"}\n");
-			funcpostrack[functrackline] = funcpostrack[functrackline - 1];
-			functrackline++;
-			break;
+			nextoppos = min(nextoppos, oppos);
 		}
-		default:
-			str += tabstr+_(HADES_STRING_SCRIPT_OPCODE[func.op[oppos].opcode].label)+_(L"( ");
-			for (i=0;i<func.op[oppos].arg_amount;i++) {
-				ScriptArgument& arg = func.op[oppos].arg[i];
-				if (arg.is_var)
-					str += ConvertVarArgument(arg,argcommentptr);
-				else if (func.op[oppos].opcode==0x29)
-					str << L"( " << (int16_t)(arg.GetValue() & 0xFFFF) << L", " << (int16_t)((arg.GetValue() >> 16) & 0xFFFF) << L" )";
-				else
-					str << arg.GetValue();
-				if (i+1<func.op[oppos].arg_amount)
-					str += _(L", ");
-				if (appendcomment && !arg.is_var) {
-					wxString argcommenttoken = GetArgumentDescription(arg.GetValue(),HADES_STRING_SCRIPT_OPCODE[func.op[oppos].opcode].arg_type[i]);
-					if (argcommenttoken.Len()>0)
-						argcomment.Add(argcommenttoken);
+		if (nextoppos != UINT32_MAX) {
+			oppos = nextoppos;
+			opposprogress = max(opposprogress, oppos);
+		} else if (keeplooping) {
+			if (oppos <= opposprogress)
+				oppossecondpass.push_back(oppos);
+			oppos++;
+			opposprogress = max(opposprogress, oppos);
+		} else {
+			while (oppossecondpassindex < oppossecondpass.size()) {
+				for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+					vector<int32_t>& langindices = func.indices[lang];
+					if (oppossecondpass[oppossecondpassindex] >= langindices.size() || funcpos[lang] >= endfuncpos[lang] || !contextlangs[lang] || langproceed[lang])
+						continue;
+					if (langindices[oppossecondpass[oppossecondpassindex]] < 0)
+						continue;
+					keeplooping = true;
+					break;
+				}
+				oppossecondpassindex++;
+				if (keeplooping) {
+					oppos = oppossecondpass[oppossecondpassindex - 1];
+					break;
 				}
 			}
-			str += _(L" )");
-			MACRO_WRITECEOL()
-			funcpostrack[functrackline++] = funcpos;
-			funcpos += func.op[oppos++].size;
 		}
 	}
-	return false;
+	if (debuglog) {
+		GetDebugLog() << "RETURN with code " << returncode << endl;
+	}
+	return returncode;
 }
 
 void ScriptEditHandler::GenerateFunctionStrings(bool appendcomment) {
-	unsigned int i, j, funci = 0, funcpos, oppos, entrytmp = entry_selection;
+	if (debuglog) {
+		for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+			GetDebugLog() << "// LANG: " << (int)lang << endl;
+			for (unsigned int i = 0; i < script.entry_amount; i++) {
+				for (unsigned int j = 0; j < script.entry_function_amount[i]; j++) {
+					GetDebugLog() << "// FUNC: " << i << "_" << j << endl;
+					for (unsigned int k = 0; k < script.func[i][j].indices[lang].size(); k++) {
+						GetDebugLog() << (int)script.func[i][j].indices[lang][k];
+						if (script.func[i][j].indices[lang][k] >= 0)
+							GetDebugLog() << "\t" << ConvertWStrToStr(HADES_STRING_SCRIPT_OPCODE[script.func[i][j].op[script.func[i][j].indices[lang][k]].opcode].label).c_str();
+						GetDebugLog() << endl;
+					}
+				}
+			}
+		}
+	}
+	unsigned int i, j, funci = 0, oppos, entrytmp = entry_selection;
+	unsigned int endfuncpos[STEAM_LANGUAGE_AMOUNT];
+	unsigned int funcpos[STEAM_LANGUAGE_AMOUNT];
 	func_str.resize(script.entry_amount);
 	localvar_str.resize(script.entry_amount);
 	/*fstream fout("aaaa.txt",ios::app|ios::out);
 	for (i=0;i<script.entry_amount;i++) for (j=0;j<script.entry_function_amount[i];j++) {
 	fout << "New Function : " << i << " " << j << endl;
-	for (unsigned int k=0;k<script.func[i][j].op_amount;k++) {fout << std::hex << (unsigned int)script.func[i][j].op[k].size << " : " << std::hex << (unsigned int)script.func[i][j].op[k].opcode;
+	for (unsigned int k=0;k<script.func[i][j].op.size();k++) {fout << std::hex << (unsigned int)script.func[i][j].op[k].size << " : " << std::hex << (unsigned int)script.func[i][j].op[k].opcode;
 	for (unsigned int l=0;l<script.func[i][j].op[k].arg_amount;l++) fout << " " << std::hex << (unsigned int)script.func[i][j].op[k].arg[l].value;
 	fout << endl;} fout << endl;}*/
 	globalvar_str = _(L"");
@@ -1442,15 +1868,34 @@ void ScriptEditHandler::GenerateFunctionStrings(bool appendcomment) {
 		func_str[i].resize(script.entry_function_amount[i]);
 		entry_selection = i;
 		for (j = 0; j < script.entry_function_amount[i]; j++) {
-			funcpos = 0;
-			oppos = 0;
-			functrackline = 0;
-			funcpostrack[functrackline++] = funcpos;
-			if (script.func[i][j].length == 0)
-				func_str[i][j] = _(TAB_STR) + _(L"forward");
-			while (funcpos < script.func[i][j].length)
-				GenerateFunctionStrings_Rec(func_str[i][j], script.func[i][j], funcpos, oppos, -1, 1, BLOCK_TYPE_ROOT, -1, appendcomment);
-			funcpostrack[functrackline++] = script.func[i][j].length;
+			ScriptFunction& func = script.func[i][j];
+			if (func.op.size() == 0) {
+				func_str[i][j] = _(TAB_STR L"forward");
+				functrackline = 0;
+			} else {
+				bool contextlangs[STEAM_LANGUAGE_AMOUNT];
+				if (GetGameType() != GAME_TYPE_STEAM || hades::STEAM_SINGLE_LANGUAGE_MODE) {
+					contextlangs[GetSteamLanguage()] = true;
+					funcpos[GetSteamLanguage()] = 0;
+					endfuncpos[GetSteamLanguage()] = func.GetLength(GetSteamLanguage());
+				} else {
+					for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+						contextlangs[lang] = true;
+						funcpos[lang] = 0;
+						endfuncpos[lang] = func.GetLength(lang);
+					}
+				}
+				for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+					funcpostrack[lang].clear();
+					funcpostrack[lang].reserve(0x100);
+					funcpostrack[lang].push_back(0);
+				}
+				oppossecondpass.clear();
+				functrackline = 1;
+				opposprogress = 0;
+				oppos = 0;
+				GenerateFunctionStrings_Rec(func_str[i][j], func, funcpos, oppos, contextlangs, 1, BLOCK_TYPE_ROOT, endfuncpos, endfuncpos, appendcomment);
+			}
 			func_str[i][j] = functionlist_str[funci] + _(L"\n") + func_str[i][j];
 			funci++;
 		}
@@ -1459,14 +1904,13 @@ void ScriptEditHandler::GenerateFunctionStrings(bool appendcomment) {
 }
 
 void ScriptEditHandler::GenerateEntryNames() {
-	unsigned int i, j, k, funcpos, oppos;
+	unsigned int i, j, k, oppos;
 	vector<bool> foundname;
 	foundname.resize(script.entry_amount, false);
 	for (i = 0; i < script.entry_amount; i++) {
 		for (j = 0; j < script.entry_function_amount[i] && !foundname[i]; j++) {
-			funcpos = 0;
 			oppos = 0;
-			while (funcpos < script.func[i][j].length && !foundname[i]) {
+			while (oppos < script.func[i][j].op.size() && !foundname[i]) {
 				ScriptOperation& op = script.func[i][j].op[oppos++];
 				if (op.opcode == 0x2F && !foundname[i]) {
 					for (k = 0; k < G_V_ELEMENTS(HADES_STRING_MODEL_NAME); k++)
@@ -1489,55 +1933,54 @@ void ScriptEditHandler::GenerateEntryNames() {
 						foundname[op.arg[0].GetValue()] = true;
 					}
 				}
-				funcpos += op.size;
 			}
 		}
 	}
 }
 
 void ScriptEditHandler::UpdateGlobalLocalStrings(int ignoreentry) {
-	unsigned int i,j;
+	unsigned int i, j;
 	wxString line, tmpstr, tmprest;
 	size_t pos;
 	globalvar_str = _(L"");
-	for (j=0;j<script.global_data.amount;j++) {
+	for (j = 0; j < script.global_data.amount; j++) {
 		globalvar_str += _(L"global ");
-		if (script.global_data.type[j]==SCRIPT_VARIABLE_TYPE_BOOL)
+		if (script.global_data.type[j] == SCRIPT_VARIABLE_TYPE_BOOL)
 			globalvar_str += _(L"bool ");
 		else {
-			if (script.global_data.type[j]==SCRIPT_VARIABLE_TYPE_INT)
+			if (script.global_data.type[j] == SCRIPT_VARIABLE_TYPE_INT)
 				globalvar_str += _(L"int");
-			else if (script.global_data.type[j]==SCRIPT_VARIABLE_TYPE_UINT)
+			else if (script.global_data.type[j] == SCRIPT_VARIABLE_TYPE_UINT)
 				globalvar_str += _(L"uint");
-			globalvar_str += wxString::Format(wxT("%u "),script.global_data.size[j]);
+			globalvar_str += wxString::Format(wxT("%u "), script.global_data.size[j]);
 		}
-		globalvar_str += wxString::Format(wxT("%s %s%u\n"),script.global_data.name[j],VarOpList[script.global_data.cat[j]].opstring,script.global_data.id[j]);
+		globalvar_str += wxString::Format(wxT("%s %s%u\n"), script.global_data.name[j], VarOpList[script.global_data.cat[j]].opstring, script.global_data.id[j]);
 	}
-	for (i=0;i<script.entry_amount;i++) {
-		if (i==ignoreentry)
+	for (i = 0; i < script.entry_amount; i++) {
+		if (i == ignoreentry)
 			continue;
 		wxString localstr = localvar_str[i];
 		wxString localstrtmp = localstr;
 		pos = 0;
-		while (localstrtmp.Len()>0) {
-			line = localstrtmp.BeforeFirst(L'\n',&tmprest);
+		while (localstrtmp.Len() > 0) {
+			line = localstrtmp.BeforeFirst(L'\n', &tmprest);
 			localstrtmp = tmprest;
-			if (line.Mid(0,7).IsSameAs(L"global ")) {
-				tmpstr = localstr.Mid(0,pos);
-				localstr = tmpstr+localstr.Mid(pos+line.Len()+1);
+			if (line.Mid(0, 7).IsSameAs(L"global ")) {
+				tmpstr = localstr.Mid(0, pos);
+				localstr = tmpstr + localstr.Mid(pos + line.Len() + 1);
 			} else
-				pos += line.Len()+1;
+				pos += line.Len() + 1;
 		}
-		if (localstr.Mid(0,9).IsSameAs(L"allocate ")) {
-			tmpstr = localstr.BeforeFirst(L'\n',&tmprest)+_(L"\n\n");
-			if (tmprest[0]==L'\n' && tmprest[1]==L'\n')
+		if (localstr.Mid(0, 9).IsSameAs(L"allocate ")) {
+			tmpstr = localstr.BeforeFirst(L'\n', &tmprest) + _(L"\n\n");
+			if (tmprest[0] == L'\n' && tmprest[1] == L'\n')
 				tmprest = tmprest.Mid(1);
 		} else
 			tmpstr = _(L"");
-		if (script.global_data.amount>0) {
+		if (script.global_data.amount > 0) {
 			tmpstr += globalvar_str;
 		}
-		localvar_str[i] = tmpstr+tmprest;
+		localvar_str[i] = tmpstr + tmprest;
 	}
 }
 
@@ -1549,7 +1992,7 @@ void ScriptEditHandler::EntryChangeName(unsigned int entry, wxString newname) {
 	for (i = 0; i < script.entry_amount; i++)
 		for (j = 0; j < script.entry_function_amount[i]; j++) {
 			if (i == entry) {
-				functionlist_str[funci] = GetFunctionName(entry, script.function_type[i][j]);
+				functionlist_str[funci] = GetFunctionName(entry, script.func[i][j].function_type);
 				if (handler_dialog)
 					handler_dialog->m_functionlist->SetItemText(funci, functionlist_str[funci]);
 			}
@@ -1711,8 +2154,15 @@ vector<uint8_t> ConvertStringToVararg(wxString varstr, wxString& errmsg, ScriptL
 						break;
 					}
 				if (j == G_V_ELEMENTS(ScriptCharacterField)) {
-					errmsg = _(HADES_STRING_SCRIPT_VARARG_ARRAY);
-					return vector<uint8_t>();
+					for (j = 0; j < G_V_ELEMENTS(ScriptCharacterFieldMemoria); j++)
+						if (tmpstr.IsSameAs(ScriptCharacterFieldMemoria[j].name)) {
+							MACRO_APPEND_BYTE(ScriptCharacterFieldMemoria[j].id, true)
+								break;
+						}
+					if (j == G_V_ELEMENTS(ScriptCharacterFieldMemoria)) {
+						errmsg = _(HADES_STRING_SCRIPT_VARARG_ARRAY);
+						return vector<uint8_t>();
+					}
 				}
 			}
 			tmpstr = GetNextVarThing(varstr);
@@ -2033,40 +2483,40 @@ vector<uint8_t> ConvertStringToVararg(wxString varstr, wxString& errmsg, ScriptL
 }
 
 uint8_t GetLocalCategoryFromType(int localtype, int type, int size) {
-	if (localtype==SCRIPT_VARIABLE_LOCALTYPE_LOCAL) {
-		if (type==SCRIPT_VARIABLE_TYPE_UINT && size==16)
+	if (localtype == SCRIPT_VARIABLE_LOCALTYPE_LOCAL) {
+		if (type == SCRIPT_VARIABLE_TYPE_UINT && size == 16)
 			return 0xDE;
-		if (type==SCRIPT_VARIABLE_TYPE_INT && size==16)
+		if (type == SCRIPT_VARIABLE_TYPE_INT && size == 16)
 			return 0xDA;
-		if (type==SCRIPT_VARIABLE_TYPE_UINT && size==8)
+		if (type == SCRIPT_VARIABLE_TYPE_UINT && size == 8)
 			return 0xD6;
-		if (type==SCRIPT_VARIABLE_TYPE_INT && size==8)
+		if (type == SCRIPT_VARIABLE_TYPE_INT && size == 8)
 			return 0xD2;
-		if (type==SCRIPT_VARIABLE_TYPE_UINT && size==24)
+		if (type == SCRIPT_VARIABLE_TYPE_UINT && size == 24)
 			return 0xCE;
-		if (type==SCRIPT_VARIABLE_TYPE_INT && size==24)
+		if (type == SCRIPT_VARIABLE_TYPE_INT && size == 24)
 			return 0xCA;
-		if (type==SCRIPT_VARIABLE_TYPE_BOOL && size==1)
+		if (type == SCRIPT_VARIABLE_TYPE_BOOL && size == 1)
 			return 0xC6;
-		if (type==SCRIPT_VARIABLE_TYPE_SBOOL && size==1)
+		if (type == SCRIPT_VARIABLE_TYPE_SBOOL && size == 1)
 			return 0xC2;
 		return 0xCA;
-	} else if (localtype==SCRIPT_VARIABLE_LOCALTYPE_GLOBAL) {
-		if (type==SCRIPT_VARIABLE_TYPE_UINT && size==16)
+	} else if (localtype == SCRIPT_VARIABLE_LOCALTYPE_GLOBAL) {
+		if (type == SCRIPT_VARIABLE_TYPE_UINT && size == 16)
 			return 0xDD;
-		if (type==SCRIPT_VARIABLE_TYPE_INT && size==16)
+		if (type == SCRIPT_VARIABLE_TYPE_INT && size == 16)
 			return 0xD9;
-		if (type==SCRIPT_VARIABLE_TYPE_UINT && size==8)
+		if (type == SCRIPT_VARIABLE_TYPE_UINT && size == 8)
 			return 0xD5;
-		if (type==SCRIPT_VARIABLE_TYPE_INT && size==8)
+		if (type == SCRIPT_VARIABLE_TYPE_INT && size == 8)
 			return 0xD1;
-		if (type==SCRIPT_VARIABLE_TYPE_UINT && size==24)
+		if (type == SCRIPT_VARIABLE_TYPE_UINT && size == 24)
 			return 0xCD;
-		if (type==SCRIPT_VARIABLE_TYPE_INT && size==24)
+		if (type == SCRIPT_VARIABLE_TYPE_INT && size == 24)
 			return 0xC9;
-		if (type==SCRIPT_VARIABLE_TYPE_BOOL && size==1)
+		if (type == SCRIPT_VARIABLE_TYPE_BOOL && size == 1)
 			return 0xC5;
-		if (type==SCRIPT_VARIABLE_TYPE_SBOOL && size==1)
+		if (type == SCRIPT_VARIABLE_TYPE_SBOOL && size == 1)
 			return 0xC1;
 		return 0xC9;
 	}
@@ -2123,31 +2573,31 @@ ScriptLocalVariableSet* ScriptEditHandler::ParseLocal(LogStruct& log, wxString s
 			else
 				localvartmp[vari].local_type = SCRIPT_VARIABLE_LOCALTYPE_GLOBAL;
 			token = GetNextThing(linestr);
-			if (token.Mid(0,3).IsSameAs(L"int")) {
+			if (token.Mid(0, 3).IsSameAs(L"int")) {
 				localvartmp[vari].type = SCRIPT_VARIABLE_TYPE_INT;
 				if (token.Mid(3).IsNumber()) {
 					localvartmp[vari].size = wxAtoi(token.Mid(3));
-					if (localvartmp[vari].size!=8 && localvartmp[vari].size!=16 && localvartmp[vari].size!=24) {
-						errstr.Printf(wxT(HADES_STRING_LSCRIPT_UNEXPECTED),token);
+					if (localvartmp[vari].size != 8 && localvartmp[vari].size != 16 && localvartmp[vari].size != 24) {
+						errstr.Printf(wxT(HADES_STRING_LSCRIPT_UNEXPECTED), token);
 						log.AddWarning(errstr.ToStdWstring());
 						isok = false;
 					}
 				} else {
-					errstr.Printf(wxT(HADES_STRING_LSCRIPT_UNEXPECTED),token);
+					errstr.Printf(wxT(HADES_STRING_LSCRIPT_UNEXPECTED), token);
 					log.AddWarning(errstr.ToStdWstring());
 					isok = false;
 				}
-			} else if (token.Mid(0,4).IsSameAs(L"uint")) {
+			} else if (token.Mid(0, 4).IsSameAs(L"uint")) {
 				localvartmp[vari].type = SCRIPT_VARIABLE_TYPE_UINT;
 				if (token.Mid(4).IsNumber()) {
 					localvartmp[vari].size = wxAtoi(token.Mid(4));
-					if (localvartmp[vari].size!=8 && localvartmp[vari].size!=16 && localvartmp[vari].size!=24) {
-						errstr.Printf(wxT(HADES_STRING_LSCRIPT_UNEXPECTED),token);
+					if (localvartmp[vari].size != 8 && localvartmp[vari].size != 16 && localvartmp[vari].size != 24) {
+						errstr.Printf(wxT(HADES_STRING_LSCRIPT_UNEXPECTED), token);
 						log.AddWarning(errstr.ToStdWstring());
 						isok = false;
 					}
 				} else {
-					errstr.Printf(wxT(HADES_STRING_LSCRIPT_UNEXPECTED),token);
+					errstr.Printf(wxT(HADES_STRING_LSCRIPT_UNEXPECTED), token);
 					log.AddWarning(errstr.ToStdWstring());
 					isok = false;
 				}
@@ -2158,21 +2608,21 @@ ScriptLocalVariableSet* ScriptEditHandler::ParseLocal(LogStruct& log, wxString s
 				localvartmp[vari].type = SCRIPT_VARIABLE_TYPE_SBOOL;
 				localvartmp[vari].size = 1;
 			} else {
-				errstr.Printf(wxT(HADES_STRING_LSCRIPT_UNEXPECTED),token);
+				errstr.Printf(wxT(HADES_STRING_LSCRIPT_UNEXPECTED), token);
 				log.AddWarning(errstr.ToStdWstring());
 				isok = false;
 			}
 			if (isok) {
 				token = GetNextThing(linestr);
-				if (token==wxEmptyString) {
+				if (token == wxEmptyString) {
 					log.AddWarning(HADES_STRING_LSCRIPT_MISS_NAME);
 					isok = false;
 				} else
 					localvartmp[vari].name = token.ToStdWstring();
 			}
 			token = GetNextThing(linestr);
-			while (isok && token!=wxEmptyString) {
-				if (token.Mid(0,4).IsSameAs(L"VAR_")) {
+			while (isok && token != wxEmptyString) {
+				if (token.Mid(0, 4).IsSameAs(L"VAR_")) {
 					isok = false;
 					for (i = 0; i < G_V_ELEMENTS(VarOpList); i++)
 						if (VarOpList[i].type >= 10 && VarOpList[i].type < 30 && token.Mid(0, VarOpList[i].opstring.length()).IsSameAs(VarOpList[i].opstring)) {
@@ -2186,7 +2636,7 @@ ScriptLocalVariableSet* ScriptEditHandler::ParseLocal(LogStruct& log, wxString s
 						log.AddWarning(errstr.ToStdWstring());
 					}
 				} else {
-					errstr.Printf(wxT(HADES_STRING_LSCRIPT_UNEXPECTED),token);
+					errstr.Printf(wxT(HADES_STRING_LSCRIPT_UNEXPECTED), token);
 					log.AddWarning(errstr.ToStdWstring());
 					isok = false;
 				}
@@ -2196,7 +2646,7 @@ ScriptLocalVariableSet* ScriptEditHandler::ParseLocal(LogStruct& log, wxString s
 				vari++;
 			MACRO_REINIT_LOCAL()
 		} else {
-			errstr.Printf(wxT(HADES_STRING_LSCRIPT_UNEXPECTED),token);
+			errstr.Printf(wxT(HADES_STRING_LSCRIPT_UNEXPECTED), token);
 			log.AddWarning(errstr.ToStdWstring());
 		}
 	}
@@ -2283,113 +2733,297 @@ ScriptLocalVariableSet* ScriptEditHandler::ParseLocal(LogStruct& log, wxString s
 
 static wxString keywords[] = {
 	L"if",		L"else",		L"ifnot",
-	L"while",	L"do",			L"loop",
-	L"switch",	L"switchex",	L"case",
-	L"default",	L"break",		L"Function",
-	L"forward"
+	L"while",	L"do",			L"dowhile",
+	L"loop",	L"switch",		L"switchex",
+	L"case",	L"default",		L"break",
+	L"Function",L"forward"
+};
+struct ParserLevelParam {
+	unsigned int rawpos[STEAM_LANGUAGE_AMOUNT];
+	unsigned int oppos;
+	unsigned int type;
+	unsigned int caseamount;
+	unsigned int argvalamount;
+	vector<vector<uint8_t>> argval;
+	vector<vector<SteamLanguage>> argvallang;
+	bool parsecontextlang[STEAM_LANGUAGE_AMOUNT];
+};
+struct ParserBreakLevelParam {
+	vector<unsigned int> rawpos[STEAM_LANGUAGE_AMOUNT];
+	vector<unsigned int> oppos;
+	unsigned int count;
+
+	void Reset() {
+		count = 0;
+		for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+			rawpos[lang].clear();
+		oppos.clear();
+	}
 };
 ScriptOperation parseop[0x8000];
+vector<int32_t> parseindices[STEAM_LANGUAGE_AMOUNT];
 unsigned int parseopamount = 0;
-unsigned int parseoplength = 0;
+unsigned int parseoplength[STEAM_LANGUAGE_AMOUNT]{ 0, 0, 0, 0, 0, 0, 0 };
+vector<ParserLevelParam> lvlparam;
+vector<ParserBreakLevelParam> breaklvlparam;
 LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, unsigned int function, unsigned int startinglinenumber) {
 	entry_selection = entry;
 	function_selection = function;
+	LogStruct res = LogStruct();
 	size_t pos;
-	unsigned int rawpos = 0, lvlamount = 0, lvlrawpos[SCRPT_MAX_OPERAND], lvloppos[SCRPT_MAX_OPERAND], lvltype[SCRPT_MAX_OPERAND], lvlcaseamount[SCRPT_MAX_OPERAND];
-	unsigned int breaklvlamount = 0, breaklvli[SCRPT_MAX_OPERAND], breaklvlrawpos[SCRPT_MAX_OPERAND][SCRPT_MAX_OPERAND], breaklvloppos[SCRPT_MAX_OPERAND][SCRPT_MAX_OPERAND];
-	unsigned int i, j, opi = 0, line = startinglinenumber;
+	unsigned int rawpos[STEAM_LANGUAGE_AMOUNT];
+	unsigned int opi = 0, indicescount = 0;
+	unsigned int lvlamount = 0;
+	unsigned int breaklvlamount = 0;
+	unsigned int i, j, line = startinglinenumber;
+	set<SteamLanguage> isfunctionreturned;
 	wxString linestr, token, errstr;
 	wxString argstr[SCRPT_MAX_OPERAND];
-	LogStruct res = LogStruct();
-	vector<uint8_t> lvlargval[SCRPT_MAX_OPERAND];
 	vector<uint8_t> argval, argvalarray[SCRPT_MAX_OPERAND];
 	uint8_t varargbyte;
-	int tokentype;
 	bool islastarg;
-	bool isfunctionreturned = false;
-	
-	unsigned int macroi;
+	int tokentype;
+	vector<SteamLanguage> linecontextlang, blockcontextlang;
+	SteamLanguage lang;
+	// Keep "lvlparam" and "breaklvlparam" allocations through the whole runtime, to avoid re-allocating them (their inner vector) each time
+	if (lvlparam.size() == 0)
+		lvlparam.emplace_back();
+	for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+		rawpos[lang] = 0;
+		lvlparam[0].parsecontextlang[lang] = true;
+		parseindices[lang].clear();
+	}
+
+	vector<long long> macrojumpoffset;
+	unsigned int macroi, macroj, macroopibase;
 	wxString macrostr;
-	#define MACRO_NEW_OPCODE(OPCODE) \
+	#define MACRO_REGISTER_FUNCTION_RETURN() \
+		for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) \
+			if (lvlparam[lvlamount].parsecontextlang[lang] && IsLineInLang(linecontextlang, lang)) \
+				isfunctionreturned.insert(lang);
+	#define MACRO_NEW_OPCODE_MULTILANG(OPCODE, SETUPINDICES, CONTEXTLANG) \
 		parseop[opi].parent = &script.func[entry_selection][function_selection]; \
 		parseop[opi].opcode = OPCODE; \
 		parseop[opi].arg_amount = HADES_STRING_SCRIPT_OPCODE[OPCODE].arg_amount; \
-		if (parseop[opi].arg_amount>=0) { \
-			parseop[opi].arg = NewScriptArgumentArray(parseop[opi].arg_amount,&parseop[opi]); \
-			for (macroi=0;macroi<parseop[opi].arg_amount;macroi++) { \
+		if (parseop[opi].arg_amount >= 0) { \
+			parseop[opi].arg = NewScriptArgumentArray(parseop[opi].arg_amount, &parseop[opi]); \
+			for (macroi = 0; macroi < parseop[opi].arg_amount; macroi++) { \
 				parseop[opi].arg[macroi].is_signed = IsScriptArgTypeSigned(HADES_STRING_SCRIPT_OPCODE[OPCODE].arg_type[macroi]); \
 				parseop[opi].arg[macroi].typesize = HADES_STRING_SCRIPT_OPCODE[OPCODE].arg_length[macroi]; \
 			} \
-		}
-	#define MACRO_OPCODE_SIZE_DONE() \
+		} \
+		if (SETUPINDICES) \
+			for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) \
+				if (lvlparam[lvlamount].parsecontextlang[lang] && IsLineInLang(CONTEXTLANG, lang)) \
+					parseindices[lang].push_back(opi);
+	#define MACRO_OPCODE_SIZE_DONE_SOFT() \
 		parseop[opi].size = 1 + (parseop[opi].opcode >> 8); \
 		if (HADES_STRING_SCRIPT_OPCODE[parseop[opi].opcode].use_vararg) \
 			parseop[opi].size += 1; \
-		if (parseop[opi].opcode==0x06 || parseop[opi].opcode==0x0B || parseop[opi].opcode==0x29) \
+		if (parseop[opi].opcode == 0x06 || parseop[opi].opcode == 0x0B || parseop[opi].opcode == 0x29) \
 			parseop[opi].size += 1; \
-		for (macroi=0;macroi<parseop[opi].arg_amount;macroi++) \
-			parseop[opi].size += parseop[opi].arg[macroi].size; \
-		rawpos += parseop[opi++].size;
-	#define MACRO_RISE_LEVEL(RAW,OP) \
-		lvlrawpos[lvlamount] = RAW; \
-		lvloppos[lvlamount] = OP; \
-		lvltype[lvlamount] = tokentype; \
-		lvlcaseamount[lvlamount++] = 0;
+		for (macroi = 0; macroi < parseop[opi].arg_amount; macroi++) \
+			parseop[opi].size += parseop[opi].arg[macroi].size;
+	#define MACRO_NEW_OPCODE(OPCODE) \
+		MACRO_NEW_OPCODE_MULTILANG(OPCODE, false, linecontextlang) \
+		for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) { \
+			if (lvlparam[lvlamount].parsecontextlang[lang] && IsLineInLang(linecontextlang, lang)) \
+				parseindices[lang].push_back(opi); \
+			else \
+				parseindices[lang].push_back(-1); \
+		}
+	#define MACRO_OPCODE_SIZE_DONE() \
+		MACRO_OPCODE_SIZE_DONE_SOFT() \
+		for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) \
+			if (lvlparam[lvlamount].parsecontextlang[lang] && IsLineInLang(linecontextlang, lang)) \
+				rawpos[lang] += parseop[opi].size; \
+		opi++;
+	#define MACRO_OPCODE_COMPLETE_INDICES(COUNT) \
+		if (debuglog) { \
+			for (macroi = indicescount; macroi < indicescount + COUNT; macroi++) { \
+				set<int> okindices; \
+				for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) { \
+					while (parseindices[lang].size() < indicescount + COUNT) \
+						parseindices[lang].push_back(-1); \
+					GetDebugLog() << HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[lang] << ":" << parseindices[lang][macroi] << " "; \
+					if (parseindices[lang][macroi] >= 0) \
+						okindices.insert(parseindices[lang][macroi]); \
+				} \
+				GetDebugLog() << "-->"; \
+				for (auto it = okindices.begin(); it != okindices.end(); it++) \
+					GetDebugLog() << " " << ConvertWStrToStr(HADES_STRING_SCRIPT_OPCODE[parseop[*it].opcode].label); \
+				GetDebugLog() << endl; \
+			} \
+		} \
+		indicescount += COUNT; \
+		for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) \
+			while (parseindices[lang].size() < indicescount) \
+				parseindices[lang].push_back(-1);
+	#define MACRO_RISE_LEVEL(RAW, OP) \
+		if (lvlparam.size() <= lvlamount + 1) lvlparam.emplace_back(); \
+		for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) { \
+			if (lvlparam[lvlamount].parsecontextlang[lang] && IsLineInLang(blockcontextlang, lang)) { \
+				lvlparam[lvlamount].rawpos[lang] = RAW; \
+				lvlparam[lvlamount + 1].parsecontextlang[lang] = true; \
+				if (debuglog) { \
+					GetDebugLog() << "RISE LEVEL " << lvlamount << " at " << lvlparam[lvlamount].rawpos[lang] << " in lang " << HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[lang].c_str() << endl; \
+				} \
+			} else { \
+				lvlparam[lvlamount].rawpos[lang] = 0; \
+				lvlparam[lvlamount + 1].parsecontextlang[lang] = false; \
+			} \
+		} \
+		blockcontextlang.clear(); \
+		lvlparam[lvlamount].oppos = OP; \
+		lvlparam[lvlamount].type = tokentype; \
+		lvlparam[lvlamount++].caseamount = 0;
+	#define MACRO_CHECK_VALID_LANG(ISBLOCK) \
+		for (macroi = 0; macroi < linecontextlang.size(); macroi++) { \
+			if (!lvlparam[lvlamount].parsecontextlang[linecontextlang[macroi]]) { \
+				errstr.Printf(wxT(HADES_STRING_SCRIPT_OOC_LANGUAGE), line, HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[linecontextlang[macroi]]); \
+				res.AddWarning(errstr.ToStdWstring()); \
+				linecontextlang.erase(linecontextlang.begin() + macroi--); \
+			} else if (isfunctionreturned.find(linecontextlang[macroi]) != isfunctionreturned.end()) { \
+				errstr.Printf(wxT(HADES_STRING_SCRIPT_IGNORE_POSTLANGRET), line, HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[linecontextlang[macroi]]); \
+				res.AddWarning(errstr.ToStdWstring()); \
+			} else if (ISBLOCK && IsLineInLang(blockcontextlang, linecontextlang[macroi])) { \
+				errstr.Printf(wxT(HADES_STRING_SCRIPT_FALLBACK_LANGUAGE), line, HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[linecontextlang[macroi]]); \
+				res.AddWarning(errstr.ToStdWstring()); \
+				linecontextlang.erase(linecontextlang.begin() + macroi--); \
+			} \
+		}
+	#define MACRO_CHECK_MULTILANG_FLOW() \
+		if (token.IsSameAs(L"{")) \
+			break; \
+		if (linecontextlang.size() == 0 || !(token.empty() || token.StartsWith(_(L"//")))) { \
+			MACRO_CHECK_PUNC_ERROR(L"{") \
+		} \
+		pos = str.find_first_of(L'\n'); \
+		linestr = str.Mid(0, pos); \
+		if (pos != string::npos) \
+			str = str.Mid(pos + 1); \
+		else \
+			str = wxEmptyString; \
+		line++; \
+		token = GetNextThing(linestr); \
+		linecontextlang.clear(); \
+		if (token[0] != L'[') { \
+			errstr.Printf(wxT(HADES_STRING_SCRIPT_EXPECT_LANGUAGE), line); \
+			res.AddError(errstr.ToStdWstring()); \
+		} else { \
+			ParseLangSelector(token, linecontextlang, &res, line); \
+			token = GetNextThing(linestr); \
+			MACRO_CHECK_VALID_LANG(true) \
+		} \
+		blockcontextlang.insert(blockcontextlang.end(), linecontextlang.cbegin(), linecontextlang.cend());
+	#define MACRO_NEW_JUMP_MULTILANG(OPCODE, CONTEXTLANG, FORMULA, SPLITALL) \
+		macroopibase = opi; \
+		for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) { \
+			if (lvlparam[lvlamount].parsecontextlang[lang] && IsLineInLang(CONTEXTLANG, lang)) { \
+				long long offset = FORMULA; \
+				if (SPLITALL) { \
+					macroj = macrojumpoffset.size(); \
+				} else { \
+					for (macroj = 0; macroj < macrojumpoffset.size(); macroj++) \
+						if (macrojumpoffset[macroj] == offset) \
+							break; \
+				} \
+				if (macroj >= macrojumpoffset.size()) { \
+					macrojumpoffset.push_back(offset); \
+					MACRO_NEW_OPCODE_MULTILANG(OPCODE, false, CONTEXTLANG) \
+					parseop[opi].arg[0].SetValue(offset); \
+					MACRO_OPCODE_SIZE_DONE_SOFT() \
+					opi++; \
+				} \
+				parseindices[lang].push_back(macroopibase + macroj); \
+				rawpos[lang] += parseop[macroopibase + macroj].size; \
+			} \
+		} \
+		macrojumpoffset.clear();
+	#define MACRO_SET_JUMP_DEST_MULTILANG(CONTEXTLANG, OPPOS, RAWPOS) \
+		for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) \
+			if (lvlparam[lvlamount].parsecontextlang[lang] && IsLineInLang(CONTEXTLANG, lang)) \
+				parseop[parseindices[lang][OPPOS]].arg[0].SetValue(RAWPOS);
+	#define MACRO_STORE_ARGVAL_MULTILANG(LVLPARAM, ARGVAL, CONTEXTLANG) \
+		if (LVLPARAM.argval.size() <= LVLPARAM.argvalamount) { \
+			LVLPARAM.argval.emplace_back(); \
+			LVLPARAM.argvallang.emplace_back(); \
+		} \
+		LVLPARAM.argval[LVLPARAM.argvalamount] = ARGVAL; \
+		LVLPARAM.argvallang[LVLPARAM.argvalamount++] = CONTEXTLANG;
 	#define MACRO_CHECK_PUNC_ERROR(PUNC) \
 		if (!token.IsSameAs(PUNC)) { \
-			errstr.Printf(wxT(HADES_STRING_SCRIPT_EXPECT),line,PUNC); \
+			errstr.Printf(wxT(HADES_STRING_SCRIPT_EXPECT), line, PUNC); \
 			res.AddError(errstr.ToStdWstring()); \
-			break; \
+			goto end_of_loop; \
 		}
 	#define MACRO_CHECK_NUMBER_ERROR() \
 		if (!token.IsNumber()) { \
-			errstr.Printf(wxT(HADES_STRING_SCRIPT_NUMBER),line); \
+			errstr.Printf(wxT(HADES_STRING_SCRIPT_NUMBER), line); \
 			res.AddError(errstr.ToStdWstring()); \
-			break; \
+			goto end_of_loop; \
+		}
+	#define MACRO_CHECK_SWITCH_MISMATCH_ERROR(COMPARE) \
+		if (!token.IsSameAs(COMPARE)) { \
+			errstr.Printf(wxT(HADES_STRING_SCRIPT_SWITCH_MISMATCH), line); \
+			res.AddError(errstr.ToStdWstring()); \
+			goto end_of_loop; \
 		}
 	#define MACRO_CHECK_EMPTY_ERROR() \
 		if (token.IsEmpty()) { \
-			errstr.Printf(wxT(HADES_STRING_SCRIPT_EMPTY),line); \
+			errstr.Printf(wxT(HADES_STRING_SCRIPT_EMPTY), line); \
 			res.AddError(errstr.ToStdWstring()); \
-			break; \
+			goto end_of_loop; \
 		}
 	#define MACRO_CHECK_VARARG_ERROR(DEST) \
-		DEST = ConvertStringToVararg(token,macrostr,localvar); \
-		if (DEST.size()==0) { \
-			errstr.Printf(wxT(HADES_STRING_SCRIPT_VARARG_MAIN),line,macrostr); \
+		DEST = ConvertStringToVararg(token, macrostr, localvar); \
+		if (DEST.size() == 0) { \
+			errstr.Printf(wxT(HADES_STRING_SCRIPT_VARARG_MAIN), line, macrostr); \
 			res.AddError(errstr.ToStdWstring()); \
-			break; \
+			goto end_of_loop; \
 		}
 	#define MACRO_CHECK_TRAILING_WARNING() \
 		linestr.Trim(false); \
-		if (linestr.Length()>0 && !(linestr.Length()>=2 && linestr[0]==L'/' && linestr[1]==L'/')) { \
-			errstr.Printf(wxT(HADES_STRING_SCRIPT_IGNORE),line,linestr); \
+		if (linestr.Length() > 0 && !linestr.StartsWith(_(L"//"))) { \
+			errstr.Printf(wxT(HADES_STRING_SCRIPT_IGNORE), line, linestr); \
 			res.AddWarning(errstr.ToStdWstring()); \
+		}
+	#define MACRO_CHECK_NO_LANG_SPEC(KEYWORD) \
+		if (linecontextlang.size() > 0) { \
+			errstr.Printf(wxT(HADES_STRING_SCRIPT_UNEXPECT_LANGUAGE), line, KEYWORD); \
+			res.AddError(errstr.ToStdWstring()); \
+			goto end_of_loop; \
 		}
 	
 	ScriptLocalVariableSet* localvar = ParseLocal(res, currentvar_str);
 	while (!str.IsEmpty()) {
 		pos = str.find_first_of(L'\n');
 		linestr = str.Mid(0, pos);
-		if (pos!=string::npos)
-			str = str.Mid(pos+1);
+		if (pos != string::npos)
+			str = str.Mid(pos + 1);
 		else
 			str = wxEmptyString;
 		line++;
 		token = GetNextThing(linestr);
 		tokentype = -1;
-		if (token==wxEmptyString || (token.Length()>=2 && token[0]==L'/' && token[1]==L'/'))
+		if (token == wxEmptyString || token.StartsWith(_(L"//")))
 			continue;
-		if (isfunctionreturned) {
-			errstr.Printf(wxT(HADES_STRING_SCRIPT_IGNORE_POSTRET),line);
+		linecontextlang.clear();
+		if (token[0] == L'[') {
+			ParseLangSelector(token, linecontextlang, &res, line);
+			token = GetNextThing(linestr);
+			MACRO_CHECK_VALID_LANG(false)
+		}
+		if (isfunctionreturned.size() >= STEAM_LANGUAGE_AMOUNT) {
+			errstr.Printf(wxT(HADES_STRING_SCRIPT_IGNORE_POSTRET), line);
 			res.AddWarning(errstr.ToStdWstring());
 			if (opi == 0)
 				continue;
 		}
 		for (i = 0; i < G_N_ELEMENTS(keywords); i++) {
 			if (token.IsSameAs(keywords[i])) {
-				tokentype = i + 1;
-				switch (i) {
+				tokentype = i;
+				switch (tokentype) {
 				case 0: // if
 					token = GetNextPunc(linestr);
 					MACRO_CHECK_PUNC_ERROR(L"(")
@@ -2398,20 +3032,30 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 					token = GetNextPunc(linestr);
 					MACRO_CHECK_PUNC_ERROR(L")")
 					token = GetNextPunc(linestr);
-					MACRO_CHECK_PUNC_ERROR(L"{")
-					MACRO_NEW_OPCODE(0x05)
-					parseop[opi].arg[0].SetValueVar(argval);
-					MACRO_OPCODE_SIZE_DONE()
-					MACRO_NEW_OPCODE(0x02)
-					parseop[opi].arg[0].SetValue(0);
-					MACRO_OPCODE_SIZE_DONE()
-					MACRO_RISE_LEVEL(rawpos, opi - 2)
+					blockcontextlang = linecontextlang;
+					while (true) {
+						MACRO_NEW_OPCODE_MULTILANG(0x05, true, linecontextlang)
+						parseop[opi].arg[0].SetValueVar(argval);
+						MACRO_OPCODE_SIZE_DONE()
+						MACRO_NEW_JUMP_MULTILANG(0x02, linecontextlang, 0, true)
+						MACRO_CHECK_MULTILANG_FLOW()
+						MACRO_CHECK_PUNC_ERROR(L"if")
+						token = GetNextPunc(linestr);
+						MACRO_CHECK_PUNC_ERROR(L"(")
+						token = GetNextArg(linestr);
+						MACRO_CHECK_VARARG_ERROR(argval)
+						token = GetNextPunc(linestr);
+						MACRO_CHECK_PUNC_ERROR(L")")
+						token = GetNextPunc(linestr);
+					}
 					MACRO_CHECK_TRAILING_WARNING()
-					break;
+					MACRO_RISE_LEVEL(rawpos[lang], indicescount)
+					MACRO_OPCODE_COMPLETE_INDICES(2)
+					goto end_of_loop;
 				case 1: // else
 					errstr.Printf(wxT(HADES_STRING_SCRIPT_EXPECT), line, L"}");
 					res.AddError(errstr.ToStdWstring());
-					break;
+					goto end_of_loop;
 				case 2: // ifnot
 					token = GetNextPunc(linestr);
 					MACRO_CHECK_PUNC_ERROR(L"(")
@@ -2420,52 +3064,107 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 					token = GetNextPunc(linestr);
 					MACRO_CHECK_PUNC_ERROR(L")")
 					token = GetNextPunc(linestr);
-					MACRO_CHECK_PUNC_ERROR(L"{")
-					MACRO_NEW_OPCODE(0x05)
-					parseop[opi].arg[0].SetValueVar(argval);
-					MACRO_OPCODE_SIZE_DONE()
-					MACRO_NEW_OPCODE(0x03)
-					parseop[opi].arg[0].SetValue(0);
-					MACRO_OPCODE_SIZE_DONE()
-					MACRO_RISE_LEVEL(rawpos, opi - 2)
+					blockcontextlang = linecontextlang;
+					while (true) {
+						MACRO_NEW_OPCODE_MULTILANG(0x05, true, linecontextlang)
+						parseop[opi].arg[0].SetValueVar(argval);
+						MACRO_OPCODE_SIZE_DONE()
+						MACRO_NEW_JUMP_MULTILANG(0x03, linecontextlang, 0, true)
+						MACRO_CHECK_MULTILANG_FLOW()
+						MACRO_CHECK_PUNC_ERROR(L"ifnot")
+						token = GetNextPunc(linestr);
+						MACRO_CHECK_PUNC_ERROR(L"(")
+						token = GetNextArg(linestr);
+						MACRO_CHECK_VARARG_ERROR(argval)
+						token = GetNextPunc(linestr);
+						MACRO_CHECK_PUNC_ERROR(L")")
+						token = GetNextPunc(linestr);
+					}
 					MACRO_CHECK_TRAILING_WARNING()
-					break;
+					MACRO_RISE_LEVEL(rawpos[lang], indicescount)
+					MACRO_OPCODE_COMPLETE_INDICES(2)
+					goto end_of_loop;
 				case 3: // while
 					token = GetNextPunc(linestr);
 					MACRO_CHECK_PUNC_ERROR(L"(")
 					token = GetNextArg(linestr);
-					MACRO_CHECK_VARARG_ERROR(lvlargval[lvlamount])
+					MACRO_CHECK_VARARG_ERROR(argval)
+					lvlparam[lvlamount].argvalamount = 0;
+					MACRO_STORE_ARGVAL_MULTILANG(lvlparam[lvlamount], argval, linecontextlang)
 					token = GetNextPunc(linestr);
 					MACRO_CHECK_PUNC_ERROR(L")")
 					token = GetNextPunc(linestr);
-					MACRO_CHECK_PUNC_ERROR(L"{")
-					MACRO_NEW_OPCODE(0x01)
-					parseop[opi].arg[0].SetValue(0);
-					MACRO_OPCODE_SIZE_DONE()
-					MACRO_RISE_LEVEL(rawpos, opi - 1)
+					blockcontextlang = linecontextlang;
+					while (true) {
+						MACRO_NEW_JUMP_MULTILANG(0x01, linecontextlang, 0, true)
+						MACRO_CHECK_MULTILANG_FLOW()
+						MACRO_CHECK_PUNC_ERROR(L"while")
+						token = GetNextPunc(linestr);
+						MACRO_CHECK_PUNC_ERROR(L"(")
+						token = GetNextArg(linestr);
+						MACRO_CHECK_VARARG_ERROR(argval)
+						MACRO_STORE_ARGVAL_MULTILANG(lvlparam[lvlamount], argval, linecontextlang)
+						token = GetNextPunc(linestr);
+						MACRO_CHECK_PUNC_ERROR(L")")
+						token = GetNextPunc(linestr);
+					}
 					MACRO_CHECK_TRAILING_WARNING()
-					breaklvli[breaklvlamount++] = 0;
-					break;
+					MACRO_RISE_LEVEL(rawpos[lang], indicescount)
+					MACRO_OPCODE_COMPLETE_INDICES(1)
+					if (breaklvlparam.size() <= breaklvlamount) breaklvlparam.emplace_back();
+					breaklvlparam[breaklvlamount++].Reset();
+					goto end_of_loop;
 				case 4: // do
+					MACRO_CHECK_NO_LANG_SPEC(L"do")
 					token = GetNextPunc(linestr);
+					blockcontextlang = linecontextlang;
 					MACRO_CHECK_PUNC_ERROR(L"{")
-					MACRO_RISE_LEVEL(rawpos, opi)
+					MACRO_RISE_LEVEL(rawpos[lang], indicescount)
 					MACRO_CHECK_TRAILING_WARNING()
-					breaklvli[breaklvlamount++] = 0;
-					break;
-				case 5: // loop
+					if (breaklvlparam.size() <= breaklvlamount) breaklvlparam.emplace_back();
+					breaklvlparam[breaklvlamount++].Reset();
+					goto end_of_loop;
+				case 5: // dowhile
+					token = GetNextPunc(linestr);
+					MACRO_CHECK_PUNC_ERROR(L"(")
+					token = GetNextArg(linestr);
+					MACRO_CHECK_VARARG_ERROR(argval)
+					lvlparam[lvlamount].argvalamount = 0;
+					MACRO_STORE_ARGVAL_MULTILANG(lvlparam[lvlamount], argval, linecontextlang)
+					token = GetNextPunc(linestr);
+					MACRO_CHECK_PUNC_ERROR(L")")
+					token = GetNextPunc(linestr);
+					blockcontextlang = linecontextlang;
+					while (true) {
+						MACRO_CHECK_MULTILANG_FLOW()
+						MACRO_CHECK_PUNC_ERROR(L"dowhile")
+						token = GetNextPunc(linestr);
+						MACRO_CHECK_PUNC_ERROR(L"(")
+						token = GetNextArg(linestr);
+						MACRO_CHECK_VARARG_ERROR(argval)
+						MACRO_STORE_ARGVAL_MULTILANG(lvlparam[lvlamount], argval, linecontextlang)
+						token = GetNextPunc(linestr);
+						MACRO_CHECK_PUNC_ERROR(L")")
+						token = GetNextPunc(linestr);
+					}
+					MACRO_CHECK_TRAILING_WARNING()
+					MACRO_RISE_LEVEL(rawpos[lang], indicescount)
+					if (breaklvlparam.size() <= breaklvlamount) breaklvlparam.emplace_back();
+					breaklvlparam[breaklvlamount++].Reset();
+					goto end_of_loop;
+				case 6: { // loop
 					if (lvlamount > 0) {
 						errstr.Printf(wxT(HADES_STRING_SCRIPT_LOOP), line);
 						res.AddError(errstr.ToStdWstring());
-						break;
+						goto end_of_loop;
 					}
-					MACRO_NEW_OPCODE(0x01)
-					parseop[opi].arg[0].SetValue(-((long long)rawpos + 3));
-					MACRO_OPCODE_SIZE_DONE()
+					MACRO_NEW_JUMP_MULTILANG(0x01, linecontextlang, -((long long)rawpos[lang] + 3), false)
+					MACRO_OPCODE_COMPLETE_INDICES(1)
 					MACRO_CHECK_TRAILING_WARNING()
-					isfunctionreturned = true;
-					break;
-				case 6: // switch
+					MACRO_REGISTER_FUNCTION_RETURN()
+					goto end_of_loop;
+				}
+				case 7: // switch
 					token = GetNextThing(linestr);
 					MACRO_CHECK_NUMBER_ERROR()
 					argstr[0] = token;
@@ -2481,28 +3180,55 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 					MACRO_CHECK_NUMBER_ERROR()
 					argstr[1] = token;
 					token = GetNextPunc(linestr);
-					MACRO_CHECK_PUNC_ERROR(L"{")
-					MACRO_NEW_OPCODE(0x05)
-					parseop[opi].arg[0].SetValueVar(argval);
-					MACRO_OPCODE_SIZE_DONE()
-					MACRO_NEW_OPCODE(0x0B)
-					parseop[opi].size_byte = wxAtoi(argstr[0]);
-					parseop[opi].arg_amount = 2 + parseop[opi].size_byte;
-					parseop[opi].arg = NewScriptArgumentArray(parseop[opi].arg_amount, &parseop[opi]);
-					parseop[opi].arg[0].is_signed = false;
-					parseop[opi].arg[0].typesize = 2;
-					parseop[opi].arg[0].SetValue(wxAtoi(argstr[1]));
-					for (j = 1; j < parseop[opi].arg_amount; j++) {
-						parseop[opi].arg[j].is_signed = true;
-						parseop[opi].arg[j].typesize = 2;
-						parseop[opi].arg[j].SetValue(-1);
+					blockcontextlang = linecontextlang;
+					while (true) {
+						MACRO_NEW_OPCODE_MULTILANG(0x05, true, linecontextlang)
+						parseop[opi].arg[0].SetValueVar(argval);
+						MACRO_OPCODE_SIZE_DONE()
+						for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+							if (lvlparam[lvlamount].parsecontextlang[lang] && IsLineInLang(linecontextlang, lang)) {
+								MACRO_NEW_OPCODE_MULTILANG(0x0B, false, linecontextlang)
+								parseindices[lang].push_back(opi);
+								parseop[opi].size_byte = wxAtoi(argstr[0]);
+								parseop[opi].arg_amount = 2 + parseop[opi].size_byte;
+								parseop[opi].arg = NewScriptArgumentArray(parseop[opi].arg_amount, &parseop[opi]);
+								parseop[opi].arg[0].is_signed = false;
+								parseop[opi].arg[0].typesize = 2;
+								parseop[opi].arg[0].SetValue(wxAtoi(argstr[1]));
+								for (j = 1; j < parseop[opi].arg_amount; j++) {
+									parseop[opi].arg[j].is_signed = true;
+									parseop[opi].arg[j].typesize = 2;
+									parseop[opi].arg[j].SetValue(-1);
+								}
+								MACRO_OPCODE_SIZE_DONE_SOFT()
+								rawpos[lang] += parseop[opi++].size;
+							}
+						}
+						MACRO_CHECK_MULTILANG_FLOW()
+						MACRO_CHECK_PUNC_ERROR(L"switch")
+						token = GetNextThing(linestr);
+						MACRO_CHECK_NUMBER_ERROR()
+						MACRO_CHECK_SWITCH_MISMATCH_ERROR(argstr[0])
+						token = GetNextPunc(linestr);
+						MACRO_CHECK_PUNC_ERROR(L"(")
+						token = GetNextArg(linestr);
+						MACRO_CHECK_VARARG_ERROR(argval)
+						token = GetNextPunc(linestr);
+						MACRO_CHECK_PUNC_ERROR(L")")
+						token = GetNextThing(linestr);
+						MACRO_CHECK_PUNC_ERROR(L"from")
+						token = GetNextThing(linestr);
+						MACRO_CHECK_NUMBER_ERROR()
+						MACRO_CHECK_SWITCH_MISMATCH_ERROR(argstr[1])
+						token = GetNextPunc(linestr);
 					}
-					MACRO_OPCODE_SIZE_DONE()
-					MACRO_RISE_LEVEL(rawpos + 1 - parseop[opi - 1].size, opi - 2)
 					MACRO_CHECK_TRAILING_WARNING()
-					breaklvli[breaklvlamount++] = 0;
-					break;
-				case 7: // switchex
+					MACRO_RISE_LEVEL(rawpos[lang] + 1 - parseop[parseindices[lang][indicescount + 1]].size, indicescount)
+					MACRO_OPCODE_COMPLETE_INDICES(2)
+					if (breaklvlparam.size() <= breaklvlamount) breaklvlparam.emplace_back();
+					breaklvlparam[breaklvlamount++].Reset();
+					goto end_of_loop;
+				case 8: // switchex
 					token = GetNextThing(linestr);
 					MACRO_CHECK_NUMBER_ERROR()
 					argstr[0] = token;
@@ -2513,67 +3239,96 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 					token = GetNextPunc(linestr);
 					MACRO_CHECK_PUNC_ERROR(L")")
 					token = GetNextPunc(linestr);
-					MACRO_CHECK_PUNC_ERROR(L"{")
-					MACRO_NEW_OPCODE(0x05)
-					parseop[opi].arg[0].SetValueVar(argval);
-					MACRO_OPCODE_SIZE_DONE()
-					MACRO_NEW_OPCODE(0x06)
-					parseop[opi].size_byte = wxAtoi(argstr[0]);
-					parseop[opi].arg_amount = 1 + parseop[opi].size_byte * 2;
-					parseop[opi].arg = NewScriptArgumentArray(parseop[opi].arg_amount, &parseop[opi]);
-					parseop[opi].arg[0].is_signed = true;
-					parseop[opi].arg[0].typesize = 2;
-					parseop[opi].arg[0].SetValue(-1);
-					for (j = 1; j < parseop[opi].arg_amount; j++) {
-						parseop[opi].arg[j].is_signed = j % 2 == 0;
-						parseop[opi].arg[j].typesize = 2;
-						parseop[opi].arg[j].SetValue(0);
+					blockcontextlang = linecontextlang;
+					while (true) {
+						MACRO_NEW_OPCODE_MULTILANG(0x05, true, linecontextlang)
+						parseop[opi].arg[0].SetValueVar(argval);
+						MACRO_OPCODE_SIZE_DONE()
+						for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+							if (lvlparam[lvlamount].parsecontextlang[lang] && IsLineInLang(linecontextlang, lang)) {
+								MACRO_NEW_OPCODE_MULTILANG(0x06, false, linecontextlang)
+								parseindices[lang].push_back(opi);
+								parseop[opi].size_byte = wxAtoi(argstr[0]);
+								parseop[opi].arg_amount = 1 + parseop[opi].size_byte * 2;
+								parseop[opi].arg = NewScriptArgumentArray(parseop[opi].arg_amount, &parseop[opi]);
+								parseop[opi].arg[0].is_signed = true;
+								parseop[opi].arg[0].typesize = 2;
+								parseop[opi].arg[0].SetValue(-1);
+								for (j = 1; j < parseop[opi].arg_amount; j++) {
+									parseop[opi].arg[j].is_signed = j % 2 == 0;
+									parseop[opi].arg[j].typesize = 2;
+									parseop[opi].arg[j].SetValue(0);
+								}
+								MACRO_OPCODE_SIZE_DONE_SOFT()
+								rawpos[lang] += parseop[opi++].size;
+							}
+						}
+						MACRO_CHECK_MULTILANG_FLOW()
+						MACRO_CHECK_PUNC_ERROR(L"switchex")
+						token = GetNextThing(linestr);
+						MACRO_CHECK_NUMBER_ERROR()
+						MACRO_CHECK_SWITCH_MISMATCH_ERROR(argstr[0])
+						token = GetNextPunc(linestr);
+						MACRO_CHECK_PUNC_ERROR(L"(")
+						token = GetNextArg(linestr);
+						MACRO_CHECK_VARARG_ERROR(argval)
+						token = GetNextPunc(linestr);
+						MACRO_CHECK_PUNC_ERROR(L")")
+						token = GetNextPunc(linestr);
 					}
-					MACRO_OPCODE_SIZE_DONE()
-					MACRO_RISE_LEVEL(rawpos + 4 - parseop[opi - 1].size, opi - 2)
 					MACRO_CHECK_TRAILING_WARNING()
-					breaklvli[breaklvlamount++] = 0;
-					break;
-				case 8: { // case
-					if (lvltype[lvlamount - 1] != 7 && lvltype[lvlamount - 1] != 8) {
-						errstr.Printf(wxT(HADES_STRING_SCRIPT_NOTSWITCH), line, L"default");
+					MACRO_RISE_LEVEL(rawpos[lang] + 4 - parseop[parseindices[lang][indicescount + 1]].size, indicescount)
+					MACRO_OPCODE_COMPLETE_INDICES(2)
+					if (breaklvlparam.size() <= breaklvlamount) breaklvlparam.emplace_back();
+					breaklvlparam[breaklvlamount++].Reset();
+					goto end_of_loop;
+				case 9: { // case
+					MACRO_CHECK_NO_LANG_SPEC(L"case")
+					if (lvlamount == 0 || (lvlparam[lvlamount - 1].type != 7 && lvlparam[lvlamount - 1].type != 8)) {
+						errstr.Printf(wxT(HADES_STRING_SCRIPT_NOTSWITCH), line, L"case");
 						res.AddError(errstr.ToStdWstring());
-						break;
+						goto end_of_loop;
 					}
 					bool endenum = false;
 					token = GetNextThing(linestr);
 					while (!endenum) {
-						if (lvltype[lvlamount - 1] == 7) {
+						if (lvlparam[lvlamount - 1].type == 7) {
 							if (token[0] != L'+') {
 								errstr.Printf(wxT(HADES_STRING_SCRIPT_EXPECT), line, L"+");
 								res.AddError(errstr.ToStdWstring());
-								break;
+								goto end_of_loop;
 							}
 							token = token.Mid(1);
 						}
 						MACRO_CHECK_NUMBER_ERROR()
-						if (lvlcaseamount[lvlamount - 1] >= parseop[lvloppos[lvlamount - 1] + 1].size_byte) {
-							errstr.Printf(wxT(HADES_STRING_SCRIPT_CASE), line);
-							res.AddError(errstr.ToStdWstring());
-							break;
-						}
-						if (lvltype[lvlamount - 1] == 7) {
-							if (wxAtoi(token) >= parseop[lvloppos[lvlamount - 1] + 1].size_byte || wxAtoi(token) < 0) {
-								errstr.Printf(wxT(HADES_STRING_SCRIPT_CASE_RANGE), line);
-								res.AddError(errstr.ToStdWstring());
-								break;
+						for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+							if (lvlparam[lvlamount].parsecontextlang[lang] && IsLineInLang(linecontextlang, lang)) {
+								long long offset = rawpos[lang] - lvlparam[lvlamount - 1].rawpos[lang];
+								int langoppos = parseindices[lang][lvlparam[lvlamount - 1].oppos + 1];
+								if (lvlparam[lvlamount - 1].caseamount >= parseop[langoppos].size_byte) {
+									errstr.Printf(wxT(HADES_STRING_SCRIPT_CASE), line);
+									res.AddError(errstr.ToStdWstring());
+									goto end_of_loop;
+								}
+								if (lvlparam[lvlamount - 1].type == 7) {
+									if (wxAtoi(token) >= parseop[langoppos].size_byte || wxAtoi(token) < 0) {
+										errstr.Printf(wxT(HADES_STRING_SCRIPT_CASE_RANGE), line);
+										res.AddError(errstr.ToStdWstring());
+										goto end_of_loop;
+									}
+									if (parseop[langoppos].arg[2 + wxAtoi(token)].GetValue() != -1) {
+										errstr.Printf(wxT(HADES_STRING_SCRIPT_CASE_TWICE), line, token);
+										res.AddError(errstr.ToStdWstring());
+										goto end_of_loop;
+									}
+									parseop[langoppos].arg[2 + wxAtoi(token)].SetValue(offset);
+								} else {
+									parseop[langoppos].arg[1 + lvlparam[lvlamount - 1].caseamount * 2].SetValue(wxAtoi(token));
+									parseop[langoppos].arg[2 + lvlparam[lvlamount - 1].caseamount * 2].SetValue(offset);
+								}
 							}
-							if (parseop[lvloppos[lvlamount - 1] + 1].arg[2 + wxAtoi(token)].GetValue() != -1) {
-								errstr.Printf(wxT(HADES_STRING_SCRIPT_CASE_TWICE), line, token);
-								res.AddError(errstr.ToStdWstring());
-								break;
-							}
-							parseop[lvloppos[lvlamount - 1] + 1].arg[2 + wxAtoi(token)].SetValue(rawpos - lvlrawpos[lvlamount - 1]);
-						} else {
-							parseop[lvloppos[lvlamount - 1] + 1].arg[1 + lvlcaseamount[lvlamount - 1] * 2].SetValue(wxAtoi(token));
-							parseop[lvloppos[lvlamount - 1] + 1].arg[2 + lvlcaseamount[lvlamount - 1] * 2].SetValue(rawpos - lvlrawpos[lvlamount - 1]);
 						}
-						lvlcaseamount[lvlamount - 1]++;
+						lvlparam[lvlamount - 1].caseamount++;
 						token = GetNextThing(linestr);
 						if (token.IsSameAs(L";")) {
 							token = GetNextThing(linestr);
@@ -2582,49 +3337,57 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 						} else {
 							errstr.Printf(wxT(HADES_STRING_SCRIPT_EXPECT), line, L";' or ':");
 							res.AddError(errstr.ToStdWstring());
-							break;
+							goto end_of_loop;
 						}
 					}
-					if (!endenum)
-						break;
 					MACRO_CHECK_TRAILING_WARNING()
-					break;
+					goto end_of_loop;
 				}
-				case 9: // default
-					if (lvltype[lvlamount - 1] != 7 && lvltype[lvlamount - 1] != 8) {
+				case 10: // default
+					MACRO_CHECK_NO_LANG_SPEC(L"default")
+					if (lvlamount == 0 || (lvlparam[lvlamount - 1].type != 7 && lvlparam[lvlamount - 1].type != 8)) {
 						errstr.Printf(wxT(HADES_STRING_SCRIPT_NOTSWITCH), line, L"default");
 						res.AddError(errstr.ToStdWstring());
-						break;
+						goto end_of_loop;
 					}
 					token = GetNextPunc(linestr);
 					MACRO_CHECK_PUNC_ERROR(L":")
-					if (lvltype[lvlamount - 1] == 7)
-						parseop[lvloppos[lvlamount - 1] + 1].arg[1].SetValue(rawpos - lvlrawpos[lvlamount - 1]);
-					else
-						parseop[lvloppos[lvlamount - 1] + 1].arg[0].SetValue(rawpos - lvlrawpos[lvlamount - 1]);
-					for (i = 0; i < parseop[lvloppos[lvlamount - 1] + 1].size_byte; i++)
-						if (parseop[lvloppos[lvlamount - 1] + 1].arg[2 + i].GetValue() == -1)
-							parseop[lvloppos[lvlamount - 1] + 1].arg[2 + i].SetValue(rawpos - lvlrawpos[lvlamount - 1]);
+					for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+						if (lvlparam[lvlamount].parsecontextlang[lang] && IsLineInLang(linecontextlang, lang)) {
+							long long offset = rawpos[lang] - lvlparam[lvlamount - 1].rawpos[lang];
+							int langoppos = parseindices[lang][lvlparam[lvlamount - 1].oppos + 1];
+							if (lvlparam[lvlamount - 1].type == 8) {
+								parseop[langoppos].arg[0].SetValue(offset);
+							} else {
+								parseop[langoppos].arg[1].SetValue(offset);
+								for (j = 0; j < parseop[langoppos].size_byte; j++)
+									if (parseop[langoppos].arg[2 + j].GetValue() == -1)
+										parseop[langoppos].arg[2 + j].SetValue(offset);
+							}
+						}
+					}
 					MACRO_CHECK_TRAILING_WARNING()
-					break;
-				case 10: // break
+					goto end_of_loop;
+				case 11: // break
+					MACRO_CHECK_NO_LANG_SPEC(L"break")
 					if (breaklvlamount > 0) {
-						MACRO_NEW_OPCODE(0x01)
-						parseop[opi].arg[0].SetValue(0);
-						breaklvloppos[breaklvlamount - 1][breaklvli[breaklvlamount - 1]] = opi;
-						MACRO_OPCODE_SIZE_DONE()
-						breaklvlrawpos[breaklvlamount - 1][breaklvli[breaklvlamount - 1]] = rawpos;
-						breaklvli[breaklvlamount - 1]++;
+						breaklvlparam[breaklvlamount - 1].oppos.push_back(indicescount);
+						MACRO_NEW_JUMP_MULTILANG(0x01, linecontextlang, 0, true)
+						MACRO_OPCODE_COMPLETE_INDICES(1)
+						for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+							breaklvlparam[breaklvlamount - 1].rawpos[lang].push_back(rawpos[lang]);
+						breaklvlparam[breaklvlamount - 1].count++;
 						MACRO_CHECK_TRAILING_WARNING()
 					} else {
 						errstr.Printf(wxT(HADES_STRING_SCRIPT_NOBREAK), line, L"break");
 						res.AddError(errstr.ToStdWstring());
 					}
-					break;
-				case 11: // Function
+					goto end_of_loop;
+				case 12: // Function
 					functionlist_str[GetFunctionAbsolutePos(entry_selection, function_selection)] = _(L"Function") + linestr;
-					break;
-				case 12: // forward
+					goto end_of_loop;
+				case 13: // forward
+					MACRO_CHECK_NO_LANG_SPEC(L"forward")
 					if (opi > 0) {
 						errstr.Printf(wxT(HADES_STRING_SCRIPT_FORWARD), line, L"forward");
 						res.AddError(errstr.ToStdWstring());
@@ -2632,56 +3395,66 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 						errstr.Printf(wxT(HADES_STRING_SCRIPT_FORWARD_END), line);
 						res.AddError(errstr.ToStdWstring());
 					} else {
-						isfunctionreturned = true;
+						MACRO_REGISTER_FUNCTION_RETURN()
 					}
 				}
-				break;
+				goto end_of_loop;
 			}
 		}
-		if (tokentype<0 && token.IsSameAs(L"}")) {
+		if (tokentype < 0 && token.IsSameAs(L"}")) {
 			tokentype = 0x80;
-			if (lvlamount==0) {
-				errstr.Printf(wxT(HADES_STRING_SCRIPT_BLOCKTOOMANY),line);
-				res.AddError(errstr.ToStdWstring());
-				break;
+			if (linecontextlang.size() > 0) {
+				errstr.Printf(wxT(HADES_STRING_SCRIPT_UNEXPECT_LANGUAGE), line, L"}");
+				res.AddWarning(errstr.ToStdWstring());
 			}
+			if (lvlamount == 0) {
+				errstr.Printf(wxT(HADES_STRING_SCRIPT_BLOCKTOOMANY), line);
+				res.AddError(errstr.ToStdWstring());
+				goto end_of_loop;
+			}
+			linecontextlang.clear();
+			for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+				if (lvlparam[lvlamount].parsecontextlang[lang])
+					linecontextlang.push_back(lang);
 			lvlamount--;
-			switch (lvltype[lvlamount]) {
-			case 1: // if
+			switch (lvlparam[lvlamount].type) {
+			case 0: // if
 				token = GetNextThing(linestr);
 				if (token.IsSameAs(L"else")) {
 					token = GetNextPunc(linestr);
 					MACRO_CHECK_PUNC_ERROR(L"{")
 					MACRO_CHECK_TRAILING_WARNING()
-					MACRO_NEW_OPCODE(0x01)
-					parseop[opi].arg[0].SetValue(0);
-					MACRO_OPCODE_SIZE_DONE()
-					parseop[lvloppos[lvlamount] + 1].arg[0].SetValue(rawpos - lvlrawpos[lvlamount]);
-					tokentype = 2;
-					MACRO_RISE_LEVEL(rawpos, opi - 1)
+					MACRO_NEW_JUMP_MULTILANG(0x01, linecontextlang, 0, true)
+					MACRO_SET_JUMP_DEST_MULTILANG(linecontextlang, lvlparam[lvlamount].oppos + 1, rawpos[lang] - lvlparam[lvlamount].rawpos[lang])
+					tokentype = 1;
+					blockcontextlang = linecontextlang;
+					MACRO_RISE_LEVEL(rawpos[lang], indicescount)
+					MACRO_OPCODE_COMPLETE_INDICES(1)
 				} else {
-					parseop[lvloppos[lvlamount] + 1].arg[0].SetValue(rawpos - lvlrawpos[lvlamount]);
+					MACRO_SET_JUMP_DEST_MULTILANG(linecontextlang, lvlparam[lvlamount].oppos + 1, rawpos[lang] - lvlparam[lvlamount].rawpos[lang])
 				}
-				break;
-			case 2: // else
-				parseop[lvloppos[lvlamount]].arg[0].SetValue(rawpos - lvlrawpos[lvlamount]);
-				break;
-			case 3: // ifnot
-				parseop[lvloppos[lvlamount] + 1].arg[0].SetValue(rawpos - lvlrawpos[lvlamount]);
-				break;
-			case 4: // while
-				parseop[lvloppos[lvlamount]].arg[0].SetValue(rawpos - lvlrawpos[lvlamount]);
-				MACRO_NEW_OPCODE(0x05)
-				parseop[opi].arg[0].SetValueVar(lvlargval[lvlamount]);
-				MACRO_OPCODE_SIZE_DONE()
-				MACRO_NEW_OPCODE(0x03)
-				parseop[opi].arg[0].SetValue(lvlrawpos[lvlamount] - (rawpos + 3));
-				MACRO_OPCODE_SIZE_DONE()
+				goto end_of_loop;
+			case 1: // else
+				MACRO_SET_JUMP_DEST_MULTILANG(linecontextlang, lvlparam[lvlamount].oppos, rawpos[lang] - lvlparam[lvlamount].rawpos[lang])
+				goto end_of_loop;
+			case 2: // ifnot
+				MACRO_SET_JUMP_DEST_MULTILANG(linecontextlang, lvlparam[lvlamount].oppos + 1, rawpos[lang] - lvlparam[lvlamount].rawpos[lang])
+				goto end_of_loop;
+			case 3: // while
+				MACRO_SET_JUMP_DEST_MULTILANG(linecontextlang, lvlparam[lvlamount].oppos, rawpos[lang] - lvlparam[lvlamount].rawpos[lang])
+				for (i = 0; i < lvlparam[lvlamount].argvalamount; i++) {
+					MACRO_NEW_OPCODE_MULTILANG(0x05, true, lvlparam[lvlamount].argvallang[i])
+					parseop[opi].arg[0].SetValueVar(lvlparam[lvlamount].argval[i]);
+					MACRO_OPCODE_SIZE_DONE()
+				}
+				MACRO_NEW_JUMP_MULTILANG(0x03, linecontextlang, lvlparam[lvlamount].rawpos[lang] - (rawpos[lang] + 3), false)
 				breaklvlamount--;
-				for (i = 0; i < breaklvli[breaklvlamount]; i++)
-					parseop[breaklvloppos[breaklvlamount][i]].arg[0].SetValue(rawpos - breaklvlrawpos[breaklvlamount][i]);
-				break;
-			case 5: // do
+				for (i = 0; i < breaklvlparam[breaklvlamount].count; i++) {
+					MACRO_SET_JUMP_DEST_MULTILANG(linecontextlang, breaklvlparam[breaklvlamount].oppos[i], rawpos[lang] - breaklvlparam[breaklvlamount].rawpos[lang][i])
+				}
+				MACRO_OPCODE_COMPLETE_INDICES(2)
+				goto end_of_loop;
+			case 4: // do
 				token = GetNextThing(linestr);
 				MACRO_CHECK_PUNC_ERROR(L"while")
 				token = GetNextPunc(linestr);
@@ -2690,38 +3463,65 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 				MACRO_CHECK_VARARG_ERROR(argval)
 				token = GetNextPunc(linestr);
 				MACRO_CHECK_PUNC_ERROR(L")")
-				MACRO_NEW_OPCODE(0x05)
+				MACRO_NEW_OPCODE_MULTILANG(0x05, true, linecontextlang)
 				parseop[opi].arg[0].SetValueVar(argval);
 				MACRO_OPCODE_SIZE_DONE()
-				MACRO_NEW_OPCODE(0x03)
-				parseop[opi].arg[0].SetValue(lvlrawpos[lvlamount] - (rawpos + 3));
-				MACRO_OPCODE_SIZE_DONE()
+				MACRO_NEW_JUMP_MULTILANG(0x03, linecontextlang, lvlparam[lvlamount].rawpos[lang] - (rawpos[lang] + 3), false)
+				MACRO_OPCODE_COMPLETE_INDICES(2)
 				breaklvlamount--;
-				for (i = 0; i < breaklvli[breaklvlamount]; i++)
-					parseop[breaklvloppos[breaklvlamount][i]].arg[0].SetValue(rawpos - breaklvlrawpos[breaklvlamount][i]);
-				break;
-			case 7: // switch
-				for (i = 0; i < parseop[lvloppos[lvlamount] + 1].size_byte; i++)
-					if (parseop[lvloppos[lvlamount] + 1].arg[2 + i].GetValue() == -1)
-						parseop[lvloppos[lvlamount] + 1].arg[2 + i].SetValue(rawpos - lvlrawpos[lvlamount]);
-				if (parseop[lvloppos[lvlamount] + 1].arg[1].GetValue() == -1)
-					parseop[lvloppos[lvlamount] + 1].arg[1].SetValue(rawpos - lvlrawpos[lvlamount]);
-				breaklvlamount--;
-				for (i = 0; i < breaklvli[breaklvlamount]; i++)
-					parseop[breaklvloppos[breaklvlamount][i]].arg[0].SetValue(rawpos - breaklvlrawpos[breaklvlamount][i]);
-				break;
-			case 8: // switchex
-				if (lvlcaseamount[lvlamount] < parseop[lvloppos[lvlamount] + 1].size_byte) {
-					errstr.Printf(wxT(HADES_STRING_SCRIPT_CASE), line);
-					res.AddError(errstr.ToStdWstring());
-					break;
+				for (i = 0; i < breaklvlparam[breaklvlamount].count; i++) {
+					MACRO_SET_JUMP_DEST_MULTILANG(linecontextlang, breaklvlparam[breaklvlamount].oppos[i], rawpos[lang] - breaklvlparam[breaklvlamount].rawpos[lang][i])
 				}
-				if (parseop[lvloppos[lvlamount] + 1].arg[0].GetValue() == -1)
-					parseop[lvloppos[lvlamount] + 1].arg[0].SetValue(rawpos - lvlrawpos[lvlamount]);
+				goto end_of_loop;
+			case 5: // dowhile
+				for (i = 0; i < lvlparam[lvlamount].argvalamount; i++) {
+					MACRO_NEW_OPCODE_MULTILANG(0x05, true, lvlparam[lvlamount].argvallang[i])
+					parseop[opi].arg[0].SetValueVar(lvlparam[lvlamount].argval[i]);
+					MACRO_OPCODE_SIZE_DONE()
+				}
+				MACRO_NEW_JUMP_MULTILANG(0x03, linecontextlang, lvlparam[lvlamount].rawpos[lang] - (rawpos[lang] + 3), false)
 				breaklvlamount--;
-				for (i = 0; i < breaklvli[breaklvlamount]; i++)
-					parseop[breaklvloppos[breaklvlamount][i]].arg[0].SetValue(rawpos - breaklvlrawpos[breaklvlamount][i]);
-				break;
+				for (i = 0; i < breaklvlparam[breaklvlamount].count; i++) {
+					MACRO_SET_JUMP_DEST_MULTILANG(linecontextlang, breaklvlparam[breaklvlamount].oppos[i], rawpos[lang] - breaklvlparam[breaklvlamount].rawpos[lang][i])
+				}
+				MACRO_OPCODE_COMPLETE_INDICES(2)
+				goto end_of_loop;
+			case 7: // switch
+				for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+					if (lvlparam[lvlamount].parsecontextlang[lang] && IsLineInLang(linecontextlang, lang)) {
+						long long offset = rawpos[lang] - lvlparam[lvlamount].rawpos[lang];
+						int langoppos = parseindices[lang][lvlparam[lvlamount].oppos + 1];
+						for (i = 0; i < parseop[langoppos].size_byte; i++)
+							if (parseop[langoppos].arg[2 + i].GetValue() == -1)
+								parseop[langoppos].arg[2 + i].SetValue(offset);
+						if (parseop[langoppos].arg[1].GetValue() == -1)
+							parseop[langoppos].arg[1].SetValue(offset);
+					}
+				}
+				breaklvlamount--;
+				for (i = 0; i < breaklvlparam[breaklvlamount].count; i++) {
+					MACRO_SET_JUMP_DEST_MULTILANG(linecontextlang, breaklvlparam[breaklvlamount].oppos[i], rawpos[lang] - breaklvlparam[breaklvlamount].rawpos[lang][i])
+				}
+				goto end_of_loop;
+			case 8: // switchex
+				for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+					if (lvlparam[lvlamount].parsecontextlang[lang] && IsLineInLang(linecontextlang, lang)) {
+						long long offset = rawpos[lang] - lvlparam[lvlamount].rawpos[lang];
+						int langoppos = parseindices[lang][lvlparam[lvlamount].oppos + 1];
+						if (lvlparam[lvlamount].caseamount < parseop[langoppos].size_byte) {
+							errstr.Printf(wxT(HADES_STRING_SCRIPT_CASE), line);
+							res.AddError(errstr.ToStdWstring());
+							goto end_of_loop;
+						}
+						if (parseop[langoppos].arg[0].GetValue() == -1)
+							parseop[langoppos].arg[0].SetValue(offset);
+					}
+				}
+				breaklvlamount--;
+				for (i = 0; i < breaklvlparam[breaklvlamount].count; i++) {
+					MACRO_SET_JUMP_DEST_MULTILANG(linecontextlang, breaklvlparam[breaklvlamount].oppos[i], rawpos[lang] - breaklvlparam[breaklvlamount].rawpos[lang][i])
+				}
+				goto end_of_loop;
 			}
 			MACRO_CHECK_TRAILING_WARNING()
 		}
@@ -2733,9 +3533,11 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 					case 0x04:
 						MACRO_NEW_OPCODE(0x04)
 						MACRO_OPCODE_SIZE_DONE()
-						if (lvlamount==0)
-							isfunctionreturned = true;
-						break;
+						MACRO_OPCODE_COMPLETE_INDICES(1)
+						if (lvlamount == 0) {
+							MACRO_REGISTER_FUNCTION_RETURN()
+						}
+						goto end_of_loop;
 					case 0x05:
 						token = linestr;
 						linestr = wxEmptyString;
@@ -2745,7 +3547,8 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 						MACRO_NEW_OPCODE(0x05)
 						parseop[opi].arg[0].SetValueVar(argval);
 						MACRO_OPCODE_SIZE_DONE()
-						break;
+						MACRO_OPCODE_COMPLETE_INDICES(1)
+						goto end_of_loop;
 					case 0x29:
 						token = GetNextPunc(linestr);
 						MACRO_CHECK_PUNC_ERROR(L"(")
@@ -2776,32 +3579,31 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 							if (token.IsSameAs(L")"))
 								islastarg = true;
 							else if (!token.IsSameAs(L",")) {
-								errstr.Printf(wxT(HADES_STRING_SCRIPT_EXPECT),line,L",' or ')");
+								errstr.Printf(wxT(HADES_STRING_SCRIPT_EXPECT), line, L",' or ')");
 								res.AddError(errstr.ToStdWstring());
-								break;
+								goto end_of_loop;
 							}
 						}
-						if (!islastarg)
-							break;
 						MACRO_NEW_OPCODE(0x29)
 						parseop[opi].vararg_flag = varargbyte;
-						parseop[opi].size_byte = j/2;
-						parseop[opi].arg_amount = j/2;
-						parseop[opi].arg = NewScriptArgumentArray(j/2,&parseop[opi]);
-						for (j=0;j<parseop[opi].arg_amount;j++) {
+						parseop[opi].size_byte = j / 2;
+						parseop[opi].arg_amount = j / 2;
+						parseop[opi].arg = NewScriptArgumentArray(j / 2, &parseop[opi]);
+						for (j = 0; j < parseop[opi].arg_amount; j++) {
 							parseop[opi].arg[j].is_signed = true;
 							parseop[opi].arg[j].typesize = 4;
-							if (argstr[2*j].IsNumber())
-								parseop[opi].arg[j].SetValue((wxAtoi(argstr[2*j]) & 0xFFFF) | ((wxAtoi(argstr[2*j+1]) & 0xFFFF) << 16));
+							if (argstr[2 * j].IsNumber())
+								parseop[opi].arg[j].SetValue((wxAtoi(argstr[2 * j]) & 0xFFFF) | ((wxAtoi(argstr[2 * j + 1]) & 0xFFFF) << 16));
 							else
-								parseop[opi].arg[j].SetValueVar(argvalarray[2*j]);
+								parseop[opi].arg[j].SetValueVar(argvalarray[2 * j]);
 						}
 						MACRO_OPCODE_SIZE_DONE()
-						break;
+						MACRO_OPCODE_COMPLETE_INDICES(1)
+						goto end_of_loop;
 					default:
 						token = GetNextPunc(linestr);
 						MACRO_CHECK_PUNC_ERROR(L"(")
-						if (it->second.arg_amount>0) {
+						if (it->second.arg_amount > 0) {
 							islastarg = false;
 							varargbyte = 0;
 							j = 0;
@@ -2814,29 +3616,24 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 								}
 								argstr[j++] = token;
 								token = GetNextPunc(linestr);
-								if (token.IsSameAs(L")"))
+								if (token.IsSameAs(L")")) {
 									islastarg = true;
-								else if (!token.IsSameAs(L",")) {
-									errstr.Printf(wxT(HADES_STRING_SCRIPT_EXPECT),line,L",' or ')");
+								} else if (!token.IsSameAs(L",")) {
+									errstr.Printf(wxT(HADES_STRING_SCRIPT_EXPECT), line, L",' or ')");
 									res.AddError(errstr.ToStdWstring());
-									break;
+									goto end_of_loop;
 								}
 							}
-							if (!islastarg)
-								break;
-							islastarg = false; // becomes a check for errors
 							if (j != it->second.arg_amount) {
 								errstr.Printf(wxT(HADES_STRING_SCRIPT_ARGAMOUNT), line, _(it->second.label), it->second.arg_amount, j);
 								res.AddError(errstr.ToStdWstring());
-								islastarg = true;
+								goto end_of_loop;
 							}
 							if (!it->second.use_vararg && varargbyte > 0) {
 								errstr.Printf(wxT(HADES_STRING_SCRIPT_NOVARARG), line, _(it->second.label));
 								res.AddError(errstr.ToStdWstring());
-								islastarg = true;
+								goto end_of_loop;
 							}
-							if (islastarg)
-								break;
 						} else {
 							token = GetNextPunc(linestr);
 							MACRO_CHECK_PUNC_ERROR(L")")
@@ -2844,45 +3641,48 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 						if ((it->second.id & 0xFF) == 0xFF) {
 							errstr.Printf(wxT(HADES_STRING_SCRIPT_NOT_AN_OPCODE), line, it->second.label, it->second.id);
 							res.AddError(errstr.ToStdWstring());
-							break;
+							goto end_of_loop;
 						}
 						MACRO_NEW_OPCODE(it->second.id)
 						if (it->second.use_vararg)
 							parseop[opi].vararg_flag = varargbyte;
-						for (j=0;j<parseop[opi].arg_amount;j++) {
+						for (j = 0; j < parseop[opi].arg_amount; j++) {
 							if (argstr[j].IsNumber())
 								parseop[opi].arg[j].SetValue(wxAtoi(argstr[j]));
 							else
 								parseop[opi].arg[j].SetValueVar(argvalarray[j]);
 						}
 						MACRO_OPCODE_SIZE_DONE()
-						break;
+						MACRO_OPCODE_COMPLETE_INDICES(1)
+						goto end_of_loop;
 					}
 					MACRO_CHECK_TRAILING_WARNING()
 				}
 			}
 		}
-		if (tokentype<0) {
-			errstr.Printf(wxT(HADES_STRING_SCRIPT_UNKNOWN),line,token);
+		if (tokentype < 0) {
+			errstr.Printf(wxT(HADES_STRING_SCRIPT_UNKNOWN), line, token);
 			res.AddError(errstr.ToStdWstring());
 		}
+	end_of_loop:;
 	}
-	if (lvlamount>0) {
-		errstr.Printf(wxT(HADES_STRING_SCRIPT_BLOCKMISSING),line,lvlamount);
+	if (lvlamount > 0) {
+		errstr.Printf(wxT(HADES_STRING_SCRIPT_BLOCKMISSING), line, lvlamount);
 		res.AddError(errstr.ToStdWstring());
 	}
-	if (!isfunctionreturned) {
-		errstr.Printf(wxT(HADES_STRING_SCRIPT_RETURNMISSING),line);
+	if (isfunctionreturned.size() < STEAM_LANGUAGE_AMOUNT) {
+		errstr.Printf(wxT(HADES_STRING_SCRIPT_RETURNMISSING), line);
 		res.AddError(errstr.ToStdWstring());
 	}
 	parseopamount = opi;
-	parseoplength = rawpos;
+	for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+		parseoplength[lang] = rawpos[lang];
 	if (res.ok) {
 		unsigned int localam = 0, globalam = 0;
-		for (i=0;i<localvar->amount;i++)
-			if (localvar->local_type[i]==SCRIPT_VARIABLE_LOCALTYPE_LOCAL)
+		for (i = 0; i < localvar->amount; i++)
+			if (localvar->local_type[i] == SCRIPT_VARIABLE_LOCALTYPE_LOCAL)
 				localam++;
-			else if (localvar->local_type[i]==SCRIPT_VARIABLE_LOCALTYPE_GLOBAL)
+			else if (localvar->local_type[i] == SCRIPT_VARIABLE_LOCALTYPE_GLOBAL)
 				globalam++;
 		script.entry_local_var[entry] = localvar->allocate_amount;
 		script.local_data[entry].allocate_amount = localvar->allocate_amount;
@@ -2903,8 +3703,8 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 		script.global_data.id.resize(globalam);
 		localam = 0;
 		globalam = 0;
-		for (i=0;i<localvar->amount;i++)
-			if (localvar->local_type[i]==SCRIPT_VARIABLE_LOCALTYPE_LOCAL) {
+		for (i = 0; i < localvar->amount; i++) {
+			if (localvar->local_type[i] == SCRIPT_VARIABLE_LOCALTYPE_LOCAL) {
 				script.local_data[entry].local_type[localam] = localvar->local_type[i];
 				script.local_data[entry].type[localam] = localvar->type[i];
 				script.local_data[entry].size[localam] = localvar->size[i];
@@ -2912,7 +3712,7 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 				script.local_data[entry].cat[localam] = localvar->cat[i];
 				script.local_data[entry].id[localam] = localvar->id[i];
 				localam++;
-			} else if (localvar->local_type[i]==SCRIPT_VARIABLE_LOCALTYPE_GLOBAL) {
+			} else if (localvar->local_type[i] == SCRIPT_VARIABLE_LOCALTYPE_GLOBAL) {
 				script.global_data.local_type[globalam] = localvar->local_type[i];
 				script.global_data.type[globalam] = localvar->type[i];
 				script.global_data.size[globalam] = localvar->size[i];
@@ -2921,6 +3721,7 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 				script.global_data.id[globalam] = localvar->id[i];
 				globalam++;
 			}
+		}
 		delete localvar;
 		UpdateGlobalLocalStrings(entry);
 	}
@@ -2928,19 +3729,25 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 }
 
 unsigned int ScriptEditHandler::GetParsedEntryNewSize() {
-	unsigned int entrynewsize = script.entry_size[entry_selection]-script.func[entry_selection][function_selection].length+parseoplength;
-	if (entrynewsize%4)
-		entrynewsize += 4-entrynewsize%4;
+	unsigned int entrynewsize = script.entry_size[entry_selection] - script.func[entry_selection][function_selection].GetLength(GetSteamLanguage()) + parseoplength[GetSteamLanguage()];
+	if (entrynewsize % 4)
+		entrynewsize += 4 - entrynewsize % 4;
 	return entrynewsize;
 }
 
 void ScriptEditHandler::ApplyParsedFunction() {
+	if (debuglog) {
+		GetDebugLog() << "APPLY PARSED: size " << (int)script.entry_size[entry_selection] << " -> " << GetParsedEntryNewSize() << " ; parseopamount " << parseopamount << " ; parseindices.size " << (int)parseindices[0].size() << endl;
+	}
 	script.entry_size[entry_selection] = GetParsedEntryNewSize();
-	script.func[entry_selection][function_selection].length = parseoplength;
-	script.func[entry_selection][function_selection].op_amount = parseopamount;
 	script.func[entry_selection][function_selection].op.resize(parseopamount);
-	for (unsigned int i=0;i<parseopamount;i++)
+	for (unsigned int i = 0; i < parseopamount; i++)
 		script.func[entry_selection][function_selection].op[i] = parseop[i];
+	for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+		script.func[entry_selection][function_selection].indices[lang] = parseindices[lang];
+	if (debuglog) {
+		GetDebugLog() << "APPLY PARSED DONE" << endl;
+	}
 }
 
 //=============================//
@@ -3050,8 +3857,13 @@ void ScriptHelpDialog::DisplayHelpVarCode(VariableOperation* item) {
 	if (item->type == 3) {
 		wxString desc = _(item->description);
 		for (unsigned int i = 0; i < G_V_ELEMENTS(ScriptCharacterField); i++)
-			desc += _(ScriptCharacterField[i].name) + _(L"\n");
+			desc += _(ScriptFieldAccessType[ScriptCharacterField[i].access_type]) + _(ScriptCharacterField[i].name) + _(L"\n");
 		desc += _(ARRAY_ADDITIONAL_INFO);
+		if (GetGameType() == GAME_TYPE_STEAM && GetGameConfiguration() != NULL && GetGameConfiguration()->dll_usage != 0) {
+			desc += _(ARRAY_ADDITIONAL_INFO_MEMORIA);
+			for (unsigned int i = 0; i < G_V_ELEMENTS(ScriptCharacterFieldMemoria); i++)
+				desc += _(ScriptFieldAccessType[ScriptCharacterFieldMemoria[i].access_type]) + _(ScriptCharacterFieldMemoria[i].name) + _(L"\n");
+		}
 		m_helptextctrl->SetValue(desc);
 	} else if (item->type < 1000) {
 		m_helptextctrl->SetValue(item->description);
@@ -3141,7 +3953,7 @@ struct FlagsStruct {
 	unsigned int amount;
 	wxCheckBox** box;
 };
-struct LinkedDialogStruct {
+struct LinkedDialogStruct { // Unused anymore
 	wxChoice* dialog;
 	wxButton* link_btn;
 };
@@ -3205,9 +4017,9 @@ void ScriptEditDialog::WorldMapDraw(wxDC& dc) {
 
 void ScriptEditDialog::UpdateWorldRegion(unsigned int entry, unsigned int function) {
 	if (script_type == SCRIPT_TYPE_WORLD) {
-		if (entry == 0 && script.function_type[entry][function] >= 0x8000) {
-			world_region_x = (script.function_type[entry][function] & 0xFC) >> 2;
-			world_region_y = (script.function_type[entry][function] & 0x3F00) >> 8;
+		if (entry == 0 && script.func[entry][function].function_type >= 0x8000) {
+			world_region_x = (script.func[entry][function].function_type & 0xFC) >> 2;
+			world_region_y = (script.func[entry][function].function_type & 0x3F00) >> 8;
 		} else {
 			world_region_x = -1;
 			world_region_y = -1;
@@ -3248,7 +4060,12 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 		animlist_id.clear();
 		animlist_str.Empty();
 	}
+	current_opcode_lang.clear();
 	tmpstr = GetNextWord(line);
+	if (tmpstr.StartsWith(_(L"[")) && tmpstr.EndsWith(_(L"]"))) {
+		ParseLangSelector(tmpstr, current_opcode_lang);
+		tmpstr = GetNextWord(line);
+	}
 	for (auto it = HADES_STRING_SCRIPT_OPCODE.begin(); it != HADES_STRING_SCRIPT_OPCODE.end(); it++)
 		if (tmpstr.IsSameAs(it->second.label)) {
 			opcode = it->second.id;
@@ -3354,7 +4171,7 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 				break;
 			case AT_TEXT:
 				if (use_text)
-					arg_control[i] = ArgCreateDialog(arg, i, vector<uint16_t*>(), text_str);
+					arg_control[i] = ArgCreateDialog(arg, i, text_id, text_str);
 				else
 					arg_control[i] = ArgCreateSpin(arg, i, scriptop.arg_length[argi], false);
 				argsizer->Add(arg_control[i], 0, wxALL, 5);
@@ -3465,7 +4282,7 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 					uint16_t funcid = wxAtoi(arg), funclistpos = 0;
 					for (j = 0; j < script.entry_amount; j++)
 						for (k = 0; k < script.entry_function_amount[j]; k++) {
-							if (entrysel == j && script.function_type[j][k] == funcid)
+							if (entrysel == j && script.func[j][k].function_type == funcid)
 								static_cast<wxChoice*>(arg_control[i])->SetSelection(funclistpos);
 							funclistpos++;
 						}
@@ -3559,6 +4376,7 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 				case ARG_CONTROL_SPIN:
 					static_cast<wxSpinCtrl*>(arg_control[i])->SetValue(wxAtoi(arg));
 					break;
+				case ARG_CONTROL_MULTI_DIAL:
 				case ARG_CONTROL_CHOICE: {
 					wxChoice* choicectrl = static_cast<wxChoice*>(arg_control[i]);
 					uint16_t choiceval = wxAtoi(arg);
@@ -3568,8 +4386,11 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 								choicectrl->SetSelection(j);
 								break;
 							}
-					} else
+					} else {
 						choicectrl->SetSelection(choiceval);
+					}
+					if (arg_control_type[i] == ARG_CONTROL_MULTI_DIAL)
+						UpdateMultiLangDialogHelp(choicectrl);
 					break;
 				}
 				case ARG_CONTROL_LINKED_DIAL: {
@@ -3582,8 +4403,9 @@ void ScriptEditDialog::DisplayOperation(wxString line, bool refreshargcontrol, b
 								choicectrl->SetSelection(j);
 								break;
 							}
-					} else
+					} else {
 						choicectrl->SetSelection(choiceval);
+					}
 					break;
 				}
 				case ARG_CONTROL_DISC: {
@@ -3829,39 +4651,27 @@ void ScriptEditDialog::UpdateLineHelp(long x, long y) {
 }
 
 void ScriptEditDialog::UpdateMultiLangDialogHelp(wxChoice* dialogchoice) {
-	if (!use_text || script.multi_lang_script==NULL) {
+	int dialsel = dialogchoice->GetSelection();
+	if (!use_text || dialsel == wxNOT_FOUND || dialsel >= (int)text->text.size()) {
 		dialogchoice->UnsetToolTip();
 		return;
 	}
-	SteamLanguage lang, baselang = script.multi_lang_script->base_script_lang[script.current_language];
-	int dialsel = dialogchoice->GetSelection();
-	if (dialsel==wxNOT_FOUND)
-		dialsel = 0;
-	uint16_t transdialid, basedialid = dialsel;
-	unsigned int i;
-	if (baselang!=script.current_language)
-		for (i=0;i<script.multi_lang_script->lang_script_text_id[script.current_language].size();i++)
-			if (dialsel==script.multi_lang_script->lang_script_text_id[script.current_language][i]) {
-				basedialid = script.multi_lang_script->base_script_text_id[script.current_language][i];
-				break;
-			}
-	wxString line,translationhelp = _(L"");
-	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-		if (lang!=script.current_language && script.multi_lang_script->base_script_lang[lang]==baselang) {
-			transdialid = basedialid;
-			if (lang!=baselang)
-				for (i=0;i<script.multi_lang_script->base_script_text_id[lang].size();i++)
-					if (basedialid==script.multi_lang_script->base_script_text_id[lang][i]) {
-						transdialid = script.multi_lang_script->lang_script_text_id[lang][i];
-						break;
-					}
-			if (translationhelp.Len()>0)
+	wxString line, translationhelp = _(L"");
+	FF9String& dialstr = text->text[dialsel].txt;
+	bool showtooltip = false;
+	for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+		if (IsLineInLang(current_opcode_lang, lang) && dialstr.multi_lang_init[lang]) {
+			if (translationhelp.Len() > 0)
 				translationhelp += _(L"\n");
-			line = HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[lang].Upper()+_(L": ")+_(FF9String::RemoveOpcodes(text->text[transdialid].multi_lang_str[lang],SCRIPT_TEXT_LINK_PREVIEW_LENGTH/2));
-			line.Replace(_(L"\n"),_(L" "));
+			line = HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[lang] + _(L": ") + _(FF9String::RemoveOpcodes(dialstr.multi_lang_str[lang], SCRIPT_TEXT_LINK_PREVIEW_LENGTH / 2));
+			line.Replace(_(L"\n"), _(L" "));
+			line.Replace(_(L"\r"), _(L""));
 			translationhelp += line;
+			if (lang != GetSteamLanguage())
+				showtooltip = true;
 		}
-	if (translationhelp.Len()>0)
+	}
+	if (showtooltip)
 		dialogchoice->SetToolTip(translationhelp);
 	else
 		dialogchoice->UnsetToolTip();
@@ -3901,16 +4711,16 @@ wxSpinCtrl* ScriptEditDialog::ArgCreateSpin(wxString& arg, unsigned int id, int 
 }
 
 wxChoice* ScriptEditDialog::ArgCreateChoice(wxString& arg, unsigned int id, vector<uint16_t*> choiceid, wxArrayString& choicestr) {
-	wxChoice* res = new wxChoice(m_argpanel,SS_ARG_ID+id);
-	if (choiceid.size()>0)
-		res->Append(choicestr,(void**)choiceid.data());
+	wxChoice* res = new wxChoice(m_argpanel, SS_ARG_ID + id);
+	if (choiceid.size() > 0)
+		res->Append(choicestr, (void**)choiceid.data());
 	else
 		res->Append(choicestr);
 	if (arg.IsNumber()) {
 		int argval = wxAtoi(arg);
-		if (choiceid.size()>0) {
-			for (unsigned int i=0;i<choiceid.size();i++)
-				if (argval==*choiceid[i]) {
+		if (choiceid.size() > 0) {
+			for (unsigned int i = 0; i < choiceid.size(); i++)
+				if (argval == *choiceid[i]) {
 					res->SetSelection(i);
 					break;
 				}
@@ -3918,62 +4728,17 @@ wxChoice* ScriptEditDialog::ArgCreateChoice(wxString& arg, unsigned int id, vect
 			res->SetSelection(argval);
 		}
 	}
-	res->Connect(wxEVT_COMMAND_CHOICE_SELECTED,wxCommandEventHandler(ScriptEditDialog::OnArgChoice),NULL,this);
+	res->Connect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(ScriptEditDialog::OnArgChoice), NULL, this);
 	arg_control_type[id] = ARG_CONTROL_CHOICE;
 	return res;
 }
 
 wxWindow* ScriptEditDialog::ArgCreateDialog(wxString& arg, unsigned int id, vector<uint16_t*> choiceid, wxArrayString& choicestr) {
-	if (script.multi_lang_script==NULL)
-		return ArgCreateChoice(arg,id,choiceid,choicestr);
-	bool uselink = false;
-	SteamLanguage lang;
-	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-		if (lang!=script.current_language && script.multi_lang_script->base_script_lang[lang]==script.multi_lang_script->base_script_lang[script.current_language]) {
-			uselink = true;
-			break;
-		}
-	if (!uselink)
-		return ArgCreateChoice(arg,id,choiceid,choicestr);
-	wxPanel* res = new wxPanel(m_argpanel);
-	wxFlexGridSizer* grid = new wxFlexGridSizer(2);
-	wxChoice* dialchoice = new wxChoice(res,SS_ARG_ID+id);
-	wxButton* linkbtn = new wxButton(res,SS_ARG_ID+id,_(L"..."),wxDefaultPosition,wxDefaultSize,wxBU_EXACTFIT);
-	LinkedDialogStruct* datagroup = new LinkedDialogStruct;
-	grid->AddGrowableCol(0);
-	grid->SetFlexibleDirection(wxBOTH);
-	grid->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
-	grid->Add(dialchoice,0,wxALL | wxEXPAND,5);
-	grid->Add(linkbtn,0,wxALL,5);
-	if (choiceid.size()>0)
-		dialchoice->Append(choicestr,(void**)choiceid.data());
-	else
-		dialchoice->Append(choicestr);
-	if (arg.IsNumber()) {
-		int argval = wxAtoi(arg);
-		if (choiceid.size()>0) {
-			for (unsigned int i=0;i<choiceid.size();i++)
-				if (argval==*choiceid[i]) {
-					dialchoice->SetSelection(i);
-					break;
-				}
-		} else {
-			dialchoice->SetSelection(argval);
-		}
+	wxChoice* dialchoice = ArgCreateChoice(arg, id, choiceid, choicestr);
+	if (arg.IsNumber())
 		UpdateMultiLangDialogHelp(dialchoice);
-	}
-	datagroup->dialog = dialchoice;
-	datagroup->link_btn = linkbtn;
-	res->SetClientData((void*)datagroup);
-	dialchoice->SetClientData((void*)datagroup);
-	linkbtn->SetClientData((void*)datagroup);
-	dialchoice->Connect(wxEVT_COMMAND_CHOICE_SELECTED,wxCommandEventHandler(ScriptEditDialog::OnArgChoice),NULL,this);
-	linkbtn->Connect(wxEVT_COMMAND_BUTTON_CLICKED,wxCommandEventHandler(ScriptEditDialog::OnArgDialogLink),NULL,this);
-	res->SetSizer(grid);
-	res->Layout();
-	grid->Fit(res);
-	arg_control_type[id] = ARG_CONTROL_LINKED_DIAL;
-	return res;
+	arg_control_type[id] = ARG_CONTROL_MULTI_DIAL;
+	return dialchoice;
 }
 
 wxPanel* ScriptEditDialog::ArgCreateDiscFieldChoice(wxString& arg, unsigned int id, vector<uint16_t*> choiceid, wxArrayString& choicestr) {
@@ -4122,7 +4887,8 @@ void ScriptEditDialog::ScriptChangeArg(int argi, int64_t value, int argshift) {
 	wxString token, newtxt = scripttxt;
 	int shiftedargi = argi;
 	int i;
-	GetNextWord(scripttxt);
+	if (GetNextWord(scripttxt).StartsWith(_(L"[")))
+		GetNextWord(scripttxt);
 	token = GetNextPunc(scripttxt);
 	if (!token.IsSameAs(L'('))
 		return;
@@ -4293,12 +5059,12 @@ void ScriptEditDialog::OnIntValueText(wxCommandEvent& event) {
 void ScriptEditDialog::OnFunctionRightClick(wxListEvent& event) {
 	unsigned int entryid = 0, funcid = 0;
 	long sel = event.GetIndex();
-	if (sel!=wxNOT_FOUND) {
-		while (script.entry_function_amount[entryid]==0)
+	if (sel != wxNOT_FOUND) {
+		while (script.entry_function_amount[entryid] == 0)
 			entryid++;
-		while (sel>0) {
+		while (sel > 0) {
 			funcid++;
-			while (funcid>=script.entry_function_amount[entryid]) {
+			while (funcid >= script.entry_function_amount[entryid]) {
 				entryid++;
 				funcid = 0;
 			}
@@ -4357,15 +5123,14 @@ void ScriptEditDialog::OnFunctionRightClickMenu(wxCommandEvent& event) {
 		dial.m_entryctrl->SetSelection(entryid);
 		dial.m_entrytypectrl->SetValue(script.entry_type[entryid]);
 		dial.m_entrytypectrl->Enable(false);
-		dial.m_typectrl->SetValue(script.function_type[entryid][funcid]);
+		dial.m_typectrl->SetValue(script.func[entryid][funcid].function_type);
 		bool showdiag = true;
-		while (showdiag)
-		{
+		while (showdiag) {
 			showdiag = false;
 			if (dial.ShowModal() == wxID_OK) {
 				unsigned int entrysel = dial.m_entryctrl->GetSelection();
 				for (i = 0; i < script.entry_function_amount[entrysel]; i++)
-					if (script.function_type[entrysel][i] == dial.m_typectrl->GetValue())
+					if (script.func[entrysel][i].function_type == dial.m_typectrl->GetValue())
 					{
 						showdiag = true;
 						break;
@@ -4413,7 +5178,8 @@ void ScriptEditDialog::OnFunctionRightClickMenu(wxCommandEvent& event) {
 			popup.ShowModal();
 			return;
 		}
-		extra_size += script.RemoveFunction(entryid, funcid);
+		extra_size += max((unsigned int)4, script.func[entryid][funcid].GetLength());
+		script.RemoveFunction(entryid, funcid);
 		DisplayFunctionList(-1, sel);
 		for (i = funcid; i < script.entry_function_amount[entryid]; i++)
 			func_str[entryid][i] = func_str[entryid][i + 1];
@@ -4426,18 +5192,18 @@ void ScriptEditDialog::OnFunctionRightClickMenu(wxCommandEvent& event) {
 		dial.m_entryctrl->SetSelection(entryid);
 		dial.m_entryctrl->Enable(false);
 		dial.m_entrytypectrl->SetValue(script.entry_type[entryid]);
-		dial.m_typectrl->SetValue(script.function_type[entryid][funcid]);
-		if (script.function_type[entryid][funcid] >= 0x8000)
+		dial.m_typectrl->SetValue(script.func[entryid][funcid].function_type);
+		if (script.func[entryid][funcid].function_type >= 0x8000)
 		{
-			dial.m_typeworldx->SetValue((script.function_type[entryid][funcid] & 0xFC) >> 2);
-			dial.m_typeworldy->SetValue((script.function_type[entryid][funcid] & 0x3F00) >> 8);
-			dial.m_typeterrain->SetValue(script.function_type[entryid][funcid] & 3);
+			dial.m_typeworldx->SetValue((script.func[entryid][funcid].function_type & 0xFC) >> 2);
+			dial.m_typeworldy->SetValue((script.func[entryid][funcid].function_type & 0x3F00) >> 8);
+			dial.m_typeterrain->SetValue(script.func[entryid][funcid].function_type & 3);
 		}
 		if (dial.ShowModal() == wxID_OK) {
 			script.entry_type[entryid] = dial.m_entrytypectrl->GetValue();
-			script.function_type[entryid][funcid] = dial.m_typectrl->GetValue();
+			script.func[entryid][funcid].function_type = dial.m_typectrl->GetValue();
 			UpdateWorldRegion(entryid, funcid);
-			functionlist_str[sel] = GetFunctionName(entryid, script.function_type[entryid][funcid]);
+			functionlist_str[sel] = GetFunctionName(entryid, script.func[entryid][funcid].function_type);
 			DisplayFunctionList(-1, -1);
 			m_functionlist->SetItemState(sel, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
 		}
@@ -4445,43 +5211,43 @@ void ScriptEditDialog::OnFunctionRightClickMenu(wxCommandEvent& event) {
 }
 
 void ScriptEditDialog::OnFunctionUpdate(wxCommandEvent& event) {
-	unsigned int i,j,funclistpos = 0;
-	for (i=0;i<entry_selection;i++)
-		for (j=0;j<script.entry_function_amount[i];j++)
+	unsigned int i, j, funclistpos = 0;
+	for (i = 0; i < entry_selection; i++)
+		for (j = 0; j < script.entry_function_amount[i]; j++)
 			funclistpos++;
-	for (j=0;j<function_selection;j++)
+	for (j = 0; j < function_selection; j++)
 		funclistpos++;
-	m_functionlist->SetItemTextColour(funclistpos,FUNCTION_COLOR_MODIFIED);
+	m_functionlist->SetItemTextColour(funclistpos, FUNCTION_COLOR_MODIFIED);
 	func_should_parse[funclistpos] = true;
 }
 
 void ScriptEditDialog::OnFunctionNewLine(wxCommandEvent& event) {
 	long selfrom, selto;
-	m_scripttext->GetSelection(&selfrom,&selto);
-	if (selfrom!=selto)
+	m_scripttext->GetSelection(&selfrom, &selto);
+	if (selfrom != selto)
 		return;
 	wxString indentstr = _(L"");
 	long y, ip = m_scripttext->GetInsertionPoint();
-	if (ip>1 && m_scripttext->GetRange(ip-2,ip-1).IsSameAs(L"{"))
+	if (ip > 1 && m_scripttext->GetRange(ip - 2, ip - 1).IsSameAs(L"{"))
 		indentstr += TAB_STR;
-	if (m_scripttext->PositionToXY(m_scripttext->GetInsertionPoint(),NULL,&y) && y>0) {
-		wxString scriptline = m_scripttext->GetLineText(y-1);
-		indentstr += scriptline.Mid(0,scriptline.find_first_not_of(L' '));
+	if (m_scripttext->PositionToXY(m_scripttext->GetInsertionPoint(), NULL, &y) && y > 0) {
+		wxString scriptline = m_scripttext->GetLineText(y - 1);
+		indentstr += scriptline.Mid(0, scriptline.find_first_not_of(L' '));
 	}
-	if (indentstr.Length()>0)
+	if (indentstr.Length() > 0)
 		m_scripttext->WriteText(indentstr);
 }
 
 void ScriptEditDialog::OnChoiceSelection(wxCommandEvent& event) {
 	int id = event.GetId();
-	if (id==wxID_FIELD) {
-		if (event.GetSelection()>0)
-			UpdateLineHelp(text_x_selection,line_selection);
+	if (id == wxID_FIELD) {
+		if (event.GetSelection() > 0)
+			UpdateLineHelp(text_x_selection, line_selection);
 		else
-			gl_window->DisplayFieldPlane(0,0);
-	} else if (id==wxID_WORLD) {
-		if (event.GetSelection()>0)
-			UpdateLineHelp(text_x_selection,line_selection);
+			gl_window->DisplayFieldPlane(0, 0);
+	} else if (id == wxID_WORLD) {
+		if (event.GetSelection() > 0)
+			UpdateLineHelp(text_x_selection, line_selection);
 		else {
 			world_pos_type = 0;
 			wxClientDC dc(m_worlddisplaypanel);
@@ -4492,10 +5258,10 @@ void ScriptEditDialog::OnChoiceSelection(wxCommandEvent& event) {
 
 void ScriptEditDialog::OnCheckBox(wxCommandEvent& event) {
 	int id = event.GetId();
-	if (id==wxID_FBACK) {
+	if (id == wxID_FBACK) {
 		gl_window->field_showtiles = event.IsChecked();
 		gl_window->Draw();
-	} else if (id==wxID_FWALK) {
+	} else if (id == wxID_FWALK) {
 		gl_window->field_showwalk = event.IsChecked();
 		gl_window->Draw();
 	}
@@ -4524,55 +5290,64 @@ void ScriptEditDialog::OnShowHideLocalVar(wxMouseEvent& event) {
 
 void ScriptEditDialog::OnButtonClick(wxCommandEvent& event) {
 	int id = event.GetId();
-	unsigned int i,j,funclistpos = 0;
-	if (id==wxID_PARSE) {
+	unsigned int i, j, funclistpos = 0;
+	if (id == wxID_PARSE) {
+		if (debuglog) {
+			GetDebugLog() << "PARSE START" << endl;
+		}
 		currentvar_str = m_localvartext->GetValue();
 		LogStruct log = ParseFunction(m_scripttext->GetValue(), entry_selection, function_selection);
-		int sizegap = extra_size+script.entry_size[entry_selection]-GetParsedEntryNewSize();
-		if (sizegap<0) {
+		int sizegap = extra_size + script.entry_size[entry_selection] - GetParsedEntryNewSize();
+		if (sizegap < 0) {
 			wxString errstr;
 			errstr.Printf(wxT(HADES_STRING_LOGERROR_SPACE), -sizegap);
 			log.AddError(errstr.ToStdWstring());
+		}
+		if (debuglog) {
+			GetDebugLog() << "PARSE COMPILED" << endl;
 		}
 		LogDialog dial(this, log);
 		dial.ShowModal();
 		if (log.ok) {
 			extra_size = sizegap;
 			ApplyParsedFunction();
-			for (i=0;i<entry_selection;i++)
-				for (j=0;j<script.entry_function_amount[i];j++)
+			for (i = 0; i < entry_selection; i++)
+				for (j = 0; j < script.entry_function_amount[i]; j++)
 					funclistpos++;
-			for (j=0;j<function_selection;j++)
+			for (j = 0; j < function_selection; j++)
 				funclistpos++;
 			m_functionlist->SetItemTextColour(funclistpos, FUNCTION_COLOR_PARSED);
 			func_should_parse[funclistpos] = false;
+			if (debuglog) {
+				GetDebugLog() << "PARSE ENDED" << endl;
+			}
 		} else {
 			unsigned int funclistpos = 0;
-			for (i=0;i<entry_selection;i++)
-				for (j=0;j<script.entry_function_amount[i];j++)
+			for (i = 0; i < entry_selection; i++)
+				for (j = 0; j < script.entry_function_amount[i]; j++)
 					funclistpos++;
-			for (j=0;j<function_selection;j++)
+			for (j = 0; j < function_selection; j++)
 				funclistpos++;
 			m_functionlist->SetItemTextColour(funclistpos, FUNCTION_COLOR_FAILED);
 			func_should_parse[funclistpos] = true;
 		}
-	} else if (id==wxID_HELP) {
-		if (help_dial==NULL || !help_dial->IsShown()) {
+	} else if (id == wxID_HELP) {
+		if (help_dial == NULL || !help_dial->IsShown()) {
 			help_dial = new ScriptHelpDialog(this);
 			help_dial->Show();
 		} else {
 			help_dial->SetFocus();
 		}
 	} else {
-		if (id==wxID_OK) {
+		if (id == wxID_OK) {
 			bool shouldparse = false;
-			for (i=0;i<script.entry_amount;i++)
-				for (j=0;j<script.entry_function_amount[i];j++)
+			for (i = 0; i < script.entry_amount; i++)
+				for (j = 0; j < script.entry_function_amount[i]; j++)
 					if (func_should_parse[funclistpos++])
 						shouldparse = true;
 			if (shouldparse) {
-				wxMessageDialog popup(this, _(HADES_STRING_SCRIPT_SHOULDPARSE), _(HADES_STRING_WARNING), wxYES_NO|wxCENTRE);
-				if (popup.ShowModal()==wxID_YES)
+				wxMessageDialog popup(this, _(HADES_STRING_SCRIPT_SHOULDPARSE), _(HADES_STRING_WARNING), wxYES_NO | wxCENTRE);
+				if (popup.ShowModal() == wxID_YES)
 					EndModal(id);
 			} else
 				EndModal(id);
@@ -4613,16 +5388,17 @@ void ScriptEditDialog::OnArgSpin(wxSpinEvent& event) {
 
 void ScriptEditDialog::OnArgChoice(wxCommandEvent& event) {
 	int argi = event.GetId() - SS_ARG_ID;
-	if (arg_control_type[argi] == ARG_CONTROL_LINKED_DIAL) {
-		LinkedDialogStruct* datagroup = static_cast<LinkedDialogStruct*>(static_cast<wxChoice*>(event.GetEventObject())->GetClientData());
-		uint16_t* objid = (uint16_t*)datagroup->dialog->GetClientData(event.GetInt());
+	if (arg_control_type[argi] == ARG_CONTROL_CHOICE || arg_control_type[argi] == ARG_CONTROL_MULTI_DIAL) {
+		uint16_t* objid = (uint16_t*)event.GetClientData();
 		if (objid)
 			ScriptChangeArg(argi, *objid);
 		else
 			ScriptChangeArg(argi, event.GetInt());
-		UpdateMultiLangDialogHelp(static_cast<wxChoice*>(event.GetEventObject()));
-	} else {
-		uint16_t* objid = (uint16_t*)event.GetClientData();
+		if (arg_control_type[argi] == ARG_CONTROL_MULTI_DIAL)
+			UpdateMultiLangDialogHelp(static_cast<wxChoice*>(event.GetEventObject()));
+	} else if (arg_control_type[argi] == ARG_CONTROL_LINKED_DIAL) {
+		LinkedDialogStruct* datagroup = static_cast<LinkedDialogStruct*>(static_cast<wxChoice*>(event.GetEventObject())->GetClientData());
+		uint16_t* objid = (uint16_t*)datagroup->dialog->GetClientData(event.GetInt());
 		if (objid)
 			ScriptChangeArg(argi, *objid);
 		else
@@ -4660,59 +5436,6 @@ void ScriptEditDialog::OnArgDisc(wxCommandEvent& event) {
 		ScriptChangeArg(argi, (event.GetInt() << 14) | datagroup->field->GetSelection());
 }
 
-void ScriptEditDialog::OnArgDialogLink(wxCommandEvent& event) {
-	int argi = event.GetId()-SS_ARG_ID;
-	LinkedDialogStruct* datagroup = static_cast<LinkedDialogStruct*>(static_cast<wxButton*>(event.GetEventObject())->GetClientData());
-	SteamLanguage lang, baselang = script.multi_lang_script->base_script_lang[script.current_language];
-	SteamLanguage langShiftedlink[STEAM_LANGUAGE_AMOUNT];
-	int dialsel = datagroup->dialog->GetSelection();
-	if (dialsel==wxNOT_FOUND)
-		dialsel = 0;
-	uint16_t basedialid = dialsel;
-	unsigned int i;
-	if (baselang!=script.current_language)
-		for (i=0;i<script.multi_lang_script->lang_script_text_id[script.current_language].size();i++)
-			if (dialsel==script.multi_lang_script->lang_script_text_id[script.current_language][i]) {
-				basedialid = script.multi_lang_script->base_script_text_id[script.current_language][i];
-				break;
-			}
-	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-		if (script.multi_lang_script->base_script_lang[lang]==baselang)
-			langShiftedlink[lang] = script.current_language;
-		else
-			langShiftedlink[lang] = script.multi_lang_script->base_script_lang[lang];
-	ScriptEditTextLinkDialog dial(this,langShiftedlink,*text,script.current_language);
-	dial.message_link_base.assign(1,dialsel);
-	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-		if (lang!=script.current_language && langShiftedlink[lang]==script.current_language) {
-			dial.message_link[lang].assign(1,basedialid);
-			if (lang!=baselang)
-				for (i=0;i<script.multi_lang_script->base_script_text_id[lang].size();i++)
-					if (basedialid==script.multi_lang_script->base_script_text_id[lang][i]) {
-						dial.message_link[lang][0] = script.multi_lang_script->lang_script_text_id[lang][i];
-						break;
-					}
-		}
-	if (dial.ShowModal(dialsel)==wxID_OK) {
-		if (baselang!=script.current_language)
-			basedialid = dial.message_link[baselang][0];
-		for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-			if (lang!=baselang && langShiftedlink[lang]==script.current_language) {
-				uint16_t langtextid = lang==script.current_language ? dial.message_link_base[0] : dial.message_link[lang][0];
-				for (i=0;i<script.multi_lang_script->base_script_text_id[lang].size();i++)
-					if (basedialid==script.multi_lang_script->base_script_text_id[lang][i]) {
-						script.multi_lang_script->lang_script_text_id[lang][i] = langtextid;
-						break;
-					}
-				if (i>=script.multi_lang_script->base_script_text_id[lang].size()) {
-					script.multi_lang_script->base_script_text_id[lang].push_back(basedialid);
-					script.multi_lang_script->lang_script_text_id[lang].push_back(langtextid);
-				}
-			}
-		UpdateMultiLangDialogHelp(datagroup->dialog);
-	}
-}
-
 void ScriptEditDialog::OnArgPositionPaint(wxPaintEvent& event) {
 	PositionStruct* posdata = static_cast<PositionStruct*>(static_cast<wxPanel*>(event.GetEventObject())->GetClientData());
 	wxPaintDC dc((wxWindow*)event.GetEventObject());
@@ -4742,9 +5465,9 @@ void ScriptEditDialog::OnArgPositionMouseUp(wxMouseEvent& event) {
 	PositionStruct* posdata = static_cast<PositionStruct*>(static_cast<wxPanel*>(event.GetEventObject())->GetClientData());
 	posdata->x += posdata->GetAsTranslation().x;
 	posdata->y += posdata->GetAsTranslation().y;
-	posdata->drawpt = wxPoint(POSITION_PANEL_SIZE/2,POSITION_PANEL_SIZE/2);
+	posdata->drawpt = wxPoint(POSITION_PANEL_SIZE / 2, POSITION_PANEL_SIZE / 2);
 	wxClientDC dc((wxWindow*)event.GetEventObject());
-	ArgPositionDraw(dc,posdata);
+	ArgPositionDraw(dc, posdata);
 	event.Skip();
 }
 
@@ -4781,15 +5504,15 @@ void ScriptEditDialog::OnArgPositionKeyboard(wxKeyEvent& event) {
 }
 
 void ScriptEditDialog::OnArgColorPicker(wxColourPickerEvent& event) {
-	int argi = event.GetId()-SS_ARG_ID;
-	if (arg_control_type[argi]==ARG_CONTROL_COLOR_RGB) {
-		ScriptChangeArg(argi,event.GetColour().Red());
-		ScriptChangeArg(argi,event.GetColour().Green(),1);
-		ScriptChangeArg(argi,event.GetColour().Blue(),2);
+	int argi = event.GetId() - SS_ARG_ID;
+	if (arg_control_type[argi] == ARG_CONTROL_COLOR_RGB) {
+		ScriptChangeArg(argi, event.GetColour().Red());
+		ScriptChangeArg(argi, event.GetColour().Green(), 1);
+		ScriptChangeArg(argi, event.GetColour().Blue(), 2);
 	} else {
-		ScriptChangeArg(argi,255-event.GetColour().Red());
-		ScriptChangeArg(argi,255-event.GetColour().Green(),1);
-		ScriptChangeArg(argi,255-event.GetColour().Blue(),2);
+		ScriptChangeArg(argi, 255 - event.GetColour().Red());
+		ScriptChangeArg(argi, 255 - event.GetColour().Green(), 1);
+		ScriptChangeArg(argi, 255 - event.GetColour().Blue(), 2);
 	}
 }
 
@@ -4831,11 +5554,11 @@ ScriptEditEntryDialog::ScriptEditEntryDialog(wxWindow* parent, ScriptDataStruct&
 	entry_amount = scpt.entry_amount;
 	base_entry_id.resize(entry_amount);
 	entry_type.resize(entry_amount);
-	for (i=0;i<entry_amount;i++) {
+	for (i = 0; i < entry_amount; i++) {
 		base_entry_id[i] = i;
 		entry_type[i] = scpt.entry_type[i];
 	}
-	has_character_entry = entry_amount>SCRIPT_FIXED_ENTRY_AMOUNT;
+	has_character_entry = entry_amount > SCRIPT_FIXED_ENTRY_AMOUNT;
 	extra_size = scpt.GetExtraSize();
 }
 
@@ -4843,27 +5566,27 @@ ScriptEditEntryDialog::~ScriptEditEntryDialog() {
 }
 
 int ScriptEditEntryDialog::ShowModal() {
-	unsigned int i,normalentry = entry_amount;
-	if (entry_amount>0)
+	unsigned int i, normalentry = entry_amount;
+	if (entry_amount > 0)
 		m_entrylist->Append(_(L"Main"));
 	if (has_character_entry)
 		normalentry -= SCRIPT_FIXED_ENTRY_AMOUNT;
-	for (i=1;i<normalentry;i++) {
-		if (entry_type[i]==0)
+	for (i = 1; i < normalentry; i++) {
+		if (entry_type[i] == 0)
 			m_entrylist->Append(_(L"Code"));
-		else if (entry_type[i]==1)
+		else if (entry_type[i] == 1)
 			m_entrylist->Append(_(L"Region"));
-		else if (entry_type[i]==2)
+		else if (entry_type[i] == 2)
 			m_entrylist->Append(_(L"Object"));
-		else 
+		else
 			m_entrylist->Append(_(L"Unknown"));
 	}
 	if (has_character_entry) {
-		for (i=0;i<8;i++)
-			m_entrylist->Append(HADES_STRING_CHARACTER_DEFAULT_NAME[i]);
-		m_entrylist->Append(HADES_STRING_CHARACTER_DEFAULT_NAME[11]); // Beatrix
+		for (i = 0; i < 8; i++)
+			m_entrylist->Append(HADES_STRING_CHARACTER_DEFAULT_NAME[i][STEAM_LANGUAGE_US]);
+		m_entrylist->Append(HADES_STRING_CHARACTER_DEFAULT_NAME[11][STEAM_LANGUAGE_US]); // Beatrix
 	}
-	if (entry_amount>0) {
+	if (entry_amount > 0) {
 		m_entrylist->SetSelection(0);
 		DisplayEntry(0);
 	}
@@ -4871,31 +5594,31 @@ int ScriptEditEntryDialog::ShowModal() {
 }
 
 void ScriptEditEntryDialog::ApplyModifications(ScriptDataStruct& scpt) {
-	unsigned int i,j;
+	unsigned int i, j;
 	int lostentryarg = 0;
 	j = 0;
-	for (i=0;i<entry_amount;i++) {
-		if (j<base_entry_amount && base_entry_id[j]==i) {
+	for (i = 0; i < entry_amount; i++) {
+		if (j < base_entry_amount && base_entry_id[j] == i) {
 			j++;
 		} else {
-			while (j<base_entry_amount && base_entry_id[j]<0) {
-				scpt.RemoveEntry(i,&lostentryarg);
+			while (j < base_entry_amount && base_entry_id[j] < 0) {
+				lostentryarg += scpt.RemoveEntry(i);
 				j++;
 			}
-			if (j>=base_entry_amount || base_entry_id[j]!=i)
-				scpt.AddEntry(i,entry_type[i]);
+			if (j >= base_entry_amount || base_entry_id[j] != i)
+				scpt.AddEntry(i, entry_type[i]);
 			else
 				j++;
 		}
 	}
-	while (j<base_entry_amount && base_entry_id[j]<0) {
-		scpt.RemoveEntry(entry_amount,&lostentryarg);
+	while (j < base_entry_amount && base_entry_id[j] < 0) {
+		lostentryarg += scpt.RemoveEntry(entry_amount);
 		j++;
 	}
-	if (lostentryarg>0) {
+	if (lostentryarg > 0) {
 		wxString warningstr;
-		warningstr.Printf(wxT(HADES_STRING_ENTRY_ARG_LOST),lostentryarg);
-		wxMessageDialog popup(NULL,warningstr,HADES_STRING_WARNING,wxOK|wxCENTRE);
+		warningstr.Printf(wxT(HADES_STRING_ENTRY_ARG_LOST), lostentryarg);
+		wxMessageDialog popup(NULL, warningstr, HADES_STRING_WARNING, wxOK | wxCENTRE);
 		popup.ShowModal();
 	}
 }
@@ -4917,286 +5640,55 @@ void ScriptEditEntryDialog::OnEntrySelect(wxCommandEvent& event) {
 
 void ScriptEditEntryDialog::OnSpinCtrl(wxSpinEvent& event) {
 	int sel = m_entrylist->GetSelection();
-	if (sel==wxNOT_FOUND)
+	if (sel == wxNOT_FOUND)
 		return;
 	entry_type[sel] = event.GetPosition();
-	if (entry_type[sel]==0)
-		m_entrylist->SetString(sel,_(L"Code"));
-	else if (entry_type[sel]==1)
-		m_entrylist->SetString(sel,_(L"Region"));
-	else if (entry_type[sel]==2)
-		m_entrylist->SetString(sel,_(L"Object"));
+	if (entry_type[sel] == 0)
+		m_entrylist->SetString(sel, _(L"Code"));
+	else if (entry_type[sel] == 1)
+		m_entrylist->SetString(sel, _(L"Region"));
+	else if (entry_type[sel] == 2)
+		m_entrylist->SetString(sel, _(L"Object"));
 	else
-		m_entrylist->SetString(sel,_(L"Unknown"));
+		m_entrylist->SetString(sel, _(L"Unknown"));
 }
 
 void ScriptEditEntryDialog::OnButtonClick(wxCommandEvent& event) {
 	int id = event.GetId();
 	int sel = m_entrylist->GetSelection();
 	unsigned int i;
-	if (id==wxID_ADD) {
-		if (extra_size<0x10) {
-			wxMessageDialog popup(NULL,HADES_STRING_MISSING_SPACE,HADES_STRING_ERROR,wxOK|wxCENTRE);
+	if (id == wxID_ADD) {
+		if (extra_size < 0x10) {
+			wxMessageDialog popup(NULL, HADES_STRING_MISSING_SPACE, HADES_STRING_ERROR, wxOK | wxCENTRE);
 			popup.ShowModal();
 			return;
 		}
 		sel++;
-		entry_type.insert(entry_type.begin()+sel,0);
-		for (i=0;i<base_entry_amount;i++)
-			if (base_entry_id[i]>=sel)
+		entry_type.insert(entry_type.begin() + sel, 0);
+		for (i = 0; i < base_entry_amount; i++)
+			if (base_entry_id[i] >= sel)
 				base_entry_id[i]++;
 		entry_amount++;
 		extra_size -= 0x10;
-		m_entrylist->Insert(_(L"Code"),sel);
+		m_entrylist->Insert(_(L"Code"), sel);
 		m_entrylist->SetSelection(sel);
 		DisplayEntry(sel);
-	} else if (id==wxID_REMOVE) {
-		if (sel==wxNOT_FOUND)
+	} else if (id == wxID_REMOVE) {
+		if (sel == wxNOT_FOUND)
 			return;
 		entry_amount--;
-		entry_type.erase(entry_type.begin()+sel);
-		for (i=0;i<base_entry_amount;i++)
-			if (base_entry_id[i]==sel)
+		entry_type.erase(entry_type.begin() + sel);
+		for (i = 0; i < base_entry_amount; i++)
+			if (base_entry_id[i] == sel)
 				base_entry_id[i] = -1;
-			else if (base_entry_id[i]>sel)
+			else if (base_entry_id[i] > sel)
 				base_entry_id[i]--;
 		extra_size += 0x10;
 		m_entrylist->Delete(sel);
-		if (sel==entry_amount)
+		if (sel == entry_amount)
 			sel--;
 		m_entrylist->SetSelection(sel);
 		DisplayEntry(sel);
 	} else
 		EndModal(id);
-}
-
-//=====================================//
-// Language Links and Correspondancies //
-//=====================================//
-
-ScriptEditLinkDialog::ScriptEditLinkDialog(wxWindow* parent, ScriptDataStruct& scpt, TextDataStruct& td) :
-	ScriptEditLinkWindow(parent),
-	text(&td) {
-	SteamLanguage lang,baselang,sublang;
-	unsigned int i,j;
-	lang_link[0] = m_langlink1;	lang_link[1] = m_langlink2;	lang_link[2] = m_langlink3;	lang_link[3] = m_langlink4;
-	lang_link[4] = m_langlink5;	lang_link[5] = m_langlink6;	lang_link[6] = m_langlink7;
-	lang_text[0] = m_langtext1;	lang_text[1] = m_langtext2;	lang_text[2] = m_langtext3;	lang_text[3] = m_langtext4;
-	lang_text[4] = m_langtext5;	lang_text[5] = m_langtext6;	lang_text[6] = m_langtext7;
-	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
-		baselang = scpt.multi_lang_script->base_script_lang[lang];
-		lang_link[lang]->SetSelection(baselang);
-		message_link[lang] = message_link_base[baselang];
-		for (i=0;i<scpt.multi_lang_script->base_script_text_id[lang].size();i++) {
-			for (j=0;j<message_link_base[baselang].size();j++)
-				if (message_link_base[baselang][j]==scpt.multi_lang_script->base_script_text_id[lang][i]) {
-					message_link[lang][j] = scpt.multi_lang_script->lang_script_text_id[lang][i];
-					break;
-				}
-			if (j>=message_link_base[baselang].size()) {
-				message_link_base[baselang].push_back(scpt.multi_lang_script->base_script_text_id[lang][i]);
-				message_link[lang].push_back(scpt.multi_lang_script->lang_script_text_id[lang][i]);
-			}
-		}
-		lang_link[lang]->Enable(scpt.multi_lang_script->is_loaded[lang] && !hades::STEAM_SINGLE_LANGUAGE_MODE);
-		if (scpt.multi_lang_script->is_loaded[lang] && !hades::STEAM_SINGLE_LANGUAGE_MODE) {
-			bool enabletext = false;
-			for (sublang=0;sublang<STEAM_LANGUAGE_AMOUNT;sublang++)
-				if (lang!=sublang && scpt.multi_lang_script->base_script_lang[sublang]==lang) {
-					enabletext = true;
-					break;
-				}
-			lang_text[lang]->Enable(enabletext);
-		} else {
-			lang_text[lang]->Enable(false);
-		}
-		is_modified[lang] = false;
-	}
-	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++) {
-		baselang = scpt.multi_lang_script->base_script_lang[lang];
-		for (i=message_link[lang].size();i<message_link_base[baselang].size();i++)
-			message_link[lang].push_back(message_link_base[baselang][i]);
-	}
-}
-
-ScriptEditLinkDialog::~ScriptEditLinkDialog() {
-}
-
-void ScriptEditLinkDialog::ApplyModifications(ScriptDataStruct& scpt) {
-	SteamLanguage lang,baselang;
-	scpt.UpdateSteamMultiLanguage();
-	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-		if (scpt.multi_lang_script->is_loaded[lang]) {
-			baselang = lang_link[lang]->GetSelection();
-			if (is_modified[lang] || is_modified[baselang]) {
-				if (scpt.multi_lang_script->base_script_lang[baselang]!=baselang)
-					scpt.LinkLanguageScripts(baselang,baselang,message_link[baselang],message_link[baselang]);
-				scpt.LinkLanguageScripts(lang,baselang,message_link[lang],message_link_base[baselang]);
-			}
-		}
-}
-
-void ScriptEditLinkDialog::OnButtonClick(wxCommandEvent& event) {
-	int id = event.GetId();
-	if (id==wxID_OK || id==wxID_CANCEL) {
-		EndModal(id);
-		return;
-	}
-	SteamLanguage lang, sublang;
-	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-		if (static_cast<wxButton*>(event.GetEventObject())==lang_text[lang]) {
-			SteamLanguage link[STEAM_LANGUAGE_AMOUNT];
-			for (sublang=0;sublang<STEAM_LANGUAGE_AMOUNT;sublang++)
-				link[sublang] = lang_link[sublang]->GetSelection();
-			lang = lang_link[lang]->GetSelection();
-			ScriptEditTextLinkDialog dial(this,link,*text,lang);
-			dial.message_link_base = message_link_base[lang];
-			for (sublang=0;sublang<STEAM_LANGUAGE_AMOUNT;sublang++)
-				if (link[sublang]==lang)
-					dial.message_link[sublang] = message_link[sublang];
-			if (dial.ShowModal()==wxID_OK) {
-				message_link_base[lang] = dial.message_link_base;
-				for (sublang=0;sublang<STEAM_LANGUAGE_AMOUNT;sublang++)
-					if (link[sublang]==lang)
-						message_link[sublang] = dial.message_link[sublang];
-				is_modified[lang] = true;
-			}
-			break;
-		}
-}
-
-void ScriptEditLinkDialog::OnChangeLink(wxCommandEvent& event) {
-	SteamLanguage lang,baselang,sublang;
-	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-		if (static_cast<wxChoice*>(event.GetEventObject())==lang_link[lang]) {
-			baselang = lang_link[event.GetSelection()]->GetSelection();
-			if (lang!=event.GetSelection() && lang_link[event.GetSelection()]->GetSelection()!=event.GetSelection())
-				lang_link[lang]->SetSelection(baselang);
-			if (lang!=baselang) {
-				for (sublang=0;sublang<STEAM_LANGUAGE_AMOUNT;sublang++)
-					if (lang_link[sublang]->GetSelection()==lang) {
-						lang_link[sublang]->SetSelection(sublang);
-						is_modified[sublang] = true;
-					}
-				message_link_base[lang].clear();
-				message_link[lang] = message_link_base[baselang];
-			}
-			is_modified[lang] = true;
-			break;
-		}
-	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-		if (lang==lang_link[lang]->GetSelection()) {
-			bool islinked = false;
-			for (sublang=0;sublang<STEAM_LANGUAGE_AMOUNT;sublang++)
-				if (sublang!=lang && lang_link[sublang]->GetSelection()==lang) {
-					islinked = true;
-					break;
-				}
-			lang_text[lang]->Enable(islinked);
-			if (!islinked) {
-				message_link_base[lang].clear();
-				message_link[lang].clear();
-			}
-		} else {
-			lang_text[lang]->Enable(false);
-			message_link_base[lang].clear();
-		}
-}
-
-ScriptEditTextLinkDialog::ScriptEditTextLinkDialog(wxWindow* parent, SteamLanguage* linklang, TextDataStruct& td, SteamLanguage baselang) :
-	ScriptEditTextLinkWindow(parent),
-	text(&td),
-	base_lang(baselang) {
-	wxArrayString dialoglist;
-	SteamLanguage lang;
-	unsigned int i;
-	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-		link[lang] = linklang[lang];
-	for (i=0;i<text->amount;i++)
-		if (text->text[i].multi_lang_init[base_lang])
-			dialoglist.Add(_(FF9String::RemoveOpcodes(text->text[i].multi_lang_str[base_lang],SCRIPT_TEXT_LINK_PREVIEW_LENGTH)));
-		else
-			break;
-	m_baselangdialog->Append(dialoglist);
-	for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-		if (link[lang]==base_lang && lang!=base_lang) {
-			dialoglist.Clear();
-			link_choice[lang] = new wxChoice(this,wxID_ANY);
-			for (i=0;i<text->amount;i++)
-				if (text->text[i].multi_lang_init[lang])
-					dialoglist.Add(_(FF9String::RemoveOpcodes(text->text[i].multi_lang_str[lang],SCRIPT_TEXT_LINK_PREVIEW_LENGTH)));
-				else
-					break;
-			link_choice[lang]->Append(dialoglist);
-			m_translationsizer->Add(link_choice[lang],0,wxEXPAND|wxALL,2);
-			link_choice[lang]->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ScriptEditTextLinkDialog::OnChooseDialog ), NULL, this );
-		} else {
-			link_choice[lang] = NULL;
-		}
-	Fit();
-	Layout();
-	Refresh();
-}
-
-ScriptEditTextLinkDialog::~ScriptEditTextLinkDialog() {
-	for (SteamLanguage lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-		if (link_choice[lang]!=NULL)
-			link_choice[lang]->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ScriptEditTextLinkDialog::OnChooseDialog ), NULL, this );
-}
-
-int ScriptEditTextLinkDialog::ShowModal(int dialogid) {
-	if (dialogid<0)
-		dialogid = 0;
-	else
-		m_baselangdialog->Enable(false);
-	m_baselangdialog->SetSelection(dialogid);
-	UpdateDialogSelection();
-	return ScriptEditTextLinkWindow::ShowModal();
-}
-
-void ScriptEditTextLinkDialog::UpdateDialogSelection() {
-	SteamLanguage lang;
-	unsigned int i;
-	int dialogid = m_baselangdialog->GetSelection();
-	for (i=0;i<message_link_base.size();i++)
-		if (message_link_base[i]==dialogid) {
-			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-				if (link_choice[lang]!=NULL)
-					link_choice[lang]->SetSelection(message_link[lang][i]);
-			break;
-		}
-	if (i>=message_link_base.size()) {
-		for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-			if (link_choice[lang]!=NULL)
-				link_choice[lang]->SetSelection(dialogid);
-	}
-}
-
-void ScriptEditTextLinkDialog::OnButtonClick(wxCommandEvent& event) {
-	EndModal(event.GetId());
-}
-
-void ScriptEditTextLinkDialog::OnChooseDialog(wxCommandEvent& event) {
-	wxChoice* dialchoice = static_cast<wxChoice*>(event.GetEventObject());
-	if (dialchoice==m_baselangdialog) {
-		UpdateDialogSelection();
-	} else {
-		SteamLanguage lang;
-		unsigned int dialindex;
-		for (dialindex=0;dialindex<message_link_base.size();dialindex++)
-			if (message_link_base[dialindex]==m_baselangdialog->GetSelection())
-				break;
-		if (dialindex>=message_link_base.size()) {
-			dialindex = message_link_base.size();
-			message_link_base.push_back(m_baselangdialog->GetSelection());
-			for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-				if (link_choice[lang]!=NULL)
-					message_link[lang].push_back(m_baselangdialog->GetSelection());
-		}
-		for (lang=0;lang<STEAM_LANGUAGE_AMOUNT;lang++)
-			if (dialchoice==link_choice[lang]) {
-				message_link[lang][dialindex] = event.GetSelection();
-				break;
-			}
-	}
 }

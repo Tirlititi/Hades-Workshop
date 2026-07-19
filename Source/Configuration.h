@@ -349,6 +349,8 @@ GameType GetGameType();
 void SetGameType(GameType gt);
 GameType GetHWSGameType();
 void SetHWSGameType(GameType gt);
+uint16_t GetHWSGlobalVersion();
+void SetHWSGlobalVersion(uint16_t version);
 
 ConfigurationSet* GetGameConfiguration();
 void SetGameConfiguration(ConfigurationSet* config);

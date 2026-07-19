@@ -103,7 +103,7 @@ wxString CharBattleParameterStruct::GetFieldValue(wxString fieldname) {
 	if (fieldname.IsSameAs("status_bone")) return wxString::Format(wxT("%d, %d, %d, %d, %d, %d"), status_bone[0], status_bone[1], status_bone[2], status_bone[3], status_bone[4], status_bone[5]);
 	if (fieldname.IsSameAs("status_offy")) return wxString::Format(wxT("%d, %d, %d, %d, %d, %d"), status_offy[0], status_offy[1], status_offy[2], status_offy[3], status_offy[4], status_offy[5]);
 	if (fieldname.IsSameAs("status_offz")) return wxString::Format(wxT("%d, %d, %d, %d, %d, %d"), status_offz[0], status_offz[1], status_offz[2], status_offz[3], status_offz[4], status_offz[5]);
-	if (fieldname.IsSameAs("attack_sound")) return wxString::Format(wxT("%d, %d"), attack_sound[0], attack_sound[1]);
+	if (fieldname.IsSameAs("attack_sound")) return attack_sound_disabled ? wxEmptyString : wxString::Format(wxT("%d, %d"), attack_sound[0], attack_sound[1]);
 	if (auto search = custom_field.find(fieldname); search != custom_field.end()) return search->second;
 	if (auto search = parent->custom_field_battle_param.find(fieldname); search != parent->custom_field_battle_param.end()) return search->second;
 	return _(L"");
@@ -295,17 +295,27 @@ const unsigned int steam_stat_field_size[] = { 8, 8, 8, 8, 16 };
 const unsigned int steam_lvlhpmp_field_size[] = { 16, 16 };
 
 void InitialStatDataStruct::GenerateDefaultName() {
-	wstring name = id < PLAYABLE_CHAR_AMOUNT ? HADES_STRING_CHARACTER_DEFAULT_NAME[id].ToStdWstring() : (L"PC n°" + to_string(id));
 	default_name.CreateEmpty();
-	if (GetGameType() == GAME_TYPE_PSX || hades::STEAM_SINGLE_LANGUAGE_MODE) {
-		default_name.SetValue(name);
+	if (id < PLAYABLE_CHAR_AMOUNT) {
+		if (GetGameType() == GAME_TYPE_PSX || hades::STEAM_SINGLE_LANGUAGE_MODE) {
+			wstring name = HADES_STRING_CHARACTER_DEFAULT_NAME[id][GetSteamLanguage() != STEAM_LANGUAGE_NONE ? GetSteamLanguage() : STEAM_LANGUAGE_US].ToStdWstring();
+			default_name.SetValue(name);
+		} else {
+			for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+				default_name.SetValue(HADES_STRING_CHARACTER_DEFAULT_NAME[id][lang].ToStdWstring(), lang);
+		}
 	} else {
-		for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
-			default_name.SetValue(name, lang);
+		wstring name = L"PC n°" + to_string(id);
+		if (GetGameType() == GAME_TYPE_PSX || hades::STEAM_SINGLE_LANGUAGE_MODE) {
+			default_name.SetValue(name);
+		} else {
+			for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+				default_name.SetValue(name, lang);
+		}
 	}
 }
 
-int InitialStatDataStruct::SetDefaultName(wstring newvalue) {
+int InitialStatDataStruct::SetDefaultName(wstring newvalue, SteamLanguage lang) {
 	if (GetGameType() == GAME_TYPE_PSX) {
 		FF9String tmp(default_name);
 		tmp.SetValue(newvalue);
@@ -315,7 +325,7 @@ int InitialStatDataStruct::SetDefaultName(wstring newvalue) {
 			return 1;
 		parent->default_name_space_used += newlen - oldlen;
 	}
-	default_name.SetValue(newvalue);
+	default_name.SetValue(newvalue, lang);
 	return 0;
 }
 
@@ -503,6 +513,7 @@ void StatDataSet::InitializeNewCharacter(int charindex) {
 	stat.default_category = 0;
 	stat.attack_sfx = 100;
 	stat.attack_sound[0] = stat.attack_sound[1] = 0;
+	stat.attack_sound_disabled = false;
 	stat.weapon_bone = 0;
 	for (i = 0; i < 6; i++) {
 		stat.status_bone[i] = 0;
@@ -600,7 +611,6 @@ void StatDataSet::InitializeNewCharacter(int charindex) {
 			} \
 		} \
 		for (j=0;j<abilsetsize;j++) { \
-			if (READ) ability_list[i].entry[j].ability.Setup(rawid); \
 			if (useextendedtype) { \
 				IO ## Char(ffbin, ability_list[i].entry[j].ability.is_active); \
 				IO ## FlexibleChar(ffbin, ability_list[i].entry[j].ability.id, true); \
@@ -822,6 +832,11 @@ void StatDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 							wxArrayString snd = MemoriaUtility::SplitEntryArray(csventry[45]);
 							for (j = 0; j < 2 && j < (int)snd.GetCount(); j++)
 								battle_param[btlid].attack_sound[j] = wxAtoi(snd[j]);
+							battle_param[btlid].attack_sound_disabled = snd.GetCount() == 0;
+						} else {
+							battle_param[btlid].attack_sound[0] = 0;
+							battle_param[btlid].attack_sound[1] = 0;
+							battle_param[btlid].attack_sound_disabled = false;
 						}
 					}
 				}
@@ -1107,7 +1122,7 @@ bool CSV_AbilitySetGenerator(wxString modfolder, wxString csvpath, wxString cust
 	return MemoriaUtility::GenerateDatabaseGeneric<AbilityEntryDataStruct>(modfolder, csvpath, header, _(L"\n"), _(L"\n"), as.entry, format, false);
 }
 
-bool StatDataSet::GenerateCSV(string basefolder) {
+bool StatDataSet::GenerateCSV(string modfolder, string basefolder) {
 	unsigned int i, j;
 	if (!MemoriaUtility::GenerateDatabaseGeneric<CharBattleParameterStruct>(_(basefolder), _(HADES_STRING_CSV_BATTLEPARAM_FILE), csv_header_battle_param, _(L"\n"), _(L"\n"), battle_param, csv_format_battle_param, true))
 		return false;
@@ -1119,7 +1134,7 @@ bool StatDataSet::GenerateCSV(string basefolder) {
 		return false;
 	if (!MemoriaUtility::GenerateDatabaseGeneric<InitialEquipDataStruct>(_(basefolder), _(HADES_STRING_CSV_STATEQUIP_FILE), csv_header_initial_equip, _(L"\n"), _(L"\n"), initial_equip, csv_format_initial_equip, true))
 		return false;
-	for (unsigned int i = 0; i < ability_list.size(); i++) {
+	for (i = 0; i < ability_list.size(); i++) {
 		if (ability_list[i].entry.size() == 0) // Theater sets
 			continue;
 		if (ability_list[i].id < (int)HADES_STRING_CSV_STATABIL_FILE.size()) {
@@ -1168,6 +1183,13 @@ bool StatDataSet::GenerateCSV(string basefolder) {
 			return false;
 		equiptxtfile.Close();
 	}
+	wxString charnamelines = _(L"");
+	for (i = 0; i < initial_stat.size(); i++)
+		for (j = 0; j < STEAM_LANGUAGE_AMOUNT; j++)
+			if (initial_stat[i].default_name.multi_lang_init[j])
+				if (initial_stat[i].id >= PLAYABLE_CHAR_AMOUNT || !HADES_STRING_CHARACTER_DEFAULT_NAME[initial_stat[i].id][j].IsSameAs(initial_stat[i].default_name.multi_lang_str[j]))
+					charnamelines << "CharacterDefaultName " << initial_stat[i].id << " " << HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[j].Upper() << " " << initial_stat[i].default_name.multi_lang_str[j] << "\n";
+	MemoriaUtility::ExportDictionaryPatchLines(modfolder + HADES_STRING_DICTIONARY_PATCH_FILE, _(L"CharacterDefaultName "), charnamelines);
 	bool generatelevels = custom_field_level.size() > 0;
 	if (!generatelevels) {
 		wxArrayString levelbasecsv;
@@ -1337,6 +1359,11 @@ int StatDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 				ffbin.seekg(tmppos + txtspace);
 				HWSReadChar(ffbin, lg);
 			}
+		}
+		if (version < 4 && GetHWSGameType() != GAME_TYPE_PSX) {
+			for (i = 0; i < charamount; i++)
+				if (initial_stat[i].id < PLAYABLE_CHAR_AMOUNT)
+					initial_stat[i].GenerateDefaultName();
 		}
 	} else {
 		if (GetHWSGameType() == GAME_TYPE_PSX) {

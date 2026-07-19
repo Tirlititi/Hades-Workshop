@@ -420,6 +420,7 @@ public:
 	void WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsigned int localflag);
 	int GetSteamTextSize(SteamLanguage lang = GetSteamLanguage());
 	void WriteSteamText(fstream& ffbin, SteamLanguage lang = GetSteamLanguage());
+	void WriteSteamTextPatch(fstream& fileout, fstream& baseresourcefile, ConfigurationSet& configset, SteamLanguage lang = GetSteamLanguage());
 	int GetIndexById(uint16_t fieldid);
 };
 

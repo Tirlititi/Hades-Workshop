@@ -170,21 +170,73 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	m_menuBar->Append( m_menuOption, _("&Option") );
 
 	m_menuBatch = new wxMenu();
-	m_exporttext = new wxMenuItem( m_menuBatch, wxID_TEXT, wxString( _("Export Texts") ) , _("Export all the text blocks at once"), wxITEM_NORMAL );
-	m_menuBatch->Append( m_exporttext );
+	m_exporttextmenu = new wxMenu();
+	wxMenuItem* m_exporttextmenuItem = new wxMenuItem( m_menuBatch, wxID_ANY, _("Export Texts"), wxEmptyString, wxITEM_NORMAL, m_exporttextmenu );
+	#if (defined( __WXMSW__ ) || defined( __WXGTK__ ) || defined( __WXOSX__ ))
+	m_exporttextmenuItem->SetBitmap( wxNullBitmap );
+	#endif
+
+	m_exporttext = new wxMenuItem( m_exporttextmenu, wxID_TEXT, wxString( _("Export Field Texts") ) , _("Export all the field text blocks at once"), wxITEM_NORMAL );
+	m_exporttextmenu->Append( m_exporttext );
 	m_exporttext->Enable( false );
 
-	m_importtext = new wxMenuItem( m_menuBatch, wxID_IMPTEXT, wxString( _("Import Texts") ) , _("Import all the text blocks at once"), wxITEM_NORMAL );
+	m_exportworldtext = new wxMenuItem( m_exporttextmenu, wxID_WORLDTEXT, wxString( _("Export World Map Texts") ) , _("Export all the world map texts"), wxITEM_NORMAL );
+	m_exporttextmenu->Append( m_exportworldtext );
+	m_exportworldtext->Enable( false );
+
+	m_exportbattletext = new wxMenuItem( m_exporttextmenu, wxID_ENMYTEXT, wxString( _("Export Battle Texts") ) , _("Export the text blocks of all battles at once"), wxITEM_NORMAL );
+	m_exporttextmenu->Append( m_exportbattletext );
+	m_exportbattletext->Enable( false );
+
+	m_exportfieldtext = new wxMenuItem( m_exporttextmenu, wxID_FIELDTEXT, wxString( _("Export Field Names") ) , _("Export the names of each field"), wxITEM_NORMAL );
+	m_exporttextmenu->Append( m_exportfieldtext );
+	m_exportfieldtext->Enable( false );
+
+	m_exportplacetext = new wxMenuItem( m_exporttextmenu, wxID_PLACETEXT, wxString( _("Export World Place Names") ) , _("Export the names of the different places on the world map"), wxITEM_NORMAL );
+	m_exporttextmenu->Append( m_exportplacetext );
+	m_exportplacetext->Enable( false );
+
+	m_exportspecialtext = new wxMenuItem( m_exporttextmenu, wxID_UITEXT, wxString( _("Export UI Texts") ) , _("Export all the UI text blocks except Localization"), wxITEM_NORMAL );
+	m_exporttextmenu->Append( m_exportspecialtext );
+	m_exportspecialtext->Enable( false );
+
+	m_exportlocalizationtext = new wxMenuItem( m_exporttextmenu, wxID_LOCTEXT, wxString( _("Export Localization") ) , _("Export the texts of the Localization text block"), wxITEM_NORMAL );
+	m_exporttextmenu->Append( m_exportlocalizationtext );
+	m_exportlocalizationtext->Enable( false );
+
+	m_exportcardtext = new wxMenuItem( m_exporttextmenu, wxID_CARDTEXT, wxString( _("Export Card Names") ) , _("Export the names of Tetra Master cards"), wxITEM_NORMAL );
+	m_exporttextmenu->Append( m_exportcardtext );
+	m_exportcardtext->Enable( false );
+
+	m_exportspelltext = new wxMenuItem( m_exporttextmenu, wxID_SPELLTEXT, wxString( _("Export Spell Texts") ) , _("Export the names and descriptions of each spell"), wxITEM_NORMAL );
+	m_exporttextmenu->Append( m_exportspelltext );
+	m_exportspelltext->Enable( false );
+
+	m_exportsupporttext = new wxMenuItem( m_exporttextmenu, wxID_SUPPORTTEXT, wxString( _("Export Support Texts") ) , _("Export the names and descriptions of each support"), wxITEM_NORMAL );
+	m_exporttextmenu->Append( m_exportsupporttext );
+	m_exportsupporttext->Enable( false );
+
+	m_exportcmdtext = new wxMenuItem( m_exporttextmenu, wxID_CMDTEXT, wxString( _("Export Command Texts") ) , _("Export the names and descriptions of each command"), wxITEM_NORMAL );
+	m_exporttextmenu->Append( m_exportcmdtext );
+	m_exportcmdtext->Enable( false );
+
+	m_exportstattext = new wxMenuItem( m_exporttextmenu, wxID_STATTEXT, wxString( _("Export Character Names") ) , _("Export the names of each playable character"), wxITEM_NORMAL );
+	m_exporttextmenu->Append( m_exportstattext );
+	m_exportstattext->Enable( false );
+
+	m_exportitemtext = new wxMenuItem( m_exporttextmenu, wxID_ITEMTEXT, wxString( _("Export Item Texts") ) , _("Export the names and descriptions of each item"), wxITEM_NORMAL );
+	m_exporttextmenu->Append( m_exportitemtext );
+	m_exportitemtext->Enable( false );
+
+	m_exportkeytext = new wxMenuItem( m_exporttextmenu, wxID_KEYTEXT, wxString( _("Export Key Item Texts") ) , _("Export the names and descriptions of each key item"), wxITEM_NORMAL );
+	m_exporttextmenu->Append( m_exportkeytext );
+	m_exportkeytext->Enable( false );
+
+	m_menuBatch->Append( m_exporttextmenuItem );
+
+	m_importtext = new wxMenuItem( m_menuBatch, wxID_IMPTEXT, wxString( _("Import Texts") ) , _("Import one or multiple files containing text databases"), wxITEM_NORMAL );
 	m_menuBatch->Append( m_importtext );
 	m_importtext->Enable( false );
-
-	m_exportuitext = new wxMenuItem( m_menuBatch, wxID_UITEXT, wxString( _("Export UI Texts") ) , _("Export all the interface texts at once"), wxITEM_NORMAL );
-	m_menuBatch->Append( m_exportuitext );
-	m_exportuitext->Enable( false );
-
-	m_importuitext = new wxMenuItem( m_menuBatch, wxID_IMPUITEXT, wxString( _("Import UI Texts") ) , _("Import all the interface texts at once"), wxITEM_NORMAL );
-	m_menuBatch->Append( m_importuitext );
-	m_importuitext->Enable( false );
 
 	m_menuBatch->AppendSeparator();
 
@@ -317,10 +369,21 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortFieldClick ), this, m_fieldshowid->GetId());
 	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortBattleSceneClick ), this, m_sortbattlescene->GetId());
 	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortSpellAnimationClick ), this, m_sortspellanim->GetId());
-	m_menuBatch->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchExportClick ), this, m_exporttext->GetId());
+	m_exporttextmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchExportClick ), this, m_exporttext->GetId());
+	m_exporttextmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchExportClick ), this, m_exportworldtext->GetId());
+	m_exporttextmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchExportClick ), this, m_exportbattletext->GetId());
+	m_exporttextmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchExportClick ), this, m_exportfieldtext->GetId());
+	m_exporttextmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchExportClick ), this, m_exportplacetext->GetId());
+	m_exporttextmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchExportClick ), this, m_exportspecialtext->GetId());
+	m_exporttextmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchExportClick ), this, m_exportlocalizationtext->GetId());
+	m_exporttextmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchExportClick ), this, m_exportcardtext->GetId());
+	m_exporttextmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchExportClick ), this, m_exportspelltext->GetId());
+	m_exporttextmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchExportClick ), this, m_exportsupporttext->GetId());
+	m_exporttextmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchExportClick ), this, m_exportcmdtext->GetId());
+	m_exporttextmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchExportClick ), this, m_exportstattext->GetId());
+	m_exporttextmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchExportClick ), this, m_exportitemtext->GetId());
+	m_exporttextmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchExportClick ), this, m_exportkeytext->GetId());
 	m_menuBatch->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchImportClick ), this, m_importtext->GetId());
-	m_menuBatch->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchExportClick ), this, m_exportuitext->GetId());
-	m_menuBatch->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchImportClick ), this, m_importuitext->GetId());
 	m_menuBatch->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchExportClick ), this, m_exportenemyscript->GetId());
 	m_menuBatch->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchImportClick ), this, m_importenemyscript->GetId());
 	m_menuBatch->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchExportClick ), this, m_exportworldscript->GetId());
@@ -3281,11 +3344,6 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemyscriptentryedit = new wxButton( m_enemyscrolledwindow, wxID_ENTRY, _("Edit Entries"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer191->Add( m_enemyscriptentryedit, 0, wxALL, 3 );
 
-	m_enemyscriptlink = new wxButton( m_enemyscrolledwindow, wxID_SCRIPTLINK, _("Languages"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_enemyscriptlink->SetToolTip( _("Script links between different languages.\nScripts of linked languages are the same\nand are modified together.") );
-
-	bSizer191->Add( m_enemyscriptlink, 0, wxALL, 3 );
-
 
 	fgSizer8->Add( bSizer191, 1, wxEXPAND, 5 );
 
@@ -5076,6 +5134,34 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_textdatalist = new wxListBox( m_textscrolledwindow, wxID_TEXT, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
 	fgSizer14->Add( m_textdatalist, 0, wxALL|wxEXPAND, 2 );
 
+	m_staticText550 = new wxStaticText( m_textscrolledwindow, wxID_ANY, _("Text ID"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText550->Wrap( -1 );
+	fgSizer14->Add( m_staticText550, 0, wxALL, 5 );
+
+	wxBoxSizer* bSizer333;
+	bSizer333 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_textid = new wxSpinCtrl( m_textscrolledwindow, wxID_ID, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 2147483647, 0 );
+	bSizer333->Add( m_textid, 0, wxALL, 2 );
+
+	m_staticText551 = new wxStaticText( m_textscrolledwindow, wxID_ANY, _("Universal ID "), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText551->Wrap( -1 );
+	m_staticText551->SetToolTip( _("The \"Universal ID\" of a text is\na way to re-order texts to take\ninto account those that only\nexist in some language(s)") );
+
+	bSizer333->Add( m_staticText551, 0, wxALIGN_CENTER|wxLEFT, 15 );
+
+	m_textuniversalid = new wxSpinCtrl( m_textscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 2147483647, 0 );
+	m_textuniversalid->Enable( false );
+
+	bSizer333->Add( m_textuniversalid, 0, wxALL, 2 );
+
+	m_textidwarning = new wxStaticText( m_textscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_textidwarning->Wrap( -1 );
+	bSizer333->Add( m_textidwarning, 0, wxALL|wxEXPAND, 5 );
+
+
+	fgSizer14->Add( bSizer333, 1, wxEXPAND, 5 );
+
 	m_textexportlabel = new wxStaticText( m_textscrolledwindow, wxID_ANY, _("Export"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_textexportlabel->Wrap( -1 );
 	fgSizer14->Add( m_textexportlabel, 0, wxALL, 5 );
@@ -5175,11 +5261,6 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_worldscriptentryedit = new wxButton( m_worldscrolledwindow, wxID_ENTRY, _("Edit Entries"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer189->Add( m_worldscriptentryedit, 0, wxALL, 3 );
 
-	m_worldscriptlink = new wxButton( m_worldscrolledwindow, wxID_SCRIPTLINK, _("Languages"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_worldscriptlink->SetToolTip( _("Script links between different languages.\nScripts of linked languages are the same\nand are modified together.") );
-
-	bSizer189->Add( m_worldscriptlink, 0, wxALL, 3 );
-
 
 	fgSizer142->Add( bSizer189, 1, wxEXPAND, 5 );
 
@@ -5196,6 +5277,34 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	m_worldtextlist = new wxListBox( m_worldscrolledwindow, wxID_WORLD, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
 	fgSizer142->Add( m_worldtextlist, 0, wxALL|wxEXPAND, 2 );
+
+	m_staticText553 = new wxStaticText( m_worldscrolledwindow, wxID_ANY, _("Text ID"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText553->Wrap( -1 );
+	fgSizer142->Add( m_staticText553, 0, wxALL, 5 );
+
+	wxBoxSizer* bSizer3331;
+	bSizer3331 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_worldtextid = new wxSpinCtrl( m_worldscrolledwindow, wxID_WORLDID, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 2147483647, 0 );
+	bSizer3331->Add( m_worldtextid, 0, wxALL, 2 );
+
+	m_staticText5511 = new wxStaticText( m_worldscrolledwindow, wxID_ANY, _("Universal ID "), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText5511->Wrap( -1 );
+	m_staticText5511->SetToolTip( _("The \"Universal ID\" of a text is\na way to re-order texts to take\ninto account those that only\nexist in some language(s)") );
+
+	bSizer3331->Add( m_staticText5511, 0, wxALIGN_CENTER|wxLEFT, 15 );
+
+	m_worldtextuniversalid = new wxSpinCtrl( m_worldscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 2147483647, 0 );
+	m_worldtextuniversalid->Enable( false );
+
+	bSizer3331->Add( m_worldtextuniversalid, 0, wxALL, 2 );
+
+	m_worldtextidwarning = new wxStaticText( m_worldscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_worldtextidwarning->Wrap( -1 );
+	bSizer3331->Add( m_worldtextidwarning, 0, wxALL|wxEXPAND, 5 );
+
+
+	fgSizer142->Add( bSizer3331, 1, wxEXPAND, 5 );
 
 	m_staticText831 = new wxStaticText( m_worldscrolledwindow, wxID_ANY, _("Export"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText831->Wrap( -1 );
@@ -5715,6 +5824,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	wxFlexGridSizer* fgSizer39;
 	fgSizer39 = new wxFlexGridSizer( 0, 2, 0, 0 );
 	fgSizer39->AddGrowableCol( 1 );
+	fgSizer39->AddGrowableRow( 5 );
 	fgSizer39->SetFlexibleDirection( wxBOTH );
 	fgSizer39->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -5748,11 +5858,6 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	m_fieldscriptentryedit = new wxButton( m_fieldscrolledwindow, wxID_ENTRY, _("Edit Entries"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer190->Add( m_fieldscriptentryedit, 0, wxALL, 3 );
-
-	m_fieldscriptlink = new wxButton( m_fieldscrolledwindow, wxID_SCRIPTLINK, _("Languages"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_fieldscriptlink->SetToolTip( _("Script links between different languages.\nScripts of linked languages are the same\nand are modified together.") );
-
-	bSizer190->Add( m_fieldscriptlink, 0, wxALL, 3 );
 
 
 	fgSizer39->Add( bSizer190, 1, wxEXPAND, 5 );
@@ -5805,8 +5910,10 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_staticText210->Wrap( -1 );
 	fgSizer39->Add( m_staticText210, 0, wxALL, 5 );
 
-	m_fieldtexturepreview = new wxScrolledWindow( m_fieldscrolledwindow, wxID_ANY, wxDefaultPosition, wxSize( 518,518 ), wxHSCROLL|wxVSCROLL|wxBORDER_SUNKEN );
+	m_fieldtexturepreview = new wxScrolledWindow( m_fieldscrolledwindow, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), wxHSCROLL|wxVSCROLL|wxBORDER_SUNKEN );
 	m_fieldtexturepreview->SetScrollRate( 5, 5 );
+	m_fieldtexturepreview->SetMinSize( wxSize( 518,518 ) );
+
 	fgSizer39->Add( m_fieldtexturepreview, 1, wxEXPAND | wxALL, 5 );
 
 
@@ -5985,6 +6092,32 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	m_specialtextdatalist = new wxListBox( m_specialtextscrolledwindow, wxID_ANY, wxDefaultPosition, wxSize( 350,150 ), 0, NULL, 0 );
 	fgSizer73->Add( m_specialtextdatalist, 0, wxALL|wxEXPAND, 2 );
+
+	m_staticText554 = new wxStaticText( m_specialtextscrolledwindow, wxID_ANY, _("Text ID"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText554->Wrap( -1 );
+	fgSizer73->Add( m_staticText554, 0, wxALL, 5 );
+
+	m_specialtextid = new wxSpinCtrl( m_specialtextscrolledwindow, wxID_ID, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 2147483647, 0 );
+	fgSizer73->Add( m_specialtextid, 0, wxALL, 2 );
+
+	m_staticText555 = new wxStaticText( m_specialtextscrolledwindow, wxID_ANY, _("Entry Key"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText555->Wrap( -1 );
+	fgSizer73->Add( m_staticText555, 0, wxALL, 5 );
+
+	wxBoxSizer* bSizer335;
+	bSizer335 = new wxBoxSizer( wxVERTICAL );
+
+	m_specialtextkey = new wxTextCtrl( m_specialtextscrolledwindow, wxID_KEY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_specialtextkey->SetMinSize( wxSize( 250,-1 ) );
+
+	bSizer335->Add( m_specialtextkey, 0, wxALL, 2 );
+
+	m_specialtextidwarning = new wxStaticText( m_specialtextscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_specialtextidwarning->Wrap( -1 );
+	bSizer335->Add( m_specialtextidwarning, 0, wxALL|wxEXPAND, 5 );
+
+
+	fgSizer73->Add( bSizer335, 1, wxEXPAND, 5 );
 
 
 	m_specialtextscrolledwindow->SetSizer( fgSizer73 );
@@ -6559,7 +6692,6 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemytextlist->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnEnemyTextRightClick ), NULL, this );
 	m_enemyscriptedit->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
 	m_enemyscriptentryedit->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
-	m_enemyscriptlink->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
 	m_enemyscene->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
 	m_enemyflag1->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyflag2->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
@@ -6788,8 +6920,10 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_carddecksetbutton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnCardChangeButton ), NULL, this );
 	m_notebookenvironment->Connect( wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED, wxNotebookEventHandler( CDPanel::OnNotebookEnvironment ), NULL, this );
 	m_textlist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxText ), NULL, this );
+	m_textdatalist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnTextSelectText ), NULL, this );
 	m_textdatalist->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnTextEditText ), NULL, this );
 	m_textdatalist->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnTextRightClick ), NULL, this );
+	m_textid->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnTextChangeSpin ), NULL, this );
 	m_textexport->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnTextExportText ), NULL, this );
 	m_textmanagecharmapbutton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnTextManageCharmap ), NULL, this );
 	m_textcharmaplist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnTextCharmapListSelection ), NULL, this );
@@ -6800,10 +6934,11 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_worldlist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxWorldMap ), NULL, this );
 	m_worldscriptedit->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnWorldChangeButton ), NULL, this );
 	m_worldscriptentryedit->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnWorldChangeButton ), NULL, this );
-	m_worldscriptlink->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnWorldChangeButton ), NULL, this );
 	m_worldpreload->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnWorldChangeButton ), NULL, this );
+	m_worldtextlist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnTextSelectText ), NULL, this );
 	m_worldtextlist->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnTextEditText ), NULL, this );
 	m_worldtextlist->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnTextRightClick ), NULL, this );
+	m_worldtextid->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnTextChangeSpin ), NULL, this );
 	m_worldtextexport->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnTextExportText ), NULL, this );
 	m_worldtextmanagecharmapbutton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnTextManageCharmap ), NULL, this );
 	m_worldtextcharmaplist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnTextCharmapListSelection ), NULL, this );
@@ -6851,7 +6986,6 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_fieldnamebutton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldeditscript->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldscriptentryedit->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
-	m_fieldscriptlink->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldpreload->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldtexturechoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnFieldChangeChoice ), NULL, this );
 	m_fieldtexturemanage->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
@@ -6872,8 +7006,11 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_spellanimsequence->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnSpellAnimationChangeButton ), NULL, this );
 	m_notebookinterface->Connect( wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED, wxNotebookEventHandler( CDPanel::OnNotebookInterface ), NULL, this );
 	m_specialtextlist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxSpecialText ), NULL, this );
+	m_specialtextdatalist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnSpecialTextSelectText ), NULL, this );
 	m_specialtextdatalist->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnSpecialTextEditText ), NULL, this );
 	m_specialtextdatalist->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnSpecialTextRightClick ), NULL, this );
+	m_specialtextid->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnSpecialTextChangeSpin ), NULL, this );
+	m_specialtextkey->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnSpecialTextEditKey ), NULL, this );
 	m_notebookmips->Connect( wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED, wxNotebookEventHandler( CDPanel::OnNotebookMips ), NULL, this );
 	m_mipsbattlelist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxMipsBattle ), NULL, this );
 	m_mipsbattlecodegen->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnMipsBattleButton ), NULL, this );
@@ -7227,7 +7364,6 @@ CDPanel::~CDPanel()
 	m_enemytextlist->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnEnemyTextRightClick ), NULL, this );
 	m_enemyscriptedit->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
 	m_enemyscriptentryedit->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
-	m_enemyscriptlink->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
 	m_enemyscene->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
 	m_enemyflag1->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyflag2->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
@@ -7456,8 +7592,10 @@ CDPanel::~CDPanel()
 	m_carddecksetbutton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnCardChangeButton ), NULL, this );
 	m_notebookenvironment->Disconnect( wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED, wxNotebookEventHandler( CDPanel::OnNotebookEnvironment ), NULL, this );
 	m_textlist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxText ), NULL, this );
+	m_textdatalist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnTextSelectText ), NULL, this );
 	m_textdatalist->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnTextEditText ), NULL, this );
 	m_textdatalist->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnTextRightClick ), NULL, this );
+	m_textid->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnTextChangeSpin ), NULL, this );
 	m_textexport->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnTextExportText ), NULL, this );
 	m_textmanagecharmapbutton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnTextManageCharmap ), NULL, this );
 	m_textcharmaplist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnTextCharmapListSelection ), NULL, this );
@@ -7468,10 +7606,11 @@ CDPanel::~CDPanel()
 	m_worldlist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxWorldMap ), NULL, this );
 	m_worldscriptedit->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnWorldChangeButton ), NULL, this );
 	m_worldscriptentryedit->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnWorldChangeButton ), NULL, this );
-	m_worldscriptlink->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnWorldChangeButton ), NULL, this );
 	m_worldpreload->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnWorldChangeButton ), NULL, this );
+	m_worldtextlist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnTextSelectText ), NULL, this );
 	m_worldtextlist->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnTextEditText ), NULL, this );
 	m_worldtextlist->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnTextRightClick ), NULL, this );
+	m_worldtextid->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnTextChangeSpin ), NULL, this );
 	m_worldtextexport->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnTextExportText ), NULL, this );
 	m_worldtextmanagecharmapbutton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnTextManageCharmap ), NULL, this );
 	m_worldtextcharmaplist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnTextCharmapListSelection ), NULL, this );
@@ -7519,7 +7658,6 @@ CDPanel::~CDPanel()
 	m_fieldnamebutton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldeditscript->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldscriptentryedit->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
-	m_fieldscriptlink->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldpreload->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldtexturechoice->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnFieldChangeChoice ), NULL, this );
 	m_fieldtexturemanage->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
@@ -7540,8 +7678,11 @@ CDPanel::~CDPanel()
 	m_spellanimsequence->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnSpellAnimationChangeButton ), NULL, this );
 	m_notebookinterface->Disconnect( wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED, wxNotebookEventHandler( CDPanel::OnNotebookInterface ), NULL, this );
 	m_specialtextlist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxSpecialText ), NULL, this );
+	m_specialtextdatalist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnSpecialTextSelectText ), NULL, this );
 	m_specialtextdatalist->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnSpecialTextEditText ), NULL, this );
 	m_specialtextdatalist->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnSpecialTextRightClick ), NULL, this );
+	m_specialtextid->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnSpecialTextChangeSpin ), NULL, this );
+	m_specialtextkey->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnSpecialTextEditKey ), NULL, this );
 	m_notebookmips->Disconnect( wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED, wxNotebookEventHandler( CDPanel::OnNotebookMips ), NULL, this );
 	m_mipsbattlelist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxMipsBattle ), NULL, this );
 	m_mipsbattlecodegen->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnMipsBattleButton ), NULL, this );
@@ -8491,7 +8632,7 @@ CharacterParameterWindow::CharacterParameterWindow( wxWindow* parent, wxWindowID
 	fgSizer92->Add( m_staticText552, 0, wxALL, 5 );
 
 	wxFlexGridSizer* fgSizer931;
-	fgSizer931 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer931 = new wxFlexGridSizer( 0, 3, 0, 0 );
 	fgSizer931->SetFlexibleDirection( wxBOTH );
 	fgSizer931->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
@@ -8503,11 +8644,20 @@ CharacterParameterWindow::CharacterParameterWindow( wxWindow* parent, wxWindowID
 	m_staticText3701->Wrap( -1 );
 	fgSizer931->Add( m_staticText3701, 0, wxLEFT, 10 );
 
+	m_staticText5511 = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText5511->Wrap( -1 );
+	fgSizer931->Add( m_staticText5511, 0, 0, 5 );
+
 	m_attacksound1 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -1, 2147483647, 0 );
 	fgSizer931->Add( m_attacksound1, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_attacksound2 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -1, 2147483647, 0 );
 	fgSizer931->Add( m_attacksound2, 0, wxLEFT|wxRIGHT, 5 );
+
+	m_attacksounddisable = new wxCheckBox( this, wxID_ANY, _("Use weapon sounds instead"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_attacksounddisable->SetToolTip( _("When enabled, the Attack and Hit\nsounds used are the ones linked to\nweapon models directly") );
+
+	fgSizer931->Add( m_attacksounddisable, 0, wxALL, 5 );
 
 
 	fgSizer92->Add( fgSizer931, 1, wxEXPAND, 5 );
@@ -8708,6 +8858,7 @@ CharacterParameterWindow::CharacterParameterWindow( wxWindow* parent, wxWindowID
 	m_tranceglowr->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CharacterParameterWindow::OnChangeColor ), NULL, this );
 	m_tranceglowg->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CharacterParameterWindow::OnChangeColor ), NULL, this );
 	m_tranceglowb->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CharacterParameterWindow::OnChangeColor ), NULL, this );
+	m_attacksounddisable->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CharacterParameterWindow::OnWeaponSoundCheck ), NULL, this );
 	m_buttoncancel->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CharacterParameterWindow::OnButtonClick ), NULL, this );
 	m_buttonok->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CharacterParameterWindow::OnButtonClick ), NULL, this );
 }
@@ -8720,6 +8871,7 @@ CharacterParameterWindow::~CharacterParameterWindow()
 	m_tranceglowr->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CharacterParameterWindow::OnChangeColor ), NULL, this );
 	m_tranceglowg->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CharacterParameterWindow::OnChangeColor ), NULL, this );
 	m_tranceglowb->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CharacterParameterWindow::OnChangeColor ), NULL, this );
+	m_attacksounddisable->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CharacterParameterWindow::OnWeaponSoundCheck ), NULL, this );
 	m_buttoncancel->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CharacterParameterWindow::OnButtonClick ), NULL, this );
 	m_buttonok->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CharacterParameterWindow::OnButtonClick ), NULL, this );
 
@@ -10948,7 +11100,6 @@ BatchExportWindow::BatchExportWindow( wxWindow* parent, wxWindowID id, const wxS
 	bSizer159 = new wxBoxSizer( wxVERTICAL );
 
 	m_splitfile = new wxCheckBox( m_splitfilepanel, wxID_ANY, _("Split Files"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_splitfile->SetValue(true);
 	m_splitfile->SetToolTip( _("When unchecked, all the datas\nare written in one big file") );
 
 	bSizer159->Add( m_splitfile, 0, wxALL, 5 );

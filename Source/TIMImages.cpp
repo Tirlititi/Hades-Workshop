@@ -258,30 +258,30 @@ ftga.write((const char*)&a,1);
 }
 
 uint32_t* TIMImageDataStruct::ConvertAsFullImage(uint32_t* pal, uint16_t palpos, bool usealpha) {
-	unsigned int i,j;
+	unsigned int i, j;
 	uint32_t alphamask = usealpha ? 0 : 0xFF000000;
 	uint8_t pb = 2;//format & 0x3;
-	if (pal==NULL) {
+	if (pal == NULL) {
 		if (format & 0x8)
-			pal = ConvertAsPalette(palpos,usealpha);
+			pal = ConvertAsPalette(palpos, usealpha);
 		else
 			return NULL;
 	}
-	uint32_t* res = new uint32_t[GetWidth()*height];
+	uint32_t* res = new uint32_t[GetWidth() * height];
 	if (format & 0x8) {
-		for (i=0;i<width*pb;i++)
-			for (j=0;j<height;j++) {
-				uint8_t first = pixel_value[i+j*width*pb] & 0xF;
-				uint8_t last = pixel_value[i+j*width*pb] >> 4;
-				uint32_t midcol = ComputeMidColor(pal[first],pal[last]);
-				res[(i+j*width*pb)*3] = pal[first] | alphamask;
-				res[(i+j*width*pb)*3+1] = midcol | alphamask;
-				res[(i+j*width*pb)*3+2] = pal[last] | alphamask;
+		for (i = 0; i < (unsigned int)(width * pb); i++)
+			for (j = 0; j < height; j++) {
+				uint8_t first = pixel_value[i + j * width * pb] & 0xF;
+				uint8_t last = pixel_value[i + j * width * pb] >> 4;
+				uint32_t midcol = ComputeMidColor(pal[first], pal[last]);
+				res[(i + j * width * pb) * 3] = pal[first] | alphamask;
+				res[(i + j * width * pb) * 3 + 1] = midcol | alphamask;
+				res[(i + j * width * pb) * 3 + 2] = pal[last] | alphamask;
 			}
 	} else {
-		for (i=0;i<GetWidth();i++)
-			for (j=0;j<height;j++)
-				res[i+j*GetWidth()] = pal[pixel_value[i+j*GetWidth()]] | alphamask;
+		for (i = 0; i < GetWidth(); i++)
+			for (j = 0; j < height; j++)
+				res[i + j * GetWidth()] = pal[pixel_value[i + j * GetWidth()]] | alphamask;
 	}
 	return res;
 }
@@ -352,34 +352,34 @@ uint32_t SearchBestColor(uint32_t color, uint32_t* pal, uint32_t palsize, int tr
 }
 
 void TIMImageDataStruct::Import(uint8_t* colordata, uint8_t* alphadata, uint16_t posx, uint16_t posy, uint16_t sizex, uint16_t sizey, uint32_t* pal, int charflag) {
-	unsigned int i,j,index;
+	unsigned int i, j, index;
 	int transpalbyte = -1;
-	for (i=0;i<256;i++)
-		if (pal[i] >> 24<=ALPHA_LIMIT) {
+	for (i = 0; i < 256; i++)
+		if (pal[i] >> 24 <= ALPHA_LIMIT) {
 			transpalbyte = i;
 			break;
 		}
 	uint8_t pb = 2;//format & 0x3;
 	if (format & 0x8) {
-		uint8_t palbyte1,palbyte2;
+		uint8_t palbyte1, palbyte2;
 		posx /= 3;
-		for (i=0;i<sizex/3;i++)
-			for (j=0;j<sizey;j++) {
-				index = 3*i+j*sizex;
-				palbyte1 = SearchBestColor(colordata[3*index] | (colordata[3*index+1] << 8) | (colordata[3*index+2] << 16) | (alphadata[index] << 24),pal,256,transpalbyte);
-				palbyte2 = SearchBestColor(colordata[3*(index+2)] | (colordata[3*(index+2)+1] << 8) | (colordata[3*(index+2)+2] << 16) | (alphadata[index+2] << 24),pal,256,transpalbyte);
-				if (charflag==0)
-					pixel_value[i+posx+(j+posy)*width*pb] = (palbyte1 & 0x3) | ((palbyte2 & 0x3) << 4) | (pixel_value[i+posx+(j+posy)*width*pb] & 0xCC);
-				else if (charflag==1)
-					pixel_value[i+posx+(j+posy)*width*pb] = (palbyte1 & 0xC) | ((palbyte2 & 0xC) << 4) | (pixel_value[i+posx+(j+posy)*width*pb] & 0x33);
+		for (i = 0; i < sizex / 3u; i++)
+			for (j = 0; j < sizey; j++) {
+				index = 3 * i + j * sizex;
+				palbyte1 = SearchBestColor(colordata[3 * index] | (colordata[3 * index + 1] << 8) | (colordata[3 * index + 2] << 16) | (alphadata[index] << 24), pal, 256, transpalbyte);
+				palbyte2 = SearchBestColor(colordata[3 * (index + 2)] | (colordata[3 * (index + 2) + 1] << 8) | (colordata[3 * (index + 2) + 2] << 16) | (alphadata[index + 2] << 24), pal, 256, transpalbyte);
+				if (charflag == 0)
+					pixel_value[i + posx + (j + posy) * width * pb] = (palbyte1 & 0x3) | ((palbyte2 & 0x3) << 4) | (pixel_value[i + posx + (j + posy) * width * pb] & 0xCC);
+				else if (charflag == 1)
+					pixel_value[i + posx + (j + posy) * width * pb] = (palbyte1 & 0xC) | ((palbyte2 & 0xC) << 4) | (pixel_value[i + posx + (j + posy) * width * pb] & 0x33);
 				else
-					pixel_value[i+posx+(j+posy)*width*pb] = (palbyte1 & 0xF) | ((palbyte2 & 0xF) << 4);
+					pixel_value[i + posx + (j + posy) * width * pb] = (palbyte1 & 0xF) | ((palbyte2 & 0xF) << 4);
 			}
 	} else {
-		for (i=0;i<sizex;i++)
-			for (j=0;j<sizey;j++) {
-				index = i+j*sizex;
-				pixel_value[i+posx+(j+posy)*width*pb] = SearchBestColor(colordata[3*index] | (colordata[3*index+1] << 8) | (colordata[3*index+2] << 16) | (alphadata[index] << 24),pal,256,transpalbyte);
+		for (i = 0; i < sizex; i++)
+			for (j = 0; j < sizey; j++) {
+				index = i + j * sizex;
+				pixel_value[i + posx + (j + posy) * width * pb] = SearchBestColor(colordata[3 * index] | (colordata[3 * index + 1] << 8) | (colordata[3 * index + 2] << 16) | (alphadata[index] << 24), pal, 256, transpalbyte);
 			}
 	}
 }

@@ -53,6 +53,8 @@ string ConvertToString(int val);
 string ConvertWStrToStr(const wstring& wstr);
 wstring ConvertStrToWStr(const string& str);
 
+fstream& GetDebugLog();
+
 #define StreamAsHex(VALUE) hex << showbase << (unsigned long)VALUE << dec << noshowbase
 
 #define MACRO_IOFUNCTIONGENERIC_STATUS(FFBIN, CONDITION, IO, READ, STATUSSET) \

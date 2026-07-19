@@ -15,12 +15,6 @@ class BatchImportDialog;
 
 class BatchExportDialog : public BatchExportWindow {
 public:
-	// 1 : texts
-	// 2 : ui texts
-	// 3 : enemy scripts
-	// 4 : world scripts
-	// 5 : field scripts
-	// 10 : field backgrounds
 	int datatype;
 	unsigned int* sortlist;
 	SaveSet* dataset;
@@ -31,7 +25,19 @@ public:
 	int ShowModal(int type, SaveSet* datas, wxArrayString objlist, unsigned int* objlistsort);
 
 	static int ExportText(TextDataSet& data, wxString path, bool* exportlist = NULL, bool splitfile = true);
+	static int ExportWorldTexts(WorldMapDataSet& data, wxString path);
+	static int ExportBattleTexts(EnemyDataSet& data, wxString path, bool* exportlist = NULL, bool splitfile = true);
+	static int ExportWorldPlaceNames(WorldMapDataStruct& data, wxString path);
 	static int ExportSpecialText(SpecialTextDataSet& data, wxString path, bool* exportlist = NULL, bool splitfile = true);
+	static int ExportCardNames(CardDataSet& data, wxString path);
+	static int ExportLocalizationEntries(SpecialTextDataStruct& data, wxString path);
+	static int ExportSpellNames(SpellDataSet& data, wxString path);
+	static int ExportSupportNames(SupportDataSet& data, wxString path);
+	static int ExportCommandNames(CommandDataSet& data, wxString path);
+	static int ExportItemNames(ItemDataSet& data, wxString path);
+	static int ExportKeyItemNames(ItemDataSet& data, wxString path);
+	static int ExportFieldNames(FieldDataSet& data, wxString path);
+	static int ExportCharacterNames(StatDataSet& data, wxString path);
 	static int ExportEnemyScript(SaveSet* dataset, wxString path, bool* exportlist = NULL, bool splitfile = true, int addedinfo = 0);
 	static int ExportWorldScript(SaveSet* dataset, wxString path, bool* exportlist = NULL, bool splitfile = true, int addedinfo = 0);
 	static int ExportFieldScript(SaveSet* dataset, wxString path, bool* exportlist = NULL, bool splitfile = true, int addedinfo = 0);
@@ -54,14 +60,14 @@ public:
 	SaveSet* dataset;
 	bool japanversion;
 	bool datamodified;
+	set<int> datasectionmodified;
 	
 	BatchImportDialog(wxWindow* p);
 	~BatchImportDialog();
 	int ShowModal(int type, SaveSet* datas, bool isjapan);
 
-	static LogStruct ImportText(TextDataSet& data, wxString filetext, bool adjustsize = true, bool isjapan = false, bool fatalwarning = false);
-	static LogStruct ImportSpecialText(SpecialTextDataSet& data, wxString filetext, bool fatalwarning = false);
-	static LogStruct ImportScript(SaveSet* dataset, int scripttype, wxString filescript, bool fatalwarning = false, bool* datamodif = NULL);
+	static LogStruct ImportText(SaveSet* dataset, set<int>& sectionmodified, wxString filetext, bool adjustsize = true, bool isjapan = false, bool fatalwarning = false);
+	static LogStruct ImportScript(SaveSet* dataset, set<int>& sectionmodified, int scripttype, wxString filescript, bool fatalwarning = false, bool* datamodif = NULL);
 
 private:
 	wxMenu* list_popup_menu;

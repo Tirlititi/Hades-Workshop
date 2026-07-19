@@ -97,7 +97,7 @@ int Translate(wxString text, SteamLanguage from, SteamLanguage to, wxString* out
 	}
 	int datalen;
 	datalen = send(Socket, httprequest.c_str(), strlen(httprequest.c_str()), 0);
-	if (datalen<strlen(httprequest.c_str()) || datalen==SOCKET_ERROR) {
+	if (datalen<(int)strlen(httprequest.c_str()) || datalen==SOCKET_ERROR) {
 		closesocket(Socket);
 		WSACleanup();
 		return 5;
@@ -111,7 +111,7 @@ int Translate(wxString text, SteamLanguage from, SteamLanguage to, wxString* out
 	wxString yandexanswer = _(L"");
 	char buffer[10000];
 	while ((datalen = recv(Socket,buffer,10000,0)) > 0) {
-		for (i=0;i<datalen;i++)
+		for (i=0;i<(unsigned int)datalen;i++)
 			yandexanswer += buffer[i];
 	}
 	closesocket(Socket);

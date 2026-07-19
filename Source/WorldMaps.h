@@ -41,7 +41,7 @@ struct WorldMapDataStruct : public ChunkChild {
 	uint16_t friendly_area[WORLD_MAP_FRIENDLY_AMOUNT][WORLD_MAP_FRIENDLY_AREA_AMOUNT];
 	
 	// Return 0 if success ; 1 if the value is too long
-	int SetName(unsigned int placeid, wstring newvalue);
+	int SetName(unsigned int placeid, wstring newvalue, SteamLanguage lang = GetSteamLanguage());
 	int SetName(unsigned int placeid, FF9String& newvalue);
 
 	int ChangeBattle(unsigned int groundid, unsigned int setid, uint16_t newid);
@@ -78,9 +78,9 @@ public:
 	// Parent block is a data block containing preloading datas and TIM images in Field & World Map clusters.
 	int* LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool usetext, unsigned int localflag);
 	void WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsigned int localflag);
-	// texttype: 0 for world texts, 1 for place name
-	void WriteSteamText(fstream& ffbin, unsigned int texttype, SteamLanguage lang = GetSteamLanguage());
-	int GetSteamTextSize(unsigned int texttype, SteamLanguage lang = GetSteamLanguage());
+	int GetSteamTextSize(SteamLanguage lang = GetSteamLanguage());
+	void WriteSteamText(fstream& ffbin, SteamLanguage lang = GetSteamLanguage());
+	void WriteSteamTextPatch(fstream& fileout, wxArrayString basefile, SteamLanguage lang = GetSteamLanguage());
 	int GetIndexById(uint16_t worldid);
 };
 

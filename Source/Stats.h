@@ -31,6 +31,7 @@ public:
 	wstring avatar_sprite;
 	int attack_sfx;
 	int attack_sound[2];
+	bool attack_sound_disabled;
 	uint8_t weapon_bone;
 	uint8_t status_bone[6];
 	int8_t status_offy[6];
@@ -77,7 +78,7 @@ public:
 	
 	// Return 0 if success ; 1 if the value is too long
 	void GenerateDefaultName();
-	int SetDefaultName(wstring newvalue);
+	int SetDefaultName(wstring newvalue, SteamLanguage lang = GetSteamLanguage());
 	int SetDefaultName(FF9String& newvalue);
 
 	wxString GetFieldValue(wxString fieldname);
@@ -251,7 +252,7 @@ public:
 	// Return a modifamount-long pointer, to be deleted[]
 	DllMetaDataModification* ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount);
 	void GenerateCSharp(vector<string>& buffer);
-	bool GenerateCSV(string basefolder);
+	bool GenerateCSV(string modfolder, string basefolder);
 	void UpdateOffset();
 };
 

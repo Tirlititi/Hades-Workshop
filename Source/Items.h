@@ -84,11 +84,11 @@ public:
 	map<wxString, wxString> custom_field;
 	
 	// Return 0 if success ; 1 if the value is too long
-	int SetName(wstring newvalue);
+	int SetName(wstring newvalue, SteamLanguage lang = GetSteamLanguage());
 	int SetName(FF9String& newvalue);
-	int SetHelp(wstring newvalue);
+	int SetHelp(wstring newvalue, SteamLanguage lang = GetSteamLanguage());
 	int SetHelp(FF9String& newvalue);
-	int SetBattleHelp(wstring newvalue);
+	int SetBattleHelp(wstring newvalue, SteamLanguage lang = GetSteamLanguage());
 	int SetBattleHelp(FF9String& newvalue);
 	wxString GetFieldValue(wxString fieldname);
 	bool CompareWithCSV(wxArrayString entries);
@@ -186,11 +186,11 @@ public:
 	uint16_t help_size_x;
 	
 	// Return 0 if success ; 1 if the value is too long
-	int SetName(wstring newvalue);
+	int SetName(wstring newvalue, SteamLanguage lang = GetSteamLanguage());
 	int SetName(FF9String& newvalue);
-	int SetHelp(wstring newvalue);
+	int SetHelp(wstring newvalue, SteamLanguage lang = GetSteamLanguage());
 	int SetHelp(FF9String& newvalue);
-	int SetDescription(wstring newvalue);
+	int SetDescription(wstring newvalue, SteamLanguage lang = GetSteamLanguage());
 	int SetDescription(FF9String& newvalue);
 
 private:

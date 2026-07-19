@@ -11,7 +11,7 @@
 #define STATUSDATA_CSV_DEFAULT L"%name%;" STATUSDATA_CSV_CHECK L";# %name%"
 
 wxString StatusDataStruct::GetFieldValue(wxString fieldname) {
-	if (fieldname.IsSameAs("name")) return name;
+	if (fieldname.IsSameAs("name")) return wxString::Format(wxT("%s"), name.str_nice);
 	if (fieldname.IsSameAs("id")) return wxString::Format(wxT("%d"), id);
 	if (fieldname.IsSameAs("priority")) return wxString::Format(wxT("%d"), priority);
 	if (fieldname.IsSameAs("tick")) return wxString::Format(wxT("%d"), tick);
@@ -48,7 +48,8 @@ void StatusDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 	for (int i = 0; i < STATUS_AMOUNT; i++) {
 		status[i].parent = this;
 		status[i].id = i;
-		status[i].name = HADES_STRING_STATUS[i];
+		status[i].name.CreateEmpty();
+		status[i].name.SetValue(HADES_STRING_STATUS[i].ToStdWstring(), STEAM_LANGUAGE_US);
 	}
 	status[0].priority = 2;
 	status[0].clear = { 27 };

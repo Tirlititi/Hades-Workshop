@@ -5,7 +5,7 @@
 
 #define CARD_HWS_VERSION 2
 
-int CardDataStruct::SetName(wstring newvalue) {
+int CardDataStruct::SetName(wstring newvalue, SteamLanguage lang) {
 	if (GetGameType() == GAME_TYPE_PSX) {
 		FF9String tmp(name);
 		tmp.SetValue(newvalue);
@@ -15,7 +15,7 @@ int CardDataStruct::SetName(wstring newvalue) {
 			return 1;
 		parent->name_space_used += newlen - oldlen;
 	}
-	name.SetValue(newvalue);
+	name.SetValue(newvalue, lang);
 	return 0;
 }
 
@@ -108,6 +108,7 @@ void CardDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 		ffbin.seekg(config.card_set_offset);
 		MACRO_CARD_IOFUNCTIONSET(FFIXRead, FFIXSeek, true, false)
 	} else {
+		card_amount = CARD_AMOUNT;
 		string fname = config.steam_dir_data;
 		fname += "resources.assets";
 		ffbin.open(fname.c_str(), ios::in | ios::binary);

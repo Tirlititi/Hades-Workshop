@@ -4,8 +4,6 @@
 class ScriptEditHandler;
 class ScriptEditDialog;
 class ScriptEditEntryDialog;
-class ScriptEditLinkDialog;
-class ScriptEditTextLinkDialog;
 class ScriptHelpDialog;
 
 #include <vector>
@@ -67,8 +65,9 @@ public:
 	void AddEntry(int entrypos, uint8_t entrytype);
 
 private:
-	bool GenerateFunctionStrings_Rec(wxString& str, ScriptFunction& func, unsigned int& funcpos, unsigned int& oppos, int endfuncpos = -1, unsigned int tabpos = 1, int blocktype = 0, int endblockpos = -1, bool appendcomment = false);
+	bool GenerateFunctionStrings_Rec(wxString& str, ScriptFunction& func, unsigned int* funcpos, unsigned int& oppos, bool* contextlangs, unsigned int tabpos, int blocktype, unsigned int* endfuncpos, unsigned int* endblockpos, bool appendcomment = false);
 	wxString ConvertVarArgument(ScriptArgument& arg, wxArrayString* argcomment = NULL, bool* ignorenulljump = NULL);
+	void GenerateStandardLine(wxString& str, ScriptOperation* op, wxArrayString* argcommentptr);
 	void UpdateGlobalLocalStrings(int ignoreentry = -1);
 };
 
@@ -101,6 +100,7 @@ public:
 	wxArrayString deck_str;
 	wxArrayString animlist_str;
 	vector<uint16_t*> modellist_id;
+	vector<uint16_t*> text_id;
 	vector<uint16_t*> battle_id;
 	vector<uint16_t*> field_id;
 	vector<uint16_t*> item_id;
@@ -125,6 +125,7 @@ public:
 	vector<int> arg_control_type;
 	vector<wxStaticText*> arg_label;
 	vector<wxWindow*> arg_control;
+	vector<SteamLanguage> current_opcode_lang;
 	
 	ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int scpttype, SaveSet* sv, EnemyDataStruct* ed, TextDataStruct* td);
 	~ScriptEditDialog();
@@ -183,7 +184,6 @@ private:
 	void OnArgFlags(wxCommandEvent& event);
 	void OnArgField(wxCommandEvent& event);
 	void OnArgDisc(wxCommandEvent& event);
-	void OnArgDialogLink(wxCommandEvent& event);
 	void OnArgPositionPaint(wxPaintEvent& event);
 	void OnArgPositionMouseMove(wxMouseEvent& event);
 	void OnArgPositionMouseUp(wxMouseEvent& event);
@@ -218,43 +218,6 @@ private:
 	void OnEntrySelect(wxCommandEvent& event);
 	void OnSpinCtrl(wxSpinEvent& event);
 	void OnButtonClick(wxCommandEvent& event);
-};
-
-class ScriptEditLinkDialog : public ScriptEditLinkWindow {
-public:
-	TextDataStruct* text;
-	vector<uint16_t> message_link[STEAM_LANGUAGE_AMOUNT];
-	vector<uint16_t> message_link_base[STEAM_LANGUAGE_AMOUNT];
-	wxChoice* lang_link[STEAM_LANGUAGE_AMOUNT];
-	wxButton* lang_text[STEAM_LANGUAGE_AMOUNT];
-	bool is_modified[STEAM_LANGUAGE_AMOUNT];
-
-	ScriptEditLinkDialog(wxWindow* parent, ScriptDataStruct& scpt, TextDataStruct& td);
-	~ScriptEditLinkDialog();
-	void ApplyModifications(ScriptDataStruct& scpt);
-
-private:
-	void OnButtonClick(wxCommandEvent& event);
-	void OnChangeLink(wxCommandEvent& event);
-};
-
-class ScriptEditTextLinkDialog : public ScriptEditTextLinkWindow {
-public:
-	TextDataStruct* text;
-	SteamLanguage base_lang;
-	SteamLanguage link[STEAM_LANGUAGE_AMOUNT];
-	wxChoice* link_choice[STEAM_LANGUAGE_AMOUNT];
-	vector<uint16_t> message_link[STEAM_LANGUAGE_AMOUNT];
-	vector<uint16_t> message_link_base;
-
-	ScriptEditTextLinkDialog(wxWindow* parent, SteamLanguage* linklang, TextDataStruct& td, SteamLanguage baselang = GetSteamLanguage());
-	~ScriptEditTextLinkDialog();
-	int ShowModal(int dialogid = -1);
-	void UpdateDialogSelection();
-
-private:
-	void OnButtonClick(wxCommandEvent& event);
-	void OnChooseDialog(wxCommandEvent& event);
 };
 
 #endif

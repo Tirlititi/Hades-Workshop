@@ -87,7 +87,7 @@ public:
 	TextFormatStruct* format_data;
 	bool* format_removed;
 	
-	TextEditDialog(wxWindow* parent, FF9String& str, unsigned int extrasize, int style = TEXT_STYLE_DEFAULT, CharmapDataStruct* chmap = NULL, CharmapDataStruct* chmapext = NULL, int sizex = -1, int sizey = -1, uint16_t formatamount = 0, TextFormatStruct* format = NULL);
+	TextEditDialog(wxWindow* parent, FF9String& str, unsigned int extrasize, int style = TEXT_STYLE_DEFAULT, CharmapDataStruct* chmap = NULL, CharmapDataStruct* chmapext = NULL, int sizex = -1, int sizey = -1, uint16_t formatamount = 0, vector<TextFormatStruct>* format = NULL);
 	~TextEditDialog();
 	int ShowModal();
 	bool ProcessPreviewText();
@@ -148,6 +148,8 @@ public:
 	bool ignore_color;
 	int bubble_size_x;
 	int bubble_size_y;
+
+	static void CalculateTextBestSize(wxWindow* dcsupport, wxString& textstr, unsigned int* textsizex = NULL, unsigned int* textlinecount = NULL);
 
 	TextSteamEditDialog(wxWindow* parent, MenuUIDataSet* ui, FF9String& str, int style = TEXT_STYLE_DEFAULT);
 	~TextSteamEditDialog();

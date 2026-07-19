@@ -31,15 +31,18 @@ template<typename T> void WriteSteamTextGeneric(fstream& f, vector<T>& list, FF9
 // Concatenate multiple strings using a delimiter between each, possibly with strings generated out of a list of non-strings
 template<typename T> string ConcatenateStrings(string delim, vector<T>& objlist, function<string(T)> stringifier, bool escapeempty = false);
 string ConcatenateStrings(string delim, vector<string>& objlist, bool escapeempty = false);
+unsigned int CharCountInString(wxString str, wxUniChar c);
 wxString GetStatusNameAndId(int statusid);
 wxString FormatStatusSet(set<int>& statuses);
 uint32_t GetStatusBitList(set<int>& statuses);
 void SetupStatusList(set<int>& statuses, uint32_t statusbits);
+int RedirectEmptyStatusSetToNull(int statusset);
 bool IsNumber(string s);
 
 void UpdateCustomFieldMap(map<wxString, wxString>& fields, map<wxString, wxString>& parentfields);
 
 namespace MemoriaUtility {
+	bool ExportDictionaryPatchLines(wxString filename, wxString removeinstruction, wxString appendstr);
 	wxArrayString LoadCSVLines(wxString filename, wxArrayString* metadata = NULL);
 	wxArrayString LoadCSVEntry(wxString csvline);
 	wxArrayString SplitEntryArray(wxString csventry, wxUniChar sep = ',');
