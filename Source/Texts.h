@@ -52,7 +52,7 @@ public:
 
 	// Return 0 if success ; 1 if the value is too long
 	int AddText(int id, FF9String& value);
-	void RemoveText(int index);
+	void RemoveText(int index, bool shiftids = false);
 	int SetText(int index, wstring newvalue, SteamLanguage lang = GetSteamLanguage());
 	int SetText(int index, FF9String& newvalue); // Copy the new value
 	int AddFormatCode(int index, uint8_t opcode, uint8_t* arg); // arg must be malloc'ed and have the proper size depending of the opcode

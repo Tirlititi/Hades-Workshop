@@ -432,7 +432,7 @@ void FF9String::SetValue(wstring value, SteamLanguage lang) {
 			wxstr += timetag;
 			value = wxstr.wc_str();
 		}
-		if (lang >= STEAM_LANGUAGE_AMOUNT || (lang < STEAM_LANGUAGE_AMOUNT && GetSteamLanguage() == lang)) {
+		if (lang >= STEAM_LANGUAGE_AMOUNT || GetSteamLanguage() == lang) {
 			wxCharBuffer buffer = wxstr.mb_str(wxConvUTF8);
 			code_amount = 0;
 			if (timetag.IsEmpty()) {
@@ -1053,7 +1053,7 @@ void SteamWriteFlexibleChar(fstream& f, int value, bool asint) {
 }
 
 void SteamSeek(fstream& f, uint32_t abspos, uint32_t offset) {
-	f.seekg(abspos+offset);
+	f.seekg(abspos + offset);
 }
 
 #define PPF_MAX_DATA_SEQUENCE 0x1000000
@@ -1066,10 +1066,10 @@ void PPFInitScanStep(fstream& f, bool datastring, uint16_t len) {
 	ppfstepoffset = f.tellg();
 	ppfstepnextignore = GetFFIXNextIgnore(ppfstepoffset);
 	if (datastring) {
-		FFIXSeek(f,ppfstepoffset,len);
+		FFIXSeek(f, ppfstepoffset, len);
 		len = f.tellg();
 		len -= ppfstepoffset;
-		for (unsigned int i=0;i<len;i++) {
+		for (unsigned int i = 0; i < len; i++) {
 			ppfstepx[i] = 0;
 			ppfstepy[i] = 0;
 		}
@@ -1080,8 +1080,8 @@ void PPFInitScanStep(fstream& f, bool datastring, uint16_t len) {
 }
 
 inline void PPFStepIgnoreData(fstream& f) {
-	if (ppfstepsize==ppfstepnextignore) {
-		for (int i=0;i<FILE_IGNORE_DATA_AMOUNT;i++) {
+	if (ppfstepsize == ppfstepnextignore) {
+		for (int i = 0; i < FILE_IGNORE_DATA_AMOUNT; i++) {
 			ppfstepx[ppfstepsize] = f.get();
 			ppfstepy[ppfstepsize] = ppfstepx[ppfstepsize];
 			ppfstepsize++;
@@ -1149,27 +1149,27 @@ void PPFStepAddLong(fstream& f, uint32_t value) {
 
 void PPFStepAddFF9String(fstream& f, FF9String& value) {
 	uint32_t index;
-	for (int i=0;i<value.length;i++) {
+	for (int i = 0; i < value.length; i++) {
 		index = f.tellg();
 		index -= ppfstepoffset;
-		FFIXReadChar(f,ppfstepx[index]);
+		FFIXReadChar(f, ppfstepx[index]);
 		ppfstepy[index] = value.raw[i];
 	}
 }
 
 int PPFEndScanStep() {
-	return PPFWriteChanges(ppfstepx,ppfstepy,ppfstepsize,ppfstepoffset);
+	return PPFWriteChanges(ppfstepx, ppfstepy, ppfstepsize, ppfstepoffset);
 }
 
 void ReadCharFuncHWS(fstream& fs, uint8_t& ch) {
 	ch = fs.get();
 }
 void HWSReadFF9String(fstream& f, FF9String& deststr) {
-	deststr.Read(f,&ReadCharFuncHWS);
+	deststr.Read(f, &ReadCharFuncHWS);
 }
 
 void HWSWriteFF9String(fstream& f, FF9String& str) {
-	for (int i=0;i<str.length;i++)
+	for (int i = 0; i < str.length; i++)
 		f.put(str.raw[i]);
 }
 
@@ -1270,7 +1270,7 @@ void HWSWriteFlexibleChar(fstream& f, int value, bool asint) {
 }
 
 void HWSSeek(fstream& f, uint32_t abspos, uint32_t offset) {
-	f.seekg(abspos+offset);
+	f.seekg(abspos + offset);
 }
 
 void HWSReadWString(fstream& f, wstring& str) {

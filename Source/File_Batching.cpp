@@ -263,7 +263,7 @@ int BatchExportDialog::ExportCardNames(CardDataSet& data, wxString path) {
 	output.Write(_(L"#HW filetype TEXT_INTERFACE\n"));
 	if (GetGameType() != GAME_TYPE_PSX && singlelang != STEAM_LANGUAGE_NONE)
 		output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[singlelang] + _(L"\n"));
-	output.Write(_(L"#HW fileid 6\n\n"));
+	output.Write(_(L"#HW fileid 7 // Card Names\n\n"));
 	for (unsigned int i = 0; i < data.card_amount; i++)
 		WriteTextSingleEntry(output, data.card[i].name, wxString::Format(wxT("#HW text %d\n"), data.card[i].id), singlelang);
 	output.Close();
@@ -614,10 +614,8 @@ LogStruct BatchImportDialog::ImportText(SaveSet* dataset, set<int>& sectionmodif
 						log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_WRONG_FILEID), linenum, 7).ToStdWstring());
 					} else {
 						if (legacyuitext) {
-							if (value == 5)			value = 7;
-							else if (value == 6)	value = 100;
-							else if (value == 7)	value = 6;
-							else					value++;
+							if (value == 6)			value = 100;
+							else if (value != 7)	value++;
 						}
 						current.fileid = value;
 					}
@@ -891,7 +889,7 @@ LogStruct BatchImportDialog::ImportText(SaveSet* dataset, set<int>& sectionmodif
 					sectionmodified.insert(DATA_SECTION_WORLD_MAP);
 					dataset->sectionmodified[DATA_SECTION_WORLD_MAP] = true;
 					dataset->worldset->world_data->MarkDataModified();
-				} else if (currentfileid == 6) {
+				} else if (currentfileid == 7) {
 					if (result[i].textid < CARD_AMOUNT)	dataset->cardset->card[result[i].textid].SetName(result[i].str.ToStdWstring(), result[i].lang);
 					//else								log.AddWarning(wxString::Format(wxT(HADES_STRING_BATCH_TEXT_WRONG_ID), L"Card", result[i].textid).ToStdWstring());
 					sectionmodified.insert(DATA_SECTION_CARD);
@@ -934,7 +932,6 @@ LogStruct BatchImportDialog::ImportText(SaveSet* dataset, set<int>& sectionmodif
 //          Scripts            //
 //=============================//
 
-// TODO: check what works after update
 int BatchExportDialog::ExportEnemyScript(SaveSet* dataset, wxString path, bool* exportlist, bool splitfile, int addedinfo) {
 	EnemyDataSet& data = *dataset->enemyset;
 	wxString line, tmprest, localstr;

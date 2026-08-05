@@ -6061,7 +6061,7 @@ void CDDataStruct::OnEnemyStatRightClickMenu(wxCommandEvent& event) {
 					DiscardEnemySizeLimit = true;
 			}
 		} else {
-			enemyset.script[*sortid]->ShiftArgument(AT_TEXT, { { newsel, 1 } }); // TODO: check
+			enemyset.script[*sortid]->ShiftArgument(AT_TEXT, { { newsel, 1 } });
 			if (eb.stat_amount >= 4 && (gametype != GAME_TYPE_STEAM || config.dll_usage == 0)) {
 				if (!DiscardEnemyNumberLimit) {
 					DiscardableMessageWindow popup(wxGetApp().GetTopWindow(), HADES_STRING_STAT_WARN_LIMIT);
@@ -6118,7 +6118,7 @@ void CDDataStruct::OnEnemySpellRightClickMenu(wxCommandEvent& event) {
 					DiscardEnemySizeLimit = true;
 			}
 		} else {
-			enemyset.script[*sortid]->ShiftArgument(AT_TEXT, { { eb.stat_amount + newsel, 1 } }); // TODO: check
+			enemyset.script[*sortid]->ShiftArgument(AT_TEXT, { { eb.stat_amount + newsel, 1 } });
 			if (eb.spell_amount >= 19 && (gametype != GAME_TYPE_STEAM || config.dll_usage == 0)) {
 				if (!DiscardEnemyNumberLimit) {
 					DiscardableMessageWindow popup(wxGetApp().GetTopWindow(), HADES_STRING_SPELL_WARN_LIMIT);
@@ -6207,7 +6207,7 @@ void CDDataStruct::OnEnemyTextRightClickMenu(wxCommandEvent& event) {
 			TextReachLimit();
 		}
 	} else if (id == wxID_REMOVE && objid != wxNOT_FOUND) {
-		td.RemoveText(eb.stat_amount + eb.spell_amount + objid);
+		td.RemoveText(eb.stat_amount + eb.spell_amount + objid, true);
 		newsel = min<int>(td.text.size() - eb.stat_amount - eb.spell_amount - 1, objid);
 		if (newsel < 0)
 			m_enemytextlist->Clear();
@@ -9184,6 +9184,7 @@ CDDataStruct::CDDataStruct(wxWindow* parent, string fname, ConfigurationSet& cfg
 	unsigned int i;
 	gametype = GetGameType();
 	cluster.config = &config;
+	SetGameSaveSet(&saveset);
 	if (gametype == GAME_TYPE_PSX) {
 		m_notebookmain->RemovePage(7);
 		fstream f(filename.c_str(), ios::in | ios::binary);

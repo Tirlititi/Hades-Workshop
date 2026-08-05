@@ -299,41 +299,41 @@ void FieldTilesDataStruct::AddTileToImage(uint32_t* imgdest, FieldTilesTileDataS
 }
 
 int FieldTilesDataStruct::GetRelatedTitleTileById(int tileid, SteamLanguage lang) {
-	if (GetGameType()==GAME_TYPE_PSX || title_tile_amount==0)
+	if (GetGameType() == GAME_TYPE_PSX || title_tile_amount == 0)
 		return tileid;
 	unsigned int infoid;
-	for (infoid=0;infoid<parent->title_info->amount;infoid++)
-		if (parent->title_info->field_id[infoid]==object_id) {
-			if (tileid<0) {
-				int tid = -tileid-1;
-				if (tid<=parent->title_info->title_tile_last[infoid]-parent->title_info->title_tile_start[infoid])
-					return tiles_amount+lang*title_tile_amount-tid;
+	for (infoid = 0; infoid < parent->title_info->amount; infoid++)
+		if (parent->title_info->field_id[infoid] == object_id) {
+			if (tileid < 0) {
+				int tid = -tileid - 1;
+				if (tid <= parent->title_info->title_tile_last[infoid] - parent->title_info->title_tile_start[infoid])
+					return tiles_amount + lang * title_tile_amount - tid;
 				return tileid;
 			}
-			if (tileid>=tiles_amount || tileid<parent->title_info->title_tile_start[infoid] || tileid>parent->title_info->title_tile_last[infoid])
+			if (tileid >= tiles_amount || tileid<parent->title_info->title_tile_start[infoid] || tileid>parent->title_info->title_tile_last[infoid])
 				return tileid;
-			return tiles_amount+lang*title_tile_amount+tileid-parent->title_info->title_tile_start[infoid];
+			return tiles_amount + lang * title_tile_amount + tileid - parent->title_info->title_tile_start[infoid];
 		}
 	return tileid;
 }
 
 uint32_t* FieldTilesDataStruct::ConvertAsImage(unsigned int cameraid, bool tileflag[], bool showtp) {
-	unsigned int i,imgsize = camera[cameraid].width*camera[cameraid].height;
+	unsigned int i, imgsize = camera[cameraid].width * camera[cameraid].height;
 	TIMImageDataStruct* tim = parent->tim_data[id];
 	uint32_t* rawimg = NULL;
 	uint32_t* res = new uint32_t[imgsize];
-	if (GetGameType()==GAME_TYPE_PSX)
+	if (GetGameType() == GAME_TYPE_PSX)
 		tim->LoadInVRam();
 	else
 		rawimg = tim->ConvertAsSteamImage();
-	for (i=0;i<imgsize;i++)
+	for (i = 0; i < imgsize; i++)
 		res[i] = 0;
-	for (i=0;i<tiles_amount;i++) { // ToDo: mind the shader layering order ("QUEUE")
-		FieldTilesTileDataStruct& t = tiles[GetRelatedTitleTileById(tiles_sorted[i]->id,GetSteamLanguage())];
-		if (t.camera_id==cameraid && (tileflag==NULL || tileflag[t.id]) && (tileflag!=NULL || t.is_static || t.is_first_of_anim))
-			AddTilesetToImage(res,t,showtp,rawimg,tim->steam_width,tim->steam_height);
+	for (i = 0; i < tiles_amount; i++) { // ToDo: mind the shader layering order ("QUEUE")
+		FieldTilesTileDataStruct& t = tiles[GetRelatedTitleTileById(tiles_sorted[i]->id, GetSteamLanguage())];
+		if (t.camera_id == cameraid && (tileflag == NULL || tileflag[t.id]) && (tileflag != NULL || t.is_static || t.is_first_of_anim))
+			AddTilesetToImage(res, t, showtp, rawimg, tim->steam_width, tim->steam_height);
 	}
-	if (GetGameType()!=GAME_TYPE_PSX)
+	if (GetGameType() != GAME_TYPE_PSX)
 		delete[] rawimg;
 	return res;
 }
@@ -1821,23 +1821,23 @@ int FieldWalkmeshDataStruct::ImportFromObj(wxString intputfilename, wxString* me
 }
 
 int FieldRoleDataStruct::AddModelRole(uint16_t modelid) {
-	if (GetExtraSize()<0x10)
+	if (GetExtraSize() < 0x10)
 		return 1;
-	SetSize(size+0x10);
-	uint16_t* newmodel = new uint16_t[unk2_amount+1];
-	uint8_t* newunk1 = new uint8_t[unk2_amount+1];
-	uint8_t* newunk2 = new uint8_t[unk2_amount+1];
-	uint8_t* newunk3 = new uint8_t[unk2_amount+1];
-	uint8_t* newunk4 = new uint8_t[unk2_amount+1];
-	uint8_t* newunk5 = new uint8_t[unk2_amount+1];
-	uint8_t* newunk6 = new uint8_t[unk2_amount+1];
-	memcpy(newmodel,unk2_model,unk2_amount*sizeof(uint16_t));
-	memcpy(newunk1,unk2_unknown1,unk2_amount*sizeof(uint8_t));
-	memcpy(newunk2,unk2_unknown2,unk2_amount*sizeof(uint8_t));
-	memcpy(newunk3,unk2_unknown3,unk2_amount*sizeof(uint8_t));
-	memcpy(newunk4,unk2_unknown4,unk2_amount*sizeof(uint8_t));
-	memcpy(newunk5,unk2_unknown5,unk2_amount*sizeof(uint8_t));
-	memcpy(newunk6,unk2_unknown6,unk2_amount*sizeof(uint8_t));
+	SetSize(size + 0x10);
+	uint16_t* newmodel = new uint16_t[unk2_amount + 1];
+	uint8_t* newunk1 = new uint8_t[unk2_amount + 1];
+	uint8_t* newunk2 = new uint8_t[unk2_amount + 1];
+	uint8_t* newunk3 = new uint8_t[unk2_amount + 1];
+	uint8_t* newunk4 = new uint8_t[unk2_amount + 1];
+	uint8_t* newunk5 = new uint8_t[unk2_amount + 1];
+	uint8_t* newunk6 = new uint8_t[unk2_amount + 1];
+	memcpy(newmodel, unk2_model, unk2_amount * sizeof(uint16_t));
+	memcpy(newunk1, unk2_unknown1, unk2_amount * sizeof(uint8_t));
+	memcpy(newunk2, unk2_unknown2, unk2_amount * sizeof(uint8_t));
+	memcpy(newunk3, unk2_unknown3, unk2_amount * sizeof(uint8_t));
+	memcpy(newunk4, unk2_unknown4, unk2_amount * sizeof(uint8_t));
+	memcpy(newunk5, unk2_unknown5, unk2_amount * sizeof(uint8_t));
+	memcpy(newunk6, unk2_unknown6, unk2_amount * sizeof(uint8_t));
 	newmodel[unk2_amount] = modelid;
 	newunk1[unk2_amount] = 0;
 	newunk2[unk2_amount] = 0;
@@ -2520,7 +2520,7 @@ void FieldDataSet::WritePPF(fstream& ffbin, ClusterSet& clusset) {
 }
 
 int* FieldDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool usetext, unsigned int localflag) {
-	unsigned int i, j, k, l;
+	unsigned int i, j, k;
 	uint32_t chunksize, clustersize, chunkpos, objectpos, objectsize;
 	uint16_t nbmodified, objectid;
 	SteamLanguage lang, sublang;
@@ -2542,12 +2542,12 @@ int* FieldDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 				clus = script_data[j]->parent_cluster;
 				if (clustersize <= clus->size + clus->extra_size) {
 					HWSReadChar(ffhws, chunktype);
-					while (chunktype != 0xFF) {
+					while (chunktype != CHUNK_SPECIAL_END) {
 						HWSReadLong(ffhws, chunksize);
 						chunkpos = ffhws.tellg();
 						if (chunktype == CHUNK_TYPE_SCRIPT) {
 							if (loadmain) {
-								script_data[j]->ReadHWS(ffhws, usetext);
+								script_data[j]->ReadHWS(ffhws, usetext && GetGameType() == GAME_TYPE_PSX);
 								script_data[j]->SetSize(chunksize);
 							}
 						} else if (chunktype == CHUNK_TYPE_FIELD_TILES && background_data[j]) {
@@ -2613,39 +2613,19 @@ int* FieldDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 								script_data[j]->ReadLocalHWS(ffhws);
 						} else if (chunktype == CHUNK_STEAM_SCRIPT_MULTILANG) {
 							if (loadmain) {
-								uint16_t langcorrcount;
-								uint32_t langcorrpos;
-								vector<uint16_t> corrlinkbase, corrlink;
 								HWSReadChar(ffhws, lang);
 								while (lang != STEAM_LANGUAGE_NONE) {
+									ScriptLanguageLink langlink;
 									uint32_t langdatasize;
-									shouldread = false;
-									HWSReadChar(ffhws, langcount);
-									langcorrpos = ffhws.tellg();
-									for (k = 0; k < langcount; k++) {
-										HWSReadChar(ffhws, sublang);
-										HWSReadLong(ffhws, langdatasize);
-										if (hades::STEAM_SINGLE_LANGUAGE_MODE && sublang == GetSteamLanguage()) {
-											shouldread = true;
-											HWSReadShort(ffhws, langcorrcount);
-											corrlinkbase.resize(langcorrcount);
-											corrlink.resize(langcorrcount);
-											for (l = 0; l < langcorrcount; l++) {
-												HWSReadShort(ffhws, corrlinkbase[l]);
-												HWSReadShort(ffhws, corrlink[l]);
-											}
-										} else {
-											ffhws.seekg((long long)ffhws.tellg() + langdatasize);
-										}
-									}
+									shouldread = langlink.InitFromHWS(ffhws, lang);
 									HWSReadLong(ffhws, langdatasize);
 									if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang != GetSteamLanguage()) {
 										if (shouldread)
-											script_data[j]->ReadHWS(ffhws, false);
+											script_data[j]->ReadHWS(ffhws, false, lang, &langlink);
 										else
 											ffhws.seekg(langdatasize, ios::cur);
 									} else {
-										script_data[j]->ReadHWS(ffhws, false, lang);
+										script_data[j]->ReadHWS(ffhws, false, lang, &langlink);
 									}
 									HWSReadChar(ffhws, lang);
 								}
@@ -2687,7 +2667,7 @@ int* FieldDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 				} else {
 					objectsize = 7;
 					HWSReadChar(ffhws, chunktype);
-					while (chunktype != 0xFF) {
+					while (chunktype != CHUNK_SPECIAL_END) {
 						HWSReadLong(ffhws, chunksize);
 						ffhws.seekg(chunksize, ios::cur);
 						HWSReadChar(ffhws, chunktype);
@@ -2701,7 +2681,7 @@ int* FieldDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 			} else if (j + 1 == amount) {
 				objectsize = 7;
 				HWSReadChar(ffhws, chunktype);
-				while (chunktype != 0xFF) {
+				while (chunktype != CHUNK_SPECIAL_END) {
 					HWSReadLong(ffhws, chunksize);
 					ffhws.seekg(chunksize, ios::cur);
 					HWSReadChar(ffhws, chunktype);
@@ -2801,7 +2781,7 @@ void FieldDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsign
 					ffhws.seekg(chunkpos + chunksize);
 				}
 			}
-			HWSWriteChar(ffhws, 0xFF);
+			HWSWriteChar(ffhws, CHUNK_SPECIAL_END);
 			nbmodified++;
 		}
 	}

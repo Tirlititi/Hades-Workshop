@@ -1023,7 +1023,7 @@ void ToolRandomizer::ApplyRandomizerArmor() {
 }
 
 void ToolRandomizer::ApplyRandomizerBattle() {
-	unsigned int i,j,k;
+	unsigned int i, j, k;
 	if (m_battlespell->IsChecked()) {
 		vector<tuple<unsigned int, EnemySpellDataStruct*, EnemySpellDataStruct, uint16_t>> swaplist;
 		vector<vector<bool>> spelldone(cddata->enemyset.battle_amount);
@@ -1036,79 +1036,79 @@ void ToolRandomizer::ApplyRandomizerBattle() {
 		EnemySpellDataStruct** similarspells;
 		unsigned int* similarbattleid;
 		unsigned int similaramount;
-		for (i=0; i<cddata->enemyset.battle_amount; i++)
+		for (i = 0; i < cddata->enemyset.battle_amount; i++)
 			spelldone[i] = vector<bool>(cddata->enemyset.battle[i]->spell_amount, false);
-		for (i=0; i<cddata->enemyset.battle_amount; i++)
-			for (j=0; j<cddata->enemyset.battle[i]->spell_amount; j++)
+		for (i = 0; i < cddata->enemyset.battle_amount; i++)
+			for (j = 0; j < cddata->enemyset.battle[i]->spell_amount; j++)
 				if (!spelldone[i][j] && IsEnemySpellRandomizable(cddata->enemyset.battle[i]->spell[j], cddata->enemyset.battle_data[i]->sequence_code[j], &spellmodel, &targamount)) {
-					if (targamount==SPELL_TARGET_AMOUNT_ONE)
+					if (targamount == SPELL_TARGET_AMOUNT_ONE)
 						spelllistsingle.push_back(make_pair(cddata->enemyset.battle[i]->spell[j], spellmodel));
 					else
 						spelllistmulti.push_back(make_pair(cddata->enemyset.battle[i]->spell[j], spellmodel));
 					similarspells = cddata->enemyset.GetSimilarEnemySpells(cddata->enemyset.battle[i]->spell[j], &similaramount, &similarbattleid);
-					for (k=0; k<similaramount; k++)
+					for (k = 0; k < similaramount; k++)
 						spelldone[similarbattleid[k]][similarspells[k]->id] = true;
 				}
-		for (i=0; i<cddata->enemyset.battle_amount; i++)
-			for (j=0; j<cddata->enemyset.battle[i]->spell_amount; j++)
+		for (i = 0; i < cddata->enemyset.battle_amount; i++)
+			for (j = 0; j < cddata->enemyset.battle[i]->spell_amount; j++)
 				spelldone[i][j] = false;
 		if (m_battleprop->IsChecked()) {
-			for (i=0; i<cddata->enemyset.battle_amount; i++)
-				for (j=0; j<cddata->enemyset.battle[i]->spell_amount; j++)
+			for (i = 0; i < cddata->enemyset.battle_amount; i++)
+				for (j = 0; j < cddata->enemyset.battle[i]->spell_amount; j++)
 					if (!spelldone[i][j] && IsEnemySpellRandomizable(cddata->enemyset.battle[i]->spell[j], cddata->enemyset.battle_data[i]->sequence_code[j], &spellmodel, &targamount)) {
-						if (targamount==SPELL_TARGET_AMOUNT_ONE)
+						if (targamount == SPELL_TARGET_AMOUNT_ONE)
 							curspell = PickRandomInVector(spelllistsingle);
 						else
 							curspell = PickRandomInVector(spelllistmulti);
 						similarspells = cddata->enemyset.GetSimilarEnemySpells(cddata->enemyset.battle[i]->spell[j], &similaramount, &similarbattleid);
-						for (k=0; k<similaramount; k++) {
+						for (k = 0; k < similaramount; k++) {
 							spelldone[similarbattleid[k]][similarspells[k]->id] = true;
 							swaplist.push_back(make_tuple(similarbattleid[k], similarspells[k], curspell.first, curspell.second));
 						}
 					}
 		} else {
 			unsigned int mergecount;
-			for (i=0; i<spelllistsingle.size(); i++) {
+			for (i = 0; i < spelllistsingle.size(); i++) {
 				mergecount = 1;
-				for (j=i+1; j<spelllistsingle.size(); )
-					if (spelllistsingle[i].second==spelllistsingle[j].second && spelllistsingle[i].first.effect==spelllistsingle[j].first.effect && spelllistsingle[i].first.element==spelllistsingle[j].first.element && spelllistsingle[i].first.status==spelllistsingle[j].first.status && spelllistsingle[i].first.name.str_nice==spelllistsingle[j].first.name.str_nice) {
-						spelllistsingle[i].first.accuracy = (mergecount*spelllistsingle[i].first.accuracy+spelllistsingle[j].first.accuracy)/(mergecount+1);
-						spelllistsingle[i].first.mp = (mergecount*spelllistsingle[i].first.mp+spelllistsingle[j].first.mp)/(mergecount+1);
-						spelllistsingle[i].first.power = (mergecount*spelllistsingle[i].first.power+spelllistsingle[j].first.power)/(mergecount+1);
+				for (j = i + 1; j < spelllistsingle.size(); )
+					if (spelllistsingle[i].second == spelllistsingle[j].second && spelllistsingle[i].first.effect == spelllistsingle[j].first.effect && spelllistsingle[i].first.element == spelllistsingle[j].first.element && spelllistsingle[i].first.status == spelllistsingle[j].first.status && spelllistsingle[i].first.name.str_nice == spelllistsingle[j].first.name.str_nice) {
+						spelllistsingle[i].first.accuracy = (mergecount * spelllistsingle[i].first.accuracy + spelllistsingle[j].first.accuracy) / (mergecount + 1);
+						spelllistsingle[i].first.mp = (mergecount * spelllistsingle[i].first.mp + spelllistsingle[j].first.mp) / (mergecount + 1);
+						spelllistsingle[i].first.power = (mergecount * spelllistsingle[i].first.power + spelllistsingle[j].first.power) / (mergecount + 1);
 						mergecount++;
-						spelllistsingle.erase(spelllistsingle.begin()+j);
+						spelllistsingle.erase(spelllistsingle.begin() + j);
 					} else {
 						j++;
 					}
 			}
-			for (i=0; i<spelllistmulti.size(); i++) {
+			for (i = 0; i < spelllistmulti.size(); i++) {
 				mergecount = 1;
-				for (j=i+1; j<spelllistmulti.size(); )
-					if (spelllistmulti[i].second==spelllistmulti[j].second && spelllistmulti[i].first.effect==spelllistmulti[j].first.effect && spelllistmulti[i].first.element==spelllistmulti[j].first.element && spelllistmulti[i].first.status==spelllistmulti[j].first.status && spelllistmulti[i].first.name.str_nice==spelllistmulti[j].first.name.str_nice) {
-						spelllistmulti[i].first.accuracy = (mergecount*spelllistmulti[i].first.accuracy+spelllistmulti[j].first.accuracy)/(mergecount+1);
-						spelllistmulti[i].first.mp = (mergecount*spelllistmulti[i].first.mp+spelllistmulti[j].first.mp)/(mergecount+1);
-						spelllistmulti[i].first.power = (mergecount*spelllistmulti[i].first.power+spelllistmulti[j].first.power)/(mergecount+1);
+				for (j = i + 1; j < spelllistmulti.size(); )
+					if (spelllistmulti[i].second == spelllistmulti[j].second && spelllistmulti[i].first.effect == spelllistmulti[j].first.effect && spelllistmulti[i].first.element == spelllistmulti[j].first.element && spelllistmulti[i].first.status == spelllistmulti[j].first.status && spelllistmulti[i].first.name.str_nice == spelllistmulti[j].first.name.str_nice) {
+						spelllistmulti[i].first.accuracy = (mergecount * spelllistmulti[i].first.accuracy + spelllistmulti[j].first.accuracy) / (mergecount + 1);
+						spelllistmulti[i].first.mp = (mergecount * spelllistmulti[i].first.mp + spelllistmulti[j].first.mp) / (mergecount + 1);
+						spelllistmulti[i].first.power = (mergecount * spelllistmulti[i].first.power + spelllistmulti[j].first.power) / (mergecount + 1);
 						mergecount++;
-						spelllistmulti.erase(spelllistmulti.begin()+j);
+						spelllistmulti.erase(spelllistmulti.begin() + j);
 					} else {
 						j++;
 					}
 			}
-			for (i=0; i<cddata->enemyset.battle_amount; i++)
-				for (j=0; j<cddata->enemyset.battle[i]->spell_amount; j++)
+			for (i = 0; i < cddata->enemyset.battle_amount; i++)
+				for (j = 0; j < cddata->enemyset.battle[i]->spell_amount; j++)
 					if (!spelldone[i][j] && IsEnemySpellRandomizable(cddata->enemyset.battle[i]->spell[j], cddata->enemyset.battle_data[i]->sequence_code[j], &spellmodel, &targamount)) {
-						if (targamount==SPELL_TARGET_AMOUNT_ONE)
+						if (targamount == SPELL_TARGET_AMOUNT_ONE)
 							curspell = spelllistsingle[GetRandom(0, spelllistsingle.size())];
 						else
 							curspell = spelllistmulti[GetRandom(0, spelllistmulti.size())];
 						similarspells = cddata->enemyset.GetSimilarEnemySpells(cddata->enemyset.battle[i]->spell[j], &similaramount, &similarbattleid);
-						for (k=0; k<similaramount; k++) {
+						for (k = 0; k < similaramount; k++) {
 							spelldone[similarbattleid[k]][similarspells[k]->id] = true;
 							swaplist.push_back(make_tuple(similarbattleid[k], similarspells[k], curspell.first, curspell.second));
 						}
 					}
 		}
-		for (i=0; i<swaplist.size(); i++) {
+		for (i = 0; i < swaplist.size(); i++) {
 			ReplaceEnemySpell(get<1>(swaplist[i]), get<2>(swaplist[i]));
 			EnemyDataSet::GetSpellSequenceModelRef(cddata->enemyset.battle_data[get<0>(swaplist[i])]->sequence_code[get<1>(swaplist[i])->id], &seqcode, &codearg);
 			cddata->enemyset.battle_data[get<0>(swaplist[i])]->sequence_code[get<1>(swaplist[i])->id][seqcode].arg[codearg] = get<3>(swaplist[i]);
@@ -1118,36 +1118,36 @@ void ToolRandomizer::ApplyRandomizerBattle() {
 		}
 	}
 	if (m_battlemp->IsChecked())
-		for (i=0; i<cddata->enemyset.battle_amount; i++) {
-			for (j=0; j<cddata->enemyset.battle[i]->stat_amount; j++)
-				cddata->enemyset.battle[i]->stat[j].mp = m_battlempfactor->GetValue()*cddata->enemyset.battle[i]->stat[j].lvl;
+		for (i = 0; i < cddata->enemyset.battle_amount; i++) {
+			for (j = 0; j < cddata->enemyset.battle[i]->stat_amount; j++)
+				cddata->enemyset.battle[i]->stat[j].mp = m_battlempfactor->GetValue() * cddata->enemyset.battle[i]->stat[j].lvl;
 			cddata->MarkDataEnemyModified(i, CHUNK_TYPE_ENEMY_STATS);
 		}
 }
 
 void ToolRandomizer::ApplyRandomizerCard() {
-	unsigned int i,j;
+	unsigned int i, j;
 	if (m_carddrop->IsChecked())
-		for (i=0; i<cddata->enemyset.battle_amount; i++) {
-			for (j=0; j<cddata->enemyset.battle[i]->stat_amount; j++)
+		for (i = 0; i < cddata->enemyset.battle_amount; i++) {
+			for (j = 0; j < cddata->enemyset.battle[i]->stat_amount; j++)
 				cddata->enemyset.battle[i]->stat[j].card_drop = GetRandom(0, 100);
 			cddata->MarkDataEnemyModified(i, CHUNK_TYPE_ENEMY_STATS);
 		}
-	if (m_carddeck->GetSelection()==1) {
+	if (m_carddeck->GetSelection() == 1) {
 		uint8_t cardtmp;
 		uint8_t selset;
-		for (i=0; i+1<CARD_SET_AMOUNT; i++) {
+		for (i = 0; i + 1 < CARD_SET_AMOUNT; i++) {
 			selset = GetRandom(i, CARD_SET_AMOUNT);
-			for (j=0; j<CARD_SET_CAPACITY; j++) {
+			for (j = 0; j < CARD_SET_CAPACITY; j++) {
 				cardtmp = cddata->cardset.set[i].card[j];
 				cddata->cardset.set[i].card[j] = cddata->cardset.set[selset].card[j];
 				cddata->cardset.set[selset].card[j] = cardtmp;
 			}
 		}
 		cddata->MarkDataCardModified();
-	} else if (m_carddeck->GetSelection()==2) {
-		for (i=0; i<CARD_SET_AMOUNT; i++)
-			for (j=0; j<CARD_SET_CAPACITY; j++)
+	} else if (m_carddeck->GetSelection() == 2) {
+		for (i = 0; i < CARD_SET_AMOUNT; i++)
+			for (j = 0; j < CARD_SET_CAPACITY; j++)
 				cddata->cardset.set[i].card[j] = GetRandom(0, 100);
 		cddata->MarkDataCardModified();
 	}
@@ -1180,16 +1180,16 @@ void ToolRandomizer::OnCheckBox(wxCommandEvent& event) {
 
 void ToolRandomizer::OnButtonClick(wxCommandEvent& event) {
 	int id = event.GetId();
-	if (id==wxID_SAFESET) {
+	if (id == wxID_SAFESET) {
 		RandomizerListDialog dial(this);
-		if (dial.ShowModal()==wxID_OK) {
+		if (dial.ShowModal() == wxID_OK) {
 			unsigned int i;
 			safe_abil_scramble.clear();
 			safe_abil_spell.clear();
 			safe_abil_support.clear();
 			safe_abil_weap.clear();
 			safe_abil_armor.clear();
-			for (i=0; i<dial.list.size(); i++) {
+			for (i = 0; i < dial.list.size(); i++) {
 				if (dial.list[i].safe[0]) safe_abil_scramble.push_back(dial.list[i].id);
 				if (dial.list[i].safe[1]) safe_abil_spell.push_back(dial.list[i].id);
 				if (dial.list[i].safe[2]) safe_abil_support.push_back(dial.list[i].id);
@@ -1197,7 +1197,7 @@ void ToolRandomizer::OnButtonClick(wxCommandEvent& event) {
 				if (dial.list[i].safe[4]) safe_abil_armor.push_back(dial.list[i].id);
 			}
 		}
-	} else if (id==wxID_LOADALL) {
+	} else if (id == wxID_LOADALL) {
 		m_loadallbtn->Enable(false);
 		cddata->InitSpell();
 		cddata->InitCommand();
@@ -1211,11 +1211,11 @@ void ToolRandomizer::OnButtonClick(wxCommandEvent& event) {
 		if (!m_enablebattle->IsEnabled()) m_enablebattle->SetValue(true);
 		if (!m_enablecard->IsEnabled()) m_enablecard->SetValue(true);
 		UpdateMenuAvailability();
-	} else if (id==wxID_APPLY) {
+	} else if (id == wxID_APPLY) {
 		ApplyRandomizer(); // ToDo: hidden for now; show when cddata is not modified directly and preview exists in the tool
-	} else if (id==wxID_CANCEL) {
+	} else if (id == wxID_CANCEL) {
 		EndModal(id);
-	} else if (id==wxID_OK) {
+	} else if (id == wxID_OK) {
 		ApplyRandomizer();
 		EndModal(id);
 	}

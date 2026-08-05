@@ -1379,7 +1379,7 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	dest.spetext_chocomenu_amount = 82;
 	dest.spetext_cardrank_amount = 32;
 	dest.spetext_tetramaster_amount = 53;
-	dest.spetext_localization_amount = 490;
+	dest.spetext_localization_amount = 493;
 	for (i=0;i<SPELL_ANIMATION_AMOUNT;i++) {
 		stringstream fnamestr;
 		fnamestr << "ef";
@@ -2708,10 +2708,6 @@ wstring* LoadHWS(string filepath, bool* section, bool* sectext, bool* localsec, 
 	for (i = 0; i < nbsection; i++) {
 		HWSReadChar(save, sectiontype[i]);
 		HWSReadLong(save, sectionlength[i]);
-		// TODO: Crash after (1) import AF (2) save copy HWS (3) close data -> (4) open game again crash (consistently?)
-		// also had the same crash without import/save any HWS; Party Special tab involved?
-		// TODO
-		fstream fout("aaaa.txt", ios::out | ios::app); fout << "Section " << (int)sectiontype[i] << " (length " << (int)sectionlength[i] << ") at 0x" << std::hex << (int)save.tellg() << endl; fout.close();
 		sectionpos = save.tellg();
 		if (section[sectiontype[i]]) {
 

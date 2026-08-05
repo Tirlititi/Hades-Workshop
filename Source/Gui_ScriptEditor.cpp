@@ -765,14 +765,16 @@ ScriptEditDialog::~ScriptEditDialog() {
 	delete timer;
 }
 
+bool debuglog = wxFileName::FileExists("LogParser.txt");
 int ScriptEditDialog::ShowModal() {
+	debuglog = wxFileName::FileExists("LogParser.txt");
 	unsigned int entryid = 0;
 	GenerateEntryNames();
 	GenerateFunctionStrings(false);
 	m_buttonok->SetFocus();
-	while (script.entry_function_amount[entryid]==0)
+	while (script.entry_function_amount[entryid] == 0)
 		entryid++;
-	DisplayFunction(entryid,0);
+	DisplayFunction(entryid, 0);
 	timer->Start(TIMER_TIMEOUT);
 	return wxDialog::ShowModal();
 }
@@ -833,15 +835,15 @@ void ScriptEditHandler::GenerateFunctionList() {
 
 void ScriptEditDialog::DisplayFunctionList(int newfunc, int removedfunc) {
 	unsigned int funcamount = 0;
-	unsigned int i,j;
+	unsigned int i, j;
 	GenerateFunctionList();
-	for (i=0;i<entrylist_id.size();i++)
+	for (i = 0; i < entrylist_id.size(); i++)
 		delete entrylist_id[i];
 	entry_selection = SCRIPT_ID_NO_ENTRY;
-	entrylist_str.resize(script.entry_amount+6);
-	entrylist_id.resize(script.entry_amount+6);
-	for (i=0;i<script.entry_amount;i++) {
-		entrylist_str[i] = _(L"Entry ")+wxString::Format(wxT("%s"), entry_name[i]);
+	entrylist_str.resize(script.entry_amount + 6);
+	entrylist_id.resize(script.entry_amount + 6);
+	for (i = 0; i < script.entry_amount; i++) {
+		entrylist_str[i] = _(L"Entry ") + wxString::Format(wxT("%s"), entry_name[i]);
 		entrylist_id[i] = new uint16_t(i);
 		funcamount += script.entry_function_amount[i];
 	}
@@ -858,37 +860,37 @@ void ScriptEditDialog::DisplayFunctionList(int newfunc, int removedfunc) {
 	entrylist_str[i] = _(L"Team Character 4");
 	entrylist_id[i++] = new uint16_t(0xFE);
 	m_functionlist->ClearAll();
-	m_functionlist->AppendColumn(_(L"Functions"),wxLIST_FORMAT_LEFT,202);
+	m_functionlist->AppendColumn(_(L"Functions"), wxLIST_FORMAT_LEFT, 202);
 	vector<bool> newshouldparse;
-	bool firsttime = func_should_parse.size()==0;
+	bool firsttime = func_should_parse.size() == 0;
 	if (firsttime)
 		func_should_parse.resize(funcamount);
-	else if (newfunc>=0)
+	else if (newfunc >= 0)
 		newshouldparse.resize(funcamount);
 	else
 		newshouldparse.resize(funcamount);
 	funcamount = 0;
-	for (i=0;i<script.entry_amount;i++) {
-		for (j=0;j<script.entry_function_amount[i];j++) {
-			m_functionlist->InsertItem(funcamount,functionlist_str[funcamount]);
+	for (i = 0; i < script.entry_amount; i++) {
+		for (j = 0; j < script.entry_function_amount[i]; j++) {
+			m_functionlist->InsertItem(funcamount, functionlist_str[funcamount]);
 			if (firsttime)
 				func_should_parse[funcamount] = false;
-			else if (newfunc>=0) {
-				if ((int)funcamount<newfunc)
+			else if (newfunc >= 0) {
+				if ((int)funcamount < newfunc)
 					newshouldparse[funcamount] = func_should_parse[funcamount];
-				else if (funcamount==newfunc)
+				else if (funcamount == newfunc)
 					newshouldparse[funcamount] = false;
 				else
-					newshouldparse[funcamount] = func_should_parse[funcamount-1];
+					newshouldparse[funcamount] = func_should_parse[funcamount - 1];
 				if (newshouldparse[funcamount])
-					m_functionlist->SetItemTextColour(funcamount,FUNCTION_COLOR_MODIFIED);
+					m_functionlist->SetItemTextColour(funcamount, FUNCTION_COLOR_MODIFIED);
 			} else {
-				if ((int)funcamount<removedfunc)
+				if ((int)funcamount < removedfunc)
 					newshouldparse[funcamount] = func_should_parse[funcamount];
 				else
-					newshouldparse[funcamount] = func_should_parse[funcamount+1];
+					newshouldparse[funcamount] = func_should_parse[funcamount + 1];
 				if (newshouldparse[funcamount])
-					m_functionlist->SetItemTextColour(funcamount,FUNCTION_COLOR_MODIFIED);
+					m_functionlist->SetItemTextColour(funcamount, FUNCTION_COLOR_MODIFIED);
 			}
 			funcamount++;
 		}
@@ -1076,7 +1078,6 @@ void ScriptEditHandler::GenerateStandardLine(wxString& str, ScriptOperation* op,
 	str += _(L"\n");
 }
 
-bool debuglog = false;
 #define BLOCK_TYPE_ROOT			0
 #define BLOCK_TYPE_IF			1
 #define BLOCK_TYPE_IFN			2
@@ -1842,10 +1843,10 @@ void ScriptEditHandler::GenerateFunctionStrings(bool appendcomment) {
 	}
 	for (i = 0; i < script.entry_amount; i++) {
 		localvar_str[i] = _(L"");
-		if (script.entry_local_var[i] > 0)
-			localvar_str[i] += wxString::Format(wxT("allocate %u\n"), script.entry_local_var[i]);
+		if (script.local_data[i].allocate_amount > 0)
+			localvar_str[i] += wxString::Format(wxT("allocate %u\n"), script.local_data[i].allocate_amount);
 		if (script.global_data.amount > 0) {
-			if (script.entry_local_var[i] > 0)
+			if (script.local_data[i].allocate_amount > 0)
 				localvar_str[i] += _(L"\n");
 			localvar_str[i] += globalvar_str;
 		}
@@ -2776,6 +2777,7 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 	unsigned int lvlamount = 0;
 	unsigned int breaklvlamount = 0;
 	unsigned int i, j, line = startinglinenumber;
+	bool expectcase = false;
 	set<SteamLanguage> isfunctionreturned;
 	wxString linestr, token, errstr;
 	wxString argstr[SCRPT_MAX_OPERAND];
@@ -2806,7 +2808,7 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 		parseop[opi].opcode = OPCODE; \
 		parseop[opi].arg_amount = HADES_STRING_SCRIPT_OPCODE[OPCODE].arg_amount; \
 		if (parseop[opi].arg_amount >= 0) { \
-			parseop[opi].arg = NewScriptArgumentArray(parseop[opi].arg_amount, &parseop[opi]); \
+			parseop[opi].InitialiseArgumentVector(parseop[opi].arg_amount); \
 			for (macroi = 0; macroi < parseop[opi].arg_amount; macroi++) { \
 				parseop[opi].arg[macroi].is_signed = IsScriptArgTypeSigned(HADES_STRING_SCRIPT_OPCODE[OPCODE].arg_type[macroi]); \
 				parseop[opi].arg[macroi].typesize = HADES_STRING_SCRIPT_OPCODE[OPCODE].arg_length[macroi]; \
@@ -2832,10 +2834,10 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 			else \
 				parseindices[lang].push_back(-1); \
 		}
-	#define MACRO_OPCODE_SIZE_DONE() \
+	#define MACRO_OPCODE_SIZE_DONE(CONTEXTLANG) \
 		MACRO_OPCODE_SIZE_DONE_SOFT() \
 		for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) \
-			if (lvlparam[lvlamount].parsecontextlang[lang] && IsLineInLang(linecontextlang, lang)) \
+			if (lvlparam[lvlamount].parsecontextlang[lang] && IsLineInLang(CONTEXTLANG, lang)) \
 				rawpos[lang] += parseop[opi].size; \
 		opi++;
 	#define MACRO_OPCODE_COMPLETE_INDICES(COUNT) \
@@ -3020,6 +3022,13 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 			if (opi == 0)
 				continue;
 		}
+		if (expectcase) {
+			if (!token.IsSameAs(keywords[9]) && !token.IsSameAs(keywords[10])) {
+				errstr.Printf(wxT(HADES_STRING_SCRIPT_EXPECT), line, "case' or 'default");
+				res.AddError(errstr.ToStdWstring());
+			}
+			expectcase = false;
+		}
 		for (i = 0; i < G_N_ELEMENTS(keywords); i++) {
 			if (token.IsSameAs(keywords[i])) {
 				tokentype = i;
@@ -3036,7 +3045,7 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 					while (true) {
 						MACRO_NEW_OPCODE_MULTILANG(0x05, true, linecontextlang)
 						parseop[opi].arg[0].SetValueVar(argval);
-						MACRO_OPCODE_SIZE_DONE()
+						MACRO_OPCODE_SIZE_DONE(linecontextlang)
 						MACRO_NEW_JUMP_MULTILANG(0x02, linecontextlang, 0, true)
 						MACRO_CHECK_MULTILANG_FLOW()
 						MACRO_CHECK_PUNC_ERROR(L"if")
@@ -3068,7 +3077,7 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 					while (true) {
 						MACRO_NEW_OPCODE_MULTILANG(0x05, true, linecontextlang)
 						parseop[opi].arg[0].SetValueVar(argval);
-						MACRO_OPCODE_SIZE_DONE()
+						MACRO_OPCODE_SIZE_DONE(linecontextlang)
 						MACRO_NEW_JUMP_MULTILANG(0x03, linecontextlang, 0, true)
 						MACRO_CHECK_MULTILANG_FLOW()
 						MACRO_CHECK_PUNC_ERROR(L"ifnot")
@@ -3184,14 +3193,14 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 					while (true) {
 						MACRO_NEW_OPCODE_MULTILANG(0x05, true, linecontextlang)
 						parseop[opi].arg[0].SetValueVar(argval);
-						MACRO_OPCODE_SIZE_DONE()
+						MACRO_OPCODE_SIZE_DONE(linecontextlang)
 						for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
 							if (lvlparam[lvlamount].parsecontextlang[lang] && IsLineInLang(linecontextlang, lang)) {
 								MACRO_NEW_OPCODE_MULTILANG(0x0B, false, linecontextlang)
 								parseindices[lang].push_back(opi);
 								parseop[opi].size_byte = wxAtoi(argstr[0]);
 								parseop[opi].arg_amount = 2 + parseop[opi].size_byte;
-								parseop[opi].arg = NewScriptArgumentArray(parseop[opi].arg_amount, &parseop[opi]);
+								parseop[opi].InitialiseArgumentVector(parseop[opi].arg_amount);
 								parseop[opi].arg[0].is_signed = false;
 								parseop[opi].arg[0].typesize = 2;
 								parseop[opi].arg[0].SetValue(wxAtoi(argstr[1]));
@@ -3227,6 +3236,7 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 					MACRO_OPCODE_COMPLETE_INDICES(2)
 					if (breaklvlparam.size() <= breaklvlamount) breaklvlparam.emplace_back();
 					breaklvlparam[breaklvlamount++].Reset();
+					expectcase = true;
 					goto end_of_loop;
 				case 8: // switchex
 					token = GetNextThing(linestr);
@@ -3243,14 +3253,14 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 					while (true) {
 						MACRO_NEW_OPCODE_MULTILANG(0x05, true, linecontextlang)
 						parseop[opi].arg[0].SetValueVar(argval);
-						MACRO_OPCODE_SIZE_DONE()
+						MACRO_OPCODE_SIZE_DONE(linecontextlang)
 						for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
 							if (lvlparam[lvlamount].parsecontextlang[lang] && IsLineInLang(linecontextlang, lang)) {
 								MACRO_NEW_OPCODE_MULTILANG(0x06, false, linecontextlang)
 								parseindices[lang].push_back(opi);
 								parseop[opi].size_byte = wxAtoi(argstr[0]);
 								parseop[opi].arg_amount = 1 + parseop[opi].size_byte * 2;
-								parseop[opi].arg = NewScriptArgumentArray(parseop[opi].arg_amount, &parseop[opi]);
+								parseop[opi].InitialiseArgumentVector(parseop[opi].arg_amount);
 								parseop[opi].arg[0].is_signed = true;
 								parseop[opi].arg[0].typesize = 2;
 								parseop[opi].arg[0].SetValue(-1);
@@ -3281,6 +3291,7 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 					MACRO_OPCODE_COMPLETE_INDICES(2)
 					if (breaklvlparam.size() <= breaklvlamount) breaklvlparam.emplace_back();
 					breaklvlparam[breaklvlamount++].Reset();
+					expectcase = true;
 					goto end_of_loop;
 				case 9: { // case
 					MACRO_CHECK_NO_LANG_SPEC(L"case")
@@ -3445,7 +3456,7 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 				for (i = 0; i < lvlparam[lvlamount].argvalamount; i++) {
 					MACRO_NEW_OPCODE_MULTILANG(0x05, true, lvlparam[lvlamount].argvallang[i])
 					parseop[opi].arg[0].SetValueVar(lvlparam[lvlamount].argval[i]);
-					MACRO_OPCODE_SIZE_DONE()
+					MACRO_OPCODE_SIZE_DONE(lvlparam[lvlamount].argvallang[i])
 				}
 				MACRO_NEW_JUMP_MULTILANG(0x03, linecontextlang, lvlparam[lvlamount].rawpos[lang] - (rawpos[lang] + 3), false)
 				breaklvlamount--;
@@ -3465,7 +3476,7 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 				MACRO_CHECK_PUNC_ERROR(L")")
 				MACRO_NEW_OPCODE_MULTILANG(0x05, true, linecontextlang)
 				parseop[opi].arg[0].SetValueVar(argval);
-				MACRO_OPCODE_SIZE_DONE()
+				MACRO_OPCODE_SIZE_DONE(linecontextlang)
 				MACRO_NEW_JUMP_MULTILANG(0x03, linecontextlang, lvlparam[lvlamount].rawpos[lang] - (rawpos[lang] + 3), false)
 				MACRO_OPCODE_COMPLETE_INDICES(2)
 				breaklvlamount--;
@@ -3477,7 +3488,7 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 				for (i = 0; i < lvlparam[lvlamount].argvalamount; i++) {
 					MACRO_NEW_OPCODE_MULTILANG(0x05, true, lvlparam[lvlamount].argvallang[i])
 					parseop[opi].arg[0].SetValueVar(lvlparam[lvlamount].argval[i]);
-					MACRO_OPCODE_SIZE_DONE()
+					MACRO_OPCODE_SIZE_DONE(lvlparam[lvlamount].argvallang[i])
 				}
 				MACRO_NEW_JUMP_MULTILANG(0x03, linecontextlang, lvlparam[lvlamount].rawpos[lang] - (rawpos[lang] + 3), false)
 				breaklvlamount--;
@@ -3532,7 +3543,7 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 					switch (it->second.id) {
 					case 0x04:
 						MACRO_NEW_OPCODE(0x04)
-						MACRO_OPCODE_SIZE_DONE()
+						MACRO_OPCODE_SIZE_DONE(linecontextlang)
 						MACRO_OPCODE_COMPLETE_INDICES(1)
 						if (lvlamount == 0) {
 							MACRO_REGISTER_FUNCTION_RETURN()
@@ -3546,7 +3557,7 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 						MACRO_CHECK_VARARG_ERROR(argval)
 						MACRO_NEW_OPCODE(0x05)
 						parseop[opi].arg[0].SetValueVar(argval);
-						MACRO_OPCODE_SIZE_DONE()
+						MACRO_OPCODE_SIZE_DONE(linecontextlang)
 						MACRO_OPCODE_COMPLETE_INDICES(1)
 						goto end_of_loop;
 					case 0x29:
@@ -3588,7 +3599,7 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 						parseop[opi].vararg_flag = varargbyte;
 						parseop[opi].size_byte = j / 2;
 						parseop[opi].arg_amount = j / 2;
-						parseop[opi].arg = NewScriptArgumentArray(j / 2, &parseop[opi]);
+						parseop[opi].InitialiseArgumentVector(j / 2);
 						for (j = 0; j < parseop[opi].arg_amount; j++) {
 							parseop[opi].arg[j].is_signed = true;
 							parseop[opi].arg[j].typesize = 4;
@@ -3597,7 +3608,7 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 							else
 								parseop[opi].arg[j].SetValueVar(argvalarray[2 * j]);
 						}
-						MACRO_OPCODE_SIZE_DONE()
+						MACRO_OPCODE_SIZE_DONE(linecontextlang)
 						MACRO_OPCODE_COMPLETE_INDICES(1)
 						goto end_of_loop;
 					default:
@@ -3652,7 +3663,7 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 							else
 								parseop[opi].arg[j].SetValueVar(argvalarray[j]);
 						}
-						MACRO_OPCODE_SIZE_DONE()
+						MACRO_OPCODE_SIZE_DONE(linecontextlang)
 						MACRO_OPCODE_COMPLETE_INDICES(1)
 						goto end_of_loop;
 					}
@@ -3684,7 +3695,6 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 				localam++;
 			else if (localvar->local_type[i] == SCRIPT_VARIABLE_LOCALTYPE_GLOBAL)
 				globalam++;
-		script.entry_local_var[entry] = localvar->allocate_amount;
 		script.local_data[entry].allocate_amount = localvar->allocate_amount;
 		script.local_data[entry].amount = localam;
 		script.local_data[entry].local_type.resize(localam);
@@ -4928,21 +4938,21 @@ void ScriptEditDialog::ScriptChangeArg(int argi, int64_t value, int argshift) {
 void ScriptEditDialog::OnFunctionChoose(wxListEvent& event) {
 	unsigned int entryid = 0, funcid = 0;
 	long sel = event.GetIndex();
-	while (script.entry_function_amount[entryid]==0)
+	while (script.entry_function_amount[entryid] == 0)
 		entryid++;
-	while (sel>0) {
+	while (sel > 0) {
 		funcid++;
-		while (funcid>=script.entry_function_amount[entryid]) {
+		while (funcid >= script.entry_function_amount[entryid]) {
 			entryid++;
 			funcid = 0;
 		}
 		sel--;
 	}
-	if (entry_selection!=SCRIPT_ID_NO_ENTRY) {
+	if (entry_selection != SCRIPT_ID_NO_ENTRY) {
 		localvar_str[entry_selection] = m_localvartext->GetValue();
 		func_str[entry_selection][function_selection] = m_scripttext->GetValue();
 	}
-	DisplayFunction(entryid,funcid);
+	DisplayFunction(entryid, funcid);
 }
 
 void ScriptEditDialog::OnIntValueText(wxCommandEvent& event) {

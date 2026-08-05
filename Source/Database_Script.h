@@ -1,8 +1,6 @@
 #ifndef _DATABASE_SCRIPT_H
 #define _DATABASE_SCRIPT_H
 
-// ToDo: implement "command_tags.cs" infos
-
 #include "Database_Common.h"
 
 struct SortedChoiceItemScriptOpcode {

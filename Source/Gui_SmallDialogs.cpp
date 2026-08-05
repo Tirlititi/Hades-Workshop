@@ -797,17 +797,22 @@ int EnemyResourceDialog::ShowModal(EnemyStatDataStruct& es, BattleDataStruct& bd
 	m_textamount->SetMax(maxtextamount);
 	m_textamount->SetValue(es.text_amount);
 	m_radius->SetValue(es.radius);
-	m_mesh->SetValue(es.mesh);							m_meshvanish->SetValue(es.mesh_vanish);
+	m_mesh->SetValue(es.mesh);								m_meshvanish->SetValue(es.mesh_vanish);
 	m_bonetarget->SetValue(es.bone_target);
-	m_bonecamera1->SetValue(es.bone_camera1);			m_bonecamera2->SetValue(es.bone_camera2);			m_bonecamera3->SetValue(es.bone_camera3);
-	m_boneselection1->SetValue(es.selection_bone[0]);	m_boneselection2->SetValue(es.selection_bone[1]);	m_boneselection3->SetValue(es.selection_bone[2]);
-	m_boneselection4->SetValue(es.selection_bone[3]);	m_boneselection5->SetValue(es.selection_bone[4]);	m_boneselection6->SetValue(es.selection_bone[5]);
-	m_boneshadow1->SetValue(es.shadow_bone1);			m_boneshadow2->SetValue(es.shadow_bone2);
-	m_shadowsizex->SetValue(es.shadow_size_x);			m_shadowsizey->SetValue(es.shadow_size_y);
-	m_soundengage->SetValue(es.sound_engage);			m_sounddeath->SetValue(es.sound_death);
-	m_animidle->SetValue(es.anim_idle);					m_animhit->SetValue(es.anim_hit);					m_animdeath->SetValue(es.anim_death);
-	m_animidlealt->SetValue(es.anim_idle_alt);			m_animhitalt->SetValue(es.anim_hit_alt);			m_animdeathalt->SetValue(es.anim_death_alt);
-	m_listanim.resize(es.sequence_anim_amount);			m_listanimid.resize(es.sequence_anim_amount);		m_listanimdelete.resize(es.sequence_anim_amount);
+	m_bonecamera1->SetValue(es.bone_camera1);				m_bonecamera2->SetValue(es.bone_camera2);				m_bonecamera3->SetValue(es.bone_camera3);
+	m_boneselection0->SetValue(es.selection_bone[0]);		m_boneselection1->SetValue(es.selection_bone[1]);		m_boneselection2->SetValue(es.selection_bone[2]);
+	m_boneselection3->SetValue(es.selection_bone[3]);		m_boneselection4->SetValue(es.selection_bone[4]);		m_boneselection5->SetValue(es.selection_bone[5]);
+	m_selectionoffsety0->SetValue(es.selection_offsety[0]);	m_selectionoffsety1->SetValue(es.selection_offsety[1]);	m_selectionoffsety2->SetValue(es.selection_offsety[2]);
+	m_selectionoffsety3->SetValue(es.selection_offsety[3]);	m_selectionoffsety4->SetValue(es.selection_offsety[4]);	m_selectionoffsety5->SetValue(es.selection_offsety[5]);
+	m_selectionoffsetz0->SetValue(es.selection_offsetz[0]);	m_selectionoffsetz1->SetValue(es.selection_offsetz[1]);	m_selectionoffsetz2->SetValue(es.selection_offsetz[2]);
+	m_selectionoffsetz3->SetValue(es.selection_offsetz[3]);	m_selectionoffsetz4->SetValue(es.selection_offsetz[4]);	m_selectionoffsetz5->SetValue(es.selection_offsetz[5]);
+	m_boneshadow1->SetValue(es.shadow_bone1);				m_boneshadow2->SetValue(es.shadow_bone2);
+	m_shadowsizex->SetValue(es.shadow_size_x);				m_shadowsizey->SetValue(es.shadow_size_y);
+	m_shadowoffsetx->SetValue(es.shadow_offset_x);			m_shadowoffsety->SetValue(es.shadow_offset_y);
+	m_soundengage->SetValue(es.sound_engage);				m_sounddeath->SetValue(es.sound_death);
+	m_animidle->SetValue(es.anim_idle);						m_animhit->SetValue(es.anim_hit);						m_animdeath->SetValue(es.anim_death);
+	m_animidlealt->SetValue(es.anim_idle_alt);				m_animhitalt->SetValue(es.anim_hit_alt);				m_animdeathalt->SetValue(es.anim_death_alt);
+	m_listanim.resize(es.sequence_anim_amount);				m_listanimid.resize(es.sequence_anim_amount);			m_listanimdelete.resize(es.sequence_anim_amount);
 	int32_t animindex = AnimationDatabase::GetIndexFromModelId(es.model);
 	if (animindex >= 0)
 		while (AnimationDatabase::GetModelId(animindex) == es.model) {
@@ -923,16 +928,21 @@ bool EnemyResourceDialog::ApplyModifications(EnemyStatDataStruct& es, BattleData
 	bool result = true;
 	es.text_amount = m_textamount->GetValue();
 	es.radius = m_radius->GetValue();
-	es.mesh = m_mesh->GetValue();							es.mesh_vanish = m_meshvanish->GetValue();
+	es.mesh = m_mesh->GetValue();								es.mesh_vanish = m_meshvanish->GetValue();
 	es.bone_target = m_bonetarget->GetValue();
-	es.bone_camera1 = m_bonecamera1->GetValue();			es.bone_camera2 = m_bonecamera2->GetValue();			es.bone_camera3 = m_bonecamera3->GetValue();
-	es.selection_bone[0] = m_boneselection1->GetValue();	es.selection_bone[1] = m_boneselection2->GetValue();	es.selection_bone[2] = m_boneselection3->GetValue();
-	es.selection_bone[3] = m_boneselection4->GetValue();	es.selection_bone[4] = m_boneselection5->GetValue();	es.selection_bone[5] = m_boneselection6->GetValue();
-	es.shadow_bone1 = m_boneshadow1->GetValue();			es.shadow_bone2 = m_boneshadow2->GetValue();
-	es.shadow_size_x = m_shadowsizex->GetValue();			es.shadow_size_y = m_shadowsizey->GetValue();
-	es.sound_engage = m_soundengage->GetValue();			es.sound_death = m_sounddeath->GetValue();
-	es.anim_idle = m_animidle->GetValue();					es.anim_hit = m_animhit->GetValue();					es.anim_death = m_animdeath->GetValue();
-	es.anim_idle_alt = m_animidlealt->GetValue();			es.anim_hit_alt = m_animhitalt->GetValue();				es.anim_death_alt = m_animdeathalt->GetValue();
+	es.bone_camera1 = m_bonecamera1->GetValue();				es.bone_camera2 = m_bonecamera2->GetValue();				es.bone_camera3 = m_bonecamera3->GetValue();
+	es.selection_bone[0] = m_boneselection0->GetValue();		es.selection_bone[1] = m_boneselection1->GetValue();		es.selection_bone[2] = m_boneselection2->GetValue();
+	es.selection_bone[3] = m_boneselection3->GetValue();		es.selection_bone[4] = m_boneselection4->GetValue();		es.selection_bone[5] = m_boneselection5->GetValue();
+	es.selection_offsety[0] = m_selectionoffsety0->GetValue();	es.selection_offsety[1] = m_selectionoffsety1->GetValue();	es.selection_offsety[2] = m_selectionoffsety2->GetValue();
+	es.selection_offsety[3] = m_selectionoffsety3->GetValue();	es.selection_offsety[4] = m_selectionoffsety4->GetValue();	es.selection_offsety[5] = m_selectionoffsety5->GetValue();
+	es.selection_offsetz[0] = m_selectionoffsetz0->GetValue();	es.selection_offsetz[1] = m_selectionoffsetz1->GetValue();	es.selection_offsetz[2] = m_selectionoffsetz2->GetValue();
+	es.selection_offsetz[3] = m_selectionoffsetz3->GetValue();	es.selection_offsetz[4] = m_selectionoffsetz4->GetValue();	es.selection_offsetz[5] = m_selectionoffsetz5->GetValue();
+	es.shadow_bone1 = m_boneshadow1->GetValue();				es.shadow_bone2 = m_boneshadow2->GetValue();
+	es.shadow_size_x = m_shadowsizex->GetValue();				es.shadow_size_y = m_shadowsizey->GetValue();
+	es.shadow_offset_x = m_shadowoffsetx->GetValue();			es.shadow_offset_y = m_shadowoffsety->GetValue();
+	es.sound_engage = m_soundengage->GetValue();				es.sound_death = m_sounddeath->GetValue();
+	es.anim_idle = m_animidle->GetValue();						es.anim_hit = m_animhit->GetValue();						es.anim_death = m_animdeath->GetValue();
+	es.anim_idle_alt = m_animidlealt->GetValue();				es.anim_hit_alt = m_animhitalt->GetValue();					es.anim_death_alt = m_animdeathalt->GetValue();
 	if (GetGameType() != GAME_TYPE_PSX) {
 		unsigned int i, firstmodif;
 		for (i = 0; i < m_listanimid.size() && i < es.sequence_anim_amount; i++)

@@ -218,11 +218,6 @@ wxString ItemDataStruct::GetFieldValue(wxString fieldname) {
 		if (fieldname.IsSameAs("usable_accuracy")) return wxString::Format(wxT("%d"), usable.accuracy);
 		if (fieldname.IsSameAs("usable_element")) return wxString::Format(wxT("%d"), usable.element);
 		if (fieldname.IsSameAs("usable_status")) return FormatStatusSet(usable.status);
-		// TODO: https://github.com/Albeoris/Memoria/blob/main/Assembly-CSharp/Memoria/Data/Items/ItemEffect.cs
-		// TODO: https://github.com/Albeoris/Memoria/blob/main/Assembly-CSharp/Global/BTL_SCENE.cs (including bbg?)
-		// TODO: https://github.com/Albeoris/Memoria/blob/main/Assembly-CSharp/Global/AA_DATA.cs (perform name)
-		// TODO: Make sure that "loc_names.mes" can be imported as patch
-		// TODO: [Export] Translations: Tetra Master Menu
 	}
 	if (fieldname.StartsWith("stat_") && parent->GetStatIndexById(stat_id) >= 0) {
 		ItemStatDataStruct& stat = parent->GetStatById(stat_id);
@@ -1370,24 +1365,6 @@ int ItemDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 				HWSReadWString(ffbin, weapon[i].texture_names[j]);
 		}
 	}
-	for (i = 0; i < (int)nonmodifieditem.size(); i++)
-		InsertAtId(item, nonmodifieditem[i], nonmodifieditem[i].id);
-	for (i = 0; i < (int)nonmodifiedweapon.size(); i++)
-		InsertAtId(weapon, nonmodifiedweapon[i], nonmodifiedweapon[i].id);
-	for (i = 0; i < (int)nonmodifiedarmor.size(); i++)
-		InsertAtId(armor, nonmodifiedarmor[i], nonmodifiedarmor[i].id);
-	for (i = 0; i < (int)nonmodifiedusable.size(); i++)
-		InsertAtId(usable, nonmodifiedusable[i], nonmodifiedusable[i].id);
-	for (i = 0; i < (int)nonmodifiedstat.size(); i++)
-		InsertAtId(stat, nonmodifiedstat[i], nonmodifiedstat[i].id);
-	for (i = 0; i < (int)nonmodifiedkeyitem.size(); i++)
-		InsertAtId(key_item, nonmodifiedkeyitem[i], nonmodifiedkeyitem[i].id);
-	name_space_total = namesize;
-	help_space_total = helpsize;
-	help2_space_total = helpsize2;
-	key_name_space_total = knamesize;
-	key_help_space_total = khelpsize;
-	key_desc_space_total = kdescsize;
 	if (GetHWSGameType() != GAME_TYPE_PSX) {
 		SteamLanguage lg;
 		int txtspace;
@@ -1419,6 +1396,24 @@ int ItemDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 		MACRO_ITEM_HWSSTEAMTEXT(key_item[i].help, keyitemamount)
 		MACRO_ITEM_HWSSTEAMTEXT(key_item[i].description, keyitemamount)
 	}
+	for (i = 0; i < (int)nonmodifieditem.size(); i++)
+		InsertAtId(item, nonmodifieditem[i], nonmodifieditem[i].id);
+	for (i = 0; i < (int)nonmodifiedweapon.size(); i++)
+		InsertAtId(weapon, nonmodifiedweapon[i], nonmodifiedweapon[i].id);
+	for (i = 0; i < (int)nonmodifiedarmor.size(); i++)
+		InsertAtId(armor, nonmodifiedarmor[i], nonmodifiedarmor[i].id);
+	for (i = 0; i < (int)nonmodifiedusable.size(); i++)
+		InsertAtId(usable, nonmodifiedusable[i], nonmodifiedusable[i].id);
+	for (i = 0; i < (int)nonmodifiedstat.size(); i++)
+		InsertAtId(stat, nonmodifiedstat[i], nonmodifiedstat[i].id);
+	for (i = 0; i < (int)nonmodifiedkeyitem.size(); i++)
+		InsertAtId(key_item, nonmodifiedkeyitem[i], nonmodifiedkeyitem[i].id);
+	name_space_total = namesize;
+	help_space_total = helpsize;
+	help2_space_total = helpsize2;
+	key_name_space_total = knamesize;
+	key_help_space_total = khelpsize;
+	key_desc_space_total = kdescsize;
 	UpdateOffset();
 	return res;
 }

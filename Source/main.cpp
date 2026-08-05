@@ -930,6 +930,8 @@ void MainFrame::UpdateMenuAvailability(int panel) {
 	if (panel == wxNOT_FOUND)
 		panel = m_cdbook->GetSelection();
 	if (panel == wxNOT_FOUND) {
+		SetGameConfiguration(NULL);
+		SetGameSaveSet(NULL);
 		m_openhws->Enable(false);
 		m_close->Enable(false);
 		m_closeall->Enable(false);

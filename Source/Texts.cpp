@@ -57,7 +57,7 @@ int TextDataStruct::AddText(int id, FF9String& value) {
 	return 0;
 }
 
-void TextDataStruct::RemoveText(int index) {
+void TextDataStruct::RemoveText(int index, bool shiftids) {
 	uint16_t usedlen;
 	text.erase(text.begin() + index);
 	if (GetGameType() == GAME_TYPE_PSX) {
@@ -71,6 +71,10 @@ void TextDataStruct::RemoveText(int index) {
 		usedlen = text[index].txt.length;
 	}
 	SetSize(size - usedlen);
+	if (shiftids)
+		for (unsigned int i = 0; i < text.size(); i++)
+			if (text[i].id > index)
+				text[i].id--;
 }
 
 int TextDataStruct::SetText(int index, wstring newvalue, SteamLanguage lang) {
@@ -593,7 +597,7 @@ int* TextDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup) {
 			if (objectid == fileobjectid) {
 				if (clustersize <= clus->size + clus->extra_size) {
 					HWSReadChar(ffhws, chunktype);
-					while (chunktype != 0xFF) {
+					while (chunktype != CHUNK_SPECIAL_END) {
 						HWSReadLong(ffhws, chunksize);
 						chunkpos = ffhws.tellg();
 						if (chunktype == CHUNK_TYPE_TEXT && text_data[j]) {
@@ -620,7 +624,7 @@ int* TextDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup) {
 				} else {
 					objectsize = 7;
 					HWSReadChar(ffhws, chunktype);
-					while (chunktype != 0xFF) {
+					while (chunktype != CHUNK_SPECIAL_END) {
 						HWSReadLong(ffhws, chunksize);
 						ffhws.seekg(chunksize, ios::cur);
 						HWSReadChar(ffhws, chunktype);
@@ -634,7 +638,7 @@ int* TextDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup) {
 			} else if (j + 1 == amount) {
 				objectsize = 7;
 				HWSReadChar(ffhws, chunktype);
-				while (chunktype != 0xFF) {
+				while (chunktype != CHUNK_SPECIAL_END) {
 					HWSReadLong(ffhws, chunksize);
 					ffhws.seekg(chunksize, ios::cur);
 					HWSReadChar(ffhws, chunktype);
@@ -703,7 +707,7 @@ void TextDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup) {
 					ffhws.seekg(chunkpos + chunksize);
 				}
 			}
-			HWSWriteChar(ffhws, 0xFF);
+			HWSWriteChar(ffhws, CHUNK_SPECIAL_END);
 			nbmodified++;
 		}
 	}
@@ -1103,7 +1107,8 @@ void SpecialTextDataSet::Load(fstream& ffbin, ConfigurationSet& configset) {
 		fname += "resources.assets";
 		ffbin.open(fname.c_str(), ios::in | ios::binary);
 
-		#define MACRO_READ_SPETEXT_STEAM(INDEX,TYPE) \
+		#define MACRO_READ_SPETEXT_STEAM(INDEX, TYPE, COUNT) \
+			text_block[INDEX].base_amount = COUNT; \
 			text_block[INDEX].space_used = configset.meta_res.GetFileSizeByIndex(configset.spetext_ ## TYPE ## _file[GetSteamLanguage()]); \
 			text_block[INDEX].is_localization = false; \
 			text_block[INDEX].text.resize(configset.spetext_ ## TYPE ## _amount); \
@@ -1117,23 +1122,17 @@ void SpecialTextDataSet::Load(fstream& ffbin, ConfigurationSet& configset) {
 				} \
 			}
 
-		text_block[0].base_amount = 39;
-		text_block[1].base_amount = 22;
-		text_block[2].base_amount = 8;
-		text_block[3].base_amount = 82;
-		text_block[4].base_amount = 32;
-		text_block[5].base_amount = 53;
-		text_block[6].base_amount = 493;
-		MACRO_READ_SPETEXT_STEAM(0, battleinfo)
-		MACRO_READ_SPETEXT_STEAM(1, battlescan)
-		MACRO_READ_SPETEXT_STEAM(2, spellnaming)
-		MACRO_READ_SPETEXT_STEAM(3, chocomenu)
-		MACRO_READ_SPETEXT_STEAM(4, cardrank)
-		MACRO_READ_SPETEXT_STEAM(5, tetramaster)
+		MACRO_READ_SPETEXT_STEAM(0, battleinfo, 39)
+		MACRO_READ_SPETEXT_STEAM(1, battlescan, 22)
+		MACRO_READ_SPETEXT_STEAM(2, spellnaming, 8)
+		MACRO_READ_SPETEXT_STEAM(3, chocomenu, 82)
+		MACRO_READ_SPETEXT_STEAM(4, cardrank, 32)
+		MACRO_READ_SPETEXT_STEAM(5, tetramaster, 53)
 		for (j = 15; j < text_block[1].text.size(); j++) // "Weak against Ice." etc... missing in JP
 			if (!hades::STEAM_SINGLE_LANGUAGE_MODE || STEAM_LANGUAGE_JA == GetSteamLanguage())
 				text_block[1].text[j].txt.SetValue(L"", STEAM_LANGUAGE_JA);
 		ffbin.seekg(configset.meta_res.GetFileOffsetByIndex(configset.spetext_localization_file));
+		text_block[SPECIAL_TEXT_LOCALIZATION_INDEX_STEAM].base_amount = 493;
 		text_block[SPECIAL_TEXT_LOCALIZATION_INDEX_STEAM].is_localization = true;
 		text_block[SPECIAL_TEXT_LOCALIZATION_INDEX_STEAM].space_used = configset.meta_res.GetFileSizeByIndex(configset.spetext_localization_file);
 		text_block[SPECIAL_TEXT_LOCALIZATION_INDEX_STEAM].LocalizationRead(ffbin, text_block[SPECIAL_TEXT_LOCALIZATION_INDEX_STEAM].space_used);

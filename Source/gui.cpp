@@ -8960,64 +8960,118 @@ EnemyResourceWindow::EnemyResourceWindow( wxWindow* parent, wxWindowID id, const
 	m_staticText359->Wrap( -1 );
 	fgSizer92->Add( m_staticText359, 0, wxALL, 5 );
 
-	wxGridSizer* gSizer49;
-	gSizer49 = new wxGridSizer( 0, 3, 0, 0 );
+	wxFlexGridSizer* fgSizer160;
+	fgSizer160 = new wxFlexGridSizer( 0, 3, 0, 30 );
+	fgSizer160->SetFlexibleDirection( wxBOTH );
+	fgSizer160->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
 	m_bonecamera1 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
-	gSizer49->Add( m_bonecamera1, 0, wxALL, 5 );
+	fgSizer160->Add( m_bonecamera1, 0, wxALL, 5 );
 
 	m_bonecamera2 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
-	gSizer49->Add( m_bonecamera2, 0, wxALL, 5 );
+	fgSizer160->Add( m_bonecamera2, 0, wxALL, 5 );
 
 	m_bonecamera3 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
-	gSizer49->Add( m_bonecamera3, 0, wxALL, 5 );
+	fgSizer160->Add( m_bonecamera3, 0, wxALL, 5 );
 
 
-	fgSizer92->Add( gSizer49, 1, wxEXPAND, 5 );
+	fgSizer92->Add( fgSizer160, 1, wxEXPAND, 5 );
 
-	m_staticText360 = new wxStaticText( this, wxID_ANY, _("Icon Bones"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText360 = new wxStaticText( this, wxID_ANY, _("Status Icons"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText360->Wrap( -1 );
 	fgSizer92->Add( m_staticText360, 0, wxALL, 5 );
 
-	wxGridSizer* gSizer50;
-	gSizer50 = new wxGridSizer( 0, 3, 0, 0 );
+	wxFlexGridSizer* fgSizer158;
+	fgSizer158 = new wxFlexGridSizer( 0, 3, 0, 0 );
+	fgSizer158->SetFlexibleDirection( wxBOTH );
+	fgSizer158->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_staticText566 = new wxStaticText( this, wxID_ANY, _("Bone"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText566->Wrap( -1 );
+	fgSizer158->Add( m_staticText566, 0, wxLEFT, 10 );
+
+	m_staticText567 = new wxStaticText( this, wxID_ANY, _("Offset Y"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText567->Wrap( -1 );
+	fgSizer158->Add( m_staticText567, 0, wxLEFT, 10 );
+
+	m_staticText568 = new wxStaticText( this, wxID_ANY, _("OffsetZ"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText568->Wrap( -1 );
+	fgSizer158->Add( m_staticText568, 0, wxLEFT, 10 );
+
+	m_boneselection0 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	fgSizer158->Add( m_boneselection0, 0, wxLEFT|wxRIGHT, 5 );
+
+	m_selectionoffsety0 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	fgSizer158->Add( m_selectionoffsety0, 0, wxLEFT|wxRIGHT, 5 );
+
+	m_selectionoffsetz0 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	fgSizer158->Add( m_selectionoffsetz0, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_boneselection1 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
-	gSizer50->Add( m_boneselection1, 0, wxALL, 5 );
+	fgSizer158->Add( m_boneselection1, 0, wxLEFT|wxRIGHT, 5 );
+
+	m_selectionoffsety1 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	fgSizer158->Add( m_selectionoffsety1, 0, wxLEFT|wxRIGHT, 5 );
+
+	m_selectionoffsetz1 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	fgSizer158->Add( m_selectionoffsetz1, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_boneselection2 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
-	gSizer50->Add( m_boneselection2, 0, wxALL, 5 );
+	fgSizer158->Add( m_boneselection2, 0, wxLEFT|wxRIGHT, 5 );
+
+	m_selectionoffsety2 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	fgSizer158->Add( m_selectionoffsety2, 0, wxLEFT|wxRIGHT, 5 );
+
+	m_selectionoffsetz2 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	fgSizer158->Add( m_selectionoffsetz2, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_boneselection3 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
-	gSizer50->Add( m_boneselection3, 0, wxALL, 5 );
+	fgSizer158->Add( m_boneselection3, 0, wxLEFT|wxRIGHT, 5 );
+
+	m_selectionoffsety3 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	fgSizer158->Add( m_selectionoffsety3, 0, wxLEFT|wxRIGHT, 5 );
+
+	m_selectionoffsetz3 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	fgSizer158->Add( m_selectionoffsetz3, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_boneselection4 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
-	gSizer50->Add( m_boneselection4, 0, wxALL, 5 );
+	fgSizer158->Add( m_boneselection4, 0, wxLEFT|wxRIGHT, 5 );
+
+	m_selectionoffsety4 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	fgSizer158->Add( m_selectionoffsety4, 0, wxLEFT|wxRIGHT, 5 );
+
+	m_selectionoffsetz4 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	fgSizer158->Add( m_selectionoffsetz4, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_boneselection5 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
-	gSizer50->Add( m_boneselection5, 0, wxALL, 5 );
+	fgSizer158->Add( m_boneselection5, 0, wxLEFT|wxRIGHT, 5 );
 
-	m_boneselection6 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
-	gSizer50->Add( m_boneselection6, 0, wxALL, 5 );
+	m_selectionoffsety5 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	fgSizer158->Add( m_selectionoffsety5, 0, wxLEFT|wxRIGHT, 5 );
+
+	m_selectionoffsetz5 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	fgSizer158->Add( m_selectionoffsetz5, 0, wxLEFT|wxRIGHT, 5 );
 
 
-	fgSizer92->Add( gSizer50, 1, wxEXPAND, 5 );
+	fgSizer92->Add( fgSizer158, 1, wxEXPAND, 5 );
 
 	m_staticText367 = new wxStaticText( this, wxID_ANY, _("Shadow Bones"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText367->Wrap( -1 );
 	fgSizer92->Add( m_staticText367, 0, wxALL, 5 );
 
-	wxGridSizer* gSizer51;
-	gSizer51 = new wxGridSizer( 0, 3, 0, 0 );
+	wxFlexGridSizer* fgSizer159;
+	fgSizer159 = new wxFlexGridSizer( 0, 3, 0, 30 );
+	fgSizer159->SetFlexibleDirection( wxBOTH );
+	fgSizer159->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
 	m_boneshadow1 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
-	gSizer51->Add( m_boneshadow1, 0, wxALL, 5 );
+	fgSizer159->Add( m_boneshadow1, 0, wxALL, 5 );
 
 	m_boneshadow2 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
-	gSizer51->Add( m_boneshadow2, 0, wxALL, 5 );
+	fgSizer159->Add( m_boneshadow2, 0, wxALL, 5 );
 
 
-	fgSizer92->Add( gSizer51, 1, wxEXPAND, 5 );
+	fgSizer92->Add( fgSizer159, 1, wxEXPAND, 5 );
 
 	m_staticText361 = new wxStaticText( this, wxID_ANY, _("Shadow Size"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText361->Wrap( -1 );
@@ -9044,6 +9098,32 @@ EnemyResourceWindow::EnemyResourceWindow( wxWindow* parent, wxWindowID id, const
 
 
 	fgSizer92->Add( fgSizer93, 1, wxEXPAND, 5 );
+
+	m_staticText3611 = new wxStaticText( this, wxID_ANY, _("Shadow Offset"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText3611->Wrap( -1 );
+	fgSizer92->Add( m_staticText3611, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+
+	wxFlexGridSizer* fgSizer931;
+	fgSizer931 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer931->SetFlexibleDirection( wxBOTH );
+	fgSizer931->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_staticText3691 = new wxStaticText( this, wxID_ANY, _("x"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText3691->Wrap( -1 );
+	fgSizer931->Add( m_staticText3691, 0, wxLEFT, 10 );
+
+	m_staticText3701 = new wxStaticText( this, wxID_ANY, _("y"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText3701->Wrap( -1 );
+	fgSizer931->Add( m_staticText3701, 0, wxLEFT, 10 );
+
+	m_shadowoffsetx = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	fgSizer931->Add( m_shadowoffsetx, 0, wxLEFT|wxRIGHT, 5 );
+
+	m_shadowoffsety = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -32768, 32767, 0 );
+	fgSizer931->Add( m_shadowoffsety, 0, wxLEFT|wxRIGHT, 5 );
+
+
+	fgSizer92->Add( fgSizer931, 1, wxEXPAND, 5 );
 
 	m_staticText363 = new wxStaticText( this, wxID_ANY, _("Engage Sound"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText363->Wrap( -1 );
@@ -10140,7 +10220,7 @@ AboutWindow::AboutWindow( wxWindow* parent, wxWindowID id, const wxString& title
 	wxBoxSizer* bSizer16;
 	bSizer16 = new wxBoxSizer( wxVERTICAL );
 
-	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.50b\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for PSX model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\n - Satoh -\n - Ze_PilOt -\n\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/\n\nYou can e-mail me at\nlaroche.clement1@gmail.com"), wxDefaultPosition, wxSize( -1,330 ), wxTE_MULTILINE|wxTE_READONLY|wxTE_CENTER|wxBORDER_SIMPLE );
+	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.51alpha\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for PSX model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\n - Satoh -\n - Ze_PilOt -\n\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/"), wxDefaultPosition, wxSize( -1,330 ), wxTE_MULTILINE|wxTE_READONLY|wxTE_CENTER|wxBORDER_SIMPLE );
 	m_textCtrl13->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 	m_textCtrl13->SetMinSize( wxSize( -1,330 ) );
 

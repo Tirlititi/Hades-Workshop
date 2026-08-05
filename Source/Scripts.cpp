@@ -1,5 +1,6 @@
 #include "Scripts.h"
 
+#include "main.h"
 #include "Hades_Strings.h"
 #include "Database_Script.h"
 
@@ -122,6 +123,32 @@ void LoadCustomScriptUtility() {
 		}
 	}
 	CustomScriptsAreLoaded = true;
+}
+
+bool ScriptLanguageLink::InitFromHWS(fstream& ffhws, SteamLanguage baselang) {
+	bool shouldread = !hades::STEAM_SINGLE_LANGUAGE_MODE || baselang == GetSteamLanguage();
+	uint32_t langdatasize;
+	unsigned int i, j;
+	lang_base = baselang;
+	HWSReadChar(ffhws, lang_link_count);
+	lang_link.resize(lang_link_count);
+	id_count.resize(lang_link_count);
+	id_base.resize(lang_link_count);
+	id_link.resize(lang_link_count);
+	for (i = 0; i < lang_link_count; i++) {
+		HWSReadChar(ffhws, lang_link[i]);
+		if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang_link[i] == GetSteamLanguage())
+			shouldread = true;
+		HWSReadLong(ffhws, langdatasize);
+		HWSReadShort(ffhws, id_count[i]);
+		id_base[i].resize(id_count[i]);
+		id_link[i].resize(id_count[i]);
+		for (j = 0; j < id_count[i]; j++) {
+			HWSReadShort(ffhws, id_base[i][j]);
+			HWSReadShort(ffhws, id_link[i][j]);
+		}
+	}
+	return shouldread;
 }
 
 bool ScriptArgument::SetValue(long long newvalue) {
@@ -269,11 +296,12 @@ void ScriptArgument::WriteSteam(fstream& f) {
 	MACRO_SCRIPT_IOFUNCTION_ARGWRITE(SteamWrite, SteamSeek, false)
 }
 
-inline vector<ScriptArgument> NewScriptArgumentArray(unsigned int amount, ScriptOperation* p) {
-	vector<ScriptArgument> res(amount);
-	for (unsigned int i = 0; i < amount; i++)
-		res[i].parent = p;
-	return res;
+inline void ScriptOperation::InitialiseArgumentVector(unsigned int count) {
+	arg.resize(count);
+	for (unsigned int i = 0; i < count; i++) {
+		arg[i].parent = this;
+		arg[i].var.clear();
+	}
 }
 
 inline bool IsScriptArgTypeSigned(uint8_t argtype) {
@@ -303,7 +331,7 @@ inline bool IsScriptArgTypeEntry(const ScriptOperation& op, int argindex) {
 	if (opcode == 0x06) { \
 		IO ## Char(f, size_byte); \
 		arg_amount = 1 + size_byte * 2; \
-		arg = NewScriptArgumentArray(arg_amount, this); \
+		InitialiseArgumentVector(arg_amount); \
 		arg[0].FUNC(f, 2, false, true); \
 		for (i = 0; i < size_byte; i++) { \
 			arg[2 * i + 1].FUNC(f, 2, false, false); \
@@ -313,7 +341,7 @@ inline bool IsScriptArgTypeEntry(const ScriptOperation& op, int argindex) {
 	} else if (opcode == 0x0B) { \
 		IO ## Char(f, size_byte); \
 		arg_amount = 2 + size_byte; \
-		arg = NewScriptArgumentArray(arg_amount, this); \
+		InitialiseArgumentVector(arg_amount); \
 		arg[0].FUNC(f, 2, false, false); \
 		for (i = 1; i < arg_amount; i++) \
 			arg[i].FUNC(f, 2, false, true); \
@@ -323,17 +351,17 @@ inline bool IsScriptArgTypeEntry(const ScriptOperation& op, int argindex) {
 		IO ## Char(f, vararg_flag); \
 		IO ## Char(f, size_byte); \
 		arg_amount = size_byte; \
-		arg = NewScriptArgumentArray(arg_amount, this); \
+		InitialiseArgumentVector(arg_amount); \
 		size += 2; \
 		for (i = 0; i < arg_amount; i++) { \
 			arg[i].FUNC(f, 4, flag & vararg_flag, true); \
 			size += arg[i].size; \
-			flag *= 2; \
+			flag <<= 1; \
 		} \
 	} else { \
 		SortedChoiceItemScriptOpcode& scriptop = HADES_STRING_SCRIPT_OPCODE[opcode]; \
 		arg_amount = scriptop.arg_amount; \
-		arg = NewScriptArgumentArray(arg_amount, this); \
+		InitialiseArgumentVector(arg_amount); \
 		if (scriptop.use_vararg) { \
 			uint8_t flag = 1; \
 			IO ## Char(f, vararg_flag); \
@@ -341,7 +369,7 @@ inline bool IsScriptArgTypeEntry(const ScriptOperation& op, int argindex) {
 			for (i = 0; i < arg_amount; i++) { \
 				arg[i].FUNC(f, scriptop.arg_length[i], flag & vararg_flag, IsScriptArgTypeSigned(scriptop.arg_type[i])); \
 				size += arg[i].size; \
-				flag *= 2; \
+				flag <<= 1; \
 			} \
 		} else { \
 			for (i = 0; i < arg_amount; i++) { \
@@ -581,7 +609,7 @@ uint16_t GetControlVarArgCode(const vector<ScriptOperation>& oplist, unsigned in
 	return oplist[nextpos].opcode;
 }
 
-bool dbgscript = false;
+bool dbgscript = wxFileName::FileExists("LogScripts.txt");
 bool ScriptFunction::SearchOperationCorrespondance(const vector<ScriptOperation>& langop, SteamLanguage lang, unsigned int& langindex, unsigned int& searchindex, unsigned int& codecount, unsigned int codediff, set<unsigned int>& elsejumpoffsets, unsigned int& codeoffset) {
 	unsigned int i, j, langsearchindex;
 	SteamLanguage lg;
@@ -680,7 +708,7 @@ bool ScriptFunction::SearchOperationCorrespondance(const vector<ScriptOperation>
 			int cmp1 = langop[langindex + 1].Compare(op[indices[lg][langsearchindex]]);
 			int cmp2 = langop[langindex].Compare(op[indices[lg][langsearchindex + 1]]);
 			if (cmp1 <= 2 && cmp2 <= 2) {
-				if (true || dbgscript) {
+				if (dbgscript) {
 					GetDebugLog() << "Debug Iifa switch match: " << (int)lang << " " << (int)lg << " -> " << (int)langop[langindex].opcode << " and " << (int)langop[langindex + 1].opcode << " at " << langindex << "/" << langsearchindex << endl;
 				}
 				indices[lang].insert(indices[lang].end(), langsearchindex - searchindex + 2, -1);
@@ -743,8 +771,8 @@ bool ScriptFunction::SearchOperationCorrespondance(const vector<ScriptOperation>
 void ScriptFunction::Import(const vector<ScriptOperation>& langop, SteamLanguage lang) {
 	unsigned int langindex;
 	SteamLanguage lg;
+	bool shouldflush = indices[lang].size() > 0;
 	indices[lang].clear();
-	// TODO: flush previous
 	if (dbgscript) {
 		GetDebugLog() << "START IMPORT " << HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[lang] << " (" << (int)langop.size() << ")" << endl;
 		GetDebugLog() << "LANGS:";
@@ -767,6 +795,10 @@ void ScriptFunction::Import(const vector<ScriptOperation>& langop, SteamLanguage
 	int codediff = max(20, abs((int)validcodecount - (int)langop.size()));
 	if (dbgscript) {
 		GetDebugLog() << " -> " << codecount << " " << validcodecount << " " << codediff << endl;
+	}
+	if (shouldflush && codecount == 0) {
+		op.clear();
+		shouldflush = false;
 	}
 	if (IsDebugCutsceneSwitch(lang)) {
 		langindex = 0;
@@ -862,145 +894,73 @@ void ScriptFunction::Import(const vector<ScriptOperation>& langop, SteamLanguage
 	if (dbgscript) {
 		GetDebugLog() << "END IMPORT: " << langindex << " " << codecount << " " << (int)langop.size() << " " << (int)op.size() << endl;
 	}
+	if (shouldflush)
+		FlushUnusedOperations();
+	if (!shouldflush && dbgscript)
+		GetDebugLog() << "FLUSH SKIPPED" << endl;
 }
 
-/*
-void ScriptFunction::Import(const vector<ScriptOperation>& langop, SteamLanguage lang) {
-	// TODO: flush previous
-	// TODO: improve
-	unsigned int i, j, k;
-	for (i = 0; i < breaks.size(); i++) {
-		vector<unsigned int> routeindices = GetRouteIndices(&breaks[i], breaks[i].GetFirstLang());
-		if (abs((int)(routeindices.size() - langop.size())) > (int)langop.size() / 2)
-			continue;
-		unsigned int routeindex = 0;
-		bool useasbasis = true;
-		vector<ScriptLanguageBreakPoint> subbreaks;
-		for (j = 0; j < langop.size(); j++) {
-			if (routeindex >= routeindices.size()) {
-				if (langop.size() - j > langop.size() / 5) {
-					useasbasis = false;
-				} else {
-					// Add breakpoint for end
-					ScriptLanguageBreakPoint br(false);
-					br.lang[lang] = true;
-					br.op_start_relative = j;
-					br.op_amount = langop.size() - j;
-					subbreaks.push_back(br);
-				}
-				break;
-			}
-			int cmp = langop[j].Compare(op[routeindices[routeindex]]);
-			if (cmp == 0) {
-				routeindex++;
-			} else if (cmp == 1) {
-				if (langop[j].opcode >= 0x10) {
-					// Insert size 1 breakpoint
-					ScriptLanguageBreakPoint br(false);
-					br.lang[lang] = true;
-					br.op_start_relative = j;
-					br.op_amount = 1;
-					subbreaks.push_back(br);
-					for (SteamLanguage lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++)
-						br.lang[lg] = breaks[i].lang[lg];
-					br.op_start_relative = routeindex;
-					br.op_amount = 1;
-					subbreaks.push_back(br);
-				} else {
-					// TODO ??? (control block most likely) - same size
-					useasbasis = false;
+void ScriptFunction::FlushUnusedOperations() {
+	unsigned int dbgflushcount = 0;
+	SteamLanguage lg;
+	int i, indexi;
+	for (i = 0; i < (int)op.size(); i++) {
+		bool opflush = true;
+		for (lg = 0; opflush && lg < STEAM_LANGUAGE_AMOUNT; lg++) {
+			for (indexi = i; indexi < (int)indices[lg].size(); indexi++) {
+				if (indices[lg][indexi] == i) {
+					opflush = false;
 					break;
 				}
-				routeindex++;
-			} else {
-				bool shiftfound = false;
-				for (k = 1; k < 10 && routeindex + k < routeindices.size(); k++) {
-					cmp = langop[j].Compare(op[routeindices[routeindex + k]]);
-					if (cmp == 0) {
-						// Insert breakpoint: langop has less operations than breaks[i]
-						ScriptLanguageBreakPoint br(false);
-						for (SteamLanguage lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++)
-							br.lang[lg] = breaks[i].lang[lg];
-						br.op_start_relative = routeindex;
-						br.op_amount = k;
-						subbreaks.push_back(br);
-						routeindex += k + 1;
-						shiftfound = true;
+			}
+			if (opflush) {
+				for (indexi = 0; indexi < i && indexi < (int)indices[lg].size(); indexi++) {
+					if (indices[lg][indexi] == i) {
+						opflush = false;
 						break;
 					}
 				}
-				if (!shiftfound) {
-					for (k = 1; k < 10 && j + k < langop.size(); k++) {
-						cmp = langop[j + k].Compare(op[routeindices[routeindex]]);
-						if (cmp == 0) {
-							// Insert breakpoint: breaks[i] has less operations than langop
-							ScriptLanguageBreakPoint br(false);
-							br.lang[lang] = true;
-							br.op_start_relative = j;
-							br.op_amount = k;
-							subbreaks.push_back(br);
-							j += k;
-							shiftfound = true;
-							break;
-						}
-					}
-				}
-				if (!shiftfound) {
-					useasbasis = false;
-					break;
-				}
 			}
 		}
-		if (routeindex < routeindices.size()) {
-			if (routeindices.size() - routeindex > routeindices.size() / 5) {
-				useasbasis = false;
-			} else {
-				// Add breakpoint for end
-				ScriptLanguageBreakPoint br(false);
-				for (SteamLanguage lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++)
-					br.lang[lg] = breaks[i].lang[lg];
-				br.op_start_relative = routeindex;
-				br.op_amount = routeindices.size() - routeindex;
-				subbreaks.push_back(br);
-			}
-		}
-		if (useasbasis) {
-			breaks[i].lang[lang] = true;
-			for (k = 0; k < breaks[i].sub.size(); k++)
-				if (breaks[i].sub[k].lang[breaks[i].GetFirstLang()])
-					breaks[i].sub[k].lang[lang] = true;
-			for (j = 0; j < subbreaks.size(); j++) {
-				for (k = 0; k < breaks[i].sub.size(); k++) {
-					if (breaks[i].sub[k].op_start_relative < subbreaks[j].op_start_relative) {
-						subbreaks[j].op_start_relative += breaks[i].sub[k].op_amount;
-
-					}
-				}
-				if (subbreaks[j].lang[lang]) {
-					subbreaks[j].op_start_absolute = op.size();
-					for (k = 0; k < subbreaks[j].op_amount; k++)
-						op.push_back(langop[subbreaks[j].op_start_relative + k]);
-				} else {
-
-				}
-				breaks[i].InsertSub(subbreaks[j]);
-			}
-			// TODO
-			return;
+		if (opflush) {
+			dbgflushcount++;
+			op.erase(op.begin() + i);
+			for (lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++)
+				for (indexi = 0; indexi < (int)indices[lg].size(); indexi++)
+					if (indices[lg][indexi] >= i)
+						indices[lg][indexi]--;
+			i--;
 		}
 	}
-	ScriptLanguageBreakPoint rootbreak(false);
-	rootbreak.lang[lang] = true;
-	rootbreak.op_start_absolute = op.size();
-	rootbreak.op_start_relative = op.size();
-	rootbreak.op_amount = langop.size();
-	breaks.push_back(rootbreak);
-	op.insert(op.end(), langop.begin(), langop.end());
+	int indexcount = 0;
+	for (lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++) {
+		if (!indices[lg].empty()) {
+			indexcount = indices[lg].size();
+			break;
+		}
+	}
+	for (indexi = 0; indexi < indexcount; indexi++) {
+		bool indexflush = true;
+		for (lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++) {
+			if (!indices[lg].empty() && indices[lg][indexi] >= 0) {
+				indexflush = false;
+				break;
+			}
+		}
+		if (indexflush) {
+			for (lg = 0; lg < STEAM_LANGUAGE_AMOUNT; lg++)
+				if (!indices[lg].empty())
+					indices[lg].erase(indices[lg].begin() + indexi);
+			indexi--;
+			indexcount--;
+		}
+	}
+	if (dbgscript)
+		GetDebugLog() << "FLUSH DONE: " << dbgflushcount << endl;
 }
-*/
 
 void ScriptFunction::Read(fstream& f, unsigned int length, SteamLanguage lang) {
-	if (true) {
+	if (dbgscript) {
 		GetDebugLog() << "READ FIELD/ENTRY/FUNC " << (int)CurrentScriptReadField << "/" << (int)CurrentScriptReadEntry << "/" << (int)CurrentScriptReadFunction << endl;
 	}
 	vector<ScriptOperation> langop;
@@ -1016,34 +976,60 @@ void ScriptFunction::Read(fstream& f, unsigned int length, SteamLanguage lang) {
 }
 
 void ScriptFunction::Write(fstream& f, SteamLanguage lang) {
-	vector<int32_t>& routeindices = indices[lang];
+	vector<int>& routeindices = indices[lang];
 	for (unsigned int i = 0; i < indices[lang].size(); i++)
 		if (routeindices[i] >= 0)
 			op[indices[lang][i]].Write(f);
 }
 
 void ScriptFunction::WritePPF(fstream& f, SteamLanguage lang) {
-	vector<int32_t>& routeindices = indices[lang];
+	vector<int>& routeindices = indices[lang];
 	for (unsigned int i = 0; i < routeindices.size(); i++)
 		if (routeindices[i] >= 0)
 			op[routeindices[i]].WritePPF(f);
 }
 
-void ScriptFunction::ReadHWS(fstream& f, unsigned int length, SteamLanguage lang) {
+void ScriptFunction::ReadHWS(fstream& f, unsigned int length, SteamLanguage lang, ScriptLanguageLink* langlink) {
+	if (dbgscript) {
+		GetDebugLog() << "READHWS FUNC " << (int)function_type << endl;
+	}
 	if (lang == STEAM_LANGUAGE_AMOUNT) {
+		uint32_t opcount, indicecount;
+		SteamLanguage lang;
+		uint8_t haslang;
 		unsigned int i;
-		uint32_t count;
-		for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
-			HWSReadLong(f, count);
-			indices[lang].resize(count);
-			for (i = 0; i < count; i++)
-				HWSReadFlexibleChar(f, indices[lang][i], true);
+		HWSReadChar(f, haslang);
+		HWSReadShort(f, function_type);
+		HWSReadLong(f, opcount);
+		HWSReadLong(f, indicecount);
+		if (dbgscript) {
+			GetDebugLog() << "READ FUNC at 0x" << std::hex << ((int)f.tellg() - 10) << std::dec << ": " << (int)function_type << ": " << (int)opcount << ": " << (int)indicecount << endl;
 		}
-		HWSReadLong(f, count);
-		op.resize(count);
-		for (i = 0; i < op.size(); i++) {
+		op.resize(opcount);
+		for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+			indices[lang].resize((haslang & (1 << lang)) ? indicecount : 0);
+		for (i = 0; i < opcount; i++) {
 			op[i].parent = this;
 			op[i].ReadHWS(f);
+		}
+		if (dbgscript) {
+			GetDebugLog() << "READ INDICES at 0x" << std::hex << (int)f.tellg() << std::dec << endl;
+		}
+		for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+			if (haslang & (1 << lang))
+				for (i = 0; i < indicecount; i++)
+					HWSReadFlexibleChar(f, indices[lang][i], true);
+		if (hades::STEAM_SINGLE_LANGUAGE_MODE) {
+			if ((haslang & (1 << GetSteamLanguage())) == 0) {
+				for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+					indices[lang].clear();
+				op.clear();
+			} else {
+				for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+					if ((haslang & (1 << lang)) == 0)
+						indices[lang].clear();
+				FlushUnusedOperations();
+			}
 		}
 	} else {
 		vector<ScriptOperation> langop;
@@ -1055,31 +1041,70 @@ void ScriptFunction::ReadHWS(fstream& f, unsigned int length, SteamLanguage lang
 			langop.push_back(newop);
 			len += newop.size;
 		}
-		Import(langop, lang);
+		if (!hades::STEAM_SINGLE_LANGUAGE_MODE || lang == GetSteamLanguage())
+			Import(langop, lang);
+		if (langlink != NULL) {
+			unsigned int linki, linkj, i;
+			int j;
+			for (linki = 0; linki < langlink->lang_link_count; linki++) {
+				if (hades::STEAM_SINGLE_LANGUAGE_MODE && langlink->lang_link[linki] != GetSteamLanguage())
+					continue;
+				vector<ScriptArgument*> modarg;
+				vector<uint16_t> modbaseval;
+				for (i = 0; i < langop.size(); i++) {
+					SortedChoiceItemScriptOpcode& scriptop = HADES_STRING_SCRIPT_OPCODE[langop[i].opcode];
+					for (j = 0; j < scriptop.arg_amount; j++) {
+						if (scriptop.arg_type[j] == AT_TEXT && !langop[i].arg[j].is_var) {
+							for (linkj = 0; linkj < langlink->id_count[linki]; linkj++) {
+								if (langlink->id_base[linki][linkj] == langop[i].arg[j].GetValue()) {
+									langop[i].arg[j].SetValue(langlink->id_link[linki][linkj]);
+									modarg.push_back(&langop[i].arg[j]);
+									modbaseval.push_back(langlink->id_base[linki][linkj]);
+								}
+							}
+						}
+					}
+				}
+				Import(langop, langlink->lang_link[linki]);
+				for (i = 0; i < modarg.size(); i++)
+					modarg[i]->SetValue(modbaseval[i]);
+			}
+		}
 	}
 }
 
 void ScriptFunction::WriteHWS(fstream& f) {
+	uint32_t opcount = op.size();
+	uint32_t indicecount = 0;
+	uint8_t haslang = 0;
 	unsigned int i;
 	for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
-		HWSWriteLong(f, indices[lang].size());
-		for (i = 0; i < indices[lang].size(); i++)
-			HWSWriteFlexibleChar(f, indices[lang][i], true);
+		if (!indices[lang].empty()) {
+			haslang |= 1 << lang;
+			indicecount = indices[lang].size();
+		}
 	}
-	HWSWriteLong(f, op.size());
-	for (i = 0; i < op.size(); i++)
+	HWSWriteChar(f, haslang);
+	HWSWriteShort(f, function_type);
+	HWSWriteLong(f, opcount);
+	HWSWriteLong(f, indicecount);
+	for (i = 0; i < opcount; i++)
 		op[i].WriteHWS(f);
+	for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+		if (haslang & (1 << lang))
+			for (i = 0; i < indicecount; i++)
+				HWSWriteFlexibleChar(f, indices[lang][i], true);
 }
 
 void ScriptFunction::WriteSteam(fstream& f, SteamLanguage lang) {
-	vector<int32_t>& routeindices = indices[lang];
+	vector<int>& routeindices = indices[lang];
 	for (unsigned int i = 0; i < routeindices.size(); i++)
 		if (routeindices[i] >= 0)
 			op[routeindices[i]].WriteSteam(f);
 }
 
 unsigned int ScriptFunction::GetLength(SteamLanguage lang) {
-	vector<int32_t>& routeindices = indices[lang];
+	vector<int>& routeindices = indices[lang];
 	unsigned int length = 0;
 	for (unsigned int i = 0; i < routeindices.size(); i++)
 		if (routeindices[i] >= 0)
@@ -1185,7 +1210,6 @@ void ScriptDataStruct::AddEntry(int entrypos, uint8_t entrytype) {
 	func.insert(func.begin() + entrypos, vector<ScriptFunction>());
 	entry_offset.insert(entry_offset.begin() + entrypos, 0);
 	entry_size.insert(entry_size.begin() + entrypos, 0);
-	entry_local_var.insert(entry_local_var.begin() + entrypos, 0);
 	entry_flag.insert(entry_flag.begin() + entrypos, 0);
 	entry_type.insert(entry_type.begin() + entrypos, entrytype);
 	entry_function_amount.insert(entry_function_amount.begin() + entrypos, 0);
@@ -1246,7 +1270,6 @@ int ScriptDataStruct::RemoveEntry(int entrypos) {
 	func.erase(func.begin() + entrypos);
 	entry_offset.erase(entry_offset.begin() + entrypos);
 	entry_size.erase(entry_size.begin() + entrypos);
-	entry_local_var.erase(entry_local_var.begin() + entrypos);
 	entry_flag.erase(entry_flag.begin() + entrypos);
 	entry_type.erase(entry_type.begin() + entrypos);
 	entry_function_amount.erase(entry_function_amount.begin() + entrypos);
@@ -1287,14 +1310,12 @@ int ScriptDataStruct::ShiftArgument(int argtype, vector<pair<int, int>> shift) {
 	return count;
 }
 
-// TODO: apply entry shift to the incoming function.Read when "entryprevamount > entry_amount"
 #define MACRO_SCRIPT_IOFUNCTION_PART1(IO, SEEK, READ, PPF) \
 	unsigned int i, j, k, entryi, funcj, entryprevamount; \
 	vector<uint16_t> funcpoint; \
 	vector<int> funcreorder; \
 	uint16_t functype; \
 	uint32_t entry_pos, local_entry_pos, function_pos; \
-	uint32_t zero32 = 0; \
 	uint16_t zero16 = 0; \
 	uint8_t zero8 = 0; \
 	if (PPF) PPFInitScanStep(f); \
@@ -1313,7 +1334,7 @@ int ScriptDataStruct::ShiftArgument(int argtype, vector<pair<int, int>> shift) {
 		} else { \
 			entry_offset.resize(entry_amount); \
 			entry_size.resize(entry_amount); \
-			entry_local_var.resize(entry_amount); \
+			local_data.resize(max(local_data.size(), (size_t)entry_amount)); \
 			entry_flag.resize(entry_amount); \
 			entry_type.resize(entry_amount); \
 			entry_function_amount.resize(entry_amount); \
@@ -1331,7 +1352,7 @@ int ScriptDataStruct::ShiftArgument(int argtype, vector<pair<int, int>> shift) {
 		entryi = i + SCRIPT_FIXED_ENTRY_AMOUNT < entry_amount ? i : i + entry_offset.size() - entry_amount; \
 		IO ## Short(f, entry_offset[entryi]); \
 		IO ## Short(f, entry_size[entryi]); \
-		IO ## Char(f, entry_local_var[entryi]); \
+		IO ## Char(f, local_data[entryi].allocate_amount); \
 		IO ## Char(f, entry_flag[entryi]); \
 		IO ## Short(f, zero16); \
 	} \
@@ -1393,27 +1414,89 @@ int ScriptDataStruct::ShiftArgument(int argtype, vector<pair<int, int>> shift) {
 			entry_type[entryi] = 0xFF; \
 		} \
 	} \
-	if (READ) entry_amount = entry_offset.size(); 
+	if (READ) { \
+		entry_amount = entry_offset.size(); \
+		local_data.resize(max(local_data.size(), (size_t)entry_amount)); \
+	}
 
-int dbgscriptcounter = 0;
+#define MACRO_SCRIPT_IOFUNCTION_MULTILANG(IO, SEEK, READ) \
+	wstring namestr; \
+	unsigned int i, j; \
+	uint16_t zero16 = 0; \
+	EntryIdShift = EntryIdShift_Base = 0; \
+	IO ## Char(f, has_language); \
+	if (READ && hades::STEAM_SINGLE_LANGUAGE_MODE && (has_language & (1 << GetSteamLanguage())) == 0) { \
+		has_language = 1 << GetSteamLanguage(); \
+		return; \
+	} \
+	IO ## Short(f, magic_number); \
+	IO ## Char(f, header_unknown1); \
+	IO ## Char(f, entry_amount); \
+	if (READ) { \
+		entry_offset.resize(entry_amount); \
+		entry_size.resize(entry_amount); \
+		local_data.resize(max(local_data.size(), (size_t)entry_amount)); \
+		entry_flag.resize(entry_amount); \
+		entry_type.resize(entry_amount); \
+		entry_function_amount.resize(entry_amount); \
+		func.resize(entry_amount); \
+		unsigned int localprevamount = local_data.size(); \
+		local_data.resize(max(localprevamount, (unsigned int)entry_amount)); \
+		for (i = localprevamount; i < entry_amount; i++) \
+			local_data[i].amount = 0; \
+	} \
+	for (i = 0; i < 20; i++) { \
+		IO ## Char(f, header_unknown2[i]); \
+		IO ## Char(f, header_unknown3[i]); \
+	} \
+	for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) { \
+		if (has_language & (1 << lang)) { \
+			if (!READ) namestr = lang == GetSteamLanguage() ? name.str : name.multi_lang_str[lang]; \
+			IO ## WString(f, namestr); \
+			if (usetext && READ) name.SetValue(namestr, lang); \
+		} \
+	} \
+	for (i = 0; i < entry_amount; i++) { \
+		IO ## Char(f, local_data[i].allocate_amount); \
+		IO ## Char(f, entry_flag[i]); \
+		IO ## Short(f, zero16); \
+		IO ## Char(f, entry_type[i]); \
+		IO ## Char(f, entry_function_amount[i]); \
+		if (READ) { \
+			func[i].resize(entry_function_amount[i]); \
+			for (j = 0; j < entry_function_amount[i]; j++) { \
+				func[i][j].parent = this; \
+				func[i][j].ReadHWS(f, 0, STEAM_LANGUAGE_AMOUNT); \
+			} \
+		} else { \
+			for (j = 0; j < entry_function_amount[i]; j++) \
+				func[i][j].WriteHWS(f); \
+		} \
+	} \
+	for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) \
+		if (has_language & (1 << lang)) \
+			UpdateOffset(lang);
+
 void ScriptDataStruct::Read(fstream& f, SteamLanguage lang) {
+	dbgscript = wxFileName::FileExists("LogScripts.txt");
 	LoadCustomScriptUtility();
 	CurrentScriptReadField = object_id;
-	//if (dbgscriptcounter++ > 800 * STEAM_LANGUAGE_AMOUNT) dbgscript = true;
 	if (dbgscript) {
 		GetDebugLog() << "FIELD " << (int)object_id << endl;
 	}
+	if (lang < STEAM_LANGUAGE_AMOUNT)
+		has_language |= 1 << lang;
 	if (GetGameType() == GAME_TYPE_PSX && parent_cluster->parent_cluster && parent_cluster->parent_cluster->clus_type == CLUSTER_TYPE_WORLD_MAP && object_id >= 9100) {
 		ChunkChild::Read(f);
 	} else {
 		if (GetGameType() == GAME_TYPE_PSX) {
 			MACRO_SCRIPT_IOFUNCTION_PART1(FFIXRead, FFIXSeek, true, false)
-			func[entryi][funcj].Read(f, length, lang);
+				func[entryi][funcj].Read(f, length, lang);
 			MACRO_SCRIPT_IOFUNCTION_PART2(FFIXRead, FFIXSeek, true, false)
 			name.ReadFromChar(header_name[lang]);
 		} else {
 			MACRO_SCRIPT_IOFUNCTION_PART1(SteamRead, SteamSeek, true, false)
-			func[entryi][funcj].Read(f, length, lang);
+				func[entryi][funcj].Read(f, length, lang);
 			MACRO_SCRIPT_IOFUNCTION_PART2(SteamRead, SteamSeek, true, false)
 			FF9String dummystr;
 			dummystr.ReadFromChar(header_name[lang]);
@@ -1421,11 +1504,9 @@ void ScriptDataStruct::Read(fstream& f, SteamLanguage lang) {
 				name.CreateEmpty();
 			name.SetValue(dummystr.str, lang);
 		}
-		local_data.resize(entry_amount);
-		for (unsigned int i = 0; i < entry_amount; i++) {
-			local_data[i].allocate_amount = entry_local_var[i];
+		local_data.resize(max(local_data.size(), (size_t)entry_amount));
+		for (unsigned int i = 0; i < entry_amount; i++)
 			local_data[i].amount = 0;
-		}
 		global_data.allocate_amount = 0;
 		global_data.amount = 0;
 		loaded = true;
@@ -1439,7 +1520,7 @@ void ScriptDataStruct::Write(fstream& f) {
 	} else {
 		SteamLanguage lang = GetSteamLanguage();
 		MACRO_SCRIPT_IOFUNCTION_PART1(FFIXWrite, FFIXSeek, false, false)
-		func[entryi][funcj].Write(f, lang);
+			func[entryi][funcj].Write(f, lang);
 		MACRO_SCRIPT_IOFUNCTION_PART2(FFIXWrite, FFIXSeek, false, false)
 	}
 	modified = false;
@@ -1451,104 +1532,83 @@ void ScriptDataStruct::WritePPF(fstream& f) {
 	} else {
 		SteamLanguage lang = GetSteamLanguage();
 		MACRO_SCRIPT_IOFUNCTION_PART1(PPFStepAdd, FFIXSeek, false, true)
-		func[entryi][funcj].WritePPF(f, lang);
+			func[entryi][funcj].WritePPF(f, lang);
 		MACRO_SCRIPT_IOFUNCTION_PART2(PPFStepAdd, FFIXSeek, false, true)
 	}
 }
 
-void ScriptDataStruct::ReadHWS(fstream& f, bool usetext, SteamLanguage lang) {
-	// TODO: all langs
-	MACRO_SCRIPT_IOFUNCTION_PART1(HWSRead, HWSSeek, true, false)
-	if (lang == STEAM_LANGUAGE_AMOUNT)
-		func[entryi][funcj].ReadHWS(f, length, lang);
-	else
-		func[entryi][funcj].ReadHWS(f, length, lang);
-	MACRO_SCRIPT_IOFUNCTION_PART2(HWSRead, HWSSeek, true, false)
-	//if (usetext)
-	//	name.ReadFromChar(header_name);
+void ScriptDataStruct::ReadHWS(fstream& f, bool usetext, SteamLanguage lang, ScriptLanguageLink* langlink) {
+	dbgscript = wxFileName::FileExists("LogScripts.txt");
+	if (dbgscript) {
+		GetDebugLog() << "LOAD FIELD HWS " << ConvertWStrToStr(name.str_nice) << (lang < STEAM_LANGUAGE_AMOUNT ? " (old version)" : " (new version)") << endl;
+	}
+	if (lang < STEAM_LANGUAGE_AMOUNT) {
+		MACRO_SCRIPT_IOFUNCTION_PART1(HWSRead, HWSSeek, true, false)
+			func[entryi][funcj].ReadHWS(f, length, lang, langlink);
+		MACRO_SCRIPT_IOFUNCTION_PART2(HWSRead, HWSSeek, true, false)
+	} else {
+		MACRO_SCRIPT_IOFUNCTION_MULTILANG(HWSRead, HWSSeek, true)
+	}
 	MarkDataModified();
 }
 
 void ScriptDataStruct::WriteHWS(fstream& f) {
-	SteamLanguage lang = GetSteamLanguage();
-	// TODO: all langs
-	MACRO_SCRIPT_IOFUNCTION_PART1(HWSWrite, HWSSeek, false, false)
-	func[entryi][funcj].WriteHWS(f);
-	MACRO_SCRIPT_IOFUNCTION_PART2(HWSWrite, HWSSeek, false, false)
+	SteamLanguage lang;
+	bool usetext = true;
+	MACRO_SCRIPT_IOFUNCTION_MULTILANG(HWSWrite, HWSSeek, false)
 }
 
 void ScriptDataStruct::WriteSteam(fstream& f, SteamLanguage lang) {
 	UpdateOffset(lang);
 	MACRO_SCRIPT_IOFUNCTION_PART1(HWSWrite, HWSSeek, false, false)
-	vector<int32_t>& langindices = func[entryi][funcj].indices[lang];
-	for (k = 0; k < langindices.size(); k++)
-		if (langindices[k] >= 0)
-			func[entryi][funcj].op[langindices[k]].WriteHWS(f);
+		vector<int>& langindices = func[entryi][funcj].indices[lang];
+		for (k = 0; k < langindices.size(); k++)
+			if (langindices[k] >= 0)
+				func[entryi][funcj].op[langindices[k]].WriteHWS(f);
 	MACRO_SCRIPT_IOFUNCTION_PART2(HWSWrite, HWSSeek, false, false)
 }
 
 void ScriptDataStruct::ReadLocalHWS(fstream& f) {
 	uint32_t localpos, entrypos, vardatapos, localsize;
 	uint16_t entryheadersize, vardatasize, tmp16;
-	uint8_t entryam, vardatatype, localam;
+	uint8_t entryam, vardatatype;
 	unsigned int i, j;
 	localpos = f.tellg();
 	HWSReadLong(f, localsize);
 	HWSReadChar(f, entryam);
+	local_data.resize(max(local_data.size(), (size_t)entryam));
 	for (i = 0; i < entryam; i++) {
 		entrypos = f.tellg();
 		HWSReadShort(f, entryheadersize);
-		if (i < entry_amount) {
-			HWSReadChar(f, local_data[i].allocate_amount);
-			HWSReadChar(f, (uint8_t&)local_data[i].amount);
-			entry_local_var[i] = local_data[i].allocate_amount;
-		} else {
-			HWSReadChar(f, localam);
-			HWSReadChar(f, localam);
-		}
+		HWSReadChar(f, local_data[i].allocate_amount);
+		HWSReadChar(f, (uint8_t&)local_data[i].amount);
 		HWSSeek(f, entrypos, entryheadersize);
-		if (i < entry_amount) {
-			local_data[i].local_type.resize(local_data[i].amount);
-			local_data[i].type.resize(local_data[i].amount);
-			local_data[i].size.resize(local_data[i].amount);
-			local_data[i].name.resize(local_data[i].amount);
-			local_data[i].cat.resize(local_data[i].amount);
-			local_data[i].id.resize(local_data[i].amount);
-			for (j = 0; j < local_data[i].amount; j++) {
-				HWSReadChar(f, local_data[i].local_type[j]);
-				HWSReadShort(f, (uint16_t&)local_data[i].type[j]);
-				HWSReadChar(f, local_data[i].size[j]);
-				HWSReadChar(f, local_data[i].cat[j]);
-				HWSReadShort(f, local_data[i].id[j]);
-				local_data[i].name[j].clear();
+		local_data[i].local_type.resize(local_data[i].amount);
+		local_data[i].type.resize(local_data[i].amount);
+		local_data[i].size.resize(local_data[i].amount);
+		local_data[i].name.resize(local_data[i].amount);
+		local_data[i].cat.resize(local_data[i].amount);
+		local_data[i].id.resize(local_data[i].amount);
+		for (j = 0; j < local_data[i].amount; j++) {
+			HWSReadChar(f, local_data[i].local_type[j]);
+			HWSReadShort(f, (uint16_t&)local_data[i].type[j]);
+			HWSReadChar(f, local_data[i].size[j]);
+			HWSReadChar(f, local_data[i].cat[j]);
+			HWSReadShort(f, local_data[i].id[j]);
+			local_data[i].name[j].clear();
+			HWSReadShort(f, tmp16);
+			while (tmp16 != 0) {
+				local_data[i].name[j].append(1, tmp16);
 				HWSReadShort(f, tmp16);
-				while (tmp16 != 0) {
-					local_data[i].name[j].append(1, tmp16);
-					HWSReadShort(f, tmp16);
-				}
-				HWSReadChar(f, vardatatype);
-				while (vardatatype != 0) {
-					vardatapos = f.tellg();
-					HWSReadShort(f, vardatasize);
-					// Additional variable informations
-					// may appear here in a future version
-					HWSSeek(f, vardatapos, vardatasize);
-					HWSReadChar(f, vardatatype);
-				}
 			}
-		} else {
-			for (j = 0; j < localam; j++) {
-				HWSSeek(f, f.tellg(), 7);
-				HWSReadShort(f, tmp16);
-				while (tmp16 != 0)
-					HWSReadShort(f, tmp16);
+			HWSReadChar(f, vardatatype);
+			while (vardatatype != 0) {
+				vardatapos = f.tellg();
+				HWSReadShort(f, vardatasize);
+				// Additional variable informations
+				// may appear here in a future version
+				HWSSeek(f, vardatapos, vardatasize);
 				HWSReadChar(f, vardatatype);
-				while (vardatatype != 0) {
-					vardatapos = f.tellg();
-					HWSReadShort(f, vardatasize);
-					HWSSeek(f, vardatapos, vardatasize);
-					HWSReadChar(f, vardatatype);
-				}
 			}
 		}
 	}
@@ -1653,7 +1713,6 @@ ScriptDataStruct& ScriptDataStruct::operator=(const ScriptDataStruct& from) {
 	entry_amount = from.entry_amount;
 	entry_offset = from.entry_offset;
 	entry_size = from.entry_size;
-	entry_local_var = from.entry_local_var;
 	entry_flag = from.entry_flag;
 	entry_type = from.entry_type;
 	entry_function_amount = from.entry_function_amount;

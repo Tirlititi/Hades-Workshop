@@ -167,7 +167,7 @@ vector<wxString> HADES_STRING_SPECIAL_TEXT_BLOCK_STEAM = {
 	L"Battle Scan",
 	L"Battle Spell Naming",
 	L"Chocobo Menu",
-	L"Card Menu",
+	L"Card Ranks",
 	L"Tetra Master Game",
 	L"Localization"
 };

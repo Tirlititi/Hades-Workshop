@@ -467,7 +467,7 @@ void WorldMapDataSet::WritePPF(fstream& ffbin, ClusterSet& clusset) {
 }
 
 int* WorldMapDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool usetext, unsigned int localflag) {
-	unsigned int i, j, k, l;
+	unsigned int i, j, k;
 	uint32_t chunksize, clustersize, chunkpos, objectpos, objectsize;
 	uint16_t nbmodified, objectid;
 	SteamLanguage lang, sublang;
@@ -488,7 +488,7 @@ int* WorldMapDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool
 			clus = world_data->parent_cluster;
 			if (clustersize <= clus->size + clus->extra_size) {
 				HWSReadChar(ffhws, chunktype);
-				while (chunktype != 0xFF) {
+				while (chunktype != CHUNK_SPECIAL_END) {
 					HWSReadLong(ffhws, chunksize);
 					chunkpos = ffhws.tellg();
 					if (chunktype == 1) {
@@ -529,7 +529,7 @@ int* WorldMapDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool
 			} else {
 				objectsize = 7;
 				HWSReadChar(ffhws, chunktype);
-				while (chunktype != 0xFF) {
+				while (chunktype != CHUNK_SPECIAL_END) {
 					HWSReadLong(ffhws, chunksize);
 					ffhws.seekg(chunksize, ios::cur);
 					HWSReadChar(ffhws, chunktype);
@@ -545,12 +545,12 @@ int* WorldMapDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool
 					clus = script[j]->parent_cluster;
 					if (clustersize <= clus->size + clus->extra_size) {
 						HWSReadChar(ffhws, chunktype);
-						while (chunktype != 0xFF) {
+						while (chunktype != CHUNK_SPECIAL_END) {
 							HWSReadLong(ffhws, chunksize);
 							chunkpos = ffhws.tellg();
 							if (chunktype == CHUNK_TYPE_SCRIPT) {
 								if (loadmain) {
-									script[j]->ReadHWS(ffhws);
+									script[j]->ReadHWS(ffhws, false);
 									script[j]->SetSize(chunksize);
 								}
 							} else if (chunktype == CHUNK_TYPE_TEXT) {
@@ -596,39 +596,19 @@ int* WorldMapDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool
 									text_data[j]->ReadHWS(ffhws, true);
 							} else if (chunktype == CHUNK_STEAM_SCRIPT_MULTILANG) {
 								if (loadmain) {
-									uint16_t langcorrcount;
-									uint32_t langcorrpos;
-									vector<uint16_t> corrlinkbase, corrlink;
 									HWSReadChar(ffhws, lang);
 									while (lang != STEAM_LANGUAGE_NONE) {
+										ScriptLanguageLink langlink;
 										uint32_t langdatasize;
-										shouldread = false;
-										HWSReadChar(ffhws, langcount);
-										langcorrpos = ffhws.tellg();
-										for (k = 0; k < langcount; k++) {
-											HWSReadChar(ffhws, sublang);
-											HWSReadLong(ffhws, langdatasize);
-											if (hades::STEAM_SINGLE_LANGUAGE_MODE && sublang == GetSteamLanguage()) {
-												shouldread = true;
-												HWSReadShort(ffhws, langcorrcount);
-												corrlinkbase.resize(langcorrcount);
-												corrlink.resize(langcorrcount);
-												for (l = 0; l < langcorrcount; l++) {
-													HWSReadShort(ffhws, corrlinkbase[l]);
-													HWSReadShort(ffhws, corrlink[l]);
-												}
-											} else {
-												ffhws.seekg((long long)ffhws.tellg() + langdatasize);
-											}
-										}
+										shouldread = langlink.InitFromHWS(ffhws, lang);
 										HWSReadLong(ffhws, langdatasize);
 										if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang != GetSteamLanguage()) {
 											if (shouldread)
-												script[j]->ReadHWS(ffhws, false);
+												script[j]->ReadHWS(ffhws, false, lang, &langlink);
 											else
 												ffhws.seekg(langdatasize, ios::cur);
 										} else {
-											script[j]->ReadHWS(ffhws, false, lang);
+											script[j]->ReadHWS(ffhws, false, lang, &langlink);
 										}
 										HWSReadChar(ffhws, lang);
 									}
@@ -670,7 +650,7 @@ int* WorldMapDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool
 					} else {
 						objectsize = 7;
 						HWSReadChar(ffhws, chunktype);
-						while (chunktype != 0xFF) {
+						while (chunktype != CHUNK_SPECIAL_END) {
 							HWSReadLong(ffhws, chunksize);
 							ffhws.seekg(chunksize, ios::cur);
 							HWSReadChar(ffhws, chunktype);
@@ -684,7 +664,7 @@ int* WorldMapDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool
 				} else if (j + 1 == amount) {
 					objectsize = 7;
 					HWSReadChar(ffhws, chunktype);
-					while (chunktype != 0xFF) {
+					while (chunktype != CHUNK_SPECIAL_END) {
 						HWSReadLong(ffhws, chunksize);
 						ffhws.seekg(chunksize, ios::cur);
 						HWSReadChar(ffhws, chunktype);
@@ -738,7 +718,7 @@ void WorldMapDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, uns
 				ffhws.seekg(chunkpos + chunksize);
 			}
 		}
-		HWSWriteChar(ffhws, 0xFF);
+		HWSWriteChar(ffhws, CHUNK_SPECIAL_END);
 		clussize = (long long)ffhws.tellg() - cluspos;
 		ffhws.seekg(cluspos - 4);
 		HWSWriteLong(ffhws, clussize);
@@ -827,7 +807,7 @@ void WorldMapDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, uns
 					ffhws.seekg(chunkpos + chunksize);
 				}
 			}
-			HWSWriteChar(ffhws, 0xFF);
+			HWSWriteChar(ffhws, CHUNK_SPECIAL_END);
 			clussize = (long long)ffhws.tellg() - cluspos;
 			ffhws.seekg(cluspos - 4);
 			HWSWriteLong(ffhws, clussize);

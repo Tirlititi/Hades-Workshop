@@ -105,7 +105,7 @@ void EnemyDataStruct::RemoveStat(uint16_t statid) {
 	SetSize(size - 0x74);
 	stat.erase(stat.begin() + statid);
 	stat_amount--;
-	td.RemoveText(statid);
+	td.RemoveText(statid, true);
 	parent->UpdateBattleName(id);
 }
 
@@ -196,7 +196,7 @@ void EnemyDataStruct::RemoveSpell(uint16_t spellid) {
 		bs->sequence_code.push_back(vector<EnemySequenceCodeLine>());
 	}
 	bs->UpdateOffset();
-	td->RemoveText(stat_amount + spellid);
+	td->RemoveText(stat_amount + spellid, true);
 }
 
 int EnemyDataStruct::AddGroup() {
@@ -205,7 +205,7 @@ int EnemyDataStruct::AddGroup() {
 	unsigned int i;
 	SetSize(size + 0x38);
 	group.resize(group_amount + 1);
-	group[group_amount].frequence = 0;
+	group[group_amount].frequence = 255;
 	group[group_amount].enemy_amount = 1;
 	group[group_amount].camera_engage = 0;
 	group[group_amount].ap = 0;
@@ -224,9 +224,12 @@ int EnemyDataStruct::AddGroup() {
 }
 
 void EnemyDataStruct::RemoveGroup(uint16_t groupid) {
+	if (group_amount <= 1)
+		return;
 	SetSize(size - 0x38);
 	group.erase(group.begin() + groupid);
 	group_amount--;
+	group[group_amount - 1].frequence = 255;
 }
 
 int EnemyDataStruct::AddAnimation(uint16_t statid, uint16_t animid) {
@@ -362,6 +365,7 @@ void EnemySpellDataStruct::SetTargetAmount(Spell_Target_Amount newvalue) {
 		if (READ) group[i].parent = this; \
 		if (READ) group[i].id = i; \
 		IO ## Char(f, group[i].frequence); \
+		if (READ && i + 1 == group_amount) group[i].frequence = 255; \
 		IO ## Char(f, group[i].enemy_amount); \
 		IO ## Short(f, group[i].camera_engage); \
 		IO ## Long(f, group[i].ap); \
@@ -1222,7 +1226,7 @@ int* EnemyDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 				if (clustersize > clus->size + clus->extra_size) { // There should never be a problem about that...
 					objectsize = 7;
 					HWSReadChar(ffhws, chunktype);
-					while (chunktype != 0xFF) {
+					while (chunktype != CHUNK_SPECIAL_END) {
 						HWSReadLong(ffhws, chunksize);
 						ffhws.seekg(chunksize, ios::cur);
 						HWSReadChar(ffhws, chunktype);
@@ -1260,7 +1264,7 @@ int* EnemyDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 			clus = battle[btlindex]->parent_cluster;
 			if (clustersize <= clus->size + clus->extra_size) {
 				HWSReadChar(ffhws, chunktype);
-				while (chunktype != 0xFF) {
+				while (chunktype != CHUNK_SPECIAL_END) {
 					HWSReadLong(ffhws, chunksize);
 					chunkpos = ffhws.tellg();
 					if (chunktype == CHUNK_TYPE_BATTLE_DATA) {
@@ -1281,7 +1285,7 @@ int* EnemyDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 						}
 					} else if (chunktype == CHUNK_TYPE_SCRIPT) {
 						if (loadmain) {
-							script[btlindex]->ReadHWS(ffhws);
+							script[btlindex]->ReadHWS(ffhws, GetGameType() == GAME_TYPE_PSX);
 							script[btlindex]->SetSize(chunksize);
 						}
 					} else if (chunktype == CHUNK_TYPE_IMAGE_MAP) {
@@ -1301,39 +1305,19 @@ int* EnemyDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 							text[btlindex]->ReadHWS(ffhws, true);
 					} else if (chunktype == CHUNK_STEAM_SCRIPT_MULTILANG) {
 						if (loadmain) {
-							uint16_t langcorrcount;
-							uint32_t langcorrpos;
-							vector<uint16_t> corrlinkbase, corrlink;
 							HWSReadChar(ffhws, lang);
 							while (lang != STEAM_LANGUAGE_NONE) {
+								ScriptLanguageLink langlink;
 								uint32_t langdatasize;
-								shouldread = false;
-								HWSReadChar(ffhws, langcount);
-								langcorrpos = ffhws.tellg();
-								for (j = 0; j < langcount; j++) {
-									HWSReadChar(ffhws, sublang);
-									HWSReadLong(ffhws, langdatasize);
-									if (hades::STEAM_SINGLE_LANGUAGE_MODE && sublang == GetSteamLanguage()) {
-										shouldread = true;
-										HWSReadShort(ffhws, langcorrcount);
-										corrlinkbase.resize(langcorrcount);
-										corrlink.resize(langcorrcount);
-										for (k = 0; k < langcorrcount; k++) {
-											HWSReadShort(ffhws, corrlinkbase[k]);
-											HWSReadShort(ffhws, corrlink[k]);
-										}
-									} else {
-										ffhws.seekg((long long)ffhws.tellg() + langdatasize);
-									}
-								}
+								shouldread = langlink.InitFromHWS(ffhws, lang);
 								HWSReadLong(ffhws, langdatasize);
 								if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang != GetSteamLanguage()) {
 									if (shouldread)
-										script[btlindex]->ReadHWS(ffhws, false);
+										script[btlindex]->ReadHWS(ffhws, false, lang, &langlink);
 									else
 										ffhws.seekg(langdatasize, ios::cur);
 								} else {
-									script[btlindex]->ReadHWS(ffhws, false, lang);
+									script[btlindex]->ReadHWS(ffhws, false, lang, &langlink);
 								}
 								HWSReadChar(ffhws, lang);
 							}
@@ -1377,7 +1361,7 @@ int* EnemyDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 			} else {
 				objectsize = 7;
 				HWSReadChar(ffhws, chunktype);
-				while (chunktype != 0xFF) {
+				while (chunktype != CHUNK_SPECIAL_END) {
 					HWSReadLong(ffhws, chunksize);
 					ffhws.seekg(chunksize, ios::cur);
 					HWSReadChar(ffhws, chunktype);
@@ -1403,7 +1387,7 @@ int* EnemyDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 		} else {
 			objectsize = 7;
 			HWSReadChar(ffhws, chunktype);
-			while (chunktype != 0xFF) {
+			while (chunktype != CHUNK_SPECIAL_END) {
 				HWSReadLong(ffhws, chunksize);
 				ffhws.seekg(chunksize, ios::cur);
 				HWSReadChar(ffhws, chunktype);
@@ -1504,7 +1488,7 @@ void EnemyDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsign
 					ffhws.seekg(chunkpos + chunksize);
 				}
 			}
-			HWSWriteChar(ffhws, 0xFF);
+			HWSWriteChar(ffhws, CHUNK_SPECIAL_END);
 			nbmodified++;
 		}
 	}

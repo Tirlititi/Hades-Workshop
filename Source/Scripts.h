@@ -21,6 +21,7 @@
 
 #define SCRIPT_CUSTOM_API_FILENAME	"ScriptAPI.txt"
 
+struct ScriptLanguageLink;
 struct ScriptLocalVariableSet;
 struct ScriptArgument;
 struct ScriptOperation;
@@ -35,9 +36,22 @@ struct ScriptDataStruct;
 #include "Configuration.h"
 using namespace std;
 
+struct ScriptLanguageLink {
+	// Structure to hold the data for the old HWS storage of similar scripts
+	// Not used in any context other than importing old HWS (with CHUNK_STEAM_SCRIPT_MULTILANG)
+	SteamLanguage lang_base;
+	uint8_t lang_link_count;
+	vector<SteamLanguage> lang_link;
+	vector<uint16_t> id_count;
+	vector<vector<uint16_t>> id_base;
+	vector<vector<uint16_t>> id_link;
+
+	bool InitFromHWS(fstream& ffhws, SteamLanguage baselang);
+};
+
 struct ScriptLocalVariableSet {
-	unsigned int amount;
-	uint8_t allocate_amount;
+	unsigned int amount = 0;
+	uint8_t allocate_amount = 0;
 	vector<uint8_t> local_type;
 	vector<int16_t> type;
 	vector<uint8_t> size;
@@ -85,6 +99,7 @@ public:
 
 	// 0: identical, 1: different argument(s) but same opcode and vararg structure, 2: different vararg formulas but same size, 3: different opcodes or size
 	int Compare(const ScriptOperation& other) const;
+	void InitialiseArgumentVector(unsigned int count);
 	
 	void Read(fstream& f);
 	void Write(fstream& f);
@@ -98,7 +113,7 @@ struct ScriptFunction {
 public:
 	ScriptDataStruct* parent;
 	vector<ScriptOperation> op;
-	vector<int32_t> indices[STEAM_LANGUAGE_AMOUNT];
+	vector<int> indices[STEAM_LANGUAGE_AMOUNT];
 	uint16_t function_point;
 	uint16_t function_type;
 
@@ -107,11 +122,12 @@ public:
 	ScriptFunction() {}
 
 	void Import(const vector<ScriptOperation>& langop, SteamLanguage lang);
+	void FlushUnusedOperations();
 
 	void Read(fstream& f, unsigned int length, SteamLanguage lang);
 	void Write(fstream& f, SteamLanguage lang);
 	void WritePPF(fstream& f, SteamLanguage lang);
-	void ReadHWS(fstream& f, unsigned int length, SteamLanguage lang);
+	void ReadHWS(fstream& f, unsigned int length, SteamLanguage lang, ScriptLanguageLink* langlink = NULL);
 	void WriteHWS(fstream& f);
 	void WriteSteam(fstream& f, SteamLanguage lang = GetSteamLanguage());
 	unsigned int GetLength(SteamLanguage lang = GetSteamLanguage());
@@ -133,13 +149,13 @@ public:
 	uint8_t header_name[STEAM_LANGUAGE_AMOUNT][SCRIPT_NAME_MAX_LENGTH];
 	vector<uint16_t> entry_offset;
 	vector<uint16_t> entry_size;
-	vector<uint8_t> entry_local_var;
 	vector<uint8_t> entry_flag;
 	vector<uint8_t> entry_type;
 	vector<uint8_t> entry_function_amount;
 	ScriptLocalVariableSet global_data;
 	vector<ScriptLocalVariableSet> local_data;
-	
+
+	uint8_t has_language = 0;
 	uint16_t related_charmap_id;
 
 	ScriptDataStruct& operator=(const ScriptDataStruct& from);
@@ -157,8 +173,8 @@ public:
 	void Read(fstream& f) { Read(f, GetSteamLanguage()); }
 	void Write(fstream& f);
 	void WritePPF(fstream& f);
-	void ReadHWS(fstream& f, bool usetext = true, SteamLanguage lang = GetSteamLanguage());
-	void WriteHWS(fstream& f); // Remark: unlike other WriteHWS methods, this writes only 1 language by calls, not all those flagged by hades::STEAM_LANGUAGE_SAVE_LIST
+	void ReadHWS(fstream& f, bool usetext = true, SteamLanguage lang = GetSteamLanguage(), ScriptLanguageLink* langlink = NULL);
+	void WriteHWS(fstream& f); // Remark: unlike other WriteHWS methods, this writes all the languages that have been read, without taking hades::STEAM_LANGUAGE_SAVE_LIST into account
 	void WriteSteam(fstream& f, SteamLanguage lang = GetSteamLanguage());
 	void ReadLocalHWS(fstream& f);
 	void WriteLocalHWS(fstream& f);
@@ -167,7 +183,6 @@ public:
 	void UpdateOffset(SteamLanguage lang = GetSteamLanguage());
 };
 
-vector<ScriptArgument> NewScriptArgumentArray(unsigned int amount, ScriptOperation* p);
 bool IsScriptArgTypeSigned(uint8_t argtype);
 
 #endif

@@ -94,20 +94,20 @@ void ChunkChild::Read(fstream& f) {
 	if (loaded)
 		return;
 	raw_data = new uint8_t[size];
-	for (unsigned int i=0;i<size;i++)
-		FFIXReadChar(f,raw_data[i]);
+	for (unsigned int i = 0; i < size; i++)
+		FFIXReadChar(f, raw_data[i]);
 	loaded = true;
 }
 
 void ChunkChild::Write(fstream& f) {
-	for (unsigned int i=0;i<size;i++)
-		FFIXWriteChar(f,raw_data[i]);
+	for (unsigned int i = 0; i < size; i++)
+		FFIXWriteChar(f, raw_data[i]);
 }
 
 void ChunkChild::WritePPF(fstream& f) {
 	PPFInitScanStep(f);
-	for (unsigned int i=0;i<size;i++)
-		PPFStepAddChar(f,raw_data[i]);
+	for (unsigned int i = 0; i < size; i++)
+		PPFStepAddChar(f, raw_data[i]);
 	PPFEndScanStep();
 }
 
