@@ -61,11 +61,11 @@ void WriteTextBlockWithUniversalID(wxFile& output, TextDataStruct* td, wstring b
 		} else if (singlelang != STEAM_LANGUAGE_NONE) {
 			int localindex = GetTextIdFromUniversalId(singlelang, areaid, i);
 			if (localindex >= 0 && td->text[localindex].txt.multi_lang_init[singlelang]) {
-				output.Write(wxString::Format(wxT("#HW universal %u\n"), i));
+				output.Write(wxString::Format(wxT("#HW universal %d\n"), i < td->base_amount ? i : td->text[localindex].id));
 				output.Write(_(td->text[localindex].txt.multi_lang_str[singlelang]) + _(L"\n\n"));
 			}
 		} else {
-			output.Write(wxString::Format(wxT("#HW universal %u\n"), i));
+			output.Write(wxString::Format(wxT("#HW universal %u\n"), i < td->base_amount ? i : td->text[i].id));
 			for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
 				if (exportlang[lang]) {
 					int localindex = GetTextIdFromUniversalId(lang, areaid, i);
@@ -103,10 +103,8 @@ SteamLanguage GetSingleLanguageExport() {
 	bool* exportlang = hades::STEAM_LANGUAGE_SAVE_LIST;
 	for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
 		if (exportlang[lang]) {
-			if (singlelang != STEAM_LANGUAGE_NONE) {
+			if (singlelang != STEAM_LANGUAGE_NONE)
 				return STEAM_LANGUAGE_NONE;
-				break;
-			}
 			singlelang = lang;
 		}
 	}
@@ -455,6 +453,7 @@ FF9String CreateFF9StringToAdd(ImportTextStruct& txtdata, wstring nullstr) {
 LogStruct BatchImportDialog::ImportText(SaveSet* dataset, set<int>& sectionmodified, wxString filetext, bool adjustsize, bool isjapan, bool fatalwarning) {
 	wxString line, linebuf, hwword, token;
 	vector<ImportTextStruct> result;
+	set<int> universaliddone;
 	ImportTextStruct current;
 	unsigned long value;
 	int textcommand;
@@ -606,6 +605,7 @@ LogStruct BatchImportDialog::ImportText(SaveSet* dataset, set<int>& sectionmodif
 				}
 				if (token.IsSameAs(_(L"fileid"))) {
 					current.fileid = -1;
+					universaliddone.clear();
 					if (filetypeid == 2 || (filetypeid == 3 && current.fileid == 100)) {
 						log.AddError(wxString::Format(wxT(HADES_STRING_BATCH_COMMAND_IRRELEVANT), linenum, token).ToStdWstring());
 					} else if (!FB_GetNextWord(linebuf).ToULong(&value)) {
@@ -692,10 +692,16 @@ LogStruct BatchImportDialog::ImportText(SaveSet* dataset, set<int>& sectionmodif
 									value--;
 								current.textid = value;
 								current.textkind = textcommand;
-								for (i = 0; i < result.size(); i++) {
-									if (result[i].fileid == current.fileid && result[i].textid == current.textid && result[i].textkind == current.textkind) {
+								if (textcommand == 2) {
+									if (universaliddone.find(current.textid) != universaliddone.end())
 										log.AddWarning(wxString::Format(wxT(HADES_STRING_BATCH_TEXT_REDEFINITION), linenum, value).ToStdWstring());
-										break;
+									universaliddone.insert(current.textid);
+								} else {
+									for (i = 0; i < result.size(); i++) {
+										if (result[i].fileid == current.fileid && result[i].textid == current.textid && result[i].textkind == current.textkind) {
+											log.AddWarning(wxString::Format(wxT(HADES_STRING_BATCH_TEXT_REDEFINITION), linenum, value).ToStdWstring());
+											break;
+										}
 									}
 								}
 							}
@@ -932,7 +938,7 @@ LogStruct BatchImportDialog::ImportText(SaveSet* dataset, set<int>& sectionmodif
 //          Scripts            //
 //=============================//
 
-int BatchExportDialog::ExportEnemyScript(SaveSet* dataset, wxString path, bool* exportlist, bool splitfile, int addedinfo) {
+int BatchExportDialog::ExportEnemyScript(SaveSet* dataset, wxString path, bool* exportlist, bool splitfile, bool appendmode, int addedinfo) {
 	EnemyDataSet& data = *dataset->enemyset;
 	wxString line, tmprest, localstr;
 	unsigned int i, j, k;
@@ -961,14 +967,25 @@ int BatchExportDialog::ExportEnemyScript(SaveSet* dataset, wxString path, bool* 
 			scpthand.GenerateFunctionList();
 			scpthand.GenerateEntryNames();
 			scpthand.GenerateFunctionStrings(addedinfo & BATCHING_SCRIPT_INFO_ARGUMENT);
+			if (scpthand.script.append_mode != 0)
+				output.Write(_(L"#HW option appendmode\n"));
 			if (scpthand.script.global_data.amount > 0) {
 				output.Write(_(L"#HW globals\n"));
 				output.Write(scpthand.globalvar_str);
 				output.Write(_(L"#HW endglobals\n\n"));
 			}
 			for (j = 0; j < scpthand.script.entry_amount; j++) {
-				if (scpthand.script.entry_function_amount[j] > 0) {
-					output.Write(_(L"#HW newentry ") + wxString::Format(wxT("%u"), j) + _(L"\n"));
+				if (appendmode && scpthand.script.append_mode != 0 && (scpthand.script.entry[j].append_mode & 1) == 0)
+					continue;
+				if (scpthand.script.entry[j].function_amount > 0) {
+					if (scpthand.script.entry[j].player_link < 0)
+						output.Write(_(L"#HW newentry ") + wxString::Format(wxT("%u"), j) + _(L"\n"));
+					else
+						output.Write(_(L"#HW newentry ") + wxString::Format(wxT("PC%d"), scpthand.script.entry[j].player_link) + _(L"\n"));
+					if ((scpthand.script.entry[j].append_mode & 1) != 0)
+						output.Write(_(L"#HW option appendentry\n"));
+					if ((scpthand.script.entry[j].append_mode & 2) != 0)
+						output.Write(_(L"#HW option autoinit\n"));
 					if (scpthand.script.local_data[j].allocate_amount > 0 || scpthand.script.local_data[j].amount > 0) {
 						localstr = scpthand.localvar_str[j];
 						output.Write(_(L"#HW locals\n"));
@@ -980,8 +997,8 @@ int BatchExportDialog::ExportEnemyScript(SaveSet* dataset, wxString path, bool* 
 						}
 						output.Write(_(L"#HW endlocals\n\n"));
 					}
-					for (k = 0; k < scpthand.script.entry_function_amount[j]; k++) {
-						output.Write(_(L"#HW newfunction ") + wxString::Format(wxT("%u"), scpthand.script.func[j][k].function_type) + _(L"\n"));
+					for (k = 0; k < scpthand.script.entry[j].function_amount; k++) {
+						output.Write(_(L"#HW newfunction ") + wxString::Format(wxT("%u"), scpthand.script.entry[j].func[k].function_type) + _(L"\n"));
 						output.Write(scpthand.func_str[j][k] + _(L"\n\n"));
 					}
 				}
@@ -994,7 +1011,7 @@ int BatchExportDialog::ExportEnemyScript(SaveSet* dataset, wxString path, bool* 
 	return 0;
 }
 
-int BatchExportDialog::ExportWorldScript(SaveSet* dataset, wxString path, bool* exportlist, bool splitfile, int addedinfo) {
+int BatchExportDialog::ExportWorldScript(SaveSet* dataset, wxString path, bool* exportlist, bool splitfile, bool appendmode, int addedinfo) {
 	WorldMapDataSet& data = *dataset->worldset;
 	wxString line, tmprest, localstr;
 	unsigned int i, j, k;
@@ -1021,14 +1038,25 @@ int BatchExportDialog::ExportWorldScript(SaveSet* dataset, wxString path, bool* 
 			scpthand.GenerateFunctionList();
 			scpthand.GenerateEntryNames();
 			scpthand.GenerateFunctionStrings(addedinfo & BATCHING_SCRIPT_INFO_ARGUMENT);
+			if (scpthand.script.append_mode != 0)
+				output.Write(_(L"#HW option appendmode\n"));
 			if (scpthand.script.global_data.amount > 0) {
 				output.Write(_(L"#HW globals\n"));
 				output.Write(scpthand.globalvar_str);
 				output.Write(_(L"#HW endglobals\n\n"));
 			}
 			for (j = 0; j < scpthand.script.entry_amount; j++) {
-				if (scpthand.script.entry_function_amount[j] > 0) {
-					output.Write(_(L"#HW newentry ") + wxString::Format(wxT("%u"), j) + _(L"\n"));
+				if (appendmode && scpthand.script.append_mode != 0 && (scpthand.script.entry[j].append_mode & 1) == 0)
+					continue;
+				if (scpthand.script.entry[j].function_amount > 0) {
+					if (scpthand.script.entry[j].player_link < 0)
+						output.Write(_(L"#HW newentry ") + wxString::Format(wxT("%u"), j) + _(L"\n"));
+					else
+						output.Write(_(L"#HW newentry ") + wxString::Format(wxT("PC%d"), scpthand.script.entry[j].player_link) + _(L"\n"));
+					if ((scpthand.script.entry[j].append_mode & 1) != 0)
+						output.Write(_(L"#HW option appendentry\n"));
+					if ((scpthand.script.entry[j].append_mode & 2) != 0)
+						output.Write(_(L"#HW option autoinit\n"));
 					if (scpthand.script.local_data[j].allocate_amount > 0 || scpthand.script.local_data[j].amount > 0) {
 						localstr = scpthand.localvar_str[j];
 						output.Write(_(L"#HW locals\n"));
@@ -1040,8 +1068,8 @@ int BatchExportDialog::ExportWorldScript(SaveSet* dataset, wxString path, bool* 
 						}
 						output.Write(_(L"#HW endlocals\n\n"));
 					}
-					for (k = 0; k < scpthand.script.entry_function_amount[j]; k++) {
-						output.Write(_(L"#HW newfunction ") + wxString::Format(wxT("%u"), scpthand.script.func[j][k].function_type) + _(L"\n"));
+					for (k = 0; k < scpthand.script.entry[j].function_amount; k++) {
+						output.Write(_(L"#HW newfunction ") + wxString::Format(wxT("%u"), scpthand.script.entry[j].func[k].function_type) + _(L"\n"));
 						output.Write(_(scpthand.func_str[j][k]) + _(L"\n\n"));
 					}
 				}
@@ -1052,7 +1080,7 @@ int BatchExportDialog::ExportWorldScript(SaveSet* dataset, wxString path, bool* 
 	return 0;
 }
 
-int BatchExportDialog::ExportFieldScript(SaveSet* dataset, wxString path, bool* exportlist, bool splitfile, int addedinfo) {
+int BatchExportDialog::ExportFieldScript(SaveSet* dataset, wxString path, bool* exportlist, bool splitfile, bool appendmode, int addedinfo) {
 	FieldDataSet& data = *dataset->fieldset;
 	wxString line, tmprest, localstr;
 	unsigned int i, j, k;
@@ -1077,14 +1105,25 @@ int BatchExportDialog::ExportFieldScript(SaveSet* dataset, wxString path, bool* 
 			scpthand.GenerateFunctionList();
 			scpthand.GenerateEntryNames();
 			scpthand.GenerateFunctionStrings(addedinfo & BATCHING_SCRIPT_INFO_ARGUMENT);
+			if (scpthand.script.append_mode != 0)
+				output.Write(_(L"#HW option appendmode\n"));
 			if (scpthand.script.global_data.amount > 0) {
 				output.Write(_(L"#HW globals\n"));
 				output.Write(scpthand.globalvar_str);
 				output.Write(_(L"#HW endglobals\n\n"));
 			}
 			for (j = 0; j < scpthand.script.entry_amount; j++) {
-				if (scpthand.script.entry_function_amount[j] > 0) {
-					output.Write(_(L"#HW newentry ") + wxString::Format(wxT("%u"), j) + _(L"\n"));
+				if (appendmode && scpthand.script.append_mode != 0 && (scpthand.script.entry[j].append_mode & 1) == 0)
+					continue;
+				if (scpthand.script.entry[j].function_amount > 0) {
+					if (scpthand.script.entry[j].player_link < 0)
+						output.Write(_(L"#HW newentry ") + wxString::Format(wxT("%u"), j) + _(L"\n"));
+					else
+						output.Write(_(L"#HW newentry ") + wxString::Format(wxT("PC%d"), scpthand.script.entry[j].player_link) + _(L"\n"));
+					if ((scpthand.script.entry[j].append_mode & 1) != 0)
+						output.Write(_(L"#HW option appendentry\n"));
+					if ((scpthand.script.entry[j].append_mode & 2) != 0)
+						output.Write(_(L"#HW option autoinit\n"));
 					if (scpthand.script.local_data[j].allocate_amount > 0 || scpthand.script.local_data[j].amount > 0) {
 						localstr = scpthand.localvar_str[j];
 						output.Write(_(L"#HW locals\n"));
@@ -1097,13 +1136,13 @@ int BatchExportDialog::ExportFieldScript(SaveSet* dataset, wxString path, bool* 
 						output.Write(_(L"#HW endlocals\n\n"));
 					}
 					functypecheck.clear();
-					for (k = 0; k < scpthand.script.entry_function_amount[j]; k++) {
-						if (functypecheck.count(scpthand.script.func[j][k].function_type) > 0) {
-							output.Write(wxString::Format(wxT("// Duplicated function %u is discarded\n\n"), scpthand.script.func[j][k].function_type));
+					for (k = 0; k < scpthand.script.entry[j].function_amount; k++) {
+						if (functypecheck.count(scpthand.script.entry[j].func[k].function_type) > 0) {
+							output.Write(wxString::Format(wxT("// Duplicated function %u is discarded\n\n"), scpthand.script.entry[j].func[k].function_type));
 						} else {
-							output.Write(_(L"#HW newfunction ") + wxString::Format(wxT("%u"), scpthand.script.func[j][k].function_type) + _(L"\n"));
+							output.Write(_(L"#HW newfunction ") + wxString::Format(wxT("%u"), scpthand.script.entry[j].func[k].function_type) + _(L"\n"));
 							output.Write(_(scpthand.func_str[j][k]) + _(L"\n\n"));
-							functypecheck.insert(scpthand.script.func[j][k].function_type);
+							functypecheck.insert(scpthand.script.entry[j].func[k].function_type);
 						}
 					}
 				}
@@ -1116,9 +1155,9 @@ int BatchExportDialog::ExportFieldScript(SaveSet* dataset, wxString path, bool* 
 	return 0;
 }
 
-LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, set<int>& sectionmodified, int scripttype, wxString filescript, bool fatalwarning, bool* datamodif) {
+LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, set<int>& sectionmodified, int scripttype, wxString filescript, bool fatalwarning, bool* datamodif, vector<ScriptDataStruct*>* modifiedscripts) {
 	wxString line, linebuf, errstr, token, codevalue, globalcode, localcode, inputstr = filescript;
-	int filescripttype, currentbattle = -1, currententry = -1, currentfunction = -1;
+	int filescripttype, currentscriptindex = -1, currententry = -1, currentfunction = -1;
 	unsigned int i, codelinenum, linenum = 0;
 	bool updatecur = false, langlinkblock = false, localblock = false, globalblock = false;
 	bool end, tokencheck, filetypeok = false, nothingdone = true;
@@ -1140,7 +1179,7 @@ LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, set<int>& sectionmod
 			if (currentfunction >= 0) {
 				current_handler->currentvar_str = globalcode + _(L"\n") + localcode;
 				tmplog = current_handler->ParseFunction(codevalue, currententry, currentfunction, codelinenum);
-				entrysizegap = current_script_ptr->GetExtraSize() + current_handler->script.entry_size[currententry] - current_handler->GetParsedEntryNewSize();
+				entrysizegap = current_script_ptr->GetExtraSize() + current_handler->script.entry[currententry].size - current_handler->GetParsedEntryNewSize();
 				if (entrysizegap < 0) {
 					errstr.Printf(wxT(HADES_STRING_LOGERROR_SPACE), -entrysizegap);
 					tmplog.AddError(errstr.ToStdWstring());
@@ -1233,7 +1272,10 @@ LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, set<int>& sectionmod
 				if (token.IsSameAs(_(L"fileid"))) {
 					if (updatecur) {
 						*current_script_ptr = current_handler->script;
+						current_script_ptr->GuaranteePlayerLinks();
 						current_script_ptr->MarkDataModified();
+						if (modifiedscripts != NULL)
+							modifiedscripts->push_back(current_script_ptr);
 						updatecur = false;
 						nothingdone = false;
 					}
@@ -1243,7 +1285,7 @@ LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, set<int>& sectionmod
 						current_handler = NULL;
 					}
 					token = FB_GetNextWord(linebuf);
-					currentbattle = -1;
+					currentscriptindex = -1;
 					currententry = -1;
 					currentfunction = -1;
 					if (!token.ToULong(&value)) {
@@ -1253,7 +1295,7 @@ LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, set<int>& sectionmod
 						if (filescripttype == SCRIPT_TYPE_FIELD) {
 							for (i = 0; i < dataset->fieldset->amount; i++)
 								if (dataset->fieldset->script_data[i]->object_id == value) {
-									currentbattle = i;
+									currentscriptindex = i;
 									current_script_ptr = dataset->fieldset->script_data[i];
 									current_handler = new ScriptEditHandler(*current_script_ptr, filescripttype, dataset, NULL, NULL);
 									current_handler->GenerateFunctionList();
@@ -1268,7 +1310,7 @@ LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, set<int>& sectionmod
 						} else if (filescripttype == SCRIPT_TYPE_BATTLE) {
 							for (i = 0; i < dataset->enemyset->battle_amount; i++)
 								if (dataset->enemyset->battle_data[i]->object_id == value) {
-									currentbattle = i;
+									currentscriptindex = i;
 									current_script_ptr = dataset->enemyset->script[i];
 									current_handler = new ScriptEditHandler(*current_script_ptr, filescripttype, dataset, NULL, NULL);
 									current_handler->GenerateFunctionList();
@@ -1283,7 +1325,7 @@ LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, set<int>& sectionmod
 						} else {
 							for (i = 0; i < dataset->worldset->amount; i++)
 								if (dataset->worldset->script[i]->object_id == value) {
-									currentbattle = i;
+									currentscriptindex = i;
 									current_script_ptr = dataset->worldset->script[i];
 									current_handler = new ScriptEditHandler(*current_script_ptr, filescripttype, dataset, NULL, NULL);
 									current_handler->GenerateFunctionList();
@@ -1299,23 +1341,40 @@ LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, set<int>& sectionmod
 					}
 				} else if (token.IsSameAs(_(L"newentry"))) {
 					localcode = _(L"");
-					token = FB_GetNextWord(linebuf);
-					if (!token.ToULong(&value)) {
-						errstr.Printf(wxT(HADES_STRING_BATCH_MISSING_INTEGER), linenum, L"newentry");
-						res.AddError(errstr.ToStdWstring());
-						currententry = -1;
-						currentfunction = -1;
-					} else if (currentbattle >= 0) {
-						currententry = value;
+					if (current_handler != NULL) {
 						token = FB_GetNextWord(linebuf);
-						tokencheck = token.ToULong(&value);
-						if (current_handler != NULL) {
-							if (current_handler->script.entry_amount < currententry)
-								current_handler->AddEntry(currententry, tokencheck ? value : 0);
+						if (token.StartsWith(_(L"PC")) && token.Mid(2).ToULong(&value)) {
+							unsigned long entrytype;
+							token = FB_GetNextWord(linebuf);
+							if (!token.ToULong(&entrytype))
+								entrytype = 2;
+							currententry = -1;
+							for (i = 0; i < current_handler->script.entry_amount; i++) {
+								if (current_handler->script.entry[i].player_link == value) {
+									current_handler->script.entry[i].type = entrytype;
+									currententry = i;
+									break;
+								}
+							}
+							if (currententry < 0) {
+								currententry = current_handler->script.entry_amount;
+								current_handler->AddEntry(currententry, entrytype, value);
+							}
+						} else if (token.ToULong(&value)) {
+							currententry = value;
+							token = FB_GetNextWord(linebuf);
+							tokencheck = token.ToULong(&value);
+							if (currententry >= current_handler->script.entry_amount)
+								current_handler->AddEntry(currententry, tokencheck ? value : 0, -1);
 							else if (tokencheck)
-								current_handler->script.entry_type[currententry] = value;
+								current_handler->script.entry[currententry].type = value;
+							currentfunction = -1;
+						} else {
+							errstr.Printf(wxT(HADES_STRING_BATCH_MISSING_INTEGER), linenum, L"newentry");
+							res.AddError(errstr.ToStdWstring());
+							currententry = -1;
+							currentfunction = -1;
 						}
-						currentfunction = -1;
 					}
 				} else if (token.IsSameAs(_(L"newfunction"))) {
 					token = FB_GetNextWord(linebuf);
@@ -1324,14 +1383,14 @@ LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, set<int>& sectionmod
 						res.AddError(errstr.ToStdWstring());
 						currentfunction = -1;
 					} else if (currententry >= 0) {
-						for (i = 0; i < current_handler->script.entry_function_amount[currententry]; i++)
-							if (current_handler->script.func[currententry][i].function_type == value) {
+						for (i = 0; i < current_handler->script.entry[currententry].function_amount; i++)
+							if (current_handler->script.entry[currententry].func[i].function_type == value) {
 								currentfunction = i;
 								break;
 							}
-						if (i == current_handler->script.entry_function_amount[currententry]) {
-							for (i = 0; i < current_handler->script.entry_function_amount[currententry]; i++)
-								if (current_handler->script.func[currententry][i].function_type > value) {
+						if (i == current_handler->script.entry[currententry].function_amount) {
+							for (i = 0; i < current_handler->script.entry[currententry].function_amount; i++)
+								if (current_handler->script.entry[currententry].func[i].function_type > value) {
 									if (i > 0)
 										i--;
 									break;
@@ -1346,6 +1405,33 @@ LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, set<int>& sectionmod
 					globalblock = true;
 				} else if (token.IsSameAs(_(L"locals"))) {
 					localblock = true;
+				} else if (token.IsSameAs(_(L"option"))) {
+					if (current_handler != NULL) {
+						bool irrelevant = true;
+						token = FB_GetNextWord(linebuf);
+						if (token.IsSameAs(_(L"appendmode"))) {
+							current_handler->script.append_mode = 1;
+							irrelevant = false;
+						} else if (token.IsSameAs(_(L"appendentry"))) {
+							if (currententry >= 0) {
+								current_handler->script.entry[currententry].append_mode |= 1;
+								irrelevant = false;
+							}
+						} else if (token.IsSameAs(_(L"autoinit"))) {
+							if (currententry >= 0) {
+								current_handler->script.entry[currententry].append_mode |= 2;
+								irrelevant = false;
+							}
+						} else {
+							errstr.Printf(wxT(HADES_STRING_BATCH_INVALID_OPTION), linenum, token);
+							res.AddWarning(errstr.ToStdWstring());
+							irrelevant = false;
+						}
+						if (irrelevant) {
+							errstr.Printf(wxT(HADES_STRING_BATCH_COMMAND_IRRELEVANT), linenum, _(L"option ") + token);
+							res.AddWarning(errstr.ToStdWstring());
+						}
+					}
 				} else if (token.IsSameAs(_(L"languagetextlink"))) {
 					errstr.Printf(wxT(HADES_STRING_BATCH_UNSUPPORT_ANYMORE), linenum, token);
 					res.AddWarning(errstr.ToStdWstring());
@@ -1389,7 +1475,10 @@ LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, set<int>& sectionmod
 		else if (filescripttype == SCRIPT_TYPE_WORLD)
 			sectionmodified.insert(DATA_SECTION_WORLD_MAP);
 		*current_script_ptr = current_handler->script;
+		current_script_ptr->GuaranteePlayerLinks();
 		current_script_ptr->MarkDataModified();
+		if (modifiedscripts != NULL)
+			modifiedscripts->push_back(current_script_ptr);
 		updatecur = false;
 		nothingdone = false;
 	}
@@ -1600,13 +1689,13 @@ void BatchExportDialog::OnButtonClick(wxCommandEvent& event) {
 			ExportCharacterNames(*dataset->statset, m_filepicker->GetPath());
 			break;
 		case 100:
-			ExportEnemyScript(dataset, m_filepicker->GetPath(), exportlist, m_scriptsplitfile->IsChecked(), BATCHING_SCRIPT_INFO_FILENAME | BATCHING_SCRIPT_INFO_TEXT_LINK | (m_scriptcomment->IsChecked() ? BATCHING_SCRIPT_INFO_ARGUMENT : 0));
+			ExportEnemyScript(dataset, m_filepicker->GetPath(), exportlist, m_scriptsplitfile->IsChecked(), m_scriptcomplyappendmode->IsChecked(), BATCHING_SCRIPT_INFO_FILENAME | BATCHING_SCRIPT_INFO_TEXT_LINK | (m_scriptcomment->IsChecked() ? BATCHING_SCRIPT_INFO_ARGUMENT : 0));
 			break;
 		case 101:
-			ExportWorldScript(dataset, m_filepicker->GetPath(), exportlist, m_scriptsplitfile->IsChecked(), BATCHING_SCRIPT_INFO_FILENAME | BATCHING_SCRIPT_INFO_TEXT_LINK | (m_scriptcomment->IsChecked() ? BATCHING_SCRIPT_INFO_ARGUMENT : 0));
+			ExportWorldScript(dataset, m_filepicker->GetPath(), exportlist, m_scriptsplitfile->IsChecked(), m_scriptcomplyappendmode->IsChecked(), BATCHING_SCRIPT_INFO_FILENAME | BATCHING_SCRIPT_INFO_TEXT_LINK | (m_scriptcomment->IsChecked() ? BATCHING_SCRIPT_INFO_ARGUMENT : 0));
 			break;
 		case 102:
-			ExportFieldScript(dataset, m_filepicker->GetPath(), exportlist, m_scriptsplitfile->IsChecked(), BATCHING_SCRIPT_INFO_FILENAME | BATCHING_SCRIPT_INFO_TEXT_LINK | (m_scriptcomment->IsChecked() ? BATCHING_SCRIPT_INFO_ARGUMENT : 0));
+			ExportFieldScript(dataset, m_filepicker->GetPath(), exportlist, m_scriptsplitfile->IsChecked(), m_scriptcomplyappendmode->IsChecked(), BATCHING_SCRIPT_INFO_FILENAME | BATCHING_SCRIPT_INFO_TEXT_LINK | (m_scriptcomment->IsChecked() ? BATCHING_SCRIPT_INFO_ARGUMENT : 0));
 			break;
 		case 200:
 			ExportImageBackground(*dataset->fieldset, m_filepicker->GetPath(), exportlist, m_mergetile->IsChecked(), m_exportorder->IsChecked(), m_languagetitle->GetSelection() - 1);

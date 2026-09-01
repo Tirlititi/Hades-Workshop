@@ -2210,6 +2210,8 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 				ClusterData& clus = (ClusterData&)clusset.clus[i].chunk[clusset.clus[i].SearchChunkType(CHUNK_TYPE_CLUSTER_DATA)].GetObject(1);
 				clus.CreateChildren(ffbin);
 				for (k = 0; k < clus.chunk_amount; k++) {
+					if (clus.chunk[k].type == CHUNK_TYPE_SCRIPT)
+						((ScriptDataStruct*)&clus.chunk[k].GetObject(0))->is_field_script = true;
 					for (l = 0; l < clus.chunk[k].object_amount; l++) {
 						ffbin.seekg(clus.chunk[k].object_offset[l]);
 						clus.chunk[k].GetObject(l).Read(ffbin);
@@ -2339,6 +2341,7 @@ void FieldDataSet::Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textse
 			script_data[i] = new ScriptDataStruct[1];
 			script_data[i]->related_charmap_id = 0;
 			script_data[i]->Init(true, CHUNK_TYPE_SCRIPT, config.field_id[i], &dummyclus[i], CLUSTER_TYPE_FIELD);
+			script_data[i]->is_field_script = true;
 			for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
 				if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang != GetSteamLanguage())
 					continue;
@@ -2766,7 +2769,7 @@ void FieldDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsign
 					HWSWriteChar(ffhws, CHUNK_TYPE_SCRIPT);
 					HWSWriteLong(ffhws, script_data[i]->size);
 					chunkpos = ffhws.tellg();
-					script_data[i]->WriteHWS(ffhws);
+					script_data[i]->WriteHWS(ffhws, false);
 					ffhws.seekg(chunkpos + script_data[i]->size);
 				}
 			} else {
@@ -2774,7 +2777,7 @@ void FieldDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsign
 					HWSWriteChar(ffhws, CHUNK_STEAM_SCRIPT_MERGED);
 					HWSWriteLong(ffhws, 0);
 					chunkpos = ffhws.tellg();
-					script_data[i]->WriteHWS(ffhws);
+					script_data[i]->WriteHWS(ffhws, true);
 					chunksize = (long long)ffhws.tellg() - chunkpos;
 					ffhws.seekg(chunkpos - 4);
 					HWSWriteLong(ffhws, chunksize);

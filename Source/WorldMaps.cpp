@@ -782,7 +782,7 @@ void WorldMapDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, uns
 					HWSWriteChar(ffhws, CHUNK_TYPE_SCRIPT);
 					HWSWriteLong(ffhws, script[i]->size);
 					chunkpos = ffhws.tellg();
-					script[i]->WriteHWS(ffhws);
+					script[i]->WriteHWS(ffhws, false);
 					ffhws.seekg(chunkpos + script[i]->size);
 				}
 			} else {
@@ -800,7 +800,7 @@ void WorldMapDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, uns
 					HWSWriteChar(ffhws, CHUNK_STEAM_SCRIPT_MERGED);
 					HWSWriteLong(ffhws, 0);
 					chunkpos = ffhws.tellg();
-					script[i]->WriteHWS(ffhws);
+					script[i]->WriteHWS(ffhws, true);
 					chunksize = (long long)ffhws.tellg() - chunkpos;
 					ffhws.seekg(chunkpos - 4);
 					HWSWriteLong(ffhws, chunksize);

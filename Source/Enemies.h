@@ -57,6 +57,9 @@ public:
 	uint8_t menu_flag;
 	int model_alt;
 	uint16_t name_offset;
+
+	// Memoria only
+	wstring sequence_path;
 	
 	// Return 0 if success ; 1 if the value is too long
 	int SetName(wstring newvalue, SteamLanguage lang = GetSteamLanguage());
@@ -204,7 +207,7 @@ public:
 	void Write(fstream& f);
 	void WritePPF(fstream& f);
 	void ReadHWS(fstream& f);
-	void WriteHWS(fstream& f, bool useextendedtype = true);
+	void WriteHWS(fstream& f, bool uselatestversion = true);
 	void UpdateOffset();
 	
 	EnemyDataSet* parent;

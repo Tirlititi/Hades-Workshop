@@ -33,6 +33,8 @@ public:
 	GLint field_pointz[GL_WINDOW_FIELD_MAX_POINTS];
 	unsigned int field_showplane;
 	GLint field_plane_coord;
+	bool field_showangle;
+	GLfloat field_angle_value;
 	
 	GLint*** field_tiles_quad_pos;
 	int field_tiles_highlight;
@@ -61,6 +63,7 @@ public:
 	void DisplayFieldPolygon(vector<int16_t> vert);
 	void DisplayFieldPoint3D(int16_t x, int16_t y, int16_t z);
 	void DisplayFieldPoint2D(int16_t x, int16_t y);
+	void DisplayFieldAngle(float angle);
 	void DisplayFieldPlane(int planetype, int16_t coord); // 1 for x ; 2 for y ; 3 for z
 	void DisplayFieldTrianglePath(int triangleid);
 	void DisplayFieldPath(int pathid);

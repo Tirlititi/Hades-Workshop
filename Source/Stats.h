@@ -66,6 +66,10 @@ public:
 	int spirit;
 	int magic_stone;
 
+	vector<int> equip_ids;
+	vector<int> command_ids;
+	vector<int> battle_param_ids;
+
 	// Parameters for Memoria mod
 	wstring name_keyword;
 	uint8_t default_row;
@@ -134,6 +138,8 @@ public:
 	vector<AbilityEntryDataStruct> entry;
 
 	int GetCharacterIndex();
+	void InsertEntry(int pos, const AbilityEntryDataStruct& newentry);
+	void EraseEntry(int pos);
 
 private:
 	StatDataSet* parent;
@@ -233,11 +239,12 @@ public:
 	map<wxString, wxString> custom_field_ability_list;
 	map<wxString, wxString> custom_field_command_list;
 	map<wxString, wxString> custom_field_level;
-	
-	// Return a temporary array, not to be deleted
-	static int* GetCharacterEquipmentsIndices(int charindex, unsigned int* amount = NULL);
-	static int* GetCharacterCommandsIndices(int charindex, unsigned int* amount = NULL);
-	static int* GetCharacterBattleParametersIndices(int charindex, unsigned int* amount = NULL);
+
+	InitialEquipDataStruct& GetCharacterEquipmentsById(int equipid);
+	CommandSetDataStruct& GetCharacterCommandsById(int cmdid);
+	AbilitySetDataStruct& GetCharacterAbilitiesById(int abilid);
+	CharBattleParameterStruct& GetCharacterBattleParametersById(int paramid);
+	void FlushUnusedData();
 
 	int GetCharacterIndexById(int charid);
 	InitialStatDataStruct& GetCharacterById(int charid);

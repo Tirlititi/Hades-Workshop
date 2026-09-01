@@ -46,6 +46,8 @@ namespace hades {
 	bool STEAM_LANGUAGE_SAVE_LIST[STEAM_LANGUAGE_AMOUNT] = { true, false, false, false, false, false, false };
 	bool STEAM_SINGLE_LANGUAGE_MODE = false;
 	bool PREFER_EXPORT_AS_PATCHES = false;
+	bool ENABLE_BATTLE_ENTRY_EDIT = false;
+	bool SHOW_SCRIPT_COMMENTS = false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -81,6 +83,7 @@ bool MainApp::OnInit() {
 
 	SetTopWindow(new MainFrame(NULL));
 	GetTopWindow()->Show();
+	wxToolTip::SetAutoPop(60000); // TODO: doesn't seem to have any effect...
 	return true;
 }
 
@@ -90,7 +93,7 @@ bool MainApp::OnInit() {
 
 void MainFrame::MakeDirForFile(string filename) {
 	wxFileName fname(filename);
-	fname.Mkdir(wxS_DIR_DEFAULT,wxPATH_MKDIR_FULL);
+	fname.Mkdir(wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 }
 
 void MainFrame::DeleteFullDir(string dirname) {
@@ -675,6 +678,8 @@ void MainFrame::PreferencesUpdate() {
 			}
 	}
 	hades::PREFER_EXPORT_AS_PATCHES = PreferenceWindow->prefer_export_as_patches;
+	hades::ENABLE_BATTLE_ENTRY_EDIT = PreferenceWindow->enable_battle_entry_edit;
+	hades::SHOW_SCRIPT_COMMENTS = PreferenceWindow->show_script_comments;
 }
 
 void MainFrame::OnPreferencesClick(wxCommandEvent& event) {
@@ -1011,7 +1016,7 @@ void MainFrame::UpdateMenuAvailability(int panel) {
 	m_custombattle->Enable(CDPanel[panel]->config.gametype == GAME_TYPE_STEAM && CDPanel[panel]->config.dll_usage != 0);
 }
 
-void MainFrame::OnDebugClick( wxCommandEvent& event ) {
+void MainFrame::OnDebugClick(wxCommandEvent& event) {
 	unsigned int currentpanel = m_cdbook->GetSelection();
 	CDPanel[currentpanel]->DebugWrite();
 }

@@ -7,7 +7,7 @@
 #define PARTY_SPECIAL_HWS_VERSION 3
 
 #define MAGIC_SWORD_CSV_CHECK L"%id%;%supporter%;%beneficiary%;%requirement%;%unlocked%;%supporter_status_blocker%;%beneficiary_status_blocker%"
-#define MAGIC_SWORD_CSV_DEFAULT MAGIC_SWORD_CSV_CHECK L";# %name%"
+#define MAGIC_SWORD_CSV_DEFAULT MAGIC_SWORD_CSV_CHECK L";# %name%\n"
 
 void MagicSwordDataStruct::InitDefault() {
 	id = 0;
@@ -33,8 +33,6 @@ wxString MagicSwordDataStruct::GetFieldValue(wxString fieldname) {
 	if (fieldname.IsSameAs("unlocked")) return wxString::Format(wxT("%s"), ConcatenateStrings<int>(", ", unlocked, [](int spellid) { return "AA:" + to_string(spellid); }));
 	if (fieldname.IsSameAs("supporter_status_blocker")) return FormatStatusSet(supporter_status_blocker);
 	if (fieldname.IsSameAs("beneficiary_status_blocker")) return FormatStatusSet(beneficiary_status_blocker);
-	if (auto search = custom_field.find(fieldname); search != custom_field.end()) return search->second;
-	if (auto search = parent->custom_field.find(fieldname); search != parent->custom_field.end()) return search->second;
 	return _(L"");
 }
 
@@ -131,7 +129,7 @@ void PartySpecialDataSet::GenerateCSharp(vector<string>& buffer) {
 }
 
 bool PartySpecialDataSet::GenerateCSV(string basefolder) {
-	return MemoriaUtility::GenerateDatabaseGeneric<MagicSwordDataStruct>(_(basefolder), _(HADES_STRING_CSV_MGCSWORD_FILE), csv_header, _(L"\n"), _(L"\n"), magic_sword, csv_format, true);
+	return MemoriaUtility::GenerateDatabaseGeneric<MagicSwordDataStruct>(_(basefolder), _(HADES_STRING_CSV_MGCSWORD_FILE), csv_header, magic_sword, csv_format, custom_field, true);
 }
 
 void PartySpecialDataSet::Write(fstream& ffbin, ConfigurationSet& config) {

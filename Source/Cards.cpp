@@ -31,65 +31,63 @@ int CardDataStruct::SetName(FF9String& newvalue) {
 	return 0;
 }
 
-#define MACRO_CARD_IOFUNCTIONNAME(IO,SEEK,READ,PPF) \
+#define MACRO_CARD_IOFUNCTIONNAME(IO, SEEK, READ, PPF) \
 	uint32_t txtpos; \
 	if (PPF) PPFInitScanStep(ffbin); \
-	IO ## Long(ffbin,card_amount); \
+	IO ## Long(ffbin, card_amount); \
 	txtpos = ffbin.tellg(); \
-	for (i=0;i<CARD_AMOUNT;i++) { \
-		IO ## Short(ffbin,card[i].name_offset); \
-		IO ## Short(ffbin,card[i].name_size_x); \
+	for (i = 0; i < CARD_AMOUNT; i++) { \
+		IO ## Short(ffbin, card[i].name_offset); \
+		IO ## Short(ffbin, card[i].name_size_x); \
 	} \
 	if (PPF) PPFEndScanStep(); \
-	if (READ) name_space_used = 4*CARD_AMOUNT; \
-	if (PPF) PPFInitScanStep(ffbin,true,name_space_total); \
-	for (i=0;i<CARD_AMOUNT;i++) { \
-		SEEK(ffbin,txtpos,card[i].name_offset); \
-		IO ## FF9String(ffbin,card[i].name); \
+	if (READ) name_space_used = 4 * CARD_AMOUNT; \
+	if (PPF) PPFInitScanStep(ffbin, true, name_space_total); \
+	for (i = 0; i < CARD_AMOUNT; i++) { \
+		SEEK(ffbin, txtpos, card[i].name_offset); \
+		IO ## FF9String(ffbin, card[i].name); \
 		if (READ) name_space_used += card[i].name.length; \
 	} \
 	if (PPF) PPFEndScanStep(); \
-	SEEK(ffbin,txtpos,name_space_total);
+	SEEK(ffbin, txtpos, name_space_total);
 
-#define MACRO_CARD_IOFUNCTIONCARDDATA(IO,SEEK,READ,PPF,NPC) \
+#define MACRO_CARD_IOFUNCTIONCARDDATA(IO, SEEK, READ, PPF, NPC) \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<CARD_AMOUNT;i++) { \
+	for (i = 0; i < CARD_AMOUNT; i++) { \
 		if (NPC) { \
-			IO ## Char(ffbin,card[i].npc_attack); \
-			IO ## Char(ffbin,card[i].npc_type); \
-			IO ## Char(ffbin,card[i].npc_defence); \
-			IO ## Char(ffbin,card[i].npc_magicdefence); \
+			IO ## Char(ffbin, card[i].npc_attack); \
+			IO ## Char(ffbin, card[i].npc_type); \
+			IO ## Char(ffbin, card[i].npc_defence); \
+			IO ## Char(ffbin, card[i].npc_magicdefence); \
 		} else { \
-			IO ## Char(ffbin,card[i].player_attack); \
-			IO ## Char(ffbin,card[i].player_type); \
-			IO ## Char(ffbin,card[i].player_defence); \
-			IO ## Char(ffbin,card[i].player_magicdefence); \
+			IO ## Char(ffbin, card[i].player_attack); \
+			IO ## Char(ffbin, card[i].player_type); \
+			IO ## Char(ffbin, card[i].player_defence); \
+			IO ## Char(ffbin, card[i].player_magicdefence); \
 		} \
-		IO ## Char(ffbin,card[i].points); \
+		IO ## Char(ffbin, card[i].points); \
 	} \
 	if (PPF) PPFEndScanStep();
 
-#define MACRO_CARD_IOFUNCTIONSET(IO,SEEK,READ,PPF) \
+#define MACRO_CARD_IOFUNCTIONSET(IO, SEEK, READ, PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<CARD_SET_AMOUNT;i++) { \
-		for (unsigned int j=0;j<CARD_SET_CAPACITY;j++) { \
-			IO ## Char(ffbin,set[i].card[j]); \
-		} \
-	} \
+	for (i = 0; i < CARD_SET_AMOUNT; i++) \
+		for (j = 0; j < CARD_SET_CAPACITY; j++) \
+			IO ## Char(ffbin, set[i].card[j]); \
 	if (PPF) PPFEndScanStep();
 
-#define MACRO_CARD_IOFUNCTIONDECK(IO,SEEK,READ,PPF) \
+#define MACRO_CARD_IOFUNCTIONDECK(IO, SEEK, READ, PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<CARD_DECK_AMOUNT;i++) { \
-		IO ## Char(ffbin,deck[i].set); \
-		IO ## Char(ffbin,deck[i].difficulty); \
+	for (i = 0; i < CARD_DECK_AMOUNT; i++) { \
+		IO ## Char(ffbin, deck[i].set); \
+		IO ## Char(ffbin, deck[i].difficulty); \
 	} \
 	if (PPF) PPFEndScanStep();
 
 
 
 void CardDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
-	unsigned int i;
+	unsigned int i, j;
 	name_space_total = config.card_name_space_total;
 	card.resize(CARD_AMOUNT);
 	for (i = 0; i < CARD_AMOUNT; i++) {
@@ -139,51 +137,51 @@ void CardDataSet::WriteSteamText(fstream& ffbin, bool onlymodified, bool asmes, 
 }
 
 void CardDataSet::WriteSteamData(fstream& ffbin, unsigned int datatype) {
-	unsigned int i;
-	if (datatype==0) {
-		MACRO_CARD_IOFUNCTIONCARDDATA(HWSWrite,HWSSeek,false,false,false)
-	} else if (datatype==1) {
-		MACRO_CARD_IOFUNCTIONDECK(HWSWrite,HWSSeek,false,false)
+	unsigned int i, j;
+	if (datatype == 0) {
+		MACRO_CARD_IOFUNCTIONCARDDATA(HWSWrite, HWSSeek, false, false, false)
+	} else if (datatype == 1) {
+		MACRO_CARD_IOFUNCTIONDECK(HWSWrite, HWSSeek, false, false)
 	} else {
-		MACRO_CARD_IOFUNCTIONSET(HWSWrite,HWSSeek,false,false)
+		MACRO_CARD_IOFUNCTIONSET(HWSWrite, HWSSeek, false, false)
 	}
 }
 
 void CardDataSet::Write(fstream& ffbin, ConfigurationSet& config) {
-	unsigned int i;
+	unsigned int i, j;
 	UpdateOffset();
 	ffbin.seekg(config.card_text_offset);
-	MACRO_CARD_IOFUNCTIONNAME(FFIXWrite,FFIXSeek,false,false)
+	MACRO_CARD_IOFUNCTIONNAME(FFIXWrite, FFIXSeek, false, false)
 	ffbin.seekg(config.card_stat_offset[0]);
-	MACRO_CARD_IOFUNCTIONCARDDATA(FFIXWrite,FFIXSeek,false,false,false)
+	MACRO_CARD_IOFUNCTIONCARDDATA(FFIXWrite, FFIXSeek, false, false, false)
 	ffbin.seekg(config.card_stat_offset[1]);
-	MACRO_CARD_IOFUNCTIONCARDDATA(FFIXWrite,FFIXSeek,false,false,true)
+	MACRO_CARD_IOFUNCTIONCARDDATA(FFIXWrite, FFIXSeek, false, false, true)
 	ffbin.seekg(config.card_set_offset);
-	MACRO_CARD_IOFUNCTIONSET(FFIXWrite,FFIXSeek,false,false)
+	MACRO_CARD_IOFUNCTIONSET(FFIXWrite, FFIXSeek, false, false)
 	ffbin.seekg(config.card_deck_offset);
-	MACRO_CARD_IOFUNCTIONDECK(FFIXWrite,FFIXSeek,false,false)
+	MACRO_CARD_IOFUNCTIONDECK(FFIXWrite, FFIXSeek, false, false)
 }
 
 void CardDataSet::WritePPF(fstream& ffbin, ConfigurationSet& config) {
-	unsigned int i;
+	unsigned int i, j;
 	UpdateOffset();
 	ffbin.seekg(config.card_text_offset);
-	MACRO_CARD_IOFUNCTIONNAME(PPFStepAdd,FFIXSeek,false,true)
+	MACRO_CARD_IOFUNCTIONNAME(PPFStepAdd, FFIXSeek, false, true)
 	ffbin.seekg(config.card_stat_offset[0]);
-	MACRO_CARD_IOFUNCTIONCARDDATA(PPFStepAdd,FFIXSeek,false,true,false)
+	MACRO_CARD_IOFUNCTIONCARDDATA(PPFStepAdd, FFIXSeek, false, true, false)
 	ffbin.seekg(config.card_stat_offset[1]);
-	MACRO_CARD_IOFUNCTIONCARDDATA(PPFStepAdd,FFIXSeek,false,true,true)
+	MACRO_CARD_IOFUNCTIONCARDDATA(PPFStepAdd, FFIXSeek, false, true, true)
 	ffbin.seekg(config.card_set_offset);
-	MACRO_CARD_IOFUNCTIONSET(PPFStepAdd,FFIXSeek,false,true)
+	MACRO_CARD_IOFUNCTIONSET(PPFStepAdd, FFIXSeek, false, true)
 	ffbin.seekg(config.card_deck_offset);
-	MACRO_CARD_IOFUNCTIONDECK(PPFStepAdd,FFIXSeek,false,true)
+	MACRO_CARD_IOFUNCTIONDECK(PPFStepAdd, FFIXSeek, false, true)
 }
 
 int CardDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 	bool useextendedtype = false;
 	SteamLanguage lg;
 	int txtspace;
-	int i;
+	int i, j;
 	int res = 0;
 	uint16_t version;
 	uint16_t namesize = name_space_total;
@@ -203,16 +201,19 @@ int CardDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 			HWSReadChar(ffbin, lg);
 			while (lg != STEAM_LANGUAGE_NONE) {
 				HWSReadFlexibleShort(ffbin, txtspace, useextendedtype);
-				tmppos = ffbin.tellg();
-				if (GetGameType() != GAME_TYPE_PSX)
-					for (i = 0; i < CARD_AMOUNT; i++)
-						SteamReadFF9String(ffbin, card[i].name, lg);
-				else if (lg == GetSteamLanguage())
-					for (i = 0; i < CARD_AMOUNT; i++) {
-						SteamReadFF9String(ffbin, card[i].name);
-						card[i].name.SteamToPSX();
+				if (txtspace > 0) {
+					tmppos = ffbin.tellg();
+					if (GetGameType() != GAME_TYPE_PSX) {
+						for (i = 0; i < CARD_AMOUNT; i++)
+							SteamReadFF9String(ffbin, card[i].name, lg);
+					} else if (lg == GetSteamLanguage()) {
+						for (i = 0; i < CARD_AMOUNT; i++) {
+							SteamReadFF9String(ffbin, card[i].name);
+							card[i].name.SteamToPSX();
+						}
 					}
-				ffbin.seekg(tmppos + txtspace);
+					ffbin.seekg(tmppos + txtspace);
+				}
 				HWSReadChar(ffbin, lg);
 			}
 		}
@@ -240,7 +241,7 @@ int CardDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 }
 
 void CardDataSet::WriteHWS(fstream& ffbin) {
-	unsigned int i;
+	unsigned int i, j;
 	UpdateOffset();
 	HWSWriteShort(ffbin, CARD_HWS_VERSION);
 	uint16_t namesize = name_space_total;
@@ -249,8 +250,9 @@ void CardDataSet::WriteHWS(fstream& ffbin) {
 	if (GetGameType() == GAME_TYPE_PSX) {
 		MACRO_CARD_IOFUNCTIONNAME(HWSWrite, HWSSeek, false, false)
 	} else {
-		SteamLanguage lg;
-		for (lg = STEAM_LANGUAGE_US; lg < STEAM_LANGUAGE_AMOUNT; lg++) {
+		for (SteamLanguage lg = STEAM_LANGUAGE_US; lg < STEAM_LANGUAGE_AMOUNT; lg++) {
+			if (!hades::STEAM_LANGUAGE_SAVE_LIST[lg])
+				continue;
 			HWSWriteChar(ffbin, lg);
 			HWSWriteFlexibleShort(ffbin, GetSteamTextSizeGeneric(card, &CardDataStruct::name, false, lg), true);
 			for (i = 0; i < CARD_AMOUNT; i++)

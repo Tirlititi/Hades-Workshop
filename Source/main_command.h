@@ -128,12 +128,16 @@ public:
 	bool ProcessCommandLoad(wxArrayString args);
 	bool ProcessCommandImport(wxArrayString args);
 	bool ProcessCommandExport(wxArrayString args);
+	bool ProcessCommandParse(wxArrayString args);
 	bool ProcessCommandSave(wxArrayString args);
 	bool ProcessCommandSelect(wxArrayString args);
 	bool ProcessCommandSet(wxArrayString args);
 	bool ProcessCommandHelp(wxArrayString args);
 
 private:
+	set<int> parse_section;
+	vector<ScriptDataStruct*> parse_scripts;
+
 	void OnAddCommand(wxCommandEvent& event);
 	void OnClosing(wxCloseEvent& event);
 };

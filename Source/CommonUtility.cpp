@@ -6,6 +6,8 @@
 #include "File_Manipulation.h"
 #include "Database_CSV.h"
 
+#define CSV_CUSTOM_FIELD_LOOP_FAILSAFE 10
+
 //==========================
 // Non-templates
 
@@ -341,6 +343,8 @@ bool MemoriaUtility::GetModifiedSteamTexts(vector<int>* result, int32_t baseasse
 		return false;
 	uint32_t assetoffset = GetGameConfiguration()->meta_res.GetFileOffsetByIndex(baseassetid[lang]);
 	uint32_t assetsize = GetGameConfiguration()->meta_res.GetFileSizeByIndex(baseassetid[lang]);
+	bool issupporttext = GetGameSaveSet() != NULL && GetGameSaveSet()->sectionloaded[DATA_SECTION_SUPPORT] && (void*)&objlist == (void*)&GetGameSaveSet()->supportset->support;
+	bool iskeyitemtext = GetGameSaveSet() != NULL && GetGameSaveSet()->sectionloaded[DATA_SECTION_ITEM] && (void*)&objlist == (void*)&GetGameSaveSet()->itemset->key_item;
 	int strindex = 0;
 	FF9String str;
 	resourcearchive.seekg(assetoffset);
@@ -350,8 +354,12 @@ bool MemoriaUtility::GetModifiedSteamTexts(vector<int>* result, int32_t baseasse
 			result->push_back(strindex);
 		strindex++;
 	}
-	while (strindex < (int)objlist.size())
-		result->push_back(strindex++);
+	while (strindex < (int)objlist.size()) {
+		if ((issupporttext && strindex == 63 && stringifier(objlist[strindex]).length() == 0) || (iskeyitemtext && strindex == 255 && stringifier(objlist[strindex]).length() == 0))
+			strindex++;
+		else
+			result->push_back(strindex++);
+	}
 	resourcearchive.close();
 	return true;
 }
@@ -426,9 +434,45 @@ bool MemoriaUtility::GenerateCSVGeneric(wxString modfolder, wxString csvpath, wx
 	return true;
 }
 
+bool ParseCustomFieldValues(wxString& entry, map<wxString, wxString>& objfield, map<wxString, wxString>& defaultfields) {
+	wxString result = _(L"");
+	bool foundfield = false;
+	int codepos = entry.Find(L'%');
+	while (codepos != wxNOT_FOUND) {
+		result += entry.Left(codepos);
+		entry = entry.Mid(codepos + 1);
+		int codeend = entry.Find(L'%');
+		if (codeend == wxNOT_FOUND) {
+			entry = result + _(L"%") + entry;
+			return foundfield;
+		}
+		wxString fieldname = entry.Left(codeend);
+		entry = entry.Mid(codeend + 1);
+		if (auto search = objfield.find(fieldname); search != objfield.end()) {
+			result += search->second;
+			foundfield = true;
+		} else if (auto search = defaultfields.find(fieldname); search != defaultfields.end()) {
+			result += search->second;
+			foundfield = true;
+		} else {
+			result += _(L"%") + fieldname + _(L"%");
+		}
+		codepos = entry.Find(L'%');
+	}
+	entry = result + entry;
+	return foundfield;
+}
 
 template<typename T>
-wxString MemoriaUtility::GenerateDatabaseEntryGeneric(T& obj, wxString format) {
+wxString MemoriaUtility::GenerateDatabaseEntryGeneric(T& obj, wxString format, map<wxString, wxString>* defaultfields) {
+	if (defaultfields != NULL) {
+		int safecounter = CSV_CUSTOM_FIELD_LOOP_FAILSAFE;
+		while (safecounter > 0 && ParseCustomFieldValues(format, obj.custom_field, *defaultfields))
+			safecounter--;
+		if (safecounter == 0) {
+			// "Infinite" loop failsafe
+		}
+	}
 	wxString result = _(L"");
 	int codepos = format.Find(L'%');
 	while (codepos != wxNOT_FOUND) {
@@ -446,22 +490,16 @@ wxString MemoriaUtility::GenerateDatabaseEntryGeneric(T& obj, wxString format) {
 }
 
 template<typename T>
-bool MemoriaUtility::GenerateDatabaseGeneric(wxString modfolder, wxString path, wxString header, wxString sep, wxString footer, vector<T>& objlist, wxString format, bool skipnonmodified) {
-	wxArrayString basecsv;
+bool MemoriaUtility::GenerateDatabaseGeneric(wxString modfolder, wxString path, wxString header, vector<T>& objlist, wxString format, map<wxString, wxString>& defaultfields, bool skipnonmodified) {
 	wxString entryline, content = _(L"");
+	wxArrayString basecsv;
 	if (skipnonmodified && GetGameConfiguration() != NULL)
 		basecsv = MemoriaUtility::LoadCSVLines(_(GetGameConfiguration()->steam_dir_assets) + path);
-	bool addsep = false;
 	for (int i = 0; i < (int)objlist.size(); i++) {
-		entryline = GenerateDatabaseEntryGeneric(objlist[i], format);
-		if (entryline.IsEmpty())
-			continue;
 		if (skipnonmodified && objlist[i].CompareWithCSV(basecsv))
 			continue;
-		if (addsep)
-			content += sep;
+		entryline = GenerateDatabaseEntryGeneric(objlist[i], format, &defaultfields);
 		content += entryline;
-		addsep = true;
 	}
 	if (content.IsEmpty())
 		return true;
@@ -471,8 +509,6 @@ bool MemoriaUtility::GenerateDatabaseGeneric(wxString modfolder, wxString path, 
 	if (!csvfile.Write(header))
 		return false;
 	if (!csvfile.Write(content))
-		return false;
-	if (!csvfile.Write(footer))
 		return false;
 	csvfile.Close();
 	return true;
@@ -489,8 +525,8 @@ bool MemoriaUtility::GenerateDatabaseGeneric(wxString modfolder, wxString path, 
 #define MACRO_INSTANTIATE_GetModifiedSteamTexts(T) template bool MemoriaUtility::GetModifiedSteamTexts(vector<int>* result, int32_t baseassetid[], vector<T>& objlist, function<wstring(T&)> stringifier, SteamLanguage lang);
 #define MACRO_INSTANTIATE_ConcatenateStrings(T) template string ConcatenateStrings(string delim, vector<T>& objlist, function<string(T)> stringifier, bool escapeempty);
 #define MACRO_INSTANTIATE_GenerateCSVGeneric(T) template bool MemoriaUtility::GenerateCSVGeneric(wxString modfolder, wxString csvpath, wxString csvheader, vector<T>& objlist, function<wxString(T&, int)> entryconstructor, function<bool(wxString, wxString)> entrycomparer, bool skipnonmodified);
-#define MACRO_INSTANTIATE_GenerateDatabaseEntryGeneric(T) template wxString MemoriaUtility::GenerateDatabaseEntryGeneric(T& obj, wxString format);
-#define MACRO_INSTANTIATE_GenerateDatabaseGeneric(T) template bool MemoriaUtility::GenerateDatabaseGeneric(wxString modfolder, wxString path, wxString header, wxString sep, wxString footer, vector<T>& objlist, wxString format, bool skipnonmodified);
+#define MACRO_INSTANTIATE_GenerateDatabaseEntryGeneric(T) template wxString MemoriaUtility::GenerateDatabaseEntryGeneric(T& obj, wxString format, map<wxString, wxString>* defaultfields);
+#define MACRO_INSTANTIATE_GenerateDatabaseGeneric(T) template bool MemoriaUtility::GenerateDatabaseGeneric(wxString modfolder, wxString path, wxString header, vector<T>& objlist, wxString format, map<wxString, wxString>& defaultfields, bool skipnonmodified);
 #define MACRO_INSTANTIATE_GenerateCSVAndDatabase(T) MACRO_INSTANTIATE_GenerateCSVGeneric(T) MACRO_INSTANTIATE_GenerateDatabaseEntryGeneric(T) MACRO_INSTANTIATE_GenerateDatabaseGeneric(T)
 
 MACRO_INSTANTIATE_InsertAtId(SpellDataStruct)

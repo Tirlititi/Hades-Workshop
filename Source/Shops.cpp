@@ -10,9 +10,9 @@
 #define SHOP_HWS_VERSION 4
 
 #define SHOP_CSV_CHECK L"%id%;%item_list%"
-#define SHOP_CSV_DEFAULT L"Shop %id%;" SHOP_CSV_CHECK L";# Shop %id% - %name%"
+#define SHOP_CSV_DEFAULT L"Shop %id%;" SHOP_CSV_CHECK L";# Shop %id% - %name%\n"
 #define SYNTH_CSV_CHECK L"%id%;%shop_list%;%price%;%synthesized%;%recipe_list%"
-#define SYNTH_CSV_DEFAULT L"%synthesized_name%;" SYNTH_CSV_CHECK
+#define SYNTH_CSV_DEFAULT L"%synthesized_name%;" SYNTH_CSV_CHECK L"\n"
 
 const unsigned int steam_shop_field_size[] = { 16, 8, 8, 8, 8 };
 const unsigned int steam_shop_field_array[] = { 0, 2, 0, 0, 0 };
@@ -33,8 +33,6 @@ wxString ShopDataStruct::GetFieldValue(wxString fieldname) {
 		}
 		return result;
 	}
-	if (auto search = custom_field.find(fieldname); search != custom_field.end()) return search->second;
-	if (auto search = parent->custom_field_shop.find(fieldname); search != parent->custom_field_shop.end()) return search->second;
 	return _(L"");
 }
 
@@ -59,8 +57,6 @@ wxString SynthesisDataStruct::GetFieldValue(wxString fieldname) {
 	if (fieldname.IsSameAs("synthesized")) return wxString::Format(wxT("%d"), synthesized);
 	if (fieldname.IsSameAs("shop_list")) return wxString::Format(wxT("%s"), ConcatenateStrings<int>(", ", shops, static_cast<string(*)(int)>(&to_string), true));
 	if (fieldname.IsSameAs("recipe_list")) return wxString::Format(wxT("%s"), ConcatenateStrings<int>(", ", recipe, static_cast<string(*)(int)>(&to_string), true));
-	if (auto search = custom_field.find(fieldname); search != custom_field.end()) return search->second;
-	if (auto search = parent->custom_field_synthesis.find(fieldname); search != parent->custom_field_synthesis.end()) return search->second;
 	return _(L"");
 }
 
@@ -270,9 +266,9 @@ void ShopDataSet::GenerateCSharp(vector<string>& buffer) {
 }
 
 bool ShopDataSet::GenerateCSV(string basefolder) {
-	if (!MemoriaUtility::GenerateDatabaseGeneric<ShopDataStruct>(_(basefolder), _(HADES_STRING_CSV_SHOP_FILE), csv_header_shop, _(L"\n"), _(L"\n"), shop, csv_format_shop, true))
+	if (!MemoriaUtility::GenerateDatabaseGeneric<ShopDataStruct>(_(basefolder), _(HADES_STRING_CSV_SHOP_FILE), csv_header_shop, shop, csv_format_shop, custom_field_shop, true))
 		return false;
-	if (!MemoriaUtility::GenerateDatabaseGeneric<SynthesisDataStruct>(_(basefolder), _(HADES_STRING_CSV_SYNTHESIS_FILE), csv_header_synthesis, _(L"\n"), _(L"\n"), synthesis, csv_format_synthesis, true))
+	if (!MemoriaUtility::GenerateDatabaseGeneric<SynthesisDataStruct>(_(basefolder), _(HADES_STRING_CSV_SYNTHESIS_FILE), csv_header_synthesis, synthesis, csv_format_synthesis, custom_field_synthesis, true))
 		return false;
 	if (hades::PREFER_EXPORT_AS_PATCHES && GetGameSaveSet() != NULL && GetGameSaveSet()->sectionloaded[DATA_SECTION_ITEM]) {
 		ItemDataSet* itemset = GetGameSaveSet()->itemset;

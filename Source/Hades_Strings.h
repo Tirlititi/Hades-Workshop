@@ -176,6 +176,7 @@ extern vector<wxString> HADES_STRING_PRINTABLE_CHARTABLE;
 
 #define HADES_STRING_TEXT_WARNING_ID	L"Warning: this ID is already used by another text"
 #define HADES_STRING_TEXT_WARNING_KEY	L"Warning: this key is already used by another text"
+#define HADES_STRING_TEXT_MISMATCH_UID	"[Should split to text %d] "
 #define HADES_STRING_TEXT_INVALID_LANG	L""
 #define HADES_STRING_TEXT_REACH_LIMIT	L"The text size has reached his limit.\n"\
 										L"Maybe you can try to remove unused text\n"\
@@ -203,7 +204,9 @@ extern vector<vector<wxString>> HADES_STRING_SPELL_TARGET_INFO;
 												L" - it is not linked to any command yet."
 
 //-- Stat Panel
-#define HADES_STRING_STAT_LEVEL	L"Level Progression"
+#define HADES_STRING_STAT_LEVEL				L"Level Progression"
+#define HADES_STRING_STAT_CONFIRM_DELETE	L"Are you sure you want to delete?"
+#define HADES_STRING_STAT_CONFIRM_PASTE		L"Are you sure you want to replace the whole ability list?"
 extern vector<vector<wxString>> HADES_STRING_CHARACTER_DEFAULT_NAME;
 
 //-- Party Special
@@ -276,6 +279,7 @@ extern vector<wxString> HADES_STRING_SYNTH_NAME;
 #define HADES_STRING_SCRIPT_OOC_LANGUAGE		" - Line %u: Lang specification '%s' is ruled out from the context\n"
 #define HADES_STRING_SCRIPT_FALLBACK_LANGUAGE	" - Line %u: Lang specification '%s' is provided in multiple fallbacks\n"
 #define HADES_STRING_SCRIPT_UNEXPECT_LANGUAGE	" - Line %u: Unexpected lang specification before a '%s'\n"
+#define HADES_STRING_SCRIPT_UNEXPECT_SINGLELANG	" - Line %u: Unexpected lang specification in Single Language Mode\n"
 #define HADES_STRING_SCRIPT_EXPECT_LANGUAGE		" - Line %u: Expected a lang specification as fallback from previous line\n"
 #define HADES_STRING_SCRIPT_EMPTY				" - Line %u: Empty argument\n"
 #define HADES_STRING_SCRIPT_NOT_AN_OPCODE		" - Line %u: The code '%s' cannot be an opcode because its ID 0x%x ends with 0xff\n"
@@ -351,6 +355,7 @@ extern vector<wxString> HADES_STRING_SYNTH_NAME;
 #define HADES_STRING_BATCH_SCRIPT_FUNCTION			"In %s of %s:\n"
 #define HADES_STRING_BATCH_SCRIPT_NOGLOBALS			" - Line %u: Unexpected 'endglobals' out of a global variable block\n"
 #define HADES_STRING_BATCH_SCRIPT_NOLOCALS			" - Line %u: Unexpected 'endlocals' out of a local variable block\n"
+#define HADES_STRING_BATCH_INVALID_OPTION			" - Line %u: '%s' is not recognised as an option\n"
 
 //-- World Maps
 #define HADES_STRING_WORLD_BATTLE_NAME		"Battle Spot %d"

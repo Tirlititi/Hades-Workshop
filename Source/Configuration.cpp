@@ -1,6 +1,6 @@
 #include "Configuration.h"
 
-#define MAIN_HWS_VERSION 100
+#define MAIN_HWS_VERSION 101
 
 #include <filesystem>
 #include <algorithm>
@@ -1890,7 +1890,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 							if (i == config.enmy_script_file[lang][j]) {
 								if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && saveset.enemyset->script[j]->IsDataModified(lang)) {
 									filedest.seekg(unitydataoff[i]);
-									saveset.enemyset->script[j]->WriteSteam(filedest, lang);
+									saveset.enemyset->script[j]->WriteSteam(filedest, false, lang);
 								}
 								j = config.enmy_amount;
 								break;
@@ -1901,7 +1901,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 							if (i == config.field_script_file[lang][j]) {
 								if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && saveset.fieldset->script_data[j]->IsDataModified(lang)) {
 									filedest.seekg(unitydataoff[i]);
-									saveset.fieldset->script_data[j]->WriteSteam(filedest, lang);
+									saveset.fieldset->script_data[j]->WriteSteam(filedest, false, lang);
 								}
 								j = config.field_amount;
 								break;
@@ -1912,7 +1912,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 							if (i == config.world_script_file[lang][j]) {
 								if (hades::STEAM_LANGUAGE_SAVE_LIST[lang] && saveset.worldset->script[j]->IsDataModified(lang)) {
 									filedest.seekg(unitydataoff[i]);
-									saveset.worldset->script[j]->WriteSteam(filedest, lang);
+									saveset.worldset->script[j]->WriteSteam(filedest, false, lang);
 								}
 								j = config.world_amount;
 								break;
@@ -1932,7 +1932,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 						MainFrame::MakeDirForFile(fname); \
 						filedest.open(fname.c_str(), ios::out | ios::binary); \
 						if (!filedest.is_open()) return 3; \
-						saveset.DATA[i]->WriteSteam(filedest, lang); \
+						saveset.DATA[i]->WriteSteam(filedest, true, lang); \
 						filedest.close(); \
 					} \
 				}
@@ -2493,7 +2493,7 @@ int CreateSteamCustomBattleAssets(string destfolder, ConfigurationSet& config, S
 		filedest.open(fname.c_str(), ios::out | ios::binary);
 		if (!filedest.is_open())
 			return 3;
-		saveset.enemyset->script[basebattle]->WriteSteam(filedest, lang);
+		saveset.enemyset->script[basebattle]->WriteSteam(filedest, true, lang);
 		filedest.close();
 		fname = destfolder + "FF9_Data\\EmbeddedAsset\\Text\\" + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[lang].ToStdString() + "\\Battle\\" + to_string(scriptid) + ".mes";
 		MainFrame::MakeDirForFile(fname);
@@ -2539,7 +2539,7 @@ int CreateSteamCustomFieldAssets(string destfolder, ConfigurationSet& config, Sa
 		filedest.open(fname.c_str(), ios::out | ios::binary);
 		if (!filedest.is_open())
 			return 3;
-		saveset.fieldset->script_data[basefield]->WriteSteam(filedest, lang);
+		saveset.fieldset->script_data[basefield]->WriteSteam(filedest, true, lang);
 		filedest.close();
 	}
 	filebase.open(config.steam_dir_assets + "p0data1" + to_string(config.field_file_id[basefield]) + ".bin", ios::in | ios::binary);

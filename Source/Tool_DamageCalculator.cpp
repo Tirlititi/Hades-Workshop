@@ -3009,7 +3009,7 @@ void ToolDamageCalculatorPlayer::SelectBaseCharacter(int sel) {
 		SelectBaseSpell(SPELL_ATTACK_ID);
 	} else if (parent->cddata->saveset.sectionloaded[DATA_SECTION_STAT] && parent->cddata->saveset.sectionloaded[DATA_SECTION_CMD]) {
 		int spellid = 0;
-		CommandSetDataStruct& cmd = parent->cddata->statset.command_list[parent->cddata->statset.GetCharacterCommandsIndices(sel)[0]];
+		CommandSetDataStruct& cmd = parent->cddata->statset.GetCharacterCommandsById(parent->cddata->statset.initial_stat[sel].command_ids[0]);
 		CommandDataStruct& firstcmd = parent->cddata->cmdset.GetCommandById(cmd.first_command);
 		CommandDataStruct& secondcmd = parent->cddata->cmdset.GetCommandById(cmd.second_command);
 		if (firstcmd.panel == COMMAND_PANEL_SPELL && firstcmd.spell_amount > 0)

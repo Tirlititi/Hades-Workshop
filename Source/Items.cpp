@@ -11,15 +11,15 @@
 #define ITEM_HWS_VERSION 3
 
 #define ITEM_CSV_CHECK L"%id%;%weapon_id%;%armor_id%;%usable_id%;%price%;%sell_price%;%icon%;%icon_color%;%equip_position%;%stat_id%;%skill_list%;%type_weapon%;%type_armlet%;%type_helmet%;%type_armor%;%type_accessory%;%type_item%;%type_gem%;%type_usable%;%menu_position%;%zidane%;%vivi%;%garnet%;%steiner%;%freya%;%quina%;%eiko%;%amarant%;%cinna%;%marcus%;%blank%;%beatrix%"
-#define ITEM_CSV_DEFAULT ITEM_CSV_CHECK L";# %id% - %name%"
+#define ITEM_CSV_DEFAULT ITEM_CSV_CHECK L";# %id% - %name%\n"
 #define WEAPON_CSV_CHECK L"%weapon_id%;%weapon_category%;%weapon_status%;%weapon_model%;%weapon_script%;%weapon_power%;%weapon_element%;%weapon_accuracy%;%weapon_offset1%;%weapon_offset2%;%weapon_hitsfx%;%weapon_textures%"
-#define WEAPON_CSV_DEFAULT L"%name%;" WEAPON_CSV_CHECK
+#define WEAPON_CSV_DEFAULT L"%name%;" WEAPON_CSV_CHECK L"\n"
 #define ARMOR_CSV_CHECK L"%armor_id%;%armor_defence%;%armor_evade%;%armor_magic_defence%;%armor_magic_evade%"
-#define ARMOR_CSV_DEFAULT L"%name%;" ARMOR_CSV_CHECK
+#define ARMOR_CSV_DEFAULT L"%name%;" ARMOR_CSV_CHECK L"\n"
 #define USABLE_CSV_CHECK L"%usable_id%;%usable_target_type%;%usable_target_default_ally%;%usable_panel%;%usable_model%;%usable_target_for_dead%;%usable_target_default_on_dead%;%usable_script%;%usable_power%;%usable_accuracy%;%usable_element%;%usable_status%"
-#define USABLE_CSV_DEFAULT USABLE_CSV_CHECK L";# %id% - %name%"
+#define USABLE_CSV_DEFAULT USABLE_CSV_CHECK L";# %id% - %name%\n"
 #define ITEMSTAT_CSV_CHECK L"%stat_id%;%stat_speed%;%stat_strength%;%stat_magic%;%stat_spirit%;%stat_element_boost%;%stat_element_immune%;%stat_element_absorb%;%stat_element_half%;%stat_element_weak%"
-#define ITEMSTAT_CSV_DEFAULT L"Bonus %stat_id% - %name%;" ITEMSTAT_CSV_CHECK
+#define ITEMSTAT_CSV_DEFAULT L"Bonus %stat_id% - %name%;" ITEMSTAT_CSV_CHECK L"\n"
 
 const unsigned int steam_item_field_size[] = { 16, 16, 16, 16, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8 };
 const unsigned int steam_item_field_array[] = { 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0 };
@@ -231,8 +231,6 @@ wxString ItemDataStruct::GetFieldValue(wxString fieldname) {
 		if (fieldname.IsSameAs("stat_element_half")) return wxString::Format(wxT("%d"), stat.element_half);
 		if (fieldname.IsSameAs("stat_element_weak")) return wxString::Format(wxT("%d"), stat.element_weak);
 	}
-	if (auto search = custom_field.find(fieldname); search != custom_field.end()) return search->second;
-	if (auto search = parent->custom_field.find(fieldname); search != parent->custom_field.end()) return search->second;
 	return _(L"");
 }
 
@@ -1079,15 +1077,15 @@ bool ItemDataSet::GenerateCSV(string basefolder) {
 			i--;
 		}
 	}
-	if (!MemoriaUtility::GenerateDatabaseGeneric<ItemDataStruct>(_(basefolder), _(HADES_STRING_CSV_ITEM_FILE), csv_header, _(L"\n"), _(L"\n"), item, csv_format, true))
+	if (!MemoriaUtility::GenerateDatabaseGeneric<ItemDataStruct>(_(basefolder), _(HADES_STRING_CSV_ITEM_FILE), csv_header, item, csv_format, custom_field, true))
 		return false;
-	if (!MemoriaUtility::GenerateDatabaseGeneric<ItemDataStruct>(_(basefolder), _(HADES_STRING_CSV_WEAPON_FILE), csv_header_weapon, _(L"\n"), _(L"\n"), weaponmap, csv_format_weapon, true))
+	if (!MemoriaUtility::GenerateDatabaseGeneric<ItemDataStruct>(_(basefolder), _(HADES_STRING_CSV_WEAPON_FILE), csv_header_weapon, weaponmap, csv_format_weapon, custom_field, true))
 		return false;
-	if (!MemoriaUtility::GenerateDatabaseGeneric<ItemDataStruct>(_(basefolder), _(HADES_STRING_CSV_ARMOR_FILE), csv_header_armor, _(L"\n"), _(L"\n"), armormap, csv_format_armor, true))
+	if (!MemoriaUtility::GenerateDatabaseGeneric<ItemDataStruct>(_(basefolder), _(HADES_STRING_CSV_ARMOR_FILE), csv_header_armor, armormap, csv_format_armor, custom_field, true))
 		return false;
-	if (!MemoriaUtility::GenerateDatabaseGeneric<ItemDataStruct>(_(basefolder), _(HADES_STRING_CSV_USABLE_FILE), csv_header_usable, _(L"\n"), _(L"\n"), usablemap, csv_format_usable, true))
+	if (!MemoriaUtility::GenerateDatabaseGeneric<ItemDataStruct>(_(basefolder), _(HADES_STRING_CSV_USABLE_FILE), csv_header_usable, usablemap, csv_format_usable, custom_field, true))
 		return false;
-	if (!MemoriaUtility::GenerateDatabaseGeneric<ItemDataStruct>(_(basefolder), _(HADES_STRING_CSV_ITEMSTAT_FILE), csv_header_stat, _(L"\n"), _(L"\n"), statmap, csv_format_stat, true))
+	if (!MemoriaUtility::GenerateDatabaseGeneric<ItemDataStruct>(_(basefolder), _(HADES_STRING_CSV_ITEMSTAT_FILE), csv_header_stat, statmap, csv_format_stat, custom_field, true))
 		return false;
 	if (hades::PREFER_EXPORT_AS_PATCHES && GetGameSaveSet() != NULL && GetGameSaveSet()->sectionloaded[DATA_SECTION_SPELL] && GetGameSaveSet()->sectionloaded[DATA_SECTION_SUPPORT]) {
 		SupportDataSet* supportset = GetGameSaveSet()->supportset;

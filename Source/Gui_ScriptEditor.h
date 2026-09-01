@@ -52,7 +52,7 @@ public:
 	void GenerateFunctionList();
 	void GenerateEntryNames();
 	void EntryChangeName(unsigned int entry, wxString newname);
-	wxString GetArgumentDescription(int64_t argvalue, uint8_t argtype);
+	wxString GetArgumentDescription(int64_t argvalue, uint8_t argtype, SteamLanguage displaylang = GetSteamLanguage());
 	wxString GetFunctionName(unsigned int entry, uint16_t functype);
 
 	// Change entry_selection and function_selection
@@ -62,12 +62,12 @@ public:
 	void ApplyParsedFunction();
 	
 	void AddFunction(int entryid, int funcidpos, uint16_t functype);
-	void AddEntry(int entrypos, uint8_t entrytype);
+	void AddEntry(int entrypos, uint8_t entrytype, int playerlink);
 
 private:
 	bool GenerateFunctionStrings_Rec(wxString& str, ScriptFunction& func, unsigned int* funcpos, unsigned int& oppos, bool* contextlangs, unsigned int tabpos, int blocktype, unsigned int* endfuncpos, unsigned int* endblockpos, bool appendcomment = false);
-	wxString ConvertVarArgument(ScriptArgument& arg, wxArrayString* argcomment = NULL, bool* ignorenulljump = NULL);
-	void GenerateStandardLine(wxString& str, ScriptOperation* op, wxArrayString* argcommentptr);
+	wxString ConvertVarArgument(ScriptArgument& arg, SteamLanguage displaylang, wxArrayString* argcomment = NULL, bool* ignorenulljump = NULL);
+	void GenerateStandardLine(wxString& str, ScriptOperation* op, SteamLanguage displaylang, wxArrayString* argcommentptr);
 	void UpdateGlobalLocalStrings(int ignoreentry = -1);
 };
 
@@ -75,7 +75,7 @@ class ScriptEditDialog : public ScriptEditWindow, public ScriptEditHandler {
 public:
 	wxArrayString modellist_str;
 	wxArrayString defaultbool_str;
-	wxArrayString text_str;
+	wxArrayString text_str[STEAM_LANGUAGE_AMOUNT];
 	wxArrayString battle_str;
 	wxArrayString field_str;
 	wxArrayString attack_str;
@@ -154,9 +154,9 @@ private:
 
 	wxCheckBox* ArgCreateFlag(wxString& arg, unsigned int id);
 	wxTextCtrl* ArgCreateText(wxString& arg, unsigned int id);
-	wxSpinCtrl* ArgCreateSpin(wxString& arg, unsigned int id, int size, bool sign);
+	wxSpinCtrl* ArgCreateSpin(wxString& arg, unsigned int id, int size, bool sign, long ctrlstyle = wxSP_ARROW_KEYS);
 	wxChoice* ArgCreateChoice(wxString& arg, unsigned int id, vector<uint16_t*> choiceid, wxArrayString& choicestr);
-	wxWindow* ArgCreateDialog(wxString& arg, unsigned int id, vector<uint16_t*> choiceid, wxArrayString& choicestr);
+	wxWindow* ArgCreateDialog(wxString& arg, unsigned int id, vector<uint16_t*> choiceid, wxArrayString* choicestr);
 	wxPanel* ArgCreateDiscFieldChoice(wxString& arg, unsigned int id, vector<uint16_t*> choiceid, wxArrayString& choicestr);
 	wxPanel* ArgCreateFlags(wxString& arg, unsigned int id, unsigned int amount, wxArrayString& flagstr);
 	wxPanel* ArgCreatePosition(wxArrayString& arg, unsigned int id);
@@ -201,9 +201,11 @@ public:
 	int script_type;
 	unsigned int base_entry_amount;
 	unsigned int entry_amount;
-	bool has_character_entry; // should always be true
 	vector<int> base_entry_id;
 	vector<uint8_t> entry_type;
+	vector<int> entry_player_link;
+	vector<uint8_t> entry_append_mode;
+	vector<bool> entry_is_custom;
 	
 	ScriptEditEntryDialog(wxWindow* parent, ScriptDataStruct& scpt, int scpttype);
 	~ScriptEditEntryDialog();
@@ -212,11 +214,15 @@ public:
 
 private:
 	uint32_t extra_size;
-	
+	wxString warningStr;
+
+	wxString GetEntryName(int index);
+	void UpdateWarning(int index);
 	void DisplayEntry(int sel);
 	
 	void OnEntrySelect(wxCommandEvent& event);
 	void OnSpinCtrl(wxSpinEvent& event);
+	void OnCheckBox(wxCommandEvent& event);
 	void OnButtonClick(wxCommandEvent& event);
 };
 

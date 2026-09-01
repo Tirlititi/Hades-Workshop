@@ -389,7 +389,7 @@ struct ModelDataStruct {
 
     bool Read(fstream& f, GameObjectHierarchy* gohier);
 	bool Write(fstream& f);
-	int Export(const char* outputname, int format);
+	int Export(const char* outputname, int format, bool exportanims = true);
 	int Import(const char* inputname, bool retrieveanims = true);
 
 	void SetupPostImportData(fstream& filebase, vector<unsigned int> folderfiles, UnityArchiveMetaData archivelist[UNITY_ARCHIVE_AMOUNT], vector<int64_t> additionalinfotoavoid, UnityArchiveAssetBundle* animbundle = NULL, GameObjectHierarchy* basehierarchy = NULL, int mergepolicy = 0);

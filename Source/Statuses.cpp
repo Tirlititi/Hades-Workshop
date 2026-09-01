@@ -8,7 +8,7 @@
 #define STATUSDATA_HWS_VERSION 0
 
 #define STATUSDATA_CSV_CHECK L"%id%;%priority%;%tick%;%duration%;%clear%;%immune%;%sps%;%sps_attach%;%sps_pos%;%shp%;%shp_attach%;%shp_pos%;%color_kind%;%color_priority%;%color%"
-#define STATUSDATA_CSV_DEFAULT L"%name%;" STATUSDATA_CSV_CHECK L";# %name%"
+#define STATUSDATA_CSV_DEFAULT L"%name%;" STATUSDATA_CSV_CHECK L";# %name%\n"
 
 wxString StatusDataStruct::GetFieldValue(wxString fieldname) {
 	if (fieldname.IsSameAs("name")) return wxString::Format(wxT("%s"), name.str_nice);
@@ -27,8 +27,6 @@ wxString StatusDataStruct::GetFieldValue(wxString fieldname) {
 	if (fieldname.IsSameAs("color_kind")) return wxString::Format(wxT("%d"), color_kind);
 	if (fieldname.IsSameAs("color_priority")) return wxString::Format(wxT("%d"), color_priority);
 	if (fieldname.IsSameAs("color")) return wxString::Format(wxT("%d, %d, %d"), color[0], color[1], color[2]);
-	if (auto search = custom_field.find(fieldname); search != custom_field.end()) return search->second;
-	if (auto search = parent->custom_field.find(fieldname); search != parent->custom_field.end()) return search->second;
 	return _(L"");
 }
 
@@ -69,5 +67,5 @@ void StatusDataSet::WriteHWS(fstream& ffhws) {
 }
 
 bool StatusDataSet::GenerateCSV(string basefolder) {
-	return MemoriaUtility::GenerateDatabaseGeneric<StatusDataStruct>(_(basefolder), _(HADES_STRING_CSV_STATUSDATA_FILE), csv_header, _(L"\n"), _(L"\n"), status, csv_format, true);
+	return MemoriaUtility::GenerateDatabaseGeneric<StatusDataStruct>(_(basefolder), _(HADES_STRING_CSV_STATUSDATA_FILE), csv_header, status, csv_format, custom_field, true);
 }

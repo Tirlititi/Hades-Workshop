@@ -7,60 +7,122 @@
 #include "Database_CSV.h"
 #include "CommonUtility.h"
 
-#define STAT_HWS_VERSION 4
+#define STAT_HWS_VERSION 5
+
+#define STAT_EQUIPSET_NONE 15
 
 #define BTLPARAM_CSV_CHECK L"%id%;%avatar_sprite%;%model%;%model_trance%;%trance_color%;%animations%;%attack_sfx%;%weapon_bone%;%shadow_bone%, %shadow_size%;%status_bone%;%status_offy%;%status_offz%;%attack_sound%"
-#define BTLPARAM_CSV_DEFAULT BTLPARAM_CSV_CHECK L";# %name%"
+#define BTLPARAM_CSV_DEFAULT BTLPARAM_CSV_CHECK L";# %name%\n"
 #define CHARPARAM_CSV_CHECK L"%id%;%default_row%;%default_winpose%;%default_category%;%commandset%;%equipset%;%battle_param%;%name_keyword%"
-#define CHARPARAM_CSV_DEFAULT CHARPARAM_CSV_CHECK L";# %name%"
+#define CHARPARAM_CSV_DEFAULT CHARPARAM_CSV_CHECK L";# %name%\n"
 #define INITSTAT_CSV_CHECK L"%id%;%speed%;%strength%;%magic%;%spirit%;%magic_stone%"
-#define INITSTAT_CSV_DEFAULT L"%name%;" INITSTAT_CSV_CHECK
+#define INITSTAT_CSV_DEFAULT L"%name%;" INITSTAT_CSV_CHECK L"\n"
 #define INITEQUIP_CSV_CHECK L"%id%;%weapon%;%head%;%wrist%;%armor%;%accessory%"
-#define INITEQUIP_CSV_DEFAULT L"%name%;" INITEQUIP_CSV_CHECK L";# %id% - %name% (%description%)"
+#define INITEQUIP_CSV_DEFAULT L"%name%;" INITEQUIP_CSV_CHECK L";# %id% - %name% (%description%)\n"
 #define ABILLIST_CSV_CHECK L"%ability%;%ap_cost%"
-#define ABILLIST_CSV_DEFAULT ABILLIST_CSV_CHECK L";# %ability_name%"
+#define ABILLIST_CSV_DEFAULT ABILLIST_CSV_CHECK L";# %ability_name%\n"
 #define CMDLIST_CSV_CHECK L"%id%;%attack_command%;%defend_command%;%first_command%;%second_command%;%item_command%;%change_command%;%attack_command_trance%;%defend_command_trance%;%first_command_trance%;%second_command_trance%;%item_command_trance%;%change_command_trance%"
-#define CMDLIST_CSV_DEFAULT CMDLIST_CSV_CHECK L";# %name%: %description%"
+#define CMDLIST_CSV_DEFAULT CMDLIST_CSV_CHECK L";# %name%: %description%\n"
 #define LEVEL_CSV_CHECK L"%exp%;%hp%;%mp%"
-#define LEVEL_CSV_DEFAULT LEVEL_CSV_CHECK L";# Level %level%"
+#define LEVEL_CSV_DEFAULT LEVEL_CSV_CHECK L";# Level %level%\n"
 
 int CharBattleParameterStruct::GetCharacterIndex() {
-	if (id >= 19)
-		return id - 7;
-	unsigned int paramcount;
-	for (int charindex = 0; charindex < 12; charindex++) {
-		int* params = parent->GetCharacterBattleParametersIndices(charindex, &paramcount);
-		for (unsigned int i = 0; i < paramcount; i++)
-			if (params[i] == id)
-				return charindex;
+	unsigned int i, j;
+	for (i = 0; i < parent->initial_stat.size(); i++) {
+		vector<int> ids = parent->initial_stat[i].battle_param_ids;
+		for (j = 0; j < ids.size(); j++)
+			if (ids[j] == id)
+				return i;
 	}
 	return -1;
 }
 
 int InitialEquipDataStruct::GetCharacterIndex() {
-	if (id >= 16)
-		return id - 4;
-	unsigned int equipcount;
-	for (int charindex = 0; charindex < 12; charindex++) {
-		int* equips = parent->GetCharacterEquipmentsIndices(charindex, &equipcount);
-		for (unsigned int i = 0; i < equipcount; i++)
-			if (equips[i] == id)
-				return charindex;
+	if (id == STAT_EQUIPSET_NONE)
+		return 0;
+	unsigned int i, j;
+	for (i = 0; i < parent->initial_stat.size(); i++) {
+		vector<int> ids = parent->initial_stat[i].equip_ids;
+		for (j = 0; j < ids.size(); j++)
+			if (ids[j] == id)
+				return i;
 	}
 	return -1;
 }
 
 int AbilitySetDataStruct::GetCharacterIndex() {
-	if (id >= 20)
-		return id - 8;
-	unsigned int cmdcount;
-	for (int charindex = 0; charindex < 12; charindex++) {
-		int* cmds = parent->GetCharacterCommandsIndices(charindex, &cmdcount);
-		for (unsigned int i = 0; i < cmdcount; i++)
-			if (cmds[i] == id)
-				return charindex;
+	unsigned int i, j;
+	for (i = 0; i < parent->initial_stat.size(); i++) {
+		vector<int> ids = parent->initial_stat[i].command_ids;
+		for (j = 0; j < ids.size(); j++)
+			if (ids[j] == id)
+				return i;
 	}
 	return -1;
+}
+
+void AbilitySetDataStruct::InsertEntry(int pos, const AbilityEntryDataStruct& newentry) {
+	entry.insert(entry.begin() + pos, newentry);
+	entry[pos].parent = this;
+	for (unsigned int i = pos; i < entry.size(); i++)
+		entry[i].id = i;
+}
+
+void AbilitySetDataStruct::EraseEntry(int pos) {
+	entry.erase(entry.begin() + pos);
+	for (unsigned int i = pos; i < entry.size(); i++)
+		entry[i].id = i;
+}
+
+void InitializeDefaultAssociations(vector<InitialStatDataStruct>& statlist) {
+	statlist[0].battle_param = L"WeaponShape == 1 ? 0 : 1";
+	statlist[1].battle_param = L"2";
+	statlist[2].battle_param = L"ScenarioCounter < 10300 ? (WeaponShape == 7 ? 4 : 3) : (WeaponShape == 7 ? 6 : 5)";
+	statlist[3].battle_param = L"7";
+	statlist[4].battle_param = L"12";
+	statlist[5].battle_param = L"9";
+	statlist[6].battle_param = L"WeaponShape == 7 ? 11 : 10";
+	statlist[7].battle_param = L"13";
+	statlist[8].battle_param = L"14";
+	statlist[9].battle_param = L"15";
+	statlist[10].battle_param = L"(1500 <= ScenarioCounter && ScenarioCounter < 1600) ? 17 : 16";
+	statlist[11].battle_param = L"18";
+	statlist[0].battle_param_ids = { 0, 1 };
+	statlist[1].battle_param_ids = { 2 };
+	statlist[2].battle_param_ids = { 3, 4, 5, 6 };
+	statlist[3].battle_param_ids = { 7, 8 };
+	statlist[4].battle_param_ids = { 12 };
+	statlist[5].battle_param_ids = { 9 };
+	statlist[6].battle_param_ids = { 10, 11 };
+	statlist[7].battle_param_ids = { 13 };
+	statlist[8].battle_param_ids = { 14 };
+	statlist[9].battle_param_ids = { 15 };
+	statlist[10].battle_param_ids = { 16, 17 };
+	statlist[11].battle_param_ids = { 18 };
+	statlist[0].equip_ids = { 0, STAT_EQUIPSET_NONE };
+	statlist[1].equip_ids = { 1, STAT_EQUIPSET_NONE };
+	statlist[2].equip_ids = { 2, STAT_EQUIPSET_NONE };
+	statlist[3].equip_ids = { 3, STAT_EQUIPSET_NONE };
+	statlist[4].equip_ids = { 4, STAT_EQUIPSET_NONE };
+	statlist[5].equip_ids = { 5, STAT_EQUIPSET_NONE };
+	statlist[6].equip_ids = { 6, STAT_EQUIPSET_NONE };
+	statlist[7].equip_ids = { 7, STAT_EQUIPSET_NONE };
+	statlist[8].equip_ids = { 8, STAT_EQUIPSET_NONE };
+	statlist[9].equip_ids = { 9, 12, STAT_EQUIPSET_NONE };
+	statlist[10].equip_ids = { 10, 14, STAT_EQUIPSET_NONE };
+	statlist[11].equip_ids = { 11, 13, STAT_EQUIPSET_NONE };
+	statlist[0].command_ids = { 0, 16 };
+	statlist[1].command_ids = { 1 };
+	statlist[2].command_ids = { 2 };
+	statlist[3].command_ids = { 3 };
+	statlist[4].command_ids = { 4 };
+	statlist[5].command_ids = { 5 };
+	statlist[6].command_ids = { 6 };
+	statlist[7].command_ids = { 7 };
+	statlist[8].command_ids = { 8, 9, 17 };
+	statlist[9].command_ids = { 10, 11, 18 };
+	statlist[10].command_ids = { 12, 13, 19 };
+	statlist[11].command_ids = { 14, 15 };
 }
 
 void CommandSetDataStruct::InitializeDefaultCommands() {
@@ -71,21 +133,19 @@ void CommandSetDataStruct::InitializeDefaultCommands() {
 }
 
 int CommandSetDataStruct::GetCharacterIndex() {
-	if (id >= 20)
-		return id - 8;
-	unsigned int cmdcount;
-	for (int charindex = 0; charindex < 12; charindex++) {
-		int* cmds = parent->GetCharacterCommandsIndices(charindex, &cmdcount);
-		for (unsigned int i = 0; i < cmdcount; i++)
-			if (cmds[i] == id)
-				return charindex;
+	unsigned int i, j;
+	for (i = 0; i < parent->initial_stat.size(); i++) {
+		vector<int> ids = parent->initial_stat[i].command_ids;
+		for (j = 0; j < ids.size(); j++)
+			if (ids[j] == id)
+				return i;
 	}
 	return -1;
 }
 
 wxString CharBattleParameterStruct::GetFieldValue(wxString fieldname) {
 	if (fieldname.IsSameAs("id")) return wxString::Format(wxT("%d"), id);
-	if (fieldname.IsSameAs("name")) return wxString::Format(wxT("%s"), parent->GetCharacterById(GetCharacterIndex()).default_name.str_nice);
+	if (fieldname.IsSameAs("name")) return wxString::Format(wxT("%s"), parent->initial_stat[GetCharacterIndex()].default_name.str_nice);
 	if (fieldname.IsSameAs("avatar_sprite")) return wxString::Format(wxT("%s"), avatar_sprite);
 	if (fieldname.IsSameAs("model")) return wxString::Format(wxT("%s"), model);
 	if (fieldname.IsSameAs("model_trance")) return wxString::Format(wxT("%s"), model_trance);
@@ -104,8 +164,6 @@ wxString CharBattleParameterStruct::GetFieldValue(wxString fieldname) {
 	if (fieldname.IsSameAs("status_offy")) return wxString::Format(wxT("%d, %d, %d, %d, %d, %d"), status_offy[0], status_offy[1], status_offy[2], status_offy[3], status_offy[4], status_offy[5]);
 	if (fieldname.IsSameAs("status_offz")) return wxString::Format(wxT("%d, %d, %d, %d, %d, %d"), status_offz[0], status_offz[1], status_offz[2], status_offz[3], status_offz[4], status_offz[5]);
 	if (fieldname.IsSameAs("attack_sound")) return attack_sound_disabled ? wxEmptyString : wxString::Format(wxT("%d, %d"), attack_sound[0], attack_sound[1]);
-	if (auto search = custom_field.find(fieldname); search != custom_field.end()) return search->second;
-	if (auto search = parent->custom_field_battle_param.find(fieldname); search != parent->custom_field_battle_param.end()) return search->second;
 	return _(L"");
 }
 
@@ -129,12 +187,24 @@ wxString InitialStatDataStruct::GetFieldValue(wxString fieldname) {
 	if (fieldname.IsSameAs("default_row")) return wxString::Format(wxT("%d"), default_row);
 	if (fieldname.IsSameAs("default_winpose")) return wxString::Format(wxT("%d"), default_winpose);
 	if (fieldname.IsSameAs("default_category")) return wxString::Format(wxT("%d"), default_category);
-	if (fieldname.IsSameAs("commandset")) return wxString::Format(wxT("%d"), parent->GetCharacterCommandsIndices(id, NULL)[0]);
-	if (fieldname.IsSameAs("equipset")) return wxString::Format(wxT("%d"), parent->GetCharacterEquipmentsIndices(id, NULL)[0]);
 	if (fieldname.IsSameAs("battle_param")) return wxString::Format(wxT("%s"), battle_param);
 	if (fieldname.IsSameAs("name_keyword")) return wxString::Format(wxT("%s"), name_keyword);
-	if (auto search = custom_field.find(fieldname); search != custom_field.end()) return search->second;
-	if (auto search = parent->custom_field_initial_stat.find(fieldname); search != parent->custom_field_initial_stat.end()) return search->second;
+	if (fieldname.StartsWith("commandset")) {
+		int index = 0;
+		if (fieldname.Len() > 10)
+			index = wxAtoi(fieldname.Mid(10));
+		if (index < 0 || index >= (int)command_ids.size())
+			index = 0;
+		return wxString::Format(wxT("%d"), command_ids[index]);
+	}
+	if (fieldname.StartsWith("equipset")) {
+		int index = 0;
+		if (fieldname.Len() > 8)
+			index = wxAtoi(fieldname.Mid(8));
+		if (index < 0 || index >= (int)equip_ids.size())
+			index = 0;
+		return wxString::Format(wxT("%d"), equip_ids[index]);
+	}
 	return _(L"");
 }
 
@@ -154,7 +224,7 @@ bool InitialStatDataStruct::CompareWithCSV(wxArrayString entries) {
 
 wxString InitialEquipDataStruct::GetFieldValue(wxString fieldname) {
 	if (fieldname.IsSameAs("id")) return wxString::Format(wxT("%d"), id);
-	if (fieldname.IsSameAs("name")) return wxString::Format(wxT("%s"), parent->GetCharacterById(GetCharacterIndex()).default_name.str_nice);
+	if (fieldname.IsSameAs("name")) return wxString::Format(wxT("%s"), parent->initial_stat[GetCharacterIndex()].default_name.str_nice);
 	if (fieldname.IsSameAs("description")) {
 		wxString result = _(L"");
 		if (GetGameSaveSet() != NULL && GetGameSaveSet()->sectionloaded[DATA_SECTION_ITEM]) {
@@ -188,8 +258,6 @@ wxString InitialEquipDataStruct::GetFieldValue(wxString fieldname) {
 	if (fieldname.IsSameAs("wrist")) return wxString::Format(wxT("%d"), wrist == 0xFF ? -1 : wrist);
 	if (fieldname.IsSameAs("armor")) return wxString::Format(wxT("%d"), armor == 0xFF ? -1 : armor);
 	if (fieldname.IsSameAs("accessory")) return wxString::Format(wxT("%d"), accessory == 0xFF ? -1 : accessory);
-	if (auto search = custom_field.find(fieldname); search != custom_field.end()) return search->second;
-	if (auto search = parent->custom_field_initial_equip.find(fieldname); search != parent->custom_field_initial_equip.end()) return search->second;
 	return _(L"");
 }
 
@@ -214,8 +282,6 @@ wxString AbilityEntryDataStruct::GetFieldValue(wxString fieldname) {
 	}
 	if (fieldname.IsSameAs("ability")) return wxString::Format(wxT("%s"), ability.GetStringId());
 	if (fieldname.IsSameAs("ap_cost")) return wxString::Format(wxT("%d"), ap_cost);
-	if (auto search = custom_field.find(fieldname); search != custom_field.end()) return search->second;
-	if (auto search = parent->parent->custom_field_ability_list.find(fieldname); search != parent->parent->custom_field_ability_list.end()) return search->second;
 	return _(L"");
 }
 
@@ -229,7 +295,7 @@ wxString CommandSetDataStruct::GetFieldValue(wxString fieldname) {
 		int charindex = GetCharacterIndex();
 		if (charindex < 0)
 			return _(L"None");
-		return wxString::Format(wxT("%s"), parent->GetCharacterById(charindex).default_name.str_nice);
+		return wxString::Format(wxT("%s"), parent->initial_stat[charindex].default_name.str_nice);
 	}
 	if (fieldname.IsSameAs("description")) {
 		if (GetGameSaveSet() != NULL && GetGameSaveSet()->sectionloaded[DATA_SECTION_CMD]) {
@@ -257,8 +323,6 @@ wxString CommandSetDataStruct::GetFieldValue(wxString fieldname) {
 	if (fieldname.IsSameAs("second_command_trance")) return wxString::Format(wxT("%d"), second_command_trance);
 	if (fieldname.IsSameAs("item_command_trance")) return wxString::Format(wxT("%d"), item_command_trance);
 	if (fieldname.IsSameAs("change_command_trance")) return wxString::Format(wxT("%d"), change_command_trance);
-	if (auto search = custom_field.find(fieldname); search != custom_field.end()) return search->second;
-	if (auto search = parent->custom_field_command_list.find(fieldname); search != parent->custom_field_command_list.end()) return search->second;
 	return _(L"");
 }
 
@@ -276,8 +340,6 @@ wxString LevelDataStruct::GetFieldValue(wxString fieldname) {
 	if (fieldname.IsSameAs("exp")) return wxString::Format(wxT("%u"), exp_table);
 	if (fieldname.IsSameAs("hp")) return wxString::Format(wxT("%d"), hp_table);
 	if (fieldname.IsSameAs("mp")) return wxString::Format(wxT("%d"), mp_table);
-	if (auto search = custom_field.find(fieldname); search != custom_field.end()) return search->second;
-	if (auto search = parent->custom_field_level.find(fieldname); search != parent->custom_field_level.end()) return search->second;
 	return _(L"");
 }
 
@@ -341,142 +403,56 @@ int InitialStatDataStruct::SetDefaultName(FF9String& newvalue) {
 	return 0;
 }
 
-int character_equip_set[3];
-int* StatDataSet::GetCharacterEquipmentsIndices(int charindex, unsigned int* amount) {
-	character_equip_set[0] = charindex;
-	if (charindex < 9) {
-		character_equip_set[1] = EQUIP_SET_AMOUNT - 1;
-		if (amount)
-			*amount = 2;
-	} else if (charindex == 9) {
-		character_equip_set[1] = 12;
-		character_equip_set[2] = EQUIP_SET_AMOUNT - 1;
-		if (amount)
-			*amount = 3;
-	} else if (charindex == 10) {
-		character_equip_set[1] = 14;
-		character_equip_set[2] = EQUIP_SET_AMOUNT - 1;
-		if (amount)
-			*amount = 3;
-	} else if (charindex == 11) {
-		character_equip_set[1] = 13;
-		character_equip_set[2] = EQUIP_SET_AMOUNT - 1;
-		if (amount)
-			*amount = 3;
-	} else {
-		character_equip_set[0] = charindex + 4;
-		character_equip_set[1] = EQUIP_SET_AMOUNT - 1;
-		if (amount)
-			*amount = 2;
-	}
-	return character_equip_set;
+InitialEquipDataStruct& StatDataSet::GetCharacterEquipmentsById(int equipid) {
+	for (unsigned int i = 0; i < initial_equip.size(); i++)
+		if (equipid == initial_equip[i].id)
+			return initial_equip[i];
+	throw;
 }
 
-int character_command_set[3];
-int* StatDataSet::GetCharacterCommandsIndices(int charindex, unsigned int* amount) {
-	if (charindex == 0) {
-		character_command_set[0] = 0;
-		character_command_set[1] = 16;
-		if (amount)
-			*amount = 2;
-	} else if (charindex < 8) {
-		character_command_set[0] = charindex;
-		if (amount)
-			*amount = 1;
-	} else if (charindex == 8) {
-		character_command_set[0] = 8;
-		character_command_set[1] = 9;
-		character_command_set[2] = 17;
-		if (amount)
-			*amount = 3;
-	} else if (charindex == 9) {
-		character_command_set[0] = 10;
-		character_command_set[1] = 11;
-		character_command_set[2] = 18;
-		if (amount)
-			*amount = 3;
-	} else if (charindex == 10) {
-		character_command_set[0] = 12;
-		character_command_set[1] = 13;
-		character_command_set[2] = 19;
-		if (amount)
-			*amount = 3;
-	} else if (charindex == 11) {
-		character_command_set[0] = 14;
-		character_command_set[1] = 15;
-		if (amount)
-			*amount = 2;
-	} else {
-		character_command_set[0] = charindex + 8;
-		if (amount)
-			*amount = 1;
-	}
-	return character_command_set;
+CommandSetDataStruct& StatDataSet::GetCharacterCommandsById(int cmdid) {
+	for (unsigned int i = 0; i < command_list.size(); i++)
+		if (cmdid == command_list[i].id)
+			return command_list[i];
+	throw;
 }
 
-int character_btlparam_set[4];
-int* StatDataSet::GetCharacterBattleParametersIndices(int charindex, unsigned int* amount) {
-	if (charindex == 0) {
-		character_btlparam_set[0] = 0;
-		character_btlparam_set[1] = 1;
-		if (amount)
-			*amount = 2;
-	} else if (charindex == 1) {
-		character_btlparam_set[0] = 2;
-		if (amount)
-			*amount = 1;
-	} else if (charindex == 2) {
-		character_btlparam_set[0] = 3;
-		character_btlparam_set[1] = 4;
-		character_btlparam_set[2] = 5;
-		character_btlparam_set[3] = 6;
-		if (amount)
-			*amount = 4;
-	} else if (charindex == 3) {
-		character_btlparam_set[0] = 7;
-		character_btlparam_set[1] = 8;
-		if (amount)
-			*amount = 2;
-	} else if (charindex == 4) {
-		character_btlparam_set[0] = 12;
-		if (amount)
-			*amount = 1;
-	} else if (charindex == 5) {
-		character_btlparam_set[0] = 9;
-		if (amount)
-			*amount = 1;
-	} else if (charindex == 6) {
-		character_btlparam_set[0] = 10;
-		character_btlparam_set[1] = 11;
-		if (amount)
-			*amount = 2;
-	} else if (charindex == 7) {
-		character_btlparam_set[0] = 13;
-		if (amount)
-			*amount = 1;
-	} else if (charindex == 8) {
-		character_btlparam_set[0] = 14;
-		if (amount)
-			*amount = 1;
-	} else if (charindex == 9) {
-		character_btlparam_set[0] = 15;
-		if (amount)
-			*amount = 1;
-	} else if (charindex == 10) {
-		character_btlparam_set[0] = 16;
-		character_btlparam_set[1] = 17;
-		if (amount)
-			*amount = 2;
-	} else if (charindex == 11) {
-		character_btlparam_set[0] = 18;
-		if (amount)
-			*amount = 1;
-	} else {
-		character_btlparam_set[0] = charindex + 7;
-		if (amount)
-			*amount = 1;
-	}
-	return character_btlparam_set;
+AbilitySetDataStruct& StatDataSet::GetCharacterAbilitiesById(int abilid) {
+	for (unsigned int i = 0; i < ability_list.size(); i++)
+		if (abilid == ability_list[i].id)
+			return ability_list[i];
+	throw;
+}
+
+CharBattleParameterStruct& StatDataSet::GetCharacterBattleParametersById(int paramid) {
+	for (unsigned int i = 0; i < battle_param.size(); i++)
+		if (paramid == battle_param[i].id)
+			return battle_param[i];
+	throw;
+}
+
+void StatDataSet::FlushUnusedData() {
+	int i;
+	unsigned int j, k;
+	bool flush;
+
+	#define MACRO_STAT_FLUSH_UNUSED(LIST, IDS) \
+		for (i = 0; i < (int)LIST.size(); i++) { \
+			flush = true; \
+			for (j = 0; flush && j < initial_stat.size(); j++) \
+				for (k = 0; flush && k < initial_stat[j].IDS.size(); k++) \
+					if (initial_stat[j].IDS[k] == LIST[i].id) \
+						flush = false; \
+			if (flush) { \
+				LIST.erase(LIST.begin() + i); \
+				i--; \
+			} \
+		}
+
+	MACRO_STAT_FLUSH_UNUSED(initial_equip, equip_ids)
+	MACRO_STAT_FLUSH_UNUSED(ability_list, command_ids)
+	MACRO_STAT_FLUSH_UNUSED(command_list, command_ids)
+	MACRO_STAT_FLUSH_UNUSED(battle_param, battle_param_ids)
 }
 
 int StatDataSet::GetCharacterIndexById(int charid) {
@@ -503,10 +479,27 @@ InitialStatDataStruct& StatDataSet::GetCharacterById(int charid) {
 void StatDataSet::InitializeNewCharacter(int charindex) {
 	InitialStatDataStruct& stat = initial_stat[charindex];
 	int reverseindex = initial_stat.size() - charindex - 1;
-	int i;
+	int equipmaxid = 0, cmdmaxid = 0, parammaxid = 0;
+	unsigned int i, j;
+	for (i = 0; i < initial_stat.size(); i++) {
+		if (i != charindex) {
+			for (j = 0; j < initial_stat[i].equip_ids.size(); j++)
+				if (equipmaxid < initial_stat[i].equip_ids[j])
+					equipmaxid = initial_stat[i].equip_ids[j];
+			for (j = 0; j < initial_stat[i].command_ids.size(); j++)
+				if (cmdmaxid < initial_stat[i].command_ids[j])
+					cmdmaxid = initial_stat[i].command_ids[j];
+			for (j = 0; j < initial_stat[i].battle_param_ids.size(); j++)
+				if (parammaxid < initial_stat[i].battle_param_ids[j])
+					parammaxid = initial_stat[i].battle_param_ids[j];
+		}
+	}
+	stat.battle_param_ids = { parammaxid + 1 };
+	stat.command_ids = { cmdmaxid + 1 };
+	stat.equip_ids = { equipmaxid + 1, STAT_EQUIPSET_NONE };
 	stat.GenerateDefaultName();
 	stat.name_keyword = stat.id < 100 ? L"CH" + to_string(stat.id) : L"C" + to_string(stat.id).substr(0, 3);
-	stat.battle_param = to_wstring(stat.id + 7);
+	stat.battle_param = to_wstring(stat.battle_param_ids[0]);
 	/*stat.avatar_sprite = L"face" + to_string(stat.id + 1);
 	stat.default_row = 0;
 	stat.default_winpose = 0;
@@ -531,7 +524,7 @@ void StatDataSet::InitializeNewCharacter(int charindex) {
 		stat.anim[i] = L"";*/
 	InitialEquipDataStruct equip;
 	equip.parent = this;
-	equip.id = stat.id + 4;
+	equip.id = stat.equip_ids[0];
 	equip.weapon = 0xFF;
 	equip.head = 0xFF;
 	equip.wrist = 0xFF;
@@ -539,7 +532,7 @@ void StatDataSet::InitializeNewCharacter(int charindex) {
 	equip.accessory = 0xFF;
 	AbilitySetDataStruct abil;
 	abil.parent = this;
-	abil.id = stat.id + 8;
+	abil.id = stat.command_ids[0];
 	abil.entry.resize(ABILITY_SET_CAPACITY);
 	for (i = 0; i < ABILITY_SET_CAPACITY; i++) {
 		abil.entry[i].parent = &abil;
@@ -548,41 +541,41 @@ void StatDataSet::InitializeNewCharacter(int charindex) {
 	}
 	CommandSetDataStruct command;
 	command.parent = this;
-	command.id = stat.id + 8;
+	command.id = stat.command_ids[0];
 	command.first_command = 0;
 	command.second_command = 0;
 	command.first_command_trance = 0;
 	command.second_command_trance = 0;
 	command.InitializeDefaultCommands();
-	initial_equip.insert(initial_equip.begin() + initial_equip.size() - reverseindex, equip);
-	ability_list.insert(ability_list.begin() + ability_list.size() - reverseindex, abil);
-	command_list.insert(command_list.begin() + command_list.size() - reverseindex, command);
+	initial_equip.push_back(equip);
+	ability_list.push_back(abil);
+	command_list.push_back(command);
 }
 
-#define MACRO_STAT_IOFUNCTIONNAME(IO,SEEK,READ,PPF) \
+#define MACRO_STAT_IOFUNCTIONNAME(IO, SEEK, READ, PPF) \
 	uint16_t zero16 = 0; \
 	uint32_t txtpos; \
 	if (PPF) PPFInitScanStep(ffbin); \
-	IO ## Short(ffbin,amount); \
-	IO ## Short(ffbin,zero16); \
+	IO ## Short(ffbin, amount); \
+	IO ## Short(ffbin, zero16); \
 	txtpos = ffbin.tellg(); \
-	for (i=0;i<PLAYABLE_CHAR_AMOUNT;i++) { \
-		IO ## Short(ffbin,initial_stat[i].default_name_offset); \
-		IO ## Short(ffbin,initial_stat[i].default_name_size_x); \
+	for (i = 0; i < PLAYABLE_CHAR_AMOUNT; i++) { \
+		IO ## Short(ffbin, initial_stat[i].default_name_offset); \
+		IO ## Short(ffbin, initial_stat[i].default_name_size_x); \
 	} \
 	if (PPF) PPFEndScanStep(); \
-	SEEK(ffbin,txtpos,0); \
-	if (READ) default_name_space_used = PLAYABLE_CHAR_AMOUNT*4; \
-	if (PPF) PPFInitScanStep(ffbin,true,default_name_space_total); \
-	for (i=0;i<PLAYABLE_CHAR_AMOUNT;i++) { \
-		SEEK(ffbin,txtpos,initial_stat[i].default_name_offset); \
-		IO ## FF9String(ffbin,initial_stat[i].default_name); \
+	SEEK(ffbin, txtpos, 0); \
+	if (READ) default_name_space_used = PLAYABLE_CHAR_AMOUNT * 4; \
+	if (PPF) PPFInitScanStep(ffbin, true, default_name_space_total); \
+	for (i = 0; i < PLAYABLE_CHAR_AMOUNT; i++) { \
+		SEEK(ffbin, txtpos, initial_stat[i].default_name_offset); \
+		IO ## FF9String(ffbin, initial_stat[i].default_name); \
 		if (READ) default_name_space_used += initial_stat[i].default_name.length; \
 	} \
 	if (PPF) PPFEndScanStep(); \
-	SEEK(ffbin,txtpos,default_name_space_total);
+	SEEK(ffbin, txtpos, default_name_space_total);
 
-#define MACRO_STAT_IOFUNCTIONEQUIP(IO,SEEK,READ,PPF) \
+#define MACRO_STAT_IOFUNCTIONEQUIP(IO, SEEK, READ, PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
 	for (i = 0; i < equipamount; i++) { \
 		IO ## FlexibleChar(ffbin, initial_equip[i].weapon, useextendedtype); \
@@ -594,23 +587,23 @@ void StatDataSet::InitializeNewCharacter(int charindex) {
 	} \
 	if (PPF) PPFEndScanStep();
 
-#define MACRO_STAT_IOFUNCTIONABIL(IO,SEEK,READ,PPF) \
+#define MACRO_STAT_IOFUNCTIONABIL(IO, SEEK, READ, PPF) \
 	uint8_t rawid; \
 	int abilsetsize = ABILITY_SET_CAPACITY; \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<abilsetamount;i++) { \
+	for (i = 0; i < abilsetamount; i++) { \
 		if (useextendedtype) { \
 			if (!READ) abilsetsize = ability_list[i].entry.size(); \
 			IO ## FlexibleChar(ffbin, abilsetsize, true); \
 			if (READ) { \
 				ability_list[i].entry.resize(abilsetsize); \
-				for (j=0;j<abilsetsize;j++) { \
+				for (j = 0; j < abilsetsize; j++) { \
 					ability_list[i].entry[j].parent = &ability_list[i]; \
 					ability_list[i].entry[j].id = j; \
 				} \
 			} \
 		} \
-		for (j=0;j<abilsetsize;j++) { \
+		for (j = 0; j < abilsetsize; j++) { \
 			if (useextendedtype) { \
 				IO ## Char(ffbin, ability_list[i].entry[j].ability.is_active); \
 				IO ## FlexibleChar(ffbin, ability_list[i].entry[j].ability.id, true); \
@@ -625,7 +618,7 @@ void StatDataSet::InitializeNewCharacter(int charindex) {
 	} \
 	if (PPF) PPFEndScanStep();
 
-#define MACRO_STAT_IOFUNCTIONSTAT(IO,SEEK,READ,PPF) \
+#define MACRO_STAT_IOFUNCTIONSTAT(IO, SEEK, READ, PPF) \
 	uint8_t zero8 = 0; \
 	if (PPF) PPFInitScanStep(ffbin); \
 	for (i = 0; i < charamount; i++) { \
@@ -639,7 +632,7 @@ void StatDataSet::InitializeNewCharacter(int charindex) {
 	} \
 	if (PPF) PPFEndScanStep();
 
-#define MACRO_STAT_IOFUNCTIONLEVEL(IO,SEEK,READ,PPF) \
+#define MACRO_STAT_IOFUNCTIONLEVEL(IO, SEEK, READ, PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
 	for (i = 0; i < MAX_LEVEL; i++) { \
 		IO ## Short(ffbin, level[i].hp_table); \
@@ -647,7 +640,7 @@ void StatDataSet::InitializeNewCharacter(int charindex) {
 	} \
 	if (PPF) PPFEndScanStep();
 
-#define MACRO_STAT_IOFUNCTIONLEVELEXP(IO,SEEK,READ,PPF) \
+#define MACRO_STAT_IOFUNCTIONLEVELEXP(IO, SEEK, READ, PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
 	for (i = 0; i < MAX_LEVEL; i++) { \
 		IO ## Long(ffbin, level[i].exp_table); \
@@ -655,15 +648,15 @@ void StatDataSet::InitializeNewCharacter(int charindex) {
 	} \
 	if (PPF) PPFEndScanStep();
 
-#define MACRO_STAT_IOFUNCTIONSHAREDCOMMAND(IO,SEEK,READ,PPF) \
+#define MACRO_STAT_IOFUNCTIONSHAREDCOMMAND(IO, SEEK, READ, PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
-	IO ## Char(ffbin,shared_command_attack); \
-	IO ## Char(ffbin,shared_command_2); \
-	IO ## Char(ffbin,shared_command_3); \
-	IO ## Char(ffbin,shared_command_item); \
+	IO ## Char(ffbin, shared_command_attack); \
+	IO ## Char(ffbin, shared_command_2); \
+	IO ## Char(ffbin, shared_command_3); \
+	IO ## Char(ffbin, shared_command_item); \
 	if (PPF) PPFEndScanStep();
 
-#define MACRO_STAT_IOFUNCTIONCOMMAND(IO,SEEK,READ,PPF) \
+#define MACRO_STAT_IOFUNCTIONCOMMAND(IO, SEEK, READ, PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
 	for (i = 0; i < cmdsetamount; i++) { \
 		IO ## FlexibleChar(ffbin, command_list[i].first_command, useextendedtype); \
@@ -677,7 +670,7 @@ void StatDataSet::InitializeNewCharacter(int charindex) {
 	} \
 	if (PPF) PPFEndScanStep();
 
-#define MACRO_STAT_IOFUNCTIONTRANCECOMMAND(IO,SEEK,READ,PPF) \
+#define MACRO_STAT_IOFUNCTIONTRANCECOMMAND(IO, SEEK, READ, PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
 	for (i = 0; i < cmdsetamount; i++) { \
 		IO ## FlexibleChar(ffbin, command_list[i].first_command_trance, useextendedtype); \
@@ -756,18 +749,7 @@ void StatDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 		level[i].parent = this;
 		level[i].id = i;
 	}
-	initial_stat[0].battle_param = L"WeaponShape == 1 ? 0 : 1";
-	initial_stat[1].battle_param = L"2";
-	initial_stat[2].battle_param = L"ScenarioCounter < 10300 ? (WeaponShape == 7 ? 4 : 3) : (WeaponShape == 7 ? 6 : 5)";
-	initial_stat[3].battle_param = L"7";
-	initial_stat[4].battle_param = L"12";
-	initial_stat[5].battle_param = L"9";
-	initial_stat[6].battle_param = L"WeaponShape == 7 ? 11 : 10";
-	initial_stat[7].battle_param = L"13";
-	initial_stat[8].battle_param = L"14";
-	initial_stat[9].battle_param = L"15";
-	initial_stat[10].battle_param = L"(1500 <= ScenarioCounter && ScenarioCounter < 1600) ? 17 : 16";
-	initial_stat[11].battle_param = L"18";
+	InitializeDefaultAssociations(initial_stat);
 	if (GetGameType() == GAME_TYPE_PSX) {
 		ffbin.seekg(config.stat_defaultname_offset);
 		MACRO_STAT_IOFUNCTIONNAME(FFIXRead, FFIXSeek, true, false)
@@ -1099,7 +1081,7 @@ void StatDataSet::GenerateCSharp(vector<string>& buffer) {
 	buffer.push_back(leveldb.str());
 }
 
-bool CSV_AbilitySetGenerator(wxString modfolder, wxString csvpath, wxString customheader, wxString format, AbilitySetDataStruct& as) {
+bool CSV_AbilitySetGenerator(wxString modfolder, wxString csvpath, wxString customheader, wxString format, AbilitySetDataStruct& as, map<wxString, wxString>& defaultfields) {
 	wxArrayString abilbasecsv;
 	if (as.id < ABILITY_SET_AMOUNT && GetGameConfiguration() != NULL)
 		abilbasecsv = MemoriaUtility::LoadCSVLines(_(GetGameConfiguration()->steam_dir_assets) + csvpath);
@@ -1119,29 +1101,29 @@ bool CSV_AbilitySetGenerator(wxString modfolder, wxString csvpath, wxString cust
 	wxString header =	!customheader.IsEmpty() ? customheader :
 						as.id < (int)HADES_STRING_CSV_STATABIL_HEADER.size() ? _(HADES_STRING_CSV_STATABIL_HEADER[as.id]) :
 						_(HADES_STRING_CSV_STATABIL_DEFAULT_HEADER);
-	return MemoriaUtility::GenerateDatabaseGeneric<AbilityEntryDataStruct>(modfolder, csvpath, header, _(L"\n"), _(L"\n"), as.entry, format, false);
+	return MemoriaUtility::GenerateDatabaseGeneric<AbilityEntryDataStruct>(modfolder, csvpath, header, as.entry, format, defaultfields, false);
 }
 
 bool StatDataSet::GenerateCSV(string modfolder, string basefolder) {
 	unsigned int i, j;
-	if (!MemoriaUtility::GenerateDatabaseGeneric<CharBattleParameterStruct>(_(basefolder), _(HADES_STRING_CSV_BATTLEPARAM_FILE), csv_header_battle_param, _(L"\n"), _(L"\n"), battle_param, csv_format_battle_param, true))
+	if (!MemoriaUtility::GenerateDatabaseGeneric<CharBattleParameterStruct>(_(basefolder), _(HADES_STRING_CSV_BATTLEPARAM_FILE), csv_header_battle_param, battle_param, csv_format_battle_param, custom_field_battle_param, true))
 		return false;
-	if (!MemoriaUtility::GenerateDatabaseGeneric<InitialStatDataStruct>(_(basefolder), _(HADES_STRING_CSV_CHARPARAM_FILE), csv_header_character_param, _(L"\n"), _(L"\n"), initial_stat, csv_format_character_param, true))
+	if (!MemoriaUtility::GenerateDatabaseGeneric<InitialStatDataStruct>(_(basefolder), _(HADES_STRING_CSV_CHARPARAM_FILE), csv_header_character_param, initial_stat, csv_format_character_param, custom_field_initial_stat, true))
 		return false;
-	if (!MemoriaUtility::GenerateDatabaseGeneric<InitialStatDataStruct>(_(basefolder), _(HADES_STRING_CSV_STATINIT_FILE), csv_header_initial_stat, _(L"\n"), _(L"\n"), initial_stat, csv_format_initial_stat, true))
+	if (!MemoriaUtility::GenerateDatabaseGeneric<InitialStatDataStruct>(_(basefolder), _(HADES_STRING_CSV_STATINIT_FILE), csv_header_initial_stat, initial_stat, csv_format_initial_stat, custom_field_initial_stat, true))
 		return false;
-	if (!MemoriaUtility::GenerateDatabaseGeneric<CommandSetDataStruct>(_(basefolder), _(HADES_STRING_CSV_STATCMD_FILE), csv_header_command_list, _(L"\n"), _(L"\n"), command_list, csv_format_command_list, true))
+	if (!MemoriaUtility::GenerateDatabaseGeneric<CommandSetDataStruct>(_(basefolder), _(HADES_STRING_CSV_STATCMD_FILE), csv_header_command_list, command_list, csv_format_command_list, custom_field_command_list, true))
 		return false;
-	if (!MemoriaUtility::GenerateDatabaseGeneric<InitialEquipDataStruct>(_(basefolder), _(HADES_STRING_CSV_STATEQUIP_FILE), csv_header_initial_equip, _(L"\n"), _(L"\n"), initial_equip, csv_format_initial_equip, true))
+	if (!MemoriaUtility::GenerateDatabaseGeneric<InitialEquipDataStruct>(_(basefolder), _(HADES_STRING_CSV_STATEQUIP_FILE), csv_header_initial_equip, initial_equip, csv_format_initial_equip, custom_field_initial_equip, true))
 		return false;
 	for (i = 0; i < ability_list.size(); i++) {
 		if (ability_list[i].entry.size() == 0) // Theater sets
 			continue;
 		if (ability_list[i].id < (int)HADES_STRING_CSV_STATABIL_FILE.size()) {
-			if (!CSV_AbilitySetGenerator(_(basefolder), _(HADES_STRING_CSV_STATABIL_FILE[ability_list[i].id]), csv_header_ability_list, csv_format_ability_list, ability_list[i]))
+			if (!CSV_AbilitySetGenerator(_(basefolder), _(HADES_STRING_CSV_STATABIL_FILE[ability_list[i].id]), csv_header_ability_list, csv_format_ability_list, ability_list[i], custom_field_ability_list))
 				return false;
 		} else {
-			if (!CSV_AbilitySetGenerator(_(basefolder), wxString::Format(wxT("%s%d.csv"), HADES_STRING_CSV_STATABIL_DEFAULT_FILE, ability_list[i].id), csv_header_ability_list, csv_format_ability_list, ability_list[i]))
+			if (!CSV_AbilitySetGenerator(_(basefolder), wxString::Format(wxT("%s%d.csv"), HADES_STRING_CSV_STATABIL_DEFAULT_FILE, ability_list[i].id), csv_header_ability_list, csv_format_ability_list, ability_list[i], custom_field_ability_list))
 				return false;
 		}
 	}
@@ -1206,7 +1188,7 @@ bool StatDataSet::GenerateCSV(string modfolder, string basefolder) {
 			}
 		}
 	}
-	if (generatelevels && !MemoriaUtility::GenerateDatabaseGeneric<LevelDataStruct>(_(basefolder), _(HADES_STRING_CSV_STATLEVEL_FILE), csv_header_level, _(L"\n"), _(L"\n"), level, csv_format_level, false))
+	if (generatelevels && !MemoriaUtility::GenerateDatabaseGeneric<LevelDataStruct>(_(basefolder), _(HADES_STRING_CSV_STATLEVEL_FILE), csv_header_level, level, csv_format_level, custom_field_level, false))
 		return false;
 	return true;
 }
@@ -1419,18 +1401,41 @@ int StatDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 				HWSReadCSVFields(ffbin, battle_param[i].custom_field);
 		}
 		for (i = 0; i < charamount; i++) {
-			int equipcount;
+			int vectorsize;
 			HWSReadWString(ffbin, initial_stat[i].name_keyword);
 			HWSReadChar(ffbin, initial_stat[i].default_row);
 			HWSReadChar(ffbin, initial_stat[i].default_winpose);
 			HWSReadChar(ffbin, initial_stat[i].default_category);
 			if (version >= 4)
 				HWSReadWString(ffbin, initial_stat[i].battle_param);
-			HWSReadFlexibleChar(ffbin, equipcount, true);
-			initial_stat[i].equip_patch.resize(equipcount);
-			for (j = 0; j < equipcount; j++)
+			HWSReadFlexibleChar(ffbin, vectorsize, true);
+			initial_stat[i].equip_patch.resize(vectorsize);
+			for (j = 0; j < vectorsize; j++)
 				HWSReadFlexibleChar(ffbin, initial_stat[i].equip_patch[j], true);
+			if (version >= 5) {
+				HWSReadFlexibleChar(ffbin, vectorsize, true);
+				initial_stat[i].equip_ids.resize(vectorsize);
+				for (j = 0; j < vectorsize; j++)
+					HWSReadFlexibleChar(ffbin, initial_stat[i].equip_ids[j], true);
+				HWSReadFlexibleChar(ffbin, vectorsize, true);
+				initial_stat[i].command_ids.resize(vectorsize);
+				for (j = 0; j < vectorsize; j++)
+					HWSReadFlexibleChar(ffbin, initial_stat[i].command_ids[j], true);
+				HWSReadFlexibleChar(ffbin, vectorsize, true);
+				initial_stat[i].battle_param_ids.resize(vectorsize);
+				for (j = 0; j < vectorsize; j++)
+					HWSReadFlexibleChar(ffbin, initial_stat[i].battle_param_ids[j], true);
+			}
 		}
+	}
+	if (version < 5) {
+		for (i = PLAYABLE_CHAR_AMOUNT; i < charamount; i++) {
+			initial_stat[i].battle_param_ids = { i + 7 };
+			initial_stat[i].command_ids = { i + 8 };
+			initial_stat[i].equip_ids = { i + 4, STAT_EQUIPSET_NONE };
+		}
+		if (charamount >= PLAYABLE_CHAR_AMOUNT) // Should always be the case
+			InitializeDefaultAssociations(initial_stat);
 	}
 	for (i = 0; i < (int)nonmodifiedbtl.size(); i++)
 		InsertAtId(battle_param, nonmodifiedbtl[i], nonmodifiedbtl[i].id);
@@ -1544,6 +1549,15 @@ void StatDataSet::WriteHWS(fstream& ffbin) {
 		HWSWriteFlexibleChar(ffbin, initial_stat[i].equip_patch.size(), true);
 		for (j = 0; j < (int)initial_stat[i].equip_patch.size(); j++)
 			HWSWriteFlexibleChar(ffbin, initial_stat[i].equip_patch[j], true);
+		HWSWriteFlexibleChar(ffbin, initial_stat[i].equip_ids.size(), true);
+		for (j = 0; j < (int)initial_stat[i].equip_ids.size(); j++)
+			HWSWriteFlexibleChar(ffbin, initial_stat[i].equip_ids[j], true);
+		HWSWriteFlexibleChar(ffbin, initial_stat[i].command_ids.size(), true);
+		for (j = 0; j < (int)initial_stat[i].command_ids.size(); j++)
+			HWSWriteFlexibleChar(ffbin, initial_stat[i].command_ids[j], true);
+		HWSWriteFlexibleChar(ffbin, initial_stat[i].battle_param_ids.size(), true);
+		for (j = 0; j < (int)initial_stat[i].battle_param_ids.size(); j++)
+			HWSWriteFlexibleChar(ffbin, initial_stat[i].battle_param_ids[j], true);
 	}
 	default_name_space_total = defnamesize;
 }
@@ -1551,6 +1565,7 @@ void StatDataSet::WriteHWS(fstream& ffbin) {
 void StatDataSet::UpdateOffset() {
 	uint16_t j;
 	int i;
+	FlushUnusedData();
 	if (GetGameType() == GAME_TYPE_PSX) {
 		j = PLAYABLE_CHAR_AMOUNT * 4;
 		for (i = 0; i < PLAYABLE_CHAR_AMOUNT; i++) {

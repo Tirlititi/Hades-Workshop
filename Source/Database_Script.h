@@ -60,10 +60,11 @@ extern map<wstring, int> SCRIPT_ARG_TYPE_MAP;
 #define AT_POSITION_X		32
 #define AT_POSITION_Y		33
 #define AT_POSITION_Z		34
-#define AT_MODELCODE		35
-#define AT_WORLDCODE		36
-#define AT_SOUNDCODE		37
-#define AT_SPSCODE			38
+#define AT_ANGLE			35
+#define AT_MODELCODE		36
+#define AT_WORLDCODE		37
+#define AT_SOUNDCODE		38
+#define AT_SPSCODE			39
 #define AT_ANIMATION		40
 #define AT_ANIMFLAG			41
 #define AT_DECK				42

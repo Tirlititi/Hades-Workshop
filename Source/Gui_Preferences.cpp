@@ -33,6 +33,8 @@ PreferencesDialog::PreferencesDialog(wxWindow* parent) :
 	background_resolution(32),
 	lang_change_allowed(true),
 	prefer_export_as_patches(false),
+	enable_battle_entry_edit(false),
+	show_script_comments(false),
 	CharmapNames() {
 	unsigned int i;
 	save_lang_box[STEAM_LANGUAGE_US] = m_steamsaveus;
@@ -195,6 +197,8 @@ bool PreferencesDialog::SavePreferences() {
 		if (save_lang[i]) { configfileout.Write(comma + wxString::Format(wxT("%s"), HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[i])); comma = _(L","); }
 	configfileout.Write(_(L"\nBackgroundResolution=") + wxString::Format(wxT("%i"), background_resolution));
 	configfileout.Write(_(L"\nPreferExportAsPatches=") + wxString::Format(wxT("%i"), prefer_export_as_patches ? 1 : 0));
+	configfileout.Write(_(L"\nEnableBattleEntryEdit=") + wxString::Format(wxT("%i"), enable_battle_entry_edit ? 1 : 0));
+	configfileout.Write(_(L"\nShowScriptComments=") + wxString::Format(wxT("%i"), show_script_comments ? 1 : 0));
 	configfileout.Write(_(L"\n\n") + after);
 	configfileout.Close();
 	return true;
@@ -280,6 +284,12 @@ bool PreferencesDialog::ReadConfiguration() {
 		cfgfield = cfgsection;
 		if (SearchField(cfgfield, _(L"PreferExportAsPatches"), TmpArgs, argcount))
 			prefer_export_as_patches = wxAtoi(TmpArgs[argcount]) > 0;
+		cfgfield = cfgsection;
+		if (SearchField(cfgfield, _(L"EnableBattleEntryEdit"), TmpArgs, argcount))
+			enable_battle_entry_edit = wxAtoi(TmpArgs[argcount]) > 0;
+		cfgfield = cfgsection;
+		if (SearchField(cfgfield, _(L"ShowScriptComments"), TmpArgs, argcount))
+			show_script_comments = wxAtoi(TmpArgs[argcount]) > 0;
 	}
 	m_gamealphabet->Clear();
 	m_gamealphabet->Append(CharmapNames);
@@ -293,6 +303,8 @@ bool PreferencesDialog::ReadConfiguration() {
 		save_lang_box[i]->SetValue(save_lang[i]);
 	m_backgroundresolution->SetValue(background_resolution);
 	m_preferexportaspatches->SetValue(prefer_export_as_patches);
+	m_enablebattleentryedit->SetValue(enable_battle_entry_edit);
+	m_showscriptcomments->SetValue(show_script_comments);
 	UpdateSteamLanguageAvailability();
 	return true;
 }
@@ -321,6 +333,11 @@ bool PreferencesDialog::SaveMainFrameConfig(MainFrameBase* configwindow) {
 	configfileout.Write(_(L"\nEnemyID=") + wxString::Format(wxT("%i"), configwindow->m_enemyshowid->IsChecked()));
 	configfileout.Write(_(L"\nEnemySimilar=") + wxString::Format(wxT("%i"), configwindow->m_editsimilarenemy->IsChecked()));
 	configfileout.Write(_(L"\nFieldID=") + wxString::Format(wxT("%i"), configwindow->m_fieldshowid->IsChecked()));
+	comma = _(L"");
+	configfileout.Write(_(L"\nPreferScriptAppendMode="));
+	if (configwindow->m_fieldpreferappendmode->IsChecked()) { configfileout.Write(comma + _(L"field")); comma = _(L","); }
+	if (configwindow->m_worldpreferappendmode->IsChecked()) { configfileout.Write(comma + _(L"world")); comma = _(L","); }
+	if (configwindow->m_battlepreferappendmode->IsChecked()) { configfileout.Write(comma + _(L"enemy")); comma = _(L","); }
 	configfileout.Write(_(L"\n\n") + after);
 	configfileout.Close();
 	return true;
@@ -365,6 +382,17 @@ bool PreferencesDialog::LoadMainFrameConfig(MainFrameBase* configwindow) {
 		cfgfield = cfgstr;
 		if (SearchField(cfgfield, _(L"FieldID"), TmpArgs, argcount))
 			configwindow->m_fieldshowid->Check(!TmpArgs[argcount].IsSameAs(_(L"0")));
+		cfgfield = cfgstr;
+		if (SearchField(cfgfield, _(L"PreferScriptAppendMode"), TmpArgs, argcount)) {
+			wxStringTokenizer scriptlist(TmpArgs[argcount], L",");
+			wxString scripttoken;
+			while (scriptlist.HasMoreTokens()) {
+				scripttoken = scriptlist.GetNextToken();
+				if (scripttoken.IsSameAs(_(L"field")))			configwindow->m_fieldpreferappendmode->Check();
+				else if (scripttoken.IsSameAs(_(L"world")))		configwindow->m_worldpreferappendmode->Check();
+				else if (scripttoken.IsSameAs(_(L"enemy")))		configwindow->m_battlepreferappendmode->Check();
+			}
+		}
 	}
 	return true;
 }
@@ -1218,6 +1246,8 @@ void PreferencesDialog::OnButtonClick(wxCommandEvent& event) {
 			save_lang[i] = save_lang_box[i]->IsChecked();
 		background_resolution = m_backgroundresolution->GetValue();
 		prefer_export_as_patches = m_preferexportaspatches->IsChecked();
+		enable_battle_entry_edit = m_enablebattleentryedit->IsChecked();
+		show_script_comments = m_showscriptcomments->IsChecked();
 		SavePreferences();
 		return EndModal(id);
 	} else if (id == wxID_CANCEL) {

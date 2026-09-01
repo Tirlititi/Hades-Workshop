@@ -10,7 +10,9 @@
 #include "CommonUtility.h"
 
 #define HWS_BATTLE_SCENE_VERSION_VANILLA	7
-#define HWS_BATTLE_SCENE_VERSION			8
+#define HWS_BATTLE_SCENE_VERSION_EXTENDED	8
+#define HWS_BATTLE_SCENE_VERSION_SEQPATH	9
+#define HWS_BATTLE_SCENE_VERSION			9
 #define HWS_BATTLE_SCENE_MOD_ID				0xFFF0
 
 int EnemySpellDataStruct::SetName(wstring newvalue, SteamLanguage lang) {
@@ -78,6 +80,16 @@ int EnemyDataStruct::AddStat(EnemyStatDataStruct* copystat) {
 	stat_amount++;
 	bd.animation_amount += copystat->sequence_anim_amount;
 	bd.animation_id.insert(bd.animation_id.end(), copybd.animation_id.begin() + copystat->sequence_anim_base, copybd.animation_id.begin() + copystat->sequence_anim_base + copystat->sequence_anim_amount);
+	if (GetGameType() != GAME_TYPE_PSX) {
+		ScriptDataStruct& scrpt = *parent->script[id];
+		scrpt.AddEntry(stat_amount, 2, -1);
+		scrpt.entry[stat_amount].memoria_id = stat_amount + 1;
+		scrpt.AddFunction(stat_amount, 0, 0);
+		scrpt.AddFunction(stat_amount, 1, 5);
+		scrpt.entry[stat_amount].func[0].SetDefaultScriptForced();
+		scrpt.entry[stat_amount].func[1].SetDefaultScriptForced();
+		scrpt.GuaranteePlayerLinks();
+	}
 	parent->UpdateBattleName(id);
 	return 0;
 }
@@ -106,6 +118,18 @@ void EnemyDataStruct::RemoveStat(uint16_t statid) {
 	stat.erase(stat.begin() + statid);
 	stat_amount--;
 	td.RemoveText(statid, true);
+	if (GetGameType() != GAME_TYPE_PSX) {
+		ScriptDataStruct& scrpt = *parent->script[id];
+		bool deleteentry = scrpt.entry_amount >= stat_amount + 1;
+		for (i = 0; deleteentry && (int)i < stat_amount + 1; i++)
+			if (scrpt.entry[i + 1].player_link >= 0)
+				deleteentry = false;
+		if (deleteentry) {
+			scrpt.RemoveEntry(statid + 1);
+			for (i = 0; i < stat_amount && i + 1 < scrpt.entry.size(); i++)
+				scrpt.entry[i + 1].memoria_id = i + 1;
+		}
+	}
 	parent->UpdateBattleName(id);
 }
 
@@ -349,7 +373,7 @@ void EnemySpellDataStruct::SetTargetAmount(Spell_Target_Amount newvalue) {
 	uint16_t zero16 = 0; \
 	if (PPF) PPFInitScanStep(f); \
 	IO ## Char(f, version); \
-	if (READ && HWS) useextendedtype = version > HWS_BATTLE_SCENE_VERSION_VANILLA; \
+	if (READ && HWS) useextendedtype = version >= HWS_BATTLE_SCENE_VERSION_EXTENDED; \
 	IO ## Char(f, group_amount); \
 	IO ## Char(f, stat_amount); \
 	IO ## Char(f, spell_amount); \
@@ -501,6 +525,7 @@ void EnemySpellDataStruct::SetTargetAmount(Spell_Target_Amount newvalue) {
 			IO ## Short(f, tmp); \
 		} \
 		IO ## Char(f, spell[i].target_flag); \
+		if (READ && version < HWS_BATTLE_SCENE_VERSION_SEQPATH) spell[i].target_flag &= 0xE0; \
 		IO ## FlexibleChar(f, spell[i].effect, useextendedtype); \
 		IO ## FlexibleChar(f, spell[i].power, useextendedtype); \
 		IO ## Char(f, spell[i].element); \
@@ -516,6 +541,9 @@ void EnemySpellDataStruct::SetTargetAmount(Spell_Target_Amount newvalue) {
 		IO ## Char(f, spell[i].menu_flag); \
 		IO ## FlexibleShort(f, spell[i].model_alt, useextendedtype); \
 		IO ## Short(f, spell[i].name_offset); \
+		if (HWS && version >= HWS_BATTLE_SCENE_VERSION_SEQPATH) { \
+			if (READ) HWSReadWString(f, spell[i].sequence_path); else HWSWriteWString(f, spell[i].sequence_path); \
+		} else if (READ) { spell[i].sequence_path = L""; } \
 	} \
 	if (PPF) PPFEndScanStep();
 
@@ -548,8 +576,9 @@ void EnemyDataStruct::ReadHWS(fstream& f) {
 	MarkDataModified();
 }
 
-void EnemyDataStruct::WriteHWS(fstream& f, bool useextendedtype) {
-	version = useextendedtype ? HWS_BATTLE_SCENE_VERSION : HWS_BATTLE_SCENE_VERSION_VANILLA;
+void EnemyDataStruct::WriteHWS(fstream& f, bool uselatestversion) {
+	bool useextendedtype = uselatestversion;
+	version = uselatestversion ? HWS_BATTLE_SCENE_VERSION : HWS_BATTLE_SCENE_VERSION_VANILLA;
 	MACRO_ENEMY_IOFUNCTION(HWSWrite, HWSSeek, false, false, true)
 }
 
@@ -823,6 +852,8 @@ void EnemyDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 				cluster_id[j] = i;
 				clus.CreateChildren(ffbin);
 				for (k = 0; k < clus.chunk_amount; k++) {
+					if (clus.chunk[k].type == CHUNK_TYPE_SCRIPT)
+						((ScriptDataStruct*)&clus.chunk[k].GetObject(0))->is_battle_script = true;
 					for (l = 0; l < clus.chunk[k].object_amount; l++) {
 						ffbin.seekg(clus.chunk[k].object_offset[l]);
 						clus.chunk[k].GetObject(l).Read(ffbin);
@@ -933,6 +964,7 @@ void EnemyDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 		for (i = 0; i < battle_amount; i++) {
 			script[i] = new ScriptDataStruct[1];
 			script[i]->Init(false, CHUNK_TYPE_SCRIPT, config.enmy_id[i], &dummyclus[i]);
+			script[i]->is_battle_script = true;
 			for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
 				if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang != GetSteamLanguage())
 					continue;
@@ -1285,6 +1317,7 @@ int* EnemyDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 						}
 					} else if (chunktype == CHUNK_TYPE_SCRIPT) {
 						if (loadmain) {
+							script[btlindex]->RegisterEnemyCountForOldHWS(battle[btlindex]->stat_amount);
 							script[btlindex]->ReadHWS(ffhws, GetGameType() == GAME_TYPE_PSX);
 							script[btlindex]->SetSize(chunksize);
 						}
@@ -1305,6 +1338,7 @@ int* EnemyDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 							text[btlindex]->ReadHWS(ffhws, true);
 					} else if (chunktype == CHUNK_STEAM_SCRIPT_MULTILANG) {
 						if (loadmain) {
+							script[btlindex]->RegisterEnemyCountForOldHWS(battle[btlindex]->stat_amount);
 							HWSReadChar(ffhws, lang);
 							while (lang != STEAM_LANGUAGE_NONE) {
 								ScriptLanguageLink langlink;
@@ -1456,7 +1490,7 @@ void EnemyDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsign
 					HWSWriteChar(ffhws, CHUNK_TYPE_SCRIPT);
 					HWSWriteLong(ffhws, script[i]->size);
 					chunkpos = ffhws.tellg();
-					script[i]->WriteHWS(ffhws);
+					script[i]->WriteHWS(ffhws, false);
 					ffhws.seekg(chunkpos + script[i]->size);
 				}
 				if (preload[i]->modified && savemain) {
@@ -1481,7 +1515,7 @@ void EnemyDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsign
 					HWSWriteChar(ffhws, CHUNK_STEAM_SCRIPT_MERGED);
 					HWSWriteLong(ffhws, 0);
 					chunkpos = ffhws.tellg();
-					script[i]->WriteHWS(ffhws);
+					script[i]->WriteHWS(ffhws, true);
 					chunksize = (long long)ffhws.tellg() - chunkpos;
 					ffhws.seekg(chunkpos - 4);
 					HWSWriteLong(ffhws, chunksize);

@@ -6,6 +6,10 @@
 
 #define ENTRY_MAX_VALID_ID 128
 
+#define SCRIPT_VERSION_VANILLA	2
+#define SCRIPT_VERSION_PENTRY	3 // Player Character entries (beyond vanillas), script append mode and memoria id
+#define SCRIPT_VERSION_CURRENT	3
+
 int EntryIdShift = 0;
 int EntryIdShift_Base = 0;
 
@@ -57,6 +61,141 @@ inline wxString CS_GetQuotedString(wxString& str) {
 	return res;
 }
 
+int GetDefaultPlayerLink(int entryindex, int entryamount, int fieldid) {
+	if (entryindex + 1 == entryamount)
+		return 11; // Beatrix
+	if (fieldid >= 0) {
+		if (entryindex + 2 == entryamount) {
+			if ((fieldid < 1600 && fieldid != 956 && fieldid != 1250) || fieldid == 1816 || fieldid == 1851 || fieldid == 1854 || fieldid == 1864 || fieldid == 2054 || fieldid == 2105 || fieldid == 2114 || fieldid == 2161 || fieldid == 2168 || fieldid == 2453 || fieldid == 2755 || fieldid == 3008 || fieldid == 3009 || fieldid == 3010)
+				return 10; // Blank
+			else
+				return 7; // Amarant
+		}
+		if (entryindex + 3 == entryamount) {
+			if ((fieldid < 1450 && fieldid != 956) || fieldid == 1851 || fieldid == 1854 || fieldid == 1864 || fieldid == 2054 || fieldid == 2114 || fieldid == 2453 || fieldid == 2755 || fieldid == 3008)
+				return 9; // Marcus
+			else
+				return 6; // Eiko
+		}
+		if (entryindex + 4 == entryamount) {
+			if (fieldid < 157 || fieldid == 1851 || fieldid == 1864 || fieldid == 2450 || fieldid == 3008 || fieldid == 3011)
+				return 8; // Cinna
+			else
+				return 5; // Quina
+		}
+	}
+	if (entryindex + SCRIPT_FIXED_ENTRY_AMOUNT >= entryamount)
+		return entryindex + SCRIPT_FIXED_ENTRY_AMOUNT - entryamount;
+	return -1;
+}
+
+// That whole thing is meant only for importing .hws of v0.50b and older
+struct EntryIdentifyingInfos {
+	uint8_t entrytype = 255;
+	int playerlink = -1;
+	int modelid = -1;
+	int regionx = 0;
+	int regiony = 0;
+	bool emptyentry = false;
+	bool entryfollow = false;
+	bool codesps = false;
+	bool codetile = false;
+	bool codeshared = false;
+	bool coderegion = false;
+	bool codevariable = true;
+
+	string ToString() {
+		return wxString::Format(wxT("entrytype %d, emptyentry %d, playerlink %d, modelid %d, coderegion %d, regionx %d, regiony %d, entryfollow %d, codesps %d, codetile %d, codeshared %d, codevariable %d"), entrytype, emptyentry, playerlink, modelid, coderegion, regionx, regiony, entryfollow, codesps, codetile, codeshared, codevariable).ToStdString();
+	}
+
+	bool CompareWith(EntryIdentifyingInfos& other) {
+		//if (playerlink >= 0 || other.playerlink >= 0)
+		//	return playerlink == other.playerlink;
+		//if (entrytype != other.entrytype)
+		//	return false;
+		if (entrytype == other.entrytype) {
+			if (emptyentry && other.emptyentry)
+				return true;
+			if (entrytype == 2) {
+				if (modelid >= 0 || other.modelid >= 0)
+					return modelid == other.modelid;
+				return entryfollow == other.entryfollow;
+			}
+			if (entrytype == 1) {
+				if (coderegion && other.coderegion)
+					return abs(regionx - other.regionx) < 10 && abs(regiony - other.regiony) < 10;
+				if (coderegion != other.coderegion)
+					return false;
+				if ((codeshared && other.codeshared) || (codetile && other.codetile) || (codesps && other.codesps))
+					return true;
+				return (codeshared == other.codeshared) && (codetile == other.codetile) && (codesps == other.codesps);
+			}
+			if (entrytype == 0) {
+				if ((codeshared && other.codeshared) || (codetile && other.codetile) || (codesps && other.codesps) || (codevariable && other.codevariable))
+					return true;
+				return (codeshared == other.codeshared) && (codetile == other.codetile) && (codesps == other.codesps) && (codevariable == other.codevariable);
+			}
+			return true;
+		}
+		if (modelid >= 0 || other.modelid >= 0)
+			return modelid == other.modelid;
+		if (coderegion && other.coderegion)
+			return abs(regionx - other.regionx) < 10 && abs(regiony - other.regiony) < 10;
+		if (coderegion != other.coderegion)
+			return false;
+		if (emptyentry && other.emptyentry)
+			return true;
+		return false;
+	}
+};
+
+EntryIdentifyingInfos GetEntryIdentifyingInfos(ScriptEntry& entry) {
+	EntryIdentifyingInfos infos;
+	infos.entrytype = entry.type;
+	infos.playerlink = entry.player_link;
+	infos.emptyentry = entry.function_amount == 0;
+	if (entry.function_amount == 0)
+		return infos;
+	SteamLanguage lang;
+	for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++)
+		if (!entry.func[0].indices[lang].empty())
+			break;
+	if (lang == STEAM_LANGUAGE_AMOUNT)
+		return infos;
+	unsigned int i, j, k;
+	for (i = 0; i < entry.function_amount; i++) {
+		for (j = 0; j < entry.func[i].indices[lang].size(); j++) {
+			if (entry.func[i].indices[lang][j] >= 0) {
+				ScriptOperation& op = entry.func[i].op[entry.func[i].indices[lang][j]];
+				if (op.opcode == 0x2F && infos.modelid < 0)
+					infos.modelid = op.arg[0].GetValue();
+				else if (op.opcode == 0xA1 || op.opcode == 0xA2 || op.opcode == 0xA5 || op.opcode == 0x1D || op.opcode == 0x23 || op.opcode == 0x24)
+					infos.entryfollow = true;
+				else if (op.opcode == 0x29) {
+					infos.coderegion = true;
+					float x = 0.0f, y = 0.0f;
+					for (k = 0; k < op.arg_amount; k++) {
+						x += (int16_t)(op.arg[k].GetValue() & 0xFFFF);
+						y += (int16_t)((op.arg[k].GetValue() >> 16) & 0xFFFF);
+					}
+					if (op.arg_amount > 0) {
+						infos.regionx = x / op.arg_amount;
+						infos.regiony = y / op.arg_amount;
+					}
+				} else if (op.opcode == 0xB3 || op.opcode == 0xDA)
+					infos.codesps = true;
+				else if ((op.opcode >= 0x59 && op.opcode <= 0x65 && op.opcode != 0x62) || op.opcode == 0xE4)
+					infos.codetile = true;
+				else if (op.opcode == 0x1C && op.arg[0].GetValue() == 255)
+					infos.codeshared = true;
+				if (op.opcode != 0x05 && op.opcode != 0x05)
+					infos.codevariable = false;
+			}
+		}
+	}
+	return infos;
+}
+
 // Custom script utility externalizes to "ScriptAPI.txt" different functions and variables to be used in scripts
 // It should only be updated according to EventEngine API additions made in the Memoria mod
 bool CustomScriptsAreLoaded = false;
@@ -97,7 +236,7 @@ void LoadCustomScriptUtility() {
 				 */ newopcode.arg_type[i] != AT_POSITION_Y && newopcode.arg_type[i] != AT_POSITION_Z && /*
 				 */ newopcode.arg_type[i] != AT_COLOR_MAGENTA && newopcode.arg_type[i] != AT_COLOR_YELLOW && /*
 				 */ newopcode.arg_type[i] != AT_COLOR_GREEN && newopcode.arg_type[i] != AT_COLOR_BLUE)
-						newopcode.arg_help[helpi++] = CS_GetQuotedString(apistr).ToStdWstring();
+					newopcode.arg_help[helpi++] = CS_GetQuotedString(apistr).ToStdWstring();
 			}
 			HADES_STRING_SCRIPT_OPCODE[newopcode.id] = newopcode;
 		} else if (token.IsSameAs(_(L"Variable"))) {
@@ -149,6 +288,35 @@ bool ScriptLanguageLink::InitFromHWS(fstream& ffhws, SteamLanguage baselang) {
 		}
 	}
 	return shouldread;
+}
+
+void ScriptLanguageLink::Apply(vector<ScriptOperation>& baselangop, int linkindex) {
+	unsigned int i, linkj;
+	int j;
+	modarg.clear();
+	modbaseval.clear();
+	for (i = 0; i < baselangop.size(); i++) {
+		SortedChoiceItemScriptOpcode& scriptop = HADES_STRING_SCRIPT_OPCODE[baselangop[i].opcode];
+		for (j = 0; j < scriptop.arg_amount; j++) {
+			if (scriptop.arg_type[j] == AT_TEXT && !baselangop[i].arg[j].is_var) {
+				for (linkj = 0; linkj < id_count[linkindex]; linkj++) {
+					if (id_base[linkindex][linkj] == baselangop[i].arg[j].GetValue()) {
+						baselangop[i].arg[j].SetValue(id_link[linkindex][linkj]);
+						modarg.push_back(&baselangop[i].arg[j]);
+						modbaseval.push_back(id_base[linkindex][linkj]);
+						break;
+					}
+				}
+			}
+		}
+	}
+}
+
+void ScriptLanguageLink::RevertLastApply() {
+	for (unsigned int i = 0; i < modarg.size(); i++)
+		modarg[i]->SetValue(modbaseval[i]);
+	modarg.clear();
+	modbaseval.clear();
 }
 
 bool ScriptArgument::SetValue(long long newvalue) {
@@ -458,7 +626,7 @@ inline bool AreVerySimilarOpcodes(uint16_t op1, uint16_t op2) {
 
 inline bool IsDebugCutsceneSwitch(SteamLanguage lang) {
 	// The way that bug is handled currently doesn't generate optimal codes (the whole function is duplicated for the JP language)
-	
+
 	// Function GrandpaA_Loop of field 457 (Mountain/Shack)
 	//  switchex 10 ( VAR_GlobInt16_28 ) {
 	//  [...] (same in all languages)
@@ -599,6 +767,24 @@ ScriptOperation::ScriptOperation(const ScriptOperation& from) :
 	arg(from.arg) {
 	for (unsigned int i = 0; i < arg_amount; i++)
 		arg[i].parent = this;
+}
+
+void ScriptFunction::SetDefaultScriptForced() {
+	ScriptOperation returnop;
+	returnop.parent = this;
+	returnop.opcode = 0x04;
+	returnop.vararg_flag = 0;
+	returnop.size_byte = 0;
+	returnop.arg_amount = 0;
+	returnop.size = 1;
+	returnop.arg.clear();
+	op.clear();
+	op.push_back(returnop);
+	for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+		indices[lang].clear();
+		if (parent->has_language & (1 << lang))
+			indices[lang].push_back(0);
+	}
 }
 
 uint16_t GetControlVarArgCode(const vector<ScriptOperation>& oplist, unsigned int pos, unsigned int nextpos) {
@@ -1041,33 +1227,12 @@ void ScriptFunction::ReadHWS(fstream& f, unsigned int length, SteamLanguage lang
 			langop.push_back(newop);
 			len += newop.size;
 		}
-		if (!hades::STEAM_SINGLE_LANGUAGE_MODE || lang == GetSteamLanguage())
-			Import(langop, lang);
+		Import(langop, lang);
 		if (langlink != NULL) {
-			unsigned int linki, linkj, i;
-			int j;
-			for (linki = 0; linki < langlink->lang_link_count; linki++) {
-				if (hades::STEAM_SINGLE_LANGUAGE_MODE && langlink->lang_link[linki] != GetSteamLanguage())
-					continue;
-				vector<ScriptArgument*> modarg;
-				vector<uint16_t> modbaseval;
-				for (i = 0; i < langop.size(); i++) {
-					SortedChoiceItemScriptOpcode& scriptop = HADES_STRING_SCRIPT_OPCODE[langop[i].opcode];
-					for (j = 0; j < scriptop.arg_amount; j++) {
-						if (scriptop.arg_type[j] == AT_TEXT && !langop[i].arg[j].is_var) {
-							for (linkj = 0; linkj < langlink->id_count[linki]; linkj++) {
-								if (langlink->id_base[linki][linkj] == langop[i].arg[j].GetValue()) {
-									langop[i].arg[j].SetValue(langlink->id_link[linki][linkj]);
-									modarg.push_back(&langop[i].arg[j]);
-									modbaseval.push_back(langlink->id_base[linki][linkj]);
-								}
-							}
-						}
-					}
-				}
+			for (unsigned int linki = 0; linki < langlink->lang_link_count; linki++) {
+				langlink->Apply(langop, linki);
 				Import(langop, langlink->lang_link[linki]);
-				for (i = 0; i < modarg.size(); i++)
-					modarg[i]->SetValue(modbaseval[i]);
+				langlink->RevertLastApply();
 			}
 		}
 	}
@@ -1166,35 +1331,35 @@ void ScriptDataStruct::AddFunction(int entryid, int funcidpos, uint16_t functype
 	newfunc.parent = this;
 	newfunc.function_point = 0;
 	newfunc.function_type = functype;
-	func[entryid].insert(func[entryid].begin() + funcidpos, newfunc);
-	entry_function_amount[entryid]++;
+	entry[entryid].func.insert(entry[entryid].func.begin() + funcidpos, newfunc);
+	entry[entryid].function_amount++;
 }
 
 void ScriptDataStruct::RemoveFunction(int entryid, int funcid) {
-	entry_function_amount[entryid]--;
-	func[entryid].erase(func[entryid].begin() + funcid);
+	entry[entryid].function_amount--;
+	entry[entryid].func.erase(entry[entryid].func.begin() + funcid);
 }
 
-void ScriptDataStruct::AddEntry(int entrypos, uint8_t entrytype) {
+void ScriptDataStruct::AddEntry(int entrypos, uint8_t entrytype, int playerlink) {
 	unsigned int i, j, k, l, m;
 	int varargtype;
 	for (i = 0; i < entry_amount; i++)
-		for (j = 0; j < entry_function_amount[i]; j++)
-			for (k = 0; k < func[i][j].op.size(); k++)
-				if (func[i][j].op[k].opcode != 0x06 && func[i][j].op[k].opcode != 0x0B && func[i][j].op[k].opcode != 0x29)
-					for (l = 0; l < func[i][j].op[k].arg_amount; l++) {
-						if (!func[i][j].op[k].arg[l].is_var && IsScriptArgTypeEntry(func[i][j].op[k], l) && (int)func[i][j].op[k].arg[l].value >= entrypos && func[i][j].op[k].arg[l].value < ENTRY_MAX_VALID_ID) {
-							func[i][j].op[k].arg[l].value++;
-						} else if (func[i][j].op[k].arg[l].is_var) {
-							for (m = 0; m < func[i][j].op[k].arg[l].size; m++) {
-								varargtype = VarOpList[func[i][j].op[k].arg[l].var[m]].type;
+		for (j = 0; j < entry[i].function_amount; j++)
+			for (k = 0; k < entry[i].func[j].op.size(); k++)
+				if (entry[i].func[j].op[k].opcode != 0x06 && entry[i].func[j].op[k].opcode != 0x0B && entry[i].func[j].op[k].opcode != 0x29)
+					for (l = 0; l < entry[i].func[j].op[k].arg_amount; l++) {
+						if (!entry[i].func[j].op[k].arg[l].is_var && IsScriptArgTypeEntry(entry[i].func[j].op[k], l) && (int)entry[i].func[j].op[k].arg[l].value >= entrypos && entry[i].func[j].op[k].arg[l].value < ENTRY_MAX_VALID_ID) {
+							entry[i].func[j].op[k].arg[l].value++;
+						} else if (entry[i].func[j].op[k].arg[l].is_var) {
+							for (m = 0; m < entry[i].func[j].op[k].arg[l].size; m++) {
+								varargtype = VarOpList[entry[i].func[j].op[k].arg[l].var[m]].type;
 								if (varargtype == 55) {
-									if (func[i][j].op[k].arg[l].var[m + 1] >= entrypos && func[i][j].op[k].arg[l].var[m + 1] < ENTRY_MAX_VALID_ID)
-										func[i][j].op[k].arg[l].var[m + 1]++;
+									if (entry[i].func[j].op[k].arg[l].var[m + 1] >= entrypos && entry[i].func[j].op[k].arg[l].var[m + 1] < ENTRY_MAX_VALID_ID)
+										entry[i].func[j].op[k].arg[l].var[m + 1]++;
 									m += 2;
 								} else if (varargtype == 3 || varargtype == 5 || (varargtype >= 10 && varargtype < 20)) {
-									if (func[i][j].op[k].arg[l].var[m] == 0x5F && func[i][j].op[k].arg[l].var[m + 1] >= entrypos && func[i][j].op[k].arg[l].var[m + 1] < ENTRY_MAX_VALID_ID)
-										func[i][j].op[k].arg[l].var[m + 1]++;
+									if (entry[i].func[j].op[k].arg[l].var[m] == 0x5F && entry[i].func[j].op[k].arg[l].var[m + 1] >= entrypos && entry[i].func[j].op[k].arg[l].var[m + 1] < ENTRY_MAX_VALID_ID)
+										entry[i].func[j].op[k].arg[l].var[m + 1]++;
 									m++;
 								} else if (varargtype == 6 || (varargtype >= 20 && varargtype < 30)) {
 									m += 2;
@@ -1206,13 +1371,22 @@ void ScriptDataStruct::AddEntry(int entrypos, uint8_t entrytype) {
 							}
 						}
 					}
+	set<int> memexistingids;
+	int memid = 1000;
+	for (i = 0; i < entry_amount; i++)
+		if (i != entrypos)
+			memexistingids.insert(entry[i].memoria_id);
+	while (memexistingids.find(memid) != memexistingids.end())
+		memid++;
 	entry_amount++;
-	func.insert(func.begin() + entrypos, vector<ScriptFunction>());
-	entry_offset.insert(entry_offset.begin() + entrypos, 0);
-	entry_size.insert(entry_size.begin() + entrypos, 0);
-	entry_flag.insert(entry_flag.begin() + entrypos, 0);
-	entry_type.insert(entry_type.begin() + entrypos, entrytype);
-	entry_function_amount.insert(entry_function_amount.begin() + entrypos, 0);
+	entry.insert(entry.begin() + entrypos, ScriptEntry());
+	entry[entrypos].type = entrytype;
+	entry[entrypos].memoria_id = memid;
+	entry[entrypos].player_link = playerlink;
+	entry[entrypos].append_mode = false;
+	entry[entrypos].function_amount = 0;
+	entry[entrypos].size = 0;
+	entry[entrypos].flag = 0;
 	local_data.insert(local_data.begin() + entrypos, ScriptLocalVariableSet());
 	local_data[entrypos].allocate_amount = 0;
 	local_data[entrypos].amount = 0;
@@ -1224,35 +1398,35 @@ int ScriptDataStruct::RemoveEntry(int entrypos) {
 	int res = 0;
 	for (i = 0; i < entry_amount; i++)
 		if (i != entrypos)
-			for (j = 0; j < entry_function_amount[i]; j++)
-				for (k = 0; k < func[i][j].op.size(); k++)
-					if (func[i][j].op[k].opcode != 0x06 && func[i][j].op[k].opcode != 0x0B && func[i][j].op[k].opcode != 0x29)
-						for (l = 0; l < func[i][j].op[k].arg_amount; l++) {
-							if (!func[i][j].op[k].arg[l].is_var && IsScriptArgTypeEntry(func[i][j].op[k], l)) {
-								if (func[i][j].op[k].arg[l].value == entrypos) {
-									func[i][j].op[k].arg[l].value = 0;
+			for (j = 0; j < entry[i].function_amount; j++)
+				for (k = 0; k < entry[i].func[j].op.size(); k++)
+					if (entry[i].func[j].op[k].opcode != 0x06 && entry[i].func[j].op[k].opcode != 0x0B && entry[i].func[j].op[k].opcode != 0x29)
+						for (l = 0; l < entry[i].func[j].op[k].arg_amount; l++) {
+							if (!entry[i].func[j].op[k].arg[l].is_var && IsScriptArgTypeEntry(entry[i].func[j].op[k], l)) {
+								if (entry[i].func[j].op[k].arg[l].value == entrypos) {
+									entry[i].func[j].op[k].arg[l].value = 0;
 									res++;
-								} else if ((int)func[i][j].op[k].arg[l].value > entrypos && func[i][j].op[k].arg[l].value < ENTRY_MAX_VALID_ID) {
-									func[i][j].op[k].arg[l].value--;
+								} else if ((int)entry[i].func[j].op[k].arg[l].value > entrypos && entry[i].func[j].op[k].arg[l].value < ENTRY_MAX_VALID_ID) {
+									entry[i].func[j].op[k].arg[l].value--;
 								}
-							} else if (func[i][j].op[k].arg[l].is_var) {
-								for (m = 0; m < func[i][j].op[k].arg[l].size; m++) {
-									varargtype = VarOpList[func[i][j].op[k].arg[l].var[m]].type;
+							} else if (entry[i].func[j].op[k].arg[l].is_var) {
+								for (m = 0; m < entry[i].func[j].op[k].arg[l].size; m++) {
+									varargtype = VarOpList[entry[i].func[j].op[k].arg[l].var[m]].type;
 									if (varargtype == 55) {
-										if (func[i][j].op[k].arg[l].var[m + 1] == entrypos) {
-											func[i][j].op[k].arg[l].var[m + 1] = 0;
+										if (entry[i].func[j].op[k].arg[l].var[m + 1] == entrypos) {
+											entry[i].func[j].op[k].arg[l].var[m + 1] = 0;
 											res++;
-										} else if (func[i][j].op[k].arg[l].var[m + 1] > entrypos && func[i][j].op[k].arg[l].var[m + 1] < ENTRY_MAX_VALID_ID) {
-											func[i][j].op[k].arg[l].var[m + 1]--;
+										} else if (entry[i].func[j].op[k].arg[l].var[m + 1] > entrypos && entry[i].func[j].op[k].arg[l].var[m + 1] < ENTRY_MAX_VALID_ID) {
+											entry[i].func[j].op[k].arg[l].var[m + 1]--;
 										}
 										m += 2;
 									} else if (varargtype == 3 || varargtype == 5 || (varargtype >= 10 && varargtype < 20)) {
-										if (func[i][j].op[k].arg[l].var[m] == 0x5F) {
-											if (func[i][j].op[k].arg[l].var[m + 1] == entrypos) {
-												func[i][j].op[k].arg[l].var[m + 1] = 0;
+										if (entry[i].func[j].op[k].arg[l].var[m] == 0x5F) {
+											if (entry[i].func[j].op[k].arg[l].var[m + 1] == entrypos) {
+												entry[i].func[j].op[k].arg[l].var[m + 1] = 0;
 												res++;
-											} else if (func[i][j].op[k].arg[l].var[m + 1] > entrypos && func[i][j].op[k].arg[l].var[m + 1] < ENTRY_MAX_VALID_ID) {
-												func[i][j].op[k].arg[l].var[m + 1]--;
+											} else if (entry[i].func[j].op[k].arg[l].var[m + 1] > entrypos && entry[i].func[j].op[k].arg[l].var[m + 1] < ENTRY_MAX_VALID_ID) {
+												entry[i].func[j].op[k].arg[l].var[m + 1]--;
 											}
 										}
 										m++;
@@ -1267,14 +1441,25 @@ int ScriptDataStruct::RemoveEntry(int entrypos) {
 							}
 						}
 	entry_amount--;
-	func.erase(func.begin() + entrypos);
-	entry_offset.erase(entry_offset.begin() + entrypos);
-	entry_size.erase(entry_size.begin() + entrypos);
-	entry_flag.erase(entry_flag.begin() + entrypos);
-	entry_type.erase(entry_type.begin() + entrypos);
-	entry_function_amount.erase(entry_function_amount.begin() + entrypos);
+	entry.erase(entry.begin() + entrypos);
 	local_data.erase(local_data.begin() + entrypos);
 	return res;
+}
+
+void ScriptDataStruct::GuaranteePlayerLinks() {
+	bool foundzidane = false;
+	bool forcelinks = false;
+	unsigned int i;
+	for (i = 0; i < entry_amount; i++) {
+		if (entry[i].player_link == 0)
+			foundzidane = true;
+		if (i + SCRIPT_FIXED_ENTRY_AMOUNT >= entry_amount && entry[i].player_link < 0)
+			forcelinks = true;
+		if (forcelinks)
+			entry[i].player_link = GetDefaultPlayerLink(i, entry_amount, is_field_script ? object_id : -1);
+		else if (!foundzidane && entry[i].player_link >= 0)
+			entry[i].player_link = -1;
+	}
 }
 
 int ScriptDataStruct::ShiftArgument(int argtype, vector<pair<int, int>> shift) {
@@ -1305,8 +1490,8 @@ int ScriptDataStruct::ShiftArgument(int argtype, vector<pair<int, int>> shift) {
 		return c;
 	};
 	for (i = 0; i < entry_amount; i++)
-		for (j = 0; j < entry_function_amount[i]; j++)
-			count += shifter(func[i][j], argtype, shift);
+		for (j = 0; j < entry[i].function_amount; j++)
+			count += shifter(entry[i].func[j], argtype, shift);
 	return count;
 }
 
@@ -1314,15 +1499,15 @@ int ScriptDataStruct::ShiftArgument(int argtype, vector<pair<int, int>> shift) {
 	unsigned int i, j, k, entryi, funcj, entryprevamount; \
 	vector<uint16_t> funcpoint; \
 	vector<int> funcreorder; \
-	uint16_t functype; \
 	uint32_t entry_pos, local_entry_pos, function_pos; \
+	uint16_t functype; \
 	uint16_t zero16 = 0; \
 	uint8_t zero8 = 0; \
 	if (PPF) PPFInitScanStep(f); \
 	IO ## Short(f, magic_number); \
-	IO ## Char(f, header_unknown1); \
+	IO ## Char(f, version); \
 	IO ## Char(f, entry_amount); \
-	entryprevamount = entry_offset.size(); \
+	entryprevamount = entry.size(); \
 	EntryIdShift = (READ && entryprevamount >= SCRIPT_FIXED_ENTRY_AMOUNT && entryprevamount > entry_amount) ? entryprevamount - entry_amount : 0; \
 	EntryIdShift_Base = entry_amount - SCRIPT_FIXED_ENTRY_AMOUNT; \
 	if (READ && entry_amount > entryprevamount) { \
@@ -1330,15 +1515,10 @@ int ScriptDataStruct::ShiftArgument(int argtype, vector<pair<int, int>> shift) {
 			uint8_t extra_count = entry_amount - entryprevamount; \
 			entry_amount = entryprevamount; \
 			for (i = 0; i < extra_count; i++) \
-				AddEntry(entry_offset.size() - SCRIPT_FIXED_ENTRY_AMOUNT, 0); \
+				AddEntry(entry.size() - SCRIPT_FIXED_ENTRY_AMOUNT, 0, -1); \
 		} else { \
-			entry_offset.resize(entry_amount); \
-			entry_size.resize(entry_amount); \
+			entry.resize(entry_amount); \
 			local_data.resize(max(local_data.size(), (size_t)entry_amount)); \
-			entry_flag.resize(entry_amount); \
-			entry_type.resize(entry_amount); \
-			entry_function_amount.resize(entry_amount); \
-			func.resize(entry_amount); \
 		} \
 	} \
 	for (i = 0; i < 20; i++) { \
@@ -1349,73 +1529,77 @@ int ScriptDataStruct::ShiftArgument(int argtype, vector<pair<int, int>> shift) {
 		IO ## Char(f, header_name[lang][i]); \
 	entry_pos = f.tellg(); \
 	for (i = 0; i < entry_amount; i++) { \
-		entryi = i + SCRIPT_FIXED_ENTRY_AMOUNT < entry_amount ? i : i + entry_offset.size() - entry_amount; \
-		IO ## Short(f, entry_offset[entryi]); \
-		IO ## Short(f, entry_size[entryi]); \
+		entryi = i + SCRIPT_FIXED_ENTRY_AMOUNT < entry_amount ? i : i + entry.size() - entry_amount; \
+		IO ## Short(f, entry[entryi].offset); \
+		IO ## Short(f, entry[entryi].size); \
 		IO ## Char(f, local_data[entryi].allocate_amount); \
-		IO ## Char(f, entry_flag[entryi]); \
+		IO ## Char(f, entry[entryi].flag); \
 		IO ## Short(f, zero16); \
+		if (READ) { \
+			entry[entryi].player_link = GetDefaultPlayerLink(i, entry_amount, is_field_script ? object_id : -1); \
+			entry[entryi].append_mode = 0; \
+		} \
 	} \
 	if (PPF) PPFEndScanStep(); \
 	for (i = 0; i < entry_amount; i++) { \
-		entryi = i + SCRIPT_FIXED_ENTRY_AMOUNT < entry_amount ? i : i + entry_offset.size() - entry_amount; \
-		if (entry_size[entryi] > 0) { \
+		entryi = i + SCRIPT_FIXED_ENTRY_AMOUNT < entry_amount ? i : i + entry.size() - entry_amount; \
+		if (entry[entryi].size > 0) { \
 			CurrentScriptReadEntry = entryi; \
-			SEEK(f, entry_pos, entry_offset[entryi]); \
+			SEEK(f, entry_pos, entry[entryi].offset); \
 			local_entry_pos = f.tellg(); \
 			if (PPF) PPFInitScanStep(f); \
-			IO ## Char(f, entry_type[entryi]); \
-			IO ## Char(f, entry_function_amount[entryi]); \
+			IO ## Char(f, entry[entryi].type); \
+			IO ## Char(f, entry[entryi].function_amount); \
 			funcreorder.clear(); \
-			funcpoint.resize(entry_function_amount[entryi]); \
+			funcpoint.resize(entry[entryi].function_amount); \
 			function_pos = f.tellg(); \
-			for (j = 0; j < entry_function_amount[entryi]; j++) { \
+			for (j = 0; j < entry[entryi].function_amount; j++) { \
 				if (READ) { \
 					IO ## Short(f, functype); \
 					IO ## Short(f, funcpoint[j]); \
-					for (funcj = 0; funcj < func[entryi].size(); funcj++) \
-						if (func[entryi][funcj].function_type == functype) \
+					for (funcj = 0; funcj < entry[entryi].func.size(); funcj++) \
+						if (entry[entryi].func[funcj].function_type == functype) \
 							break; \
-					if (funcj == func[entryi].size()) \
-						func[entryi].resize(funcj + 1); \
+					if (funcj == entry[entryi].func.size()) \
+						entry[entryi].func.resize(funcj + 1); \
 					else \
 						for (k = 0; k < funcreorder.size(); k++) \
 							if (funcreorder[k] == funcj) \
 								funcreorder[k] = -1; \
 					funcreorder.push_back(funcj); \
-					func[entryi][funcj].function_type = functype; \
-					func[entryi][funcj].function_point = funcpoint[j]; \
-					func[entryi][funcj].parent = this; \
+					entry[entryi].func[funcj].function_type = functype; \
+					entry[entryi].func[funcj].function_point = funcpoint[j]; \
+					entry[entryi].func[funcj].parent = this; \
 				} else { \
-					IO ## Short(f, func[entryi][j].function_type); \
-					IO ## Short(f, func[entryi][j].function_point); \
-					funcpoint[j] = func[entryi][j].function_point; \
+					IO ## Short(f, entry[entryi].func[j].function_type); \
+					IO ## Short(f, entry[entryi].func[j].function_point); \
+					funcpoint[j] = entry[entryi].func[j].function_point; \
 				} \
 			} \
 			if (PPF) PPFEndScanStep(); \
-			for (j = 0; j < entry_function_amount[entryi]; j++) { \
+			for (j = 0; j < entry[entryi].function_amount; j++) { \
 				if (READ && funcreorder[j] < 0) \
 					continue; \
 				funcj = READ ? funcreorder[j] : j; \
 				SEEK(f, function_pos, funcpoint[j]); \
-				CurrentScriptReadFunction = func[entryi][j].function_type; \
+				CurrentScriptReadFunction = entry[entryi].func[j].function_type; \
 				uint32_t length; \
-				if (j + 1 < entry_function_amount[entryi]) \
+				if (j + 1 < entry[entryi].function_amount) \
 					length = funcpoint[j + 1] - funcpoint[j]; \
 				else \
-					length = entry_size[entryi] - funcpoint[j] - 2;
+					length = entry[entryi].size - funcpoint[j] - 2;
 
 #define MACRO_SCRIPT_IOFUNCTION_PART2(IO, SEEK, READ, PPF) \
 			} \
-			if (READ) entry_function_amount[entryi] = func[entryi].size(); \
-			while (f.tellg() < local_entry_pos + entry_size[entryi]) \
+			if (READ) entry[entryi].function_amount = entry[entryi].func.size(); \
+			while (f.tellg() < local_entry_pos + entry[entryi].size) \
 				IO ## Char(f, zero8); \
-		} else if (READ && entry_function_amount[entryi] == 0) { \
-			entry_type[entryi] = 0xFF; \
+		} else if (READ && entry[entryi].function_amount == 0) { \
+			entry[entryi].type = 0xFF; \
 		} \
 	} \
 	if (READ) { \
-		entry_amount = entry_offset.size(); \
+		entry_amount = entry.size(); \
 		local_data.resize(max(local_data.size(), (size_t)entry_amount)); \
 	}
 
@@ -1430,16 +1614,11 @@ int ScriptDataStruct::ShiftArgument(int argtype, vector<pair<int, int>> shift) {
 		return; \
 	} \
 	IO ## Short(f, magic_number); \
-	IO ## Char(f, header_unknown1); \
+	IO ## Char(f, version); \
+	if (version >= SCRIPT_VERSION_PENTRY) IO ## Char(f, append_mode); \
 	IO ## Char(f, entry_amount); \
 	if (READ) { \
-		entry_offset.resize(entry_amount); \
-		entry_size.resize(entry_amount); \
-		local_data.resize(max(local_data.size(), (size_t)entry_amount)); \
-		entry_flag.resize(entry_amount); \
-		entry_type.resize(entry_amount); \
-		entry_function_amount.resize(entry_amount); \
-		func.resize(entry_amount); \
+		entry.resize(entry_amount); \
 		unsigned int localprevamount = local_data.size(); \
 		local_data.resize(max(localprevamount, (unsigned int)entry_amount)); \
 		for (i = localprevamount; i < entry_amount; i++) \
@@ -1453,24 +1632,33 @@ int ScriptDataStruct::ShiftArgument(int argtype, vector<pair<int, int>> shift) {
 		if (has_language & (1 << lang)) { \
 			if (!READ) namestr = lang == GetSteamLanguage() ? name.str : name.multi_lang_str[lang]; \
 			IO ## WString(f, namestr); \
-			if (usetext && READ) name.SetValue(namestr, lang); \
+			if (usetext && READ && (!hades::STEAM_SINGLE_LANGUAGE_MODE || lang == GetSteamLanguage())) name.SetValue(namestr, lang); \
 		} \
 	} \
 	for (i = 0; i < entry_amount; i++) { \
+		if (version >= SCRIPT_VERSION_PENTRY) { \
+			IO ## FlexibleChar(f, entry[i].memoria_id, true); \
+			IO ## FlexibleChar(f, entry[i].player_link, true); \
+			IO ## Char(f, entry[i].append_mode); \
+		} else if (READ) { \
+			entry[i].memoria_id = i; \
+			entry[i].player_link = GetDefaultPlayerLink(i, entry_amount, is_field_script ? object_id : -1); \
+			entry[i].append_mode = 0; \
+		} \
 		IO ## Char(f, local_data[i].allocate_amount); \
-		IO ## Char(f, entry_flag[i]); \
+		IO ## Char(f, entry[i].flag); \
 		IO ## Short(f, zero16); \
-		IO ## Char(f, entry_type[i]); \
-		IO ## Char(f, entry_function_amount[i]); \
+		IO ## Char(f, entry[i].type); \
+		IO ## Char(f, entry[i].function_amount); \
 		if (READ) { \
-			func[i].resize(entry_function_amount[i]); \
-			for (j = 0; j < entry_function_amount[i]; j++) { \
-				func[i][j].parent = this; \
-				func[i][j].ReadHWS(f, 0, STEAM_LANGUAGE_AMOUNT); \
+			entry[i].func.resize(entry[i].function_amount); \
+			for (j = 0; j < entry[i].function_amount; j++) { \
+				entry[i].func[j].parent = this; \
+				entry[i].func[j].ReadHWS(f, 0, STEAM_LANGUAGE_AMOUNT); \
 			} \
 		} else { \
-			for (j = 0; j < entry_function_amount[i]; j++) \
-				func[i][j].WriteHWS(f); \
+			for (j = 0; j < entry[i].function_amount; j++) \
+				entry[i].func[j].WriteHWS(f); \
 		} \
 	} \
 	for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) \
@@ -1491,12 +1679,12 @@ void ScriptDataStruct::Read(fstream& f, SteamLanguage lang) {
 	} else {
 		if (GetGameType() == GAME_TYPE_PSX) {
 			MACRO_SCRIPT_IOFUNCTION_PART1(FFIXRead, FFIXSeek, true, false)
-				func[entryi][funcj].Read(f, length, lang);
+				entry[entryi].func[funcj].Read(f, length, lang);
 			MACRO_SCRIPT_IOFUNCTION_PART2(FFIXRead, FFIXSeek, true, false)
 			name.ReadFromChar(header_name[lang]);
 		} else {
 			MACRO_SCRIPT_IOFUNCTION_PART1(SteamRead, SteamSeek, true, false)
-				func[entryi][funcj].Read(f, length, lang);
+				entry[entryi].func[funcj].Read(f, length, lang);
 			MACRO_SCRIPT_IOFUNCTION_PART2(SteamRead, SteamSeek, true, false)
 			FF9String dummystr;
 			dummystr.ReadFromChar(header_name[lang]);
@@ -1509,8 +1697,11 @@ void ScriptDataStruct::Read(fstream& f, SteamLanguage lang) {
 			local_data[i].amount = 0;
 		global_data.allocate_amount = 0;
 		global_data.amount = 0;
+		for (unsigned int i = 0; i < entry_amount; i++)
+			entry[i].memoria_id = i;
 		loaded = true;
 	}
+	GuaranteePlayerLinks();
 	loaded = true;
 }
 
@@ -1520,7 +1711,7 @@ void ScriptDataStruct::Write(fstream& f) {
 	} else {
 		SteamLanguage lang = GetSteamLanguage();
 		MACRO_SCRIPT_IOFUNCTION_PART1(FFIXWrite, FFIXSeek, false, false)
-			func[entryi][funcj].Write(f, lang);
+			entry[entryi].func[funcj].Write(f, lang);
 		MACRO_SCRIPT_IOFUNCTION_PART2(FFIXWrite, FFIXSeek, false, false)
 	}
 	modified = false;
@@ -1532,46 +1723,358 @@ void ScriptDataStruct::WritePPF(fstream& f) {
 	} else {
 		SteamLanguage lang = GetSteamLanguage();
 		MACRO_SCRIPT_IOFUNCTION_PART1(PPFStepAdd, FFIXSeek, false, true)
-			func[entryi][funcj].WritePPF(f, lang);
+			entry[entryi].func[funcj].WritePPF(f, lang);
 		MACRO_SCRIPT_IOFUNCTION_PART2(PPFStepAdd, FFIXSeek, false, true)
 	}
 }
 
+int oldhwsenemycount = 0;
 void ScriptDataStruct::ReadHWS(fstream& f, bool usetext, SteamLanguage lang, ScriptLanguageLink* langlink) {
 	dbgscript = wxFileName::FileExists("LogScripts.txt");
 	if (dbgscript) {
 		GetDebugLog() << "LOAD FIELD HWS " << ConvertWStrToStr(name.str_nice) << (lang < STEAM_LANGUAGE_AMOUNT ? " (old version)" : " (new version)") << endl;
 	}
 	if (lang < STEAM_LANGUAGE_AMOUNT) {
-		MACRO_SCRIPT_IOFUNCTION_PART1(HWSRead, HWSSeek, true, false)
-			func[entryi][funcj].ReadHWS(f, length, lang, langlink);
-		MACRO_SCRIPT_IOFUNCTION_PART2(HWSRead, HWSSeek, true, false)
+		CurrentScriptReadField = is_battle_script ? 0 : object_id;
+		EntryIdShift = EntryIdShift_Base = 0;
+		vector<EntryIdentifyingInfos> entryinfos;
+		vector<uint8_t> hwsentryallocate;
+		vector<ScriptEntry> hwsentry;
+		vector<int> entrymoveindex;
+		vector<bool> entryisnew;
+		unsigned int entryextracount = 0;
+		unsigned int i, j, k;
+		uint32_t script_pos, entry_pos, function_pos;
+		uint16_t functype, funcpoint;
+		uint8_t hwsentrycount, entrytype, entryfunccount, entryfuncprevcount;
+		script_pos = f.tellg();
+		f.seekg(3, ios::cur);
+		HWSReadChar(f, hwsentrycount);
+		uint8_t hwsexactentrycount = hwsentrycount;
+		bool rawimport = is_battle_script || hwsentrycount == entry_amount;
+		if (is_battle_script) {
+			while (entry_amount < oldhwsenemycount + SCRIPT_FIXED_ENTRY_AMOUNT + 1)
+				AddEntry(max(1, entry_amount - SCRIPT_FIXED_ENTRY_AMOUNT), 2, -1);
+			if (hwsentrycount > entry_amount)
+				hwsentrycount = entry_amount;
+		} else if (!rawimport) {
+			for (i = 0; i + SCRIPT_FIXED_ENTRY_AMOUNT < entry_amount; i++)
+				entryinfos.push_back(GetEntryIdentifyingInfos(entry[i]));
+		}
+		for (i = 0; i < 20; i++) {
+			HWSReadChar(f, header_unknown2[i]);
+			HWSReadChar(f, header_unknown3[i]);
+		}
+		if (usetext)
+			for (i = 0; i < SCRIPT_NAME_MAX_LENGTH; i++)
+				HWSReadChar(f, header_name[lang][i]);
+		else
+			f.seekg(SCRIPT_NAME_MAX_LENGTH, ios::cur);
+		entry_pos = f.tellg();
+		if (!rawimport) {
+			hwsentry.resize(hwsentrycount);
+			hwsentryallocate.resize(hwsentrycount);
+		}
+		vector<ScriptEntry>& readentry = rawimport ? entry : hwsentry;
+		uint16_t lastentryoffset, lastentrysize, entrysize;
+		for (i = 0; i < hwsexactentrycount; i++) {
+			if (i < hwsentrycount) {
+				HWSReadShort(f, readentry[i].offset);
+				HWSReadShort(f, readentry[i].size);
+				HWSReadChar(f, rawimport ? local_data[i].allocate_amount : hwsentryallocate[i]);
+				HWSReadChar(f, readentry[i].flag);
+				f.seekg(2, ios::cur);
+				readentry[i].append_mode = 0;
+				readentry[i].player_link = GetDefaultPlayerLink(i, rawimport ? entry_amount : hwsentrycount, is_field_script ? object_id : -1);
+				lastentryoffset = readentry[i].offset;
+				if (readentry[i].size > 0)
+					lastentrysize = readentry[i].size;
+			} else {
+				HWSReadShort(f, lastentryoffset);
+				HWSReadShort(f, entrysize);
+				if (entrysize > 0)
+					lastentrysize = entrysize;
+				f.seekg(4, ios::cur);
+			}
+		}
+		int entrylastindex = -1;
+		for (i = 0; i < hwsentrycount; i++) {
+			if (readentry[i].size > 0) {
+				CurrentScriptReadEntry = i;
+				HWSSeek(f, entry_pos, readentry[i].offset);
+				HWSReadChar(f, entrytype);
+				HWSReadChar(f, entryfunccount);
+				if (is_battle_script && i >= 1 && entryfunccount <= 1)
+					continue;
+				entryfuncprevcount = readentry[i].function_amount;
+				readentry[i].type = entrytype;
+				readentry[i].function_amount = entryfunccount;
+				readentry[i].func.resize(readentry[i].function_amount);
+				function_pos = f.tellg();
+				if (rawimport) {
+					for (j = 0; j < readentry[i].function_amount; j++) {
+						HWSReadShort(f, functype);
+						HWSReadShort(f, funcpoint);
+						for (k = 0; k < readentry[i].function_amount && k < entryfuncprevcount; k++) {
+							if (readentry[i].func[k].function_type == functype) {
+								if (j != k) {
+									ScriptFunction ftmp = readentry[i].func[k];
+									readentry[i].func[k] = readentry[i].func[j];
+									readentry[i].func[j] = ftmp;
+								}
+								break;
+							}
+						}
+					}
+					f.seekg(function_pos);
+				}
+				for (j = 0; j < readentry[i].function_amount; j++) {
+					HWSReadShort(f, readentry[i].func[j].function_type);
+					HWSReadShort(f, readentry[i].func[j].function_point);
+					readentry[i].func[j].parent = this;
+					if (rawimport) {
+						readentry[i].func[j].indices[lang].clear();
+						if (langlink != NULL)
+							for (k = 0; k < langlink->lang_link_count; k++)
+								readentry[i].func[j].indices[langlink->lang_link[k]].clear();
+					}
+				}
+				for (j = 0; j < readentry[i].function_amount; j++) {
+					HWSSeek(f, function_pos, readentry[i].func[j].function_point);
+					CurrentScriptReadFunction = readentry[i].func[j].function_type;
+					uint32_t length;
+					if (j + 1 < readentry[i].function_amount)
+						length = readentry[i].func[j + 1].function_point - readentry[i].func[j].function_point;
+					else
+						length = readentry[i].size - readentry[i].func[j].function_point - 2;
+					readentry[i].func[j].ReadHWS(f, length, lang, langlink);
+					if (rawimport && hades::STEAM_SINGLE_LANGUAGE_MODE) {
+						for (SteamLanguage sublang = 0; sublang < STEAM_LANGUAGE_AMOUNT; sublang++)
+							if (sublang != GetSteamLanguage())
+								readentry[i].func[j].indices[sublang].clear();
+						readentry[i].func[j].FlushUnusedOperations();
+					}
+				}
+			} else {
+				if (rawimport)
+					continue;
+				readentry[i].type = 0xFF;
+				readentry[i].function_amount = 0;
+			}
+			if (!rawimport) {
+				bool foundentry = false;
+				if (i == 0) {
+					entrylastindex = i;
+					foundentry = true;
+				} else if (i + SCRIPT_FIXED_ENTRY_AMOUNT >= hwsentrycount) {
+					entrylastindex = i + entry_amount - hwsentrycount;
+					foundentry = true;
+				} else {
+					EntryIdentifyingInfos hwsinfo = GetEntryIdentifyingInfos(readentry[i]);
+					for (j = entrylastindex + 1 - entryextracount; j < entryinfos.size(); j++) {
+						if (hwsinfo.CompareWith(entryinfos[j])) {
+							entrylastindex = j + entryextracount;
+							foundentry = true;
+							break;
+						} else if (j + hwsentrycount >= entryinfos.size() + SCRIPT_FIXED_ENTRY_AMOUNT + i) {
+							break;
+						}
+					}
+				}
+				if (foundentry) {
+					entrymoveindex.push_back(entrylastindex);
+					entryisnew.push_back(false);
+				} else {
+					AddEntry(++entrylastindex, readentry[i].type, -1);
+					entrymoveindex.push_back(entrylastindex);
+					entryisnew.push_back(true);
+					entryextracount++;
+				}
+				local_data[entrylastindex].allocate_amount = hwsentryallocate[i];
+			}
+		}
+		HWSSeek(f, entry_pos, lastentryoffset + lastentrysize);
+		if (!rawimport) {
+			unsigned int l, m;
+			int varargtype;
+			for (i = 0; i < hwsentrycount; i++) {
+				for (j = 0; j < hwsentry[i].function_amount; j++)
+					for (k = 0; k < hwsentry[i].func[j].op.size(); k++) {
+						ScriptOperation& hwsop = hwsentry[i].func[j].op[k];
+						if (hwsop.opcode != 0x06 && hwsop.opcode != 0x0B && hwsop.opcode != 0x29) {
+							for (l = 0; l < hwsop.arg_amount; l++) {
+								if (!hwsop.arg[l].is_var && IsScriptArgTypeEntry(hwsop, l)) {
+									if (hwsop.arg[l].value < entrymoveindex.size())
+										hwsop.arg[l].value = entrymoveindex[hwsop.arg[l].value];
+								} else if (hwsop.arg[l].is_var) {
+									for (m = 0; m < hwsop.arg[l].size; m++) {
+										varargtype = VarOpList[hwsop.arg[l].var[m]].type;
+										if (varargtype == 55) {
+											if (hwsop.arg[l].var[m + 1] < entrymoveindex.size())
+												hwsop.arg[l].var[m + 1] = entrymoveindex[hwsop.arg[l].var[m + 1]];
+											m += 2;
+										} else if (varargtype == 3 || varargtype == 5 || (varargtype >= 10 && varargtype < 20)) {
+											if (hwsop.arg[l].var[m] == 0x5F) {
+												if (hwsop.arg[l].var[m + 1] < entrymoveindex.size())
+													hwsop.arg[l].var[m + 1] = entrymoveindex[hwsop.arg[l].var[m + 1]];
+											}
+											m++;
+										} else if (varargtype == 6 || (varargtype >= 20 && varargtype < 30)) {
+											m += 2;
+										} else if (varargtype == 7) {
+											m += 4;
+										} else if (varargtype == 60) {
+											m += 3;
+										}
+									}
+								}
+							}
+						}
+					}
+			}
+			for (i = 0; i < hwsentrycount; i++) {
+				if (entryisnew[i]) {
+					for (j = 0; j < hwsentry[i].function_amount; j++) {
+						if (hades::STEAM_SINGLE_LANGUAGE_MODE)
+							for (SteamLanguage sublang = 0; sublang < STEAM_LANGUAGE_AMOUNT; sublang++)
+								if (sublang != GetSteamLanguage())
+									hwsentry[i].func[j].indices[sublang].clear();
+						hwsentry[i].func[j].FlushUnusedOperations();
+					}
+					entry[entrymoveindex[i]] = hwsentry[i];
+				} else {
+					ScriptEntry& mergedentry = entry[entrymoveindex[i]];
+					for (j = 0; j < mergedentry.function_amount; j++) {
+						mergedentry.func[j].indices[lang].clear();
+						if (langlink != NULL)
+							for (k = 0; k < langlink->lang_link_count; k++)
+								mergedentry.func[j].indices[langlink->lang_link[k]].clear();
+					}
+					for (j = 0; j < hwsentry[i].function_amount; j++) {
+						ScriptFunction& hwsfunc = hwsentry[i].func[j];
+						int funcindex = -1;
+						for (k = 0; k < mergedentry.function_amount; k++) {
+							if (mergedentry.func[k].function_type == hwsfunc.function_type) {
+								funcindex = k;
+								break;
+							}
+						}
+						if (funcindex < 0) {
+							funcindex = mergedentry.function_amount;
+							AddFunction(entrymoveindex[i], funcindex, hwsfunc.function_type);
+						}
+						vector<ScriptOperation> importop;
+						for (k = 0; k < hwsfunc.indices[lang].size(); k++)
+							if (hwsfunc.indices[lang][k] >= 0)
+								importop.push_back(hwsfunc.op[hwsfunc.indices[lang][k]]);
+						if (!hades::STEAM_SINGLE_LANGUAGE_MODE || lang == GetSteamLanguage())
+							mergedentry.func[funcindex].Import(importop, lang);
+						if (langlink != NULL) {
+							for (l = 0; l < langlink->lang_link_count; l++) {
+								if (hades::STEAM_SINGLE_LANGUAGE_MODE && langlink->lang_link[l] != GetSteamLanguage())
+									continue;
+								langlink->Apply(importop, l);
+								mergedentry.func[funcindex].Import(importop, langlink->lang_link[l]);
+								langlink->RevertLastApply();
+							}
+						}
+						mergedentry.func[funcindex].FlushUnusedOperations();
+						if (mergedentry.func[funcindex].op.size() == 0)
+							RemoveFunction(entrymoveindex[i], funcindex);
+					}
+				}
+			}
+		}
 	} else {
 		MACRO_SCRIPT_IOFUNCTION_MULTILANG(HWSRead, HWSSeek, true)
 	}
+	GuaranteePlayerLinks();
 	MarkDataModified();
 }
 
-void ScriptDataStruct::WriteHWS(fstream& f) {
+void ScriptDataStruct::WriteHWS(fstream& f, bool uselatestversion) {
 	SteamLanguage lang;
 	bool usetext = true;
+	version = SCRIPT_VERSION_CURRENT;
 	MACRO_SCRIPT_IOFUNCTION_MULTILANG(HWSWrite, HWSSeek, false)
 }
 
-void ScriptDataStruct::WriteSteam(fstream& f, SteamLanguage lang) {
+void ScriptDataStruct::WriteSteam(fstream& f, bool uselatestversion, SteamLanguage lang) {
 	UpdateOffset(lang);
-	MACRO_SCRIPT_IOFUNCTION_PART1(HWSWrite, HWSSeek, false, false)
-		vector<int>& langindices = func[entryi][funcj].indices[lang];
-		for (k = 0; k < langindices.size(); k++)
-			if (langindices[k] >= 0)
-				func[entryi][funcj].op[langindices[k]].WriteHWS(f);
-	MACRO_SCRIPT_IOFUNCTION_PART2(HWSWrite, HWSSeek, false, false)
+	unsigned int i, j, k;
+	vector<uint16_t> offsets;
+	uint32_t entry_pos, local_entry_pos, function_pos;
+	uint16_t entry_offset = uselatestversion ? 0 : 8 * entry_amount;
+	uint16_t zero16 = 0;
+	uint8_t zero8 = 0;
+	HWSWriteShort(f, magic_number);
+	HWSWriteChar(f, uselatestversion ? SCRIPT_VERSION_CURRENT : SCRIPT_VERSION_VANILLA);
+	if (uselatestversion)
+		HWSWriteChar(f, append_mode);
+	HWSWriteChar(f, entry_amount);
+	if (!uselatestversion || append_mode == 0) {
+		for (i = 0; i < 20; i++) {
+			HWSWriteChar(f, header_unknown2[i]);
+			HWSWriteChar(f, header_unknown3[i]);
+		}
+		for (i = 0; i < SCRIPT_NAME_MAX_LENGTH; i++)
+			HWSWriteChar(f, header_name[lang][i]);
+	}
+	entry_pos = f.tellg();
+	for (i = 0; i < entry_amount; i++) {
+		offsets.push_back(entry_offset);
+		if (uselatestversion) {
+			if (dbgscript) {
+				GetDebugLog() << "GENERATE SCRIPT ENTRY " << (int)object_id << ", " << i << ": " << entry[i].memoria_id << endl;
+			}
+			HWSWriteFlexibleChar(f, entry[i].memoria_id, true);
+			HWSWriteFlexibleChar(f, entry[i].player_link, true);
+			HWSWriteChar(f, entry[i].append_mode);
+		}
+		if (uselatestversion && append_mode != 0 && (entry[i].append_mode & 1) == 0) {
+			HWSWriteShort(f, 0);
+			HWSWriteShort(f, 0);
+		} else {
+			HWSWriteShort(f, entry_offset);
+			HWSWriteShort(f, entry[i].size);
+			entry_offset += entry[i].size;
+		}
+		HWSWriteChar(f, local_data[i].allocate_amount);
+		HWSWriteChar(f, entry[i].flag);
+		HWSWriteShort(f, zero16);
+	}
+	if (uselatestversion)
+		entry_pos = f.tellg();
+	for (i = 0; i < entry_amount; i++) {
+		if (uselatestversion && append_mode != 0 && (entry[i].append_mode & 1) == 0)
+			continue;
+		if (entry[i].size > 0) {
+			HWSSeek(f, entry_pos, offsets[i]);
+			local_entry_pos = f.tellg();
+			HWSWriteChar(f, entry[i].type);
+			HWSWriteChar(f, entry[i].function_amount);
+			function_pos = f.tellg();
+			for (j = 0; j < entry[i].function_amount; j++) {
+				HWSWriteShort(f, entry[i].func[j].function_type);
+				HWSWriteShort(f, entry[i].func[j].function_point);
+			}
+			for (j = 0; j < entry[i].function_amount; j++) {
+				vector<int>& langindices = entry[i].func[j].indices[lang];
+				HWSSeek(f, function_pos, entry[i].func[j].function_point);
+				for (k = 0; k < langindices.size(); k++)
+					if (langindices[k] >= 0)
+						entry[i].func[j].op[langindices[k]].WriteHWS(f);
+			}
+			while (f.tellg() < local_entry_pos + entry[i].size)
+				HWSWriteChar(f, zero8);
+		}
+	}
 }
 
 void ScriptDataStruct::ReadLocalHWS(fstream& f) {
 	uint32_t localpos, entrypos, vardatapos, localsize;
 	uint16_t entryheadersize, vardatasize, tmp16;
-	uint8_t entryam, vardatatype;
+	uint8_t entryam, vardatatype, allocatecount;
 	unsigned int i, j;
 	localpos = f.tellg();
 	HWSReadLong(f, localsize);
@@ -1580,7 +2083,9 @@ void ScriptDataStruct::ReadLocalHWS(fstream& f) {
 	for (i = 0; i < entryam; i++) {
 		entrypos = f.tellg();
 		HWSReadShort(f, entryheadersize);
-		HWSReadChar(f, local_data[i].allocate_amount);
+		HWSReadChar(f, allocatecount);
+		if (GetHWSGlobalVersion() > 100)
+			local_data[i].allocate_amount = allocatecount;
 		HWSReadChar(f, (uint8_t&)local_data[i].amount);
 		HWSSeek(f, entrypos, entryheadersize);
 		local_data[i].local_type.resize(local_data[i].amount);
@@ -1706,18 +2211,16 @@ ScriptDataStruct& ScriptDataStruct::operator=(const ScriptDataStruct& from) {
 	object_id = from.object_id;
 	loaded = from.loaded;
 	modified = false;
+	is_field_script = from.is_field_script;
 	name = from.name;
-	func = from.func;
 	magic_number = from.magic_number;
-	header_unknown1 = from.header_unknown1;
+	version = from.version;
 	entry_amount = from.entry_amount;
-	entry_offset = from.entry_offset;
-	entry_size = from.entry_size;
-	entry_flag = from.entry_flag;
-	entry_type = from.entry_type;
-	entry_function_amount = from.entry_function_amount;
+	entry = from.entry;
 	global_data = from.global_data;
 	local_data = from.local_data;
+	has_language = from.has_language;
+	append_mode = from.append_mode;
 	related_charmap_id = from.related_charmap_id;
 	for (i = 0; i < 20; i++) {
 		header_unknown2[i] = from.header_unknown2[i];
@@ -1727,8 +2230,8 @@ ScriptDataStruct& ScriptDataStruct::operator=(const ScriptDataStruct& from) {
 		for (j = 0; j < SCRIPT_NAME_MAX_LENGTH; j++)
 			header_name[i][j] = from.header_name[i][j];
 	for (i = 0; i < entry_amount; i++)
-		for (j = 0; j < entry_function_amount[i]; j++)
-			func[i][j].parent = this;
+		for (j = 0; j < entry[i].function_amount; j++)
+			entry[i].func[j].parent = this;
 	return *this;
 }
 
@@ -1741,26 +2244,26 @@ int ScriptDataStruct::GetDataSize(SteamLanguage lang) {
 	unsigned int i, j;
 	int res = 128;
 	for (i = 0; i < entry_amount; i++) {
-		if (entry_function_amount[i] > 0) {
-			entry_offset[i] = entrypos;
-			funcpos = 4 * entry_function_amount[i];
-			for (j = 0; j < entry_function_amount[i]; j++) {
-				func[i][j].function_point = funcpos;
-				funcpos += func[i][j].GetLength(lang);
+		if (entry[i].function_amount > 0) {
+			entry[i].offset = entrypos;
+			funcpos = 4 * entry[i].function_amount;
+			for (j = 0; j < entry[i].function_amount; j++) {
+				entry[i].func[j].function_point = funcpos;
+				funcpos += entry[i].func[j].GetLength(lang);
 			}
-			entry_size[i] = funcpos + 2;
-			if (entry_size[i] % 4)
-				entry_size[i] += 4 - entry_size[i] % 4;
+			entry[i].size = funcpos + 2;
+			if (entry[i].size % 4)
+				entry[i].size += 4 - entry[i].size % 4;
 			lastentrypos = entrypos;
-			entrypos += entry_size[i];
+			entrypos += entry[i].size;
 		} else {
-			entry_offset[i] = entrypos;
-			entry_size[i] = 0;
+			entry[i].offset = entrypos;
+			entry[i].size = 0;
 		}
 	}
 	if (entry_amount > 0) // Just for mimicking the game's behavior
-		for (i = entry_amount - 1; entry_size[i] == 0; i--)
-			entry_offset[i] = lastentrypos;
+		for (i = entry_amount - 1; entry[i].size == 0; i--)
+			entry[i].offset = lastentrypos;
 	res += entrypos;
 	return res;
 }
@@ -1775,26 +2278,30 @@ void ScriptDataStruct::UpdateOffset(SteamLanguage lang) {
 	uint16_t funcpos, entrypos = 8 * entry_amount, lastentrypos = entrypos;
 	uint32_t totalsize = 128;
 	for (i = 0; i < entry_amount; i++) {
-		if (entry_function_amount[i] > 0) {
-			entry_offset[i] = entrypos;
-			funcpos = 4 * entry_function_amount[i];
-			for (j = 0; j < entry_function_amount[i]; j++) {
-				func[i][j].function_point = funcpos;
-				funcpos += func[i][j].GetLength(lang);
+		if (entry[i].function_amount > 0) {
+			entry[i].offset = entrypos;
+			funcpos = 4 * entry[i].function_amount;
+			for (j = 0; j < entry[i].function_amount; j++) {
+				entry[i].func[j].function_point = funcpos;
+				funcpos += entry[i].func[j].GetLength(lang);
 			}
-			entry_size[i] = funcpos + 2;
-			if (entry_size[i] % 4)
-				entry_size[i] += 4 - entry_size[i] % 4;
+			entry[i].size = funcpos + 2;
+			if (entry[i].size % 4)
+				entry[i].size += 4 - entry[i].size % 4;
 			lastentrypos = entrypos;
-			entrypos += entry_size[i];
+			entrypos += entry[i].size;
 		} else {
-			entry_offset[i] = entrypos;
-			entry_size[i] = 0;
+			entry[i].offset = entrypos;
+			entry[i].size = 0;
 		}
 	}
 	if (entry_amount > 0) // Just for mimicking the game's behavior
-		for (i = entry_amount - 1; entry_size[i] == 0; i--)
-			entry_offset[i] = lastentrypos;
+		for (i = entry_amount - 1; entry[i].size == 0; i--)
+			entry[i].offset = lastentrypos;
 	totalsize += entrypos;
 	SetSize(totalsize);
+}
+
+void ScriptDataStruct::RegisterEnemyCountForOldHWS(int battleenemycount) {
+	oldhwsenemycount = battleenemycount;
 }

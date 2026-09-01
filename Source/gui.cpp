@@ -114,27 +114,58 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	m_menuBar->Append( m_menuFile, _("&File") );
 
 	m_menuOption = new wxMenu();
-	m_sortspell = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Sort &Spells") ) , _("Sort spells by name or by ID"), wxITEM_CHECK );
-	m_menuOption->Append( m_sortspell );
+	m_sortmenu = new wxMenu();
+	wxMenuItem* m_sortmenuItem = new wxMenuItem( m_menuOption, wxID_ANY, _("&Sort Entries"), wxEmptyString, wxITEM_NORMAL, m_sortmenu );
+	m_sortspell = new wxMenuItem( m_sortmenu, wxID_ANY, wxString( _("Sort &Spells") ) , _("Sort spells by name or by ID"), wxITEM_CHECK );
+	m_sortmenu->Append( m_sortspell );
 
-	m_sortsupport = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Sort &Supporting Abilities") ) , _("Sort supporting abilities by name or by ID"), wxITEM_CHECK );
-	m_menuOption->Append( m_sortsupport );
+	m_sortsupport = new wxMenuItem( m_sortmenu, wxID_ANY, wxString( _("Sort &Supporting Abilities") ) , _("Sort supporting abilities by name or by ID"), wxITEM_CHECK );
+	m_sortmenu->Append( m_sortsupport );
 
-	m_sortcmd = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Sort &Commands") ) , _("Sort commands by name or by ID"), wxITEM_CHECK );
-	m_menuOption->Append( m_sortcmd );
+	m_sortcmd = new wxMenuItem( m_sortmenu, wxID_ANY, wxString( _("Sort &Commands") ) , _("Sort commands by name or by ID"), wxITEM_CHECK );
+	m_sortmenu->Append( m_sortcmd );
+
+	m_sortmenu->AppendSeparator();
+
+	m_sortitem = new wxMenuItem( m_sortmenu, wxID_ANY, wxString( _("Sort &Items") ) , _("Sort regular items by name or by ID"), wxITEM_CHECK );
+	m_sortmenu->Append( m_sortitem );
+
+	m_sortkeyitem = new wxMenuItem( m_sortmenu, wxID_ANY, wxString( _("Sort &Key Items") ) , _("Sort key items by name or by ID"), wxITEM_CHECK );
+	m_sortmenu->Append( m_sortkeyitem );
+
+	m_sortmenu->AppendSeparator();
+
+	m_sortenemy = new wxMenuItem( m_sortmenu, wxID_ANY, wxString( _("Sort &Enemies") ) , _("Sort enemies by name or by ID"), wxITEM_CHECK );
+	m_sortmenu->Append( m_sortenemy );
+
+	m_sortmenu->AppendSeparator();
+
+	m_sortcard = new wxMenuItem( m_sortmenu, wxID_ANY, wxString( _("Sort &Cards") ) , _("Sort cards by name or by ID"), wxITEM_CHECK );
+	m_sortmenu->Append( m_sortcard );
+
+	m_sortmenu->AppendSeparator();
+
+	m_sorttext = new wxMenuItem( m_sortmenu, wxID_ANY, wxString( _("Sort &Text Blocks") ) , _("Sort text blocks by name or by ID"), wxITEM_CHECK );
+	m_sortmenu->Append( m_sorttext );
+
+	m_sortworld = new wxMenuItem( m_sortmenu, wxID_ANY, wxString( _("Sort &World Maps") ) , _("Sort world maps by name or by ID"), wxITEM_CHECK );
+	m_sortmenu->Append( m_sortworld );
+
+	m_sortfield = new wxMenuItem( m_sortmenu, wxID_ANY, wxString( _("Sort &Fields") ) , _("Sort fields by name or by ID"), wxITEM_CHECK );
+	m_sortmenu->Append( m_sortfield );
+
+	m_sortbattlescene = new wxMenuItem( m_sortmenu, wxID_ANY, wxString( _("Sort &Battle Scenes") ) , _("Sort battle scenes by name or by ID"), wxITEM_CHECK );
+	m_sortmenu->Append( m_sortbattlescene );
+
+	m_sortspellanim = new wxMenuItem( m_sortmenu, wxID_ANY, wxString( _("Sort &Spell Animations") ) , _("Sort spell animations by name or by ID"), wxITEM_CHECK );
+	m_sortmenu->Append( m_sortspellanim );
+
+	m_menuOption->Append( m_sortmenuItem );
 
 	m_menuOption->AppendSeparator();
 
-	m_sortitem = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Sort &Items") ) , _("Sort regular items by name or by ID"), wxITEM_CHECK );
-	m_menuOption->Append( m_sortitem );
-
-	m_sortkeyitem = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Sort &Key Items") ) , _("Sort key items by name or by ID"), wxITEM_CHECK );
-	m_menuOption->Append( m_sortkeyitem );
-
-	m_menuOption->AppendSeparator();
-
-	m_sortenemy = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Sort &Enemies") ) , _("Sort enemies by name or by ID"), wxITEM_CHECK );
-	m_menuOption->Append( m_sortenemy );
+	m_fieldshowid = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Show &Field IDs") ) + wxT('\t') + wxT("Ctrl+J"), _("Display the field identifiers"), wxITEM_CHECK );
+	m_menuOption->Append( m_fieldshowid );
 
 	m_enemyshowid = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Show &Enemy IDs") ) + wxT('\t') + wxT("Ctrl+I"), _("Display the battle identifiers"), wxITEM_CHECK );
 	m_menuOption->Append( m_enemyshowid );
@@ -144,28 +175,14 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 
 	m_menuOption->AppendSeparator();
 
-	m_sortcard = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Sort &Cards") ) , _("Sort cards by name or by ID"), wxITEM_CHECK );
-	m_menuOption->Append( m_sortcard );
+	m_fieldpreferappendmode = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Append Mode: Field Scripts") ) , _("Prefer the \"Append mode\" for field scripts: when modified, scripts are automatically flagged with that mode and modified entries are included"), wxITEM_CHECK );
+	m_menuOption->Append( m_fieldpreferappendmode );
 
-	m_menuOption->AppendSeparator();
+	m_worldpreferappendmode = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Append Mode: World Map Scripts") ) , _("Prefer the \"Append mode\" for world map scripts: when modified, scripts are automatically flagged with that mode and modified entries are included"), wxITEM_CHECK );
+	m_menuOption->Append( m_worldpreferappendmode );
 
-	m_sorttext = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Sort &Text Blocks") ) , _("Sort text blocks by name or by ID"), wxITEM_CHECK );
-	m_menuOption->Append( m_sorttext );
-
-	m_sortworld = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Sort &World Maps") ) , _("Sort world maps by name or by ID"), wxITEM_CHECK );
-	m_menuOption->Append( m_sortworld );
-
-	m_sortfield = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Sort &Fields") ) , _("Sort fields by name or by ID"), wxITEM_CHECK );
-	m_menuOption->Append( m_sortfield );
-
-	m_fieldshowid = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Show &Field IDs") ) + wxT('\t') + wxT("Ctrl+J"), _("Display the field identifiers"), wxITEM_CHECK );
-	m_menuOption->Append( m_fieldshowid );
-
-	m_sortbattlescene = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Sort &Battle Scenes") ) , _("Sort battle scenes by name or by ID"), wxITEM_CHECK );
-	m_menuOption->Append( m_sortbattlescene );
-
-	m_sortspellanim = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Sort &Spell Animations") ) , _("Sort spell animations by name or by ID"), wxITEM_CHECK );
-	m_menuOption->Append( m_sortspellanim );
+	m_battlepreferappendmode = new wxMenuItem( m_menuOption, wxID_ANY, wxString( _("Append Mode: Enemy Scripts") ) , _("Prefer the \"Append mode\" for battle scripts: when modified, scripts are automatically flagged with that mode and modified entries are included"), wxITEM_CHECK );
+	m_menuOption->Append( m_battlepreferappendmode );
 
 	m_menuBar->Append( m_menuOption, _("&Option") );
 
@@ -355,20 +372,20 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	m_menuFile->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSaveBinClick ), this, m_savebin->GetId());
 	m_menuFile->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnPreferencesClick ), this, m_preferences->GetId());
 	m_menuFile->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnExitClick ), this, m_exit->GetId());
-	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortSpellClick ), this, m_sortspell->GetId());
-	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortSupportClick ), this, m_sortsupport->GetId());
-	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortCommandClick ), this, m_sortcmd->GetId());
-	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortItemClick ), this, m_sortitem->GetId());
-	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortKeyItemClick ), this, m_sortkeyitem->GetId());
-	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortEnemyClick ), this, m_sortenemy->GetId());
-	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortEnemyClick ), this, m_enemyshowid->GetId());
-	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortCardClick ), this, m_sortcard->GetId());
-	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortTextClick ), this, m_sorttext->GetId());
-	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortWorldMapClick ), this, m_sortworld->GetId());
-	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortFieldClick ), this, m_sortfield->GetId());
+	m_sortmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortSpellClick ), this, m_sortspell->GetId());
+	m_sortmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortSupportClick ), this, m_sortsupport->GetId());
+	m_sortmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortCommandClick ), this, m_sortcmd->GetId());
+	m_sortmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortItemClick ), this, m_sortitem->GetId());
+	m_sortmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortKeyItemClick ), this, m_sortkeyitem->GetId());
+	m_sortmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortEnemyClick ), this, m_sortenemy->GetId());
+	m_sortmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortCardClick ), this, m_sortcard->GetId());
+	m_sortmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortTextClick ), this, m_sorttext->GetId());
+	m_sortmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortWorldMapClick ), this, m_sortworld->GetId());
+	m_sortmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortFieldClick ), this, m_sortfield->GetId());
+	m_sortmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortBattleSceneClick ), this, m_sortbattlescene->GetId());
+	m_sortmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortSpellAnimationClick ), this, m_sortspellanim->GetId());
 	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortFieldClick ), this, m_fieldshowid->GetId());
-	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortBattleSceneClick ), this, m_sortbattlescene->GetId());
-	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortSpellAnimationClick ), this, m_sortspellanim->GetId());
+	m_menuOption->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnSortEnemyClick ), this, m_enemyshowid->GetId());
 	m_exporttextmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchExportClick ), this, m_exporttext->GetId());
 	m_exporttextmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchExportClick ), this, m_exportworldtext->GetId());
 	m_exporttextmenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnBatchExportClick ), this, m_exportbattletext->GetId());
@@ -1283,6 +1300,12 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_statcharadvancedkind = new wxChoice( m_statcharscrolledwindow, wxID_PARAMKIND, wxDefaultPosition, wxDefaultSize, m_statcharadvancedkindChoices, 0 );
 	m_statcharadvancedkind->SetSelection( 0 );
 	bSizer325->Add( m_statcharadvancedkind, 0, wxALL, 2 );
+
+	m_statcharadvancedadd = new wxButton( m_statcharscrolledwindow, wxID_PARAMADD, _("Add"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer325->Add( m_statcharadvancedadd, 0, wxALL, 2 );
+
+	m_statcharadvancedremove = new wxButton( m_statcharscrolledwindow, wxID_PARAMREMOVE, _("Delete"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer325->Add( m_statcharadvancedremove, 0, wxALL, 2 );
 
 
 	fgSizer23->Add( bSizer325, 1, wxEXPAND, 5 );
@@ -3488,6 +3511,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	fgSizer9->Add( m_enemystatlvllabel, 0, wxALL, 5 );
 
 	m_enemystatlvl = new wxSpinCtrl( m_enemystatpanel1, wxID_LVL, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_enemystatlvl->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer9->Add( m_enemystatlvl, 0, wxALL, 2 );
 
 	m_enemystathplabel = new wxStaticText( m_enemystatpanel1, wxID_ANY, _("HP"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -3495,6 +3520,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	fgSizer9->Add( m_enemystathplabel, 0, wxALL, 5 );
 
 	m_enemystathp = new wxSpinCtrl( m_enemystatpanel1, wxID_HP, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	m_enemystathp->SetMinSize( wxSize( 75,-1 ) );
+
 	fgSizer9->Add( m_enemystathp, 0, wxALL, 2 );
 
 	m_enemystatmplabel = new wxStaticText( m_enemystatpanel1, wxID_ANY, _("MP"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -3502,6 +3529,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	fgSizer9->Add( m_enemystatmplabel, 0, wxALL, 5 );
 
 	m_enemystatmp = new wxSpinCtrl( m_enemystatpanel1, wxID_MP, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	m_enemystatmp->SetMinSize( wxSize( 75,-1 ) );
+
 	fgSizer9->Add( m_enemystatmp, 0, wxALL, 2 );
 
 	m_staticText69 = new wxStaticText( m_enemystatpanel1, wxID_ANY, _("Attack"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -3510,6 +3539,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	m_enemystatattack = new wxSpinCtrl( m_enemystatpanel1, wxID_ATTACK, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
 	m_enemystatattack->SetToolTip( _("\"Attack Power\", actually unused") );
+	m_enemystatattack->SetMinSize( wxSize( 75,-1 ) );
 
 	fgSizer9->Add( m_enemystatattack, 0, wxALL, 2 );
 
@@ -3519,6 +3549,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	m_enemystataccuracy = new wxSpinCtrl( m_enemystatpanel1, wxID_ACCURACY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
 	m_enemystataccuracy->SetToolTip( _("\"Hit Rate\", actually unused") );
+	m_enemystataccuracy->SetMinSize( wxSize( 75,-1 ) );
 
 	fgSizer9->Add( m_enemystataccuracy, 0, wxALL, 2 );
 
@@ -3527,6 +3558,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	fgSizer9->Add( m_enemystatspeedlabel, 0, wxALL, 5 );
 
 	m_enemystatspeed = new wxSpinCtrl( m_enemystatpanel1, wxID_SPEED, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_enemystatspeed->SetMinSize( wxSize( 70,-1 ) );
+
 	fgSizer9->Add( m_enemystatspeed, 0, wxALL, 2 );
 
 	m_enemystatstrengthlabel = new wxStaticText( m_enemystatpanel1, wxID_ANY, _("Strength"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -3534,6 +3567,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	fgSizer9->Add( m_enemystatstrengthlabel, 0, wxALL, 5 );
 
 	m_enemystatstrength = new wxSpinCtrl( m_enemystatpanel1, wxID_STRENGTH, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_enemystatstrength->SetMinSize( wxSize( 70,-1 ) );
+
 	fgSizer9->Add( m_enemystatstrength, 0, wxALL, 2 );
 
 	m_enemystatmagiclabel = new wxStaticText( m_enemystatpanel1, wxID_ANY, _("Magic"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -3541,6 +3576,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	fgSizer9->Add( m_enemystatmagiclabel, 0, wxALL, 5 );
 
 	m_enemystatmagic = new wxSpinCtrl( m_enemystatpanel1, wxID_MAGIC, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_enemystatmagic->SetMinSize( wxSize( 70,-1 ) );
+
 	fgSizer9->Add( m_enemystatmagic, 0, wxALL, 2 );
 
 	m_enemystatspiritlabel = new wxStaticText( m_enemystatpanel1, wxID_ANY, _("Spirit"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -3548,6 +3585,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	fgSizer9->Add( m_enemystatspiritlabel, 0, wxALL, 5 );
 
 	m_enemystatspirit = new wxSpinCtrl( m_enemystatpanel1, wxID_SPIRIT, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_enemystatspirit->SetMinSize( wxSize( 70,-1 ) );
+
 	fgSizer9->Add( m_enemystatspirit, 0, wxALL, 2 );
 
 	m_staticText65 = new wxStaticText( m_enemystatpanel1, wxID_ANY, _("Defence"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -3555,6 +3594,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	fgSizer9->Add( m_staticText65, 0, wxALL, 5 );
 
 	m_enemystatdefence = new wxSpinCtrl( m_enemystatpanel1, wxID_DEFENCE, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_enemystatdefence->SetMinSize( wxSize( 70,-1 ) );
+
 	fgSizer9->Add( m_enemystatdefence, 0, wxALL, 2 );
 
 	m_staticText66 = new wxStaticText( m_enemystatpanel1, wxID_ANY, _("Evade"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -3562,6 +3603,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	fgSizer9->Add( m_staticText66, 0, wxALL, 5 );
 
 	m_enemystatevade = new wxSpinCtrl( m_enemystatpanel1, wxID_EVADE, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_enemystatevade->SetMinSize( wxSize( 70,-1 ) );
+
 	fgSizer9->Add( m_enemystatevade, 0, wxALL, 2 );
 
 	m_staticText67 = new wxStaticText( m_enemystatpanel1, wxID_ANY, _("Magic Defence"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -3569,6 +3612,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	fgSizer9->Add( m_staticText67, 0, wxALL, 5 );
 
 	m_enemystatmagicdefence = new wxSpinCtrl( m_enemystatpanel1, wxID_MDEFENCE, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_enemystatmagicdefence->SetMinSize( wxSize( 70,-1 ) );
+
 	fgSizer9->Add( m_enemystatmagicdefence, 0, wxALL, 2 );
 
 	m_staticText68 = new wxStaticText( m_enemystatpanel1, wxID_ANY, _("Magic Evade"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -3576,6 +3621,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	fgSizer9->Add( m_staticText68, 0, wxALL, 5 );
 
 	m_enemystatmagicevade = new wxSpinCtrl( m_enemystatpanel1, wxID_MEVADE, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_enemystatmagicevade->SetMinSize( wxSize( 70,-1 ) );
+
 	fgSizer9->Add( m_enemystatmagicevade, 0, wxALL, 2 );
 
 	m_enemystatitemsteallabel = new wxStaticText( m_enemystatpanel1, wxID_ANY, _("Steal"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -3707,6 +3754,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	fgSizer9->Add( m_enemystatexplabel, 0, wxALL, 5 );
 
 	m_enemystatexp = new wxSpinCtrl( m_enemystatpanel1, wxID_EXP, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	m_enemystatexp->SetMinSize( wxSize( 75,-1 ) );
+
 	fgSizer9->Add( m_enemystatexp, 0, wxALL, 2 );
 
 	m_enemystatgilslabel = new wxStaticText( m_enemystatpanel1, wxID_ANY, _("Gils"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -3714,6 +3763,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	fgSizer9->Add( m_enemystatgilslabel, 0, wxALL, 5 );
 
 	m_enemystatgils = new wxSpinCtrl( m_enemystatpanel1, wxID_GILS, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	m_enemystatgils->SetMinSize( wxSize( 75,-1 ) );
+
 	fgSizer9->Add( m_enemystatgils, 0, wxALL, 2 );
 
 	m_staticText264 = new wxStaticText( m_enemystatpanel1, wxID_ANY, _("Default Attack"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -3781,6 +3832,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer198->Add( m_enemystatmodel, 0, wxALL|wxEXPAND, 2 );
 
 	m_enemystatmodelid = new wxSpinCtrl( m_enemystatpanel1, wxID_MODEL, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
+	m_enemystatmodelid->SetMinSize( wxSize( 70,-1 ) );
+
 	bSizer198->Add( m_enemystatmodelid, 0, wxALL, 2 );
 
 
@@ -3799,6 +3852,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	m_enemystatzerostat = new wxSpinCtrl( m_enemystatpanel1, wxID_ZERO0, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
 	m_enemystatzerostat->SetToolTip( _("Dummied data (may have a custom use by modding the engine)") );
+	m_enemystatzerostat->SetMinSize( wxSize( 50,-1 ) );
 
 	fgSizer9->Add( m_enemystatzerostat, 0, wxALL, 2 );
 
@@ -3808,6 +3862,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	m_enemystatzero1 = new wxSpinCtrl( m_enemystatpanel1, wxID_ZERO1, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
 	m_enemystatzero1->SetToolTip( _("Dummied data (may have a custom use by modding the engine)") );
+	m_enemystatzero1->SetMinSize( wxSize( 50,-1 ) );
 
 	fgSizer9->Add( m_enemystatzero1, 0, wxALL, 2 );
 
@@ -3817,6 +3872,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	m_enemystatzero2 = new wxSpinCtrl( m_enemystatpanel1, wxID_ZERO2, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
 	m_enemystatzero2->SetToolTip( _("Dummied data (may have a custom use by modding the engine)") );
+	m_enemystatzero2->SetMinSize( wxSize( 75,-1 ) );
 
 	fgSizer9->Add( m_enemystatzero2, 0, wxALL, 2 );
 
@@ -3826,6 +3882,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	m_enemystatzero3 = new wxSpinCtrl( m_enemystatpanel1, wxID_ZERO3, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
 	m_enemystatzero3->SetToolTip( _("Dummied data (may have a custom use by modding the engine)") );
+	m_enemystatzero3->SetMinSize( wxSize( 75,-1 ) );
 
 	fgSizer9->Add( m_enemystatzero3, 0, wxALL, 2 );
 
@@ -4291,6 +4348,16 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	fgSizer10->Add( bSizer332, 1, wxEXPAND, 5 );
 
+	m_staticText5652 = new wxStaticText( m_enemyspellscrolledwindow, wxID_ANY, _("Animation Seq"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText5652->Wrap( -1 );
+	fgSizer10->Add( m_staticText5652, 0, wxALL, 5 );
+
+	m_enemyspellanimseqpath = new wxTextCtrl( m_enemyspellscrolledwindow, wxID_ANIM, _("0"), wxDefaultPosition, wxSize( -1,-1 ), 0 );
+	m_enemyspellanimseqpath->SetToolTip( _("Path to a custom file .seq\nto be placed in FF9_Data") );
+	m_enemyspellanimseqpath->SetMinSize( wxSize( 300,-1 ) );
+
+	fgSizer10->Add( m_enemyspellanimseqpath, 0, wxALIGN_CENTER_VERTICAL|wxALL, 2 );
+
 	m_staticText244 = new wxStaticText( m_enemyspellscrolledwindow, wxID_ANY, _("Animations"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText244->Wrap( -1 );
 	fgSizer10->Add( m_staticText244, 0, wxALL, 5 );
@@ -4307,7 +4374,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	fgSizer10->Add( m_staticText313, 0, wxALL, 5 );
 
 	wxGridSizer* gSizer213;
-	gSizer213 = new wxGridSizer( 1, 3, 0, 0 );
+	gSizer213 = new wxGridSizer( 2, 3, 0, 0 );
 
 	m_enemyspelltargetflagdead = new wxCheckBox( m_enemyspellscrolledwindow, wxID_CAN_TARGET_DEAD, _("Can target KO"), wxDefaultPosition, wxDefaultSize, 0 );
 	gSizer213->Add( m_enemyspelltargetflagdead, 0, wxALL, 5 );
@@ -4319,6 +4386,21 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemyspelltargetflagcamera->SetToolTip( _("Always use the alternative camera\nin spell animations using such a camera") );
 
 	gSizer213->Add( m_enemyspelltargetflagcamera, 0, wxALL, 5 );
+
+	m_enemyspelltargetflagmorphaccess = new wxCheckBox( m_enemyspellscrolledwindow, wxID_MORPH_ACCESS, _("Force Morph"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_enemyspelltargetflagmorphaccess->SetToolTip( _("When used by transformed player character,\nalways force the attack to be available") );
+
+	gSizer213->Add( m_enemyspelltargetflagmorphaccess, 0, wxALL, 5 );
+
+	m_enemyspelltargetflagmorphdisable = new wxCheckBox( m_enemyspellscrolledwindow, wxID_MORPH_DISABLE, _("Force no access"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_enemyspelltargetflagmorphdisable->SetToolTip( _("When used by transformed player character,\nalways force the attack to be unavailable") );
+
+	gSizer213->Add( m_enemyspelltargetflagmorphdisable, 0, wxALL, 5 );
+
+	m_enemyspelltargetflagalternateidle = new wxCheckBox( m_enemyspellscrolledwindow, wxID_ALTERNATE_IDLE, _("Alternate idle"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_enemyspelltargetflagalternateidle->SetToolTip( _("When used by transformed player character,\nmake the attack only available on the secondary\nidling stance (for enemies that have two stances)") );
+
+	gSizer213->Add( m_enemyspelltargetflagalternateidle, 0, wxALL, 5 );
 
 
 	fgSizer10->Add( gSizer213, 1, wxEXPAND, 5 );
@@ -4815,6 +4897,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	m_cardpoints = new wxSpinCtrl( m_cardscrolledwindow, wxID_POINTS, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
 	m_cardpoints->SetToolTip( _("These points are given only for\nthe 1st card of this type") );
+	m_cardpoints->SetMinSize( wxSize( 50,-1 ) );
 
 	gbSizer38->Add( m_cardpoints, wxGBPosition( 2, 1 ), wxGBSpan( 1, 1 ), wxALL, 2 );
 
@@ -6449,10 +6532,14 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_statcharspirit->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnStatChangeSpin ), NULL, this );
 	m_statcharmagicstone->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnStatChangeSpin ), NULL, this );
 	m_statcharadvanced->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
+	m_statcharadvancedadd->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
+	m_statcharadvancedremove->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
 	m_statcharabilityset->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharabilitylist->Connect( wxEVT_KEY_DOWN, wxKeyEventHandler( CDPanel::OnStatKeyDown ), NULL, this );
+	m_statcharabilitylist->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( CDPanel::OnWindowLooseFocus ), NULL, this );
 	m_statcharabilitylist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeList ), NULL, this );
 	m_statcharabilitylist->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnStatAbilityRightClick ), NULL, this );
+	m_statcharabilitylist->Connect( wxEVT_SET_FOCUS, wxFocusEventHandler( CDPanel::OnWindowGetFocus ), NULL, this );
 	m_statcharabilitychoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharabilitycost->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnStatChangeSpin ), NULL, this );
 	m_statcharabilitybuttonup->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
@@ -6565,12 +6652,16 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_itemskilllist->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
 	m_itemmoveskillup->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
 	m_itemmoveskilldown->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
-	m_itemmenuposlist->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( CDPanel::OnItemPositionListClick ), NULL, this );
+	m_itemmenuposlist->Connect( wxEVT_CHAR_HOOK, wxKeyEventHandler( CDPanel::PreventListNavigationCharHook ), NULL, this );
+	m_itemmenuposlist->Connect( wxEVT_KEY_DOWN, wxKeyEventHandler( CDPanel::PreventListNavigationKeyDown ), NULL, this );
+	m_itemmenuposlist->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( CDPanel::PreventListNavigationClick ), NULL, this );
 	m_itemmenuposbuttonup->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
 	m_itemmenuposbuttondown->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
 	m_itemmenuposrelative->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnItemChangeChoice ), NULL, this );
 	m_itemmenuposchoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnItemChangeChoice ), NULL, this );
-	m_itemequipposlist->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( CDPanel::OnItemPositionListClick ), NULL, this );
+	m_itemequipposlist->Connect( wxEVT_CHAR_HOOK, wxKeyEventHandler( CDPanel::PreventListNavigationCharHook ), NULL, this );
+	m_itemequipposlist->Connect( wxEVT_KEY_DOWN, wxKeyEventHandler( CDPanel::PreventListNavigationKeyDown ), NULL, this );
+	m_itemequipposlist->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( CDPanel::PreventListNavigationClick ), NULL, this );
 	m_itemequipposbuttonup->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
 	m_itemequipposbuttondown->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
 	m_itemequipposrelative->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnItemChangeChoice ), NULL, this );
@@ -6839,10 +6930,14 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemyspellmp->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemyspellanimedit->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
 	m_enemyspellanimreflect->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
+	m_enemyspellanimseqpath->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnEnemyChangeText ), NULL, this );
 	m_enemyspellbaseanim->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
 	m_enemyspelltargetflagdead->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyspelltargetflagdeadfirst->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyspelltargetflagcamera->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspelltargetflagmorphaccess->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspelltargetflagmorphdisable->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspelltargetflagalternateidle->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyspellflag1->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyspellflag2->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyspellflag3->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
@@ -7121,10 +7216,14 @@ CDPanel::~CDPanel()
 	m_statcharspirit->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnStatChangeSpin ), NULL, this );
 	m_statcharmagicstone->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnStatChangeSpin ), NULL, this );
 	m_statcharadvanced->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
+	m_statcharadvancedadd->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
+	m_statcharadvancedremove->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
 	m_statcharabilityset->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharabilitylist->Disconnect( wxEVT_KEY_DOWN, wxKeyEventHandler( CDPanel::OnStatKeyDown ), NULL, this );
+	m_statcharabilitylist->Disconnect( wxEVT_KILL_FOCUS, wxFocusEventHandler( CDPanel::OnWindowLooseFocus ), NULL, this );
 	m_statcharabilitylist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeList ), NULL, this );
 	m_statcharabilitylist->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnStatAbilityRightClick ), NULL, this );
+	m_statcharabilitylist->Disconnect( wxEVT_SET_FOCUS, wxFocusEventHandler( CDPanel::OnWindowGetFocus ), NULL, this );
 	m_statcharabilitychoice->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnStatChangeChoice ), NULL, this );
 	m_statcharabilitycost->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnStatChangeSpin ), NULL, this );
 	m_statcharabilitybuttonup->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnStatChangeButton ), NULL, this );
@@ -7237,12 +7336,16 @@ CDPanel::~CDPanel()
 	m_itemskilllist->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
 	m_itemmoveskillup->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
 	m_itemmoveskilldown->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
-	m_itemmenuposlist->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( CDPanel::OnItemPositionListClick ), NULL, this );
+	m_itemmenuposlist->Disconnect( wxEVT_CHAR_HOOK, wxKeyEventHandler( CDPanel::PreventListNavigationCharHook ), NULL, this );
+	m_itemmenuposlist->Disconnect( wxEVT_KEY_DOWN, wxKeyEventHandler( CDPanel::PreventListNavigationKeyDown ), NULL, this );
+	m_itemmenuposlist->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( CDPanel::PreventListNavigationClick ), NULL, this );
 	m_itemmenuposbuttonup->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
 	m_itemmenuposbuttondown->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
 	m_itemmenuposrelative->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnItemChangeChoice ), NULL, this );
 	m_itemmenuposchoice->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnItemChangeChoice ), NULL, this );
-	m_itemequipposlist->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( CDPanel::OnItemPositionListClick ), NULL, this );
+	m_itemequipposlist->Disconnect( wxEVT_CHAR_HOOK, wxKeyEventHandler( CDPanel::PreventListNavigationCharHook ), NULL, this );
+	m_itemequipposlist->Disconnect( wxEVT_KEY_DOWN, wxKeyEventHandler( CDPanel::PreventListNavigationKeyDown ), NULL, this );
+	m_itemequipposlist->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( CDPanel::PreventListNavigationClick ), NULL, this );
 	m_itemequipposbuttonup->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
 	m_itemequipposbuttondown->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnItemChangeButton ), NULL, this );
 	m_itemequipposrelative->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnItemChangeChoice ), NULL, this );
@@ -7511,10 +7614,14 @@ CDPanel::~CDPanel()
 	m_enemyspellmp->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
 	m_enemyspellanimedit->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
 	m_enemyspellanimreflect->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
+	m_enemyspellanimseqpath->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnEnemyChangeText ), NULL, this );
 	m_enemyspellbaseanim->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
 	m_enemyspelltargetflagdead->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyspelltargetflagdeadfirst->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyspelltargetflagcamera->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspelltargetflagmorphaccess->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspelltargetflagmorphdisable->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyspelltargetflagalternateidle->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyspellflag1->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyspellflag2->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyspellflag3->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
@@ -8606,12 +8713,18 @@ CharacterParameterWindow::CharacterParameterWindow( wxWindow* parent, wxWindowID
 	fgSizer163->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
 	m_tranceglowr = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_tranceglowr->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer163->Add( m_tranceglowr, 0, wxALL, 5 );
 
 	m_tranceglowg = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_tranceglowg->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer163->Add( m_tranceglowg, 0, wxALL, 5 );
 
 	m_tranceglowb = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_tranceglowb->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer163->Add( m_tranceglowb, 0, wxALL, 5 );
 
 	m_colorbmp = new wxStaticBitmap( this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxDefaultSize, 0 );
@@ -8667,6 +8780,8 @@ CharacterParameterWindow::CharacterParameterWindow( wxWindow* parent, wxWindowID
 	fgSizer92->Add( m_staticText551, 0, wxALL, 5 );
 
 	m_weaponbone = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_weaponbone->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer92->Add( m_weaponbone, 0, wxALL, 5 );
 
 	m_staticText557 = new wxStaticText( this, wxID_ANY, _("Status Icons"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -8691,57 +8806,93 @@ CharacterParameterWindow::CharacterParameterWindow( wxWindow* parent, wxWindowID
 	fgSizer162->Add( m_staticText5582, 0, wxLEFT, 10 );
 
 	m_statusbone0 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_statusbone0->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer162->Add( m_statusbone0, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_statusy0 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	m_statusy0->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer162->Add( m_statusy0, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_statusz0 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	m_statusz0->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer162->Add( m_statusz0, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_statusbone1 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_statusbone1->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer162->Add( m_statusbone1, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_statusy1 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	m_statusy1->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer162->Add( m_statusy1, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_statusz1 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	m_statusz1->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer162->Add( m_statusz1, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_statusbone2 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_statusbone2->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer162->Add( m_statusbone2, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_statusy2 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	m_statusy2->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer162->Add( m_statusy2, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_statusz2 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	m_statusz2->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer162->Add( m_statusz2, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_statusbone3 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_statusbone3->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer162->Add( m_statusbone3, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_statusy3 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	m_statusy3->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer162->Add( m_statusy3, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_statusz3 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	m_statusz3->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer162->Add( m_statusz3, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_statusbone4 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_statusbone4->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer162->Add( m_statusbone4, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_statusy4 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	m_statusy4->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer162->Add( m_statusy4, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_statusz4 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	m_statusz4->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer162->Add( m_statusz4, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_statusbone5 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_statusbone5->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer162->Add( m_statusbone5, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_statusy5 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	m_statusy5->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer162->Add( m_statusy5, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_statusz5 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	m_statusz5->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer162->Add( m_statusz5, 0, wxLEFT|wxRIGHT, 5 );
 
 
@@ -8755,9 +8906,13 @@ CharacterParameterWindow::CharacterParameterWindow( wxWindow* parent, wxWindowID
 	bSizer315 = new wxBoxSizer( wxHORIZONTAL );
 
 	m_shadowbone1 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_shadowbone1->SetMinSize( wxSize( 50,-1 ) );
+
 	bSizer315->Add( m_shadowbone1, 0, wxALL, 5 );
 
 	m_shadowbone2 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_shadowbone2->SetMinSize( wxSize( 50,-1 ) );
+
 	bSizer315->Add( m_shadowbone2, 0, wxALL, 5 );
 
 
@@ -8785,12 +8940,18 @@ CharacterParameterWindow::CharacterParameterWindow( wxWindow* parent, wxWindowID
 	fgSizer93->Add( m_staticText564, 0, wxLEFT, 10 );
 
 	m_shadowsizex = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_shadowsizex->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer93->Add( m_shadowsizex, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_shadowsizey = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_shadowsizey->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer93->Add( m_shadowsizey, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_shadowsizez = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_shadowsizez->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer93->Add( m_shadowsizez, 0, wxLEFT|wxRIGHT, 5 );
 
 
@@ -8907,6 +9068,7 @@ EnemyResourceWindow::EnemyResourceWindow( wxWindow* parent, wxWindowID id, const
 
 	m_textamount = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 127, 0 );
 	m_textamount->SetToolTip( _("Number of texts reserved for the Attack animations of the enemy") );
+	m_textamount->SetMinSize( wxSize( 50,-1 ) );
 
 	fgSizer92->Add( m_textamount, 0, wxALL, 5 );
 
@@ -8954,6 +9116,8 @@ EnemyResourceWindow::EnemyResourceWindow( wxWindow* parent, wxWindowID id, const
 	fgSizer92->Add( m_staticText358, 0, wxALL, 5 );
 
 	m_bonetarget = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_bonetarget->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer92->Add( m_bonetarget, 0, wxALL, 5 );
 
 	m_staticText359 = new wxStaticText( this, wxID_ANY, _("Camera Bones"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -8966,12 +9130,18 @@ EnemyResourceWindow::EnemyResourceWindow( wxWindow* parent, wxWindowID id, const
 	fgSizer160->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
 	m_bonecamera1 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_bonecamera1->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer160->Add( m_bonecamera1, 0, wxALL, 5 );
 
 	m_bonecamera2 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_bonecamera2->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer160->Add( m_bonecamera2, 0, wxALL, 5 );
 
 	m_bonecamera3 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_bonecamera3->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer160->Add( m_bonecamera3, 0, wxALL, 5 );
 
 
@@ -8999,57 +9169,93 @@ EnemyResourceWindow::EnemyResourceWindow( wxWindow* parent, wxWindowID id, const
 	fgSizer158->Add( m_staticText568, 0, wxLEFT, 10 );
 
 	m_boneselection0 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_boneselection0->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer158->Add( m_boneselection0, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_selectionoffsety0 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	m_selectionoffsety0->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer158->Add( m_selectionoffsety0, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_selectionoffsetz0 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	m_selectionoffsetz0->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer158->Add( m_selectionoffsetz0, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_boneselection1 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_boneselection1->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer158->Add( m_boneselection1, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_selectionoffsety1 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	m_selectionoffsety1->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer158->Add( m_selectionoffsety1, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_selectionoffsetz1 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	m_selectionoffsetz1->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer158->Add( m_selectionoffsetz1, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_boneselection2 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_boneselection2->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer158->Add( m_boneselection2, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_selectionoffsety2 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	m_selectionoffsety2->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer158->Add( m_selectionoffsety2, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_selectionoffsetz2 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	m_selectionoffsetz2->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer158->Add( m_selectionoffsetz2, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_boneselection3 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_boneselection3->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer158->Add( m_boneselection3, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_selectionoffsety3 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	m_selectionoffsety3->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer158->Add( m_selectionoffsety3, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_selectionoffsetz3 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	m_selectionoffsetz3->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer158->Add( m_selectionoffsetz3, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_boneselection4 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_boneselection4->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer158->Add( m_boneselection4, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_selectionoffsety4 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	m_selectionoffsety4->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer158->Add( m_selectionoffsety4, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_selectionoffsetz4 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	m_selectionoffsetz4->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer158->Add( m_selectionoffsetz4, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_boneselection5 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_boneselection5->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer158->Add( m_boneselection5, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_selectionoffsety5 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	m_selectionoffsety5->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer158->Add( m_selectionoffsety5, 0, wxLEFT|wxRIGHT, 5 );
 
 	m_selectionoffsetz5 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -128, 127, 0 );
+	m_selectionoffsetz5->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer158->Add( m_selectionoffsetz5, 0, wxLEFT|wxRIGHT, 5 );
 
 
@@ -9065,9 +9271,13 @@ EnemyResourceWindow::EnemyResourceWindow( wxWindow* parent, wxWindowID id, const
 	fgSizer159->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
 	m_boneshadow1 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_boneshadow1->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer159->Add( m_boneshadow1, 0, wxALL, 5 );
 
 	m_boneshadow2 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_boneshadow2->SetMinSize( wxSize( 50,-1 ) );
+
 	fgSizer159->Add( m_boneshadow2, 0, wxALL, 5 );
 
 
@@ -9351,6 +9561,24 @@ PreferencesWindow::PreferencesWindow( wxWindow* parent, wxWindowID id, const wxS
 	m_textpreviewtype = new wxChoice( m_panel17, wxID_TEXTPREVIEW, wxDefaultPosition, wxDefaultSize, m_textpreviewtypeNChoices, m_textpreviewtypeChoices, 0 );
 	m_textpreviewtype->SetSelection( 0 );
 	fgSizer18->Add( m_textpreviewtype, 0, wxALL, 2 );
+
+	m_staticText2181 = new wxStaticText( m_panel17, wxID_ANY, _("Script Battle Entries"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText2181->Wrap( -1 );
+	fgSizer18->Add( m_staticText2181, 0, wxALL, 5 );
+
+	m_enablebattleentryedit = new wxCheckBox( m_panel17, wxID_ANY, _("Allow \"Edit Entries\""), wxDefaultPosition, wxDefaultSize, 0 );
+	m_enablebattleentryedit->SetToolTip( _("In the Steam version, enemy script entries\nare automatically created/removed when\nadding/removing enemies.\nUse this option only if you want to use entries\nthat are NOT tied to an enemy inside battle\nscripts.") );
+
+	fgSizer18->Add( m_enablebattleentryedit, 0, wxALIGN_CENTER_VERTICAL|wxALL, 2 );
+
+	m_staticText570 = new wxStaticText( m_panel17, wxID_ANY, _("Script Editor"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText570->Wrap( -1 );
+	fgSizer18->Add( m_staticText570, 0, wxALL, 5 );
+
+	m_showscriptcomments = new wxCheckBox( m_panel17, wxID_ANY, _("Auto-comment scripts"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_showscriptcomments->SetToolTip( _("Generate comments in script editing windows,\nwhich may help in understanding them.\nComments are usually less accurate than\ndetails displayed by selecting specific lines.") );
+
+	fgSizer18->Add( m_showscriptcomments, 0, wxALIGN_CENTER_VERTICAL|wxALL, 2 );
 
 
 	bSizer42->Add( fgSizer18, 1, wxEXPAND, 5 );
@@ -10220,7 +10448,7 @@ AboutWindow::AboutWindow( wxWindow* parent, wxWindowID id, const wxString& title
 	wxBoxSizer* bSizer16;
 	bSizer16 = new wxBoxSizer( wxVERTICAL );
 
-	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.51alpha\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for PSX model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\n - Satoh -\n - Ze_PilOt -\n\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/"), wxDefaultPosition, wxSize( -1,330 ), wxTE_MULTILINE|wxTE_READONLY|wxTE_CENTER|wxBORDER_SIMPLE );
+	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.52\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for PSX model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\n - Satoh -\n - Ze_PilOt -\n\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/"), wxDefaultPosition, wxSize( -1,330 ), wxTE_MULTILINE|wxTE_READONLY|wxTE_CENTER|wxBORDER_SIMPLE );
 	m_textCtrl13->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 	m_textCtrl13->SetMinSize( wxSize( -1,330 ) );
 
@@ -11193,25 +11421,32 @@ BatchExportWindow::BatchExportWindow( wxWindow* parent, wxWindowID id, const wxS
 	m_scriptpanel = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	m_scriptpanel->Hide();
 
-	wxBoxSizer* bSizer198;
-	bSizer198 = new wxBoxSizer( wxHORIZONTAL );
+	wxGridBagSizer* gbSizer83;
+	gbSizer83 = new wxGridBagSizer( 0, 0 );
+	gbSizer83->SetFlexibleDirection( wxBOTH );
+	gbSizer83->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
 	m_scriptsplitfile = new wxCheckBox( m_scriptpanel, wxID_ANY, _("Split Files"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_scriptsplitfile->SetValue(true);
 	m_scriptsplitfile->SetToolTip( _("When unchecked, all the datas\nare written in one big file") );
 
-	bSizer198->Add( m_scriptsplitfile, 0, wxALL, 5 );
+	gbSizer83->Add( m_scriptsplitfile, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
 
 	m_scriptcomment = new wxCheckBox( m_scriptpanel, wxID_ANY, _("Readability Comments"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_scriptcomment->SetValue(true);
 	m_scriptcomment->SetToolTip( _("Generate comments in the script for a better readability") );
 
-	bSizer198->Add( m_scriptcomment, 0, wxALL, 5 );
+	gbSizer83->Add( m_scriptcomment, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	m_scriptcomplyappendmode = new wxCheckBox( m_scriptpanel, wxID_ANY, _("Comply with \"Append mode\""), wxDefaultPosition, wxDefaultSize, 0 );
+	m_scriptcomplyappendmode->SetToolTip( _("When enabled, only script entries\nflagged with \"Include entry\" will\nbe exported, in scripts that have\n\"Append mode\" enabled") );
+
+	gbSizer83->Add( m_scriptcomplyappendmode, wxGBPosition( 1, 0 ), wxGBSpan( 1, 2 ), wxALL, 5 );
 
 
-	m_scriptpanel->SetSizer( bSizer198 );
+	m_scriptpanel->SetSizer( gbSizer83 );
 	m_scriptpanel->Layout();
-	bSizer198->Fit( m_scriptpanel );
+	gbSizer83->Fit( m_scriptpanel );
 	bSizer162->Add( m_scriptpanel, 1, wxEXPAND | wxALL, 0 );
 
 	m_backgroundpanel = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
@@ -13219,7 +13454,7 @@ ScriptEditEntryWindow::ScriptEditEntryWindow( wxWindow* parent, wxWindowID id, c
 	gbSizer2->Add( bSizer188, wxGBPosition( 0, 0 ), wxGBSpan( 1, 2 ), wxALIGN_CENTER, 5 );
 
 	m_entrylist = new wxListBox( this, wxID_ANY, wxDefaultPosition, wxSize( -1,200 ), 0, NULL, wxLB_SINGLE );
-	gbSizer2->Add( m_entrylist, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	gbSizer2->Add( m_entrylist, wxGBPosition( 1, 0 ), wxGBSpan( 3, 1 ), wxALL, 5 );
 
 	wxFlexGridSizer* fgSizer79;
 	fgSizer79 = new wxFlexGridSizer( 0, 2, 0, 0 );
@@ -13230,13 +13465,57 @@ ScriptEditEntryWindow::ScriptEditEntryWindow( wxWindow* parent, wxWindowID id, c
 	m_staticText324->Wrap( -1 );
 	fgSizer79->Add( m_staticText324, 0, wxALL, 5 );
 
-	m_entrytype = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_entrytype = new wxSpinCtrl( this, wxID_TYPE, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
 	m_entrytype->SetToolTip( _("0 : normal\n1 : region or shared function\n2 : object with model") );
+	m_entrytype->SetMinSize( wxSize( 80,-1 ) );
 
 	fgSizer79->Add( m_entrytype, 0, wxALL, 2 );
 
+	m_staticText567 = new wxStaticText( this, wxID_ANY, _("Player Character"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText567->Wrap( -1 );
+	fgSizer79->Add( m_staticText567, 0, wxALL, 5 );
+
+	m_entryplayerlink = new wxSpinCtrl( this, wxID_LINK, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 2147483647, 0 );
+	m_entryplayerlink->SetToolTip( _("Link the entry to a (custom)\nplayer character, so that this\nentry is called by special entry\nreferences 251, 252, 253 and 254") );
+	m_entryplayerlink->SetMinSize( wxSize( 80,-1 ) );
+
+	fgSizer79->Add( m_entryplayerlink, 0, wxALL, 2 );
+
 
 	gbSizer2->Add( fgSizer79, wxGBPosition( 1, 1 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
+
+	m_playerlinkwarning = new wxStaticText( this, wxID_ANY, _("Warning: another entry is linked to that player character"), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL );
+	m_playerlinkwarning->Wrap( 130 );
+	m_playerlinkwarning->SetMinSize( wxSize( -1,46 ) );
+
+	gbSizer2->Add( m_playerlinkwarning, wxGBPosition( 2, 1 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
+
+	wxGridBagSizer* gbSizer84;
+	gbSizer84 = new wxGridBagSizer( 0, 0 );
+	gbSizer84->SetFlexibleDirection( wxBOTH );
+	gbSizer84->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_appendmode = new wxCheckBox( this, wxID_APPEND, _("Script \"Append mode\""), wxDefaultPosition, wxDefaultSize, 0 );
+	m_appendmode->SetToolTip( _("When enabled, only the specified entries\nwill be exported in the Steam mod,\nwhich improves mod compatibility") );
+
+	gbSizer84->Add( m_appendmode, wxGBPosition( 0, 0 ), wxGBSpan( 1, 3 ), wxALL, 5 );
+
+	m_entryappendmode = new wxCheckBox( this, wxID_INCLUDE, _("Include entry"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_entryappendmode->SetToolTip( _("Include the currently selected entry\nto the generated Steam Mod") );
+
+	gbSizer84->Add( m_entryappendmode, wxGBPosition( 1, 1 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	m_entryautoinit = new wxCheckBox( this, wxID_AUTO, _("Auto-init"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_entryautoinit->SetToolTip( _("Automatically run a \"InitObject\"\nor such without the need to write\nthat line in the function \"Main_Init\"") );
+
+	gbSizer84->Add( m_entryautoinit, wxGBPosition( 1, 2 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	m_staticText569 = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText569->Wrap( -1 );
+	gbSizer84->Add( m_staticText569, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxLEFT, 15 );
+
+
+	gbSizer2->Add( gbSizer84, wxGBPosition( 3, 1 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
 
 	wxBoxSizer* bSizer20;
 	bSizer20 = new wxBoxSizer( wxHORIZONTAL );
@@ -13248,11 +13527,11 @@ ScriptEditEntryWindow::ScriptEditEntryWindow( wxWindow* parent, wxWindowID id, c
 	bSizer20->Add( m_buttonok, 0, wxALL, 5 );
 
 
-	gbSizer2->Add( bSizer20, wxGBPosition( 2, 0 ), wxGBSpan( 1, 2 ), wxALIGN_RIGHT, 5 );
+	gbSizer2->Add( bSizer20, wxGBPosition( 4, 0 ), wxGBSpan( 1, 2 ), wxALIGN_RIGHT, 5 );
 
 
 	gbSizer2->AddGrowableCol( 0 );
-	gbSizer2->AddGrowableRow( 1 );
+	gbSizer2->AddGrowableRow( 2 );
 
 	this->SetSizer( gbSizer2 );
 	this->Layout();
@@ -13265,6 +13544,10 @@ ScriptEditEntryWindow::ScriptEditEntryWindow( wxWindow* parent, wxWindowID id, c
 	m_buttonremove->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditEntryWindow::OnButtonClick ), NULL, this );
 	m_entrylist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( ScriptEditEntryWindow::OnEntrySelect ), NULL, this );
 	m_entrytype->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ScriptEditEntryWindow::OnSpinCtrl ), NULL, this );
+	m_entryplayerlink->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ScriptEditEntryWindow::OnSpinCtrl ), NULL, this );
+	m_appendmode->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ScriptEditEntryWindow::OnCheckBox ), NULL, this );
+	m_entryappendmode->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ScriptEditEntryWindow::OnCheckBox ), NULL, this );
+	m_entryautoinit->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ScriptEditEntryWindow::OnCheckBox ), NULL, this );
 	m_buttoncancel->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditEntryWindow::OnButtonClick ), NULL, this );
 	m_buttonok->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditEntryWindow::OnButtonClick ), NULL, this );
 }
@@ -13276,6 +13559,10 @@ ScriptEditEntryWindow::~ScriptEditEntryWindow()
 	m_buttonremove->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditEntryWindow::OnButtonClick ), NULL, this );
 	m_entrylist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( ScriptEditEntryWindow::OnEntrySelect ), NULL, this );
 	m_entrytype->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ScriptEditEntryWindow::OnSpinCtrl ), NULL, this );
+	m_entryplayerlink->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ScriptEditEntryWindow::OnSpinCtrl ), NULL, this );
+	m_appendmode->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ScriptEditEntryWindow::OnCheckBox ), NULL, this );
+	m_entryappendmode->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ScriptEditEntryWindow::OnCheckBox ), NULL, this );
+	m_entryautoinit->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ScriptEditEntryWindow::OnCheckBox ), NULL, this );
 	m_buttoncancel->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditEntryWindow::OnButtonClick ), NULL, this );
 	m_buttonok->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ScriptEditEntryWindow::OnButtonClick ), NULL, this );
 
@@ -14013,45 +14300,55 @@ DatabaseFormatWindow::DatabaseFormatWindow( wxWindow* parent, wxWindowID id, con
 	fgSizer45->SetFlexibleDirection( wxBOTH );
 	fgSizer45->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
-	wxBoxSizer* bSizer315;
-	bSizer315 = new wxBoxSizer( wxVERTICAL );
+	wxFlexGridSizer* fgSizer159;
+	fgSizer159 = new wxFlexGridSizer( 0, 1, 0, 0 );
+	fgSizer159->AddGrowableCol( 0 );
+	fgSizer159->AddGrowableRow( 5 );
+	fgSizer159->SetFlexibleDirection( wxBOTH );
+	fgSizer159->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
 	m_staticText295 = new wxStaticText( this, wxID_ANY, _("Header"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText295->Wrap( -1 );
-	bSizer315->Add( m_staticText295, 0, wxALL, 5 );
+	fgSizer159->Add( m_staticText295, 0, wxALL, 5 );
 
-	m_textheader = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 500,100 ), wxTE_DONTWRAP|wxTE_MULTILINE );
-	bSizer315->Add( m_textheader, 0, wxALL|wxEXPAND, 5 );
+	m_textheader = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), wxTE_DONTWRAP|wxTE_MULTILINE );
+	m_textheader->SetMinSize( wxSize( 500,100 ) );
+
+	fgSizer159->Add( m_textheader, 0, wxALL|wxEXPAND, 5 );
 
 	m_staticText530 = new wxStaticText( this, wxID_ANY, _("Format"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText530->Wrap( -1 );
-	bSizer315->Add( m_staticText530, 0, wxALL, 5 );
+	fgSizer159->Add( m_staticText530, 0, wxALL, 5 );
 
-	m_textformat = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 500,50 ), wxTE_DONTWRAP|wxTE_MULTILINE );
-	bSizer315->Add( m_textformat, 0, wxALL|wxEXPAND, 5 );
+	m_textformat = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), wxTE_DONTWRAP|wxTE_MULTILINE );
+	m_textformat->SetMinSize( wxSize( 500,55 ) );
+
+	fgSizer159->Add( m_textformat, 0, wxALL|wxEXPAND, 5 );
 
 	m_staticText529 = new wxStaticText( this, wxID_ANY, _("Custom fields"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText529->Wrap( -1 );
-	bSizer315->Add( m_staticText529, 0, wxALL, 5 );
+	fgSizer159->Add( m_staticText529, 0, wxALL, 5 );
 
-	m_fieldscrolled = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxSize( -1,200 ), wxVSCROLL );
+	m_fieldscrolled = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), wxVSCROLL );
 	m_fieldscrolled->SetScrollRate( 5, 5 );
-	m_fieldscrolled->SetMaxSize( wxSize( -1,200 ) );
+	m_fieldscrolled->SetMinSize( wxSize( -1,200 ) );
 
 	customfieldSizer = new wxFlexGridSizer( 0, 3, 0, 0 );
+	customfieldSizer->AddGrowableCol( 1 );
 	customfieldSizer->SetFlexibleDirection( wxBOTH );
 	customfieldSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
 
 	m_fieldscrolled->SetSizer( customfieldSizer );
 	m_fieldscrolled->Layout();
-	bSizer315->Add( m_fieldscrolled, 1, wxEXPAND | wxALL, 5 );
+	customfieldSizer->Fit( m_fieldscrolled );
+	fgSizer159->Add( m_fieldscrolled, 0, wxEXPAND | wxALL, 5 );
 
 	m_buttonaddfield = new wxButton( this, wxID_ADD, _("Add custom field"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer315->Add( m_buttonaddfield, 0, wxALL, 5 );
+	fgSizer159->Add( m_buttonaddfield, 0, wxALL, 5 );
 
 
-	fgSizer45->Add( bSizer315, 1, wxEXPAND, 5 );
+	fgSizer45->Add( fgSizer159, 1, wxEXPAND, 5 );
 
 	wxBoxSizer* bSizer124;
 	bSizer124 = new wxBoxSizer( wxHORIZONTAL );
@@ -15663,7 +15960,7 @@ UnityViewerWindow::UnityViewerWindow( wxWindow* parent, wxWindowID id, const wxS
 	m_menuconvertmodel->Append( m_menuimportmodelmesh );
 	m_menuimportmodelmesh->Check( true );
 
-	m_menuimportmodelanims = new wxMenuItem( m_menuconvertmodel, wxID_ANY, wxString( _("Import Animations") ) , wxEmptyString, wxITEM_CHECK );
+	m_menuimportmodelanims = new wxMenuItem( m_menuconvertmodel, wxID_ANY, wxString( _("Import/Export Animations") ) , wxEmptyString, wxITEM_CHECK );
 	m_menuconvertmodel->Append( m_menuimportmodelanims );
 	m_menuimportmodelanims->Check( true );
 

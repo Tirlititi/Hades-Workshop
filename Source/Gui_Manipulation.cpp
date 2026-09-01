@@ -1283,11 +1283,14 @@ void CDDataStruct::OnSharedRightClickMenu(wxCommandEvent& event) {
 
 	#define MACRO_ADD_NEW_OBJECT_SHARED_PART1(TYPE, OBJLIST, STR) \
 		baselist.Alloc(OBJLIST.size()); \
-		for (i = 0; i < OBJLIST.size(); i++) \
+		for (i = 0; i < OBJLIST.size(); i++) { \
 			baselist.Add(_(STR)); \
+			maxcurrentid = max(maxcurrentid, OBJLIST[i].id); \
+		} \
 		dialog.m_baseobjectlist->Clear(); \
 		dialog.m_baseobjectlist->Append(baselist); \
 		dialog.m_baseobjectlist->SetSelection(SharedMenuSelection); \
+		dialog.m_newobjectid->SetValue(maxcurrentid + 1); \
 		bool keepasking = true; \
 		while (keepasking) { \
 			keepasking = false; \
@@ -1325,6 +1328,7 @@ void CDDataStruct::OnSharedRightClickMenu(wxCommandEvent& event) {
 	if (id == wxID_ADD) {
 		SharedNewObjectWindow dialog(this);
 		wxArrayString baselist;
+		int maxcurrentid = 0;
 		if (SharedMenuType == 0) {
 			dialog.m_newobjectid->SetRange(SPELL_AMOUNT, INT32_MAX);
 			MACRO_ADD_NEW_OBJECT_SHARED_PART1(Spell, spellset.spell, spellset.spell[i].name.GetStr(hades::TEXT_PREVIEW_TYPE))
@@ -1363,8 +1367,8 @@ void CDDataStruct::OnSharedRightClickMenu(wxCommandEvent& event) {
 			dialog.m_newobjectid->SetRange(PLAYABLE_CHAR_AMOUNT, INT32_MAX);
 			MACRO_ADD_NEW_OBJECT_SHARED_PART1(Stat, statset.initial_stat, statset.initial_stat[i].default_name.GetStr(hades::TEXT_PREVIEW_TYPE))
 			MarkDataStatModified();
-			InsertAtId(statset.battle_param, statset.battle_param[StatDataSet::GetCharacterBattleParametersIndices(baseid)[max(0, m_statcharadvancedkind->GetSelection())]], newid + 7);
 			statset.InitializeNewCharacter(addindex);
+			InsertAtId(statset.battle_param, statset.GetCharacterBattleParametersById(statset.initial_stat[baseid].battle_param_ids[max(0, m_statcharadvancedkind->GetSelection())]), statset.initial_stat[addindex].battle_param_ids[0]);
 			UpdateStatName(addindex);
 			m_statlist->SetString(1 + addindex, _(statset.initial_stat[addindex].default_name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 			m_statlist->SetSelection(1 + addindex);
@@ -1427,10 +1431,10 @@ void CDDataStruct::OnSharedRightClickMenu(wxCommandEvent& event) {
 			DisplaySynthesisShop(addindex);
 			MACRO_ADD_NEW_OBJECT_SHARED_PART2()
 		} else if (SharedMenuType == 1000) {
-			int* cmdset = statset.GetCharacterCommandsIndices(m_statlist->GetSelection() - 1, NULL);
-			AbilitySetDataStruct& ab = statset.ability_list[cmdset[m_statcharabilityset->GetSelection()]];
-			ab.entry.insert(ab.entry.begin() + SharedMenuSelection, ab.entry[SharedMenuSelection]);
-			DisplayStatAbilityList(cmdset[m_statcharabilityset->GetSelection()]);
+			int cmdid = statset.initial_stat[m_statlist->GetSelection() - 1].command_ids[m_statcharabilityset->GetSelection()];
+			AbilitySetDataStruct& ab = statset.GetCharacterAbilitiesById(cmdid);
+			ab.InsertEntry(SharedMenuSelection, ab.entry[SharedMenuSelection]);
+			DisplayStatAbilityList(cmdid);
 			m_statcharabilitylist->SetSelection(SharedMenuSelection);
 			DisplayStatSelectedAbility();
 			MarkDataStatModified();
@@ -1449,6 +1453,12 @@ void CDDataStruct::OnSharedRightClickMenu(wxCommandEvent& event) {
 			MACRO_REMOVE_OBJECT_SHARED(Spell, spellset.spell, m_spelllist)
 			MarkDataSpellModified();
 		} else if (SharedMenuType == 1) {
+			int j, delid = supportset.support[SharedMenuSelection].id;
+			for (i = 0; i < supportset.support.size(); i++)
+				if (i != SharedMenuSelection)
+					for (j = 0; j < (int)supportset.support[i].boosted_support.size(); j++)
+						if (supportset.support[i].boosted_support[j] == delid)
+							supportset.support[i].boosted_support.erase(supportset.support[i].boosted_support.begin() + j--);
 			MACRO_REMOVE_OBJECT_SHARED(Support, supportset.support, m_supportlist)
 			MarkDataSupportModified();
 		} else if (SharedMenuType == 2) {
@@ -1456,8 +1466,8 @@ void CDDataStruct::OnSharedRightClickMenu(wxCommandEvent& event) {
 			MarkDataCommandModified();
 		} else if (SharedMenuType == 3) {
 			MACRO_REMOVE_OBJECT_SHARED(Stat, statset.initial_stat, m_statlist)
+			statset.FlushUnusedData();
 			MarkDataStatModified();
-			statset.battle_param.erase(statset.battle_param.begin() + StatDataSet::GetCharacterBattleParametersIndices(SharedMenuSelection)[0]);
 		} else if (SharedMenuType == 4) {
 			MACRO_REMOVE_OBJECT_SHARED(Item, itemset.item, m_itemlist)
 			MarkDataItemModified();
@@ -1471,10 +1481,10 @@ void CDDataStruct::OnSharedRightClickMenu(wxCommandEvent& event) {
 			MACRO_REMOVE_OBJECT_SHARED(SynthesisShop, shopset.synthesis, m_synthshoplist)
 			MarkDataShopModified();
 		} else if (SharedMenuType == 1000) {
-			int* cmdset = statset.GetCharacterCommandsIndices(m_statlist->GetSelection() - 1, NULL);
-			AbilitySetDataStruct& ab = statset.ability_list[cmdset[m_statcharabilityset->GetSelection()]];
-			ab.entry.erase(ab.entry.begin() + SharedMenuSelection);
-			DisplayStatAbilityList(cmdset[m_statcharabilityset->GetSelection()]);
+			int cmdid = statset.initial_stat[m_statlist->GetSelection() - 1].command_ids[m_statcharabilityset->GetSelection()];
+			AbilitySetDataStruct& ab = statset.GetCharacterAbilitiesById(cmdid);
+			ab.EraseEntry(SharedMenuSelection);
+			DisplayStatAbilityList(cmdid);
 			m_statcharabilitylist->SetSelection(min(SharedMenuSelection, (int)m_statcharabilitylist->GetCount() - 1));
 			DisplayStatSelectedAbility();
 			MarkDataStatModified();
@@ -2451,8 +2461,7 @@ void CDDataStruct::DisplayStatSelectedAbilityInfo(AbilitySetDataStruct& ab, int 
 }
 
 void CDDataStruct::DisplayStatSelectedAbility() {
-	int* cmdset = statset.GetCharacterCommandsIndices(m_statlist->GetSelection() - 1, NULL);
-	AbilitySetDataStruct& ab = statset.ability_list[cmdset[m_statcharabilityset->GetSelection()]];
+	AbilitySetDataStruct& ab = statset.GetCharacterAbilitiesById(statset.initial_stat[m_statlist->GetSelection() - 1].command_ids[m_statcharabilityset->GetSelection()]);
 	int absel = m_statcharabilitylist->GetSelection();
 	if (ab.entry[absel].ability.is_active)
 		m_statcharabilitychoice->SetSelection(spellset.GetSpellIndexById(ab.entry[absel].ability.id));
@@ -2462,9 +2471,9 @@ void CDDataStruct::DisplayStatSelectedAbility() {
 	DisplayStatSelectedAbilityInfo(ab, absel, m_statlist->GetSelection() - 1);
 }
 
-void CDDataStruct::DisplayStatAbilityList(int abilsetid) {
-	AbilitySetDataStruct& ab = statset.ability_list[abilsetid];
-	CommandSetDataStruct& cmd = statset.command_list[abilsetid];
+void CDDataStruct::DisplayStatAbilityList(int cmdid) {
+	AbilitySetDataStruct& ab = statset.GetCharacterAbilitiesById(cmdid);
+	CommandSetDataStruct& cmd = statset.GetCharacterCommandsById(cmdid);
 	m_statcharabilitylist->Clear();
 	if (ab.entry.size() > 0) {
 		for (unsigned int i = 0; i < ab.entry.size(); i++) {
@@ -2511,7 +2520,7 @@ void CDDataStruct::DisplayStat(int statid) {
 	m_statlvlscrolledwindow->Show(false);
 	m_statcharscrolledwindow->Show(true);
 	InitialStatDataStruct& is = statset.initial_stat[statid];
-	unsigned int i, cmdamount, equipamount, paramcount;
+	unsigned int i;
 	m_statcharid->Enable(false);
 	m_statcharid->SetValue(is.id);
 	m_statcustomformat->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
@@ -2519,6 +2528,8 @@ void CDDataStruct::DisplayStat(int statid) {
 	m_statcustomkind->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 	m_statcharadvanced->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0 && statset.battle_param.size() > 0);
 	m_statcharadvancedkind->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0 && statset.battle_param.size() > 0);
+	m_statcharadvancedadd->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0 && statset.battle_param.size() > 0);
+	m_statcharadvancedremove->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 	m_statcharcommandattack->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 	m_statcharcommanddefend->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 	m_statcharcommanditem->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
@@ -2541,33 +2552,25 @@ void CDDataStruct::DisplayStat(int statid) {
 	m_statcharmagicstone->SetValue(is.magic_stone);
 	m_statcharadvancedkind->Clear();
 	if (statset.battle_param.size() > 0) {
-		int* paramids = StatDataSet::GetCharacterBattleParametersIndices(statid, &paramcount);
-		for (i = 0; i < paramcount; i++) {
-			stringstream paramlabel;
-			paramlabel << "Battle Parameters " << statset.battle_param[paramids[i]].id << ends;
-			m_statcharadvancedkind->Append(_(paramlabel.str()));
-		}
+		vector<int> paramids = statset.initial_stat[statid].battle_param_ids;
+		for (i = 0; i < paramids.size(); i++)
+			m_statcharadvancedkind->Append(wxString::Format(wxT("Battle Parameters %d"), paramids[i]));
 		m_statcharadvancedkind->SetSelection(0);
+		m_statcharadvancedremove->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0 && paramids.size() > 1);
 	}
-	int* cmdset = statset.GetCharacterCommandsIndices(statid, &cmdamount);
+	vector<int> cmdids = statset.initial_stat[statid].command_ids;
 	m_statcharabilityset->Clear();
-	for (i = 0; i < cmdamount; i++) {
-		stringstream cmdlabel;
-		cmdlabel << "Ability Set " << statset.command_list[cmdset[i]].id << ends;
-		m_statcharabilityset->Append(_(cmdlabel.str()));
-	}
+	for (i = 0; i < cmdids.size(); i++)
+		m_statcharabilityset->Append(wxString::Format(wxT("Ability Set %d"), cmdids[i]));
 	m_statcharabilityset->SetSelection(0);
-	DisplayStatAbilityList(cmdset[0]);
-	int* equipset = statset.GetCharacterEquipmentsIndices(statid, &equipamount);
+	DisplayStatAbilityList(cmdids[0]);
+	vector<int> equipids = statset.initial_stat[statid].equip_ids;
 	m_statcharequipset->Clear();
-	for (i = 0; i + 1 < equipamount; i++) {
-		stringstream equiplabel;
-		equiplabel << "Equipment Set " << statset.initial_equip[equipset[i]].id << ends;
-		m_statcharequipset->Append(_(equiplabel.str()));
-	}
+	for (i = 0; i + 1 < equipids.size(); i++)
+		m_statcharequipset->Append(wxString::Format(wxT("Equipment Set %d"), equipids[i]));
 	m_statcharequipset->Append(_("Equipment Set Empty (15)"));
 	m_statcharequipset->SetSelection(0);
-	InitialEquipDataStruct& equip = statset.initial_equip[equipset[0]];
+	InitialEquipDataStruct& equip = statset.GetCharacterEquipmentsById(equipids[0]);
 	m_statcharweapon->SetSelection(itemset.GetItemIndexById(equip.weapon));
 	m_statcharhead->SetSelection(itemset.GetItemIndexById(equip.head));
 	m_statcharwrist->SetSelection(itemset.GetItemIndexById(equip.wrist));
@@ -2607,8 +2610,7 @@ void CDDataStruct::OnStatRightClick(wxMouseEvent& event) {
 void CDDataStruct::OnStatAbilityRightClick(wxMouseEvent& event) {
 	int newsel = m_statcharabilitylist->HitTest(event.GetPosition());
 	if (newsel != wxNOT_FOUND && newsel > 0) {
-		int* cmdset = statset.GetCharacterCommandsIndices(m_statlist->GetSelection() - 1, NULL);
-		AbilitySetDataStruct& ab = statset.ability_list[cmdset[m_statcharabilityset->GetSelection()]];
+		AbilitySetDataStruct& ab = statset.GetCharacterAbilitiesById(statset.initial_stat[m_statlist->GetSelection() - 1].command_ids[m_statcharabilityset->GetSelection()]);
 		m_statcharabilitylist->SetSelection(newsel);
 		DisplayStatSelectedAbility();
 		SharedMenuSelection = newsel;
@@ -2619,27 +2621,51 @@ void CDDataStruct::OnStatAbilityRightClick(wxMouseEvent& event) {
 	}
 }
 
+int StatAbilityCopyMode = 0;
 AbilityEntryDataStruct StatAbilityEntryCopy;
+AbilitySetDataStruct StatAbilitySetCopy;
 void CDDataStruct::OnStatKeyDown(wxKeyEvent& event) {
 	int sel = m_statlist->GetSelection();
 	int setsel = m_statcharabilityset->GetSelection();
 	int abilsel = m_statcharabilitylist->GetSelection();
 	if (sel != wxNOT_FOUND && sel > 0 && setsel != wxNOT_FOUND && abilsel != wxNOT_FOUND) {
 		if (event.GetModifiers() == wxMOD_CONTROL && event.GetKeyCode() == 'C') {
-			int* cmdset = statset.GetCharacterCommandsIndices(sel - 1, NULL);
-			StatAbilityEntryCopy = statset.ability_list[cmdset[setsel]].entry[abilsel];
+			StatAbilityEntryCopy = statset.GetCharacterAbilitiesById(statset.initial_stat[sel - 1].command_ids[setsel]).entry[abilsel];
+			StatAbilityCopyMode = 1;
 			return;
-		} else if (event.GetModifiers() == wxMOD_CONTROL && event.GetKeyCode() == 'V') {
-			int* cmdset = statset.GetCharacterCommandsIndices(sel - 1, NULL);
-			AbilityEntryDataStruct& entry = statset.ability_list[cmdset[setsel]].entry[abilsel];
-			entry.ability = StatAbilityEntryCopy.ability;
-			entry.ap_cost = StatAbilityEntryCopy.ap_cost;
-			entry.custom_field = StatAbilityEntryCopy.custom_field;
-			DisplayStatSelectedAbility();
-			if (entry.ability.is_active)
-				m_statcharabilitylist->SetString(abilsel, _(spellset.GetSpellById(entry.ability.id).name.GetStr(hades::TEXT_PREVIEW_TYPE)));
-			else
-				m_statcharabilitylist->SetString(abilsel, _(supportset.GetSupportById(entry.ability.id).name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+		} else if (event.GetModifiers() == (wxMOD_CONTROL | wxMOD_SHIFT) && event.GetKeyCode() == 'C') {
+			StatAbilitySetCopy = statset.GetCharacterAbilitiesById(statset.initial_stat[sel - 1].command_ids[setsel]);
+			StatAbilityCopyMode = 2;
+			return;
+		} else if (event.GetModifiers() == wxMOD_CONTROL && event.GetKeyCode() == 'V' && StatAbilityCopyMode != 0) {
+			if (StatAbilityCopyMode == 2) {
+				wxMessageDialog popup(this, HADES_STRING_STAT_CONFIRM_PASTE, HADES_STRING_WARNING, wxYES_NO | wxSTAY_ON_TOP | wxCENTRE);
+				if (popup.ShowModal() != wxID_YES)
+					return;
+			}
+			auto copyfunc = [this](AbilitySetDataStruct& abilset, int abilindex, AbilityEntryDataStruct& replace) {
+				AbilityEntryDataStruct& entry = abilset.entry[abilindex];
+				entry.ability = replace.ability;
+				entry.ap_cost = replace.ap_cost;
+				entry.custom_field = replace.custom_field;
+				if (entry.ability.is_active)
+					m_statcharabilitylist->SetString(abilindex, _(spellset.GetSpellById(entry.ability.id).name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+				else
+					m_statcharabilitylist->SetString(abilindex, _(supportset.GetSupportById(entry.ability.id).name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+			};
+			AbilitySetDataStruct& abilset = statset.GetCharacterAbilitiesById(statset.initial_stat[sel - 1].command_ids[setsel]);
+			if (StatAbilityCopyMode == 1) {
+				copyfunc(abilset, abilsel, StatAbilityEntryCopy);
+				DisplayStatSelectedAbility();
+			} else if (StatAbilityCopyMode == 2) {
+				if (abilset.entry.size() > StatAbilitySetCopy.entry.size())
+					abilset.entry.resize(StatAbilitySetCopy.entry.size());
+				while (abilset.entry.size() < StatAbilitySetCopy.entry.size())
+					abilset.InsertEntry(abilset.entry.size(), StatAbilityEntryCopy);
+				for (unsigned int i = 0; i < abilset.entry.size(); i++)
+					copyfunc(abilset, i, StatAbilitySetCopy.entry[i]);
+				DisplayStatAbilityList(statset.initial_stat[sel - 1].command_ids[setsel]);
+			}
 			MarkDataStatModified();
 			return;
 		}
@@ -2684,8 +2710,7 @@ void CDDataStruct::OnStatChangeSpin(wxSpinEvent& event) {
 		InitialStatDataStruct& is = statset.initial_stat[sel - 1];
 		is.magic_stone = event.GetPosition();
 	} else if (id == wxID_ABILITYCOST) {
-		int* cmdset = statset.GetCharacterCommandsIndices(sel - 1, NULL);
-		AbilitySetDataStruct& ab = statset.ability_list[cmdset[m_statcharabilityset->GetSelection()]];
+		AbilitySetDataStruct& ab = statset.GetCharacterAbilitiesById(statset.initial_stat[sel - 1].command_ids[m_statcharabilityset->GetSelection()]);
 		ab.entry[m_statcharabilitylist->GetSelection()].ap_cost = event.GetPosition();
 	} else if (id == wxID_EXP) {
 		int lvlsel = m_statlvlexplist->GetSelection();
@@ -2718,17 +2743,14 @@ void CDDataStruct::OnStatChangeChoice(wxCommandEvent& event) {
 
 #define MACRO_HANDLE_COMMAND_EVENT(ID, FIELD) \
 	} else if (id == ID) { \
-		int* cmdarray = statset.GetCharacterCommandsIndices(sel, NULL); \
-		CommandSetDataStruct& cmd = statset.command_list[cmdarray[m_statcharabilityset->GetSelection()]]; \
+		CommandSetDataStruct& cmd = statset.GetCharacterCommandsById(statset.initial_stat[sel].command_ids[m_statcharabilityset->GetSelection()]); \
 		cmd.FIELD = cmdset.cmd[event.GetSelection()].id;
 
 	if (id == wxID_ABILITYSET) {
-		int* cmdarray = statset.GetCharacterCommandsIndices(sel, NULL);
-		DisplayStatAbilityList(cmdarray[event.GetSelection()]);
+		DisplayStatAbilityList(statset.initial_stat[sel].command_ids[event.GetSelection()]);
 		return;
 	} else if (id == wxID_ABILITY) {
-		int* cmdarray = statset.GetCharacterCommandsIndices(sel, NULL);
-		AbilitySetDataStruct& ab = statset.ability_list[cmdarray[m_statcharabilityset->GetSelection()]];
+		AbilitySetDataStruct& ab = statset.GetCharacterAbilitiesById(statset.initial_stat[sel].command_ids[m_statcharabilityset->GetSelection()]);
 		int absel = m_statcharabilitylist->GetSelection();
 		if (event.GetSelection() < (int)spellset.spell.size()) {
 			SpellDataStruct& sp = spellset.spell[event.GetSelection()];
@@ -2756,12 +2778,10 @@ void CDDataStruct::OnStatChangeChoice(wxCommandEvent& event) {
 	MACRO_HANDLE_COMMAND_EVENT(wxID_TRANCE_COMMANDITEM, item_command_trance)
 	MACRO_HANDLE_COMMAND_EVENT(wxID_TRANCE_COMMANDCHANGE, change_command_trance)
 	} else if (id == wxID_TRANCE_ATTACK) {
-		int* cmdarray = statset.GetCharacterCommandsIndices(sel, NULL);
-		CommandSetDataStruct& cmd = statset.command_list[cmdarray[m_statcharabilityset->GetSelection()]];
+		CommandSetDataStruct& cmd = statset.GetCharacterCommandsById(statset.initial_stat[sel].command_ids[m_statcharabilityset->GetSelection()]);
 		cmd.trance_attack = event.GetSelection() != 0 ? event.GetSelection() - 1 : 0xFF;
 	} else if (id == wxID_EQUIPSET) {
-		int* equipset = statset.GetCharacterEquipmentsIndices(sel, NULL);
-		InitialEquipDataStruct& equip = statset.initial_equip[equipset[event.GetSelection()]];
+		InitialEquipDataStruct& equip = statset.GetCharacterEquipmentsById(statset.initial_stat[sel].equip_ids[event.GetSelection()]);
 		m_statcharweapon->SetSelection(itemset.GetItemIndexById(equip.weapon));
 		m_statcharhead->SetSelection(itemset.GetItemIndexById(equip.head));
 		m_statcharwrist->SetSelection(itemset.GetItemIndexById(equip.wrist));
@@ -2769,24 +2789,19 @@ void CDDataStruct::OnStatChangeChoice(wxCommandEvent& event) {
 		m_statcharaccessory->SetSelection(itemset.GetItemIndexById(equip.accessory));
 		return;
 	} else if (id == wxID_WEAPON) {
-		int* equipset = statset.GetCharacterEquipmentsIndices(sel, NULL);
-		InitialEquipDataStruct& equip = statset.initial_equip[equipset[m_statcharequipset->GetSelection()]];
+		InitialEquipDataStruct& equip = statset.GetCharacterEquipmentsById(statset.initial_stat[sel].equip_ids[m_statcharequipset->GetSelection()]);
 		equip.weapon = itemset.item[event.GetSelection()].id;
 	} else if (id == wxID_HEAD) {
-		int* equipset = statset.GetCharacterEquipmentsIndices(sel, NULL);
-		InitialEquipDataStruct& equip = statset.initial_equip[equipset[m_statcharequipset->GetSelection()]];
+		InitialEquipDataStruct& equip = statset.GetCharacterEquipmentsById(statset.initial_stat[sel].equip_ids[m_statcharequipset->GetSelection()]);
 		equip.head = itemset.item[event.GetSelection()].id;
 	} else if (id == wxID_WRIST) {
-		int* equipset = statset.GetCharacterEquipmentsIndices(sel, NULL);
-		InitialEquipDataStruct& equip = statset.initial_equip[equipset[m_statcharequipset->GetSelection()]];
+		InitialEquipDataStruct& equip = statset.GetCharacterEquipmentsById(statset.initial_stat[sel].equip_ids[m_statcharequipset->GetSelection()]);
 		equip.wrist = itemset.item[event.GetSelection()].id;
 	} else if (id == wxID_ARMOR) {
-		int* equipset = statset.GetCharacterEquipmentsIndices(sel, NULL);
-		InitialEquipDataStruct& equip = statset.initial_equip[equipset[m_statcharequipset->GetSelection()]];
+		InitialEquipDataStruct& equip = statset.GetCharacterEquipmentsById(statset.initial_stat[sel].equip_ids[m_statcharequipset->GetSelection()]);
 		equip.armor = itemset.item[event.GetSelection()].id;
 	} else if (id == wxID_ACCESSORY) {
-		int* equipset = statset.GetCharacterEquipmentsIndices(sel, NULL);
-		InitialEquipDataStruct& equip = statset.initial_equip[equipset[m_statcharequipset->GetSelection()]];
+		InitialEquipDataStruct& equip = statset.GetCharacterEquipmentsById(statset.initial_stat[sel].equip_ids[m_statcharequipset->GetSelection()]);
 		equip.accessory = itemset.item[event.GetSelection()].id;
 	}
 	MarkDataStatModified();
@@ -2812,20 +2827,80 @@ void CDDataStruct::OnStatChangeButton(wxCommandEvent& event) {
 			}
 		}
 	} else if (id == wxID_PARAM) {
-		unsigned int paramcount = 0;
 		InitialStatDataStruct& is = statset.initial_stat[sel];
-		int* paramids = StatDataSet::GetCharacterBattleParametersIndices(sel, &paramcount);
-		CharBattleParameterStruct& bp = statset.battle_param[paramids[max(0, min((int)paramcount - 1, m_statcharadvancedkind->GetSelection()))]];
+		CharBattleParameterStruct& bp = statset.GetCharacterBattleParametersById(is.battle_param_ids[max(0, min((int)is.battle_param_ids.size() - 1, m_statcharadvancedkind->GetSelection()))]);
 		CharacterParameterDialog dial(this);
 		if (dial.ShowModal(bp, is) == wxID_OK) {
 			dial.ApplyModifications(bp, is);
 			MarkDataStatModified();
 		}
+	} else if (id == wxID_PARAMADD) {
+		vector<int>& paramids = statset.initial_stat[sel].battle_param_ids;
+		int selectedid = paramids[max(0, min((int)paramids.size() - 1, m_statcharadvancedkind->GetSelection()))];
+		int maxcurrentid = 0, selectedindex = wxNOT_FOUND;
+		SharedNewObjectWindow dialog(this);
+		wxArrayString baselist;
+		dialog.m_newobjectid->SetRange(0, INT32_MAX);
+		baselist.Alloc(statset.battle_param.size());
+		for (i = 0; i < statset.battle_param.size(); i++) {
+			baselist.Add(wxString::Format(wxT("Battle Parameters %d"), statset.battle_param[i].id));
+			maxcurrentid = max(maxcurrentid, statset.battle_param[i].id);
+			if (selectedid == statset.battle_param[i].id)
+				selectedindex = i;
+		}
+		dialog.m_baseobjectlist->Clear();
+		dialog.m_baseobjectlist->Append(baselist);
+		dialog.m_baseobjectlist->SetSelection(selectedindex);
+		dialog.m_newobjectid->SetValue(maxcurrentid + 1);
+		bool keepasking = true;
+		while (keepasking) {
+			keepasking = false;
+			if (dialog.ShowModal() == wxID_OK) {
+				int baseid = dialog.m_baseobjectlist->GetSelection();
+				int newid = dialog.m_newobjectid->GetValue();
+				int addindex = InsertAtId(statset.battle_param, statset.battle_param[baseid], newid);
+				if (addindex < 0) {
+					wxMessageDialog popup(this, HADES_STRING_ADD_OBJECT_SAME_ID, HADES_STRING_ERROR, wxOK | wxSTAY_ON_TOP | wxCENTRE);
+					popup.ShowModal();
+					keepasking = true;
+					continue;
+				}
+				for (i = 0; i < paramids.size(); i++)
+					if (paramids[i] > newid)
+						break;
+				paramids.insert(paramids.begin() + i, newid);
+				m_statcharadvancedkind->Insert(wxString::Format(wxT("Battle Parameters %d"), newid), i);
+				m_statcharadvancedkind->SetSelection(i);
+				m_statcharadvancedremove->Enable(true);
+				MarkDataStatModified();
+			} else {
+				return;
+			}
+		}
+	} else if (id == wxID_PARAMREMOVE) {
+		vector<int>& paramids = statset.initial_stat[sel].battle_param_ids;
+		if (paramids.size() <= 1)
+			return;
+		int setsel = max(0, min((int)paramids.size() - 1, m_statcharadvancedkind->GetSelection()));
+		int paramsel = -1;
+		for (i = 0; paramsel < 0 && i < statset.battle_param.size(); i++)
+			if (paramids[setsel] == statset.battle_param[i].id)
+				paramsel = i;
+		if (paramsel < 0)
+			return;
+		wxMessageDialog popup(this, HADES_STRING_STAT_CONFIRM_DELETE, HADES_STRING_WARNING, wxYES_NO | wxCANCEL_DEFAULT | wxSTAY_ON_TOP | wxCENTRE);
+		if (popup.ShowModal() == wxID_YES) {
+			statset.battle_param.erase(statset.battle_param.begin() + paramsel);
+			paramids.erase(paramids.begin() + setsel);
+			m_statcharadvancedkind->Delete(setsel);
+			m_statcharadvancedkind->SetSelection(min(setsel, (int)paramids.size() - 1));
+			m_statcharadvancedremove->Enable(paramids.size() > 1);
+			MarkDataStatModified();
+		}
 	} else if (id == wxID_MENUPOSUP) {
 		int abilsel = m_statcharabilitylist->GetSelection();
 		if (abilsel != wxNOT_FOUND && abilsel > 0) {
-			int* cmdset = statset.GetCharacterCommandsIndices(sel, NULL);
-			AbilitySetDataStruct& ab = statset.ability_list[cmdset[m_statcharabilityset->GetSelection()]];
+			AbilitySetDataStruct& ab = statset.GetCharacterAbilitiesById(statset.initial_stat[sel].equip_ids[m_statcharabilityset->GetSelection()]);
 			wxString tmplabel = m_statcharabilitylist->GetString(abilsel);
 			AbilityEntryDataStruct tmpabil = ab.entry[abilsel];
 			ab.entry[abilsel] = ab.entry[abilsel - 1];
@@ -2836,8 +2911,7 @@ void CDDataStruct::OnStatChangeButton(wxCommandEvent& event) {
 			MarkDataStatModified();
 		}
 	} else if (id == wxID_MENUPOSDOWN) {
-		int* cmdset = statset.GetCharacterCommandsIndices(sel, NULL);
-		AbilitySetDataStruct& ab = statset.ability_list[cmdset[m_statcharabilityset->GetSelection()]];
+		AbilitySetDataStruct& ab = statset.GetCharacterAbilitiesById(statset.initial_stat[sel].equip_ids[m_statcharabilityset->GetSelection()]);
 		int abilsel = m_statcharabilitylist->GetSelection();
 		if (abilsel != wxNOT_FOUND && abilsel + 1 < (int)ab.entry.size()) {
 			wxString tmplabel = m_statcharabilitylist->GetString(abilsel);
@@ -2987,30 +3061,31 @@ void CDDataStruct::OnStatChangeButton(wxCommandEvent& event) {
 				parentfields = &statset.custom_field_initial_stat;
 				fields = &statset.initial_stat[sel].custom_field;
 			} else if (kind == 3) {
+				CharBattleParameterStruct& btlparam = statset.GetCharacterBattleParametersById(statset.initial_stat[sel].battle_param_ids[max(0, m_statcharadvancedkind->GetSelection())]);
 				header = &statset.csv_header_battle_param;
 				format = &statset.csv_format_battle_param;
 				parentfields = &statset.custom_field_battle_param;
-				fields = &statset.battle_param[StatDataSet::GetCharacterBattleParametersIndices(sel)[max(0, m_statcharadvancedkind->GetSelection())]].custom_field;
+				fields = &btlparam.custom_field;
 			} else if (kind == 4) {
 				if (m_statcharabilitylist->GetSelection() == wxNOT_FOUND)
 					return;
-				int* cmdset = statset.GetCharacterCommandsIndices(sel, NULL);
+				AbilitySetDataStruct& ab = statset.GetCharacterAbilitiesById(statset.initial_stat[sel].equip_ids[m_statcharabilityset->GetSelection()]);
 				header = &statset.csv_header_ability_list;
 				format = &statset.csv_format_ability_list;
 				parentfields = &statset.custom_field_ability_list;
-				fields = &statset.ability_list[cmdset[m_statcharabilityset->GetSelection()]].entry[m_statcharabilitylist->GetSelection()].custom_field;
+				fields = &ab.entry[m_statcharabilitylist->GetSelection()].custom_field;
 			} else if (kind == 5) {
-				int* cmdset = statset.GetCharacterCommandsIndices(sel, NULL);
+				CommandSetDataStruct& cmdset = statset.GetCharacterCommandsById(statset.initial_stat[sel].equip_ids[m_statcharabilityset->GetSelection()]);
 				header = &statset.csv_header_command_list;
 				format = &statset.csv_format_command_list;
 				parentfields = &statset.custom_field_command_list;
-				fields = &statset.command_list[cmdset[m_statcharabilityset->GetSelection()]].custom_field;
+				fields = &cmdset.custom_field;
 			} else if (kind == 6) {
-				int* equipset = statset.GetCharacterEquipmentsIndices(sel, NULL);
+				InitialEquipDataStruct& eq = statset.GetCharacterEquipmentsById(statset.initial_stat[sel].equip_ids[m_statcharequipset->GetSelection()]);
 				header = &statset.csv_header_initial_equip;
 				format = &statset.csv_format_initial_equip;
 				parentfields = &statset.custom_field_initial_equip;
-				fields = &statset.initial_equip[equipset[m_statcharequipset->GetSelection()]].custom_field;
+				fields = &eq.custom_field;
 			} else {
 				return;
 			}
@@ -4299,10 +4374,26 @@ void CDDataStruct::OnButtonClickItemModel(wxCommandEvent& event) {
 	}
 }
 
-void CDDataStruct::OnItemPositionListClick(wxMouseEvent& event) {
+void CDDataStruct::PreventListNavigationClick(wxMouseEvent& event) {
 	wxWindow* obj = dynamic_cast<wxWindow*>(event.GetEventObject());
 	obj->SetFocus();
 	event.Skip(false);
+}
+
+void CDDataStruct::PreventListNavigationCharHook(wxKeyEvent& event) {
+	wxWindow* obj = dynamic_cast<wxWindow*>(event.GetEventObject());
+	obj->SetFocus();
+	event.Skip(false);
+}
+
+void CDDataStruct::PreventListNavigationKeyDown(wxKeyEvent& event) {
+	if (event.IsKeyInCategory(WXK_CATEGORY_NAVIGATION)) {
+		wxWindow* obj = dynamic_cast<wxWindow*>(event.GetEventObject());
+		obj->SetFocus();
+		event.Skip(false);
+	} else {
+		event.Skip(true);
+	}
 }
 
 //=============================//
@@ -5045,7 +5136,11 @@ void CDDataStruct::DisplayEnemySpell(int battleid, int spellid) {
 	m_enemyspellid->Enable(false);
 	m_enemyspellstatusint->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : STATUS_SET_AMOUNT - 1);
 	m_enemyspellanimreflect->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 511);
+	m_enemyspellanimseqpath->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 	m_enemyspellmodelalt->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : (int)UINT16_MAX);
+	m_enemyspelltargetflagmorphaccess->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_enemyspelltargetflagmorphdisable->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
+	m_enemyspelltargetflagalternateidle->Enable(gametype == GAME_TYPE_STEAM && config.dll_usage != 0);
 	m_enemyspelleffectint->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
 	m_enemyspellpower->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
 	m_enemyspellaccuracy->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
@@ -5079,10 +5174,14 @@ void CDDataStruct::DisplayEnemySpell(int battleid, int spellid) {
 			break;
 		}
 	m_enemyspellanimreflectlabel->SetLabel(modeltooltip);
+	m_enemyspellanimseqpath->ChangeValue(_(ep.sequence_path));
 	m_enemyspellbaseanim->SetSelection(bd.sequence_stat_id[spellid]);
 	m_enemyspelltargetflagdead->SetValue(ep.target_flag & TARGET_FLAG_CAN_TARGET_DEAD);
 	m_enemyspelltargetflagcamera->SetValue(ep.target_flag & TARGET_FLAG_CAMERA);
 	m_enemyspelltargetflagdeadfirst->SetValue(ep.target_flag & TARGET_FLAG_TARGET_DEAD_FIRST);
+	m_enemyspelltargetflagmorphaccess->SetValue(ep.target_flag & TARGET_FLAG_MORPH_FORCE_ACCESS);
+	m_enemyspelltargetflagmorphdisable->SetValue(ep.target_flag & TARGET_FLAG_MORPH_NO_ACCESS);
+	m_enemyspelltargetflagalternateidle->SetValue(ep.target_flag & TARGET_FLAG_ALTERNATE_IDLE);
 	MACRO_FLAG_DISPLAY8(ep.flag, m_enemyspellflag)
 	MACRO_FLAG_DISPLAY8(ep.menu_flag, m_enemyspellmenuflag)
 	Spell_Target_Type tt = ep.GetTargetType();
@@ -5190,6 +5289,7 @@ void CDDataStruct::DisplayEnemy(int battleid) {
 	m_enemytextlist->Clear();
 	for (i = eb.stat_amount + eb.spell_amount; i < td.text.size(); i++)
 		m_enemytextlist->Append(_(td.text[i].txt.GetStr(hades::TEXT_PREVIEW_TYPE)));
+	m_enemyscriptentryedit->Enable(gametype == GAME_TYPE_PSX || hades::ENABLE_BATTLE_ENTRY_EDIT);
 	for (i = 0; i < G_V_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME); i++)
 		if (eb.scene_id == HADES_STRING_BATTLE_SCENE_NAME[i].id) {
 			m_enemyscene->SetSelection(i);
@@ -5276,26 +5376,26 @@ void CDDataStruct::OnEnemyStatChangeName(wxCommandEvent& event) {
 	EnemyStatDataStruct& es = enemyset.battle[*sortid]->stat[statsel];
 	wstring newname = m_enemystatname->GetValue().ToStdWstring();
 	if (GetTopWindow()->m_editsimilarenemy->IsChecked()) {
-		unsigned int i,j,nb,*battleid;
-		EnemyStatDataStruct** stats = enemyset.GetSimilarEnemyStats(es,&nb,&battleid);
-		for (i=0;i<nb;i++) {
+		unsigned int i, j, nb, *battleid;
+		EnemyStatDataStruct** stats = enemyset.GetSimilarEnemyStats(es, &nb, &battleid);
+		for (i = 0; i < nb; i++) {
 			if (stats[i]->SetName(newname)) {
-				wxMessageDialog popup(this,HADES_STRING_GROUPEDIT_ERROR_TEXT,HADES_STRING_WARNING,wxOK|wxSTAY_ON_TOP|wxCENTRE);
+				wxMessageDialog popup(this, HADES_STRING_GROUPEDIT_ERROR_TEXT, HADES_STRING_WARNING, wxOK | wxSTAY_ON_TOP | wxCENTRE);
 				popup.ShowModal();
-				if (stats[i]==&es) {
+				if (stats[i] == &es) {
 					wxTextPos ip = m_enemystatname->GetInsertionPoint();
 					m_enemystatname->ChangeValue(_(es.name.str));
 					m_enemystatname->SetInsertionPoint(ip);
 				}
 			} else {
 				if (GetTopWindow()->m_sortenemy->IsChecked()) {
-					for (j=0;j<enemyset.battle_amount;j++)
-						if (*(unsigned int*)m_enemylist->GetClientData(j)==battleid[i])
-							m_enemylist->SetString(j,GetEnemyBattleName(battleid[i]));
+					for (j = 0; j < enemyset.battle_amount; j++)
+						if (*(unsigned int*)m_enemylist->GetClientData(j) == battleid[i])
+							m_enemylist->SetString(j, GetEnemyBattleName(battleid[i]));
 				} else
-					m_enemylist->SetString(battleid[i],GetEnemyBattleName(battleid[i]));
+					m_enemylist->SetString(battleid[i], GetEnemyBattleName(battleid[i]));
 				UpdateEnemyName(battleid[i]);
-				MarkDataEnemyModified(battleid[i],CHUNK_TYPE_TEXT);
+				MarkDataEnemyModified(battleid[i], CHUNK_TYPE_TEXT);
 			}
 		}
 	} else {
@@ -5305,13 +5405,13 @@ void CDDataStruct::OnEnemyStatChangeName(wxCommandEvent& event) {
 			m_enemystatname->SetInsertionPoint(ip);
 			TextReachLimit();
 		} else {
-			m_enemylist->SetString(sel,GetEnemyBattleName(*sortid));
+			m_enemylist->SetString(sel, GetEnemyBattleName(*sortid));
 			UpdateEnemyName(*sortid);
-			MarkDataEnemyModified(*sortid,CHUNK_TYPE_TEXT);
+			MarkDataEnemyModified(*sortid, CHUNK_TYPE_TEXT);
 		}
 	}
-	m_enemystatlist->SetString(statsel,_(es.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
-	m_enemyspellbaseanim->SetString(statsel,_(es.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+	m_enemystatlist->SetString(statsel, _(es.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+	m_enemyspellbaseanim->SetString(statsel, _(es.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 }
 
 void CDDataStruct::OnEnemySpellChangeName(wxCommandEvent& event) {
@@ -5320,19 +5420,19 @@ void CDDataStruct::OnEnemySpellChangeName(wxCommandEvent& event) {
 	EnemySpellDataStruct& ep = enemyset.battle[*sortid]->spell[spellsel];
 	wstring newname = m_enemyspellname->GetValue().ToStdWstring();
 	if (GetTopWindow()->m_editsimilarenemy->IsChecked()) {
-		unsigned int i,nb,*similarbattleid;
-		EnemySpellDataStruct** similarspells = enemyset.GetSimilarEnemySpells(ep,&nb,&similarbattleid);
-		for (i=0;i<nb;i++) {
+		unsigned int i, nb, *similarbattleid;
+		EnemySpellDataStruct** similarspells = enemyset.GetSimilarEnemySpells(ep, &nb, &similarbattleid);
+		for (i = 0; i < nb; i++) {
 			if (similarspells[i]->SetName(newname)) {
-				wxMessageDialog popup(this,HADES_STRING_GROUPEDIT_ERROR_TEXT,HADES_STRING_WARNING,wxOK|wxSTAY_ON_TOP|wxCENTRE);
+				wxMessageDialog popup(this, HADES_STRING_GROUPEDIT_ERROR_TEXT, HADES_STRING_WARNING, wxOK | wxSTAY_ON_TOP | wxCENTRE);
 				popup.ShowModal();
-				if (similarspells[i]==&ep) {
+				if (similarspells[i] == &ep) {
 					wxTextPos ip = m_enemyspellname->GetInsertionPoint();
 					m_enemyspellname->ChangeValue(_(ep.name.str));
 					m_enemyspellname->SetInsertionPoint(ip);
 				}
 			} else {
-				MarkDataEnemyModified(similarbattleid[i],CHUNK_TYPE_TEXT);
+				MarkDataEnemyModified(similarbattleid[i], CHUNK_TYPE_TEXT);
 			}
 		}
 	} else {
@@ -5342,28 +5442,40 @@ void CDDataStruct::OnEnemySpellChangeName(wxCommandEvent& event) {
 			m_enemyspellname->SetInsertionPoint(ip);
 			TextReachLimit();
 		} else {
-			MarkDataEnemyModified(*sortid,CHUNK_TYPE_TEXT);
+			MarkDataEnemyModified(*sortid, CHUNK_TYPE_TEXT);
 		}
 	}
-	m_enemyspelllist->SetString(spellsel,_(ep.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
-	m_enemystatdefaultattack->SetString(spellsel,_(ep.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+	m_enemyspelllist->SetString(spellsel, _(ep.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
+	m_enemystatdefaultattack->SetString(spellsel, _(ep.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 }
 
-#define MACRO_ENEMY_CHANGE_DATA(TYPE,DATA,VALUE) \
+#define MACRO_ENEMY_CHANGE_DATA(TYPE, DATA, VALUE) \
 	if (GetTopWindow()->m_editsimilarenemy->IsChecked()) { \
-		unsigned int macroi,macronb,*macrobattleid; \
-		Enemy ## TYPE ## DataStruct** macrolist = enemyset.GetSimilarEnemy ## TYPE ## s(enmydata,&macronb,&macrobattleid); \
-		for (macroi=0;macroi<macronb;macroi++) { \
+		unsigned int macroi, macronb, *macrobattleid; \
+		Enemy ## TYPE ## DataStruct** macrolist = enemyset.GetSimilarEnemy ## TYPE ## s(enmydata, &macronb, &macrobattleid); \
+		for (macroi = 0; macroi < macronb; macroi++) { \
 			macrolist[macroi]->DATA = VALUE; \
-			MarkDataEnemyModified(macrobattleid[macroi],CHUNK_TYPE_ENEMY_STATS); \
+			MarkDataEnemyModified(macrobattleid[macroi], CHUNK_TYPE_ENEMY_STATS); \
 		} \
 	} else { \
 		enmydata.DATA = VALUE; \
-		MarkDataEnemyModified(*sortid,CHUNK_TYPE_ENEMY_STATS); \
+		MarkDataEnemyModified(*sortid, CHUNK_TYPE_ENEMY_STATS); \
 	}
 
 bool DiscardStatTooHigh = false;
 bool DiscardSimilarEnemyUnaffected = false;
+void CDDataStruct::OnEnemyChangeText(wxCommandEvent& event) {
+	int spellsel = m_enemyspelllist->GetSelection();
+	unsigned int* sortid = (unsigned int*)m_enemylist->GetClientData(m_enemylist->GetSelection());
+	EnemyDataStruct& eb = *enemyset.battle[*sortid];
+	int id = event.GetId();
+	if (id == wxID_ANIM) {
+		EnemySpellDataStruct& enmydata = eb.spell[m_enemyspelllist->GetSelection()];
+		wstring newpath = m_enemyspellanimseqpath->GetValue().ToStdWstring();
+		MACRO_ENEMY_CHANGE_DATA(Spell, sequence_path, newpath)
+	}
+}
+
 void CDDataStruct::OnEnemyChangeSpin(wxSpinEvent& event) {
 	unsigned int* sortid = (unsigned int*)m_enemylist->GetClientData(m_enemylist->GetSelection());
 	EnemyDataStruct& eb = *enemyset.battle[*sortid];
@@ -5706,7 +5818,10 @@ void CDDataStruct::OnEnemyChangeFlags(wxCommandEvent& event) {
 			MACRO_FLAG_SET8(SPELL ## .menu_flag, wxID_SM) \
 			MACRO_FLAG_SET(SPELL ## .target_flag, wxID_CAN_TARGET_DEAD, TARGET_FLAG_CAN_TARGET_DEAD) \
 			MACRO_FLAG_SET(SPELL ## .target_flag, wxID_TARGET_CAMERA, TARGET_FLAG_CAMERA) \
-			MACRO_FLAG_SET(SPELL ## .target_flag, wxID_TARGET_DEAD_FIRST, TARGET_FLAG_TARGET_DEAD_FIRST)
+			MACRO_FLAG_SET(SPELL ## .target_flag, wxID_TARGET_DEAD_FIRST, TARGET_FLAG_TARGET_DEAD_FIRST) \
+			MACRO_FLAG_SET(SPELL ## .target_flag, wxID_MORPH_ACCESS, TARGET_FLAG_MORPH_FORCE_ACCESS) \
+			MACRO_FLAG_SET(SPELL ## .target_flag, wxID_MORPH_DISABLE, TARGET_FLAG_MORPH_NO_ACCESS) \
+			MACRO_FLAG_SET(SPELL ## .target_flag, wxID_ALTERNATE_IDLE, TARGET_FLAG_ALTERNATE_IDLE)
 
 		if (GetTopWindow()->m_editsimilarenemy->IsChecked()) {
 			unsigned int macroi,macronb,*macrobattleid;
@@ -6417,7 +6532,7 @@ void CDDataStruct::OnTextExportText(wxCommandEvent& event) {
 	vector<wstring> namelist = istext ? textset.name : worldset.name;
 	int sel = itemlist->GetSelection();
 	unsigned int* sortid = (unsigned int*)itemlist->GetClientData(sel);
-	if (strlist[*sortid]==NULL)
+	if (strlist[*sortid] == NULL)
 		return;
 	if (TheTextExportDialog->ShowModal() == wxID_OK) {
 		wxFile txtfile(TheTextExportDialog->m_filepicker->GetPath(), wxFile::write);
@@ -6435,8 +6550,11 @@ void CDDataStruct::OnTextExportText(wxCommandEvent& event) {
 		txtfile.Write(_(tmpstr) + _(L'\n'));
 		TextDataStruct& td = *strlist[*sortid];
 		for (i = 0; i < td.text.size(); i++) {
-			wsprintf(tmpstr, TheTextExportDialog->m_textseparator->GetValue().wc_str(), i);
-			txtfile.Write(_(tmpstr) + _(L'\n') + _(td.text[i].txt.GetStr(TheTextExportDialog->m_strtype->GetSelection())) + _(L'\n'));
+			int localindex = GetTextIdFromUniversalId(GetSteamLanguage(), td.block_id, i);
+			if (localindex >= 0) {
+				wsprintf(tmpstr, TheTextExportDialog->m_textseparator->GetValue().wc_str(), i < td.base_amount ? i : td.text[localindex].id);
+				txtfile.Write(_(tmpstr) + _(L'\n') + _(td.text[localindex].txt.GetStr(TheTextExportDialog->m_strtype->GetSelection())) + _(L'\n'));
+			}
 		}
 		txtfile.Close();
 		wxMessageDialog popupsuccess(this, HADES_STRING_TXT_SAVE_SUCCESS, HADES_STRING_SUCCESS, wxOK | wxCENTRE);
@@ -6920,7 +7038,7 @@ for (unsigned int i=0;i<wk->triangle_amount;i++) {
 	walkimgdc.DrawLabel(wxString::Format(wxT("%u\nwalkpath %u\nunk9 %u\nunk10 %u"),i,wk->triangle_walkpath[i],wk->triangle_unk9[i],wk->triangle_unk10[i]),wxRect(meanpoint,wxSize(1000,1000)));
 }
 walkimgdc.SetBrush(*wxBLUE_BRUSH);
-for (unsigned int i=0;i<sc->entry_amount;i++) for (unsigned int j=0;j<sc->entry_function_amount[i];j++) for (unsigned int k=0;k<sc->func[i][j].op_amount;k++)
+for (unsigned int i=0;i<sc->entry_amount;i++) for (unsigned int j=0;j<sc->entry[i].function_amount;j++) for (unsigned int k=0;k<sc->func[i][j].op_amount;k++)
 if (sc->func[i][j].op[k].opcode==0x29) {
 	for (unsigned int l=0;l<sc->func[i][j].op[k].arg_amount;l++) {
 		ScriptArgument& arg = sc->func[i][j].op[k].arg[l];
@@ -7994,7 +8112,7 @@ void CDDataStruct::OnSpecialTextRightClickMenu(wxCommandEvent& event) {
 //=============================//
 
 void CDDataStruct::DisplayMipsBattle(int mipsbattleid) {
-	if (mipsbattleid==0) {
+	if (mipsbattleid == 0) {
 		m_mipsbattlescrolledwindow->Show(false);
 		m_mipsbattlegenscrolledwindow->Show(true);
 		m_mipsbattlegenscrolledwindow->Layout();
@@ -8003,7 +8121,7 @@ void CDDataStruct::DisplayMipsBattle(int mipsbattleid) {
 	} else {
 		mipsbattleid--;
 		wxString ramposlabel;
-		ramposlabel.Printf(wxT("0x%X"),mipsset.battle_ram_pos[MIPS_BATTLE_SPELL_EFFECT_INDEX+mipsbattleid] & 0x7FFFFFFF);
+		ramposlabel.Printf(wxT("0x%X"), mipsset.battle_ram_pos[MIPS_BATTLE_SPELL_EFFECT_INDEX + mipsbattleid] & 0x7FFFFFFF);
 		m_mipsbattlerampos->SetLabel(ramposlabel);
 		m_mipsbattlegenscrolledwindow->Show(false);
 		m_mipsbattlescrolledwindow->Show(true);
@@ -8061,45 +8179,45 @@ void CDDataStruct::OnMipsBattleButton(wxCommandEvent& event) {
 
 void CDDataStruct::DisplayCilStruct(int cilstructid) {
 	unsigned int sortid = *(unsigned int*)m_ciltypelist->GetClientData(cilstructid);
-	unsigned int i,mamount;
+	unsigned int i, mamount;
 	m_cilmethodlist->Clear();
 	mamount = cilset.data->GetTypeMethodAmount(sortid);
-	for (i=0;i<mamount;i++)
-		m_cilmethodlist->Append(_(cilset.data->GetMethodName(sortid,i)));
-	if (mamount>0)
+	for (i = 0; i < mamount; i++)
+		m_cilmethodlist->Append(_(cilset.data->GetMethodName(sortid, i)));
+	if (mamount > 0)
 		m_cilmethodlist->SetSelection(0);
-	m_cilmethodedit->Enable(mamount>0);
+	m_cilmethodedit->Enable(mamount > 0);
 }
 
 void CDDataStruct::DisplayCilMacro(int cilmacroid) {
-	CILMacro macro(CILMacroIDList[cilmacroid].id,cilset.data);
+	CILMacro macro(CILMacroIDList[cilmacroid].id, cilset.data);
 	bool canenable = true;
 	unsigned int i;
-	if (cilset.GetEnabledMacroIndex(macro.type->id)>=0)
+	if (cilset.GetEnabledMacroIndex(macro.type->id) >= 0)
 		m_cilmacrobutton->SetLabel(_(HADES_STRING_CIL_UNAPPLY_MACRO));
 	else
 		m_cilmacrobutton->SetLabel(_(HADES_STRING_CIL_APPLY_MACRO));
-	for (i=0;i<cilset.rawmodifamount;i++)
-		if (macro.FindMethodById(cilset.rawmodif[i].method_id)>=0) {
+	for (i = 0; i < cilset.rawmodifamount; i++)
+		if (macro.FindMethodById(cilset.rawmodif[i].method_id) >= 0) {
 			canenable = false;
 			break;
 		}
 	m_cilmacrobutton->Enable(canenable);
 	m_cilmacrodescription->SetValue(_(macro.type->description));
 	m_cilmacromethods->Clear();
-	for (i=0;i<macro.info->GetMethodCount();i++) {
+	for (i = 0; i < macro.info->GetMethodCount(); i++) {
 		wxString methodlabel;
 		methodlabel << _(macro.info->GetMethodTypeName(i)) << _(L"::") << _(macro.info->GetMethodName(i));
 		m_cilmacromethods->Append(methodlabel);
 	}
 	m_cilmacroparametersizer->Clear(true);
-	if (macro.type->id==50) {
-		wxSpinCtrl* resspin = new wxSpinCtrl(m_cilmacroscrolledwindow,wxID_ANY,wxEmptyString,wxDefaultPosition,wxDefaultSize,wxSP_ARROW_KEYS,16,123,32);
-		m_cilmacroparametersizer->Add(resspin,0,wxALL,3);
+	if (macro.type->id == 50) {
+		wxSpinCtrl* resspin = new wxSpinCtrl(m_cilmacroscrolledwindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 16, 123, 32);
+		m_cilmacroparametersizer->Add(resspin, 0, wxALL, 3);
 		m_cilmacroscrolledwindow->Layout();
 		m_cilmacroscrolledwindow->GetParent()->GetSizer()->Layout();
 		m_cilmacroscrolledwindow->Refresh();
-		m_spellpower->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDDataStruct::OnCilParameterResolution ), NULL, this );
+		m_spellpower->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(CDDataStruct::OnCilParameterResolution), NULL, this);
 	}
 }
 
@@ -8118,16 +8236,16 @@ void CDDataStruct::OnListBoxCilMacro(wxCommandEvent& event) {
 void CDDataStruct::OnCilMethodButton(wxCommandEvent& event) {
 	int tid = *(unsigned int*)m_ciltypelist->GetClientData(m_ciltypelist->GetSelection());
 	int mid = m_cilmethodlist->GetSelection();
-	CilScriptEditDialog dial(this,&cilset,tid,mid);
-	if (dial.error_type==0) {
-		if (dial.ShowModal()==wxID_OK) {
+	CilScriptEditDialog dial(this, &cilset, tid, mid);
+	if (dial.error_type == 0) {
+		if (dial.ShowModal() == wxID_OK) {
 			cilset.UpdateWithNewModification(*dial.ComputeModification());
 			MarkDataCilModified();
 		}
-	} else if (dial.error_type==1) {
+	} else if (dial.error_type == 1) {
 		wxLogError(HADES_STRING_CIL_NO_METHOD);
-	} else if (dial.error_type==2) {
-		wxMessageDialog popup(NULL,HADES_STRING_CIL_PROTECTED,HADES_STRING_WARNING,wxOK|wxCENTRE);
+	} else if (dial.error_type == 2) {
+		wxMessageDialog popup(NULL, HADES_STRING_CIL_PROTECTED, HADES_STRING_WARNING, wxOK | wxCENTRE);
 		popup.ShowModal();
 		dial.ShowModal();
 	}
@@ -8136,13 +8254,13 @@ void CDDataStruct::OnCilMethodButton(wxCommandEvent& event) {
 void CDDataStruct::OnCilMacroButton(wxCommandEvent& event) {
 	int macrosel = m_cilmacrolist->GetSelection();
 	uint32_t macroid = CILMacroIDList[macrosel].id;
-	if (cilset.GetEnabledMacroIndex(macroid)>=0) {
+	if (cilset.GetEnabledMacroIndex(macroid) >= 0) {
 		cilset.RemoveMacroModif(macroid);
 		m_cilmacrobutton->SetLabel(_(HADES_STRING_CIL_APPLY_MACRO));
 	} else {
 		cilset.AddMacroModif(macroid);
-		if (macroid==50) {
-			uint32_t param[] = {(uint32_t)dynamic_cast<wxSpinCtrl*>(m_cilmacroparametersizer->GetItem((size_t)0)->GetWindow())->GetValue()};
+		if (macroid == 50) {
+			uint32_t param[] = { (uint32_t)dynamic_cast<wxSpinCtrl*>(m_cilmacroparametersizer->GetItem((size_t)0)->GetWindow())->GetValue() };
 			cilset.macromodif[cilset.GetEnabledMacroIndex(macroid)].info->SetParameters(param);
 		}
 		m_cilmacrobutton->SetLabel(_(HADES_STRING_CIL_UNAPPLY_MACRO));
@@ -8486,6 +8604,8 @@ void CDDataStruct::InitEnemy(void) {
 		m_worldbattlepanelchoice2->Show(true);
 		m_worldbattlepanelchoice3->Show(showalt);
 		m_worldbattlepanelchoice4->Show(showalt);
+		m_worldbattlescrolledwindow->Layout();
+		m_worldbattlescrolledwindow->Refresh();
 		DisplayWorldBattle(m_worldbattlelist->GetSelection());
 	}
 	m_enemylist->SetSelection(0);
@@ -9096,6 +9216,10 @@ void CDDataStruct::OnNotebookEnvironment(wxNotebookEvent& event) {
 		DisplayWorldMap(m_worldlist->GetSelection());
 		DisplayWorldPlace(m_worldplacelist->GetSelection());
 		DisplayWorldBattle(m_worldbattlelist->GetSelection());
+		if (m_worldbattlelist->GetSelection() == 0) {
+			m_worldbattlescrolledwindow->Layout();
+			m_worldbattlescrolledwindow->Refresh();
+		}
 	} else if (sel == 2) {
 		InitField();
 		DisplayField(m_fieldlist->GetSelection());
@@ -9151,6 +9275,20 @@ void CDDataStruct::TextReachLimit() {
 	DiscardableMessageWindow popup(wxGetApp().GetTopWindow(), HADES_STRING_TEXT_REACH_LIMIT);
 	if (popup.ShowModal() == wxID_DISCARD)
 		DiscardTextLimit = true;
+}
+
+void CDDataStruct::OnWindowLooseFocus(wxFocusEvent& event) {
+	wxObject* focused = event.GetEventObject();
+	if (focused == m_statcharabilitylist)
+		GetTopWindow()->m_statusBar->PopStatusText();
+	event.Skip();
+}
+
+void CDDataStruct::OnWindowGetFocus(wxFocusEvent& event) {
+	wxObject* focused = event.GetEventObject();
+	if (focused == m_statcharabilitylist)
+		GetTopWindow()->m_statusBar->PushStatusText(_(L"Ctrl+C: copy selected ability / Ctrl+Shift+C: copy ability list / Ctrl+V: paste ability or ability list"));
+	event.Skip();
 }
 
 CDDataStruct::CDDataStruct(wxWindow* parent, string fname, ConfigurationSet& cfg) :

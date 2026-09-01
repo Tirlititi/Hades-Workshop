@@ -8,7 +8,7 @@
 #define SUPPORT_HWS_VERSION 3
 
 #define SUPPORT_CSV_CHECK L"%id%;%cost%;%boosted%"
-#define SUPPORT_CSV_DEFAULT L"%name%;" SUPPORT_CSV_CHECK
+#define SUPPORT_CSV_DEFAULT L"%name%;" SUPPORT_CSV_CHECK L"\n"
 
 const unsigned int steam_support_field_size[] = { 8, 8, 16, 16, 16 };
 
@@ -70,9 +70,7 @@ wxString SupportDataStruct::GetFieldValue(wxString fieldname) {
 	if (fieldname.IsSameAs("help")) return wxString::Format(wxT("%s"), help.str_nice);
 	if (fieldname.IsSameAs("category")) return wxString::Format(wxT("%d"), category);
 	if (fieldname.IsSameAs("cost")) return wxString::Format(wxT("%d"), cost);
-	if (fieldname.IsSameAs("boosted")) wxString::Format(wxT("%s"), ConcatenateStrings<int>(", ", boosted_support, static_cast<string(*)(int)>(&to_string)));
-	if (auto search = custom_field.find(fieldname); search != custom_field.end()) return search->second;
-	if (auto search = parent->custom_field.find(fieldname); search != parent->custom_field.end()) return search->second;
+	if (fieldname.IsSameAs("boosted")) return wxString::Format(wxT("%s"), ConcatenateStrings<int>(", ", boosted_support, static_cast<string(*)(int)>(&to_string)));
 	return _(L"");
 }
 
@@ -217,7 +215,7 @@ void SupportDataSet::GenerateCSharp(vector<string>& buffer) {
 }
 
 bool SupportDataSet::GenerateCSV(string basefolder) {
-	return MemoriaUtility::GenerateDatabaseGeneric<SupportDataStruct>(_(basefolder), _(HADES_STRING_CSV_SUPPORT_FILE), csv_header, _(L"\n"), _(L"\n"), support, csv_format, true);
+	return MemoriaUtility::GenerateDatabaseGeneric<SupportDataStruct>(_(basefolder), _(HADES_STRING_CSV_SUPPORT_FILE), csv_header, support, csv_format, custom_field, true);
 }
 
 void SupportDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype, bool onlymodified, bool asmes, SteamLanguage lang) {

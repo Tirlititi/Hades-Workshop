@@ -838,7 +838,7 @@ void ToolRandomizer::ApplyRandomizerWeapon() {
 							} else if (cddata->itemset.item[i].skill[j].is_active) {
 								interestchar = 0;
 								for (k = 0; k < PLAYABLE_CHAR_AMOUNT; k++)
-									if (((1 << k) & cddata->itemset.item[i].char_availability) && DoesCharacterUseSpell(cddata->statset.ability_list[cddata->statset.GetCharacterCommandsIndices(PLAYABLE_CHAR_AMOUNT - k - 1)[0]], cddata->itemset.item[i].skill[j].id))
+									if (((1 << k) & cddata->itemset.item[i].char_availability) && DoesCharacterUseSpell(cddata->statset.GetCharacterAbilitiesById(cddata->statset.initial_stat[PLAYABLE_CHAR_AMOUNT - k - 1].command_ids[0]), cddata->itemset.item[i].skill[j].id))
 										interestchar |= 1 << k;
 								if (interestchar == curchar) {
 									abillist.push_back(cddata->itemset.item[i].skill[j].id);
@@ -862,7 +862,7 @@ void ToolRandomizer::ApplyRandomizerWeapon() {
 											} else if (cddata->itemset.item[i].skill[j].is_active) {
 												interestchar = 0;
 												for (k = 0; k < PLAYABLE_CHAR_AMOUNT; k++)
-													if (((1 << k) & cddata->itemset.item[i].char_availability) && DoesCharacterUseSpell(cddata->statset.ability_list[cddata->statset.GetCharacterCommandsIndices(PLAYABLE_CHAR_AMOUNT - k - 1)[0]], cddata->itemset.item[i].skill[j].id))
+													if (((1 << k) & cddata->itemset.item[i].char_availability) && DoesCharacterUseSpell(cddata->statset.GetCharacterAbilitiesById(cddata->statset.initial_stat[PLAYABLE_CHAR_AMOUNT - k - 1].command_ids[0]), cddata->itemset.item[i].skill[j].id))
 														interestchar |= 1 << k;
 												if (interestchar == curchar)
 													cddata->itemset.item[i].skill[j].id = PickRandomInVector(abillist);
@@ -885,7 +885,7 @@ void ToolRandomizer::ApplyRandomizerWeapon() {
 			charspelllist.clear();
 			charsupplist.clear();
 			charweaplist.clear();
-			AbilitySetDataStruct& abil = cddata->statset.ability_list[cddata->statset.GetCharacterCommandsIndices(i)[0]];
+			AbilitySetDataStruct& abil = cddata->statset.GetCharacterAbilitiesById(cddata->statset.initial_stat[i].command_ids[0]);
 			for (j = 0; j < ABILITY_SET_CAPACITY; j++)
 				if (!abil.entry[j].ability.IsVoid() && (!m_weapsafe->IsChecked() || IsNotSafeAbility(abil.entry[j].ability.id, safe_abil_weap))) {
 					if (abil.entry[j].ability.is_active)
@@ -968,7 +968,7 @@ void ToolRandomizer::ApplyRandomizerArmor() {
 			chararmorlist.clear();
 			charspelllist.clear();
 			charsupplist.clear();
-			AbilitySetDataStruct& abil = cddata->statset.ability_list[cddata->statset.GetCharacterCommandsIndices(i)[0]];
+			AbilitySetDataStruct& abil = cddata->statset.GetCharacterAbilitiesById(cddata->statset.initial_stat[i].command_ids[0]);
 			for (j = 0; j < ABILITY_SET_CAPACITY; j++)
 				if (!abil.entry[j].ability.IsVoid() && (!m_armorsafe->IsChecked() || IsNotSafeAbility(abil.entry[j].ability.id, safe_abil_armor))) {
 					if (abil.entry[j].ability.is_active)

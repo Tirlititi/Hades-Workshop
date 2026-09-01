@@ -11,6 +11,7 @@
 
 #define DOUBLE_MIN_VALUE	-2e38
 #define DRAW_OVER_OFFSET	15
+#define ANGLE_TO_RADIANS	0.02454369261f
 
 bool IsPointInTriangle2D(GLdouble x,GLdouble y,GLdouble tx1,GLdouble ty1,GLdouble tx2,GLdouble ty2,GLdouble tx3,GLdouble ty3);
 vector<GLdouble> GetPointBarycenterCoef(GLdouble x,GLdouble y,GLdouble tx1,GLdouble ty1,GLdouble tx2,GLdouble ty2,GLdouble tx3,GLdouble ty3);
@@ -40,6 +41,7 @@ void GLWindow::DisplayField(FieldTilesDataStruct* tiles, FieldWalkmeshDataStruct
 	field_walk_triangle_highlight = -1;
 	field_region_vertex_amount = 0;
 	field_showpoint = 0;
+	field_showangle = false;
 	field_showplane = 0;
 	RecomputeGeometry(false);
 /*	field_tiles_quad_pos = new GLint**[field_tiles->tiles_amount];
@@ -171,12 +173,20 @@ void GLWindow::DisplayFieldPoint2D(int16_t x, int16_t y) {
 	Draw();
 }
 
-void GLWindow::DisplayFieldPlane(int planetype, int16_t coord) {
-	if (display_type!=DISPLAY_GL_TYPE_FIELD)
+void GLWindow::DisplayFieldAngle(float angle) {
+	if (display_type != DISPLAY_GL_TYPE_FIELD)
 		return;
-	bool mustdraw = planetype!=field_showplane;
+	field_showangle = true;
+	field_angle_value = angle;
+	Draw();
+}
+
+void GLWindow::DisplayFieldPlane(int planetype, int16_t coord) {
+	if (display_type != DISPLAY_GL_TYPE_FIELD)
+		return;
+	bool mustdraw = planetype != field_showplane;
 	field_showplane = planetype;
-	if (field_showplane==3)
+	if (field_showplane == 3)
 		field_plane_coord = -coord;
 	else
 		field_plane_coord = coord;
@@ -185,35 +195,39 @@ void GLWindow::DisplayFieldPlane(int planetype, int16_t coord) {
 }
 
 void GLWindow::DisplayFieldTrianglePath(int triangleid) {
-	if (display_type!=DISPLAY_GL_TYPE_FIELD)
+	if (display_type != DISPLAY_GL_TYPE_FIELD)
 		return;
 	field_walk_triangle_highlight = triangleid;
 	Draw();
 }
 
 void GLWindow::DisplayFieldPath(int pathid) {
-	if (display_type!=DISPLAY_GL_TYPE_FIELD)
+	if (display_type != DISPLAY_GL_TYPE_FIELD)
 		return;
 	field_walk_path_highlight = pathid;
 	Draw();
 }
 
 void GLWindow::DisplayFieldClear(bool clearpolygon, bool clearpoint, bool clearplane, bool clearhighlight) {
-	if (display_type!=DISPLAY_GL_TYPE_FIELD)
+	if (display_type != DISPLAY_GL_TYPE_FIELD)
 		return;
 	bool mustdraw = false;
-	if (clearpolygon && field_region_vertex_amount>0) {
-		for (unsigned int i=0;i<field_region_vertex_amount;i++)
+	if (clearpolygon && field_region_vertex_amount > 0) {
+		for (unsigned int i = 0; i < field_region_vertex_amount; i++)
 			delete[] field_region_vertex_pos[i];
 		delete[] field_region_vertex_pos;
 		field_region_vertex_amount = 0;
 		mustdraw = true;
 	}
-	if (clearpoint && field_showpoint>0) {
+	if (clearpoint && field_showpoint > 0) {
 		field_showpoint = 0;
 		mustdraw = true;
 	}
-	if (clearplane && field_showplane>0) {
+	if (clearpoint && field_showangle) {
+		field_showangle = false;
+		mustdraw = true;
+	}
+	if (clearplane && field_showplane > 0) {
 		field_showplane = 0;
 		mustdraw = true;
 	}
@@ -455,16 +469,16 @@ void GLWindow::Draw() {
 	glEnable(GL_COLOR_MATERIAL);
 	glEnable(GL_POINT_SMOOTH);
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	gluPerspective(65.0,1.0,1.0,100000.0L);
-	gluLookAt(camera_eye_x,camera_eye_y,camera_eye_z,camera_pos_x,camera_pos_y,camera_pos_z,cos(camera_angle_xy)*sin(camera_angle_z),sin(camera_angle_xy)*sin(camera_angle_z),cos(camera_angle_z));
-	if (display_type==DISPLAY_GL_TYPE_FIELD) {
+	gluPerspective(65.0, 1.0, 1.0, 100000.0L);
+	gluLookAt(camera_eye_x, camera_eye_y, camera_eye_z, camera_pos_x, camera_pos_y, camera_pos_z, cos(camera_angle_xy) * sin(camera_angle_z), sin(camera_angle_xy) * sin(camera_angle_z), cos(camera_angle_z));
+	if (display_type == DISPLAY_GL_TYPE_FIELD) {
 		if (field_showtiles) {
 			uint32_t* tileimg = field_tiles->ConvertAsImageAccurate(field_camera);
-			for (i=0;i<field_tiles->camera[field_camera].width*field_tiles->camera[field_camera].height;i++)
+			for (i = 0; i < field_tiles->camera[field_camera].width * field_tiles->camera[field_camera].height; i++)
 				tileimg[i] = (tileimg[i] & 0xFF00FF00) | ((tileimg[i] & 0xFF0000) >> 16) | ((tileimg[i] & 0xFF) << 16);
 			glMatrixMode(GL_PROJECTION);
 			glPushMatrix();
@@ -473,16 +487,16 @@ void GLWindow::Draw() {
 			glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
 			glLoadIdentity();
-			glColor3f(1,1,1);
+			glColor3f(1, 1, 1);
 			glEnable(GL_TEXTURE_2D);
 			GLuint textureid;
-			glGenTextures(1,&textureid);
-			glBindTexture(GL_TEXTURE_2D,textureid);
-			glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,field_tiles->camera[field_camera].width,field_tiles->camera[field_camera].height,0,GL_RGBA,GL_UNSIGNED_BYTE,tileimg);
+			glGenTextures(1, &textureid);
+			glBindTexture(GL_TEXTURE_2D, textureid);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, field_tiles->camera[field_camera].width, field_tiles->camera[field_camera].height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tileimg);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			GLint sx = field_tiles->camera[field_camera].width/2;
-			GLint sy = field_tiles->camera[field_camera].height/2;
+			GLint sx = field_tiles->camera[field_camera].width / 2;
+			GLint sy = field_tiles->camera[field_camera].height / 2;
 			glBegin(GL_QUADS);
 			glTexCoord2f(0, 1); glVertex3f(-sx, -sy, 0);
 			glTexCoord2f(0, 0); glVertex3f(-sx, sy, 0);
@@ -543,40 +557,62 @@ void GLWindow::Draw() {
 				glEnd();
 			}
 		}
-		if (field_region_vertex_amount>0) {
+		if (field_region_vertex_amount > 0) {
 			glColor4f(0, 0, 1, 0.8f);
 			glBegin(GL_POLYGON);
-			for (i=0;i<field_region_vertex_amount;i++)
+			for (i = 0; i < field_region_vertex_amount; i++)
 				glVertex3iv(field_region_vertex_pos[i]);
 			glEnd();
 		}
-		if (field_showpoint>0) {
+		if (field_showpoint > 0) {
 			glColor4f(0, 0, 1, 1);
 			glPointSize(15);
 			glBegin(GL_POINTS);
-			for (i=0;i<field_showpoint;i++)
-				glVertex3i(field_pointx[i],field_pointy[i],field_pointz[i]);
+			for (i = 0; i < field_showpoint; i++)
+				glVertex3i(field_pointx[i], field_pointy[i], field_pointz[i]);
 			glEnd();
 			glPointSize(1);
 		}
-		if (field_showplane>0) {
+		if (field_showangle) {
+			GLfloat c = cos(field_angle_value * ANGLE_TO_RADIANS);
+			GLfloat s = sin(field_angle_value * ANGLE_TO_RADIANS);
+			GLfloat x = camera_eye_x + 1000 * cos(camera_angle_z) * cos(camera_angle_xy);
+			GLfloat y = camera_eye_y + 1000 * cos(camera_angle_z) * sin(camera_angle_xy);
+			GLfloat z = camera_eye_z - 1000 * sin(camera_angle_z);
+			glColor4f(1, 0.7f, 0, 1);
+			glBegin(GL_TRIANGLES);
+			glVertex3f(x + 25 * c, y - 25 * s, z);
+			glVertex3f(x - 25 * c, y + 25 * s, z);
+			glVertex3f(x - 250 * s, y - 250 * c, z);
+			glVertex3f(x + 25 * c, y - 25 * s, z);
+			glVertex3f(x - 25 * c, y + 25 * s, z);
+			glVertex3f(x, y, z + 500);
+			glVertex3f(x + 25 * c, y - 25 * s, z);
+			glVertex3f(x - 250 * s, y - 250 * c, z);
+			glVertex3f(x, y, z + 500);
+			glVertex3f(x - 25 * c, y + 25 * s, z);
+			glVertex3f(x - 250 * s, y - 250 * c, z);
+			glVertex3f(x, y, z + 500);
+			glEnd();
+		}
+		if (field_showplane > 0) {
 			glColor4f(0, 0.3f, 1, 0.5f);
 			glBegin(GL_QUADS);
-			if (field_showplane==1) {
-				glVertex3i(field_plane_coord,-10000,-10000);
-				glVertex3i(field_plane_coord,10000,-10000);
-				glVertex3i(field_plane_coord,10000,10000);
-				glVertex3i(field_plane_coord,-10000,10000);
-			} else if (field_showplane==2) {
-				glVertex3i(-10000,field_plane_coord,-10000);
-				glVertex3i(10000,field_plane_coord,-10000);
-				glVertex3i(10000,field_plane_coord,10000);
-				glVertex3i(-10000,field_plane_coord,10000);
-			} else if (field_showplane==3) {
-				glVertex3i(-10000,-10000,field_plane_coord);
-				glVertex3i(10000,-10000,field_plane_coord);
-				glVertex3i(10000,10000,field_plane_coord);
-				glVertex3i(-10000,10000,field_plane_coord);
+			if (field_showplane == 1) {
+				glVertex3i(field_plane_coord, -10000, -10000);
+				glVertex3i(field_plane_coord, 10000, -10000);
+				glVertex3i(field_plane_coord, 10000, 10000);
+				glVertex3i(field_plane_coord, -10000, 10000);
+			} else if (field_showplane == 2) {
+				glVertex3i(-10000, field_plane_coord, -10000);
+				glVertex3i(10000, field_plane_coord, -10000);
+				glVertex3i(10000, field_plane_coord, 10000);
+				glVertex3i(-10000, field_plane_coord, 10000);
+			} else if (field_showplane == 3) {
+				glVertex3i(-10000, -10000, field_plane_coord);
+				glVertex3i(10000, -10000, field_plane_coord);
+				glVertex3i(10000, 10000, field_plane_coord);
+				glVertex3i(-10000, 10000, field_plane_coord);
 			}
 			glEnd();
 		}
@@ -585,8 +621,8 @@ void GLWindow::Draw() {
 	SwapBuffers();
 }
 
-void GLWindow::OnPaint( wxPaintEvent& evt ) {
-	if(!IsShown()) return;
+void GLWindow::OnPaint(wxPaintEvent& evt) {
+	if (!IsShown()) return;
 	wxGLCanvas::SetCurrent(*m_context);
 	wxPaintDC(this);
 	Draw();
@@ -595,29 +631,35 @@ void GLWindow::OnPaint( wxPaintEvent& evt ) {
 #define MOUSE_TRANSLATE_FACTOR	0.005f
 #define MOUSE_ROTATE_FACTOR		0.03f
 void GLWindow::OnMouseMove(wxMouseEvent& event) {
-	int x,y;
-	event.GetPosition(&x,&y);
+	int x, y;
+	event.GetPosition(&x, &y);
 	if (mouse_lefton) {
-		camera_angle_xy -= MOUSE_ROTATE_FACTOR*(x-mouse_x);
-		camera_angle_z += MOUSE_ROTATE_FACTOR*(y-mouse_y);
-		camera_angle_z = min(max((double)camera_angle_z,-M_PI/2),M_PI/2);
-		GLdouble dp = sqrt((camera_eye_x-camera_pos_x)*(camera_eye_x-camera_pos_x)+(camera_eye_y-camera_pos_y)*(camera_eye_y-camera_pos_y)+(camera_eye_z-camera_pos_z)*(camera_eye_z-camera_pos_z));
-		GLdouble cxy = cos(camera_angle_xy+M_PI);
-		GLdouble sxy = sin(camera_angle_xy+M_PI);
+		camera_angle_xy -= MOUSE_ROTATE_FACTOR * (x - mouse_x);
+		camera_angle_z += MOUSE_ROTATE_FACTOR * (y - mouse_y);
+		camera_angle_z = min(max((double)camera_angle_z, -M_PI / 2), M_PI / 2);
+		GLdouble dp = sqrt((camera_eye_x - camera_pos_x) * (camera_eye_x - camera_pos_x) + (camera_eye_y - camera_pos_y) * (camera_eye_y - camera_pos_y) + (camera_eye_z - camera_pos_z) * (camera_eye_z - camera_pos_z));
+		GLdouble cxy = cos(camera_angle_xy + M_PI);
+		GLdouble sxy = sin(camera_angle_xy + M_PI);
 		GLdouble cz = cos(camera_angle_z);
 		GLdouble sz = sin(camera_angle_z);
-		camera_eye_x = camera_pos_x+dp*cxy*cz;
-		camera_eye_y = camera_pos_y+dp*sxy*cz;
-		camera_eye_z = camera_pos_z+dp*sz;
+		camera_eye_x = camera_pos_x + dp * cxy * cz;
+		camera_eye_y = camera_pos_y + dp * sxy * cz;
+		camera_eye_z = camera_pos_z + dp * sz;
 	}
 	if (mouse_righton) {
-		GLdouble tn = MOUSE_TRANSLATE_FACTOR*sqrt((camera_eye_x-camera_pos_x)*(camera_eye_x-camera_pos_x)+(camera_eye_y-camera_pos_y)*(camera_eye_y-camera_pos_y)+(camera_eye_z-camera_pos_z)*(camera_eye_z-camera_pos_z));
-		GLdouble tx = tn*((y-mouse_y)*cos(camera_angle_xy)-(x-mouse_x)*sin(camera_angle_xy));
-		GLdouble ty = tn*((x-mouse_x)*cos(camera_angle_xy)+(y-mouse_y)*sin(camera_angle_xy));
-		camera_eye_x += tx;
-		camera_eye_y += ty;
-		camera_pos_x += tx;
-		camera_pos_y += ty;
+		GLdouble tn = MOUSE_TRANSLATE_FACTOR * sqrt((camera_eye_x - camera_pos_x) * (camera_eye_x - camera_pos_x) + (camera_eye_y - camera_pos_y) * (camera_eye_y - camera_pos_y) + (camera_eye_z - camera_pos_z) * (camera_eye_z - camera_pos_z));
+		if (wxGetMouseState().GetModifiers() == wxMOD_SHIFT) {
+			GLdouble tz = tn * (y - mouse_y);
+			camera_pos_z += tz;
+			camera_eye_z += tz;
+		} else {
+			GLdouble tx = tn * ((y - mouse_y) * cos(camera_angle_xy) - (x - mouse_x) * sin(camera_angle_xy));
+			GLdouble ty = tn * ((x - mouse_x) * cos(camera_angle_xy) + (y - mouse_y) * sin(camera_angle_xy));
+			camera_eye_x += tx;
+			camera_eye_y += ty;
+			camera_pos_x += tx;
+			camera_pos_y += ty;
+		}
 	}
 	mouse_x = x;
 	mouse_y = y;
@@ -625,25 +667,25 @@ void GLWindow::OnMouseMove(wxMouseEvent& event) {
 		Draw();
 }
 void GLWindow::OnMouseWheel(wxMouseEvent& event) {
-	if (event.GetWheelRotation()>0) {
-		camera_eye_x = camera_eye_x*0.9+camera_pos_x*0.1;
-		camera_eye_y = camera_eye_y*0.9+camera_pos_y*0.1;
-		camera_eye_z = camera_eye_z*0.9+camera_pos_z*0.1;
+	if (event.GetWheelRotation() > 0) {
+		camera_eye_x = camera_eye_x * 0.9 + camera_pos_x * 0.1;
+		camera_eye_y = camera_eye_y * 0.9 + camera_pos_y * 0.1;
+		camera_eye_z = camera_eye_z * 0.9 + camera_pos_z * 0.1;
 	} else {
-		camera_eye_x = camera_eye_x*1.1-camera_pos_x*0.1;
-		camera_eye_y = camera_eye_y*1.1-camera_pos_y*0.1;
-		camera_eye_z = camera_eye_z*1.1-camera_pos_z*0.1;
+		camera_eye_x = camera_eye_x * 1.1 - camera_pos_x * 0.1;
+		camera_eye_y = camera_eye_y * 1.1 - camera_pos_y * 0.1;
+		camera_eye_z = camera_eye_z * 1.1 - camera_pos_z * 0.1;
 	}
 	Draw();
 }
-void GLWindow::OnLeftClick(wxMouseEvent& event) {mouse_lefton = true; SetFocus();}
-void GLWindow::OnLeftRelease(wxMouseEvent& event) {mouse_lefton = false;}
-void GLWindow::OnRightClick(wxMouseEvent& event) {mouse_righton = true; SetFocus();}
-void GLWindow::OnRightRelease(wxMouseEvent& event) {mouse_righton = false;}
-void GLWindow::OnMouseLeaveWindow(wxMouseEvent& event) {mouse_lefton = false; mouse_righton = false;}
+void GLWindow::OnLeftClick(wxMouseEvent& event) { mouse_lefton = true; SetFocus(); }
+void GLWindow::OnLeftRelease(wxMouseEvent& event) { mouse_lefton = false; }
+void GLWindow::OnRightClick(wxMouseEvent& event) { mouse_righton = true; SetFocus(); }
+void GLWindow::OnRightRelease(wxMouseEvent& event) { mouse_righton = false; }
+void GLWindow::OnMouseLeaveWindow(wxMouseEvent& event) { mouse_lefton = false; mouse_righton = false; }
 void GLWindow::OnKeyPress(wxKeyEvent& event) {
 	int key = event.GetKeyCode();
-	if (key==WXK_SPACE) {
+	if (key == WXK_SPACE) {
 		ResetCamera();
 		Draw();
 		event.Skip();

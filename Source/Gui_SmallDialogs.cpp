@@ -616,7 +616,7 @@ int CharacterParameterDialog::ShowModal(CharBattleParameterStruct& btl, InitialS
 		m_listanimchoice[i] = new wxChoice(m_animscrolled, wxID_ANY, wxDefaultPosition, wxDefaultSize, animlabel);
 		m_listanimname[i] = new wxTextCtrl(m_animscrolled, wxID_ANY, _(btl.anim[i]), wxDefaultPosition, wxDefaultSize, 0);
 		m_animsizer->Add(label, 0, wxALL, 5);
-		m_animsizer->Add(m_listanimchoice[i], 0, wxALL, 5);
+		m_animsizer->Add(m_listanimchoice[i], 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
 		m_animsizer->Add(m_listanimname[i], 0, wxALL | wxEXPAND, 5);
 		m_listanimchoice[i]->Connect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(CharacterParameterDialog::OnAnimChoice), NULL, this);
 		m_listanimname[i]->Connect(wxEVT_KEY_DOWN, wxKeyEventHandler(CharacterParameterDialog::OnAnimKey), NULL, this);
@@ -983,12 +983,12 @@ void DatabaseFormatDialog::ApplyChanges() {
 
 void DatabaseFormatDialog::AddField(wxString name, wxString defaultValue) {
 	wxTextCtrl* namectrl = new wxTextCtrl(m_fieldscrolled, wxID_ANY, name, wxDefaultPosition, wxDefaultSize, 0);
-	wxTextCtrl* defaultctrl = new wxTextCtrl(m_fieldscrolled, wxID_ANY, defaultValue, wxDefaultPosition, wxDefaultSize, 0);
+	wxTextCtrl* defaultctrl = new wxTextCtrl(m_fieldscrolled, wxID_ANY, defaultValue, wxDefaultPosition, wxSize(-1, 23), wxTE_MULTILINE);
 	wxButton* deletebtn = new wxButton(m_fieldscrolled, field_count, _("x"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
 	namectrl->SetToolTip(_("Name of the custom field"));
 	defaultctrl->SetToolTip(_("Default value of the custom field"));
 	customfieldSizer->Add(namectrl, 0, wxALL, 5);
-	customfieldSizer->Add(defaultctrl, 0, wxALL, 5);
+	customfieldSizer->Add(defaultctrl, 0, wxALL | wxEXPAND, 5);
 	customfieldSizer->Add(deletebtn, 0, wxALL, 5);
 	deletebtn->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(DatabaseFormatDialog::OnButtonClick), NULL, this);
 	field_name.push_back(namectrl);
@@ -1052,7 +1052,7 @@ map<wxString, wxString> DatabaseFieldDialog::GetFieldMap() {
 
 void DatabaseFieldDialog::AddField(wxString name, wxString val, wxString defaultValue) {
 	wxTextCtrl* namectrl = new wxTextCtrl(m_fieldscrolled, wxID_ANY, name, wxDefaultPosition, wxDefaultSize, wxTE_READONLY | wxBORDER_SIMPLE);
-	wxTextCtrl* valuectrl = new wxTextCtrl(m_fieldscrolled, wxID_ANY, val, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
+	wxTextCtrl* valuectrl = new wxTextCtrl(m_fieldscrolled, wxID_ANY, val, wxDefaultPosition, wxSize(-1, 23), wxTE_MULTILINE);
 	valuectrl->SetMinSize(wxSize(-1, namectrl->GetSize().y));
 	valuectrl->SetMaxSize(wxSize(-1, namectrl->GetSize().y));
 	namectrl->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_INFOBK));

@@ -8,7 +8,7 @@
 #define COMMAND_HWS_VERSION 3
 
 #define COMMAND_CSV_CHECK L"%id%;%panel%;%spell_main%;%spell_list%"
-#define COMMAND_CSV_DEFAULT COMMAND_CSV_CHECK L";# %name%"
+#define COMMAND_CSV_DEFAULT COMMAND_CSV_CHECK L";# %name%\n"
 
 const unsigned int steam_cmd_field_size[] = { 16, 16, 16, 8, 8, 32 };
 
@@ -168,8 +168,6 @@ wxString CommandDataStruct::GetFieldValue(wxString fieldname) {
 			return wxString::Format(wxT("%d"), spell_amount);
 		return wxEmptyString;
 	}
-	if (auto search = custom_field.find(fieldname); search != custom_field.end()) return search->second;
-	if (auto search = parent->custom_field.find(fieldname); search != parent->custom_field.end()) return search->second;
 	return _(L"");
 }
 
@@ -367,7 +365,7 @@ void CommandDataSet::GenerateCSharp(vector<string>& buffer) {
 }
 
 bool CommandDataSet::GenerateCSV(string basefolder) {
-	return MemoriaUtility::GenerateDatabaseGeneric<CommandDataStruct>(_(basefolder), _(HADES_STRING_CSV_COMMAND_FILE), csv_header, _(L"\n"), _(L"\n"), cmd, csv_format, true);
+	return MemoriaUtility::GenerateDatabaseGeneric<CommandDataStruct>(_(basefolder), _(HADES_STRING_CSV_COMMAND_FILE), csv_header, cmd, csv_format, custom_field, true);
 }
 
 void CommandDataSet::WriteSteamText(fstream& ffbin, unsigned int texttype, bool onlymodified, bool asmes, SteamLanguage lang) {

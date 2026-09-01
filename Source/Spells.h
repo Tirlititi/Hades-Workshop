@@ -51,6 +51,9 @@ typedef uint8_t Spell_Target_Amount;
 #define TARGET_FLAG_CAN_TARGET_DEAD		0x20
 #define TARGET_FLAG_CAMERA				0x40
 #define TARGET_FLAG_TARGET_DEAD_FIRST	0x80
+#define TARGET_FLAG_MORPH_FORCE_ACCESS	0x01 // Memoria usage
+#define TARGET_FLAG_MORPH_NO_ACCESS		0x02 // Memoria usage
+#define TARGET_FLAG_ALTERNATE_IDLE		0x04 // Memoria usage
 
 #define SPELL_FLAG_REFLECTABLE	0x01
 #define SPELL_FLAG_SILENCE		0x02

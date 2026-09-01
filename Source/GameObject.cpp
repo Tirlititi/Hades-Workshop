@@ -33,7 +33,7 @@ GameObjectNode* BuildHierarchy_Rec(GameObjectNode* parent, GameObjectHierarchy& 
 	uint32_t ctype, cunk;
 	int64_t cinfo;
 	int32_t objindex;
-	size_t prevpos = f.tellg();
+	size_t prevpos = (size_t)f.tellg();
 	f.seekg(meta.GetFileOffsetByIndex(fileindex));
 	if (meta.file_type1[fileindex]==1) {
 		GameObjectStruct* resobj = new GameObjectStruct(parent,roothierarchy,objtype,objflags,objinfo);
@@ -67,7 +67,7 @@ GameObjectNode* BuildHierarchy_Rec(GameObjectNode* parent, GameObjectHierarchy& 
 		resobj->name = "";
 		for (i=0;i<resobj->name_len;i++)
 			resobj->name.push_back(f.get());
-		f.seekg(GetAlignOffset(f.tellg()),ios::cur);
+		f.seekg(GetAlignOffset((uint32_t)f.tellg()), ios::cur);
 		resobj->unk1 = f.get();
 		resobj->unk2 = f.get();
 		resobj->unk3 = f.get();

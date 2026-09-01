@@ -1362,12 +1362,13 @@ void ToolUnityViewer::OnAssetRightClickMenu(wxCommandEvent& event) {
 					}
 					fileanimbase.close();
 				}
-				if (m_menuconvertmodelfbxtext->IsChecked())			model.Export(path.BeforeLast(L'.').c_str(), MODEL_FILE_FORMAT_FBX_ASCII);
-				else if (m_menuconvertmodelautocad->IsChecked())	model.Export(path.BeforeLast(L'.').c_str(), MODEL_FILE_FORMAT_AUTOCAD);
-				else if (m_menuconvertmodelcollada->IsChecked())	model.Export(path.BeforeLast(L'.').c_str(), MODEL_FILE_FORMAT_COLLADA);
-				else if (m_menuconvertmodelwave->IsChecked())		model.Export(path.BeforeLast(L'.').c_str(), MODEL_FILE_FORMAT_WAVEFRONT);
-//				else if (m_menuconvertmodel3ds->IsChecked())		model.Export(path.BeforeLast(L'.').c_str(), MODEL_FILE_FORMAT_3DS_MAX);
-				else												model.Export(path.BeforeLast(L'.').c_str(), MODEL_FILE_FORMAT_FBX_BINARY);
+				bool exportanims = m_menuimportmodelanims->IsChecked();
+				if (m_menuconvertmodelfbxtext->IsChecked())			model.Export(path.BeforeLast(L'.').c_str(), MODEL_FILE_FORMAT_FBX_ASCII, exportanims);
+				else if (m_menuconvertmodelautocad->IsChecked())	model.Export(path.BeforeLast(L'.').c_str(), MODEL_FILE_FORMAT_AUTOCAD, exportanims);
+				else if (m_menuconvertmodelcollada->IsChecked())	model.Export(path.BeforeLast(L'.').c_str(), MODEL_FILE_FORMAT_COLLADA, exportanims);
+				else if (m_menuconvertmodelwave->IsChecked())		model.Export(path.BeforeLast(L'.').c_str(), MODEL_FILE_FORMAT_WAVEFRONT, exportanims);
+//				else if (m_menuconvertmodel3ds->IsChecked())		model.Export(path.BeforeLast(L'.').c_str(), MODEL_FILE_FORMAT_3DS_MAX, exportanims);
+				else												model.Export(path.BeforeLast(L'.').c_str(), MODEL_FILE_FORMAT_FBX_BINARY, exportanims);
 				/* Old version: OBJ Exporter
 				fstream fobj((path.BeforeLast(L'.')+_(L".obj")).c_str(),ios::out);
 				if (!fobj.is_open())

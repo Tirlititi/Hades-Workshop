@@ -21,6 +21,8 @@ public:
 	bool save_lang[STEAM_LANGUAGE_AMOUNT];
 	int background_resolution;
 	bool prefer_export_as_patches;
+	bool enable_battle_entry_edit;
+	bool show_script_comments;
 
 	bool lang_change_allowed;
 	

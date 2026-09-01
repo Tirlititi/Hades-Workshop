@@ -7,9 +7,9 @@
 #define SPELL_HWS_VERSION 5
 
 #define SPELL_CSV_CHECK L"%id%;%panel%;%target_type%;%target_default_ally%;%target_for_dead%;%target_default_on_dead%;%target_default_camera%;%model%;%model_alt%;%effect%;%power%;%element%;%accuracy%;%flag%;%status%;%mp%;%menu_flag%;%perform_name%"
-#define SPELL_CSV_DEFAULT L"%name%;" SPELL_CSV_CHECK L";# %name%"
+#define SPELL_CSV_DEFAULT L"%name%;" SPELL_CSV_CHECK L";# %name%\n"
 #define STATUS_CSV_CHECK L"%id%;%status_list%"
-#define STATUS_CSV_DEFAULT L"Set %id%;" STATUS_CSV_CHECK L";# %description%"
+#define STATUS_CSV_DEFAULT L"Set %id%;" STATUS_CSV_CHECK L";# %description%\n"
 
 const unsigned int steam_spell_field_size[] = { 4, 1, 3, 9, 12, 1, 1, 1, 8, 8, 8, 8, 8, 8, 8, 8, 16, 16 };
 
@@ -94,8 +94,6 @@ wxString SpellDataStruct::GetFieldValue(wxString fieldname) {
 	if (fieldname.IsSameAs("mp")) return wxString::Format(wxT("%d"), mp);
 	if (fieldname.IsSameAs("menu_flag")) return wxString::Format(wxT("%d"), menu_flag);
 	if (fieldname.IsSameAs("perform_name")) return wxString::Format(wxT("%d"), perform_name);
-	if (auto search = custom_field.find(fieldname); search != custom_field.end()) return search->second;
-	if (auto search = parent->custom_field.find(fieldname); search != parent->custom_field.end()) return search->second;
 	return _(L"");
 }
 
@@ -112,8 +110,6 @@ wxString StatusSetStruct::GetFieldValue(wxString fieldname) {
 	if (fieldname.IsSameAs("id")) return wxString::Format(wxT("%d"), id);
 	if (fieldname.IsSameAs("status_list")) return FormatStatusSet(status_list);
 	if (fieldname.IsSameAs("description")) return wxString::Format(wxT("%s"), name);
-	if (auto search = custom_field.find(fieldname); search != custom_field.end()) return search->second;
-	if (auto search = parent->custom_field_status.find(fieldname); search != parent->custom_field_status.end()) return search->second;
 	return _(L"");
 }
 
@@ -448,9 +444,9 @@ void SpellDataSet::GenerateCSharp(vector<string>& buffer) {
 }
 
 bool SpellDataSet::GenerateCSV(string basefolder) {
-	if (!MemoriaUtility::GenerateDatabaseGeneric<SpellDataStruct>(_(basefolder), _(HADES_STRING_CSV_SPELL_FILE), csv_header, _(L"\n"), _(L"\n"), spell, csv_format, true))
+	if (!MemoriaUtility::GenerateDatabaseGeneric<SpellDataStruct>(_(basefolder), _(HADES_STRING_CSV_SPELL_FILE), csv_header, spell, csv_format, custom_field, true))
 		return false;
-	if (!MemoriaUtility::GenerateDatabaseGeneric<StatusSetStruct>(_(basefolder), _(HADES_STRING_CSV_STATUS_FILE), csv_header_status, _(L"\n"), _(L"\n"), status_set, csv_format_status, true))
+	if (!MemoriaUtility::GenerateDatabaseGeneric<StatusSetStruct>(_(basefolder), _(HADES_STRING_CSV_STATUS_FILE), csv_header_status, status_set, csv_format_status, custom_field_status, true))
 		return false;
 	return true;
 }

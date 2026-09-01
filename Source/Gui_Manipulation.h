@@ -92,7 +92,7 @@ public:
 	void DisplayLevelStat(void);
 	void DisplayStatSelectedAbilityInfo(AbilitySetDataStruct& ab, int absel, int charindex);
 	void DisplayStatSelectedAbility();
-	void DisplayStatAbilityList(int abilsetid);
+	void DisplayStatAbilityList(int cmdid);
 	void DisplayStat(int charid);
 	void UpdateStatName(unsigned int statid);
 	void RegisterStatAdded(unsigned int statid);
@@ -267,6 +267,7 @@ private:
 	void OnListBoxEnemyText(wxCommandEvent& event);
 	void OnEnemyStatChangeName(wxCommandEvent& event);
 	void OnEnemySpellChangeName(wxCommandEvent& event);
+	void OnEnemyChangeText(wxCommandEvent& event);
 	void OnEnemyChangeSpin(wxSpinEvent& event);
 	void OnEnemyChangeChoice(wxCommandEvent& event);
 	void OnEnemyChangeFlags(wxCommandEvent& event);
@@ -299,7 +300,9 @@ private:
 	void OnItemChangeListBox(wxCommandEvent& event);
 	void OnKeyItemChangeSpin(wxSpinEvent& event);
 	void OnButtonClickItemModel(wxCommandEvent& event);
-	void OnItemPositionListClick(wxMouseEvent& event);
+	void PreventListNavigationClick(wxMouseEvent& event);
+	void PreventListNavigationCharHook(wxKeyEvent& event);
+	void PreventListNavigationKeyDown(wxKeyEvent& event);
 	void OnListBoxShop(wxCommandEvent& event);
 	void OnListBoxSynthesisShop(wxCommandEvent& event);
 	void OnShopRightClick(wxMouseEvent& event);
@@ -369,6 +372,8 @@ private:
 	void OnCilMethodButton(wxCommandEvent& event);
 	void OnCilMacroButton(wxCommandEvent& event);
 	void OnCilParameterResolution(wxSpinEvent& event);
+	void OnWindowLooseFocus(wxFocusEvent& event);
+	void OnWindowGetFocus(wxFocusEvent& event);
 
 public:
 	void DebugWrite();

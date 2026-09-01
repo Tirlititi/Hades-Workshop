@@ -49,8 +49,8 @@ namespace MemoriaUtility {
 	bool CompareEntries(wxString csventry1, wxString csventry2);
 	int GetEntryEnum(wxString csventry);
 	template<typename T> bool GenerateCSVGeneric(wxString modfolder, wxString csvpath, wxString csvheader, vector<T>& objlist, function<wxString(T&, int)> entryconstructor, function<bool(wxString, wxString)> entrycomparer, bool skipnonmodified);
-	template<typename T> wxString GenerateDatabaseEntryGeneric(T& obj, wxString format);
-	template<typename T> bool GenerateDatabaseGeneric(wxString modfolder, wxString path, wxString header, wxString sep, wxString footer, vector<T>& objlist, wxString format, bool skipnonmodified);
+	template<typename T> wxString GenerateDatabaseEntryGeneric(T& obj, wxString format, map<wxString, wxString>* defaultfields = NULL);
+	template<typename T> bool GenerateDatabaseGeneric(wxString modfolder, wxString path, wxString header, vector<T>& objlist, wxString format, map<wxString, wxString>& defaultfields, bool skipnonmodified);
 
 	template<typename T> bool GetModifiedSteamTexts(vector<int>* result, int32_t baseassetid[], vector<T>& objlist, function<wstring(T&)> stringifier, SteamLanguage lang);
 }

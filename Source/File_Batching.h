@@ -38,9 +38,9 @@ public:
 	static int ExportKeyItemNames(ItemDataSet& data, wxString path);
 	static int ExportFieldNames(FieldDataSet& data, wxString path);
 	static int ExportCharacterNames(StatDataSet& data, wxString path);
-	static int ExportEnemyScript(SaveSet* dataset, wxString path, bool* exportlist = NULL, bool splitfile = true, int addedinfo = 0);
-	static int ExportWorldScript(SaveSet* dataset, wxString path, bool* exportlist = NULL, bool splitfile = true, int addedinfo = 0);
-	static int ExportFieldScript(SaveSet* dataset, wxString path, bool* exportlist = NULL, bool splitfile = true, int addedinfo = 0);
+	static int ExportEnemyScript(SaveSet* dataset, wxString path, bool* exportlist = NULL, bool splitfile = true, bool appendmode = false, int addedinfo = 0);
+	static int ExportWorldScript(SaveSet* dataset, wxString path, bool* exportlist = NULL, bool splitfile = true, bool appendmode = false, int addedinfo = 0);
+	static int ExportFieldScript(SaveSet* dataset, wxString path, bool* exportlist = NULL, bool splitfile = true, bool appendmode = false, int addedinfo = 0);
 	static int ExportImageBackground(FieldDataSet& data, wxString path, bool* exportlist = NULL, bool mergetile = true, bool depthorder = true, int steamtitlelang = -1);
 	static int ExportWalkmesh(FieldDataSet& data, wxString path, bool* exportlist);
 
@@ -67,7 +67,7 @@ public:
 	int ShowModal(int type, SaveSet* datas, bool isjapan);
 
 	static LogStruct ImportText(SaveSet* dataset, set<int>& sectionmodified, wxString filetext, bool adjustsize = true, bool isjapan = false, bool fatalwarning = false);
-	static LogStruct ImportScript(SaveSet* dataset, set<int>& sectionmodified, int scripttype, wxString filescript, bool fatalwarning = false, bool* datamodif = NULL);
+	static LogStruct ImportScript(SaveSet* dataset, set<int>& sectionmodified, int scripttype, wxString filescript, bool fatalwarning = false, bool* datamodif = NULL, vector<ScriptDataStruct*>* modifiedscripts = NULL);
 
 private:
 	wxMenu* list_popup_menu;

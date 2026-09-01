@@ -67,7 +67,7 @@ struct editable_field_string : public editable_field {
 	virtual int get_type() { return 1; }
 };
 
-#define EDITABLE_FIELD_COUNT 360
+#define EDITABLE_FIELD_COUNT 359
 editable_field** const_editable_field = NULL;
 void InitConstEditableField() {
 	if (const_editable_field != NULL)
@@ -861,6 +861,10 @@ bool CommandFrame::ProcessCommand(wxString command, wxArrayString args) {
 		if (dataset.size() == 0)
 			return RaiseError(_(L"'export' cannot be used before opening at least 1 game\n"));
 		return ProcessCommandExport(args);
+	} else if (command.IsSameAs("parse")) {
+		if (dataset.size() == 0) // TODO: allow parsing without opening a game before
+			return RaiseError(_(L"'parse' cannot be used before opening at least 1 game\n"));
+		return ProcessCommandParse(args);
 	} else if (command.IsSameAs("exit")) {
 		exit = true;
 		return false;
@@ -1163,9 +1167,13 @@ bool CommandFrame::ProcessCommandImport(wxArrayString args) {
 			} else if (args[0].IsSameAs(L"uitext")) {
 				if (!dataset[i].saveset.sectionloaded[DATA_SECTION_MENU_UI]) {
 					if (auto_load) {
-						if (!ProcessCommandLoad(wxArrayString(1, { const_section_name[DATA_SECTION_MENU_UI] })))
+						wxArrayString reqsections;
+						reqsections.Add(const_section_name[DATA_SECTION_MENU_UI]);
+						reqsections.Add(const_section_name[DATA_SECTION_CARD]);
+						reqsections.Add(const_section_name[DATA_SECTION_WORLD_MAP]);
+						if (!ProcessCommandLoad(reqsections))
 							return false;
-					} else if (!RaiseWarning(_("cannot import UI text before the related section is loaded\n"))) {
+					} else if (!RaiseWarning(_("cannot import UI text before the sections uitext, card and world are loaded\n"))) {
 						return false;
 					}
 				}
@@ -1187,8 +1195,9 @@ bool CommandFrame::ProcessCommandImport(wxArrayString args) {
 				if (!input.IsOpened() || !input.ReadAll(&filestr))
 					return RaiseError(wxString::Format(wxT("cannot open the file '%s'\n"), args[1]));
 				WriteToOutput(_("importing scripts..."));
-				set<int> sectionmodified;
-				LogStruct res = BatchImportDialog::ImportScript(&dataset[i].saveset, sectionmodified, SCRIPT_TYPE_ANY, filestr, warning_stop);
+				parse_section.clear();
+				parse_scripts.clear();
+				LogStruct res = BatchImportDialog::ImportScript(&dataset[i].saveset, parse_section, SCRIPT_TYPE_ANY, filestr, warning_stop, NULL, &parse_scripts);
 				WriteToOutput(res.ok ? _(L" done\n") : _(L" fail\n"));
 				bool keeploading = true;
 				while (!res.ok && auto_load && keeploading) {
@@ -1202,7 +1211,9 @@ bool CommandFrame::ProcessCommandImport(wxArrayString args) {
 						keeploading = false;
 					if (keeploading) {
 						WriteToOutput(_("retrying to import scripts..."));
-						res = BatchImportDialog::ImportScript(&dataset[i].saveset, sectionmodified, SCRIPT_TYPE_ANY, args[1], warning_stop);
+						parse_section.clear();
+						parse_scripts.clear();
+						res = BatchImportDialog::ImportScript(&dataset[i].saveset, parse_section, SCRIPT_TYPE_ANY, filestr, warning_stop, NULL, &parse_scripts);
 						WriteToOutput(res.ok ? _(L" done\n") : _(L" fail\n"));
 					}
 				}
@@ -1229,7 +1240,7 @@ void ProcessCommandExport_Rec(CommandFrame* frame, int format, wxFile& file, Sav
 		if (branch->children.size() == 0)
 			file.Write(wxString::Format(wxT("# %s"), branch->name));
 		else
-			file.Write(wxString::Format(wxT("# %s\nID/index"), branch->name));
+			file.Write(wxString::Format(wxT("# %s\n# ID/index"), branch->name));
 		for (i = 0; i < branch->children.size(); i++)
 			file.Write(wxString::Format(wxT(";%s"), branch->children[i].name));
 	}
@@ -1530,11 +1541,11 @@ bool CommandFrame::ProcessCommandExport(wxArrayString args) {
 						}
 					}
 				}
-				int (*exportfunc)(SaveSet*, wxString, bool*, bool, int) = datasection == DATA_SECTION_FIELD ? &BatchExportDialog::ExportFieldScript :
+				int (*exportfunc)(SaveSet*, wxString, bool*, bool, bool, int) = datasection == DATA_SECTION_FIELD ? &BatchExportDialog::ExportFieldScript :
 					datasection == DATA_SECTION_ENMY ? &BatchExportDialog::ExportEnemyScript : &BatchExportDialog::ExportWorldScript;
 				if (args.GetCount() == 3) {
 					WriteToOutput(wxString::Format(wxT("exporting %d %s scripts..."), *mergedamountptr, args[1]));
-					int res = (*exportfunc)(&mergedset, args[2], NULL, false, BATCHING_SCRIPT_INFO_ALL);
+					int res = (*exportfunc)(&mergedset, args[2], NULL, false, false, BATCHING_SCRIPT_INFO_ALL);
 					WriteToOutput(res == 0 ? _(L" done\n") : _(L" fail\n"));
 				} else {
 					long scriptid;
@@ -1561,7 +1572,7 @@ bool CommandFrame::ProcessCommandExport(wxArrayString args) {
 					}
 					if (!errorformat) {
 						WriteToOutput(wxString::Format(wxT("exporting %d %s scripts..."), exportcount, args[1]));
-						int res = (*exportfunc)(&mergedset, args[2], exportlist, false, BATCHING_SCRIPT_INFO_ALL);
+						int res = (*exportfunc)(&mergedset, args[2], exportlist, false, false, BATCHING_SCRIPT_INFO_ALL);
 						WriteToOutput(res == 0 ? _(L" done\n") : _(L" fail\n"));
 					}
 					delete[] exportlist;
@@ -1659,6 +1670,62 @@ bool CommandFrame::ProcessCommandExport(wxArrayString args) {
 	}
 	if (errorformat)
 		return RaiseError(_("usage is one of the followings:\n 'export hws FILENAME [SECTIONS]'\n 'export text FILENAME [TEXTID]'\n 'export uitext FILENAME [UITEXTID]'\n 'export script field/enemy/world FILENAME [FIELDID/BATTLEID/WORLDID]'\n 'export data FORMAT FILENAME DATASTRUCTURE'\n"));
+	return true;
+}
+
+bool CommandFrame::ProcessCommandParse(wxArrayString args) {
+	bool errorformat = false;
+	if (args.GetCount() < 2) {
+		errorformat = true;
+	} else {
+		wxString inputname = args[0];
+		wxString outputname = args[1];
+		bool parseToBinary = inputname.EndsWith(".txt") && outputname.EndsWith(".eb.bytes");
+		bool parseToText = outputname.EndsWith(".txt") && inputname.EndsWith(".eb.bytes");
+		if (parseToBinary)
+		{
+			vector<ScriptDataStruct*> modifiedscripts;
+			wxArrayString importargs;
+			bool vanillabinary = args.GetCount() >= 3 && args[2].IsSameAs(_(L"vanilla"));
+			importargs.Add("script");
+			importargs.Add(inputname);
+			if (!ProcessCommandImport(importargs))
+				return false;
+			if (parse_scripts.size() == 0)
+				return RaiseWarning(_("no script imported\n"));
+			for (unsigned int i = 0; i < parse_scripts.size(); i++) {
+				wxString outputnameindexed = outputname;
+				if (outputnameindexed.Replace(L"%d", wxString::Format(wxT("%d"), parse_scripts[i]->object_id)) == 0 && parse_scripts.size() > 1)
+					outputnameindexed = outputname.Mid(0, outputname.Len() - 9) + wxString::Format(wxT("_%d.eb.bytes"), parse_scripts[i]->object_id);
+				for (SteamLanguage lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+					if (!hades::STEAM_LANGUAGE_SAVE_LIST[lang])
+						continue;
+					wxString outputnameindexedlangued = outputnameindexed;
+					if (outputnameindexedlangued.Replace(L"%l", HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[lang]) == 0)
+						outputnameindexedlangued = outputnameindexed.Mid(0, outputnameindexed.Len() - 9) + wxString::Format(wxT("_%s.eb.bytes"), HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[lang]);
+					WriteToOutput(wxString::Format(wxT("generating binary script '%s'..."), outputnameindexedlangued));
+					string fname = outputnameindexedlangued.ToStdString();
+					fstream filedest(fname.c_str(), ios::out | ios::binary);
+					if (!filedest.is_open())
+						return RaiseError(_(" could not create the file\n"));
+					parse_scripts[i]->WriteSteam(filedest, !vanillabinary, lang);
+					filedest.close();
+					WriteToOutput(_(" done\n"));
+				}
+			}
+		}
+		else if (parseToText)
+		{
+			// TODO
+			return RaiseError(_("sorry, this feature is not implemented yet\n"));
+		}
+		else
+		{
+			errorformat = true;
+		}
+	}
+	if (errorformat)
+		return RaiseError(_("usage is the following:\n 'parse INPUT.txt OUTPUT.eb.bytes [vanilla]'\n 'parse INPUT.eb.bytes OUTPUT.txt'\n"));
 	return true;
 }
 
@@ -1922,6 +1989,7 @@ bool CommandFrame::ProcessCommandSet(wxArrayString args) {
 					edit->setter(dataset[j].saveset, selector, args[1]);
 					WriteToOutput(wxString::Format(wxT("set selected %s to %s\n"), args[0], edit->getter(dataset[j].saveset, selector)));
 				}
+				return true;
 			}
 		}
 	}
@@ -1954,6 +2022,8 @@ bool CommandFrame::ProcessCommandHelp(wxArrayString args) {
 			L"- 'export uitext FILENAME [UITEXTID]'\n"\
 			L"- 'export script field/enemy/world FILENAME [FIELDID/BATTLEID/WORLDID]'\n"\
 			L"- 'export data FORMAT FILENAME DATASTRUCTURE'\n"\
+			L"- 'parse INPUT.txt OUTPUT.eb.bytes'\n"\
+			L"- 'parse INPUT.eb.bytes OUTPUT.txt'\n"\
 			L"- 'select INDEXNAME VALUE'\n"\
 			L"- 'set FIELDNAME VALUE'\n"\
 			L"- 'exit'\n"));

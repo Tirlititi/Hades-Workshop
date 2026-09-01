@@ -1313,6 +1313,8 @@ void HWSWriteWxString(fstream& f, wxString str) {
 void HWSReadCSVFormatting(fstream& f, wxString& header, wxString& format) {
 	HWSReadWxString(f, header);
 	HWSReadWxString(f, format);
+	if (GetHWSGlobalVersion() == 100 && format.Last() != L'\n')
+		format += L'\n';
 }
 
 void HWSWriteCSVFormatting(fstream& f, wxString& header, wxString& format) {
