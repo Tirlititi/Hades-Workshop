@@ -8,7 +8,7 @@ SaveCustomFieldDialog::SaveCustomFieldDialog(wxWindow* parent, wxString defaultp
 	wxArrayString choicelist;
 	unsigned int i;
 	for (i = 0; i < svset->fieldset->amount; i++)
-		choicelist.Add(wxString::Format(wxT("%04u: %s"), svset->fieldset->script_data[i]->object_id, svset->fieldset->script_data[i]->name.str_nice));
+		choicelist.Add(wxString::Format(wxT("%04u: %s"), svset->fieldset->GetIdByIndex(i), svset->fieldset->script_data[i]->name.str_nice));
 	m_basefield->Append(choicelist);
 	choicelist.Clear();
 	for (i = 0; i < svset->textset->amount; i++)

@@ -45,6 +45,7 @@ private:
 	void UpdateTexturePreview(int changeid);
 	void UpdateImportSpins();
 	void DrawPaletteColors(int palid = 0);
+	void SelectTileset(int sel);
 	
 	void OnModifyRadio(wxCommandEvent& event);
 	void OnTileButton(wxCommandEvent& event);
@@ -52,7 +53,8 @@ private:
 	void OnTilePieceSelection(wxCommandEvent& event);
 	void OnAnimClick(wxMouseEvent& event);
 	void OnSpinPosition(wxSpinEvent& event);
-	void OnChooseFileImage(wxFileDirPickerEvent& event);
+	void OnTextChanged(wxCommandEvent& event);
+	void OnPathSelection(wxFileDirPickerEvent& event);
 	void OnFocusFileImage(wxFocusEvent& event);
 	void OnButtonClick(wxCommandEvent& event);
 	void OnTextureMouseMove(wxMouseEvent& event);

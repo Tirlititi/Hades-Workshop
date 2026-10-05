@@ -2173,8 +2173,8 @@ ToolDamageCalculator::ToolDamageCalculator(wxWindow* p) : DamageCalculatorWindow
 
 int ToolDamageCalculator::ShowModal(CDDataStruct* data) {
 	cddata = data;
-	unsigned int i, j, k, nb, *battleid;
-	EnemyStatDataStruct** stats;
+	unsigned int i, j, k;
+	vector<pair<EnemyStatDataStruct*, unsigned int>> stats;
 	set<pair<int, int>> listed;
 	vector<EnemyStatDataStruct*> sample;
 	for (i = 0; i < cddata->enemyset.battle_amount; i++) {
@@ -2183,9 +2183,9 @@ int ToolDamageCalculator::ShowModal(CDDataStruct* data) {
 				continue;
 			EnemyStatDataStruct& statcurrent = cddata->enemyset.battle[i]->stat[j];
 			sample.push_back(&statcurrent);
-			stats = cddata->enemyset.GetSimilarEnemyStats(statcurrent, &nb, &battleid);
-			for (k = 0; k < nb; k++)
-				listed.insert({ battleid[k], stats[k]->id });
+			stats = cddata->enemyset.GetSimilarEnemyStats(statcurrent);
+			for (k = 0; k < stats.size(); k++)
+				listed.insert({ stats[k].second, stats[k].first->id });
 		}
 	}
 	sort(sample.begin(), sample.end(), [](EnemyStatDataStruct* first, EnemyStatDataStruct* second) { return first->name.str_nice.compare(second->name.str_nice) < 0; });

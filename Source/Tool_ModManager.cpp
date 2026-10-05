@@ -202,9 +202,11 @@ int ToolModManager::ShowModal(CDDataStruct* data) {
 			lowitem = m_listtree->AppendItem(curitem, _(L"Script"));
 			m_listtree->SetItemData(lowitem, new ModManagerClientData(3, DATA_SECTION_FIELD, i, CHUNK_TYPE_SCRIPT));
 			if (dataset->fieldset->script_data[i]->modified) m_listtree->CheckItem(lowitem);
-			lowitem = m_listtree->AppendItem(curitem, _(L"Preloading"));
-			m_listtree->SetItemData(lowitem, new ModManagerClientData(3, DATA_SECTION_FIELD, i, CHUNK_TYPE_IMAGE_MAP));
-			if (dataset->fieldset->preload[i]->modified) m_listtree->CheckItem(lowitem);
+			if (dataset->fieldset->preload[i] != NULL) {
+				lowitem = m_listtree->AppendItem(curitem, _(L"Preloading"));
+				m_listtree->SetItemData(lowitem, new ModManagerClientData(3, DATA_SECTION_FIELD, i, CHUNK_TYPE_IMAGE_MAP));
+				if (dataset->fieldset->preload[i]->modified) m_listtree->CheckItem(lowitem);
+			}
 			lowitem = m_listtree->AppendItem(curitem, _(L"Model Role"));
 			m_listtree->SetItemData(lowitem, new ModManagerClientData(3, DATA_SECTION_FIELD, i, CHUNK_TYPE_FIELD_ROLE));
 			if (dataset->fieldset->role[i]->modified) m_listtree->CheckItem(lowitem);

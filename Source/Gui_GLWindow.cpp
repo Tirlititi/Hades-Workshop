@@ -35,7 +35,7 @@ void GLWindow::DisplayField(FieldTilesDataStruct* tiles, FieldWalkmeshDataStruct
 	field_walk = walk;
 	field_camera = 0;
 	field_showtiles = false;
-	field_showwalk = field_walk!=NULL;
+	field_showwalk = field_walk != NULL;
 	field_walk_offset_type = 0;
 	field_walk_path_highlight = -1;
 	field_walk_triangle_highlight = -1;
@@ -60,7 +60,7 @@ void GLWindow::DisplayField(FieldTilesDataStruct* tiles, FieldWalkmeshDataStruct
 		}
 	}*/
 	ResetCamera();
-	Prepare3DViewport(0,0,GetSize().x,GetSize().y);
+	Prepare3DViewport(0, 0, GetSize().x, GetSize().y);
 /*	bool tilesel[field_tiles->tiles_amount];
 	for (i=0;i<field_tiles->tiles_amount;i++)
 		tilesel[i] = false;
@@ -478,7 +478,8 @@ void GLWindow::Draw() {
 	if (display_type == DISPLAY_GL_TYPE_FIELD) {
 		if (field_showtiles) {
 			uint32_t* tileimg = field_tiles->ConvertAsImageAccurate(field_camera);
-			for (i = 0; i < field_tiles->camera[field_camera].width * field_tiles->camera[field_camera].height; i++)
+			unsigned int tileimgsize = field_tiles->camera[field_camera].width * field_tiles->camera[field_camera].height;
+			for (i = 0; i < tileimgsize; i++)
 				tileimg[i] = (tileimg[i] & 0xFF00FF00) | ((tileimg[i] & 0xFF0000) >> 16) | ((tileimg[i] & 0xFF) << 16);
 			glMatrixMode(GL_PROJECTION);
 			glPushMatrix();

@@ -1,6 +1,6 @@
 #include "Configuration.h"
 
-#define MAIN_HWS_VERSION 101
+#define MAIN_HWS_VERSION 102
 
 #include <filesystem>
 #include <algorithm>
@@ -1192,26 +1192,26 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 		battlenamelower[i] = SteamBattleScript[i].name;
 		transform(battlenamelower[i].begin(), battlenamelower[i].end(), battlenamelower[i].begin(), ::tolower);
 	}
-	for (i=0;i<dest.enmy_amount;i++) {
-		
-		#define MACRO_CONFIG_SEARCHOFFBATTLE_STEAM(NAME,FILE,VARIABLE) \
-			subfilepath = "assets/resources/battlemap/battlescene/"+NAME+"/"+FILE+".bytes"; \
-			dest.VARIABLE = dest.meta_battle.GetFileIndexByInfo(dest.bundle_battle.GetFileInfo(subfilepath),49);
-		
+	for (i = 0; i < dest.enmy_amount; i++) {
+
+		#define MACRO_CONFIG_SEARCHOFFBATTLE_STEAM(NAME, FILENAME, VARIABLE) \
+			subfilepath = "assets/resources/battlemap/battlescene/"+ NAME +"/" + FILENAME + ".bytes"; \
+			dest.VARIABLE = dest.meta_battle.GetFileIndexByInfo(dest.bundle_battle.GetFileInfo(subfilepath), 49);
+
 		stringstream bnamestr;
 		bnamestr << (unsigned int)SteamBattleScript[i].battle_id << ".raw17";
-		MACRO_CONFIG_SEARCHOFFBATTLE_STEAM(battlenamelower[i],bnamestr.str(),enmy_battle_file[i])
-		MACRO_CONFIG_SEARCHOFFBATTLE_STEAM(battlenamelower[i],"dbfile0000.raw16",enmy_stat_file[i])
+		MACRO_CONFIG_SEARCHOFFBATTLE_STEAM(battlenamelower[i], bnamestr.str(), enmy_battle_file[i])
+		MACRO_CONFIG_SEARCHOFFBATTLE_STEAM(battlenamelower[i], "dbfile0000.raw16", enmy_stat_file[i])
 	}
-	for (i=0;i<STEAM_LANGUAGE_AMOUNT;i++) {
+	for (i = 0; i < STEAM_LANGUAGE_AMOUNT; i++) {
 		dest.enmy_script_file[i] = new int32_t[dest.enmy_amount];
-		
-		#define MACRO_CONFIG_SEARCHOFFSCRIPT_STEAM(MODULE,NAME,VARIABLE) \
-			subfilepath = string("assets/resources/commonasset/eventengine/eventbinary/")+MODULE+langdir[i]+"/"+NAME+".eb.bytes"; \
-			dest.VARIABLE = dest.meta_script.GetFileIndexByInfo(dest.bundle_script.GetFileInfo(subfilepath),49);
-		
-		for (j=0;j<dest.enmy_amount;j++) {
-			MACRO_CONFIG_SEARCHOFFSCRIPT_STEAM("battle/",battlenamelower[j],enmy_script_file[i][j])
+
+		#define MACRO_CONFIG_SEARCHOFFSCRIPT_STEAM(MODULE, NAME, VARIABLE) \
+			subfilepath = string("assets/resources/commonasset/eventengine/eventbinary/") + MODULE + langdir[i] + "/" + NAME + ".eb.bytes"; \
+			dest.VARIABLE = dest.meta_script.GetFileIndexByInfo(dest.bundle_script.GetFileInfo(subfilepath), 49);
+
+		for (j = 0; j < dest.enmy_amount; j++) {
+			MACRO_CONFIG_SEARCHOFFSCRIPT_STEAM("battle/", battlenamelower[j], enmy_script_file[i][j])
 		}
 	}
 	
@@ -1802,8 +1802,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 				MainFrame::MakeDirForFile(fname); \
 				filedest.open(fname.c_str(), ios::out | ios::binary); \
 				if (!filedest.is_open()) return 3; \
-				if (COPYBASE) \
-				{ \
+				if (COPYBASE) { \
 					filebase.seekg(config.meta_world.GetFileOffsetByIndex(config.FILEID)); \
 					uint32_t copysize = config.meta_world.GetFileSizeByIndex(config.FILEID); \
 					char* buffer = new char[copysize]; \
@@ -2058,10 +2057,10 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			copylist[i] = true;
 			filenewsize[i] = config.meta_res.file_size[i];
 
-			#define MACRO_STEAM_CHECKFILEUPDATE(FILEID,CONDITION,SIZE) \
-				if (CONDITION && i==config.FILEID) { \
+			#define MACRO_STEAM_CHECKFILEUPDATE(FILEID, CONDITION, ASSETSIZE) \
+				if (CONDITION && i == config.FILEID) { \
 					copylist[i] = false; \
-					filenewsize[i] = SIZE; \
+					filenewsize[i] = ASSETSIZE; \
 				}
 
 			for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
@@ -2107,8 +2106,8 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		vector<uint32_t> unitydataoff = config.meta_res.Duplicate(filebase, filedest, copylist, filenewsize);
 		for (i = 0; i < config.meta_res.header_file_amount; i++) {
 
-			#define MACRO_STEAM_WRITEFILEUPDATE(FILEID,SAVEFUNC,BREAK) \
-				if (i==config.FILEID) { \
+			#define MACRO_STEAM_WRITEFILEUPDATE(FILEID, SAVEFUNC, BREAK) \
+				if (i == config.FILEID) { \
 					filedest.seekg(unitydataoff[i]); \
 					saveset.SAVEFUNC; \
 					if (BREAK) \
@@ -2285,26 +2284,44 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 	wxYield();
 	GetTopWindow()->SetDoubleBuffered(false);
 
+	// Additional assets for custom battles and fields
+	if (assetformat == 1) {
+		if (section[DATA_SECTION_ENMY])
+			for (i = 0; i < saveset.enemyset->battle_amount; i++)
+				if (saveset.enemyset->addition[i] != NULL) {
+					int errcode = saveset.enemyset->addition[i]->ExportAssets(config, saveset, destfolder);
+					if (errcode != 0)
+						return errcode;
+				}
+		if (section[DATA_SECTION_FIELD])
+			for (i = 0; i < saveset.fieldset->amount; i++)
+				if (saveset.fieldset->addition[i] != NULL) {
+					int errcode = saveset.fieldset->addition[i]->ExportAssets(config, saveset, destfolder);
+					if (errcode != 0)
+						return errcode;
+				}
+	}
+
 	// Assembly-CSharp.dll: everything else...
 	if (dllformat == 0) {
 		unsigned int dllmodifcount, dllmodifmax, sectionmodifcount;
 		dllmodifmax = 100; // DEBUG: arbitrary number higher than number of modifications (except CIL Code modifs); consider using vector<>
 		if (section[DATA_SECTION_CIL]) {
 			dllmodifmax += saveset.cilset->rawmodifamount;
-			for (i=0;i<saveset.cilset->macromodifamount;i++)
+			for (i = 0; i < saveset.cilset->macromodifamount; i++)
 				dllmodifmax += saveset.cilset->macromodif[i].info->GetMethodCount();
 		}
 		DllMetaDataModification* dllmodif = new DllMetaDataModification[dllmodifmax];
 		DllMetaDataModification* sectionmodif;
 		dllmodifcount = 0;
 		if (section[DATA_SECTION_CIL]) {
-			for (i=0;i<saveset.cilset->rawmodifamount;i++) {
+			for (i = 0; i < saveset.cilset->rawmodifamount; i++) {
 				dllmodif[dllmodifcount] = saveset.cilset->rawmodif[i];
 				dllmodifcount++;
 			}
-			for (i=0;i<saveset.cilset->macromodifamount;i++) {
+			for (i = 0; i < saveset.cilset->macromodifamount; i++) {
 				sectionmodif = saveset.cilset->macromodif[i].info->ComputeModifications(&sectionmodifcount);
-				memcpy(&dllmodif[dllmodifcount],sectionmodif,sectionmodifcount*sizeof(DllMetaDataModification));
+				memcpy(&dllmodif[dllmodifcount], sectionmodif, sectionmodifcount * sizeof(DllMetaDataModification));
 				delete[] sectionmodif;
 				dllmodifcount += sectionmodifcount;
 			}
@@ -2318,15 +2335,15 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 				dllmodifcount += sectionmodifcount; \
 			}
 		
-		MACRO_DLL_ADD_MODIF(DATA_SECTION_SPELL,spellset)
-		MACRO_DLL_ADD_MODIF(DATA_SECTION_CMD,cmdset)
-		MACRO_DLL_ADD_MODIF(DATA_SECTION_SHOP,shopset)
-		MACRO_DLL_ADD_MODIF(DATA_SECTION_ITEM,itemset)
-		MACRO_DLL_ADD_MODIF(DATA_SECTION_SUPPORT,supportset)
-		MACRO_DLL_ADD_MODIF(DATA_SECTION_STAT,statset)
-		MACRO_DLL_ADD_MODIF(DATA_SECTION_PARTY_SPECIAL,partyspecialset)
-		MACRO_DLL_ADD_MODIF(DATA_SECTION_ENMY,enemyset)
-		if (dllmodifcount>0) {
+		MACRO_DLL_ADD_MODIF(DATA_SECTION_SPELL, spellset)
+		MACRO_DLL_ADD_MODIF(DATA_SECTION_CMD, cmdset)
+		MACRO_DLL_ADD_MODIF(DATA_SECTION_SHOP, shopset)
+		MACRO_DLL_ADD_MODIF(DATA_SECTION_ITEM, itemset)
+		MACRO_DLL_ADD_MODIF(DATA_SECTION_SUPPORT, supportset)
+		MACRO_DLL_ADD_MODIF(DATA_SECTION_STAT, statset)
+		MACRO_DLL_ADD_MODIF(DATA_SECTION_PARTY_SPECIAL, partyspecialset)
+		MACRO_DLL_ADD_MODIF(DATA_SECTION_ENMY, enemyset)
+		if (dllmodifcount > 0) {
 			fname = dirmanaged+"Assembly-CSharp.dll";
 			filedest.open(fname.c_str(),ios::out | ios::binary);
 			if (!filedest.is_open()) {
@@ -2449,7 +2466,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 	return result;
 }
 
-int SteamExtractAssetWithPath(string destfullpath, fstream& unityarchive, UnityArchiveMetaData& meta, int32_t assetindex) {
+int ConfigurationSet::SteamExtractAssetWithPath(string destfullpath, fstream& unityarchive, UnityArchiveMetaData& meta, int32_t assetindex) {
 	MainFrame::MakeDirForFile(destfullpath);
 	fstream filedest(destfullpath.c_str(), ios::out | ios::binary);
 	if (!filedest.is_open())
@@ -2546,12 +2563,12 @@ int CreateSteamCustomFieldAssets(string destfolder, ConfigurationSet& config, Sa
 	if (!filebase.is_open())
 		return 2;
 	fname = destfolder + "StreamingAssets\\Assets\\Resources\\FieldMaps\\" + mapid + "\\atlas.png";
-	errcode = SteamExtractAssetWithPath(fname, filebase, config.meta_field[config.field_file_id[basefield] - 1], config.field_image_file[basefield]);
+	errcode = ConfigurationSet::SteamExtractAssetWithPath(fname, filebase, config.meta_field[config.field_file_id[basefield] - 1], config.field_image_file[basefield]);
 	if (errcode != 0)
 		return errcode;
 	if (config.field_spt_file[basefield] >= 0) {
 		fname = destfolder + "StreamingAssets\\Assets\\Resources\\FieldMaps\\" + mapid + "\\spt.tcb.bytes";
-		errcode = SteamExtractAssetWithPath(fname, filebase, config.meta_field[config.field_file_id[basefield] - 1], config.field_spt_file[basefield]);
+		errcode = ConfigurationSet::SteamExtractAssetWithPath(fname, filebase, config.meta_field[config.field_file_id[basefield] - 1], config.field_spt_file[basefield]);
 		if (errcode != 0)
 			return errcode;
 	}
@@ -2559,7 +2576,7 @@ int CreateSteamCustomFieldAssets(string destfolder, ConfigurationSet& config, Sa
 		if (config.field_sps_file[basefield][i] < 0)
 			continue;
 		fname = destfolder + "StreamingAssets\\Assets\\Resources\\FieldMaps\\" + mapid + "\\" + to_string(SteamFieldScript[basefield].sps_list[i]) + ".sps.bytes";
-		errcode = SteamExtractAssetWithPath(fname, filebase, config.meta_field[config.field_file_id[basefield] - 1], config.field_sps_file[basefield][i]);
+		errcode = ConfigurationSet::SteamExtractAssetWithPath(fname, filebase, config.meta_field[config.field_file_id[basefield] - 1], config.field_sps_file[basefield][i]);
 		if (errcode != 0)
 			return errcode;
 	}
@@ -2569,19 +2586,19 @@ int CreateSteamCustomFieldAssets(string destfolder, ConfigurationSet& config, Sa
 		return 2;
 	if (config.field_preload_file[i] >= 0) {
 		fname = destfolder + "StreamingAssets\\Assets\\Resources\\CommonAsset\\EventEngine\\EventAnimation\\" + fieldid + ".txt.bytes";
-		errcode = SteamExtractAssetWithPath(fname, filebase, config.meta_script, config.field_preload_file[basefield]);
+		errcode = ConfigurationSet::SteamExtractAssetWithPath(fname, filebase, config.meta_script, config.field_preload_file[basefield]);
 		if (errcode != 0)
 			return errcode;
 	}
 	if (config.field_role_file[i] >= 0) {
 		fname = destfolder + "StreamingAssets\\Assets\\Resources\\CommonAsset\\MapConfigData\\" + fieldid + ".bytes";
-		errcode = SteamExtractAssetWithPath(fname, filebase, config.meta_script, config.field_role_file[basefield]);
+		errcode = ConfigurationSet::SteamExtractAssetWithPath(fname, filebase, config.meta_script, config.field_role_file[basefield]);
 		if (errcode != 0)
 			return errcode;
 	}
 	if (config.field_vibdata_file[i] >= 0) {
 		fname = destfolder + "StreamingAssets\\Assets\\Resources\\CommonAsset\\VibrationData\\" + fieldid + ".bytes";
-		errcode = SteamExtractAssetWithPath(fname, filebase, config.meta_script, config.field_vibdata_file[basefield]);
+		errcode = ConfigurationSet::SteamExtractAssetWithPath(fname, filebase, config.meta_script, config.field_vibdata_file[basefield]);
 		if (errcode != 0)
 			return errcode;
 	}

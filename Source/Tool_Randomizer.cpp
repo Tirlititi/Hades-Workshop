@@ -66,9 +66,9 @@ inline Spell_Target_Amount GetEnemySpellTargetAmountFromModel(uint16_t modelid) 
 }
 
 inline bool IsEnemySpellRandomizable(EnemySpellDataStruct& spell, vector<EnemySequenceCodeLine>& sequence, uint16_t* modelid = NULL, Spell_Target_Amount* ta = NULL) {
-	if (spell.id == 8 && spell.parent->parent->battle_data[spell.parent->id]->object_id == 301) // Absorb of "Prison Cage ; Vivi"
+	if (spell.id == 8 && spell.parent->parent->GetIdByIndex(spell.parent->id) == 301) // Absorb of "Prison Cage ; Vivi"
 		return false;
-	if (spell.id == 13 && spell.parent->parent->battle_data[spell.parent->id]->object_id == 302) // Absorb of "Prison Cage ; Garnet"
+	if (spell.id == 13 && spell.parent->parent->GetIdByIndex(spell.parent->id) == 302) // Absorb of "Prison Cage ; Garnet"
 		return false;
 	if (spell.effect == 0 || spell.effect == 64 || spell.effect == 10 || spell.effect == 12 || spell.effect == 13 || spell.effect == 30 || spell.effect == 37 || spell.effect == 41 || spell.effect == 43 || spell.effect == 44 || spell.effect == 45 || spell.effect == 47 || spell.effect == 52 || (spell.effect >= 55 && spell.effect <= 58) || spell.effect == 96 || spell.effect == 103 || spell.effect == 106)
 		return false;
@@ -1027,15 +1027,13 @@ void ToolRandomizer::ApplyRandomizerBattle() {
 	if (m_battlespell->IsChecked()) {
 		vector<tuple<unsigned int, EnemySpellDataStruct*, EnemySpellDataStruct, uint16_t>> swaplist;
 		vector<vector<bool>> spelldone(cddata->enemyset.battle_amount);
+		vector<pair<EnemySpellDataStruct*, unsigned int>> similarspells;
 		vector<pair<EnemySpellDataStruct, uint16_t>> spelllistsingle;
 		vector<pair<EnemySpellDataStruct, uint16_t>> spelllistmulti;
 		pair<EnemySpellDataStruct, uint16_t> curspell;
 		Spell_Target_Amount targamount;
 		int seqcode, codearg;
 		uint16_t spellmodel;
-		EnemySpellDataStruct** similarspells;
-		unsigned int* similarbattleid;
-		unsigned int similaramount;
 		for (i = 0; i < cddata->enemyset.battle_amount; i++)
 			spelldone[i] = vector<bool>(cddata->enemyset.battle[i]->spell_amount, false);
 		for (i = 0; i < cddata->enemyset.battle_amount; i++)
@@ -1045,9 +1043,9 @@ void ToolRandomizer::ApplyRandomizerBattle() {
 						spelllistsingle.push_back(make_pair(cddata->enemyset.battle[i]->spell[j], spellmodel));
 					else
 						spelllistmulti.push_back(make_pair(cddata->enemyset.battle[i]->spell[j], spellmodel));
-					similarspells = cddata->enemyset.GetSimilarEnemySpells(cddata->enemyset.battle[i]->spell[j], &similaramount, &similarbattleid);
-					for (k = 0; k < similaramount; k++)
-						spelldone[similarbattleid[k]][similarspells[k]->id] = true;
+					similarspells = cddata->enemyset.GetSimilarEnemySpells(cddata->enemyset.battle[i]->spell[j]);
+					for (k = 0; k < similarspells.size(); k++)
+						spelldone[similarspells[k].second][similarspells[k].first->id] = true;
 				}
 		for (i = 0; i < cddata->enemyset.battle_amount; i++)
 			for (j = 0; j < cddata->enemyset.battle[i]->spell_amount; j++)
@@ -1060,10 +1058,10 @@ void ToolRandomizer::ApplyRandomizerBattle() {
 							curspell = PickRandomInVector(spelllistsingle);
 						else
 							curspell = PickRandomInVector(spelllistmulti);
-						similarspells = cddata->enemyset.GetSimilarEnemySpells(cddata->enemyset.battle[i]->spell[j], &similaramount, &similarbattleid);
-						for (k = 0; k < similaramount; k++) {
-							spelldone[similarbattleid[k]][similarspells[k]->id] = true;
-							swaplist.push_back(make_tuple(similarbattleid[k], similarspells[k], curspell.first, curspell.second));
+						similarspells = cddata->enemyset.GetSimilarEnemySpells(cddata->enemyset.battle[i]->spell[j]);
+						for (k = 0; k < similarspells.size(); k++) {
+							spelldone[similarspells[k].second][similarspells[k].first->id] = true;
+							swaplist.push_back(make_tuple(similarspells[k].second, similarspells[k].first, curspell.first, curspell.second));
 						}
 					}
 		} else {
@@ -1101,10 +1099,10 @@ void ToolRandomizer::ApplyRandomizerBattle() {
 							curspell = spelllistsingle[GetRandom(0, spelllistsingle.size())];
 						else
 							curspell = spelllistmulti[GetRandom(0, spelllistmulti.size())];
-						similarspells = cddata->enemyset.GetSimilarEnemySpells(cddata->enemyset.battle[i]->spell[j], &similaramount, &similarbattleid);
-						for (k = 0; k < similaramount; k++) {
-							spelldone[similarbattleid[k]][similarspells[k]->id] = true;
-							swaplist.push_back(make_tuple(similarbattleid[k], similarspells[k], curspell.first, curspell.second));
+						similarspells = cddata->enemyset.GetSimilarEnemySpells(cddata->enemyset.battle[i]->spell[j]);
+						for (k = 0; k < similarspells.size(); k++) {
+							spelldone[similarspells[k].second][similarspells[k].first->id] = true;
+							swaplist.push_back(make_tuple(similarspells[k].second, similarspells[k].first, curspell.first, curspell.second));
 						}
 					}
 		}

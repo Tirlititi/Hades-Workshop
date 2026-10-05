@@ -8,6 +8,7 @@ struct EnemyDataStruct;
 
 struct EnemySequenceCodeLine;
 struct BattleDataStruct;
+struct BattleAdditionDataStruct;
 
 struct BattleModelLinks;
 
@@ -189,7 +190,6 @@ public:
 	vector<EnemySpellDataStruct> spell;
 	uint16_t flag;
 	
-	// Battle Scene ID are from the PSX version ; Use SteamBattleScenePSXId[] for conversion
 	uint16_t scene_id;
 	uint16_t base_scene_id;
 	
@@ -262,41 +262,50 @@ public:
 	EnemyDataSet* parent;
 };
 
+struct BattleAdditionDataStruct {
+	int index;
+	int base_battle_id;
+	wstring battle_id;
+	uint16_t shared_camera_pool; // Use TransferCameras rather than modifying it directly
+
+	int ExportAssets(ConfigurationSet& config, SaveSet& saveset, string destfolder);
+	void ReadHWS(fstream& f);
+	void WriteHWS(fstream& f);
+};
+
 struct EnemyDataSet {
 public:
 	uint16_t battle_amount;
 	vector<uint16_t> cluster_id; // PSX only
-	vector<uint16_t> struct_id;
+	vector<int> struct_id;
 	vector<wstring> battle_name;
 	vector<BattleDataStruct*> battle_data;
 	vector<EnemyDataStruct*> battle;
 	vector<TextDataStruct*> text;
 	vector<ScriptDataStruct*> script;
 	vector<ImageMapDataStruct*> preload; // PSX only
+	vector<BattleAdditionDataStruct*> addition; // Steam only
 	ImageMapDataStruct* shared_map; // PSX only
 	ImageMapDataStruct*** image_map; // PSX only - pointer to the cluster's image map list
 	unsigned int image_map_amount;
 	
 	uint32_t steam_method_position;
 	uint32_t steam_method_base_length;
-	
-	unsigned int modified_battle_scene_amount; // readonly
-	vector<uint16_t> modified_battle_id;
-	vector<uint16_t> modified_scene_id;
-	vector<uint32_t> modified_scene_offset;
-	vector<uint32_t> modified_scene_size;
+
+	bool CreateCustomBattle(ConfigurationSet& config, int basebattleindex, int customid);
+	void DeleteCustomBattle(int index);
 	
 	static void GetSpellSequenceModelRef(vector<EnemySequenceCodeLine>& sequence, int* code, int* arg);
 
-	// Return temporary array not to be destroyed (as for battleids)
-	EnemyStatDataStruct** GetSimilarEnemyStats(EnemyStatDataStruct& stat, unsigned int* amountfound, unsigned int** battleid);
-	EnemySpellDataStruct** GetSimilarEnemySpells(EnemySpellDataStruct& spell, unsigned int* amountfound, unsigned int** battleid);
+	vector<pair<EnemyStatDataStruct*, unsigned int>> GetSimilarEnemyStats(EnemyStatDataStruct& stat);
+	vector<pair<EnemySpellDataStruct*, unsigned int>> GetSimilarEnemySpells(EnemySpellDataStruct& spell);
 	// Change "battle_name[battleindex]" according to battle's monster names
 	void UpdateBattleName(unsigned int battleindex);
 	// For PSX: Make the modifications inside field and world map image maps only... Mark the updated image maps as modified
 	// For Steam: Only register the change ; nothing more needed
-	int ChangeBattleScene(uint16_t battleid, uint16_t newsceneid, uint32_t newsceneoffset = 0, uint32_t newscenesize = 0);
-	int ChangeBattleModel(uint16_t battleindex, uint8_t enemyid, BattleModelLinks& newmodelinfo);
+	int ChangeBattleScene(int battleid, int newsceneid, uint32_t newsceneoffset = 0, uint32_t newscenesize = 0);
+	int ChangeBattleModel(int battleindex, uint8_t enemyid, BattleModelLinks& newmodelinfo);
+	int TransferCameras(int battleindexfrom, int battleindexto);
 	
 	void Load(fstream& ffbin, ClusterSet& clusset);
 	// Use false if World Maps or fields are saved in the normal process : it prevents the image maps to be saved twice
@@ -310,10 +319,11 @@ public:
 	DllMetaDataModification* ComputeSteamMod(ConfigurationSet& config, unsigned int* modifamount);
 	void GenerateCSharp(vector<string>& buffer);
 	bool GenerateCSV(string basefolder);
-	int GetIndexById(uint16_t battleid);
+	int GetIndexById(int battleid);
+	int GetIdByIndex(int battleindex);
 	
 private:
-	void SetupEnemyInfo(uint16_t battleindex);
+	void SetupEnemyInfo(int battleindex);
 };
 
 struct BattleModelLinks {

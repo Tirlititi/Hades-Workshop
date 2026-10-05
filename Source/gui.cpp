@@ -3437,21 +3437,33 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	gSizer18->Add( m_enemyflag13, 0, wxALL, 5 );
 
-	m_enemyflag14 = new wxCheckBox( m_enemyscrolledwindow, wxID_BF14, _("Unknown"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_enemyflag14 = new wxCheckBox( m_enemyscrolledwindow, wxID_BF14, _("Unknown (14)"), wxDefaultPosition, wxDefaultSize, 0 );
 	gSizer18->Add( m_enemyflag14, 0, wxALL, 5 );
 
-	m_enemyflag15 = new wxCheckBox( m_enemyscrolledwindow, wxID_BF15, _("Unknown"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_enemyflag15->Hide();
-
+	m_enemyflag15 = new wxCheckBox( m_enemyscrolledwindow, wxID_BF15, _("Unknown (15)"), wxDefaultPosition, wxDefaultSize, 0 );
 	gSizer18->Add( m_enemyflag15, 0, wxALL, 5 );
 
-	m_enemyflag16 = new wxCheckBox( m_enemyscrolledwindow, wxID_BF16, _("Unknown"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_enemyflag16->Hide();
-
+	m_enemyflag16 = new wxCheckBox( m_enemyscrolledwindow, wxID_BF16, _("Unknown (16)"), wxDefaultPosition, wxDefaultSize, 0 );
 	gSizer18->Add( m_enemyflag16, 0, wxALL, 5 );
 
 
 	fgSizer8->Add( gSizer18, 1, wxEXPAND, 5 );
+
+	m_staticText5761 = new wxStaticText( m_enemyscrolledwindow, wxID_ANY, _("Name ID"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText5761->Wrap( -1 );
+	fgSizer8->Add( m_staticText5761, 0, wxALL, 5 );
+
+	m_enemyeventid = new wxTextCtrl( m_enemyscrolledwindow, wxID_MAPID, wxEmptyString, wxDefaultPosition, wxSize( 180,-1 ), 0 );
+	fgSizer8->Add( m_enemyeventid, 0, wxALL, 2 );
+
+	m_staticText577 = new wxStaticText( m_enemyscrolledwindow, wxID_ANY, _("Camera Pool"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText577->Wrap( -1 );
+	fgSizer8->Add( m_staticText577, 0, wxALL, 5 );
+
+	wxArrayString m_enemycamerapoolChoices;
+	m_enemycamerapool = new wxChoice( m_enemyscrolledwindow, wxID_CAMPOOL, wxDefaultPosition, wxDefaultSize, m_enemycamerapoolChoices, 0 );
+	m_enemycamerapool->SetSelection( 0 );
+	fgSizer8->Add( m_enemycamerapool, 0, wxALL, 2 );
 
 
 	m_enemyscrolledwindow->SetSizer( fgSizer8 );
@@ -5927,6 +5939,16 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	bSizer22122->Add( m_fieldnamebutton, 0, wxALIGN_CENTER_VERTICAL, 5 );
 
 
+	bSizer22122->Add( 0, 0, 1, wxEXPAND, 5 );
+
+	m_staticText572 = new wxStaticText( m_fieldscrolledwindow, wxID_ANY, _("ID"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText572->Wrap( -1 );
+	bSizer22122->Add( m_staticText572, 0, wxALL, 5 );
+
+	m_fieldid = new wxSpinCtrl( m_fieldscrolledwindow, wxID_ID, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 2147483647, 0 );
+	bSizer22122->Add( m_fieldid, 0, wxALL, 2 );
+
+
 	fgSizer39->Add( bSizer22122, 1, wxEXPAND, 5 );
 
 	m_staticText1911 = new wxStaticText( m_fieldscrolledwindow, wxID_ANY, _("Script"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -5941,6 +5963,16 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	m_fieldscriptentryedit = new wxButton( m_fieldscrolledwindow, wxID_ENTRY, _("Edit Entries"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer190->Add( m_fieldscriptentryedit, 0, wxALL, 3 );
+
+
+	bSizer190->Add( 0, 0, 1, wxEXPAND, 5 );
+
+	m_staticText573 = new wxStaticText( m_fieldscrolledwindow, wxID_ANY, _("Name ID"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText573->Wrap( -1 );
+	bSizer190->Add( m_staticText573, 0, wxALL, 5 );
+
+	m_fieldeventid = new wxTextCtrl( m_fieldscrolledwindow, wxID_MAPID, wxEmptyString, wxDefaultPosition, wxSize( 180,-1 ), 0 );
+	bSizer190->Add( m_fieldeventid, 0, wxALL, 2 );
 
 
 	fgSizer39->Add( bSizer190, 1, wxEXPAND, 5 );
@@ -5966,6 +5998,11 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 
 	m_fieldtexturemanage = new wxButton( m_fieldscrolledwindow, wxID_TEXTURE, _("Manage"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer124->Add( m_fieldtexturemanage, 0, wxALL, 2 );
+
+	m_fieldtexturetobgx = new wxButton( m_fieldscrolledwindow, wxID_BGX, _("Turn into BGX"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_fieldtexturetobgx->SetToolTip( _("BGX file format is the custom format\nused by Memoria to facilitate the\nmanagement of field backgrounds\n\nThis action cannot be cancelled") );
+
+	bSizer124->Add( m_fieldtexturetobgx, 0, wxALL, 2 );
 
 
 	fgSizer39->Add( bSizer124, 1, wxEXPAND, 5 );
@@ -5998,6 +6035,35 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_fieldtexturepreview->SetMinSize( wxSize( 518,518 ) );
 
 	fgSizer39->Add( m_fieldtexturepreview, 1, wxEXPAND | wxALL, 5 );
+
+	m_staticText574 = new wxStaticText( m_fieldscrolledwindow, wxID_ANY, _("Area"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText574->Wrap( -1 );
+	fgSizer39->Add( m_staticText574, 0, wxALL, 5 );
+
+	m_fieldareaid = new wxSpinCtrl( m_fieldscrolledwindow, wxID_AREA, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 0 );
+	m_fieldareaid->SetToolTip( _("The area ID determines in which town or dungeon\nthe field belongs to, but that information never\nactually matters") );
+
+	fgSizer39->Add( m_fieldareaid, 0, wxALL, 2 );
+
+	m_staticText575 = new wxStaticText( m_fieldscrolledwindow, wxID_ANY, _("Text Block"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText575->Wrap( -1 );
+	fgSizer39->Add( m_staticText575, 0, wxALL, 5 );
+
+	wxArrayString m_fieldtextblockChoices;
+	m_fieldtextblock = new wxChoice( m_fieldscrolledwindow, wxID_FIELDTEXT, wxDefaultPosition, wxDefaultSize, m_fieldtextblockChoices, 0 );
+	m_fieldtextblock->SetSelection( 0 );
+	fgSizer39->Add( m_fieldtextblock, 0, wxALL, 2 );
+
+	m_staticText576 = new wxStaticText( m_fieldscrolledwindow, wxID_ANY, _("SPS Pool"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText576->Wrap( -1 );
+	fgSizer39->Add( m_staticText576, 0, wxALL, 5 );
+
+	wxArrayString m_fieldspspoolChoices;
+	m_fieldspspool = new wxChoice( m_fieldscrolledwindow, wxID_SPS, wxDefaultPosition, wxDefaultSize, m_fieldspspoolChoices, 0 );
+	m_fieldspspool->SetSelection( 0 );
+	m_fieldspspool->SetToolTip( _("By default, fields can only use a handful of SPS.\nUsing \"RunSPSCode( INDEX, 129, FIELD, 0, 0 )\"\nbypasses that limitation but is more tedious") );
+
+	fgSizer39->Add( m_fieldspspool, 0, wxALL, 2 );
 
 
 	m_fieldscrolledwindow->SetSizer( fgSizer39 );
@@ -6773,6 +6839,7 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_synthshopcustomformat->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnShopChangeButton ), NULL, this );
 	m_synthshopcustomfields->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnShopChangeButton ), NULL, this );
 	m_enemylist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxEnemy ), NULL, this );
+	m_enemylist->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnEnemyRightClick ), NULL, this );
 	m_enemystatlist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxEnemyStat ), NULL, this );
 	m_enemystatlist->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnEnemyStatRightClick ), NULL, this );
 	m_enemyspelllist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxEnemySpell ), NULL, this );
@@ -6800,6 +6867,8 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_enemyflag14->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyflag15->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyflag16->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyeventid->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnEnemyChangeText ), NULL, this );
+	m_enemycamerapool->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
 	m_enemystatname->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnEnemyStatChangeName ), NULL, this );
 	m_enemystatnamebutton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
 	m_enemystatlvl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
@@ -7077,17 +7146,24 @@ CDPanel::CDPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxS
 	m_worldbattlebattlechoice43->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
 	m_worldbattlebattlechoice44->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
 	m_fieldlist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxField ), NULL, this );
+	m_fieldlist->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnFieldRightClick ), NULL, this );
 	m_fieldname->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnFieldChangeName ), NULL, this );
 	m_fieldnamebutton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
+	m_fieldid->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnFieldChangeSpin ), NULL, this );
 	m_fieldeditscript->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldscriptentryedit->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
+	m_fieldeventid->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnFieldChangeText ), NULL, this );
 	m_fieldpreload->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldtexturechoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnFieldChangeChoice ), NULL, this );
 	m_fieldtexturemanage->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
+	m_fieldtexturetobgx->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldeditwalk->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldexportwalk->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldimportwalk->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldtexturepreview->Connect( wxEVT_PAINT, wxPaintEventHandler( CDPanel::OnFieldTexturePaint ), NULL, this );
+	m_fieldareaid->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnFieldChangeSpin ), NULL, this );
+	m_fieldtextblock->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnFieldChangeChoice ), NULL, this );
+	m_fieldspspool->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnFieldChangeChoice ), NULL, this );
 	m_battlescenelist->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxBattleScene ), NULL, this );
 	m_battlesceneexport->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnBattleSceneExportButton ), NULL, this );
 	m_battlesceneimport->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnBattleSceneImportButton ), NULL, this );
@@ -7457,6 +7533,7 @@ CDPanel::~CDPanel()
 	m_synthshopcustomformat->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnShopChangeButton ), NULL, this );
 	m_synthshopcustomfields->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnShopChangeButton ), NULL, this );
 	m_enemylist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxEnemy ), NULL, this );
+	m_enemylist->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnEnemyRightClick ), NULL, this );
 	m_enemystatlist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxEnemyStat ), NULL, this );
 	m_enemystatlist->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnEnemyStatRightClick ), NULL, this );
 	m_enemyspelllist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxEnemySpell ), NULL, this );
@@ -7484,6 +7561,8 @@ CDPanel::~CDPanel()
 	m_enemyflag14->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyflag15->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
 	m_enemyflag16->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeFlags ), NULL, this );
+	m_enemyeventid->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnEnemyChangeText ), NULL, this );
+	m_enemycamerapool->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnEnemyChangeChoice ), NULL, this );
 	m_enemystatname->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnEnemyStatChangeName ), NULL, this );
 	m_enemystatnamebutton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnEnemyChangeButton ), NULL, this );
 	m_enemystatlvl->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnEnemyChangeSpin ), NULL, this );
@@ -7761,17 +7840,24 @@ CDPanel::~CDPanel()
 	m_worldbattlebattlechoice43->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
 	m_worldbattlebattlechoice44->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnWorldChangeChoice ), NULL, this );
 	m_fieldlist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxField ), NULL, this );
+	m_fieldlist->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( CDPanel::OnFieldRightClick ), NULL, this );
 	m_fieldname->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnFieldChangeName ), NULL, this );
 	m_fieldnamebutton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
+	m_fieldid->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnFieldChangeSpin ), NULL, this );
 	m_fieldeditscript->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldscriptentryedit->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
+	m_fieldeventid->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( CDPanel::OnFieldChangeText ), NULL, this );
 	m_fieldpreload->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldtexturechoice->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnFieldChangeChoice ), NULL, this );
 	m_fieldtexturemanage->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
+	m_fieldtexturetobgx->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldeditwalk->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldexportwalk->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldimportwalk->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnFieldChangeButton ), NULL, this );
 	m_fieldtexturepreview->Disconnect( wxEVT_PAINT, wxPaintEventHandler( CDPanel::OnFieldTexturePaint ), NULL, this );
+	m_fieldareaid->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( CDPanel::OnFieldChangeSpin ), NULL, this );
+	m_fieldtextblock->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnFieldChangeChoice ), NULL, this );
+	m_fieldspspool->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CDPanel::OnFieldChangeChoice ), NULL, this );
 	m_battlescenelist->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( CDPanel::OnListBoxBattleScene ), NULL, this );
 	m_battlesceneexport->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnBattleSceneExportButton ), NULL, this );
 	m_battlesceneimport->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CDPanel::OnBattleSceneImportButton ), NULL, this );
@@ -10448,7 +10534,7 @@ AboutWindow::AboutWindow( wxWindow* parent, wxWindowID id, const wxString& title
 	wxBoxSizer* bSizer16;
 	bSizer16 = new wxBoxSizer( wxVERTICAL );
 
-	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.52\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for PSX model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\n - Satoh -\n - Ze_PilOt -\n\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/"), wxDefaultPosition, wxSize( -1,330 ), wxTE_MULTILINE|wxTE_READONLY|wxTE_CENTER|wxBORDER_SIMPLE );
+	m_textCtrl13 = new wxTextCtrl( this, wxID_ANY, _("Hades Workshop v0.53\nMade by Tirlititi\n\nThe newer versions are available at\nhttp://forums.qhimm.com/index.php?topic=14315\n\nCredits and Thanks :\nIcarus/Paradox for ppf support\nZidane_2 for PSX model and texture exporter\nyaz0r for informations and ideas on scripts\nFroggy25 for informations about MIPS\nCecil-Master's team for informations about CIL\n\nThe Qhimm's forum members, especially\n - LandonRayW -\n - JBedford128 -\n - Zande -\n - Thisguyaresick2 -\n - Yugisokubodai -\n - Maki -\n - Satoh -\n - Ze_PilOt -\n\nThe Final Fantasy Wikia\nand some Gamefaqs's contributors, especially\n - Rebirth Flame -\n - S. Volo -\n\nLoading Screen by Maxa'\nhttp://maxa-art.deviantart.com/"), wxDefaultPosition, wxSize( -1,330 ), wxTE_MULTILINE|wxTE_READONLY|wxTE_CENTER|wxBORDER_SIMPLE );
 	m_textCtrl13->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_INFOBK ) );
 	m_textCtrl13->SetMinSize( wxSize( -1,330 ) );
 
@@ -11467,6 +11553,11 @@ BatchExportWindow::BatchExportWindow( wxWindow* parent, wxWindowID id, const wxS
 
 	bSizer1591->Add( m_exportorder, 0, wxALL, 2 );
 
+	m_exportbgx = new wxCheckBox( m_backgroundpanel, wxID_ANY, _("Export as .bgx"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_exportbgx->SetToolTip( _("BGX file format is the custom format\nused by Memoria to facilitate the\nmanagement of field backgrounds\n\nWhen enabled, other options are ignored") );
+
+	bSizer1591->Add( m_exportbgx, 0, wxALL, 2 );
+
 	wxString m_languagetitleChoices[] = { _("All Titles"), _("English (US)"), _("English (UK)"), _("Japanese"), _("German"), _("French"), _("Italian"), _("Spanish") };
 	int m_languagetitleNChoices = sizeof( m_languagetitleChoices ) / sizeof( wxString );
 	m_languagetitle = new wxChoice( m_backgroundpanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_languagetitleNChoices, m_languagetitleChoices, 0 );
@@ -11710,9 +11801,10 @@ FieldTextureExportWindow::FieldTextureExportWindow( wxWindow* parent, wxWindowID
 
 	fgSizer48->Add( m_onlyselected, 0, wxALL, 5 );
 
-	m_staticText328 = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText328->Wrap( -1 );
-	fgSizer48->Add( m_staticText328, 0, 0, 5 );
+	m_exportbgx = new wxCheckBox( this, wxID_ANY, _("Export as .bgx"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_exportbgx->SetToolTip( _("BGX file format is the custom format\nused by Memoria to facilitate the\nmanagement of field backgrounds\n\nWhen enabled, other options are ignored") );
+
+	fgSizer48->Add( m_exportbgx, 0, wxALL, 5 );
 
 	m_staticText326 = new wxStaticText( this, wxID_ANY, _("Language Titles"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText326->Wrap( -1 );
@@ -11753,6 +11845,54 @@ FieldTextureExportWindow::FieldTextureExportWindow( wxWindow* parent, wxWindowID
 }
 
 FieldTextureExportWindow::~FieldTextureExportWindow()
+{
+}
+
+FieldTextureConvertToBGXWindow::FieldTextureConvertToBGXWindow( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+
+	wxBoxSizer* bSizer18;
+	bSizer18 = new wxBoxSizer( wxVERTICAL );
+
+	wxGridBagSizer* gbSizer2;
+	gbSizer2 = new wxGridBagSizer( 0, 0 );
+	gbSizer2->SetFlexibleDirection( wxBOTH );
+	gbSizer2->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_NONE );
+
+	m_dirpicker = new wxDirPickerCtrl( this, wxID_ANY, wxEmptyString, _("Select folder..."), wxDefaultPosition, wxDefaultSize, wxDIRP_USE_TEXTCTRL );
+	gbSizer2->Add( m_dirpicker, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
+
+	m_staticText579 = new wxStaticText( this, wxID_ANY, _("BGX file format is the custom format used by Memoria to facilitate the management of field backgrounds\n\nSelect a folder in which the PNG layers of the background will be exported\n\nThis action cannot be cancelled"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText579->Wrap( 290 );
+	gbSizer2->Add( m_staticText579, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+
+	wxBoxSizer* bSizer20;
+	bSizer20 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_buttoncancel = new wxButton( this, wxID_CANCEL, _("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer20->Add( m_buttoncancel, 0, wxALL, 5 );
+
+	m_buttonok = new wxButton( this, wxID_OK, _("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer20->Add( m_buttonok, 0, wxALL, 5 );
+
+
+	gbSizer2->Add( bSizer20, wxGBPosition( 2, 0 ), wxGBSpan( 1, 1 ), wxALIGN_RIGHT, 5 );
+
+
+	gbSizer2->AddGrowableCol( 0 );
+	gbSizer2->AddGrowableRow( 1 );
+
+	bSizer18->Add( gbSizer2, 1, wxEXPAND, 5 );
+
+
+	this->SetSizer( bSizer18 );
+	this->Layout();
+
+	this->Centre( wxBOTH );
+}
+
+FieldTextureConvertToBGXWindow::~FieldTextureConvertToBGXWindow()
 {
 }
 
@@ -12709,10 +12849,10 @@ ManageFieldTextureWindow::ManageFieldTextureWindow( wxWindow* parent, wxWindowID
 
 	wxArrayString m_tilechecklistChoices;
 	m_tilechecklist = new wxCheckListBox( this, wxID_TILE, wxDefaultPosition, wxDefaultSize, m_tilechecklistChoices, 0 );
-	gbSizer10->Add( m_tilechecklist, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	gbSizer10->Add( m_tilechecklist, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
 
 	m_animlist = new wxListCtrl( this, wxID_ANY, wxDefaultPosition, wxSize( 135,160 ), wxLC_SINGLE_SEL|wxLC_SMALL_ICON );
-	gbSizer10->Add( m_animlist, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	gbSizer10->Add( m_animlist, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
 
 	wxGridBagSizer* gbSizer661;
 	gbSizer661 = new wxGridBagSizer( 0, 0 );
@@ -12743,44 +12883,115 @@ ManageFieldTextureWindow::ManageFieldTextureWindow( wxWindow* parent, wxWindowID
 
 	gbSizer10->Add( gbSizer661, wxGBPosition( 1, 0 ), wxGBSpan( 1, 2 ), wxEXPAND, 5 );
 
-	m_staticline9 = new wxStaticLine( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL );
-	gbSizer10->Add( m_staticline9, wxGBPosition( 2, 0 ), wxGBSpan( 1, 2 ), wxEXPAND | wxALL, 5 );
+	wxFlexGridSizer* fgSizer168;
+	fgSizer168 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer168->SetFlexibleDirection( wxBOTH );
+	fgSizer168->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
-	m_tilepiecelist = new wxListBox( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
-	gbSizer10->Add( m_tilepiecelist, wxGBPosition( 3, 0 ), wxGBSpan( 1, 2 ), wxALL, 5 );
+	m_panelvanilla = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	m_panelvanilla->Hide();
+
+	wxFlexGridSizer* fgSizer164;
+	fgSizer164 = new wxFlexGridSizer( 0, 1, 0, 0 );
+	fgSizer164->AddGrowableCol( 0 );
+	fgSizer164->AddGrowableRow( 1 );
+	fgSizer164->SetFlexibleDirection( wxBOTH );
+	fgSizer164->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_staticline9 = new wxStaticLine( m_panelvanilla, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL );
+	fgSizer164->Add( m_staticline9, 0, wxEXPAND | wxALL, 5 );
+
+	m_tilepiecelist = new wxListBox( m_panelvanilla, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
+	fgSizer164->Add( m_tilepiecelist, 0, wxALL, 5 );
 
 	wxGridBagSizer* gbSizer66;
 	gbSizer66 = new wxGridBagSizer( 0, 0 );
 	gbSizer66->SetFlexibleDirection( wxBOTH );
 	gbSizer66->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
-	m_staticText468 = new wxStaticText( this, wxID_ANY, _("Pos X"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText468 = new wxStaticText( m_panelvanilla, wxID_ANY, _("Pos X"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText468->Wrap( -1 );
 	gbSizer66->Add( m_staticText468, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxLEFT, 5 );
 
-	m_staticText469 = new wxStaticText( this, wxID_ANY, _("Pos Y"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText469 = new wxStaticText( m_panelvanilla, wxID_ANY, _("Pos Y"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText469->Wrap( -1 );
 	gbSizer66->Add( m_staticText469, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxLEFT, 5 );
 
-	m_staticText470 = new wxStaticText( this, wxID_ANY, _("Depth"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText470 = new wxStaticText( m_panelvanilla, wxID_ANY, _("Depth"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText470->Wrap( -1 );
 	gbSizer66->Add( m_staticText470, wxGBPosition( 0, 2 ), wxGBSpan( 1, 1 ), wxLEFT, 5 );
 
-	m_tilepiecex = new wxSpinCtrl( this, wxID_POSX2, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 1023, 0 );
+	m_tilepiecex = new wxSpinCtrl( m_panelvanilla, wxID_POSX2, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 1023, 0 );
 	gbSizer66->Add( m_tilepiecex, wxGBPosition( 1, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
 
-	m_tilepiecey = new wxSpinCtrl( this, wxID_POSY2, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 1023, 0 );
+	m_tilepiecey = new wxSpinCtrl( m_panelvanilla, wxID_POSY2, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 1023, 0 );
 	gbSizer66->Add( m_tilepiecey, wxGBPosition( 1, 1 ), wxGBSpan( 1, 1 ), wxALL, 5 );
 
-	m_tilepiecedepth = new wxSpinCtrl( this, wxID_POSZ2, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 4095, 0 );
+	m_tilepiecedepth = new wxSpinCtrl( m_panelvanilla, wxID_POSZ2, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 4095, 0 );
 	gbSizer66->Add( m_tilepiecedepth, wxGBPosition( 1, 2 ), wxGBSpan( 1, 1 ), wxALL, 5 );
 
 
-	gbSizer10->Add( gbSizer66, wxGBPosition( 4, 0 ), wxGBSpan( 3, 2 ), wxEXPAND, 5 );
+	fgSizer164->Add( gbSizer66, 1, wxEXPAND, 5 );
+
+
+	m_panelvanilla->SetSizer( fgSizer164 );
+	m_panelvanilla->Layout();
+	fgSizer164->Fit( m_panelvanilla );
+	fgSizer168->Add( m_panelvanilla, 1, wxEXPAND, 5 );
+
+	m_panelbgx = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxFlexGridSizer* fgSizer1641;
+	fgSizer1641 = new wxFlexGridSizer( 0, 1, 0, 0 );
+	fgSizer1641->AddGrowableCol( 0 );
+	fgSizer1641->SetFlexibleDirection( wxBOTH );
+	fgSizer1641->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_tilepath = new wxFilePickerCtrl( m_panelbgx, wxID_PATH, wxEmptyString, _("Select a layer"), _("Image (*.png)|*.png"), wxDefaultPosition, wxDefaultSize, wxFLP_DEFAULT_STYLE );
+	m_tilepath->SetToolTip( _("Path to the PNG of the tileset") );
+
+	fgSizer1641->Add( m_tilepath, 0, wxALL, 5 );
+
+	m_tileshader = new wxTextCtrl( m_panelbgx, wxID_SHADER, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_tileshader->SetToolTip( _("By default, possible shaders are:\nPSX/FieldMap_Abr_None (normal)\nPSX/FieldMap_Abr_0\nPSX/FieldMap_Abr_1 (light)\nPSX/FieldMap_Abr_2 (darken)\nPSX/FieldMap_Abr_3") );
+
+	fgSizer1641->Add( m_tileshader, 0, wxALL|wxEXPAND, 5 );
+
+	wxFlexGridSizer* fgSizer169;
+	fgSizer169 = new wxFlexGridSizer( 0, 2, 0, 0 );
+	fgSizer169->AddGrowableCol( 0 );
+	fgSizer169->AddGrowableCol( 1 );
+	fgSizer169->SetFlexibleDirection( wxBOTH );
+	fgSizer169->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	m_staticText46811 = new wxStaticText( m_panelbgx, wxID_ANY, _("Width"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText46811->Wrap( -1 );
+	fgSizer169->Add( m_staticText46811, 0, wxLEFT, 5 );
+
+	m_staticText46911 = new wxStaticText( m_panelbgx, wxID_ANY, _("Height"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText46911->Wrap( -1 );
+	fgSizer169->Add( m_staticText46911, 0, wxLEFT, 5 );
+
+	m_tilewidth = new wxSpinCtrl( m_panelbgx, wxID_WIDTH, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 1, 10000, 0 );
+	fgSizer169->Add( m_tilewidth, 0, wxALL|wxEXPAND, 5 );
+
+	m_tileheight = new wxSpinCtrl( m_panelbgx, wxID_HEIGHT, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 1, 10000, 0 );
+	fgSizer169->Add( m_tileheight, 0, wxALL|wxEXPAND, 5 );
+
+
+	fgSizer1641->Add( fgSizer169, 1, wxEXPAND, 5 );
+
+
+	m_panelbgx->SetSizer( fgSizer1641 );
+	m_panelbgx->Layout();
+	fgSizer1641->Fit( m_panelbgx );
+	fgSizer168->Add( m_panelbgx, 1, wxEXPAND, 5 );
+
+
+	gbSizer10->Add( fgSizer168, wxGBPosition( 2, 0 ), wxGBSpan( 1, 2 ), wxEXPAND, 5 );
 
 	m_texturewindow = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxSize( 280,120 ), wxHSCROLL|wxVSCROLL );
 	m_texturewindow->SetScrollRate( 5, 5 );
-	gbSizer10->Add( m_texturewindow, wxGBPosition( 0, 2 ), wxGBSpan( 6, 2 ), wxEXPAND | wxALL, 5 );
+	gbSizer10->Add( m_texturewindow, wxGBPosition( 0, 2 ), wxGBSpan( 3, 2 ), wxEXPAND | wxALL, 5 );
 
 	wxBoxSizer* bSizer56;
 	bSizer56 = new wxBoxSizer( wxHORIZONTAL );
@@ -12795,7 +13006,7 @@ ManageFieldTextureWindow::ManageFieldTextureWindow( wxWindow* parent, wxWindowID
 	bSizer56->Add( m_buttonok, 0, wxALL, 5 );
 
 
-	gbSizer10->Add( bSizer56, wxGBPosition( 7, 3 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
+	gbSizer10->Add( bSizer56, wxGBPosition( 3, 3 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
 
 	wxBoxSizer* dummied;
 	dummied = new wxBoxSizer( wxVERTICAL );
@@ -12856,7 +13067,7 @@ ManageFieldTextureWindow::ManageFieldTextureWindow( wxWindow* parent, wxWindowID
 	wxBoxSizer* bSizer111;
 	bSizer111 = new wxBoxSizer( wxVERTICAL );
 
-	m_texturepicker = new wxFilePickerCtrl( m_modifypanelimport, wxID_ANY, wxEmptyString, _("Import Image"), _("Supported Image (*.tga)|*.tga"), wxDefaultPosition, wxDefaultSize, wxFLP_DEFAULT_STYLE );
+	m_texturepicker = new wxFilePickerCtrl( m_modifypanelimport, wxID_IMPORT, wxEmptyString, _("Import Image"), _("Supported Image (*.tga)|*.tga"), wxDefaultPosition, wxDefaultSize, wxFLP_DEFAULT_STYLE );
 	bSizer111->Add( m_texturepicker, 0, wxALL, 5 );
 
 	m_buttonimport = new wxButton( m_modifypanelimport, wxID_IMPORT, _("Import"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -12898,7 +13109,7 @@ ManageFieldTextureWindow::ManageFieldTextureWindow( wxWindow* parent, wxWindowID
 
 	gbSizer10->AddGrowableCol( 2 );
 	gbSizer10->AddGrowableRow( 0 );
-	gbSizer10->AddGrowableRow( 3 );
+	gbSizer10->AddGrowableRow( 2 );
 
 	bSizer55->Add( gbSizer10, 1, wxEXPAND, 5 );
 
@@ -12921,6 +13132,10 @@ ManageFieldTextureWindow::ManageFieldTextureWindow( wxWindow* parent, wxWindowID
 	m_tilepiecex->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
 	m_tilepiecey->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
 	m_tilepiecedepth->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
+	m_tilepath->Connect( wxEVT_COMMAND_FILEPICKER_CHANGED, wxFileDirPickerEventHandler( ManageFieldTextureWindow::OnPathSelection ), NULL, this );
+	m_tileshader->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( ManageFieldTextureWindow::OnTextChanged ), NULL, this );
+	m_tilewidth->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
+	m_tileheight->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
 	m_texturewindow->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( ManageFieldTextureWindow::OnTextureMouseMove ), NULL, this );
 	m_texturewindow->Connect( wxEVT_MOTION, wxMouseEventHandler( ManageFieldTextureWindow::OnTextureMouseMove ), NULL, this );
 	m_texturewindow->Connect( wxEVT_MOUSEWHEEL, wxMouseEventHandler( ManageFieldTextureWindow::OnTextureMouseWheel ), NULL, this );
@@ -12933,7 +13148,7 @@ ManageFieldTextureWindow::ManageFieldTextureWindow( wxWindow* parent, wxWindowID
 	m_drawpanelcolor->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( ManageFieldTextureWindow::OnPaletteMouseMove ), NULL, this );
 	m_drawpanelcolor->Connect( wxEVT_MOTION, wxMouseEventHandler( ManageFieldTextureWindow::OnPaletteMouseMove ), NULL, this );
 	m_drawpanelcolor->Connect( wxEVT_PAINT, wxPaintEventHandler( ManageFieldTextureWindow::OnPaintPalette ), NULL, this );
-	m_texturepicker->Connect( wxEVT_COMMAND_FILEPICKER_CHANGED, wxFileDirPickerEventHandler( ManageFieldTextureWindow::OnChooseFileImage ), NULL, this );
+	m_texturepicker->Connect( wxEVT_COMMAND_FILEPICKER_CHANGED, wxFileDirPickerEventHandler( ManageFieldTextureWindow::OnPathSelection ), NULL, this );
 	m_buttonimport->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ManageFieldTextureWindow::OnButtonClick ), NULL, this );
 	m_texturepaletteselection->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
 	m_modifytyperadio->Connect( wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler( ManageFieldTextureWindow::OnModifyRadio ), NULL, this );
@@ -12953,6 +13168,10 @@ ManageFieldTextureWindow::~ManageFieldTextureWindow()
 	m_tilepiecex->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
 	m_tilepiecey->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
 	m_tilepiecedepth->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
+	m_tilepath->Disconnect( wxEVT_COMMAND_FILEPICKER_CHANGED, wxFileDirPickerEventHandler( ManageFieldTextureWindow::OnPathSelection ), NULL, this );
+	m_tileshader->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( ManageFieldTextureWindow::OnTextChanged ), NULL, this );
+	m_tilewidth->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
+	m_tileheight->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
 	m_texturewindow->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( ManageFieldTextureWindow::OnTextureMouseMove ), NULL, this );
 	m_texturewindow->Disconnect( wxEVT_MOTION, wxMouseEventHandler( ManageFieldTextureWindow::OnTextureMouseMove ), NULL, this );
 	m_texturewindow->Disconnect( wxEVT_MOUSEWHEEL, wxMouseEventHandler( ManageFieldTextureWindow::OnTextureMouseWheel ), NULL, this );
@@ -12965,7 +13184,7 @@ ManageFieldTextureWindow::~ManageFieldTextureWindow()
 	m_drawpanelcolor->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( ManageFieldTextureWindow::OnPaletteMouseMove ), NULL, this );
 	m_drawpanelcolor->Disconnect( wxEVT_MOTION, wxMouseEventHandler( ManageFieldTextureWindow::OnPaletteMouseMove ), NULL, this );
 	m_drawpanelcolor->Disconnect( wxEVT_PAINT, wxPaintEventHandler( ManageFieldTextureWindow::OnPaintPalette ), NULL, this );
-	m_texturepicker->Disconnect( wxEVT_COMMAND_FILEPICKER_CHANGED, wxFileDirPickerEventHandler( ManageFieldTextureWindow::OnChooseFileImage ), NULL, this );
+	m_texturepicker->Disconnect( wxEVT_COMMAND_FILEPICKER_CHANGED, wxFileDirPickerEventHandler( ManageFieldTextureWindow::OnPathSelection ), NULL, this );
 	m_buttonimport->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ManageFieldTextureWindow::OnButtonClick ), NULL, this );
 	m_texturepaletteselection->Disconnect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ManageFieldTextureWindow::OnSpinPosition ), NULL, this );
 	m_modifytyperadio->Disconnect( wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler( ManageFieldTextureWindow::OnModifyRadio ), NULL, this );
@@ -13360,7 +13579,7 @@ ScriptEditPropertiesWindow::ScriptEditPropertiesWindow( wxWindow* parent, wxWind
 	fgSizer501->Add( m_staticText2451, 0, wxALL, 5 );
 
 	m_typectrl = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0 );
-	m_typectrl->SetToolTip( _("0 : main function\n1 : looping function\n2 : running when in range\n3 : running on speak button\n5 : running on full atb\n6 : counter party function\n7 : counter enemy function\n8 : running on card button\n9 : running on death (not working well)\n10 : running after a battle") );
+	m_typectrl->SetToolTip( _("0 : main function\n1 : looping function\n2 : running when in range\n3 : running on speak button\n4 : running when opening menu\n5 : running on full atb\n6 : counter party function\n7 : counter enemy function\n8 : running on card button\n9 : running on death (not working well)\n10 : running after a battle") );
 
 	fgSizer501->Add( m_typectrl, 0, wxALL, 2 );
 

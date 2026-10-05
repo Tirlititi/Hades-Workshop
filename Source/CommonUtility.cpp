@@ -268,6 +268,52 @@ int InsertAtId<int>(vector<int>& base, int& newobj, int newobjid) {
 	return 0;
 }
 
+template<>
+int InsertAtId<FieldTilesDataStruct*>(vector<FieldTilesDataStruct*>& base, FieldTilesDataStruct*& newobj, int newobjid) {
+	if (GetGameConfiguration() == NULL)
+		return -1;
+	FieldDataSet* fieldset = NULL;
+	unsigned int i;
+	for (i = 0; i < base.size(); i++)
+		if (base[i] != NULL) {
+			fieldset = base[i]->parent;
+			break;
+		}
+	if (fieldset == NULL)
+		return -1;
+	if (fieldset->GetIndexById(newobjid) >= 0 || newobjid == FIELD_ENDING_ID)
+		return -1;
+	int basefieldindex = newobj == NULL ? fieldset->GetIndexById(70) : newobj->id;
+	if (fieldset->addition[basefieldindex] != NULL)
+		basefieldindex = fieldset->GetIndexById(fieldset->addition[basefieldindex]->base_field_id);
+	if (!fieldset->CreateCustomField(*GetGameConfiguration(), basefieldindex, newobjid))
+		return -1;
+	return fieldset->amount - 1;
+}
+
+template<>
+int InsertAtId<BattleDataStruct*>(vector<BattleDataStruct*>& base, BattleDataStruct*& newobj, int newobjid) {
+	if (GetGameConfiguration() == NULL)
+		return -1;
+	EnemyDataSet* enemyset = NULL;
+	unsigned int i;
+	for (i = 0; i < base.size(); i++)
+		if (base[i] != NULL) {
+			enemyset = base[i]->parent;
+			break;
+		}
+	if (enemyset == NULL)
+		return -1;
+	if (enemyset->GetIndexById(newobjid) >= 0)
+		return -1;
+	int basebattleindex = newobj->id;
+	if (enemyset->addition[basebattleindex] != NULL)
+		basebattleindex = enemyset->GetIndexById(enemyset->addition[basebattleindex]->base_battle_id);
+	if (!enemyset->CreateCustomBattle(*GetGameConfiguration(), basebattleindex, newobjid))
+		return -1;
+	return enemyset->battle_amount - 1;
+}
+
 template<typename T>
 int PrepareHWSFlexibleList(fstream& ffbin, vector<T>& objlist, vector<T>& nonmodifiedlist, vector<int>& insertedindices) {
 	vector<int> objid;

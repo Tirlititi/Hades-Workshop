@@ -153,12 +153,12 @@ int BatchExportDialog::ExportWorldTexts(WorldMapDataSet& data, wxString path) {
 			if (data.text_data[i] != NULL && data.script[i] != NULL) {
 				wxString name = _(L"Unknown World Map");
 				for (unsigned int j = 0; j < HADES_STRING_WORLD_BLOCK_NAME.size(); j++) {
-					if (HADES_STRING_WORLD_BLOCK_NAME[j].id == data.script[i]->object_id) {
+					if (HADES_STRING_WORLD_BLOCK_NAME[j].id == data.struct_id[i]) {
 						name = HADES_STRING_WORLD_BLOCK_NAME[j].label;
 						break;
 					}
 				}
-				WriteTextBlockWithUniversalID(output, data.text_data[i], name.ToStdWstring(), data.script[i]->object_id, singlelang);
+				WriteTextBlockWithUniversalID(output, data.text_data[i], name.ToStdWstring(), data.struct_id[i], singlelang);
 			}
 		}
 	} else {
@@ -190,7 +190,7 @@ int BatchExportDialog::ExportBattleTexts(EnemyDataSet& data, wxString path, bool
 				if (GetGameType() != GAME_TYPE_PSX && singlelang != STEAM_LANGUAGE_NONE)
 					output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[singlelang] + _(L"\n"));
 			}
-			output.Write(wxString::Format(wxT("#HW fileid %u // %s\n"), data.battle_data[i]->object_id, data.battle_name[i]));
+			output.Write(wxString::Format(wxT("#HW fileid %u // %s\n"), data.struct_id[i], data.battle_name[i]));
 			TextDataStruct* td = data.text[i];
 			for (j = 0; j < td->text.size(); j++)
 				WriteTextSingleEntry(output, td->text[j].txt, wxString::Format(wxT("#HW text %u\n"), j), singlelang);
@@ -381,7 +381,7 @@ int BatchExportDialog::ExportFieldNames(FieldDataSet& data, wxString path) {
 	if (GetGameType() != GAME_TYPE_PSX && singlelang != STEAM_LANGUAGE_NONE)
 		output.Write(_(L"#HW language ") + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME[singlelang] + _(L"\n\n"));
 	for (unsigned int i = 0; i < data.amount; i++)
-		WriteTextSingleEntry(output, data.script_data[i]->name, wxString::Format(wxT("#HW fieldname %d\n"), data.script_data[i]->object_id), singlelang);
+		WriteTextSingleEntry(output, data.script_data[i]->name, wxString::Format(wxT("#HW fieldname %d\n"), data.struct_id[i]), singlelang);
 	output.Close();
 	return 0;
 }
@@ -954,7 +954,7 @@ int BatchExportDialog::ExportEnemyScript(SaveSet* dataset, wxString path, bool* 
 				output.Open(path + wxString::Format(wxT("_%u.txt"), i + 1), wxFile::write);
 				output.Write(_(L"#HW filetype ENEMYSCRIPT\n\n"));
 			}
-			output.Write(_(L"#HW fileid ") + wxString::Format(wxT("%u"), data.battle_data[i]->object_id));
+			output.Write(_(L"#HW fileid ") + wxString::Format(wxT("%u"), data.struct_id[i]));
 			if (addedinfo & BATCHING_SCRIPT_INFO_FILENAME)
 				output.Write(_(L" // ") + _(data.battle_name[i]));
 			output.Write(_(L"\n"));
@@ -1026,10 +1026,10 @@ int BatchExportDialog::ExportWorldScript(SaveSet* dataset, wxString path, bool* 
 				output.Open(path + wxString::Format(wxT("_%u.txt"), i + 1), wxFile::write);
 				output.Write(_(L"#HW filetype WORLDSCRIPT\n\n"));
 			}
-			output.Write(_(L"#HW fileid ") + wxString::Format(wxT("%u"), data.script[i]->object_id));
+			output.Write(_(L"#HW fileid ") + wxString::Format(wxT("%u"), data.struct_id[i]));
 			if (addedinfo & BATCHING_SCRIPT_INFO_FILENAME)
 				for (j = 0; j < G_V_ELEMENTS(HADES_STRING_WORLD_BLOCK_NAME); j++)
-					if (HADES_STRING_WORLD_BLOCK_NAME[j].id == data.script[i]->object_id) {
+					if (HADES_STRING_WORLD_BLOCK_NAME[j].id == data.struct_id[i]) {
 						output.Write(_(L" // ") + HADES_STRING_WORLD_BLOCK_NAME[j].label);
 						break;
 					}
@@ -1097,7 +1097,7 @@ int BatchExportDialog::ExportFieldScript(SaveSet* dataset, wxString path, bool* 
 				output.Open(path + wxString::Format(wxT("_%u.txt"), i + 1), wxFile::write);
 				output.Write(_(L"#HW filetype FIELDSCRIPT\n\n"));
 			}
-			output.Write(_(L"#HW fileid ") + wxString::Format(wxT("%u"), data.script_data[i]->object_id));
+			output.Write(_(L"#HW fileid ") + wxString::Format(wxT("%u"), data.struct_id[i]));
 			if (addedinfo & BATCHING_SCRIPT_INFO_FILENAME)
 				output.Write(_(L" // ") + _(data.script_data[i]->name.str_nice));
 			output.Write(_(L"\n"));
@@ -1294,7 +1294,7 @@ LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, set<int>& sectionmod
 					} else {
 						if (filescripttype == SCRIPT_TYPE_FIELD) {
 							for (i = 0; i < dataset->fieldset->amount; i++)
-								if (dataset->fieldset->script_data[i]->object_id == value) {
+								if (dataset->fieldset->struct_id[i] == value) {
 									currentscriptindex = i;
 									current_script_ptr = dataset->fieldset->script_data[i];
 									current_handler = new ScriptEditHandler(*current_script_ptr, filescripttype, dataset, NULL, NULL);
@@ -1309,7 +1309,7 @@ LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, set<int>& sectionmod
 							}
 						} else if (filescripttype == SCRIPT_TYPE_BATTLE) {
 							for (i = 0; i < dataset->enemyset->battle_amount; i++)
-								if (dataset->enemyset->battle_data[i]->object_id == value) {
+								if (dataset->enemyset->struct_id[i] == value) {
 									currentscriptindex = i;
 									current_script_ptr = dataset->enemyset->script[i];
 									current_handler = new ScriptEditHandler(*current_script_ptr, filescripttype, dataset, NULL, NULL);
@@ -1324,7 +1324,7 @@ LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, set<int>& sectionmod
 							}
 						} else {
 							for (i = 0; i < dataset->worldset->amount; i++)
-								if (dataset->worldset->script[i]->object_id == value) {
+								if (dataset->worldset->struct_id[i] == value) {
 									currentscriptindex = i;
 									current_script_ptr = dataset->worldset->script[i];
 									current_handler = new ScriptEditHandler(*current_script_ptr, filescripttype, dataset, NULL, NULL);
@@ -1499,28 +1499,34 @@ LogStruct BatchImportDialog::ImportScript(SaveSet* dataset, set<int>& sectionmod
 //           Images            //
 //=============================//
 
-int BatchExportDialog::ExportImageBackground(FieldDataSet& data, wxString path, bool* exportlist, bool mergetile, bool depthorder, int steamtitlelang) {
-	unsigned int i,j;
+int BatchExportDialog::ExportImageBackground(FieldDataSet& data, wxString path, bool* exportlist, bool asbgx, bool mergetile, bool depthorder, int steamtitlelang) {
+	unsigned int i, j;
 	bool mustflush;
-	LoadingDialogInit(data.amount,_(L"Exporting field backgrounds..."));
-	for (i=0;i<data.amount;i++)
-		if (exportlist==NULL || exportlist[i]) {
+	int fieldid;
+	LoadingDialogInit(data.amount, _(L"Exporting field backgrounds..."));
+	for (i = 0; i < data.amount; i++)
+		if (exportlist == NULL || exportlist[i]) {
 			if (data.background_data[i] == NULL)
 				continue;
+			fieldid = data.GetIdByIndex(i);
 			mustflush = false;
-			if (GetGameType()!=GAME_TYPE_PSX && data.tim_data[i]!=NULL && !data.tim_data[i]->loaded) {
+			if (GetGameType() != GAME_TYPE_PSX && data.tim_data[i] != NULL && !data.tim_data[i]->loaded) {
 				fstream ftmp;
 				data.tim_data[i]->Read(ftmp);
 				mustflush = true;
 			}
-			if (data.background_data[i]->camera_amount==1)
-				data.background_data[i]->Export((path+wxString::Format(wxT("_%u.tiff"),i+1)).mb_str(),0,NULL,true,mergetile,depthorder,steamtitlelang);
-			else
-				for (j=0;j<data.background_data[i]->camera_amount;j++)
-					data.background_data[i]->Export((path+wxString::Format(wxT("_%u_%u.tiff"),i+1,j+1)).mb_str(),j,NULL,true,mergetile,depthorder,steamtitlelang);
+			if (asbgx) {
+				data.background_data[i]->WriteBGX((path + wxString::Format(wxT("/%u/"), fieldid)).ToStdString(), "Background.bgx");
+			} else {
+				if (data.background_data[i]->camera_amount == 1)
+					data.background_data[i]->Export((path + wxString::Format(wxT("_%u.tiff"), fieldid)).mb_str(), 0, NULL, true, mergetile, depthorder, steamtitlelang);
+				else
+					for (j = 0; j < data.background_data[i]->camera_amount; j++)
+						data.background_data[i]->Export((path + wxString::Format(wxT("_%u_%u.tiff"), fieldid, j + 1)).mb_str(), j, NULL, true, mergetile, depthorder, steamtitlelang);
+			}
 			if (mustflush)
 				data.tim_data[i]->Flush();
-			LoadingDialogUpdate(i+1);
+			LoadingDialogUpdate(i + 1);
 		}
 	LoadingDialogEnd();
 	return 0;
@@ -1537,7 +1543,7 @@ int BatchExportDialog::ExportWalkmesh(FieldDataSet& data, wxString path, bool* e
 		if (exportlist == NULL || exportlist[i]) {
 			if (data.walkmesh[i] == NULL)
 				continue;
-			data.walkmesh[i]->ExportAsObj((path + wxString::Format(wxT("_%u.obj"), i + 1)).ToStdString(), data.script_data[i]->name, data.script_data[i]->object_id);
+			data.walkmesh[i]->ExportAsObj((path + wxString::Format(wxT("_%u.obj"), i + 1)).ToStdString(), data.script_data[i]->name, data.struct_id[i]);
 			LoadingDialogUpdate(i + 1);
 		}
 	LoadingDialogEnd();
@@ -1698,7 +1704,7 @@ void BatchExportDialog::OnButtonClick(wxCommandEvent& event) {
 			ExportFieldScript(dataset, m_filepicker->GetPath(), exportlist, m_scriptsplitfile->IsChecked(), m_scriptcomplyappendmode->IsChecked(), BATCHING_SCRIPT_INFO_FILENAME | BATCHING_SCRIPT_INFO_TEXT_LINK | (m_scriptcomment->IsChecked() ? BATCHING_SCRIPT_INFO_ARGUMENT : 0));
 			break;
 		case 200:
-			ExportImageBackground(*dataset->fieldset, m_filepicker->GetPath(), exportlist, m_mergetile->IsChecked(), m_exportorder->IsChecked(), m_languagetitle->GetSelection() - 1);
+			ExportImageBackground(*dataset->fieldset, m_filepicker->GetPath(), exportlist, m_exportbgx->IsChecked(), m_mergetile->IsChecked(), m_exportorder->IsChecked(), m_languagetitle->GetSelection() - 1);
 			break;
 		case 300:
 			ExportWalkmesh(*dataset->fieldset, m_filepicker->GetPath(), exportlist);

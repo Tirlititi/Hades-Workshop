@@ -150,6 +150,7 @@
 #define HADES_STRING_TXT_SAVE_SUCCESS L"Text successfully exported!"
 #define HADES_STRING_TEXTURE_SAVE_SUCCESS L"Texture successfully exported!"
 #define HADES_STRING_FIELDTEXTURE_SAVE_SUCCESS L"Background successfully exported!"
+#define HADES_STRING_FIELDTEXTURE_SAVE_NOBGX L"Backgrounds in BGX format can only be exported as .bgx"
 #define HADES_STRING_SCENE_SAVE_SUCCESS L"Battle Scene model successfully exported!"
 #define HADES_STRING_WALKMESH_SAVE_SUCCESS L"Walkmesh successfully exported!"
 #define HADES_STRING_WALKMESH_LOAD_SUCCESS L"Walkmesh successfully imported!"
@@ -237,11 +238,11 @@ extern vector<wxString> HADES_STRING_PARTY_SPECIAL_DATA;
 #define HADES_STRING_WALKMESH_IMPORT_SUCCESS	"Walkmesh successfully imported:\n"\
 												" - %d walkpaths (different objects)\n"\
 												" - %d triangles\n"\
-												" - %d vertices"
-#define HADES_STRING_WALKMESH_IMPORT_DEGEN_TRI "%d triangles were degenerate (remember that vertex positions are rounded to whole numbers)"
-#define HADES_STRING_WALKMESH_IMPORT_ANIM_LOSS L"This field contained a walkmesh animation that got lost in the process"
-#define HADES_STRING_WALKMESH_IMPORT_NORMALS L"Triangles can accept only 1 normal (not 1 per vertex); the first normal was used everytimes it conflicted"
-#define HADES_STRING_WALKMESH_IMPORT_QUADS L"Only triangular faces are accepted; polygons with more than 3 vertices were cut down to 3 vertices"
+												" - %d vertices\n"
+#define HADES_STRING_WALKMESH_IMPORT_DEGEN_TRI "%d triangles were degenerate (remember that vertex positions are rounded to whole numbers)\n"
+#define HADES_STRING_WALKMESH_IMPORT_ANIM_LOSS L"This field contained a walkmesh animation that got lost in the process\n"
+#define HADES_STRING_WALKMESH_IMPORT_NORMALS L"Triangles can accept only 1 normal (not 1 per vertex); the first normal was used everytimes it conflicted\n"
+#define HADES_STRING_WALKMESH_IMPORT_QUADS L"Only triangular faces are accepted; polygons with more than 3 vertices were cut down to 3 vertices\n"
 #define HADES_STRING_WALKMESH_IMPORT_HINT L"You would better edit the imported walkmesh in order to check it and setup its pathing flags"
 
 //-- Item Panel

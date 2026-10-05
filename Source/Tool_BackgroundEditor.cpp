@@ -52,22 +52,22 @@ void GetSpiralCoordinate(int& resultx, int& resulty, unsigned int step) {
 	bool currentisx = false;
 	int nbx = 0, nby = 0;
 	int dirx, diry;
-	while (i<step) {
+	while (i < step) {
 		i += ++nbx;
-		if (i>=step) {
+		if (i >= step) {
 			currentisx = true;
 			break;
 		}
 		i += ++nby;
 	}
-	dirx = (nbx%2)*2-1;
-	diry = (nby%2)*2-1;
-	resultx = (nbx+1)/2*dirx;
-	resulty = (nby+1)/2*diry;
+	dirx = (nbx % 2) * 2 - 1;
+	diry = (nby % 2) * 2 - 1;
+	resultx = (nbx + 1) / 2 * dirx;
+	resulty = (nby + 1) / 2 * diry;
 	if (currentisx)
-		resultx -= (i-step)*dirx;
+		resultx -= (i - step) * dirx;
 	else
-		resulty -= (i-step)*diry;
+		resulty -= (i - step) * diry;
 }
 
 // imgfilename order must be the one of tiles
@@ -178,7 +178,7 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 		tilei = i < tiledata.tiles_amount ? i : i + tiledata.title_tile_amount;
 		if (skipuk && tilei >= tiledata.tiles_amount + STEAM_LANGUAGE_EN * tiledata.title_tile_amount && tilei < tiledata.tiles_amount + (STEAM_LANGUAGE_EN + 1) * tiledata.title_tile_amount)
 			continue;
-		FieldTilesTileDataStruct& tile = tiledata.tiles[tilei];
+		FieldTilesTilesetDataStruct& tile = tiledata.tiles[tilei];
 		FieldTilesCameraDataStruct& camera = tiledata.camera[tile.camera_id];
 		if (!loadallimage)
 			tblockimgarray[i].LoadFile(imgfilename[i], type);
@@ -197,16 +197,16 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 		uint8_t* imgalpha = tblockimg.GetAlpha();
 		for (j = 0; j < tile.tile_amount; j++) {
 			/* Old Blend Modes
-			switch (tile.tile_alpha[j]) {
-				case 0: alphalimit = tile.tile_trans[j] ? 0x7E : 0xFF; break;
-				case 1: alphalimit = tile.tile_trans[j] ? 0x7E : 0xFF; break;
+			switch (tile.tile[j].alpha) {
+				case 0: alphalimit = tile.tile[j].trans ? 0x7E : 0xFF; break;
+				case 1: alphalimit = tile.tile[j].trans ? 0x7E : 0xFF; break;
 				case 2: alphalimit = 0x18; break;
 				case 3: alphalimit = 0x7E; break;
 			}*/
-			imgtilex = (tile.pos_x + tile.tile_pos_x[j] - camera.pos_x) / FIELD_TILE_BASE_SIZE * tilesize;
-			imgtiley = (tile.pos_y + tile.tile_pos_y[j] - camera.pos_y) / FIELD_TILE_BASE_SIZE * tilesize;
-			atlasx = (tile.tile_steam_id[j] % atlastilecolcount) * tileperiod + tilegap;
-			atlasy = (tile.tile_steam_id[j] / atlastilecolcount) * tileperiod + tilegap;
+			imgtilex = (tile.pos_x + tile.tile[j].pos_x - camera.pos_x) / FIELD_TILE_BASE_SIZE * tilesize;
+			imgtiley = (tile.pos_y + tile.tile[j].pos_y - camera.pos_y) / FIELD_TILE_BASE_SIZE * tilesize;
+			atlasx = (tile.tile[j].steam_id % atlastilecolcount) * tileperiod + tilegap;
+			atlasy = (tile.tile[j].steam_id / atlastilecolcount) * tileperiod + tilegap;
 			// interior of the tile
 			for (y = 0; y < tilesize; y++)
 				for (x = 0; x < tilesize; x++) {
@@ -487,40 +487,40 @@ int CreateBackgroundImage(wxString* imgfilename, wxString outputname, FieldTiles
 }
 
 void ToolBackgroundEditor::GetFileNamesAndDepth(wxString basename, wxString multibackseparator, wxString endofname, FieldTilesDataStruct& tiledata, bool sortlayer, bool revertorder, wxString*& resname, unsigned int*& resdepth, bool usemultibackground) {
-	unsigned int tilesamountplustitle = tiledata.tiles_amount+tiledata.title_tile_amount*(STEAM_LANGUAGE_AMOUNT-1);
+	unsigned int tilesamountplustitle = tiledata.tiles_amount + tiledata.title_tile_amount * (STEAM_LANGUAGE_AMOUNT - 1);
 	resname = new wxString[tilesamountplustitle];
 	resdepth = new unsigned int[tiledata.tiles_amount];
-	unsigned int i,j,tileimgindex;
-	for (i=0;i<tilesamountplustitle;i++) {
-		if (i<tiledata.tiles_amount && sortlayer) {
+	unsigned int i, j, tileimgindex;
+	for (i = 0; i < tilesamountplustitle; i++) {
+		if (i < tiledata.tiles_amount && sortlayer) {
 			tileimgindex = 0;
-			for (j=0;j<tiledata.tiles_amount;j++) {
-				if (&tiledata.tiles[i]==tiledata.tiles_sorted[j])
+			for (j = 0; j < tiledata.tiles_amount; j++) {
+				if (&tiledata.tiles[i] == tiledata.tiles_sorted[j])
 					break;
-				if (!usemultibackground || tiledata.tiles[i].camera_id==tiledata.tiles_sorted[j]->camera_id)
+				if (!usemultibackground || tiledata.tiles[i].camera_id == tiledata.tiles_sorted[j]->camera_id)
 					tileimgindex++;
 			}
 			resdepth[i] = i;
 		} else {
 			tileimgindex = 0;
-			for (j=0;j<i;j++)
-				if (!usemultibackground || tiledata.tiles[i].camera_id==tiledata.tiles[j].camera_id)
+			for (j = 0; j < i; j++)
+				if (!usemultibackground || tiledata.tiles[i].camera_id == tiledata.tiles[j].camera_id)
 					tileimgindex++;
-			if (i<tiledata.tiles_amount)
-				for (j=0;j<tiledata.tiles_amount;j++)
-					if (&tiledata.tiles[i]==tiledata.tiles_sorted[j]) {
+			if (i < tiledata.tiles_amount)
+				for (j = 0; j < tiledata.tiles_amount; j++)
+					if (&tiledata.tiles[i] == tiledata.tiles_sorted[j]) {
 						resdepth[i] = j;
 						break;
 					}
 		}
 		if (revertorder) {
 			unsigned int camtileamount = 0;
-			for (j=0;j<tilesamountplustitle;j++)
-				if (!usemultibackground || tiledata.tiles[i].camera_id==tiledata.tiles[j].camera_id)
+			for (j = 0; j < tilesamountplustitle; j++)
+				if (!usemultibackground || tiledata.tiles[i].camera_id == tiledata.tiles[j].camera_id)
 					camtileamount++;
-			tileimgindex = camtileamount-tileimgindex-1;
-			if (i<tiledata.tiles_amount)
-				resdepth[i] = tiledata.tiles_amount-resdepth[i]-1;
+			tileimgindex = camtileamount - tileimgindex - 1;
+			if (i < tiledata.tiles_amount)
+				resdepth[i] = tiledata.tiles_amount - resdepth[i] - 1;
 		}
 		if (usemultibackground)
 			resname[i] << basename << (unsigned int)tiledata.tiles[i].camera_id << multibackseparator << tileimgindex << endofname;
@@ -531,13 +531,13 @@ void ToolBackgroundEditor::GetFileNamesAndDepth(wxString basename, wxString mult
 
 void ToolBackgroundEditor::DrawImage(wxDC& dc) {
 	if (main_img.IsOk()) {
-		m_texturewindow->SetVirtualSize(main_img.GetWidth(),main_img.GetHeight());
-		MACRO_CREATE_MEMORY_DC(dc,m_texturewindow)
-		mdc.DrawBitmap(main_img,0,0);
+		m_texturewindow->SetVirtualSize(main_img.GetWidth(), main_img.GetHeight());
+		MACRO_CREATE_MEMORY_DC(dc, m_texturewindow)
+			mdc.DrawBitmap(main_img, 0, 0);
 		if (tile_img.IsOk())
-			mdc.DrawBitmap(tile_img,0,0);
+			mdc.DrawBitmap(tile_img, 0, 0);
 		m_texturewindow->DoPrepareDC(dc);
-		dc.Blit(wxPoint(0,0),mdc.GetSize(),&mdc,wxPoint(0,0));
+		dc.Blit(wxPoint(0, 0), mdc.GetSize(), &mdc, wxPoint(0, 0));
 	} else {
 		dc.Clear();
 	}
@@ -636,11 +636,11 @@ void ToolBackgroundEditor::ComputeTileFilter(int x, int y) {
 				for (y = 0; (int)y < tileimgtoken.GetHeight(); y++)
 					tileimgtoken.SetAlpha(x, y, 0);
 			FieldTilesDataStruct& tileset = *cddata->fieldset.background_data[m_fieldchoice->GetSelection()];
-			FieldTilesTileDataStruct& tile = i < tileset.tiles_amount ? tileset.tiles[i] : tileset.tiles[i + tileset.title_tile_amount];
+			FieldTilesTilesetDataStruct& tile = i < tileset.tiles_amount ? tileset.tiles[i] : tileset.tiles[i + tileset.title_tile_amount];
 			FieldTilesCameraDataStruct& camera = tileset.camera[tile.camera_id];
 			for (j = 0; j < tile.tile_amount; j++) {
-				imgtilex = (tile.pos_x + tile.tile_pos_x[j] - camera.pos_x) / FIELD_TILE_BASE_SIZE * tilesize;
-				imgtiley = (tile.pos_y + tile.tile_pos_y[j] - camera.pos_y) / FIELD_TILE_BASE_SIZE * tilesize;
+				imgtilex = (tile.pos_x + tile.tile[j].pos_x - camera.pos_x) / FIELD_TILE_BASE_SIZE * tilesize;
+				imgtiley = (tile.pos_y + tile.tile[j].pos_y - camera.pos_y) / FIELD_TILE_BASE_SIZE * tilesize;
 				tileimgtoken.SetRGB(wxRect(imgtilex, imgtiley, tilesize, tilesize), TILECOLOR_INTERIOR.Red(), TILECOLOR_INTERIOR.Green(), TILECOLOR_INTERIOR.Blue());
 				for (x = 0; x < tilesize && (int)(imgtilex + x) < tileimgtoken.GetWidth(); x++)
 					for (y = 0; y < tilesize && (int)(imgtiley + y) < tileimgtoken.GetHeight(); y++) {
@@ -686,7 +686,7 @@ void ToolBackgroundEditor::OnFieldChoice(wxCommandEvent& event) {
 		wxArrayString choicelist;
 		unsigned int i;
 		m_tilelist->Clear();
-		for (i=0;i<tileset.tiles_amount+tileset.title_tile_amount*(STEAM_LANGUAGE_AMOUNT-1);i++) {
+		for (i = 0; i < tileset.tiles_amount + tileset.title_tile_amount * (STEAM_LANGUAGE_AMOUNT - 1); i++) {
 			wxString tilelabel;
 			tilelabel << L"Tile Block " << i;
 			choicelist.Add(tilelabel);
@@ -697,10 +697,10 @@ void ToolBackgroundEditor::OnFieldChoice(wxCommandEvent& event) {
 
 void ToolBackgroundEditor::OnChoice(wxCommandEvent& event) {
 	int id = event.GetId();
-	if (id==wxID_FORMAT)
-		m_dxtflagchoice->Enable(event.GetSelection()>=3);
-	else if (id==wxID_MASSFORMAT)
-		m_massdxtflagchoice->Enable(event.GetSelection()>=3);
+	if (id == wxID_FORMAT)
+		m_dxtflagchoice->Enable(event.GetSelection() >= 3);
+	else if (id == wxID_MASSFORMAT)
+		m_massdxtflagchoice->Enable(event.GetSelection() >= 3);
 }
 
 void ToolBackgroundEditor::OnTileSelect(wxCommandEvent& event) {
@@ -711,7 +711,7 @@ void ToolBackgroundEditor::OnTileSelect(wxCommandEvent& event) {
 
 void ToolBackgroundEditor::OnCheckBox(wxCommandEvent& event) {
 	int id = event.GetId();
-	if (id==wxID_SORTLAYER || id==wxID_REVERTLAYER) {
+	if (id == wxID_SORTLAYER || id == wxID_REVERTLAYER) {
 		LoadAndMergeImages();
 		ComputeTileFilter();
 		UpdateImage();
@@ -720,7 +720,7 @@ void ToolBackgroundEditor::OnCheckBox(wxCommandEvent& event) {
 
 void ToolBackgroundEditor::OnSpinChange(wxSpinEvent& event) {
 	int id = event.GetId();
-	if (id==wxID_RESOLUTION) {
+	if (id == wxID_RESOLUTION) {
 		ComputeTileFilter();
 		UpdateImage();
 	}
@@ -728,22 +728,22 @@ void ToolBackgroundEditor::OnSpinChange(wxSpinEvent& event) {
 
 void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 	int id = event.GetId();
-	unsigned int i,j;
-	if (id==wxID_APPLY) {
-		if (m_auinotebook->GetSelection()==0) { // Converter
+	unsigned int i, j;
+	if (id == wxID_APPLY) {
+		if (m_auinotebook->GetSelection() == 0) { // Converter
 			if (m_fieldchoice->GetSelection() == wxNOT_FOUND || cddata->fieldset.background_data[m_fieldchoice->GetSelection()] == NULL) {
 				wxLogError(HADES_STRING_BACKGROUNDIMPORT_ERROR_NO_BACKGROUND);
 				return;
 			}
 			uint32_t textureformat;
-			if (m_convertformat->GetSelection()==0)			textureformat = 0x03;
-			else if (m_convertformat->GetSelection()==1)	textureformat = 0x04;
-			else if (m_convertformat->GetSelection()==2)	textureformat = 0x05;
-			else if (m_convertformat->GetSelection()==3)	textureformat = 0x0A;
+			if (m_convertformat->GetSelection() == 0)		textureformat = 0x03;
+			else if (m_convertformat->GetSelection() == 1)	textureformat = 0x04;
+			else if (m_convertformat->GetSelection() == 2)	textureformat = 0x05;
+			else if (m_convertformat->GetSelection() == 3)	textureformat = 0x0A;
 			else											textureformat = 0x0C;
-			wxString destfilebase = m_exportdir->GetPath()+_(L"\\");
+			wxString destfilebase = m_exportdir->GetPath() + _(L"\\");
 			for (i = 0; i < G_V_ELEMENTS(SteamFieldScript); i++)
-				if (SteamFieldScript[i].script_id == cddata->fieldset.struct_id[m_fieldchoice->GetSelection()]) {
+				if (SteamFieldScript[i].script_id == cddata->fieldset.GetIdByIndex(m_fieldchoice->GetSelection())) {
 					destfilebase += _(SteamFieldScript[i].background_name);
 					break;
 				}
@@ -753,78 +753,78 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 			unsigned int tilesizebackup = tileset->parent->tile_size;
 			tileset->parent->tile_size = m_resolution->GetValue();
 			wxFileName imgfilebasename = m_imagepicker->GetPath();
-			wxString imgfileext = _(L".")+imgfilebasename.GetExt();
-			int lastdigitchar = imgfilebasename.GetName().Len()-1;
+			wxString imgfileext = _(L".") + imgfilebasename.GetExt();
+			int lastdigitchar = imgfilebasename.GetName().Len() - 1;
 			bool usemultiback;
-			while (lastdigitchar>=0 && isdigit(imgfilebasename.GetName().GetChar(lastdigitchar)))
+			while (lastdigitchar >= 0 && isdigit(imgfilebasename.GetName().GetChar(lastdigitchar)))
 				lastdigitchar--;
-			if (lastdigitchar>=0 && imgfilebasename.GetName().GetChar(lastdigitchar)==wxUniChar(L'_')) {
+			if (lastdigitchar >= 0 && imgfilebasename.GetName().GetChar(lastdigitchar) == wxUniChar(L'_')) {
 				usemultiback = true;
 				lastdigitchar--;
-				while (lastdigitchar>=0 && isdigit(imgfilebasename.GetName().GetChar(lastdigitchar)))
+				while (lastdigitchar >= 0 && isdigit(imgfilebasename.GetName().GetChar(lastdigitchar)))
 					lastdigitchar--;
 			} else {
 				usemultiback = false;
 			}
 			imgfilebasename.ClearExt();
-			imgfilebasename.SetName(imgfilebasename.GetName().Mid(0,lastdigitchar+1));
-			unsigned int tilesamountplustitle = tileset->tiles_amount+tileset->title_tile_amount*(STEAM_LANGUAGE_AMOUNT-1);
+			imgfilebasename.SetName(imgfilebasename.GetName().Mid(0, lastdigitchar + 1));
+			unsigned int tilesamountplustitle = tileset->tiles_amount + tileset->title_tile_amount * (STEAM_LANGUAGE_AMOUNT - 1);
 			wxString* imgfilelist;
 			unsigned int* imgorderlist;
-			GetFileNamesAndDepth(imgfilebasename.GetFullPath(),_(L"_"),imgfileext,*tileset,m_sortlayer->IsChecked(),m_revertlayer->IsChecked(),imgfilelist,imgorderlist,usemultiback);
-			int res = CreateBackgroundImage(imgfilelist,destfilebase+_(L".tex"),*tileset,imgorderlist,textureformat,m_dxtflagchoice->GetSelection());
+			GetFileNamesAndDepth(imgfilebasename.GetFullPath(), _(L"_"), imgfileext, *tileset, m_sortlayer->IsChecked(), m_revertlayer->IsChecked(), imgfilelist, imgorderlist, usemultiback);
+			int res = CreateBackgroundImage(imgfilelist, destfilebase + _(L".tex"), *tileset, imgorderlist, textureformat, m_dxtflagchoice->GetSelection());
 			tileset->parent->tile_size = tilesizebackup;
 			delete[] imgfilelist;
 			delete[] imgorderlist;
-			if (res==0) {
-				wxMessageDialog popupsuccess(this,HADES_STRING_STEAM_SAVE_SUCCESS,HADES_STRING_SUCCESS,wxOK|wxCENTRE);
+			if (res == 0) {
+				wxMessageDialog popupsuccess(this, HADES_STRING_STEAM_SAVE_SUCCESS, HADES_STRING_SUCCESS, wxOK | wxCENTRE);
 				popupsuccess.ShowModal();
 			} else {
 				LogStruct log;
-				if (res<0) {
+				if (res < 0) {
 					wxString warnstr;
-					warnstr.Printf(wxT(HADES_STRING_BACKGROUNDIMPORT_MISSING_LAYERS),-res,m_fieldchoice->GetSelection(),GetFieldNameOrDefault(cddata,m_fieldchoice->GetSelection()));
+					warnstr.Printf(wxT(HADES_STRING_BACKGROUNDIMPORT_MISSING_LAYERS), -res, m_fieldchoice->GetSelection(), GetFieldNameOrDefault(cddata, m_fieldchoice->GetSelection()));
 					log.AddWarning(warnstr.wc_str());
-				} else if (res==1) {
+				} else if (res == 1) {
 					wxString errstr;
-					errstr.Printf(wxT(HADES_STRING_BACKGROUNDIMPORT_ERROR_CREATE),m_fieldchoice->GetSelection(),GetFieldNameOrDefault(cddata,m_fieldchoice->GetSelection()));
+					errstr.Printf(wxT(HADES_STRING_BACKGROUNDIMPORT_ERROR_CREATE), m_fieldchoice->GetSelection(), GetFieldNameOrDefault(cddata, m_fieldchoice->GetSelection()));
 					log.AddError(errstr.wc_str());
-				} else if (res==2) {
+				} else if (res == 2) {
 					wxString errstr;
-					errstr.Printf(wxT(HADES_STRING_BACKGROUNDIMPORT_ERROR_DIMENSIONS),m_fieldchoice->GetSelection(),GetFieldNameOrDefault(cddata,m_fieldchoice->GetSelection()));
+					errstr.Printf(wxT(HADES_STRING_BACKGROUNDIMPORT_ERROR_DIMENSIONS), m_fieldchoice->GetSelection(), GetFieldNameOrDefault(cddata, m_fieldchoice->GetSelection()));
 					log.AddError(errstr.wc_str());
-				} else if (res==3) {
+				} else if (res == 3) {
 					wxString errstr;
-					errstr.Printf(wxT(HADES_STRING_BACKGROUNDIMPORT_ERROR_ALPHA),m_fieldchoice->GetSelection(),GetFieldNameOrDefault(cddata,m_fieldchoice->GetSelection()));
+					errstr.Printf(wxT(HADES_STRING_BACKGROUNDIMPORT_ERROR_ALPHA), m_fieldchoice->GetSelection(), GetFieldNameOrDefault(cddata, m_fieldchoice->GetSelection()));
 					log.AddError(errstr.wc_str());
 				}
-				LogDialog logdial(this,log);
+				LogDialog logdial(this, log);
 				logdial.ShowModal();
 			}
-		} else if (m_auinotebook->GetSelection()==1) { // Mass Converter
+		} else if (m_auinotebook->GetSelection() == 1) { // Mass Converter
 			uint32_t textureformat;
-			if (m_massconvertformat->GetSelection()==0)			textureformat = 0x03;
-			else if (m_massconvertformat->GetSelection()==1)	textureformat = 0x04;
-			else if (m_massconvertformat->GetSelection()==2)	textureformat = 0x05;
-			else if (m_massconvertformat->GetSelection()==3)	textureformat = 0x0A;
+			if (m_massconvertformat->GetSelection() == 0)		textureformat = 0x03;
+			else if (m_massconvertformat->GetSelection() == 1)	textureformat = 0x04;
+			else if (m_massconvertformat->GetSelection() == 2)	textureformat = 0x05;
+			else if (m_massconvertformat->GetSelection() == 3)	textureformat = 0x0A;
 			else												textureformat = 0x0C;
-			wxString destfilebase = m_massexportdir->GetPath()+_(L"\\");
-			wxString sourcefilebase = m_massimageimporter->GetPath()+_(L"\\");
-			wxStringTokenizer sourcefileformat(m_massimageformat->GetValue(),_(L"%"),wxTOKEN_RET_EMPTY_ALL);
-			if (sourcefileformat.CountTokens()!=4) {
+			wxString destfilebase = m_massexportdir->GetPath() + _(L"\\");
+			wxString sourcefilebase = m_massimageimporter->GetPath() + _(L"\\");
+			wxStringTokenizer sourcefileformat(m_massimageformat->GetValue(), _(L"%"), wxTOKEN_RET_EMPTY_ALL);
+			if (sourcefileformat.CountTokens() != 4) {
 				wxLogError(HADES_STRING_INVALID_IMAGE_NAME_FORMAT);
 				return;
 			}
 			LogStruct log;
 			wxString sourcefiletoken[4];
 			wxString destfilefield;
-			for (i=0;i<4;i++)
+			for (i = 0; i < 4; i++)
 				sourcefiletoken[i] = sourcefileformat.GetNextToken();
-			unsigned int fieldindex,fieldid;
+			unsigned int fieldindex, fieldid;
 			unsigned int counter = 0, countermax = 0;
-			for (fieldindex=0;fieldindex<cddata->fieldset.amount;fieldindex++) {
+			for (fieldindex = 0; fieldindex < cddata->fieldset.amount; fieldindex++) {
 				if (m_massfieldid->IsChecked())
-					fieldid = cddata->fieldset.struct_id[fieldindex];
+					fieldid = cddata->fieldset.GetIdByIndex(fieldindex);
 				else
 					fieldid = fieldindex;
 				wxString sourcefilenamecheck;
@@ -832,14 +832,14 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 				if (wxFile::Exists(sourcefilenamecheck))
 					countermax++;
 			}
-			if (countermax==0) {
+			if (countermax == 0) {
 				wxLogError(HADES_STRING_EMPTY_PROCEDURE);
 				return;
 			}
-			LoadingDialogInit(countermax,_(L"Converting..."));
-			for (fieldindex=0;fieldindex<cddata->fieldset.amount;fieldindex++) {
+			LoadingDialogInit(countermax, _(L"Converting..."));
+			for (fieldindex = 0; fieldindex < cddata->fieldset.amount; fieldindex++) {
 				if (m_massfieldid->IsChecked())
-					fieldid = cddata->fieldset.struct_id[fieldindex];
+					fieldid = cddata->fieldset.GetIdByIndex(fieldindex);
 				else
 					fieldid = fieldindex;
 				wxString sourcefilenamecheck;
@@ -848,30 +848,30 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 					FieldTilesDataStruct* tileset = cddata->fieldset.background_data[fieldindex];
 					if (tileset == NULL)
 						continue;
-					unsigned int tilesamountplustitle = tileset->tiles_amount+tileset->title_tile_amount*(STEAM_LANGUAGE_AMOUNT-1);
+					unsigned int tilesamountplustitle = tileset->tiles_amount + tileset->title_tile_amount * (STEAM_LANGUAGE_AMOUNT - 1);
 					unsigned int tilesizebackup = tileset->parent->tile_size;
 					wxString imgfilebase;
 					imgfilebase << sourcefilebase << sourcefiletoken[0] << fieldid << sourcefiletoken[1];
 					tileset->parent->tile_size = m_massresolution->GetValue();
-					destfilefield = destfilebase+_(SteamFieldScript[fieldindex].background_name);
+					destfilefield = destfilebase + _(SteamFieldScript[fieldindex].background_name);
 					wxString* imgfilelist;
 					unsigned int* imgorderlist;
-					GetFileNamesAndDepth(imgfilebase,sourcefiletoken[2],sourcefiletoken[3],*tileset,m_masssortlayer->IsChecked(),m_massrevertlayer->IsChecked(),imgfilelist,imgorderlist,true);
-					int res = CreateBackgroundImage(imgfilelist,destfilefield+_(L".tex"),*tileset,imgorderlist,textureformat,m_massdxtflagchoice->GetSelection());
+					GetFileNamesAndDepth(imgfilebase, sourcefiletoken[2], sourcefiletoken[3], *tileset, m_masssortlayer->IsChecked(), m_massrevertlayer->IsChecked(), imgfilelist, imgorderlist, true);
+					int res = CreateBackgroundImage(imgfilelist, destfilefield + _(L".tex"), *tileset, imgorderlist, textureformat, m_massdxtflagchoice->GetSelection());
 					tileset->parent->tile_size = tilesizebackup;
-					if (res<0) {
+					if (res < 0) {
 						wxString warnstr;
-						warnstr.Printf(wxT(HADES_STRING_BACKGROUNDIMPORT_MISSING_LAYERS),-res,fieldid,GetFieldNameOrDefault(cddata,fieldindex));
+						warnstr.Printf(wxT(HADES_STRING_BACKGROUNDIMPORT_MISSING_LAYERS), -res, fieldid, GetFieldNameOrDefault(cddata, fieldindex));
 						log.AddWarning(warnstr.wc_str());
-					} else if (res==1) {
+					} else if (res == 1) {
 						wxString errstr;
-						errstr.Printf(wxT(HADES_STRING_BACKGROUNDIMPORT_ERROR_CREATE),fieldid,GetFieldNameOrDefault(cddata,fieldindex));
+						errstr.Printf(wxT(HADES_STRING_BACKGROUNDIMPORT_ERROR_CREATE), fieldid, GetFieldNameOrDefault(cddata, fieldindex));
 						log.AddError(errstr.wc_str());
-					} else if (res==2) {
+					} else if (res == 2) {
 						wxString errstr;
-						errstr.Printf(wxT(HADES_STRING_BACKGROUNDIMPORT_ERROR_DIMENSIONS),fieldid,GetFieldNameOrDefault(cddata,fieldindex));
+						errstr.Printf(wxT(HADES_STRING_BACKGROUNDIMPORT_ERROR_DIMENSIONS), fieldid, GetFieldNameOrDefault(cddata, fieldindex));
 						log.AddError(errstr.wc_str());
-					} else if (res==3) {
+					} else if (res == 3) {
 						wxString errstr;
 						errstr.Printf(wxT(HADES_STRING_BACKGROUNDIMPORT_ERROR_ALPHA), fieldid, GetFieldNameOrDefault(cddata, fieldid));
 						log.AddError(errstr.wc_str());
@@ -882,16 +882,16 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 				}
 			}
 			LoadingDialogEnd();
-			LogDialog logdial(this,log);
+			LogDialog logdial(this, log);
 			logdial.ShowModal();
 		} else { // Mass Importer
-			wxString importdirname = m_importdir->GetPath()+_(L"\\");
+			wxString importdirname = m_importdir->GetPath() + _(L"\\");
 			wxString importpdatadir = m_importlauncher->GetPath();
-			if (!wxFile::Exists(importpdatadir) || importpdatadir.Find(_(L"FF9_Launcher.exe"))==wxNOT_FOUND) {
+			if (!wxFile::Exists(importpdatadir) || importpdatadir.Find(_(L"FF9_Launcher.exe")) == wxNOT_FOUND) {
 				wxLogError(HADES_STRING_INVALID_FF9LAUNCHER);
 				return;
 			}
-			importpdatadir = importpdatadir.Mid(0,importpdatadir.Find(_(L"FF9_Launcher.exe")))+_(L"StreamingAssets\\");
+			importpdatadir = importpdatadir.Mid(0, importpdatadir.Find(_(L"FF9_Launcher.exe"))) + _(L"StreamingAssets\\");
 			wxString importfilename;
 			wxString filename;
 			vector<bool> copylist[9];
@@ -901,36 +901,36 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 			UnityArchiveMetaData metafield[9];
 			UnityArchiveAssetBundle fieldindexlist[9];
 			bool isok = true;
-			for (i=0;i<9;i++) {
+			for (i = 0; i < 9; i++) {
 				filename = importpdatadir;
-				filename << _(L"p0data1") << (i+1) << _(L".bin");
-				filebase[i].open(filename.mb_str(),ios::in | ios::binary);
-				filedest[i].open((filename+_(L".tmp")).mb_str(),ios::out | ios::binary);
+				filename << _(L"p0data1") << (i + 1) << _(L".bin");
+				filebase[i].open(filename.mb_str(), ios::in | ios::binary);
+				filedest[i].open((filename + _(L".tmp")).mb_str(), ios::out | ios::binary);
 				if (!filebase[i].is_open()) {
-					wxLogError(HADES_STRING_OPEN_ERROR_FAIL,filename);
+					wxLogError(HADES_STRING_OPEN_ERROR_FAIL, filename);
 					isok = false;
 				}
 				if (!filedest[i].is_open()) {
-					wxLogError(HADES_STRING_OPEN_ERROR_CREATE,filename);
+					wxLogError(HADES_STRING_OPEN_ERROR_CREATE, filename);
 					isok = false;
 				}
 				if (!isok)
 					break;
-				metafield[i].Load(filebase[i], (UnityArchiveFile)(UNITY_ARCHIVE_DATA11+i));
-				filebase[i].seekg(metafield[i].GetFileOffset("",142));
+				metafield[i].Load(filebase[i], (UnityArchiveFile)(UNITY_ARCHIVE_DATA11 + i));
+				filebase[i].seekg(metafield[i].GetFileOffset("", 142));
 				fieldindexlist[i].Load(filebase[i]);
 				filebase[i].seekg(0);
 				copylist[i].resize(metafield[i].header_file_amount);
 				filenewsize[i].resize(metafield[i].header_file_amount);
 			}
 			if (!isok) {
-				for (i=0;i<9;i++) {
+				for (i = 0; i < 9; i++) {
 					if (filebase[i].is_open()) filebase[i].close();
 					if (filedest[i].is_open()) filedest[i].close();
 				}
 				return;
 			}
-			LoadingDialogInit(11,_(L"Updating Unity Archives..."));
+			LoadingDialogInit(11, _(L"Updating Unity Archives..."));
 			vector<int32_t> fieldimagefile(G_V_ELEMENTS(SteamFieldScript));
 			string fieldbacknamelower;
 			for (i = 0; i < G_V_ELEMENTS(SteamFieldScript); i++) {
@@ -968,9 +968,9 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 			}
 			LoadingDialogUpdate(1);
 			vector<uint32_t> unitydataoff[9];
-			for (i=0;i<9;i++) {
-				unitydataoff[i] = metafield[i].Duplicate(filebase[i],filedest[i],copylist[i],filenewsize[i]);
-				LoadingDialogUpdate(2+i);
+			for (i = 0; i < 9; i++) {
+				unitydataoff[i] = metafield[i].Duplicate(filebase[i], filedest[i], copylist[i], filenewsize[i]);
+				LoadingDialogUpdate(2 + i);
 			}
 			for (i = 0; i < G_V_ELEMENTS(SteamFieldScript); i++) {
 				importfilename = importdirname + _(SteamFieldScript[i].background_name);
@@ -990,24 +990,24 @@ void ToolBackgroundEditor::OnButtonClick(wxCommandEvent& event) {
 				}
 			}
 			LoadingDialogUpdate(11);
-			for (i=0;i<9;i++) {
+			for (i = 0; i < 9; i++) {
 				filebase[i].close();
 				filedest[i].close();
 				copylist[i].clear();
 				filenewsize[i].clear();
 				unitydataoff[i].clear();
 				filename = importpdatadir;
-				filename << _(L"p0data1") << (i+1) << _(L".bin");
+				filename << _(L"p0data1") << (i + 1) << _(L".bin");
 				remove(filename.mb_str());
-				rename((filename+_(L".tmp")).mb_str(),filename.mb_str());
+				rename((filename + _(L".tmp")).mb_str(), filename.mb_str());
 			}
 			LoadingDialogEnd();
 			wxString successtring;
-			successtring.Printf(wxT(HADES_STRING_IMPORT_BACKGROUND_RESULT),importsuccess,importfail);
-			wxMessageDialog popupsuccess(this,successtring,HADES_STRING_SUCCESS,wxOK|wxCENTRE);
+			successtring.Printf(wxT(HADES_STRING_IMPORT_BACKGROUND_RESULT), importsuccess, importfail);
+			wxMessageDialog popupsuccess(this, successtring, HADES_STRING_SUCCESS, wxOK | wxCENTRE);
 			popupsuccess.ShowModal();
 		}
-	} else if (id==wxID_CLOSE) {
+	} else if (id == wxID_CLOSE) {
 		EndModal(id);
 	}
 }

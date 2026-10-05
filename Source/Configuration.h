@@ -271,6 +271,8 @@ public:
 	uint32_t mips_battle_code_amount;
 
 	string GetSteamAssetPath(UnityArchiveFile arch, int32_t fileid);
+
+	static int SteamExtractAssetWithPath(string destfullpath, fstream& unityarchive, UnityArchiveMetaData& meta, int32_t assetindex);
 };
 
 struct SaveSet {

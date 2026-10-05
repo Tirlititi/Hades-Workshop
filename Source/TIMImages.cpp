@@ -101,7 +101,7 @@ void TIMImageDataStruct::WriteHWS(fstream& f) {
 void TIMImageDataStruct::Flush() {
 	if (!loaded)
 		return;
-	if (GetGameType()==GAME_TYPE_PSX && (format & 0x8))
+	if (GetGameType() == GAME_TYPE_PSX && (format & 0x8))
 		delete[] pal_value;
 	delete[] pixel_value;
 	loaded = false;

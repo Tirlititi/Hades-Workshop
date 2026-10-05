@@ -176,6 +176,7 @@ void PartySpecialDataSet::LoadHWS(fstream& ffbin) {
 		for (int seti = 0; seti < swdsetamount; seti++) {
 			MagicSwordDataStruct& mgswd = magic_sword[seti];
 			mgswd.parent = this;
+			mgswd.id = seti;
 			HWSReadFlexibleChar(ffbin, mgswd.supporter, true);
 			HWSReadFlexibleChar(ffbin, mgswd.beneficiary, true);
 			MACRO_MAGICSWORD_IOFUNCTION(HWSRead, HWSSeek, true, false)

@@ -32,7 +32,7 @@ ManageFieldTextureDialog::ManageFieldTextureDialog(wxWindow* parent, FieldTilesD
 	m_tilechecklist->Append(choicelist);
 	for (i = 0; i < field.tiles_amount; i++)
 		m_tilechecklist->Check(i, field.tiles[i].is_static || field.tiles[i].is_first_of_anim);
-	animlist_img = new wxImageList(60,20,true,4);
+	animlist_img = new wxImageList(60, 20, true, 4);
 	animcontrol_loopplay = wxBitmap(wxBITMAP(animcontrolloopplay_image));
 	animcontrol_looppause = wxBitmap(wxBITMAP(animcontrollooppause_image));
 	animcontrol_noloopplay = wxBitmap(wxBITMAP(animcontrolnoloopplay_image));
@@ -44,15 +44,28 @@ ManageFieldTextureDialog::ManageFieldTextureDialog(wxWindow* parent, FieldTilesD
 	anim_tick_time = new unsigned int[field.anim_amount];
 	anim_tile_pos = new unsigned int[field.anim_amount];
 	anim_play_flag = new unsigned int[field.anim_amount];
-	for (i=0;i<field.anim_amount;i++) {
+	for (i = 0; i < field.anim_amount; i++) {
 		anim_tick_time[i] = field.anim[i].tile_duration[0];
 		anim_tile_pos[i] = 0;
 		anim_play_flag[i] = ANIM_PLAYFLAG_LOOP;
 	}
-	m_animlist->AssignImageList(animlist_img,wxIMAGE_LIST_SMALL);
-	for (i=0;i<field.anim_amount;i++)
-		m_animlist->InsertItem(i,_(L"Anim ")+wxString::Format(wxT("%u"),i),anim_play_flag[i]);
-	m_animlist->SetColumnWidth(0,200);
+	m_animlist->AssignImageList(animlist_img, wxIMAGE_LIST_SMALL);
+	for (i = 0; i < field.anim_amount; i++)
+		m_animlist->InsertItem(i, _(L"Anim ") + wxString::Format(wxT("%u"), i), anim_play_flag[i]);
+	m_animlist->SetColumnWidth(0, 200);
+	if (field.IsBGXFormat()) {
+		m_panelvanilla->Show(false);
+		m_panelbgx->Show(true);
+		m_buttonexport->Show(false);
+		if (!m_tilechecklist->IsEmpty()) {
+			m_tilechecklist->SetSelection(0);
+			SelectTileset(0);
+		}
+	} else {
+		m_panelbgx->Show(false);
+		m_panelvanilla->Show(true);
+		m_buttonexport->Show(true);
+	}
 	m_tilex->Enable(false);
 	m_tiley->Enable(false);
 	m_tiledepth->Enable(false);
@@ -66,13 +79,13 @@ ManageFieldTextureDialog::ManageFieldTextureDialog(wxWindow* parent, FieldTilesD
 	main_img_base = wxNullImage;
 	scale_ratio = 1.0;
 	timer->Start(DEFAULT_SPEED);
-	Connect(wxEVT_TIMER,wxTimerEventHandler(ManageFieldTextureDialog::OnTimer),NULL,this);
-	m_texturepicker->GetTextCtrl()->Connect(wxEVT_SET_FOCUS,wxFocusEventHandler(ManageFieldTextureDialog::OnFocusFileImage),NULL,this);
+	Connect(wxEVT_TIMER, wxTimerEventHandler(ManageFieldTextureDialog::OnTimer), NULL, this);
+	m_texturepicker->GetTextCtrl()->Connect(wxEVT_SET_FOCUS, wxFocusEventHandler(ManageFieldTextureDialog::OnFocusFileImage), NULL, this);
 }
 
 ManageFieldTextureDialog::~ManageFieldTextureDialog() {
-	m_texturepicker->GetTextCtrl()->Disconnect(wxEVT_SET_FOCUS,wxFocusEventHandler(ManageFieldTextureDialog::OnFocusFileImage),NULL,this);
-	Disconnect(wxEVT_TIMER,wxTimerEventHandler(ManageFieldTextureDialog::OnTimer),NULL,this);
+	m_texturepicker->GetTextCtrl()->Disconnect(wxEVT_SET_FOCUS, wxFocusEventHandler(ManageFieldTextureDialog::OnFocusFileImage), NULL, this);
+	Disconnect(wxEVT_TIMER, wxTimerEventHandler(ManageFieldTextureDialog::OnTimer), NULL, this);
 	delete timer;
 	delete[] anim_tick_time;
 	delete[] anim_tile_pos;
@@ -83,13 +96,13 @@ int ManageFieldTextureDialog::ShowModal(unsigned int camera) {
 	unsigned int i;
 	bool* tileflag = new bool[field.tiles_amount];
 	camera_id = camera;
-	for (i=0;i<field.tiles_amount;i++)
+	for (i = 0; i < field.tiles_amount; i++)
 		tileflag[i] = m_tilechecklist->IsChecked(i);
-	uint32_t* imgdata = field.ConvertAsImageAccurate(camera_id,tileflag,true);
-	main_img_base = ConvertDataToImage(imgdata,field.camera[camera_id].width,field.camera[camera_id].height);
+	uint32_t* imgdata = field.ConvertAsImageAccurate(camera_id, tileflag, true);
+	main_img_base = ConvertDataToImage(imgdata, field.camera[camera_id].width, field.camera[camera_id].height);
 	delete[] imgdata;
 	delete[] tileflag;
-	scale_ratio = main_img_base.GetHeight()/DEFAULT_HEIGHT;
+	scale_ratio = main_img_base.GetHeight() / DEFAULT_HEIGHT;
 	UpdateImage();
 	return wxDialog::ShowModal();
 }
@@ -101,39 +114,39 @@ void ManageFieldTextureDialog::DrawImage(wxDC& dc) {
 		int extrax = 0;
 		int extray = 0;
 		if (imported_img.IsOk()) {
-			mainposx = max(0,-imported_img_x)/scale_ratio;
-			mainposy = max(0,-imported_img_y)/scale_ratio;
-			extrax = max(0,int(imported_img_x/scale_ratio+imported_img.GetWidth()-main_img.GetWidth()));
-			extray = max(0,int(imported_img_y/scale_ratio+imported_img.GetHeight()-main_img.GetHeight()));
+			mainposx = max(0, -imported_img_x) / scale_ratio;
+			mainposy = max(0, -imported_img_y) / scale_ratio;
+			extrax = max(0, int(imported_img_x / scale_ratio + imported_img.GetWidth() - main_img.GetWidth()));
+			extray = max(0, int(imported_img_y / scale_ratio + imported_img.GetHeight() - main_img.GetHeight()));
 		}
-		m_texturewindow->SetVirtualSize(main_img.GetWidth()+mainposx+extrax,main_img.GetHeight()+mainposy+extray);
-		MACRO_CREATE_MEMORY_DC(dc,m_texturewindow)
-		mdc.DrawBitmap(main_img,mainposx,mainposy);
+		m_texturewindow->SetVirtualSize(main_img.GetWidth() + mainposx + extrax, main_img.GetHeight() + mainposy + extray);
+		MACRO_CREATE_MEMORY_DC(dc, m_texturewindow)
+		mdc.DrawBitmap(main_img, mainposx, mainposy);
 		if (imported_img.IsOk())
-			mdc.DrawBitmap(imported_img,mainposx+imported_img_x/scale_ratio,mainposy+imported_img_y/scale_ratio);
+			mdc.DrawBitmap(imported_img, mainposx + imported_img_x / scale_ratio, mainposy + imported_img_y / scale_ratio);
 		if (foreground_img.IsOk())
-			mdc.DrawBitmap(foreground_img,mainposx,mainposy);
+			mdc.DrawBitmap(foreground_img, mainposx, mainposy);
 		m_texturewindow->DoPrepareDC(dc);
-		dc.Blit(wxPoint(0,0),mdc.GetSize(),&mdc,wxPoint(0,0));
+		dc.Blit(wxPoint(0, 0), mdc.GetSize(), &mdc, wxPoint(0, 0));
 	}
 }
 
 void ManageFieldTextureDialog::UpdateImage() {
 	int tileid = m_tilechecklist->GetSelection();
 	wxImage img = main_img_base.Copy();
-	wxImage fgimg(main_img_base.GetWidth(),main_img_base.GetHeight(),false);
+	wxImage fgimg(main_img_base.GetWidth(), main_img_base.GetHeight(), false);
 	fgimg.SetAlpha();
-	unsigned int i,s = main_img_base.GetWidth()*main_img_base.GetHeight();
+	unsigned int i, s = main_img_base.GetWidth() * main_img_base.GetHeight();
 	unsigned char* alpha = fgimg.GetAlpha();
-	for (i=0;i<s;i++)
+	for (i = 0; i < s; i++)
 		alpha[i] = 0;
-	if (tileid!=wxNOT_FOUND) {
+	if (tileid != wxNOT_FOUND) {
 //		int width = tex_fixed_width>=0 ? tex_fixed_width : tex_width[texid];
 //		int height = tex_fixed_height>=0 ? tex_fixed_height : tex_height[texid];
 //		ImageDrawSelection(fgimg,tex_pos_x[texid]*tex_move_x,tex_pos_y[texid]*tex_move_y,width*tex_scale_x,height*tex_scale_y);
 	}
-	img.Rescale(img.GetWidth()/scale_ratio,img.GetHeight()/scale_ratio);
-	fgimg.Rescale(img.GetWidth(),img.GetHeight());
+	img.Rescale(img.GetWidth() / scale_ratio, img.GetHeight() / scale_ratio);
+	fgimg.Rescale(img.GetWidth(), img.GetHeight());
 	main_img = wxBitmap(img);
 	foreground_img = wxBitmap(fgimg);
 	wxClientDC dc(m_texturewindow);
@@ -143,10 +156,10 @@ void ManageFieldTextureDialog::UpdateImage() {
 void ManageFieldTextureDialog::UpdateTexturePreview(int changeid) {
 	unsigned int i;
 	bool* tileflag = new bool[field.tiles_amount];
-	for (i=0;i<field.tiles_amount;i++)
+	for (i = 0; i < field.tiles_amount; i++)
 		tileflag[i] = m_tilechecklist->IsChecked(i);
-	uint32_t* imgdata = field.ConvertAsImageAccurate(camera_id,tileflag,true);
-	main_img_base = ConvertDataToImage(imgdata,field.camera[camera_id].width,field.camera[camera_id].height);
+	uint32_t* imgdata = field.ConvertAsImageAccurate(camera_id, tileflag, true);
+	main_img_base = ConvertDataToImage(imgdata, field.camera[camera_id].width, field.camera[camera_id].height);
 	delete[] imgdata;
 	delete[] tileflag;
 	UpdateImage();
@@ -157,31 +170,15 @@ void ManageFieldTextureDialog::OnTileButton(wxCommandEvent& event) {
 }
 
 void ManageFieldTextureDialog::OnTileSelection(wxCommandEvent& event) {
-	int blockid = event.GetSelection();
-	wxArrayString choicelist;
-	m_tilepiecelist->Clear();
-	if (blockid != wxNOT_FOUND) {
-		m_tilex->SetValue(field.tiles[blockid].pos_x);
-		m_tiley->SetValue(field.tiles[blockid].pos_y);
-		m_tiledepth->SetValue(field.tiles[blockid].depth);
-		for (int i = 0; i < field.tiles[blockid].tile_amount; i++)
-			choicelist.Add(wxString::Format(wxT("Tile (%d, %d)"), field.tiles[blockid].tile_pos_x[i], field.tiles[blockid].tile_pos_y[i]));
-	}
-	m_tilepiecelist->Append(choicelist);
-	m_tilex->Enable(blockid != wxNOT_FOUND);
-	m_tiley->Enable(blockid != wxNOT_FOUND);
-	m_tiledepth->Enable(blockid != wxNOT_FOUND);
-	m_tilepiecex->Enable(false);
-	m_tilepiecey->Enable(false);
-	m_tilepiecedepth->Enable(false);
+	SelectTileset(event.GetSelection());
 }
 
 void ManageFieldTextureDialog::OnTilePieceSelection(wxCommandEvent& event) {
 	int blockid = m_tilechecklist->GetSelection();
 	int tileid = event.GetSelection();
-	m_tilepiecex->SetValue(field.tiles[blockid].tile_pos_x[tileid]);
-	m_tilepiecey->SetValue(field.tiles[blockid].tile_pos_y[tileid]);
-	m_tilepiecedepth->SetValue(field.tiles[blockid].tile_depth[tileid]);
+	m_tilepiecex->SetValue(field.tiles[blockid].tile[tileid].pos_x);
+	m_tilepiecey->SetValue(field.tiles[blockid].tile[tileid].pos_y);
+	m_tilepiecedepth->SetValue(field.tiles[blockid].tile[tileid].depth);
 	m_tilepiecex->Enable(true);
 	m_tilepiecey->Enable(true);
 	m_tilepiecedepth->Enable(true);
@@ -191,10 +188,10 @@ void ManageFieldTextureDialog::OnAnimClick(wxMouseEvent& event) {
 	wxClientDC dc(m_animlist);
 	wxPoint mpos = event.GetLogicalPosition(dc);
 	wxPoint mrpos = event.GetPosition();
-	int button,col,hitflags;
-	button = mpos.x/20; // Not that great... Problems if HScroll is enabled
-	col = m_animlist->HitTest(mrpos,hitflags);
-	if (button>=0 && button<3 && col>=0 && col<field.anim_amount) {
+	int button, col, hitflags;
+	button = mpos.x / 20; // Not that great... Problems if HScroll is enabled
+	col = m_animlist->HitTest(mrpos, hitflags);
+	if (button >= 0 && button < 3 && col >= 0 && col < field.anim_amount) {
 		switch (button) {
 		case 0: // Loop
 			if (anim_play_flag[col] & ANIM_PLAYFLAG_LOOP)
@@ -212,13 +209,13 @@ void ManageFieldTextureDialog::OnAnimClick(wxMouseEvent& event) {
 			anim_play_flag[col] &= ~ANIM_PLAYFLAG_PLAY;
 			anim_tile_pos[col] = 0;
 			anim_tick_time[col] = field.anim[col].tile_duration[0];
-			m_tilechecklist->Check(field.anim[col].tile_list[0],true);
-			for (unsigned int i=1;i<field.anim[col].tile_amount;i++)
-				m_tilechecklist->Check(field.anim[col].tile_list[i],false);
+			m_tilechecklist->Check(field.anim[col].tile_list[0], true);
+			for (unsigned int i = 1; i < field.anim[col].tile_amount; i++)
+				m_tilechecklist->Check(field.anim[col].tile_list[i], false);
 			UpdateTexturePreview(wxID_TILE);
 			break;
 		}
-		m_animlist->SetItemImage(col,anim_play_flag[col]);
+		m_animlist->SetItemImage(col, anim_play_flag[col]);
 	}
 }
 
@@ -279,15 +276,41 @@ void ManageFieldTextureDialog::DrawPaletteColors(int palid) {
 	}*/
 }
 
+void ManageFieldTextureDialog::SelectTileset(int sel) {
+	wxArrayString choicelist;
+	m_tilepiecelist->Clear();
+	if (sel != wxNOT_FOUND) {
+		m_tilex->SetValue(field.tiles[sel].pos_x);
+		m_tiley->SetValue(field.tiles[sel].pos_y);
+		m_tiledepth->SetValue(field.tiles[sel].depth);
+		m_tilewidth->SetValue(field.tiles[sel].width);
+		m_tileheight->SetValue(field.tiles[sel].height);
+		if (field.IsBGXFormat()) {
+			m_tilepath->SetPath(field.tiles[sel].memoria_bgx_path);
+			m_tileshader->ChangeValue(field.tiles[sel].memoria_bgx_shader);
+		} else {
+			for (int i = 0; i < field.tiles[sel].tile_amount; i++)
+				choicelist.Add(wxString::Format(wxT("Tile (%d, %d)"), field.tiles[sel].tile[i].pos_x, field.tiles[sel].tile[i].pos_y));
+		}
+	}
+	m_tilepiecelist->Append(choicelist);
+	m_tilex->Enable(sel != wxNOT_FOUND);
+	m_tiley->Enable(sel != wxNOT_FOUND);
+	m_tiledepth->Enable(sel != wxNOT_FOUND);
+	m_tilepiecex->Enable(false);
+	m_tilepiecey->Enable(false);
+	m_tilepiecedepth->Enable(false);
+}
+
 void ManageFieldTextureDialog::OnModifyRadio(wxCommandEvent& event) {
-	if (event.GetInt()==0) {
+	if (event.GetInt() == 0) {
 		m_modifypanelimport->Show(false);
 		m_modifypaneldraw->Show(true);
 //		DrawPaletteColors(m_palettelist->GetSelection());
 		m_modifypaneldraw->Layout();
 		m_modifypaneldraw->GetParent()->GetSizer()->Layout();
 		m_modifypaneldraw->Refresh();
-	} else if (event.GetInt()==1) {
+	} else if (event.GetInt() == 1) {
 		color_selected = -1;
 		m_modifypaneldraw->Show(false);
 		m_modifypanelimport->Show(true);
@@ -304,29 +327,37 @@ void ManageFieldTextureDialog::OnSpinPosition(wxSpinEvent& event) {
 	if (id == wxID_POSX1 && blockid != wxNOT_FOUND) {
 		field.tiles[blockid].pos_x = event.GetPosition();
 		field.modified = true;
-		UpdateTexturePreview(id);
+		UpdateTexturePreview(blockid);
 	} else if (id == wxID_POSY1 && blockid != wxNOT_FOUND) {
 		field.tiles[blockid].pos_y = event.GetPosition();
 		field.modified = true;
-		UpdateTexturePreview(id);
+		UpdateTexturePreview(blockid);
 	} else if (id == wxID_POSZ1 && blockid != wxNOT_FOUND) {
 		field.tiles[blockid].depth = event.GetPosition();
 		field.modified = true;
 		field.SetupTilePerDepth();
-		UpdateTexturePreview(id);
+		UpdateTexturePreview(blockid);
+	} else if (id == wxID_WIDTH && blockid != wxNOT_FOUND) {
+		field.tiles[blockid].width = event.GetPosition();
+		field.modified = true;
+		UpdateTexturePreview(blockid);
+	} else if (id == wxID_HEIGHT && blockid != wxNOT_FOUND) {
+		field.tiles[blockid].height = event.GetPosition();
+		field.modified = true;
+		UpdateTexturePreview(blockid);
 	} else if (id == wxID_POSX2 && blockid != wxNOT_FOUND && tileid != wxNOT_FOUND) {
-		field.tiles[blockid].tile_pos_x[tileid] = event.GetPosition();
+		field.tiles[blockid].tile[tileid].pos_x = event.GetPosition();
 		field.modified = true;
-		UpdateTexturePreview(id);
+		UpdateTexturePreview(blockid);
 	} else if (id == wxID_POSY2 && blockid != wxNOT_FOUND && tileid != wxNOT_FOUND) {
-		field.tiles[blockid].tile_pos_y[tileid] = event.GetPosition();
+		field.tiles[blockid].tile[tileid].pos_y = event.GetPosition();
 		field.modified = true;
-		UpdateTexturePreview(id);
+		UpdateTexturePreview(blockid);
 	} else if (id == wxID_POSZ2 && blockid != wxNOT_FOUND && tileid != wxNOT_FOUND) {
-		field.tiles[blockid].tile_depth[tileid] = event.GetPosition();
+		field.tiles[blockid].tile[tileid].depth = event.GetPosition();
 		field.modified = true;
 		field.SetupTilePerDepth();
-		UpdateTexturePreview(id);
+		UpdateTexturePreview(blockid);
 	}
 /*	if (prevent_event)
 		return;
@@ -371,7 +402,22 @@ void ManageFieldTextureDialog::OnSpinPosition(wxSpinEvent& event) {
 	prevent_event = false;*/
 }
 
-void ManageFieldTextureDialog::OnChooseFileImage(wxFileDirPickerEvent& event) {
+void ManageFieldTextureDialog::OnTextChanged(wxCommandEvent& event) {
+	int id = event.GetId();
+	int blockid = m_tilechecklist->GetSelection();
+	if (id == wxID_SHADER && blockid != wxNOT_FOUND) {
+		field.tiles[blockid].memoria_bgx_shader = m_tileshader->GetValue();
+		UpdateTexturePreview(blockid);
+	}
+}
+
+void ManageFieldTextureDialog::OnPathSelection(wxFileDirPickerEvent& event) {
+	int id = event.GetId();
+	int blockid = m_tilechecklist->GetSelection();
+	if (id == wxID_PATH && blockid != wxNOT_FOUND) {
+		field.tiles[blockid].memoria_bgx_path = event.GetPath();
+		UpdateTexturePreview(blockid);
+	}
 /*	if (!wxFileName::IsFileReadable(event.GetPath())) {
 		imported_img_base.Destroy();
 		imported_img = wxNullBitmap;
@@ -452,16 +498,29 @@ void ManageFieldTextureDialog::OnButtonClick(wxCommandEvent& event) {
 		FieldTextureExportWindow dial(this);
 		dial.m_languagetitle->Enable(field.title_tile_amount > 0);
 		if (dial.ShowModal() == wxID_OK) {
-			unsigned int i;
-			bool* tileflag = new bool[field.tiles_amount];
-			for (i = 0; i < field.tiles_amount; i++)
-				tileflag[i] = m_tilechecklist->IsChecked(i) || !dial.m_onlyselected->IsChecked();
-			if (field.Export(dial.m_filepicker->GetPath().mb_str(), camera_id, tileflag, true, dial.m_mergetiles->IsChecked(), dial.m_exportorder->IsChecked(), dial.m_languagetitle->GetSelection() - 1)) {
-				wxLogError(HADES_STRING_OPEN_ERROR_CREATE, dial.m_filepicker->GetPath());
+			if (dial.m_exportbgx->IsChecked()) {
+				wxFileName fullpath(dial.m_filepicker->GetPath());
+				fullpath.SetExt(L"bgx");
+				wxString folder = fullpath.GetPath();
+				wxString bgxname = fullpath.GetFullName();
+				if (field.WriteBGX(folder.ToStdString(), bgxname.ToStdString())) {
+					wxLogError(HADES_STRING_OPEN_ERROR_CREATE, folder + bgxname);
+					return;
+				}
+			} else {
+				bool* tileflag = new bool[field.tiles_amount];
+				for (unsigned int i = 0; i < field.tiles_amount; i++)
+					tileflag[i] = m_tilechecklist->IsChecked(i) || !dial.m_onlyselected->IsChecked();
+				int exportres = field.Export(dial.m_filepicker->GetPath().mb_str(), camera_id, tileflag, true, dial.m_mergetiles->IsChecked(), dial.m_exportorder->IsChecked(), dial.m_languagetitle->GetSelection() - 1);
 				delete[] tileflag;
-				return;
+				if (exportres == 1) {
+					wxLogError(HADES_STRING_OPEN_ERROR_CREATE, dial.m_filepicker->GetPath());
+					return;
+				} else if (exportres == -1) {
+					wxLogWarning(HADES_STRING_FIELDTEXTURE_SAVE_NOBGX);
+					return;
+				}
 			}
-			delete[] tileflag;
 			wxMessageDialog popupsuccess(this, HADES_STRING_FIELDTEXTURE_SAVE_SUCCESS, HADES_STRING_SUCCESS, wxOK | wxCENTRE);
 			popupsuccess.ShowModal();
 		}
@@ -476,20 +535,20 @@ void ManageFieldTextureDialog::OnTextureMouseMove(wxMouseEvent& event) {
 			return;
 		prevent_event = true;
 		m_texturewindow->SetFocusIgnoringChildren();
-		if (color_selected!=-1) {
+		if (color_selected != -1) {
 /*			wxClientDC dc(m_texturewindow);
 			m_texturewindow->DoPrepareDC(dc);
 			wxPoint mpos = event.GetLogicalPosition(dc);
-			int timx = min(max(int(mpos.x*scale_ratio),0),tim.GetWidth()-1);
-			int timy = min(max(int(mpos.y*scale_ratio),0),tim.height-1);
-			tim.SetPixelValue(timx,timy,color_selected,char_flag ? m_palettelist->GetSelection()%2 : -1);
+			int timx = min(max(int(mpos.x * scale_ratio), 0), tim.GetWidth() - 1);
+			int timy = min(max(int(mpos.y * scale_ratio), 0), tim.height - 1);
+			tim.SetPixelValue(timx, timy, color_selected, char_flag ? m_palettelist->GetSelection() % 2 : -1);
 			UpdateTexturePreview(wxID_PALETTE);*/
 		} else if (imported_img.IsOk()) {
 			wxClientDC dc(m_texturewindow);
 			m_texturewindow->DoPrepareDC(dc);
 			wxPoint mpos = event.GetLogicalPosition(dc);
-			imported_img_x = min(max(int(mpos.x*scale_ratio-imported_img_width/2),m_textureposx->GetMin()),m_textureposx->GetMax());
-			imported_img_y = min(max(int(mpos.y*scale_ratio-imported_img_height/2),m_textureposy->GetMin()),m_textureposy->GetMax());
+			imported_img_x = min(max(int(mpos.x * scale_ratio - imported_img_width / 2), m_textureposx->GetMin()), m_textureposx->GetMax());
+			imported_img_y = min(max(int(mpos.y * scale_ratio - imported_img_height / 2), m_textureposy->GetMin()), m_textureposy->GetMax());
 			m_textureposx->SetValue(imported_img_x);
 			m_textureposy->SetValue(imported_img_y);
 			DrawImage(dc);
@@ -499,10 +558,10 @@ void ManageFieldTextureDialog::OnTextureMouseMove(wxMouseEvent& event) {
 }
 
 void ManageFieldTextureDialog::OnTextureMouseWheel(wxMouseEvent& event) {
-	if (event.GetWheelRotation()>0)
+	if (event.GetWheelRotation() > 0)
 		scale_ratio *= 0.95f;
 	else
-		scale_ratio = min(scale_ratio*1.05,main_img_base.GetHeight()/DEFAULT_HEIGHT);
+		scale_ratio = min(scale_ratio * 1.05, main_img_base.GetHeight() / DEFAULT_HEIGHT);
 	UpdateImage();
 }
 
@@ -537,17 +596,16 @@ void ManageFieldTextureDialog::OnPaintPalette(wxPaintEvent& event) {
 }
 
 void ManageFieldTextureDialog::OnTimer(wxTimerEvent& event) {
-	unsigned int i;
 	bool update = false;
-	for (i=0;i<field.anim_amount;i++) {
+	for (unsigned int i = 0; i < field.anim_amount; i++) {
 		if (anim_play_flag[i] & ANIM_PLAYFLAG_PLAY) {
-			if (anim_tick_time[i]==0) {
-				if (anim_tile_pos[i]+1<field.anim[i].tile_amount || (anim_play_flag[i] & ANIM_PLAYFLAG_LOOP)) {
-					m_tilechecklist->Check(field.anim[i].tile_list[anim_tile_pos[i]],false);
+			if (anim_tick_time[i] == 0) {
+				if (anim_tile_pos[i] + 1 < field.anim[i].tile_amount || (anim_play_flag[i] & ANIM_PLAYFLAG_LOOP)) {
+					m_tilechecklist->Check(field.anim[i].tile_list[anim_tile_pos[i]], false);
 					anim_tile_pos[i]++;
-					if (anim_tile_pos[i]>=field.anim[i].tile_amount)
+					if (anim_tile_pos[i] >= field.anim[i].tile_amount)
 						anim_tile_pos[i] = 0;
-					m_tilechecklist->Check(field.anim[i].tile_list[anim_tile_pos[i]],true);
+					m_tilechecklist->Check(field.anim[i].tile_list[anim_tile_pos[i]], true);
 					anim_tick_time[i] = field.anim[i].tile_duration[anim_tile_pos[i]];
 					update = true;
 				}
@@ -562,30 +620,32 @@ void ManageFieldTextureDialog::OnTimer(wxTimerEvent& event) {
 void ImageDrawSelectionField(wxImage& img, int x, int y, int width, int height, unsigned char red, unsigned char green, unsigned char blue) {
 	unsigned char* rawdata = img.GetData();
 	unsigned char* rawalpha = img.GetAlpha();
-	int thick = min(width,height)/100+1;
-	int i,j,posx,posy;
+	int thick = min(width, height) / 100 + 1;
+	int i, j, posx, posy;
+
 	#define MACRO_SETPIXELCOLOR() \
-		rawdata[3*(posx+posy)] = red; \
-		rawdata[3*(posx+posy)+1] = green; \
-		rawdata[3*(posx+posy)+2] = blue; \
-		rawalpha[posx+posy] = 0xFF;
+		rawdata[3 * (posx + posy)] = red; \
+		rawdata[3 * (posx + posy) + 1] = green; \
+		rawdata[3 * (posx + posy) + 2] = blue; \
+		rawalpha[posx + posy] = 0xFF;
+
 	width--;
 	height--;
-	for (i=0;i<=width;i++) {
-		posx = (x+i)%img.GetWidth();
-		for (j=0;j<thick;j++) {
-			posy = ((y+j)%img.GetHeight())*img.GetWidth();
+	for (i = 0; i <= width; i++) {
+		posx = (x + i) % img.GetWidth();
+		for (j = 0; j < thick; j++) {
+			posy = ((y + j) % img.GetHeight()) * img.GetWidth();
 			MACRO_SETPIXELCOLOR()
-			posy = ((y+height-j)%img.GetHeight())*img.GetWidth();
+			posy = ((y + height - j) % img.GetHeight()) * img.GetWidth();
 			MACRO_SETPIXELCOLOR()
 		}
 	}
-	for (i=0;i<=height;i++) {
-		posy = (y+i)%img.GetHeight()*img.GetWidth();
-		for (j=0;j<thick;j++) {
-			posx = (x+j)%img.GetWidth();
+	for (i = 0; i <= height; i++) {
+		posy = (y + i) % img.GetHeight() * img.GetWidth();
+		for (j = 0; j < thick; j++) {
+			posx = (x + j) % img.GetWidth();
 			MACRO_SETPIXELCOLOR()
-			posx = (x+width-j)%img.GetWidth();
+			posx = (x + width - j) % img.GetWidth();
 			MACRO_SETPIXELCOLOR()
 		}
 	}

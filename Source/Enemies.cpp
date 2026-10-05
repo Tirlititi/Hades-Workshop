@@ -1,6 +1,7 @@
 #include "Enemies.h"
 
 #include <algorithm>
+#include "Hades_Strings.h"
 #include "main.h"
 #include "Gui_LoadingDialog.h"
 #include "Database_Steam.h"
@@ -8,6 +9,8 @@
 #include "Database_SpellAnimation.h"
 #include "Database_CSV.h"
 #include "CommonUtility.h"
+
+#define HWS_ADDITION_INFO_VERSION_CURRENT	1
 
 #define HWS_BATTLE_SCENE_VERSION_VANILLA	7
 #define HWS_BATTLE_SCENE_VERSION_EXTENDED	8
@@ -601,50 +604,41 @@ void EnemyDataSet::GetSpellSequenceModelRef(vector<EnemySequenceCodeLine>& seque
 	*arg = -1;
 }
 
-EnemyStatDataStruct* GetSimilarEnemyStatsResult[1024];
-EnemySpellDataStruct* GetSimilarEnemySpellsResult[1024];
-unsigned int GetSimilarEnemyBattlesId[1024];
-EnemyStatDataStruct** EnemyDataSet::GetSimilarEnemyStats(EnemyStatDataStruct& stat, unsigned int* amountfound, unsigned int** battleid) {
-	unsigned int i, j, nb = 0;
+vector<pair<EnemyStatDataStruct*, unsigned int>> EnemyDataSet::GetSimilarEnemyStats(EnemyStatDataStruct& stat) {
+	vector<pair<EnemyStatDataStruct*, unsigned int>> result;
+	unsigned int i, j;
 	wstring& statname = stat.name.str_nice;
 	for (i = 0; i < battle_amount; i++)
 		for (j = 0; j < battle[i]->stat_amount; j++)
-			if (battle[i]->stat[j].name.str_nice == statname && battle[i]->stat[j].lvl == stat.lvl) {
-				GetSimilarEnemyStatsResult[nb] = &(battle[i]->stat[j]);
-				GetSimilarEnemyBattlesId[nb++] = i;
-			}
-	*amountfound = nb;
-	*battleid = GetSimilarEnemyBattlesId;
-	return GetSimilarEnemyStatsResult;
+			if (battle[i]->stat[j].name.str_nice == statname && battle[i]->stat[j].lvl == stat.lvl)
+				result.push_back({ &(battle[i]->stat[j]), i });
+	return result;
 }
 
-EnemySpellDataStruct** EnemyDataSet::GetSimilarEnemySpells(EnemySpellDataStruct& spell, unsigned int* amountfound, unsigned int** battleid) {
-	int baseseqcode, basecodearg, seqcode, codearg;
-	unsigned int i, j, nbstat, nb = 0;
-	unsigned int* bid;
+vector<pair<EnemySpellDataStruct*, unsigned int>> EnemyDataSet::GetSimilarEnemySpells(EnemySpellDataStruct& spell) {
+	vector<pair<EnemySpellDataStruct*, unsigned int>> result;
 	EnemyStatDataStruct* stat = spell.GetAssociatedStat();
-	if (stat == NULL) {
-		*amountfound = 0;
-		return NULL;
-	}
-	EnemyStatDataStruct** similarstat = GetSimilarEnemyStats(*stat, &nbstat, &bid);
+	if (stat == NULL)
+		return result;
+	int baseseqcode, basecodearg, seqcode, codearg;
+	unsigned int i, j;
+	vector<pair<EnemyStatDataStruct*, unsigned int>> simstat = GetSimilarEnemyStats(*stat);
 	wstring& spellname = spell.name.str_nice;
 	GetSpellSequenceModelRef(battle_data[spell.parent->id]->sequence_code[spell.id], &baseseqcode, &basecodearg);
-	for (i = 0; i < nbstat; i++)
-		for (j = 0; j < battle[bid[i]]->spell_amount; j++)
-			if (stat == similarstat[i] && &battle[bid[i]]->spell[j] == &spell) {
-				GetSimilarEnemySpellsResult[nb] = &(battle[bid[i]]->spell[j]);
-				GetSimilarEnemyBattlesId[nb++] = bid[i];
-			} else if (battle_data[bid[i]]->sequence_stat_id[j] == similarstat[i]->id && battle[bid[i]]->spell[j].name.str_nice == spellname && battle[bid[i]]->spell[j].effect == spell.effect && battle[bid[i]]->spell[j].power == spell.power) {
-				GetSpellSequenceModelRef(battle_data[bid[i]]->sequence_code[j], &seqcode, &codearg);
-				if ((baseseqcode < 0 && seqcode < 0) || (baseseqcode >= 0 && battle_data[bid[i]]->sequence_code[j][seqcode].arg[codearg] == battle_data[spell.parent->id]->sequence_code[spell.id][baseseqcode].arg[basecodearg])) {
-					GetSimilarEnemySpellsResult[nb] = &(battle[bid[i]]->spell[j]);
-					GetSimilarEnemyBattlesId[nb++] = bid[i];
-				}
+	for (i = 0; i < simstat.size(); i++) {
+		for (j = 0; j < battle[simstat[i].second]->spell_amount; j++) {
+			EnemySpellDataStruct& compspell = battle[simstat[i].second]->spell[j];
+			BattleDataStruct* compbtldata = battle_data[simstat[i].second];
+			if (stat == simstat[i].first && &compspell == &spell) {
+				result.push_back({ &compspell, simstat[i].second });
+			} else if (compbtldata->sequence_stat_id[j] == simstat[i].first->id && compspell.name.str_nice == spellname && compspell.effect == spell.effect && compspell.power == spell.power) {
+				GetSpellSequenceModelRef(compbtldata->sequence_code[j], &seqcode, &codearg);
+				if ((baseseqcode < 0 && seqcode < 0) || (baseseqcode >= 0 && seqcode >= 0 && compbtldata->sequence_code[j][seqcode].arg[codearg] == battle_data[spell.parent->id]->sequence_code[spell.id][baseseqcode].arg[basecodearg]))
+					result.push_back({ &compspell, simstat[i].second });
 			}
-			*amountfound = nb;
-			*battleid = GetSimilarEnemyBattlesId;
-			return GetSimilarEnemySpellsResult;
+		}
+	}
+	return result;
 }
 
 EnemySequenceCodeLine::~EnemySequenceCodeLine() {
@@ -820,17 +814,190 @@ void BattleDataStruct::UpdateOffset() {
 	SetSize(size);
 }
 
+int BattleAdditionDataStruct::ExportAssets(ConfigurationSet& config, SaveSet& saveset, string destfolder) {
+	string battleid = ConvertWStrToStr(L"EVT_BATTLE_" + battle_id);
+	if (destfolder.back() != '\\')
+		destfolder += "\\";
+	SteamLanguage lang;
+	fstream filedest;
+	string fname;
+	int evid = saveset.enemyset->GetIdByIndex(index);
+	fname = destfolder + "StreamingAssets\\Assets\\Resources\\BattleMap\\BattleScene\\" + battleid + "\\" + to_string(evid) + ".raw17.bytes";
+	MainFrame::MakeDirForFile(fname);
+	filedest.open(fname.c_str(), ios::out | ios::binary);
+	if (!filedest.is_open())
+		return 3;
+	saveset.enemyset->battle_data[index]->WriteHWS(filedest);
+	filedest.close();
+	fname = destfolder + "StreamingAssets\\Assets\\Resources\\BattleMap\\BattleScene\\" + battleid + "\\dbfile0000.raw16.bytes";
+	MainFrame::MakeDirForFile(fname);
+	filedest.open(fname.c_str(), ios::out | ios::binary);
+	if (!filedest.is_open())
+		return 3;
+	saveset.enemyset->battle[index]->WriteHWS(filedest, true);
+	filedest.close();
+	for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+		fname = destfolder + "StreamingAssets\\Assets\\Resources\\CommonAsset\\EventEngine\\EventBinary\\Battle\\" + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[lang].ToStdString() + "\\" + battleid + ".eb.bytes";
+		MainFrame::MakeDirForFile(fname);
+		filedest.open(fname.c_str(), ios::out | ios::binary);
+		if (!filedest.is_open())
+			return 3;
+		saveset.enemyset->script[index]->WriteSteam(filedest, true, lang);
+		filedest.close();
+		fname = destfolder + "FF9_Data\\EmbeddedAsset\\Text\\" + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[lang].ToStdString() + "\\Battle\\" + to_string(evid) + ".mes";
+		MainFrame::MakeDirForFile(fname);
+		filedest.open(fname.c_str(), ios::out | ios::binary);
+		if (!filedest.is_open())
+			return 3;
+		saveset.enemyset->text[index]->WriteSteam(filedest, lang);
+		filedest.close();
+	}
+	int sceneid = saveset.enemyset->battle[index]->scene_id;
+	string bbgid = "BBG_CB" + to_string(sceneid);
+	for (unsigned int i = 0; i < G_V_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME); i++)
+		if (sceneid == HADES_STRING_BATTLE_SCENE_NAME[i].id) {
+			bbgid = "BBG_" + HADES_STRING_BATTLE_SCENE_NAME[i].steamid.ToStdString();
+			break;
+		}
+	if (!MemoriaUtility::ExportDictionaryPatchLines(destfolder + HADES_STRING_DICTIONARY_PATCH_FILE, wxString::Format(wxT("BattleScene %d "), evid), wxString::Format(wxT("BattleScene %d %s %s\n"), evid, battle_id, bbgid)))
+		return 3;
+	return 0;
+}
+
+void BattleAdditionDataStruct::ReadHWS(fstream& f) {
+	uint8_t version;
+	HWSReadFlexibleShort(f, base_battle_id, true);
+	HWSReadChar(f, version);
+	HWSReadWString(f, battle_id);
+	HWSReadShort(f, shared_camera_pool);
+}
+
+void BattleAdditionDataStruct::WriteHWS(fstream& f) {
+	HWSWriteFlexibleShort(f, base_battle_id, true);
+	HWSWriteChar(f, HWS_ADDITION_INFO_VERSION_CURRENT);
+	HWSWriteWString(f, battle_id);
+	HWSWriteShort(f, shared_camera_pool);
+}
+
+bool EnemyDataSet::CreateCustomBattle(ConfigurationSet& config, int basebattleindex, int customid) {
+	string fname = config.steam_dir_assets + "p0data2.bin";
+	fstream ffbinbattle(fname.c_str(), ios::in | ios::binary);
+	fname = config.steam_dir_assets + "p0data7.bin";
+	fstream ffbinscript(fname.c_str(), ios::in | ios::binary);
+	fname = config.steam_dir_data + "resources.assets";
+	fstream ffbintext(fname.c_str(), ios::in | ios::binary);
+	if (!ffbinscript.is_open() || !ffbintext.is_open() || !ffbinbattle.is_open())
+		return false;
+	uint16_t baseid = (uint16_t)GetIdByIndex(basebattleindex);
+	ClusterData* dummyclus = NULL;
+	uint16_t text_lang_amount[STEAM_LANGUAGE_AMOUNT];
+	uint16_t textamount;
+	SteamLanguage lang;
+	unsigned int i, j;
+	uint32_t fsize;
+	text.push_back(new TextDataStruct[1]);
+	text[battle_amount]->Init(true, CHUNK_TYPE_TEXT, baseid, &dummyclus, CLUSTER_TYPE_ENEMY);
+	textamount = 0;
+	for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+		if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang != GetSteamLanguage())
+			continue;
+		ffbintext.seekg(config.meta_res.GetFileOffsetByIndex(config.enmy_text_file[lang][basebattleindex]));
+		fsize = config.meta_res.GetFileSizeByIndex(config.enmy_text_file[lang][basebattleindex]);
+		char* buffer = new char[fsize];
+		ffbintext.read(buffer, fsize);
+		text_lang_amount[lang] = FF9String::CountSteamTextAmount(buffer, fsize);
+		textamount = max(textamount, text_lang_amount[lang]);
+		delete[] buffer;
+	}
+	text[battle_amount]->base_amount = 0;
+	text[battle_amount]->text.resize(textamount);
+	for (i = 0; i < textamount; i++)
+		text[battle_amount]->text[i].id = i;
+	text[battle_amount]->loaded = true;
+	for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+		if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang != GetSteamLanguage())
+			continue;
+		ffbintext.seekg(config.meta_res.GetFileOffsetByIndex(config.enmy_text_file[lang][basebattleindex]));
+		for (i = 0; i < text_lang_amount[lang]; i++)
+			SteamReadFF9String(ffbintext, text[battle_amount]->text[i].txt, lang);
+		while (i < textamount)
+			text[battle_amount]->text[i++].txt.SetValue(L"[STRT=0,1]", lang);
+	}
+	ffbinbattle.seekg(config.meta_battle.GetFileOffsetByIndex(config.enmy_battle_file[basebattleindex]));
+	battle_data.push_back(new BattleDataStruct[1]);
+	battle_data[battle_amount]->Init(false, CHUNK_TYPE_BATTLE_DATA, baseid, &dummyclus);
+	battle_data[battle_amount]->parent = this;
+	battle_data[battle_amount]->id = battle_amount;
+	battle_data[battle_amount]->size = config.meta_battle.GetFileSizeByIndex(config.enmy_battle_file[basebattleindex]);
+	battle_data[battle_amount]->Read(ffbinbattle);
+	ffbinbattle.seekg(config.meta_battle.GetFileOffsetByIndex(config.enmy_stat_file[basebattleindex]));
+	battle.push_back(new EnemyDataStruct[1]);
+	battle[battle_amount]->Init(false, CHUNK_TYPE_ENEMY_STATS, baseid, &dummyclus);
+	battle[battle_amount]->parent = this;
+	battle[battle_amount]->id = battle_amount;
+	battle[battle_amount]->size = config.meta_battle.GetFileSizeByIndex(config.enmy_stat_file[basebattleindex]);
+	battle[battle_amount]->Read(ffbinbattle);
+	battle[battle_amount]->base_scene_id = battle[basebattleindex]->base_scene_id;
+	battle[battle_amount]->scene_id = battle[battle_amount]->base_scene_id;
+	script.push_back(new ScriptDataStruct[1]);
+	script[battle_amount]->Init(false, CHUNK_TYPE_SCRIPT, baseid, &dummyclus);
+	script[battle_amount]->is_battle_script = true;
+	for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
+		if (hades::STEAM_SINGLE_LANGUAGE_MODE && lang != GetSteamLanguage())
+			continue;
+		ffbinscript.seekg(config.meta_script.GetFileOffsetByIndex(config.enmy_script_file[lang][basebattleindex]));
+		script[battle_amount]->Read(ffbinscript, lang);
+	}
+	script[battle_amount]->size = config.meta_battle.GetFileSizeByIndex(config.enmy_script_file[GetSteamLanguage()][basebattleindex]);
+	i = 0;
+	for (j = 0; j < battle[battle_amount]->stat_amount && i < text[battle_amount]->text.size(); j++)
+		battle[battle_amount]->stat[j].name = text[battle_amount]->text[i++].txt;
+	for (j = 0; j < battle[battle_amount]->spell_amount && i < text[battle_amount]->text.size(); j++)
+		battle[battle_amount]->spell[j].name = text[battle_amount]->text[i++].txt;
+	battle_name.push_back(L"");
+	UpdateBattleName(battle_amount);
+	SetupEnemyInfo(battle_amount);
+	struct_id.push_back(customid);
+	BattleAdditionDataStruct* add = new BattleAdditionDataStruct[1];
+	add->index = battle_amount;
+	add->base_battle_id = baseid;
+	add->battle_id = L"CUSTOM_BATTLE_" + to_wstring(customid);
+	add->shared_camera_pool = baseid;
+	addition.push_back(add);
+	battle_amount++;
+	ffbinbattle.close();
+	ffbinscript.close();
+	ffbintext.close();
+	return true;
+}
+
+void EnemyDataSet::DeleteCustomBattle(int index) {
+	struct_id.erase(struct_id.begin() + index);
+	battle_name.erase(battle_name.begin() + index);
+	battle_data.erase(battle_data.begin() + index);
+	battle.erase(battle.begin() + index);
+	text.erase(text.begin() + index);
+	script.erase(script.begin() + index);
+	addition.erase(addition.begin() + index);
+	battle_amount--;
+	for (unsigned int i = index; i < battle_amount; i++) {
+		if (addition[i] != NULL)
+			addition[i]->index = i;
+		battle_data[i]->id = i;
+		battle[i]->id = i;
+	}
+}
+
 void EnemyDataSet::UpdateBattleName(unsigned int battleindex) {
 	unsigned int i;
 	battle_name[battleindex] = L"";
-	for (i=0;i+1<battle[battleindex]->stat_amount;i++)
+	for (i = 0; i + 1 < battle[battleindex]->stat_amount; i++)
 		battle_name[battleindex] += battle[battleindex]->stat[i].name.str_nice + L" ; ";
-	battle_name[battleindex] += battle[battleindex]->stat[battle[battleindex]->stat_amount-1].name.str_nice;
+	battle_name[battleindex] += battle[battleindex]->stat[battle[battleindex]->stat_amount - 1].name.str_nice;
 }
 
 void EnemyDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 	unsigned int i, j, k, l;
-	modified_battle_scene_amount = 0;
 	image_map_amount = clusset.image_map_amount;
 	battle_amount = clusset.enemy_amount;
 	struct_id.resize(battle_amount);
@@ -839,6 +1006,7 @@ void EnemyDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 	battle.resize(battle_amount);
 	text.resize(battle_amount);
 	script.resize(battle_amount);
+	addition.resize(battle_amount);
 	j = 0;
 	LoadingDialogInit(battle_amount, _(L"Reading enemy formations..."));
 	if (GetGameType() == GAME_TYPE_PSX) {
@@ -888,6 +1056,7 @@ void EnemyDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 					battle[j]->spell[k].name = text[j]->text[l++].txt;
 				UpdateBattleName(j);
 				SetupEnemyInfo(j);
+				addition[j] = NULL;
 				j++;
 				LoadingDialogUpdate(j);
 			}
@@ -979,16 +1148,7 @@ void EnemyDataSet::Load(fstream& ffbin, ClusterSet& clusset) {
 				battle[i]->spell[k].name = text[i]->text[l++].txt;
 			UpdateBattleName(i);
 			SetupEnemyInfo(i);
-/*wfstream fout("aaaa.txt",ios::app|ios::out);
-fout << battle_name[i] << L"->";
-for (j=0;j<battle[i]->group_amount;j++) {
-fout << L" (";
-for (k=0;k<4;k++)
-fout << (k<battle[i]->group[j].enemy_amount ? L"o:" : L"x:") << (int)battle[i]->group[j].enemy_angle[k] << L" ";
-fout << L")";
-}
-fout << endl;
-fout.close();*/
+			addition[i] = NULL;
 			LoadingDialogUpdate(i, wxString::Format(wxT("%u / %u (3/3)"), i, battle_amount));
 		}
 		delete[] dummyclus;
@@ -1121,12 +1281,12 @@ void EnemyDataSet::GenerateCSharp(vector<string>& buffer) {
 		bscindex = -1;
 		bbgindex = -1;
 		for (j = 0; j < G_V_ELEMENTS(SteamBattleScript); j++)
-			if (struct_id[i] == SteamBattleScript[j].battle_id) {
+			if (GetIdByIndex(i) == SteamBattleScript[j].battle_id) {
 				bscindex = j;
 				break;
 			}
 		if (bscindex < 0) {
-			bscenedb << "\t\t// Error: unexpected Battle ID " << (int)struct_id[i] << "\n";
+			bscenedb << "\t\t// Error: unexpected Battle ID " << GetIdByIndex(i) << "\n";
 			continue;
 		}
 		for (j = 0; j < G_V_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME); j++)
@@ -1155,12 +1315,12 @@ bool EnemyDataSet::GenerateCSV(string basefolder) {
 		bscindex = -1;
 		bbgindex = -1;
 		for (j = 0; j < G_V_ELEMENTS(SteamBattleScript); j++)
-			if (struct_id[i] == SteamBattleScript[j].battle_id) {
+			if (GetIdByIndex(i) == SteamBattleScript[j].battle_id) {
 				bscindex = j;
 				break;
 			}
 		if (bscindex < 0) {
-			bmmlines << "// [Hades Workshop] Error: unexpected Battle ID " << (int)struct_id[i] << "\n";
+			bmmlines << "// [Hades Workshop] Error: unexpected Battle ID " << GetIdByIndex(i) << "\n";
 			continue;
 		}
 		for (j = 0; j < G_V_ELEMENTS(HADES_STRING_BATTLE_SCENE_NAME); j++)
@@ -1178,11 +1338,15 @@ bool EnemyDataSet::GenerateCSV(string basefolder) {
 	return true;
 }
 
-int EnemyDataSet::GetIndexById(uint16_t battleid) {
+int EnemyDataSet::GetIndexById(int battleid) {
 	for (unsigned int i = 0; i < battle_amount; i++)
-		if (battleid == struct_id[i])
+		if (battleid == GetIdByIndex(i))
 			return i;
 	return -1;
+}
+
+int EnemyDataSet::GetIdByIndex(int battleindex) {
+	return struct_id[battleindex];
 }
 
 void EnemyDataSet::Write(fstream& ffbin, ClusterSet& clusset, bool saveworldmap, bool savefieldmap) {
@@ -1222,9 +1386,9 @@ void EnemyDataSet::WritePPF(fstream& ffbin, ClusterSet& clusset, bool saveworldm
 int* EnemyDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool usetext, unsigned int localflag) {
 	unsigned int i, j, k;
 	uint32_t chunksize, clustersize, chunkpos, objectpos, objectsize;
-	uint16_t nbmodified, objectid;
+	uint16_t nbmodified;
 	SteamLanguage lang, sublang;
-	int btlindex;
+	int btlindex, objectid;
 	bool shouldread;
 	uint8_t langcount;
 	uint8_t chunktype;
@@ -1236,7 +1400,7 @@ int* EnemyDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 	HWSReadShort(ffhws, nbmodified);
 	for (i = 0; i < nbmodified; i++) {
 		objectpos = ffhws.tellg();
-		HWSReadShort(ffhws, objectid);
+		HWSReadFlexibleShort(ffhws, objectid, GetHWSGlobalVersion() >= 102);
 		HWSReadLong(ffhws, clustersize);
 		if (GetHWSGameType() == GAME_TYPE_PSX && GetGameType() != GAME_TYPE_PSX) {
 			for (j = 0; j < G_V_ELEMENTS(SteamBattleScript); j++)
@@ -1291,6 +1455,7 @@ int* EnemyDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 			}
 			continue;
 		}
+	read_start:
 		btlindex = GetIndexById(objectid);
 		if (btlindex >= 0) {
 			clus = battle[btlindex]->parent_cluster;
@@ -1385,6 +1550,10 @@ int* EnemyDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 								HWSReadChar(ffhws, lang);
 							}
 						}
+					} else if (chunktype == CHUNK_SPECIAL_TYPE_BATTLE_ADDITION) {
+						if (loadmain) {
+							addition[btlindex]->ReadHWS(ffhws);
+						}
 					} else
 						res[1]++;
 					ffhws.seekg(chunkpos + chunksize);
@@ -1419,17 +1588,38 @@ int* EnemyDataSet::LoadHWS(fstream& ffhws, UnusedSaveBackupPart& backup, bool us
 				battle[btlindex]->spell[j].name = text[btlindex]->text[k++].txt;
 			UpdateBattleName(btlindex);
 		} else {
-			objectsize = 7;
-			HWSReadChar(ffhws, chunktype);
-			while (chunktype != CHUNK_SPECIAL_END) {
-				HWSReadLong(ffhws, chunksize);
-				ffhws.seekg(chunksize, ios::cur);
+			int basebattleid = -1;
+			if (GetGameType() == GAME_TYPE_STEAM && GetGameConfiguration() != NULL && GetGameConfiguration()->dll_usage != 0) {
+				chunkpos = ffhws.tellg();
 				HWSReadChar(ffhws, chunktype);
-				objectsize += chunksize + 5;
+				while (chunktype != CHUNK_SPECIAL_END && chunktype != CHUNK_SPECIAL_TYPE_BATTLE_ADDITION) {
+					HWSReadLong(ffhws, chunksize);
+					ffhws.seekg(chunksize, ios::cur);
+					HWSReadChar(ffhws, chunktype);
+				}
+				if (chunktype == CHUNK_SPECIAL_TYPE_BATTLE_ADDITION) {
+					HWSReadLong(ffhws, chunksize);
+					HWSReadFlexibleShort(ffhws, basebattleid, true);
+					if (!CreateCustomBattle(*GetGameConfiguration(), GetIndexById(basebattleid), objectid))
+						basebattleid = -1;
+				}
+				ffhws.seekg(chunkpos);
 			}
-			ffhws.seekg(objectpos);
-			backup.Add(ffhws, objectsize);
-			res[2]++;
+			if (basebattleid >= 0) {
+				goto read_start;
+			} else {
+				objectsize = 7;
+				HWSReadChar(ffhws, chunktype);
+				while (chunktype != CHUNK_SPECIAL_END) {
+					HWSReadLong(ffhws, chunksize);
+					ffhws.seekg(chunksize, ios::cur);
+					HWSReadChar(ffhws, chunktype);
+					objectsize += chunksize + 5;
+				}
+				ffhws.seekg(objectpos);
+				backup.Add(ffhws, objectsize);
+				res[2]++;
+			}
 		}
 	}
 	return res;
@@ -1447,8 +1637,18 @@ void EnemyDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsign
 		clus = battle[i]->parent_cluster;
 		if (clus->modified) {
 			clus->UpdateOffset();
-			HWSWriteShort(ffhws, struct_id[i]);
+			HWSWriteFlexibleShort(ffhws, GetIdByIndex(i), true);
 			HWSWriteLong(ffhws, clus->size);
+			if (savemain && addition[i] != NULL) {
+				HWSWriteChar(ffhws, CHUNK_SPECIAL_TYPE_BATTLE_ADDITION);
+				HWSWriteLong(ffhws, 0);
+				chunkpos = ffhws.tellg();
+				addition[i]->WriteHWS(ffhws);
+				chunksize = (long long)ffhws.tellg() - chunkpos;
+				ffhws.seekg(chunkpos - 4);
+				HWSWriteLong(ffhws, chunksize);
+				ffhws.seekg(chunkpos + chunksize);
+			}
 			if (battle_data[i]->modified && savemain) {
 				HWSWriteChar(ffhws, CHUNK_TYPE_BATTLE_DATA);
 				HWSWriteLong(ffhws, battle_data[i]->size);
@@ -1536,82 +1736,72 @@ void EnemyDataSet::WriteHWS(fstream& ffhws, UnusedSaveBackupPart& backup, unsign
 	ffhws.seekg(endoffset);
 }
 
-int EnemyDataSet::ChangeBattleScene(uint16_t battleid, uint16_t newsceneid, uint32_t newsceneoffset, uint32_t newscenesize) {
+int EnemyDataSet::ChangeBattleScene(int battleid, int newsceneid, uint32_t newsceneoffset, uint32_t newscenesize) {
 	unsigned int i, j;
 	int index = GetIndexById(battleid);
 	if (index < 0)
 		return 1;
 	battle[index]->scene_id = newsceneid;
-	if (GetGameType() == GAME_TYPE_PSX) {
-		bool foundbattle, foundscene, replacescene, scenehere;
-		uint16_t replacingsceneid, scenepos;
-		int res = 0;
-		if (newsceneoffset == 0) // find the offset and size by itself
-			for (i = 0; i < image_map_amount; i++)
-				for (j = 0; j < image_map[0][i]->amount; j++) {
-					if (image_map[0][i]->data_type[j] == CHUNK_TYPE_BATTLE_SCENE && image_map[0][i]->data_id[j] == newsceneid) {
-						newsceneoffset = image_map[0][i]->data_offset[j];
-						newscenesize = image_map[0][i]->data_size[j];
-						i = image_map_amount;
-						break;
-					}
-				}
-		for (i = 0; i < image_map_amount; i++) {
-			foundbattle = false;
+	if (addition[index] != NULL)
+		battle[index]->base_scene_id = newsceneid;
+	if (GetGameType() != GAME_TYPE_PSX)
+		return 0;
+	bool foundbattle, foundscene, replacescene, scenehere;
+	uint16_t replacingsceneid, scenepos;
+	int res = 0;
+	if (newsceneoffset == 0) // find the offset and size by itself
+		for (i = 0; i < image_map_amount; i++)
 			for (j = 0; j < image_map[0][i]->amount; j++) {
-				if (image_map[0][i]->data_type[j] == CHUNK_TYPE_BATTLE_DATA && image_map[0][i]->data_id[j] == battleid && image_map[0][i]->data_related_type[j] == CHUNK_TYPE_BATTLE_SCENE) {
-					image_map[0][i]->data_related_id[j] = newsceneid;
-					image_map[0][i]->MarkDataModified();
-					foundbattle = true;
+				if (image_map[0][i]->data_type[j] == CHUNK_TYPE_BATTLE_SCENE && image_map[0][i]->data_id[j] == newsceneid) {
+					newsceneoffset = image_map[0][i]->data_offset[j];
+					newscenesize = image_map[0][i]->data_size[j];
+					i = image_map_amount;
+					break;
 				}
 			}
-			if (foundbattle) {
-				scenehere = false;
-				foundscene = false;
-				replacescene = false;
+	for (i = 0; i < image_map_amount; i++) {
+		foundbattle = false;
+		for (j = 0; j < image_map[0][i]->amount; j++) {
+			if (image_map[0][i]->data_type[j] == CHUNK_TYPE_BATTLE_DATA && image_map[0][i]->data_id[j] == battleid && image_map[0][i]->data_related_type[j] == CHUNK_TYPE_BATTLE_SCENE) {
+				image_map[0][i]->data_related_id[j] = newsceneid;
+				image_map[0][i]->MarkDataModified();
+				foundbattle = true;
+			}
+		}
+		if (foundbattle) {
+			scenehere = false;
+			foundscene = false;
+			replacescene = false;
+			for (j = 0; j < image_map[0][i]->amount; j++) {
+				if (image_map[0][i]->data_type[j] == CHUNK_TYPE_BATTLE_SCENE && image_map[0][i]->data_related_id[j] == battleid) {
+					replacingsceneid = image_map[0][i]->data_id[j];
+					scenepos = j;
+					foundscene = true;
+					scenehere = replacingsceneid == newsceneid;
+					break;
+				}
+			}
+			if (scenehere)
+				continue;
+			if (foundscene) {
+				replacescene = true;
 				for (j = 0; j < image_map[0][i]->amount; j++) {
-					if (image_map[0][i]->data_type[j] == CHUNK_TYPE_BATTLE_SCENE && image_map[0][i]->data_related_id[j] == battleid) {
-						replacingsceneid = image_map[0][i]->data_id[j];
-						scenepos = j;
-						foundscene = true;
-						scenehere = replacingsceneid == newsceneid;
+					if (image_map[0][i]->data_type[j] == CHUNK_TYPE_BATTLE_DATA && image_map[0][i]->data_related_id[j] == replacingsceneid) {
+						replacescene = false;
 						break;
 					}
 				}
-				if (scenehere)
-					continue;
-				if (foundscene) {
-					replacescene = true;
-					for (j = 0; j < image_map[0][i]->amount; j++) {
-						if (image_map[0][i]->data_type[j] == CHUNK_TYPE_BATTLE_DATA && image_map[0][i]->data_related_id[j] == replacingsceneid) {
-							replacescene = false;
-							break;
-						}
-					}
-				}
-				if (replacescene)
-					image_map[0][i]->RemoveDataByPos(scenepos);
-				res += image_map[0][i]->AddDataSingle(newsceneid, CHUNK_TYPE_BATTLE_SCENE, 0, newsceneoffset, newscenesize, battleid, CHUNK_TYPE_BATTLE_DATA, 0);
-				image_map[0][i]->UpdateOffset();
 			}
+			if (replacescene)
+				image_map[0][i]->RemoveDataByPos(scenepos);
+			res += image_map[0][i]->AddDataSingle(newsceneid, CHUNK_TYPE_BATTLE_SCENE, 0, newsceneoffset, newscenesize, battleid, CHUNK_TYPE_BATTLE_DATA, 0);
+			image_map[0][i]->UpdateOffset();
 		}
 	}
-	for (i = 0; i < modified_battle_scene_amount; i++)
-		if (modified_battle_id[i] == battleid) {
-			modified_scene_id[i] = newsceneid;
-			modified_scene_offset[i] = newsceneoffset;
-			modified_scene_size[i] = newscenesize;
-			return 0;
-		}
-	modified_battle_id.push_back(battleid);
-	modified_scene_id.push_back(newsceneid);
-	modified_scene_offset.push_back(newsceneoffset);
-	modified_scene_size.push_back(newscenesize);
-	modified_battle_scene_amount++;
 	return 0;
 }
 
-int EnemyDataSet::ChangeBattleModel(uint16_t battleindex, uint8_t enemyid, BattleModelLinks& newmodelinfo) {
+int EnemyDataSet::ChangeBattleModel(int battleindex, uint8_t enemyid, BattleModelLinks& newmodelinfo) {
 	EnemyStatDataStruct& es = battle[battleindex]->stat[enemyid];
 	BattleDataStruct& bd = *battle_data[battleindex];
 	unsigned int i;
@@ -1636,7 +1826,23 @@ int EnemyDataSet::ChangeBattleModel(uint16_t battleindex, uint8_t enemyid, Battl
 	return 0;
 }
 
-void EnemyDataSet::SetupEnemyInfo(uint16_t battleindex) { // TODO: Check that any order is OK
+int EnemyDataSet::TransferCameras(int battleindexfrom, int battleindexto) {
+	int fromindex = GetIdByIndex(battleindexfrom);
+	if (addition[battleindexto] != NULL && addition[battleindexto]->shared_camera_pool == fromindex)
+		return 0;
+	int sizereq = battle_data[battleindexfrom]->camera_size - battle_data[battleindexto]->camera_size;
+	if (sizereq >= 0 && (unsigned int)sizereq > battle_data[battleindexto]->GetExtraSize())
+		return 1;
+	if (addition[battleindexto] != NULL)
+		addition[battleindexto]->shared_camera_pool = fromindex;
+	delete[] battle_data[battleindexto]->camera_raw;
+	battle_data[battleindexto]->camera_raw = new uint8_t[battle_data[battleindexfrom]->camera_size];
+	memcpy(battle_data[battleindexto]->camera_raw, battle_data[battleindexfrom]->camera_raw, battle_data[battleindexfrom]->camera_size);
+	battle_data[battleindexto]->camera_size = battle_data[battleindexfrom]->camera_size;
+	return 0;
+}
+
+void EnemyDataSet::SetupEnemyInfo(int battleindex) { // TODO: Check that any order is OK
 	EnemyDataStruct& ed = *battle[battleindex];
 	BattleDataStruct& bd = *battle_data[battleindex];
 	unsigned int i, j = 0, firstanim = 0, lastisdummy = 0;

@@ -51,14 +51,14 @@ public:
 	void MarkDataCommandModified();
 	void MarkDataStatModified();
 	void MarkDataPartySpecialModified();
-	void MarkDataEnemyModified(unsigned int battleid, Chunk_Type chunktype, bool alllang = false);
+	void MarkDataEnemyModified(unsigned int battleindex, Chunk_Type chunktype, bool alllang = false);
 	void MarkDataItemModified();
 	void MarkDataShopModified();
 	void MarkDataCardModified();
 	void MarkDataTextModified(unsigned int textid, Chunk_Type chunktype, unsigned int objectnum = 0);
 	void MarkDataWorldMapModified(unsigned int worldid, Chunk_Type chunktype, unsigned int objectnum = 0);
 	void MarkDataWorldMapScriptModified(unsigned int worldid, bool alllang = false);
-	void MarkDataFieldModified(unsigned int fieldid, Chunk_Type chunktype, bool alllang = false);
+	void MarkDataFieldModified(unsigned int fieldindex, Chunk_Type chunktype, bool alllang = false);
 	void MarkDataBattleSceneModified(unsigned int sceneid, Chunk_Type chunktype, unsigned int objectnum = 0);
 	void MarkDataSpellAnimationModified(unsigned int spellanimid, Spell_Animation_Data_Type datatype);
 	void MarkDataMenuUIModified();
@@ -101,10 +101,12 @@ public:
 	void DisplayPartySpecial(int specialid);
 	void InitEnemy(void);
 	void DisplayEnemy(int battleid);
-	void UpdateEnemyName(unsigned int battleid);
 	void DisplayEnemyStat(int battleid, int statid);
 	void DisplayEnemySpell(int battleid, int spellid);
 	void DisplayEnemyGroup(int battleid, int groupid);
+	void UpdateEnemyName(unsigned int battleindex);
+	void RegisterEnemyAdded(unsigned int battleindex);
+	void RegisterEnemyRemoved(unsigned int battleindex);
 	void InitItem(void);
 	void DisplayItem(int itemid);
 	void DisplayKeyItem(int keyitemid);
@@ -139,6 +141,9 @@ public:
 	void DisplayWorldBattleHelp(int spotversion, int whichbattle);
 	void InitField(void);
 	void DisplayField(int fieldid);
+	void UpdateFieldName(unsigned int fieldindex);
+	void RegisterFieldAdded(unsigned int fieldindex);
+	void RegisterFieldRemoved(unsigned int fieldindex);
 	void InitBattleScene(void);
 	void DisplayBattleScene(int sceneid);
 	void InitSpellAnimation(void);
@@ -167,7 +172,7 @@ public:
 	void CardDisplayNames(bool create = false);
 	void TextDisplayNames(bool create = false);
 	void WorldMapDisplayNames(bool create = false);
-	wxString GetFieldName(int fieldid);
+	wxString GetFieldName(int fieldindex);
 	void FieldDisplayNames(bool create = false);
 	void BattleSceneDisplayNames(bool create = false);
 	void SpellAnimationDisplayNames(bool create = false);
@@ -265,6 +270,7 @@ private:
 	void OnListBoxEnemySpell(wxCommandEvent& event);
 	void OnListBoxEnemyGroup(wxCommandEvent& event);
 	void OnListBoxEnemyText(wxCommandEvent& event);
+	void OnEnemyRightClick(wxMouseEvent& event);
 	void OnEnemyStatChangeName(wxCommandEvent& event);
 	void OnEnemySpellChangeName(wxCommandEvent& event);
 	void OnEnemyChangeText(wxCommandEvent& event);
@@ -338,7 +344,10 @@ private:
 	void OnWorldChangeSpin(wxSpinEvent& event);
 	void OnWorldTextRightClickMenu(wxCommandEvent& event);
 	void OnListBoxField(wxCommandEvent& event);
+	void OnFieldRightClick(wxMouseEvent& event);
 	void OnFieldChangeName(wxCommandEvent& event);
+	void OnFieldChangeText(wxCommandEvent& event);
+	void OnFieldChangeSpin(wxSpinEvent& event);
 	void OnFieldChangeChoice(wxCommandEvent& event);
 	void OnFieldChangeButton(wxCommandEvent& event);
 	void OnFieldTexturePaint(wxPaintEvent& event);

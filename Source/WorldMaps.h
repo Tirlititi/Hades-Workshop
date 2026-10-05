@@ -60,7 +60,7 @@ struct WorldMapDataSet {
 public:
 	uint16_t amount;
 	vector<uint16_t> cluster_id; // PSX only
-	vector<uint16_t> struct_id;
+	vector<int> struct_id;
 	vector<wstring> name;
 	vector<uint16_t> tim_amount;
 	vector<ScriptDataStruct*> script;

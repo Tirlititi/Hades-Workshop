@@ -76,8 +76,6 @@ struct ScriptArgument {
 	bool is_signed;
 	
 	bool SetValue(long long newvalue);
-	// newvaluevar must be malloc'ed and not freed (the arg takes control of it)
-	// no check performed...
 	void SetValueVar(vector<uint8_t> newvaluevar);
 	int64_t GetValue() const; // Get value with sign if needed
 	

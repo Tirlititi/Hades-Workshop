@@ -41,7 +41,7 @@ public:
 	static int ExportEnemyScript(SaveSet* dataset, wxString path, bool* exportlist = NULL, bool splitfile = true, bool appendmode = false, int addedinfo = 0);
 	static int ExportWorldScript(SaveSet* dataset, wxString path, bool* exportlist = NULL, bool splitfile = true, bool appendmode = false, int addedinfo = 0);
 	static int ExportFieldScript(SaveSet* dataset, wxString path, bool* exportlist = NULL, bool splitfile = true, bool appendmode = false, int addedinfo = 0);
-	static int ExportImageBackground(FieldDataSet& data, wxString path, bool* exportlist = NULL, bool mergetile = true, bool depthorder = true, int steamtitlelang = -1);
+	static int ExportImageBackground(FieldDataSet& data, wxString path, bool* exportlist = NULL, bool asbgx = false, bool mergetile = true, bool depthorder = true, int steamtitlelang = -1);
 	static int ExportWalkmesh(FieldDataSet& data, wxString path, bool* exportlist);
 
 private:

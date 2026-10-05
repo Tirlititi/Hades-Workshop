@@ -401,27 +401,27 @@ void MainFrame::OnSaveHWSClick(wxCommandEvent& event) {
 	bool section[DATA_SECTION_AMOUNT];
 	bool sectext[DATA_SECTION_AMOUNT];
 	bool secton[DATA_SECTION_AMOUNT];
-	for (i=0;i<DATA_SECTION_AMOUNT;i++)
+	for (i = 0; i < DATA_SECTION_AMOUNT; i++)
 		section[i] = CDPanel[currentpanel]->saveset.sectionloaded[i];
-	for (i=0;i<DATA_SECTION_AMOUNT;i++)
+	for (i = 0; i < DATA_SECTION_AMOUNT; i++)
 		secton[i] = CDPanel[currentpanel]->saveset.sectionmodified[i];
-	if (TheIOHWSMessageOut->ShowModal(true,section,sectext,secton)==wxID_OK) {
+	if (TheIOHWSMessageOut->ShowModal(true, section, sectext, secton) == wxID_OK) {
 		int hwslen = TheIOHWSMessageOut->m_hwspicker->GetPath().Length();
-		char* hwsname = new char[hwslen+1];
+		char* hwsname = new char[hwslen + 1];
 		hwsname[hwslen] = 0;
 		strncpy(hwsname, (const char*)TheIOHWSMessageOut->m_hwspicker->GetPath().mb_str(), hwslen);
 		bool localsec[3];
 		localsec[0] = TheIOHWSMessageOut->m_enemylocal->GetValue() && TheIOHWSMessageOut->m_enemylocal->IsEnabled();
 		localsec[1] = TheIOHWSMessageOut->m_worldlocal->GetValue() && TheIOHWSMessageOut->m_worldlocal->IsEnabled();
 		localsec[2] = TheIOHWSMessageOut->m_fieldlocal->GetValue() && TheIOHWSMessageOut->m_fieldlocal->IsEnabled();
-		if (WriteHWS(hwsname,section,localsec,CDPanel[currentpanel]->saveset,CDPanel[currentpanel]->backupset)) {
-			wxLogError(HADES_STRING_OPEN_ERROR_CREATE,_(hwsname));
+		if (WriteHWS(hwsname, section, localsec, CDPanel[currentpanel]->saveset, CDPanel[currentpanel]->backupset)) {
+			wxLogError(HADES_STRING_OPEN_ERROR_CREATE, _(hwsname));
 		} else {
-			wxMessageDialog popupsuccess(this,HADES_STRING_HWS_SAVE_SUCCESS,HADES_STRING_SUCCESS,wxOK|wxCENTRE);
+			wxMessageDialog popupsuccess(this, HADES_STRING_HWS_SAVE_SUCCESS, HADES_STRING_SUCCESS, wxOK | wxCENTRE);
 			popupsuccess.ShowModal();
 			if (CDModifiedState[currentpanel]) {
 				wxString title = m_cdbook->GetPageText(currentpanel);
-				m_cdbook->SetPageText(currentpanel,title.Mid(1,title.Len()));
+				m_cdbook->SetPageText(currentpanel, title.Mid(1, title.Len()));
 				CDModifiedState[currentpanel] = false;
 			}
 		}

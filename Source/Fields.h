@@ -7,6 +7,7 @@
 
 struct FieldTilesAnimDataStruct;
 struct FieldTilesTileDataStruct;
+struct FieldTilesTilesetDataStruct;
 struct FieldTilesLightDataStruct;
 struct FieldTilesCameraDataStruct;
 struct FieldTilesDataStruct;
@@ -16,6 +17,7 @@ struct FieldWalkmeshTriple;
 struct FieldRoleDataStruct;
 
 struct FieldSteamTitleInfo;
+struct FieldAdditionDataStruct;
 struct FieldDataSet;
 
 #include <inttypes.h>
@@ -45,6 +47,35 @@ public:
 
 struct FieldTilesTileDataStruct {
 public:
+	uint16_t depth;
+	uint16_t pos_y;
+	uint16_t pos_x;
+
+	uint16_t clut_y;
+	uint8_t clut_x;
+	uint8_t page_y;
+	uint8_t page_x;
+	uint8_t res;
+	uint8_t alpha;
+	uint8_t source_v;
+	uint8_t source_u;
+	uint16_t h;
+	uint16_t w;
+	bool trans;
+	unsigned int steam_id;
+
+private:
+	uint32_t data_data1;
+	uint32_t data_data2;
+	uint32_t data_data3;
+
+	friend FieldTilesTilesetDataStruct;
+	friend FieldTilesDataStruct;
+	friend FieldSteamTitleInfo;
+};
+
+struct FieldTilesTilesetDataStruct {
+public:
 	uint16_t width;
 	uint16_t height;
 	int16_t default_x;
@@ -65,7 +96,7 @@ public:
 	uint16_t tile_amount;
 	uint32_t tile_pos_offset;
 	uint32_t tile_data_offset;
-	uint32_t tile_packet_offset;
+	uint32_t tile_packet;
 	uint32_t tile_tpage;
 	
 	bool is_screen_static;
@@ -78,39 +109,22 @@ public:
 	uint32_t default_depth;
 	bool is_x_offset;
 	uint8_t viewport_id;
-	
-	uint16_t* tile_depth;
-	uint16_t* tile_pos_y;
-	uint16_t* tile_pos_x;
-	
-	uint16_t* tile_clut_y;
-	uint8_t* tile_clut_x;
-	uint8_t* tile_page_y;
-	uint8_t* tile_page_x;
-	uint8_t* tile_res;
-	uint8_t* tile_alpha;
-	uint8_t* tile_source_v;
-	uint8_t* tile_source_u;
-	uint16_t* tile_h;
-	uint16_t* tile_w;
-	bool* tile_trans;
-	unsigned int* tile_steam_id;
+
+	uint8_t is_memoria_bgx;
+	wxString memoria_bgx_path;
+	wxString memoria_bgx_shader;
+
+	FieldTilesTileDataStruct* tile;
 	
 	bool is_first_of_anim;
 	uint8_t id;
 	FieldTilesDataStruct* parent;
 	
-	FieldTilesTileDataStruct() : tile_data_data1(NULL), tile_data_data2(NULL), tile_data_data3(NULL) {}
-	
 private:
 	uint32_t data1;
 	uint8_t data2;
-	uint32_t* tile_data_data1;
-	uint32_t* tile_data_data2;
-	uint32_t* tile_data_data3;
 	
 	void SetupDataInfos(bool readway);
-	void AllocTileData();
 	
 	friend FieldTilesDataStruct;
 	friend FieldSteamTitleInfo;
@@ -118,7 +132,14 @@ private:
 
 struct FieldTilesLightDataStruct {
 public:
-	
+	int16_t pos_x;
+	int16_t pos_z;
+	int16_t pos_y;
+	uint16_t zero;
+	uint8_t clear_r;
+	uint8_t clear_g;
+	uint8_t clear_b;
+	uint8_t camera_id;
 };
 
 struct FieldTilesCameraDataStruct {
@@ -162,24 +183,24 @@ public:
 	uint32_t tiles_offset;
 	uint32_t light_offset;
 	uint32_t camera_offset;
-	uint16_t anim_unk1;
-	uint16_t tiles_unk1;
-	uint16_t light_unk1;
-	uint16_t camera_unk1;
-	uint16_t anim_unk2;
-	uint16_t tiles_unk2;
-	uint16_t light_unk2;
-	uint16_t camera_unk2;
-	uint16_t anim_unk3;
-	uint16_t tiles_unk3;
-	uint16_t light_unk3;
-	uint16_t camera_unk3;
+	int16_t default_depth;
+	int16_t depth;
+	int16_t default_x;
+	int16_t default_y;
+	int16_t pos_x;
+	int16_t pos_y;
+	int16_t min_x;
+	int16_t max_x;
+	int16_t min_y;
+	int16_t max_y;
+	int16_t screen_x;
+	int16_t screen_y;
 	FieldTilesAnimDataStruct* anim;
-	FieldTilesTileDataStruct* tiles;
+	FieldTilesTilesetDataStruct* tiles;
 	FieldTilesLightDataStruct* light; // seems unused at all...
 	FieldTilesCameraDataStruct* camera;
 	
-	FieldTilesTileDataStruct** tiles_sorted; // For ConvertAsImage: each tile block is a layer with a unique depth
+	FieldTilesTilesetDataStruct** tiles_sorted; // For ConvertAsImage: each tile block is a layer with a unique depth
 	vector<vector<pair<int, int>>> tile_per_depth; // For ConvertAsImageAccurate: each tile has its own depth
 	
 	unsigned int title_tile_amount; // Steam only
@@ -190,22 +211,27 @@ public:
 	uint32_t* ConvertAsImage(unsigned int cameraid, bool tileflag[] = NULL, bool showtp = false); // delete[] it
 	uint32_t* ConvertAsImageAccurate(unsigned int cameraid, bool tileflag[] = NULL, bool showtp = false); // delete[] it
 	int Export(const char* outputfile, unsigned int cameraid, bool tileflag[] = NULL, bool showtp = false, bool mergetiles = false, bool depthorder = true, int steamtitlelang = -1);
+	vector<pair<int, int>> ExportLayerAsPNG(vector<pair<wxString, int>> fileandtileid); // inputs: filepaths and tileset ids, output: tileset widths and heights
 	void SetupDataInfos(bool readway);
 	void SetupTilePerDepth();
+	int GetFieldId() const;
+	bool IsBGXFormat() const;
+	void ConvertToBGX(wxString imgfolder);
 	
 	void Read(fstream& f, unsigned int titletileamount);
-	void Read(fstream& f) { Read(f,0); }
+	void Read(fstream& f) { Read(f, 0); }
 	void Write(fstream& f);
 	void WritePPF(fstream& f);
 	void ReadHWS(fstream& f);
 	void WriteHWS(fstream& f);
+	int WriteBGX(string destfolder, string bgxfilename);
 	
 	unsigned int id;
 	FieldDataSet* parent;
 	
 private:
-	void AddTilesetToImage(uint32_t* imgdest, FieldTilesTileDataStruct& t, bool showtp = false, uint32_t* steamimg = NULL, uint32_t steamimgwidth = 1, uint32_t steamimgheight = 1);
-	void AddTileToImage(uint32_t* imgdest, FieldTilesTileDataStruct& t, int tid, bool showtp = false, uint32_t* steamimg = NULL, uint32_t steamimgwidth = 1, uint32_t steamimgheight = 1);
+	void AddTilesetToImage(uint32_t* imgdest, FieldTilesTilesetDataStruct& ts, bool showtp = false, uint32_t* steamimg = NULL, uint32_t steamimgwidth = 1, uint32_t steamimgheight = 1);
+	void AddTileToImage(uint32_t* imgdest, FieldTilesTilesetDataStruct& ts, int tid, bool showtp = false, uint32_t* steamimg = NULL, uint32_t steamimgwidth = 1, uint32_t steamimgheight = 1);
 };
 
 struct FieldWalkmeshTriple {
@@ -388,17 +414,32 @@ struct FieldSteamTitleInfo {
 	void Write(fstream& f);
 };
 
+struct FieldAdditionDataStruct {
+	int index;
+	int base_field_id;
+	uint8_t area_id;
+	wstring map_id;
+	wstring field_id;
+	int text_block_id;
+	uint16_t sps_pool;
+
+	int ExportAssets(ConfigurationSet& config, SaveSet& saveset, string destfolder);
+	void ReadHWS(fstream& f);
+	void WriteHWS(fstream& f);
+};
+
 struct FieldDataSet {
 public:
 	uint16_t amount;
 	vector<uint16_t> cluster_id; // PSX only
-	vector<uint16_t> struct_id;
+	vector<int> struct_id;
 	vector<ScriptDataStruct*> script_data;
 	vector<ImageMapDataStruct*> preload;
 	vector<FieldTilesDataStruct*> background_data;
 	vector<FieldWalkmeshDataStruct*> walkmesh;
 	vector<TIMImageDataStruct*> tim_data;
 	vector<FieldRoleDataStruct*> role;
+	vector<FieldAdditionDataStruct*> addition; // Steam version only
 	
 	vector<TextDataStruct*> related_text;
 	FieldSteamTitleInfo* title_info; // Steam version only
@@ -406,9 +447,12 @@ public:
 	
 	unsigned int tile_size;
 	unsigned int tile_gap;
+
+	bool CreateCustomField(ConfigurationSet& config, uint16_t basefieldindex, int customid);
+	void DeleteCustomField(int index);
 	
-	int SetFieldName(unsigned int fieldid, wstring newvalue, SteamLanguage lang = GetSteamLanguage());
-	int SetFieldName(unsigned int fieldid, FF9String& newvalue);
+	int SetFieldName(unsigned int fieldindex, wstring newvalue, SteamLanguage lang = GetSteamLanguage());
+	int SetFieldName(unsigned int fieldindex, FF9String& newvalue);
 	
 	void Load(fstream& ffbin, ClusterSet& clusset, TextDataSet* textset = NULL);
 	void Write(fstream& ffbin, ClusterSet& clusset);
@@ -421,7 +465,8 @@ public:
 	int GetSteamTextSize(SteamLanguage lang = GetSteamLanguage());
 	void WriteSteamText(fstream& ffbin, SteamLanguage lang = GetSteamLanguage());
 	void WriteSteamTextPatch(fstream& fileout, fstream& baseresourcefile, ConfigurationSet& configset, SteamLanguage lang = GetSteamLanguage());
-	int GetIndexById(uint16_t fieldid);
+	int GetIndexById(int fieldid);
+	int GetIdByIndex(int fieldindex);
 };
 
 #endif
