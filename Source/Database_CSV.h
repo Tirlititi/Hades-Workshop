@@ -7,10 +7,11 @@
 
 #define HADES_STRING_CSV_SPELL_FILE		"Data\\Battle\\Actions.csv"
 #define HADES_STRING_CSV_SPELL_HEADER	L"#! IncludeCastingTitleType\n"\
+										L"#! UseElementList\n"\
 										L"# This file contains character actions.\n"\
 										L"# -----------------------------------------------\n"\
-										L"# Comment;id;menuWindow;targets;defaultAlly;forDead;defaultOnDead;defaultCamera;animationId1;animationId2;scriptId;power;elements;rate;category;statusIndex;mp;type;commandTitle\n"\
-										L"# String;Int32;UInt8;UInt8;Boolean;Boolean;Boolean;Boolean;Int16;UInt16;Int32;Int32;UInt8;Int32;UInt8;Int32;Int32;UInt8;UInt8\n"\
+										L"# Comment;Id;Display;Targets;DefaultAlly;ForDead;DefaultDead;DefaultCamera;AnimationId;AnimationId2;ScriptId;Power;Elements;Rate;Category;AddStatus;MP;Type;CastingTitleType\n"\
+										L"# String;Int32;UInt8;UInt8;Boolean;Boolean;Boolean;Boolean;Int16;UInt16;Int32;Int32;UInt32[];Int32;UInt8;Int32;Int32;UInt8;UInt8\n"\
 										L"# -----------------------------------------------\n"
 
 #define HADES_STRING_CSV_STATUS_FILE	"Data\\Battle\\StatusSets.csv"
@@ -125,10 +126,11 @@ extern vector<wstring> HADES_STRING_CSV_STATABIL_HEADER;
 #define HADES_STRING_CSV_USABLE_FILE	"Data\\Items\\ItemEffects.csv"
 #define HADES_STRING_CSV_USABLE_HEADER	L"#! IncludeId\n"\
 										L"#! UseStatusList\n"\
+										L"#! UseElementList\n"\
 										L"# This file contains a set of usable item effects.\n"\
 										L"# -----------------------------------------------\n"\
-										L"# Id;Targets;DefaultAlly;Display;AnimationId;Dead;DefaultDead;ScriptId;Power;Rate;Element;Status\n"\
-										L"# Int32;UInt8;Bit;UInt8;Int16;Bit;Bit;Int32;Int32;Int32;UInt8;Status[]\n"\
+										L"# Id;Targets;DefaultAlly;Display;AnimationId;Dead;DefaultDead;ScriptId;Power;Rate;Elements;Status\n"\
+										L"# Int32;UInt8;Bit;UInt8;Int16;Bit;Bit;Int32;Int32;Int32;UInt32[];Status[]\n"\
 										L"# -----------------------------------------------\n"
 
 #define HADES_STRING_CSV_ITEM_FILE		"Data\\Items\\Items.csv"
@@ -149,10 +151,11 @@ extern vector<wstring> HADES_STRING_CSV_STATABIL_HEADER;
 										L"# -----------------------------------------------\n"
 
 #define HADES_STRING_CSV_ITEMSTAT_FILE		"Data\\Items\\Stats.csv"
-#define HADES_STRING_CSV_ITEMSTAT_HEADER	L"# This file contains a set of bonuses of equipment.\n"\
+#define HADES_STRING_CSV_ITEMSTAT_HEADER	L"#! UseElementList\n"\
+											L"# This file contains a set of bonuses of equipment.\n"\
 											L"# -----------------------------------------------\n"\
 											L"# Comment;Id;Dexterity;Strength;Magic;Will;AttackElement;GuardElement;AbsorbElement;HalfElement;WeakElement\n"\
-											L"# String;Int32;Byte;Byte;Byte;Byte;Byte;Byte;Byte;Byte;Byte\n"\
+											L"# String;Int32;Byte;Byte;Byte;Byte;UInt32[];UInt32[];UInt32[];UInt32[];UInt32[]\n"\
 											L"# -----------------------------------------------\n"
 
 #define HADES_STRING_CSV_SYNTHESIS_FILE		"Data\\Items\\Synthesis.csv"
@@ -166,10 +169,11 @@ extern vector<wstring> HADES_STRING_CSV_STATABIL_HEADER;
 #define HADES_STRING_CSV_WEAPON_FILE	"Data\\Items\\Weapons.csv"
 #define HADES_STRING_CSV_WEAPON_HEADER	L"#! IncludeHitSfx\n"\
 										L"#! IncludeCustomTexture\n"\
+										L"#! UseElementList\n"\
 										L"# This file contains a set of game weapons.\n"\
 										L"# -----------------------------------------------\n"\
 										L"# Comment;Id;Category;StatusIndex;Model;ScriptId;Power;Elements;Rate;Offset1;Offset2;HitSfx;CustomTexture\n"\
-										L"# String;Int32;Byte;Int32;String;Int32;Int32;Byte;Int32;Int16;Int16;Int32;String[]\n"\
+										L"# String;Int32;Byte;Int32;String;Int32;Int32;UInt32[];Int32;Int16;Int16;Int32;String[]\n"\
 										L"# -----------------------------------------------\n"
 
 #define HADES_STRING_LOCALIZATION_PATCH_FILE	"Data\\Text\\LocalizationPatch.txt"

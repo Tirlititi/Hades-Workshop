@@ -327,6 +327,14 @@ bool IsAutoAppendModeActivated(int scripttype) {
 		|| (scripttype == SCRIPT_TYPE_BATTLE && GetTopWindow()->m_battlepreferappendmode->IsChecked());
 }
 
+int CharacterOldIdToId(int charid) {
+	if (charid == 8)	return 11;
+	if (charid == 9)	return 8;
+	if (charid == 10)	return 9;
+	if (charid == 11)	return 10;
+	return charid;
+}
+
 wxString ScriptEditHandler::GetArgumentDescription(int64_t argvalue, uint8_t argtype, SteamLanguage displaylang) {
 	int64_t i;
 	switch (argtype) {
@@ -371,9 +379,14 @@ wxString ScriptEditHandler::GetArgumentDescription(int64_t argvalue, uint8_t arg
 	case AT_CHARACTER:
 		if (use_character) {
 			wxString charlist;
-			for (i = 0; i < 12; i++)
-				if (argvalue & (1LL << i))
-					charlist += _(datas->statset->initial_stat[i].default_name.str_nice) + _(L"|");
+			long long mask;
+			for (i = 0; i < 32; i++) {
+				mask = (1LL << i);
+				if (argvalue & mask)
+					charlist += _(datas->statset->GetCharacterById(CharacterOldIdToId(i)).default_name.str_nice) + _(L"|");
+				else if (argvalue < mask)
+					break;
+			}
 			if (charlist.Len() > 0) charlist.Truncate(charlist.Len() - 1);
 			return charlist;
 		}
@@ -381,8 +394,7 @@ wxString ScriptEditHandler::GetArgumentDescription(int64_t argvalue, uint8_t arg
 	case AT_LCHARACTER:
 		if (use_character) {
 			if (argvalue == 0xFF || argvalue == 0xFFFF) return _(HADES_STRING_NULL_CHARACTER_SLOT);
-			if (argvalue < 12) return _(datas->statset->initial_stat[argvalue].default_name.str_nice);
-			return _(L"[Invalid Character ID]");
+			return _(datas->statset->GetCharacterById(CharacterOldIdToId(argvalue)).default_name.str_nice);
 		}
 		break;
 	case AT_ENTRY:
@@ -556,18 +568,23 @@ ScriptEditDialog::ScriptEditDialog(wxWindow* parent, ScriptDataStruct& scpt, int
 	}
 	DisplayFunctionList();
 	if (use_character) {
-		character_str.Alloc(13);
+		unsigned int statcount = datas->statset->initial_stat.size();
+		character_str.Alloc(statcount + 1);
 		for (i = 0; i < 8; i++)
 			character_str.Add(_(datas->statset->initial_stat[i].default_name.str_nice));
 		character_str.Add(_(datas->statset->initial_stat[11].default_name.str_nice));
 		character_str.Add(_(datas->statset->initial_stat[8].default_name.str_nice));
 		character_str.Add(_(datas->statset->initial_stat[9].default_name.str_nice));
 		character_str.Add(_(datas->statset->initial_stat[10].default_name.str_nice));
+		for (i = 12; i < statcount; i++)
+			character_str.Add(_(datas->statset->initial_stat[i].default_name.str_nice));
 		character_str.Add(_(HADES_STRING_NULL_CHARACTER_SLOT));
-		character_id.resize(13);
+		character_id.resize(statcount + 1);
 		for (i = 0; i < 12; i++)
 			character_id[i] = new int(i);
-		character_id[12] = new int(0xFF);
+		for (i = 12; i < statcount; i++)
+			character_id[i] = new int(datas->statset->initial_stat[i].id);
+		character_id[statcount] = new int(0xFF);
 	}
 	if (use_battle) {
 		battle_str.Alloc(datas->enemyset->battle_amount);
@@ -3727,6 +3744,7 @@ LogStruct ScriptEditHandler::ParseFunction(wxString str, unsigned int entry, uns
 										argvalarray[j].push_back(0x0D);
 									argvalarray[j].push_back(0x7F);
 									parseop[opi].arg[j].SetValueVar(argvalarray[j]);
+									varargbyte |= 0x1 << j;
 								}
 							} else {
 								parseop[opi].arg[j].SetValueVar(argvalarray[j]);

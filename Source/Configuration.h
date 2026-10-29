@@ -31,7 +31,7 @@ typedef uint8_t GameType;
 #define GAME_TYPE_PSX	0
 #define GAME_TYPE_STEAM	1
 
-#define STEAM_SPECIAL_TEXT_AMOUNT	7
+#define STEAM_SPECIAL_TEXT_AMOUNT	9
 #define STEAM_WORLD_MAP_TEXT_ID		68
 
 typedef uint8_t LanguageVersion;

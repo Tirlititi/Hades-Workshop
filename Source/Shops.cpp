@@ -69,7 +69,7 @@ bool SynthesisDataStruct::CompareWithCSV(wxArrayString entries) {
 	return MemoriaUtility::CompareEntries(entries[id].AfterFirst(L';'), rightcsv);
 }
 
-#define MACRO_SHOP_IOFUNCTIONSHOP(IO,READ,PPF) \
+#define MACRO_SHOP_IOFUNCTIONSHOP(IO, READ, PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
 	for (i = 0; i < shopamount; i++) { \
 		if (useextendedtype) { \
@@ -77,6 +77,9 @@ bool SynthesisDataStruct::CompareWithCSV(wxArrayString entries) {
 			if (READ) shop[i].item_list.resize(max(SHOP_ITEM_AMOUNT, shop[i].item_amount)); \
 			for (j = 0; j < shop[i].item_amount; j++) \
 				IO ## FlexibleChar(ffbin, shop[i].item_list[j], useextendedtype); \
+			if (READ) \
+				for (j = shop[i].item_amount; j < SHOP_ITEM_AMOUNT; j++) \
+					shop[i].item_list[j] = j == shop[i].item_amount ? 0xFF : 0; \
 		} else { \
 			if (READ) { \
 				shop[i].item_amount = SHOP_ITEM_AMOUNT; \

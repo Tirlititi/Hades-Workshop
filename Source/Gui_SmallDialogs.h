@@ -79,10 +79,16 @@ private:
 
 class ItemStatDialog : public ItemStatWindow {
 public:
+	ItemStatDataStruct statdata;
+
 	ItemStatDialog(wxWindow* parent);
 	int ShowModal(ItemStatDataStruct& is);
 
 private:
+	void UpdateElementLabels();
+
+	void OnChangeFlag(wxCommandEvent& event);
+	void OnChangeButton(wxCommandEvent& event);
 	void OnButtonClick(wxCommandEvent& event);
 };
 
@@ -132,6 +138,12 @@ public:
 private:
 	void OnAnimChoice(wxCommandEvent& event);
 	void OnButtonClick(wxCommandEvent& event);
+};
+
+class ManageFieldCameraDialog : public ManageFieldCameraWindow {
+public:
+	ManageFieldCameraDialog(wxWindow* parent, FieldTilesCameraDataStruct& cam);
+	void ApplyModifications(FieldTilesCameraDataStruct& cam);
 };
 
 class DatabaseFormatDialog : public DatabaseFormatWindow {

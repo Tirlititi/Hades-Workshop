@@ -7,21 +7,16 @@
 #include "Database_Animation.h"
 #include "Database_SpellAnimation.h"
 
-#define MACRO_FLAG_DISPLAY8(VARIABLE,CHECKBOX)	CHECKBOX ## 1->SetValue(VARIABLE & 0x1); CHECKBOX ## 2->SetValue(VARIABLE & 0x2); CHECKBOX ## 3->SetValue(VARIABLE & 0x4); CHECKBOX ## 4->SetValue(VARIABLE & 0x8);\
-												CHECKBOX ## 5->SetValue(VARIABLE & 0x10); CHECKBOX ## 6->SetValue(VARIABLE & 0x20); CHECKBOX ## 7->SetValue(VARIABLE & 0x40); CHECKBOX ## 8->SetValue(VARIABLE & 0x80);
-#define MACRO_FLAG_DISPLAY16(VARIABLE,CHECKBOX)	CHECKBOX ## 1->SetValue(VARIABLE & 0x1); CHECKBOX ## 2->SetValue(VARIABLE & 0x2); CHECKBOX ## 3->SetValue(VARIABLE & 0x4); CHECKBOX ## 4->SetValue(VARIABLE & 0x8);\
-												CHECKBOX ## 5->SetValue(VARIABLE & 0x10); CHECKBOX ## 6->SetValue(VARIABLE & 0x20); CHECKBOX ## 7->SetValue(VARIABLE & 0x40); CHECKBOX ## 8->SetValue(VARIABLE & 0x80);\
-												CHECKBOX ## 9->SetValue(VARIABLE & 0x100); CHECKBOX ## 10->SetValue(VARIABLE & 0x200); CHECKBOX ## 11->SetValue(VARIABLE & 0x400); CHECKBOX ## 12->SetValue(VARIABLE & 0x800);\
-												CHECKBOX ## 13->SetValue(VARIABLE & 0x1000); CHECKBOX ## 14->SetValue(VARIABLE & 0x2000); CHECKBOX ## 15->SetValue(VARIABLE & 0x4000); CHECKBOX ## 16->SetValue(VARIABLE & 0x8000);
-#define MACRO_FLAG_DISPLAY32(VARIABLE,CHECKBOX)	CHECKBOX ## 1->SetValue(VARIABLE & 0x1); CHECKBOX ## 2->SetValue(VARIABLE & 0x2); CHECKBOX ## 3->SetValue(VARIABLE & 0x4); CHECKBOX ## 4->SetValue(VARIABLE & 0x8);\
-												CHECKBOX ## 5->SetValue(VARIABLE & 0x10); CHECKBOX ## 6->SetValue(VARIABLE & 0x20); CHECKBOX ## 7->SetValue(VARIABLE & 0x40); CHECKBOX ## 8->SetValue(VARIABLE & 0x80);\
-												CHECKBOX ## 9->SetValue(VARIABLE & 0x100); CHECKBOX ## 10->SetValue(VARIABLE & 0x200); CHECKBOX ## 11->SetValue(VARIABLE & 0x400); CHECKBOX ## 12->SetValue(VARIABLE & 0x800);\
-												CHECKBOX ## 13->SetValue(VARIABLE & 0x1000); CHECKBOX ## 14->SetValue(VARIABLE & 0x2000); CHECKBOX ## 15->SetValue(VARIABLE & 0x4000); CHECKBOX ## 16->SetValue(VARIABLE & 0x8000);\
-												CHECKBOX ## 17->SetValue(VARIABLE & 0x10000); CHECKBOX ## 18->SetValue(VARIABLE & 0x20000); CHECKBOX ## 19->SetValue(VARIABLE & 0x40000); CHECKBOX ## 20->SetValue(VARIABLE & 0x80000);\
-												CHECKBOX ## 21->SetValue(VARIABLE & 0x100000); CHECKBOX ## 22->SetValue(VARIABLE & 0x200000); CHECKBOX ## 23->SetValue(VARIABLE & 0x400000); CHECKBOX ## 24->SetValue(VARIABLE & 0x800000);\
-												CHECKBOX ## 25->SetValue(VARIABLE & 0x1000000); CHECKBOX ## 26->SetValue(VARIABLE & 0x2000000); CHECKBOX ## 27->SetValue(VARIABLE & 0x4000000); CHECKBOX ## 28->SetValue(VARIABLE & 0x8000000);\
-												CHECKBOX ## 29->SetValue(VARIABLE & 0x10000000); CHECKBOX ## 30->SetValue(VARIABLE & 0x20000000); CHECKBOX ## 31->SetValue(VARIABLE & 0x40000000); CHECKBOX ## 32->SetValue(VARIABLE & 0x80000000);
+#define MACRO_FLAG_DISPLAY8_EX(VARIABLE, CHECKBOX)	CHECKBOX ## 1->SetValue(SetContains(VARIABLE, 0)); CHECKBOX ## 2->SetValue(SetContains(VARIABLE, 1)); CHECKBOX ## 3->SetValue(SetContains(VARIABLE, 2)); CHECKBOX ## 4->SetValue(SetContains(VARIABLE, 3));\
+													CHECKBOX ## 5->SetValue(SetContains(VARIABLE, 4)); CHECKBOX ## 6->SetValue(SetContains(VARIABLE, 5)); CHECKBOX ## 7->SetValue(SetContains(VARIABLE, 6)); CHECKBOX ## 8->SetValue(SetContains(VARIABLE, 7));
 
+#define MACRO_FLAG_SET_EX(VARIABLE, IDNAME, VALUE) \
+	if (id == IDNAME) { \
+		if (on)	VARIABLE.insert(VALUE); \
+		else	VARIABLE.erase(VALUE); \
+	}
+#define MACRO_FLAG_SET8_EX(VARIABLE, IDNAME)	MACRO_FLAG_SET_EX(VARIABLE, IDNAME ## 1, 0) MACRO_FLAG_SET_EX(VARIABLE, IDNAME ## 2, 1) MACRO_FLAG_SET_EX(VARIABLE, IDNAME ## 3, 2) MACRO_FLAG_SET_EX(VARIABLE, IDNAME ## 4, 3) \
+												MACRO_FLAG_SET_EX(VARIABLE, IDNAME ## 5, 4) MACRO_FLAG_SET_EX(VARIABLE, IDNAME ## 6, 5) MACRO_FLAG_SET_EX(VARIABLE, IDNAME ## 7, 6) MACRO_FLAG_SET_EX(VARIABLE, IDNAME ## 8, 7)
 
 
 // Discardable message
@@ -489,19 +484,58 @@ ItemStatDialog::ItemStatDialog(wxWindow* parent) : ItemStatWindow(parent) {
 }
 
 int ItemStatDialog::ShowModal(ItemStatDataStruct& is) {
-	m_speed->SetValue(is.speed);
-	m_strength->SetValue(is.strength);
-	m_magic->SetValue(is.magic);
-	m_spirit->SetValue(is.spirit);
-	MACRO_FLAG_DISPLAY8(is.element_absorb, m_elementabsorb)
-	MACRO_FLAG_DISPLAY8(is.element_immune, m_elementimmune)
-	MACRO_FLAG_DISPLAY8(is.element_half, m_elementhalf)
-	MACRO_FLAG_DISPLAY8(is.element_weak, m_elementweak)
-	MACRO_FLAG_DISPLAY8(is.element_boost, m_elementboost)
+	statdata = is;
+	m_speed->SetValue(statdata.speed);
+	m_strength->SetValue(statdata.strength);
+	m_magic->SetValue(statdata.magic);
+	m_spirit->SetValue(statdata.spirit);
+	MACRO_FLAG_DISPLAY8_EX(statdata.element_absorb, m_elementabsorb)
+	MACRO_FLAG_DISPLAY8_EX(statdata.element_immune, m_elementimmune)
+	MACRO_FLAG_DISPLAY8_EX(statdata.element_half, m_elementhalf)
+	MACRO_FLAG_DISPLAY8_EX(statdata.element_weak, m_elementweak)
+	MACRO_FLAG_DISPLAY8_EX(statdata.element_boost, m_elementboost)
+	UpdateElementLabels();
 	return wxDialog::ShowModal();
 }
 
+void ItemStatDialog::UpdateElementLabels() {
+	SetCustomElemClassLabel(m_elementabsorblist, statdata.element_absorb, true);
+	SetCustomElemClassLabel(m_elementimmunelist, statdata.element_immune, true);
+	SetCustomElemClassLabel(m_elementhalflist, statdata.element_half, true);
+	SetCustomElemClassLabel(m_elementweaklist, statdata.element_weak, true);
+	SetCustomElemClassLabel(m_elementboostlist, statdata.element_boost, true);
+}
+
+void ItemStatDialog::OnChangeFlag(wxCommandEvent& event) {
+	int id = event.GetId();
+	bool on = event.IsChecked();
+	MACRO_FLAG_SET8_EX(statdata.element_absorb, wxID_EA)
+	MACRO_FLAG_SET8_EX(statdata.element_immune, wxID_EI)
+	MACRO_FLAG_SET8_EX(statdata.element_half, wxID_EH)
+	MACRO_FLAG_SET8_EX(statdata.element_weak, wxID_EW)
+	MACRO_FLAG_SET8_EX(statdata.element_boost, wxID_EB)
+}
+
+void ItemStatDialog::OnChangeButton(wxCommandEvent& event) {
+	int id = event.GetId();
+	if (id == wxID_EAADD)			statdata.element_absorb.insert(m_elementabsorbint->GetValue());
+	else if (id == wxID_EACLEAR)	ClearCustomElemClass(statdata.element_absorb);
+	else if (id == wxID_EIADD)		statdata.element_immune.insert(m_elementimmuneint->GetValue());
+	else if (id == wxID_EICLEAR)	ClearCustomElemClass(statdata.element_immune);
+	else if (id == wxID_EHADD)		statdata.element_half.insert(m_elementhalfint->GetValue());
+	else if (id == wxID_EHCLEAR)	ClearCustomElemClass(statdata.element_half);
+	else if (id == wxID_EWADD)		statdata.element_weak.insert(m_elementweakint->GetValue());
+	else if (id == wxID_EWCLEAR)	ClearCustomElemClass(statdata.element_weak);
+	else if (id == wxID_EBADD)		statdata.element_boost.insert(m_elementboostint->GetValue());
+	else if (id == wxID_EBCLEAR)	ClearCustomElemClass(statdata.element_boost);
+	UpdateElementLabels();
+}
+
 void ItemStatDialog::OnButtonClick(wxCommandEvent& event) {
+	statdata.speed = m_speed->GetValue();
+	statdata.strength = m_strength->GetValue();
+	statdata.magic = m_magic->GetValue();
+	statdata.spirit = m_spirit->GetValue();
 	EndModal(event.GetId());
 }
 
@@ -955,6 +989,32 @@ bool EnemyResourceDialog::ApplyModifications(EnemyStatDataStruct& es, BattleData
 			result = (es.parent->AddAnimation(es.id, m_listanimid[i]->GetValue()) == 0) && result;
 	}
 	return result;
+}
+
+ManageFieldCameraDialog::ManageFieldCameraDialog(wxWindow* parent, FieldTilesCameraDataStruct& cam) : ManageFieldCameraWindow(parent) {
+	m_posx->SetValue(cam.offset_x);			m_posy->SetValue(cam.offset_y);			m_posz->SetValue(cam.offset_z);
+	m_matrix00->SetValue(cam.matrix[0]);	m_matrix01->SetValue(cam.matrix[1]);	m_matrix02->SetValue(cam.matrix[2]);
+	m_matrix10->SetValue(cam.matrix[3]);	m_matrix11->SetValue(cam.matrix[4]);	m_matrix12->SetValue(cam.matrix[5]);
+	m_matrix20->SetValue(cam.matrix[6]);	m_matrix21->SetValue(cam.matrix[7]);	m_matrix22->SetValue(cam.matrix[8]);
+	m_viewdistance->SetValue(cam.distance);
+	m_screenoffsetx->SetValue(cam.offset_centerx);		m_screenoffsety->SetValue(cam.offset_centery);
+	m_viewportminx->SetValue(cam.min_x);				m_viewportminy->SetValue(cam.min_y);
+	m_viewportmaxx->SetValue(cam.max_x);				m_viewportmaxy->SetValue(cam.max_y);
+	m_rangewidth->SetValue(cam.offset_width);			m_rangeheight->SetValue(cam.offset_height);
+	m_depth->SetValue(cam.depth);
+}
+
+void ManageFieldCameraDialog::ApplyModifications(FieldTilesCameraDataStruct& cam) {
+	cam.offset_x = m_posx->GetValue();			cam.offset_y = m_posy->GetValue();			cam.offset_z = m_posz->GetValue();
+	cam.matrix[0] = m_matrix00->GetValue();		cam.matrix[1] = m_matrix01->GetValue();		cam.matrix[2] = m_matrix02->GetValue();
+	cam.matrix[3] = m_matrix10->GetValue();		cam.matrix[4] = m_matrix11->GetValue();		cam.matrix[5] = m_matrix12->GetValue();
+	cam.matrix[6] = m_matrix20->GetValue();		cam.matrix[7] = m_matrix21->GetValue();		cam.matrix[8] = m_matrix22->GetValue();
+	cam.distance = m_viewdistance->GetValue();
+	cam.offset_centerx = m_screenoffsetx->GetValue();	cam.offset_centery = m_screenoffsety->GetValue();
+	cam.min_x = m_viewportminx->GetValue();				cam.min_y = m_viewportminy->GetValue();
+	cam.max_x = m_viewportmaxx->GetValue();				cam.max_y = m_viewportmaxy->GetValue();
+	cam.offset_width = m_rangewidth->GetValue();		cam.offset_height = m_rangeheight->GetValue();
+	cam.depth = m_depth->GetValue();
 }
 
 DatabaseFormatDialog::DatabaseFormatDialog(wxWindow* parent, wxString* header, wxString* format, map<wxString, wxString>* fields) : DatabaseFormatWindow(parent) {

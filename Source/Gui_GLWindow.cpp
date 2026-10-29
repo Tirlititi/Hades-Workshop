@@ -384,24 +384,24 @@ void GLWindow::Prepare3DViewport(int topleft_x, int topleft_y, int bottomrigth_x
 	glEnable(GL_COLOR_MATERIAL);
 	glEnable(GL_POINT_SMOOTH);
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-	glViewport(topleft_x, topleft_y, bottomrigth_x-topleft_x, bottomrigth_y-topleft_y);
+	glViewport(topleft_x, topleft_y, bottomrigth_x - topleft_x, bottomrigth_y - topleft_y);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(65.0,1.0,1.0,100000.0L);
+	gluPerspective(65.0, 1.0, 1.0, 100000.0L);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 }
 
 void GLWindow::Prepare2DViewport(int topleft_x, int topleft_y, int bottomrigth_x, int bottomrigth_y) {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Black Background
-	glEnable(GL_TEXTURE_2D);   // textures
+	glEnable(GL_TEXTURE_2D); // textures
 	glEnable(GL_COLOR_MATERIAL);
 	glEnable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-	glViewport(topleft_x, topleft_y, bottomrigth_x-topleft_x, bottomrigth_y-topleft_y);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glViewport(topleft_x, topleft_y, bottomrigth_x - topleft_x, bottomrigth_y - topleft_y);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluOrtho2D(topleft_x, bottomrigth_x, bottomrigth_y, topleft_y);

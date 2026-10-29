@@ -1626,6 +1626,15 @@ void CDDataStruct::OnGenericTextRightClickMenu(wxCommandEvent& event) {
 												CHECKBOX ## 25->SetValue(VARIABLE & 0x1000000); CHECKBOX ## 26->SetValue(VARIABLE & 0x2000000); CHECKBOX ## 27->SetValue(VARIABLE & 0x4000000); CHECKBOX ## 28->SetValue(VARIABLE & 0x8000000);\
 												CHECKBOX ## 29->SetValue(VARIABLE & 0x10000000); CHECKBOX ## 30->SetValue(VARIABLE & 0x20000000); CHECKBOX ## 31->SetValue(VARIABLE & 0x40000000); CHECKBOX ## 32->SetValue(VARIABLE & 0x80000000);
 
+#define MACRO_FLAG_DISPLAY8_EX(VARIABLE, CHECKBOX)	CHECKBOX ## 1->SetValue(SetContains(VARIABLE, 0)); CHECKBOX ## 2->SetValue(SetContains(VARIABLE, 1)); CHECKBOX ## 3->SetValue(SetContains(VARIABLE, 2)); CHECKBOX ## 4->SetValue(SetContains(VARIABLE, 3));\
+													CHECKBOX ## 5->SetValue(SetContains(VARIABLE, 4)); CHECKBOX ## 6->SetValue(SetContains(VARIABLE, 5)); CHECKBOX ## 7->SetValue(SetContains(VARIABLE, 6)); CHECKBOX ## 8->SetValue(SetContains(VARIABLE, 7));
+#define MACRO_FLAG_SET_EX(VARIABLE, IDNAME, VALUE) \
+	if (id == IDNAME) { \
+		if (on)	VARIABLE.insert(VALUE); \
+		else	VARIABLE.erase(VALUE); \
+	}
+#define MACRO_FLAG_SET8_EX(VARIABLE, IDNAME)	MACRO_FLAG_SET_EX(VARIABLE, IDNAME ## 1, 0) MACRO_FLAG_SET_EX(VARIABLE, IDNAME ## 2, 1) MACRO_FLAG_SET_EX(VARIABLE, IDNAME ## 3, 2) MACRO_FLAG_SET_EX(VARIABLE, IDNAME ## 4, 3) \
+												MACRO_FLAG_SET_EX(VARIABLE, IDNAME ## 5, 4) MACRO_FLAG_SET_EX(VARIABLE, IDNAME ## 6, 5) MACRO_FLAG_SET_EX(VARIABLE, IDNAME ## 7, 6) MACRO_FLAG_SET_EX(VARIABLE, IDNAME ## 8, 7)
 
 //=============================//
 //          Spells             //
@@ -1683,7 +1692,8 @@ void CDDataStruct::DisplaySpell(int spellid) {
 	m_spelleffecthelp->GetSize(&x, &y);
 	m_spelleffecthelpwindow->SetScrollbars(20, 5, x / 20, y / 5);
 	m_spellpower->SetValue(sp.power);
-	MACRO_FLAG_DISPLAY8(sp.element, m_spellelement)
+	MACRO_FLAG_DISPLAY8_EX(sp.element, m_spellelement)
+	SetCustomElemClassLabel(m_spellelementlist, sp.element, true);
 	if (sp.status < STATUS_SET_AMOUNT)
 		m_spellstatus->SetSelection(sp.status);
 	m_spellstatusint->SetValue(sp.status);
@@ -1848,12 +1858,12 @@ void CDDataStruct::OnSpellChangeFlags(wxCommandEvent& event) {
 	SpellDataStruct& sp = spellset.spell[*sortid];
 	int id = event.GetId();
 	bool on = event.GetInt();
-	MACRO_FLAG_SET8(sp.menu_flag,wxID_MF)
-	MACRO_FLAG_SET8(sp.element,wxID_SE)
-	MACRO_FLAG_SET(sp.target_flag,wxID_CAN_TARGET_DEAD,TARGET_FLAG_CAN_TARGET_DEAD)
-	MACRO_FLAG_SET(sp.target_flag,wxID_TARGET_CAMERA,TARGET_FLAG_CAMERA)
-	MACRO_FLAG_SET(sp.target_flag,wxID_TARGET_DEAD_FIRST,TARGET_FLAG_TARGET_DEAD_FIRST)
-	MACRO_FLAG_SET8(sp.flag,wxID_SF)
+	MACRO_FLAG_SET8(sp.menu_flag, wxID_MF)
+	MACRO_FLAG_SET8_EX(sp.element, wxID_SE)
+	MACRO_FLAG_SET(sp.target_flag, wxID_CAN_TARGET_DEAD, TARGET_FLAG_CAN_TARGET_DEAD)
+	MACRO_FLAG_SET(sp.target_flag, wxID_TARGET_CAMERA, TARGET_FLAG_CAMERA)
+	MACRO_FLAG_SET(sp.target_flag, wxID_TARGET_DEAD_FIRST, TARGET_FLAG_TARGET_DEAD_FIRST)
+	MACRO_FLAG_SET8(sp.flag, wxID_SF)
 	MarkDataSpellModified();
 }
 
@@ -1892,6 +1902,14 @@ void CDDataStruct::OnSpellChangeButton(wxCommandEvent& event) {
 				m_spellhelp->SetValue(sp.help.str);
 			}
 		}
+	} else if (id == wxID_SEADD) {
+		sp.element.insert(m_spellelementint->GetValue());
+		SetCustomElemClassLabel(m_spellelementlist, sp.element, true);
+		MarkDataSpellModified();
+	} else if (id == wxID_SECLEAR) {
+		ClearCustomElemClass(sp.element);
+		SetCustomElemClassLabel(m_spellelementlist, sp.element, true);
+		MarkDataSpellModified();
 	} else if (id == wxID_STATUS) {
 		SpellStatusDialog spstat(this);
 		if (spellset.GetStatusSetIndexById(sp.status) < 0)
@@ -2600,6 +2618,7 @@ void CDDataStruct::DisplayStat(int statid) {
 	m_statcharmagic->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
 	m_statcharspirit->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
 	m_statcharmagicstone->SetRange(0, gametype == GAME_TYPE_STEAM && config.dll_usage != 0 ? INT32_MAX : 255);
+	m_statchardefaultname->SetMaxLength(gametype == GAME_TYPE_STEAM ? (config.dll_usage != 0 ? 12 : 8) : 7);
 	m_statchardefaultname->ChangeValue(_(is.default_name.str));
 	m_statcharspeed->SetValue(is.speed);
 	m_statcharstrength->SetValue(is.strength);
@@ -3247,9 +3266,9 @@ void CDDataStruct::OnPartySpecialChangeSpin(wxSpinEvent& event) {
 	int id = event.GetId();
 	int status = event.GetPosition();
 	if (id == wxID_STATUSCASTER) {
-		m_partyspecialmagicswordcasterstatusbaselist->SetSelection(status < STATUS_AMOUNT ? status : -1);
+		m_partyspecialmagicswordcasterstatusbaselist->SetSelection(status < STATUS_AMOUNT ? status : wxNOT_FOUND);
 	} else if (id == wxID_STATUSKNIGHT) {
-		m_partyspecialmagicswordknightstatusbaselist->SetSelection(status < STATUS_AMOUNT ? status : -1);
+		m_partyspecialmagicswordknightstatusbaselist->SetSelection(status < STATUS_AMOUNT ? status : wxNOT_FOUND);
 	}
 }
 
@@ -3421,80 +3440,53 @@ ItemStatDataStruct& CDDataStruct::GetItemStat(int itemid) {
 
 void CDDataStruct::DisplayItemStatIdHelp(void) {
 	ItemStatDataStruct& is = GetItemStat(m_itemlist->GetSelection());
-	wxString infolabel;
+	SpecialTextDataStruct* elemnames = saveset.sectionloaded[DATA_SECTION_MENU_UI] ? &ffuiset.special_text->text_block[SPECIAL_TEXT_ELEMENTNAMES_INDEX_STEAM] : NULL;
+		wxString infolabel;
 	infolabel << L"Strength +" << (int)is.strength << L"\tSpeed +" << (int)is.speed << L"\nMagic +" << (int)is.magic << L"\tSpirit +" << (int)is.spirit << L"\n";
-	if (is.element_absorb) {
+	if (!is.element_absorb.empty()) {
 		bool addslash = false;
 		infolabel << L"Absorb ";
-		#define MACRO_ITEMSTAT_ELEMENT_TOKEN(FIELD,ID,STR) \
-			if (is.FIELD & ID) { \
-				if (addslash) { \
-					infolabel << L" / " << STR; \
+		#define MACRO_ITEMSTAT_ELEMENT_TOKEN(FIELD) \
+			for (auto it = is.FIELD.begin(); it != is.FIELD.end(); it++) { \
+				if (addslash) infolabel << L" / "; \
+				addslash = true; \
+				if (elemnames != NULL) { \
+					int txtindex = elemnames->GetTextIndexById(*it); \
+					if (txtindex >= 0) \
+						infolabel << _(elemnames->text[txtindex].txt.str_nice); \
+					else \
+						infolabel << *it; \
+				} else if (*it >= 0 && *it < (int)HADES_STRING_ELEMENT_NAME.size()) { \
+					infolabel << HADES_STRING_ELEMENT_NAME[*it]; \
 				} else { \
-					infolabel << STR; \
-					addslash = true; \
+					infolabel << *it; \
 				} \
 			}
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_absorb,ELEMENT_FIRE,L"Fire")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_absorb,ELEMENT_ICE,L"Ice")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_absorb,ELEMENT_THUNDER,L"Thunder")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_absorb,ELEMENT_EARTH,L"Earth")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_absorb,ELEMENT_WATER,L"Water")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_absorb,ELEMENT_WIND,L"Wind")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_absorb,ELEMENT_HOLY,L"Holy")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_absorb,ELEMENT_SHADOW,L"Shadow")
+		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_absorb)
 		infolabel << L"\n";
 	}
-	if (is.element_immune) {
+	if (!is.element_immune.empty()) {
 		bool addslash = false;
 		infolabel << L"Immune against ";
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_immune,ELEMENT_FIRE,L"Fire")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_immune,ELEMENT_ICE,L"Ice")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_immune,ELEMENT_THUNDER,L"Thunder")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_immune,ELEMENT_EARTH,L"Earth")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_immune,ELEMENT_WATER,L"Water")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_immune,ELEMENT_WIND,L"Wind")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_immune,ELEMENT_HOLY,L"Holy")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_immune,ELEMENT_SHADOW,L"Shadow")
+		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_immune)
 		infolabel << L"\n";
 	}
-	if (is.element_half) {
+	if (!is.element_half.empty()) {
 		bool addslash = false;
 		infolabel << L"Half damage from ";
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_half,ELEMENT_FIRE,L"Fire")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_half,ELEMENT_ICE,L"Ice")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_half,ELEMENT_THUNDER,L"Thunder")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_half,ELEMENT_EARTH,L"Earth")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_half,ELEMENT_WATER,L"Water")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_half,ELEMENT_WIND,L"Wind")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_half,ELEMENT_HOLY,L"Holy")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_half,ELEMENT_SHADOW,L"Shadow")
+		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_half)
 		infolabel << L"\n";
 	}
-	if (is.element_weak) {
+	if (!is.element_weak.empty()) {
 		bool addslash = false;
 		infolabel << L"Weaken against ";
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_weak,ELEMENT_FIRE,L"Fire")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_weak,ELEMENT_ICE,L"Ice")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_weak,ELEMENT_THUNDER,L"Thunder")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_weak,ELEMENT_EARTH,L"Earth")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_weak,ELEMENT_WATER,L"Water")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_weak,ELEMENT_WIND,L"Wind")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_weak,ELEMENT_HOLY,L"Holy")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_weak,ELEMENT_SHADOW,L"Shadow")
+		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_weak)
 		infolabel << L"\n";
 	}
-	if (is.element_boost) {
+	if (!is.element_boost.empty()) {
 		bool addslash = false;
 		infolabel << L"Boost damage of ";
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_boost,ELEMENT_FIRE,L"Fire")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_boost,ELEMENT_ICE,L"Ice")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_boost,ELEMENT_THUNDER,L"Thunder")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_boost,ELEMENT_EARTH,L"Earth")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_boost,ELEMENT_WATER,L"Water")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_boost,ELEMENT_WIND,L"Wind")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_boost,ELEMENT_HOLY,L"Holy")
-		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_boost,ELEMENT_SHADOW,L"Shadow")
+		MACRO_ITEMSTAT_ELEMENT_TOKEN(element_boost)
 		infolabel << L"\n";
 	}
 	m_itemstatinfo->SetLabelText(infolabel);
@@ -3604,7 +3596,8 @@ void CDDataStruct::DisplayItem(int itemid) {
 		m_itemusableeffecthelp->GetSize(&x, &y);
 		m_itemusableeffecthelpwindow->SetScrollbars(20, 5, x / 20, y / 5);
 		m_itemusablepower->SetValue(ic.power);
-		MACRO_FLAG_DISPLAY8(ic.element, m_itemusableelement)
+		MACRO_FLAG_DISPLAY8_EX(ic.element, m_itemusableelement)
+		SetCustomElemClassLabel(m_itemusableelementlist, ic.element, true);
 		m_itemusablestatuslist->Clear();
 		for (auto st = ic.status.begin(); st != ic.status.end(); st++)
 			m_itemusablestatuslist->Append(SpellStatusDialog::StatusDisplayName(*st), new int[1]{ *st });
@@ -3642,7 +3635,8 @@ void CDDataStruct::DisplayItem(int itemid) {
 		m_itemweaponformula->SetSelection(iw.damage_formula);
 		m_itemweaponformulaint->SetValue(iw.damage_formula);
 		m_itemweaponpower->SetValue(iw.power);
-		MACRO_FLAG_DISPLAY8(iw.element, m_itemweaponelement)
+		MACRO_FLAG_DISPLAY8_EX(iw.element, m_itemweaponelement)
+		SetCustomElemClassLabel(m_itemweaponelementlist, iw.element, true);
 		if (iw.status < STATUS_SET_AMOUNT)
 			m_itemweaponstatus->SetSelection(iw.status);
 		m_itemweaponstatusint->SetValue(iw.status);
@@ -3871,7 +3865,7 @@ void CDDataStruct::OnItemChangeSpin(wxSpinEvent& event) {
 		itemset.GetUsableById(it.usable_id).power = event.GetPosition();
 	} else if (id == wxID_STATUSINT) {
 		int status = event.GetPosition();
-		m_itemusablestatusbaselist->SetSelection(status < STATUS_AMOUNT ? status : -1);
+		m_itemusablestatusbaselist->SetSelection(status < STATUS_AMOUNT ? status : wxNOT_FOUND);
 	} else if (id == wxID_ACCURACY) {
 		itemset.GetUsableById(it.usable_id).accuracy = event.GetPosition();
 	} else if (id == wxID_WEAPONFORMULA) {
@@ -4033,14 +4027,14 @@ void CDDataStruct::OnItemChangeFlags(wxCommandEvent& event) {
 		MACRO_FLAG_SET16(it.char_availability, wxID_IA)
 		if (it.usable_id >= 0) {
 			ItemUsableDataStruct& ic = itemset.GetUsableById(it.usable_id);
-			MACRO_FLAG_SET8(ic.element, wxID_UE)
+			MACRO_FLAG_SET8_EX(ic.element, wxID_UE)
 			MACRO_FLAG_SET(ic.target_flag, wxID_CAN_TARGET_DEAD, TARGET_FLAG_CAN_TARGET_DEAD)
 			MACRO_FLAG_SET(ic.target_flag, wxID_TARGET_CAMERA, TARGET_FLAG_CAMERA)
 			MACRO_FLAG_SET(ic.target_flag, wxID_TARGET_DEAD_FIRST, TARGET_FLAG_TARGET_DEAD_FIRST)
 		}
 		if (it.weapon_id >= 0) {
 			ItemWeaponDataStruct& iw = itemset.GetWeaponById(it.weapon_id);
-			MACRO_FLAG_SET8(iw.element, wxID_WE)
+			MACRO_FLAG_SET8_EX(iw.element, wxID_WE)
 			MACRO_FLAG_SET8(iw.flag, wxID_WF)
 		}
 		if (id == wxID_IA1 || id == wxID_IA2 || id == wxID_IA3 || id == wxID_IA4 || id == wxID_IA5 || id == wxID_IA6 || id == wxID_IA7 || id == wxID_IA8 || id == wxID_IA9 || id == wxID_IA10 || id == wxID_IA11 || id == wxID_IA12)
@@ -4162,20 +4156,7 @@ void CDDataStruct::OnItemChangeButton(wxCommandEvent& event) {
 			ItemStatDataStruct& is = GetItemStat(sel);
 			ItemStatDialog statdialog(this);
 			if (statdialog.ShowModal(is) == wxID_OK) {
-				is.speed = statdialog.m_speed->GetValue();
-				is.strength = statdialog.m_strength->GetValue();
-				is.magic = statdialog.m_magic->GetValue();
-				is.spirit = statdialog.m_spirit->GetValue();
-				is.element_absorb = (statdialog.m_elementabsorb1->IsChecked() ? 1 : 0) | (statdialog.m_elementabsorb2->IsChecked() << 1) | (statdialog.m_elementabsorb3->IsChecked() << 2) | (statdialog.m_elementabsorb4->IsChecked() << 3) | /*
-								*/(statdialog.m_elementabsorb5->IsChecked() << 4) | (statdialog.m_elementabsorb6->IsChecked() << 5) | (statdialog.m_elementabsorb7->IsChecked() << 6) | (statdialog.m_elementabsorb8->IsChecked() << 7);
-				is.element_immune = (statdialog.m_elementimmune1->IsChecked() ? 1 : 0) | (statdialog.m_elementimmune2->IsChecked() << 1) | (statdialog.m_elementimmune3->IsChecked() << 2) | (statdialog.m_elementimmune4->IsChecked() << 3) | /*
-								*/(statdialog.m_elementimmune5->IsChecked() << 4) | (statdialog.m_elementimmune6->IsChecked() << 5) | (statdialog.m_elementimmune7->IsChecked() << 6) | (statdialog.m_elementimmune8->IsChecked() << 7);
-				is.element_half = (statdialog.m_elementhalf1->IsChecked() ? 1 : 0) | (statdialog.m_elementhalf2->IsChecked() << 1) | (statdialog.m_elementhalf3->IsChecked() << 2) | (statdialog.m_elementhalf4->IsChecked() << 3) | /*
-								*/(statdialog.m_elementhalf5->IsChecked() << 4) | (statdialog.m_elementhalf6->IsChecked() << 5) | (statdialog.m_elementhalf7->IsChecked() << 6) | (statdialog.m_elementhalf8->IsChecked() << 7);
-				is.element_weak = (statdialog.m_elementweak1->IsChecked() ? 1 : 0) | (statdialog.m_elementweak2->IsChecked() << 1) | (statdialog.m_elementweak3->IsChecked() << 2) | (statdialog.m_elementweak4->IsChecked() << 3) | /*
-								*/(statdialog.m_elementweak5->IsChecked() << 4) | (statdialog.m_elementweak6->IsChecked() << 5) | (statdialog.m_elementweak7->IsChecked() << 6) | (statdialog.m_elementweak8->IsChecked() << 7);
-				is.element_boost = (statdialog.m_elementboost1->IsChecked() ? 1 : 0) | (statdialog.m_elementboost2->IsChecked() << 1) | (statdialog.m_elementboost3->IsChecked() << 2) | (statdialog.m_elementboost4->IsChecked() << 3) | /*
-								*/(statdialog.m_elementboost5->IsChecked() << 4) | (statdialog.m_elementboost6->IsChecked() << 5) | (statdialog.m_elementboost7->IsChecked() << 6) | (statdialog.m_elementboost8->IsChecked() << 7);
+				is = statdialog.statdata;
 				DisplayItemStatIdHelp();
 				MarkDataItemModified();
 			}
@@ -4325,6 +4306,16 @@ void CDDataStruct::OnItemChangeButton(wxCommandEvent& event) {
 				m_itemequipposlist->SetSelection(it.equip_position);
 				MarkDataItemModified();
 			}
+		} else if (id == wxID_UEADD) {
+			ItemUsableDataStruct& ic = itemset.GetUsableById(it.usable_id);
+			ic.element.insert(m_itemusableelementint->GetValue());
+			SetCustomElemClassLabel(m_itemusableelementlist, ic.element, true);
+			MarkDataItemModified();
+		} else if (id == wxID_UECLEAR) {
+			ItemUsableDataStruct& ic = itemset.GetUsableById(it.usable_id);
+			ClearCustomElemClass(ic.element);
+			SetCustomElemClassLabel(m_itemusableelementlist, ic.element, true);
+			MarkDataItemModified();
 		} else if (id == wxID_ADDSTATUS) {
 			ItemUsableDataStruct& ic = itemset.GetUsableById(it.usable_id);
 			int status = m_itemusablestatusbaseint->GetValue();
@@ -4341,6 +4332,16 @@ void CDDataStruct::OnItemChangeButton(wxCommandEvent& event) {
 			if (ic.status.erase(status) == 0)
 				return;
 			m_itemusablestatuslist->Delete(m_itemusablestatuslist->GetSelection());
+			MarkDataItemModified();
+		} else if (id == wxID_WEADD) {
+			ItemWeaponDataStruct& iw = itemset.GetWeaponById(it.weapon_id);
+			iw.element.insert(m_itemweaponelementint->GetValue());
+			SetCustomElemClassLabel(m_itemweaponelementlist, iw.element, true);
+			MarkDataItemModified();
+		} else if (id == wxID_WECLEAR) {
+			ItemWeaponDataStruct& iw = itemset.GetWeaponById(it.weapon_id);
+			ClearCustomElemClass(iw.element);
+			SetCustomElemClassLabel(m_itemweaponelementlist, iw.element, true);
 			MarkDataItemModified();
 		} else if (id == wxID_WEAPONSTATUS) {
 			SpellStatusDialog spstat(this);
@@ -5155,11 +5156,16 @@ void CDDataStruct::DisplayEnemyStat(int battleid, int statid) {
 	m_enemystatzero2->SetValue(es.zero2);
 	m_enemystatzero3->SetValue(es.zero3);
 
-	MACRO_FLAG_DISPLAY8(es.element_absorb, m_enemystatelementabsorb)
-	MACRO_FLAG_DISPLAY8(es.element_immune, m_enemystatelementimmune)
-	MACRO_FLAG_DISPLAY8(es.element_half, m_enemystatelementhalf)
-	MACRO_FLAG_DISPLAY8(es.element_weak, m_enemystatelementweak)
-	MACRO_FLAG_DISPLAY8(es.classification, m_enemystatclass)
+	MACRO_FLAG_DISPLAY8_EX(es.element_absorb, m_enemystatelementabsorb)
+	MACRO_FLAG_DISPLAY8_EX(es.element_immune, m_enemystatelementimmune)
+	MACRO_FLAG_DISPLAY8_EX(es.element_half, m_enemystatelementhalf)
+	MACRO_FLAG_DISPLAY8_EX(es.element_weak, m_enemystatelementweak)
+	MACRO_FLAG_DISPLAY8_EX(es.classification, m_enemystatclass)
+	SetCustomElemClassLabel(m_enemystatelementabsorblist, es.element_absorb, true);
+	SetCustomElemClassLabel(m_enemystatelementimmunelist, es.element_immune, true);
+	SetCustomElemClassLabel(m_enemystatelementhalflist, es.element_half, true);
+	SetCustomElemClassLabel(m_enemystatelementweaklist, es.element_weak, true);
+	SetCustomElemClassLabel(m_enemystatclasslist, es.classification, false);
 	m_enemystatimmunelist->Clear();
 	m_enemystatautolist->Clear();
 	m_enemystatinitiallist->Clear();
@@ -5216,7 +5222,8 @@ void CDDataStruct::DisplayEnemySpell(int battleid, int spellid) {
 	m_enemyspelleffecthelp->GetSize(&x, &y);
 	m_enemyspelleffecthelpwindow->SetScrollbars(20, 5, x / 20, y / 5);
 	m_enemyspellpower->SetValue(ep.power);
-	MACRO_FLAG_DISPLAY8(ep.element, m_enemyspellelement)
+	MACRO_FLAG_DISPLAY8_EX(ep.element, m_enemyspellelement)
+	SetCustomElemClassLabel(m_enemyspellelementlist, ep.element, true);
 	m_enemyspellaccuracy->SetValue(ep.accuracy);
 	if (ep.status < STATUS_SET_AMOUNT)
 		m_enemyspellstatus->SetSelection(ep.status);
@@ -5627,13 +5634,13 @@ void CDDataStruct::OnEnemyChangeSpin(wxSpinEvent& event) {
 			}
 		} else if (id == wxID_IMMUNESTATUS) {
 			int status = event.GetPosition();
-			m_enemystatimmunebaselist->SetSelection(status < STATUS_AMOUNT ? status : -1);
+			m_enemystatimmunebaselist->SetSelection(status < STATUS_AMOUNT ? status : wxNOT_FOUND);
 		} else if (id == wxID_AUTOSTATUS) {
 			int status = event.GetPosition();
-			m_enemystatautobaselist->SetSelection(status < STATUS_AMOUNT ? status : -1);
+			m_enemystatautobaselist->SetSelection(status < STATUS_AMOUNT ? status : wxNOT_FOUND);
 		} else if (id == wxID_INITIALSTATUS) {
 			int status = event.GetPosition();
-			m_enemystatinitialbaselist->SetSelection(status < STATUS_AMOUNT ? status : -1);
+			m_enemystatinitialbaselist->SetSelection(status < STATUS_AMOUNT ? status : wxNOT_FOUND);
 		}
 	} else if (m_enemyspelllist->GetSelection() != wxNOT_FOUND) {
 		EnemySpellDataStruct& enmydata = eb.spell[m_enemyspelllist->GetSelection()];
@@ -5856,11 +5863,11 @@ void CDDataStruct::OnEnemyChangeFlags(wxCommandEvent& event) {
 
 		#define MACRO_ENEMY_CHECK_STAT_FLAG(STAT) \
 			MACRO_FLAG_SET8(STAT ## .death_flag, wxID_ED) \
-			MACRO_FLAG_SET8(STAT ## .element_absorb, wxID_EA) \
-			MACRO_FLAG_SET8(STAT ## .element_immune, wxID_EI) \
-			MACRO_FLAG_SET8(STAT ## .element_half, wxID_EH) \
-			MACRO_FLAG_SET8(STAT ## .element_weak, wxID_EW) \
-			MACRO_FLAG_SET8(STAT ## .classification, wxID_EC)
+			MACRO_FLAG_SET8_EX(STAT ## .element_absorb, wxID_EA) \
+			MACRO_FLAG_SET8_EX(STAT ## .element_immune, wxID_EI) \
+			MACRO_FLAG_SET8_EX(STAT ## .element_half, wxID_EH) \
+			MACRO_FLAG_SET8_EX(STAT ## .element_weak, wxID_EW) \
+			MACRO_FLAG_SET8_EX(STAT ## .classification, wxID_EC)
 
 		if (GetTopWindow()->m_editsimilarenemy->IsChecked()) {
 			vector<pair<EnemyStatDataStruct*, unsigned int>> macrolist = enemyset.GetSimilarEnemyStats(enmydata);
@@ -5876,7 +5883,7 @@ void CDDataStruct::OnEnemyChangeFlags(wxCommandEvent& event) {
 		EnemySpellDataStruct& enmydata = eb.spell[m_enemyspelllist->GetSelection()];
 
 		#define MACRO_ENEMY_CHECK_SPELL_FLAG(SPELL) \
-			MACRO_FLAG_SET8(SPELL ## .element, wxID_SE) \
+			MACRO_FLAG_SET8_EX(SPELL ## .element, wxID_SE) \
 			MACRO_FLAG_SET8(SPELL ## .flag, wxID_SF) \
 			MACRO_FLAG_SET8(SPELL ## .menu_flag, wxID_SM) \
 			MACRO_FLAG_SET(SPELL ## .target_flag, wxID_CAN_TARGET_DEAD, TARGET_FLAG_CAN_TARGET_DEAD) \
@@ -5925,6 +5932,34 @@ void CDDataStruct::OnEnemyChangeButton(wxCommandEvent& event) {
 	unsigned int* sortid = (unsigned int*)m_enemylist->GetClientData(sel);
 	EnemyDataStruct& eb = *enemyset.battle[*sortid];
 	int id = event.GetId();
+
+	#define MACRO_ENEMY_CHANGE_EXTENDEDFLAG(ID, FIELD, FIELDCONTROL, ISELEM) \
+		} else if (id == ID ## ADD) { \
+			EnemyStatDataStruct& es = eb.stat[m_enemystatlist->GetSelection()]; \
+			vector<pair<EnemyStatDataStruct*, unsigned int>> similares; \
+			int addvalue = m_enemystat ## FIELDCONTROL ## int->GetValue(); \
+			if (GetTopWindow()->m_editsimilarenemy->IsChecked()) \
+				similares = enemyset.GetSimilarEnemyStats(es); \
+			else \
+				similares.push_back({ &es, *sortid }); \
+			for (auto it = similares.begin(); it != similares.end(); it++) { \
+				it->first->FIELD.insert(addvalue); \
+				MarkDataEnemyModified(it->second, CHUNK_TYPE_ENEMY_STATS); \
+			} \
+			SetCustomElemClassLabel(m_enemystat ## FIELDCONTROL ## list, es.FIELD, ISELEM); \
+		} else if (id == ID ## CLEAR) { \
+			EnemyStatDataStruct& es = eb.stat[m_enemystatlist->GetSelection()]; \
+			vector<pair<EnemyStatDataStruct*, unsigned int>> similares; \
+			int addvalue = m_enemystat ## FIELDCONTROL ## int->GetValue(); \
+			if (GetTopWindow()->m_editsimilarenemy->IsChecked()) \
+				similares = enemyset.GetSimilarEnemyStats(es); \
+			else \
+				similares.push_back({ &es, *sortid }); \
+			for (auto it = similares.begin(); it != similares.end(); it++) { \
+				ClearCustomElemClass(it->first->FIELD); \
+				MarkDataEnemyModified(it->second, CHUNK_TYPE_ENEMY_STATS); \
+			} \
+			SetCustomElemClassLabel(m_enemystat ## FIELDCONTROL ## list, es.FIELD, ISELEM); \
 
 	#define MACRO_ENEMY_CHANGE_STATUS(TYPEUPPER, TYPELOWER) \
 		} else if (id == wxID_ADD ## TYPEUPPER) { \
@@ -6007,6 +6042,11 @@ void CDDataStruct::OnEnemyChangeButton(wxCommandEvent& event) {
 			m_enemystatname->ChangeValue(_(es.name.str));
 			m_enemystatlist->SetString(statsel, _(es.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 		}
+	MACRO_ENEMY_CHANGE_EXTENDEDFLAG(wxID_EA, element_absorb, elementabsorb, true)
+	MACRO_ENEMY_CHANGE_EXTENDEDFLAG(wxID_EI, element_immune, elementimmune, true)
+	MACRO_ENEMY_CHANGE_EXTENDEDFLAG(wxID_EH, element_half, elementhalf, true)
+	MACRO_ENEMY_CHANGE_EXTENDEDFLAG(wxID_EW, element_weak, elementweak, true)
+	MACRO_ENEMY_CHANGE_EXTENDEDFLAG(wxID_EC, classification, class, false)
 	MACRO_ENEMY_CHANGE_STATUS(IMMUNE, immune)
 	MACRO_ENEMY_CHANGE_STATUS(AUTO, auto)
 	MACRO_ENEMY_CHANGE_STATUS(INITIAL, initial)
@@ -6047,6 +6087,32 @@ void CDDataStruct::OnEnemyChangeButton(wxCommandEvent& event) {
 			m_enemyspelllist->SetString(spellsel, _(ep.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 			m_enemystatdefaultattack->SetString(spellsel, _(ep.name.GetStr(hades::TEXT_PREVIEW_TYPE)));
 		}
+	} else if (id == wxID_SEADD) {
+		EnemySpellDataStruct& ep = eb.spell[m_enemyspelllist->GetSelection()];
+		if (GetTopWindow()->m_editsimilarenemy->IsChecked()) {
+			vector<pair<EnemySpellDataStruct*, unsigned int>> similarspells = enemyset.GetSimilarEnemySpells(ep);
+			for (unsigned int i = 0; i < similarspells.size(); i++) {
+				similarspells[i].first->element.insert(m_enemyspellelementint->GetValue());
+				MarkDataEnemyModified(similarspells[i].second, CHUNK_TYPE_ENEMY_STATS);
+			}
+		} else {
+			ep.element.insert(m_enemyspellelementint->GetValue());
+			MarkDataEnemyModified(*sortid, CHUNK_TYPE_ENEMY_STATS);
+		}
+		SetCustomElemClassLabel(m_enemyspellelementlist, ep.element, true);
+	} else if (id == wxID_SECLEAR) {
+		EnemySpellDataStruct& ep = eb.spell[m_enemyspelllist->GetSelection()];
+		if (GetTopWindow()->m_editsimilarenemy->IsChecked()) {
+			vector<pair<EnemySpellDataStruct*, unsigned int>> similarspells = enemyset.GetSimilarEnemySpells(ep);
+			for (unsigned int i = 0; i < similarspells.size(); i++) {
+				ClearCustomElemClass(similarspells[i].first->element);
+				MarkDataEnemyModified(similarspells[i].second, CHUNK_TYPE_ENEMY_STATS);
+			}
+		} else {
+			ClearCustomElemClass(ep.element);
+			MarkDataEnemyModified(*sortid, CHUNK_TYPE_ENEMY_STATS);
+		}
+		SetCustomElemClassLabel(m_enemyspellelementlist, ep.element, true);
 	} else if (id == wxID_STATUS) {
 		EnemySpellDataStruct& ep = eb.spell[m_enemyspelllist->GetSelection()];
 		SpellStatusDialog spstat(this);
@@ -6096,8 +6162,6 @@ void CDDataStruct::OnEnemyChangeButton(wxCommandEvent& event) {
 		EnemyAnimSequenceEditDialog dial(this, *enemyset.battle_data[*sortid], spellsel);
 		uint32_t battlesize = enemyset.battle_data[*sortid]->size;
 		if (dial.ShowModal() == wxID_OK) {
-			for (unsigned int i = 0; i < enemyset.battle_data[*sortid]->sequence_code_amount[spellsel]; i++)
-				delete[] enemyset.battle_data[*sortid]->sequence_code[spellsel][i].arg;
 			enemyset.battle_data[*sortid]->sequence_code[spellsel] = dial.sequence_code;
 			enemyset.battle_data[*sortid]->sequence_code_amount[spellsel] = dial.sequence_code_amount;
 			MarkDataEnemyModified(*sortid, CHUNK_TYPE_BATTLE_DATA);
@@ -7228,8 +7292,19 @@ walkbmp.SaveFile(_(L"aaaa.bmp"),wxBITMAP_TYPE_BMP);*/
 		FieldTextureConvertToBGXWindow dial(this);
 		if (dial.ShowModal() == wxID_OK) {
 			fieldset.background_data[*sortid]->ConvertToBGX(dial.m_dirpicker->GetPath());
-			m_fieldtexturetobgx->Enable(false);
-			MarkDataFieldModified(*sortid, CHUNK_TYPE_FIELD_TILES);
+			if (fieldset.background_data[*sortid]->IsBGXFormat()) {
+				m_fieldtexturetobgx->Enable(false);
+				MarkDataFieldModified(*sortid, CHUNK_TYPE_FIELD_TILES);
+			}
+		}
+	} else if (id == wxID_CAMERA) {
+		int camselection = m_fieldtexturechoice->GetSelection();
+		if (camselection >= 0 && camselection < fieldset.background_data[*sortid]->camera_amount) {
+			ManageFieldCameraDialog dial(this, fieldset.background_data[*sortid]->camera[camselection]);
+			if (dial.ShowModal() == wxID_OK) {
+				dial.ApplyModifications(fieldset.background_data[*sortid]->camera[camselection]);
+				MarkDataFieldModified(*sortid, CHUNK_TYPE_FIELD_TILES);
+			}
 		}
 	} else if (id == wxID_EXPORT) {
 		if (!TheWalkmeshExportWindow)
@@ -8211,6 +8286,7 @@ void CDDataStruct::OnSpecialTextRightClick(wxMouseEvent& event) {
 	int newsel = m_specialtextdatalist->HitTest(event.GetPosition());
 	if (newsel != wxNOT_FOUND)
 		m_specialtextdatalist->SetSelection(newsel);
+	specialtextmenuadd->Enable(blocksel <= SPECIAL_TEXT_LOCALIZATION_INDEX_STEAM || (gametype == GAME_TYPE_STEAM && config.dll_usage != 0));
 	specialtextmenuremove->Enable((newsel != wxNOT_FOUND && blocksel == SPECIAL_TEXT_LOCALIZATION_INDEX_STEAM) || newsel >= (int)ffuiset.special_text->text_block[blocksel].base_amount);
 	m_specialtextdatalist->PopupMenu(specialtextmenu);
 }

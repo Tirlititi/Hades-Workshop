@@ -228,10 +228,9 @@ void LoadCustomScriptUtility() {
 			newopcode.arg_type = new uint8_t[newopcode.arg_amount];
 			helpi = 0;
 			for (i = 0; i < newopcode.arg_amount; i++) {
+				auto argtypeit = SCRIPT_ARG_TYPE_MAP.find(CS_GetNextWord(apistr).ToStdWstring());
 				newopcode.arg_length[i] = 3;
-				newopcode.arg_type[i] = SCRIPT_ARG_TYPE_MAP[CS_GetNextWord(apistr).ToStdWstring()];
-				if (newopcode.arg_type[i] == AT_NONE)
-					newopcode.arg_type[i] = AT_USPIN;
+				newopcode.arg_type[i] = argtypeit != SCRIPT_ARG_TYPE_MAP.end() ? argtypeit->second : AT_USPIN;
 				if (newopcode.arg_type[i] != AT_NONE && /*
 				 */ newopcode.arg_type[i] != AT_POSITION_Y && newopcode.arg_type[i] != AT_POSITION_Z && /*
 				 */ newopcode.arg_type[i] != AT_COLOR_MAGENTA && newopcode.arg_type[i] != AT_COLOR_YELLOW && /*
@@ -408,24 +407,20 @@ int64_t ScriptArgument::GetValue() const {
 			IO ## Char(f, varbyte); \
 			value |= (varbyte << i*8); \
 		} \
+		if (is_signed && size == 3 && (varbyte & 0x80) != 0) \
+			value |= 0xFF000000; \
 	}
 
 #define MACRO_SCRIPT_IOFUNCTION_ARGWRITE(IO, SEEK, PPF) \
 	unsigned int i; \
 	uint8_t buffer; \
 	if (PPF) PPFInitScanStep(f); \
-	if (is_var) \
+	if (is_var) { \
 		for (i = 0; i < size; i++) \
 			IO ## Char(f, var[i]); \
-	else if (size != 2 || is_signed) \
+	} else { \
 		for (i = 0; i < size; i++) { \
 			buffer = (value >> i*8) & 0xFF; \
-			IO ## Char(f, buffer); \
-		} \
-	else { \
-		uint16_t translatedval = GetValue(); \
-		for (i = 0; i < size; i++) { \
-			buffer = (translatedval >> i*8) & 0xFF; \
 			IO ## Char(f, buffer); \
 		} \
 	} \

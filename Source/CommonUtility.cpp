@@ -5,6 +5,7 @@
 #include "Configuration.h"
 #include "File_Manipulation.h"
 #include "Database_CSV.h"
+#include "Hades_Strings.h"
 
 #define CSV_CUSTOM_FIELD_LOOP_FAILSAFE 10
 
@@ -23,6 +24,85 @@ unsigned int CharCountInString(wxString str, wxUniChar c) {
 		count++;
 	}
 	return count;
+}
+
+void SetCustomElemClassLabel(wxStaticText* listlabel, set<int>& elements, bool iselement) {
+	wxString listtext = wxEmptyString;
+	wxString hinttext = wxEmptyString;
+	bool haselem = false;
+	for (auto it = elements.begin(); it != elements.end(); it++) {
+		if (*it >= 8) {
+			wxString customname = wxEmptyString;
+			if (GetGameSaveSet() != NULL && GetGameSaveSet()->sectionloaded[DATA_SECTION_MENU_UI]) {
+				SpecialTextDataStruct& block = GetGameSaveSet()->ffuiset->special_text->text_block[iselement ? SPECIAL_TEXT_ELEMENTNAMES_INDEX_STEAM : SPECIAL_TEXT_CLASSNAMES_INDEX_STEAM];
+				int txtindex = block.GetTextIndexById(*it);
+				if (txtindex >= 0)
+					customname = _(block.text[txtindex].txt.str_nice);
+			}
+			if (haselem) {
+				listtext = iselement ? _(L"Elements...") : _(L"Classes...");
+				hinttext += _(L"\n");
+			} else {
+				listtext = customname.IsEmpty() ? ((iselement ? _(L"Element ") : _(L"Class ")) + wxString::Format(wxT("%d"), *it)) : customname;
+				haselem = true;
+			}
+			if (customname.IsEmpty())
+				hinttext << *it;
+			else
+				hinttext += customname;
+		}
+	}
+	listlabel->SetLabel(listtext);
+	listlabel->SetToolTip(hinttext);
+}
+
+void ClearCustomElemClass(set<int>& elements) {
+	vector<int> eraselist;
+	for (auto it = elements.begin(); it != elements.end(); it++)
+		if (*it >= 8)
+			eraselist.push_back(*it);
+	for (unsigned int i = 0; i < eraselist.size(); i++)
+		elements.erase(eraselist[i]);
+}
+
+wxString GetElementNameAndId(int elemid) {
+	if (elemid >= 0 && elemid < (int)HADES_STRING_ELEMENT_NAME.size())
+		return wxString::Format(wxT("%s(%d)"), HADES_STRING_ELEMENT_NAME[elemid], elemid);
+	return wxString::Format(wxT("%d"), elemid);
+}
+
+wxString FormatElementSet(set<int>& elements) {
+	wxString result = _(L"");
+	bool addcomma = false;
+	for (auto it = elements.begin(); it != elements.end(); it++) {
+		if (addcomma)
+			result += _(L", ");
+		result += GetElementNameAndId(*it);
+		addcomma = true;
+	}
+	return result;
+}
+
+wxString GetEnemyClassNameAndId(int classid) {
+	static const wxString CSV_ENEMYCLASS_NAME[8]{
+		L"Humanoid",	L"Beast",	L"Devil",	L"Dragon",
+		L"Undead",		L"Stone",	L"Bug",		L"Flying"
+	};
+	if (classid >= 0 && classid < 8)
+		return wxString::Format(wxT("%s(%d)"), CSV_ENEMYCLASS_NAME[classid], classid);
+	return wxString::Format(wxT("%d"), classid);
+}
+
+wxString FormatEnemyClassSet(set<int>& classes) {
+	wxString result = _(L"");
+	bool addcomma = false;
+	for (auto it = classes.begin(); it != classes.end(); it++) {
+		if (addcomma)
+			result += _(L", ");
+		result += GetEnemyClassNameAndId(*it);
+		addcomma = true;
+	}
+	return result;
 }
 
 wxString GetStatusNameAndId(int statusid) {
@@ -411,6 +491,11 @@ bool MemoriaUtility::GetModifiedSteamTexts(vector<int>* result, int32_t baseasse
 }
 
 template<typename T>
+bool SetContains(set<T>& set, T&& val) {
+	return set.find(val) != set.end();
+}
+
+template<typename T>
 string ConcatenateStrings(string delim, vector<T>& objlist, function<string(T)> stringifier, bool escapeempty) {
 	if (escapeempty) {
 		string resescape = "";
@@ -569,6 +654,7 @@ bool MemoriaUtility::GenerateDatabaseGeneric(wxString modfolder, wxString path, 
 #define MACRO_INSTANTIATE_GetSteamTextSizeGeneric(T) template int GetSteamTextSizeGeneric(vector<T>& list, FF9String T::*field, bool asmes, SteamLanguage lang);
 #define MACRO_INSTANTIATE_WriteSteamTextGeneric(T) template void WriteSteamTextGeneric(fstream& f, vector<T>& list, FF9String T::*field, vector<int>* subindex, bool asmes, SteamLanguage lang);
 #define MACRO_INSTANTIATE_GetModifiedSteamTexts(T) template bool MemoriaUtility::GetModifiedSteamTexts(vector<int>* result, int32_t baseassetid[], vector<T>& objlist, function<wstring(T&)> stringifier, SteamLanguage lang);
+#define MACRO_INSTANTIATE_SetContains(T) template bool SetContains(set<T>& set, T&& val);
 #define MACRO_INSTANTIATE_ConcatenateStrings(T) template string ConcatenateStrings(string delim, vector<T>& objlist, function<string(T)> stringifier, bool escapeempty);
 #define MACRO_INSTANTIATE_GenerateCSVGeneric(T) template bool MemoriaUtility::GenerateCSVGeneric(wxString modfolder, wxString csvpath, wxString csvheader, vector<T>& objlist, function<wxString(T&, int)> entryconstructor, function<bool(wxString, wxString)> entrycomparer, bool skipnonmodified);
 #define MACRO_INSTANTIATE_GenerateDatabaseEntryGeneric(T) template wxString MemoriaUtility::GenerateDatabaseEntryGeneric(T& obj, wxString format, map<wxString, wxString>* defaultfields);
@@ -629,6 +715,7 @@ MACRO_INSTANTIATE_GetModifiedSteamTexts(ItemDataStruct)
 MACRO_INSTANTIATE_GetModifiedSteamTexts(KeyItemDataStruct)
 MACRO_INSTANTIATE_GetModifiedSteamTexts(SupportDataStruct)
 MACRO_INSTANTIATE_GetModifiedSteamTexts(CardDataStruct)
+MACRO_INSTANTIATE_SetContains(int)
 MACRO_INSTANTIATE_ConcatenateStrings(int)
 MACRO_INSTANTIATE_ConcatenateStrings(float)
 MACRO_INSTANTIATE_ConcatenateStrings(wstring)

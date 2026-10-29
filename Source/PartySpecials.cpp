@@ -3,6 +3,7 @@
 #include <wx/wx.h>
 #include "CommonUtility.h"
 #include "Database_CSV.h"
+#include "Hades_Strings.h"
 
 #define PARTY_SPECIAL_HWS_VERSION 3
 
@@ -45,7 +46,7 @@ bool MagicSwordDataStruct::CompareWithCSV(wxArrayString entries) {
 	return MemoriaUtility::CompareEntries(entries[id].BeforeLast(L';'), rightcsv);
 }
 
-#define MACRO_MAGICSWORD_IOFUNCTION(IO,SEEK,READ,PPF) \
+#define MACRO_MAGICSWORD_IOFUNCTION(IO, SEEK, READ, PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
 	if (useextendedtype) { \
 		if (!READ) swdamount = mgswd.unlocked.size(); \
@@ -60,8 +61,8 @@ bool MagicSwordDataStruct::CompareWithCSV(wxArrayString entries) {
 		IO ## FlexibleChar(ffbin, mgswd.requirement[i], useextendedtype); \
 	} \
 	if (useextendedtype2) { \
-		MACRO_IOFUNCTIONGENERIC_STATUS(ffbin, true, IO, READ, mgswd.supporter_status_blocker) \
-		MACRO_IOFUNCTIONGENERIC_STATUS(ffbin, true, IO, READ, mgswd.beneficiary_status_blocker) \
+		MACRO_IOFUNCTIONGENERIC_STATUS(ffbin, true, IO, READ, mgswd.supporter_status_blocker, "") \
+		MACRO_IOFUNCTIONGENERIC_STATUS(ffbin, true, IO, READ, mgswd.beneficiary_status_blocker, "") \
 	} \
 	if (useextendedtype2) IO ## CSVFields(ffbin, mgswd.custom_field); \
 	if (PPF) PPFEndScanStep();

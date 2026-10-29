@@ -1,6 +1,6 @@
 #include "Configuration.h"
 
-#define MAIN_HWS_VERSION 102
+#define MAIN_HWS_VERSION 103
 
 #include <filesystem>
 #include <algorithm>
@@ -1380,13 +1380,13 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	dest.spetext_cardrank_amount = 32;
 	dest.spetext_tetramaster_amount = 53;
 	dest.spetext_localization_amount = 493;
-	for (i=0;i<SPELL_ANIMATION_AMOUNT;i++) {
+	for (i = 0; i < SPELL_ANIMATION_AMOUNT; i++) {
 		stringstream fnamestr;
 		fnamestr << "ef";
 		fnamestr.fill('0');
 		fnamestr.width(3);
 		fnamestr << (unsigned int)i;
-		dest.spellanim_steam_file[i] = dest.meta_res.GetFileIndex(fnamestr.str(),49);
+		dest.spellanim_steam_file[i] = dest.meta_res.GetFileIndex(fnamestr.str(), 49);
 	}
 	
 	// DLL file
@@ -1394,15 +1394,15 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	DllMethodInfo fieldmethinfo;
 	ILInstruction fieldinst;
 	int fieldmethodid;
-	dest.dll_battledb_method_id = dest.meta_dll.GetMethodIdByName("FF9BattleDB",".cctor");
-	dest.dll_ability_method_id = dest.meta_dll.GetMethodIdByName("ff9abil",".cctor","FF9");
-	dest.dll_rdata_method_id = dest.meta_dll.GetMethodIdByName("rdata",".cctor");
-	dest.dll_level_method_id = dest.meta_dll.GetMethodIdByName("ff9level",".cctor");
-	dest.dll_item_method_id = dest.meta_dll.GetMethodIdByName("ff9item",".cctor");
-	dest.dll_armor_method_id = dest.meta_dll.GetMethodIdByName("ff9armor",".cctor","FF9");
-	dest.dll_weapon_method_id = dest.meta_dll.GetMethodIdByName("ff9weap",".cctor","FF9");
-	dest.dll_equip_method_id = dest.meta_dll.GetMethodIdByName("ff9equip",".cctor","FF9");
-	dest.dll_mix_method_id = dest.meta_dll.GetMethodIdByName("ff9mix",".cctor","FF9");
+	dest.dll_battledb_method_id = dest.meta_dll.GetMethodIdByName("FF9BattleDB", ".cctor");
+	dest.dll_ability_method_id = dest.meta_dll.GetMethodIdByName("ff9abil", ".cctor", "FF9");
+	dest.dll_rdata_method_id = dest.meta_dll.GetMethodIdByName("rdata", ".cctor");
+	dest.dll_level_method_id = dest.meta_dll.GetMethodIdByName("ff9level", ".cctor");
+	dest.dll_item_method_id = dest.meta_dll.GetMethodIdByName("ff9item", ".cctor");
+	dest.dll_armor_method_id = dest.meta_dll.GetMethodIdByName("ff9armor", ".cctor", "FF9");
+	dest.dll_weapon_method_id = dest.meta_dll.GetMethodIdByName("ff9weap", ".cctor", "FF9");
+	dest.dll_equip_method_id = dest.meta_dll.GetMethodIdByName("ff9equip", ".cctor", "FF9");
+	dest.dll_mix_method_id = dest.meta_dll.GetMethodIdByName("ff9mix", ".cctor", "FF9");
 	dllfile.seekg(dest.meta_dll.GetMethodOffset(dest.dll_battledb_method_id));
 	fieldmethinfo.ReadMethodInfo(dllfile);
 	ILInstruction statussetinst[3] = {
@@ -1410,7 +1410,7 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 		{ 0x8D, dest.meta_dll.GetTypeRefTokenIdentifier("UInt32","System") },
 		{ 0x25 }
 	};
-	fieldmethinfo.JumpToInstructions(dllfile,3,statussetinst);
+	fieldmethinfo.JumpToInstructions(dllfile, 3, statussetinst);
 	fieldinst.Read(dllfile);
 	dest.dll_statusset_field_id = dest.meta_dll.GetStaticFieldIdFromToken(fieldinst.param);
 	fieldmethodid = dest.meta_dll.GetMethodIdByName("BattleHUD",".cctor");
@@ -1421,7 +1421,7 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 		{ 0x8D, dest.meta_dll.GetTypeRefTokenIdentifier("Byte","System") },
 		{ 0x25 }
 	};
-	fieldmethinfo.JumpToInstructions(dllfile,3,spellnaminginst);
+	fieldmethinfo.JumpToInstructions(dllfile, 3, spellnaminginst);
 	fieldinst.Read(dllfile);
 	dest.dll_spellnaming_field_id = dest.meta_dll.GetStaticFieldIdFromToken(fieldinst.param);
 	dllfile.seekg(dest.meta_dll.GetMethodOffset(dest.dll_rdata_method_id));
@@ -1431,7 +1431,7 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 		{ 0x8D, dest.meta_dll.GetTypeRefTokenIdentifier("Int32","System") },
 		{ 0x25 }
 	};
-	fieldmethinfo.JumpToInstructions(dllfile,3,cmdspelllistinst);
+	fieldmethinfo.JumpToInstructions(dllfile, 3, cmdspelllistinst);
 	fieldinst.Read(dllfile);
 	dest.dll_cmdspelllist_field_id = dest.meta_dll.GetStaticFieldIdFromToken(fieldinst.param);
 	dllfile.seekg(fieldmethinfo.code_abs_offset);
@@ -1441,13 +1441,13 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 		{ 0x73, dest.meta_dll.GetMemberTokenIdentifier("void byte[,]::.ctor( int, int )") },
 		{ 0x25 }
 	};
-	fieldmethinfo.JumpToInstructions(dllfile,4,statcmdtranceinst);
+	fieldmethinfo.JumpToInstructions(dllfile, 4, statcmdtranceinst);
 	fieldinst.Read(dllfile);
 	dest.dll_statcmdtrance_field_id = dest.meta_dll.GetStaticFieldIdFromToken(fieldinst.param);
 	fieldinst.Read(dllfile); // Initialize Array
 	dest.dll_cmdtrancenones_offset = dllfile.tellg();
 	size_t trancenonepos = dest.dll_cmdtrancenones_offset;
-	while (dllfile.tellg() < fieldmethinfo.code_abs_offset+fieldmethinfo.code_size) {
+	while (dllfile.tellg() < fieldmethinfo.code_abs_offset + fieldmethinfo.code_size) {
 		fieldinst.Read(dllfile);
 		if (fieldinst.opcode != 0x25) // dup
 			break;
@@ -1465,7 +1465,7 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 			break;
 		trancenonepos = dllfile.tellg();
 	}
-	dest.dll_cmdtrancenones_size = trancenonepos-dest.dll_cmdtrancenones_offset;
+	dest.dll_cmdtrancenones_size = trancenonepos - dest.dll_cmdtrancenones_offset;
 	dllfile.seekg(dest.meta_dll.GetMethodOffset(dest.dll_level_method_id));
 	fieldmethinfo.ReadMethodInfo(dllfile);
 	ILInstruction statexpinst[3] = {
@@ -1473,10 +1473,10 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 		{ 0x8D, dest.meta_dll.GetTypeRefTokenIdentifier("UInt64","System") },
 		{ 0x25 }
 	};
-	fieldmethinfo.JumpToInstructions(dllfile,3,statexpinst);
+	fieldmethinfo.JumpToInstructions(dllfile, 3, statexpinst);
 	fieldinst.Read(dllfile);
 	dest.dll_statexp_field_id = dest.meta_dll.GetStaticFieldIdFromToken(fieldinst.param);
-	fieldmethodid = dest.meta_dll.GetMethodIdByName("BattleHUD","SetAbilityMagic");
+	fieldmethodid = dest.meta_dll.GetMethodIdByName("BattleHUD", "SetAbilityMagic");
 	dllfile.seekg(dest.meta_dll.GetMethodOffset(fieldmethodid));
 	fieldmethinfo.ReadMethodInfo(dllfile);
 	ILInstruction magicswordinst[3] = {
@@ -1484,44 +1484,44 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 		{ 0x8D, dest.meta_dll.GetTypeRefTokenIdentifier("Int32","System") },
 		{ 0x25 }
 	};
-	fieldmethinfo.JumpToInstructions(dllfile,3,magicswordinst);
+	fieldmethinfo.JumpToInstructions(dllfile, 3, magicswordinst);
 	fieldinst.Read(dllfile);
 	dest.dll_magicsword_field_id = dest.meta_dll.GetStaticFieldIdFromToken(fieldinst.param);
-	fieldmethodid = dest.meta_dll.GetMethodIdByName("ff9buy",".cctor","FF9");
+	fieldmethodid = dest.meta_dll.GetMethodIdByName("ff9buy", ".cctor", "FF9");
 	dllfile.seekg(dest.meta_dll.GetMethodOffset(fieldmethodid));
 	fieldmethinfo.ReadMethodInfo(dllfile);
 	fieldinst.Read(dllfile);
-	while (dllfile.tellg()<fieldmethinfo.code_abs_offset+fieldmethinfo.code_size && fieldinst.opcode!=0xD0)
+	while (dllfile.tellg() < fieldmethinfo.code_abs_offset + fieldmethinfo.code_size && fieldinst.opcode != 0xD0)
 		fieldinst.Read(dllfile);
 	dest.dll_shop_field_id[0] = dest.meta_dll.GetStaticFieldIdFromToken(fieldinst.param);
-	for (i=1;i<SHOP_AMOUNT;i++) {
-		if (i<23)
-			dest.dll_shop_field_id[i] = dest.dll_shop_field_id[0]+i;
-		else if (i>24)
-			dest.dll_shop_field_id[i] = dest.dll_shop_field_id[0]+i-2;
+	for (i = 1; i < SHOP_AMOUNT; i++) {
+		if (i < 23)
+			dest.dll_shop_field_id[i] = dest.dll_shop_field_id[0] + i;
+		else if (i > 24)
+			dest.dll_shop_field_id[i] = dest.dll_shop_field_id[0] + i - 2;
 		else
 			dest.dll_shop_field_id[i] = -1;
 	}
-	fieldmethodid = dest.meta_dll.GetMethodIdByName("ff9play","FF9Play_SetDefEquips");
+	fieldmethodid = dest.meta_dll.GetMethodIdByName("ff9play", "FF9Play_SetDefEquips");
 	dllfile.seekg(dest.meta_dll.GetMethodOffset(fieldmethodid));
 	fieldmethinfo.ReadMethodInfo(dllfile);
 	fieldinst.Read(dllfile);
-	while (dllfile.tellg()<fieldmethinfo.code_abs_offset+fieldmethinfo.code_size && fieldinst.opcode!=0xD0)
+	while (dllfile.tellg() < fieldmethinfo.code_abs_offset + fieldmethinfo.code_size && fieldinst.opcode != 0xD0)
 		fieldinst.Read(dllfile);
 	dest.dll_equipset_field_id[0] = dest.meta_dll.GetStaticFieldIdFromToken(fieldinst.param);
-	for (i=1;i<EQUIP_SET_AMOUNT;i++)
-		dest.dll_equipset_field_id[i] = dest.dll_equipset_field_id[0]+i;
+	for (i = 1; i < EQUIP_SET_AMOUNT; i++)
+		dest.dll_equipset_field_id[i] = dest.dll_equipset_field_id[0] + i;
 
-	unityarchivename = dest.steam_dir_data+"sharedassets2.assets";
-	unityarchive.open(unityarchivename.c_str(),ios::in | ios::binary);
+	unityarchivename = dest.steam_dir_data + "sharedassets2.assets";
+	unityarchive.open(unityarchivename.c_str(), ios::in | ios::binary);
 	if (!unityarchive.is_open()) return -3;
 	dest.meta_atlas.Load(unityarchive, UNITY_ARCHIVE_SHARED2);
-	for (i=0;;i++) {
-		dest.atlas_iconsprite_file = dest.meta_atlas.GetFileIndex("",-1,i);
-		if (dest.atlas_iconsprite_file<0)
+	for (i = 0;; i++) {
+		dest.atlas_iconsprite_file = dest.meta_atlas.GetFileIndex("", -1, i);
+		if (dest.atlas_iconsprite_file < 0)
 			break;
-		unityarchive.seekg(dest.meta_atlas.GetFileOffsetByIndex(dest.atlas_iconsprite_file)+0x2C);
-		if (ReadLong(unityarchive)==377) // DEBUG: should find it from GameObject hierarchy?
+		unityarchive.seekg(dest.meta_atlas.GetFileOffsetByIndex(dest.atlas_iconsprite_file) + 0x2C);
+		if (ReadLong(unityarchive) == 377) // DEBUG: should find it from GameObject hierarchy?
 			break;
 	}
 	dest.atlas_icontexture_file = dest.meta_atlas.GetFileIndex("Icon Atlas", 28);
@@ -1544,7 +1544,7 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	dest.stat_defaultname_space_total = 0xFFFF;
 	dest.card_name_space_total = 0xFFFF;
 	dest.spetext_steam_space_total = new uint32_t[dest.spetext_amount];
-	for (i=0;i<dest.spetext_amount;i++)
+	for (i = 0; i < dest.spetext_amount; i++)
 		dest.spetext_steam_space_total[i] = 0xFFFFFF;
 	return 0;
 }
@@ -2226,6 +2226,31 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 				filedest.close(); \
 				if (isempty) remove(fname.c_str()); \
 			}
+		#define MACRO_SAVE_CUSTOMTEXT_ASSET_RESOURCES(FILENAME, TEXTCOUNT, BASEFILEID, CONDITION, SAVEFUNC) \
+			fname = destfolder + "FF9_Data\\embeddedasset\\text\\" + HADES_STRING_STEAM_LANGUAGE_SHORT_NAME_FIX[lang] + "\\etc\\" + FILENAME; \
+			if (deleteold) remove(fname.c_str()); \
+			if (CONDITION) { \
+				MainFrame::MakeDirForFile(fname); \
+				filedest.open(fname.c_str(), ios::out | ios::binary); \
+				if (!filedest.is_open()) return 3; \
+				wxArrayString filebasecontent; \
+				uint32_t basetextoffset = config.meta_res.GetFileOffsetByIndex(config.BASEFILEID); \
+				uint32_t basetextsize = config.meta_res.GetFileSizeByIndex(config.BASEFILEID); \
+				filebase.seekg(basetextoffset); \
+				basetextbuffer.resize(basetextsize); \
+				filebase.read(basetextbuffer.data(), basetextsize); \
+				uint32_t basetextamount = FF9String::CountSteamTextAmount(basetextbuffer.data(), basetextsize); \
+				filebase.seekg(basetextoffset); \
+				FF9String basetextstr; \
+				for (unsigned int macroi = 0; macroi < basetextamount && macroi < TEXTCOUNT; macroi++) { \
+					SteamReadFF9String(filebase, basetextstr, lang); \
+					filebasecontent.Add(_(basetextstr.multi_lang_str[lang])); \
+				} \
+				saveset.SAVEFUNC; \
+				bool isempty = filedest.tellp() == 0; \
+				filedest.close(); \
+				if (isempty) remove(fname.c_str()); \
+			}
 
 		for (lang = 0; lang < STEAM_LANGUAGE_AMOUNT; lang++) {
 			MACRO_SAVE_ASSET_RESOURCES(spell_name_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_SPELL], spellset->WriteSteamText(filedest, 0, config.dll_usage != 0, true, lang))
@@ -2256,6 +2281,8 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 			MACRO_SAVE_TEXT_ASSET_RESOURCES(spetext_chocomenu_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteamPatch(filedest, 3, filebasecontent, lang))
 			MACRO_SAVE_TEXT_ASSET_RESOURCES(spetext_cardrank_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteamPatch(filedest, 4, filebasecontent, lang))
 			MACRO_SAVE_TEXT_ASSET_RESOURCES(spetext_tetramaster_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteamPatch(filedest, 5, filebasecontent, lang))
+			MACRO_SAVE_CUSTOMTEXT_ASSET_RESOURCES("ElementNames.mes", 8, spetext_battleinfo_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteamPatch(filedest, 7, filebasecontent, lang))
+			MACRO_SAVE_CUSTOMTEXT_ASSET_RESOURCES("EnemyCategoryNames.mes", 8, spetext_battlescan_file[lang], hades::STEAM_LANGUAGE_SAVE_LIST[lang] && section[DATA_SECTION_MENU_UI], ffuiset->special_text->WriteSteamPatch(filedest, 8, filebasecontent, lang))
 		}
 		fname = destfolder + config.GetSteamAssetPath(UNITY_ARCHIVE_RESOURCES, config.spetext_localization_file);
 		if (deleteold) remove(fname.c_str());

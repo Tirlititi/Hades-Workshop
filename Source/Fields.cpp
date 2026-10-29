@@ -49,35 +49,8 @@ void FieldTilesCameraDataStruct::UpdateSize() {
 }
 
 void FieldTilesDataStruct::Copy(FieldTilesDataStruct& cpy) {
-	unsigned int i, j;
 	*this = cpy;
-	anim = new FieldTilesAnimDataStruct[anim_amount];
-	tiles = new FieldTilesTilesetDataStruct[tiles_amount + title_tile_amount * STEAM_LANGUAGE_AMOUNT];
-	tiles_sorted = new FieldTilesTilesetDataStruct*[tiles_amount];
-	light = new FieldTilesLightDataStruct[light_amount];
-	camera = new FieldTilesCameraDataStruct[camera_amount];
-	for (i = 0; i < anim_amount; i++) {
-		anim[i] = cpy.anim[i];
-		anim[i].tile_list = new uint8_t[anim[i].tile_amount];
-		anim[i].tile_duration = new uint8_t[anim[i].tile_amount];
-		for (j = 0; j < anim[i].tile_amount; j++) {
-			anim[i].tile_list[j] = cpy.anim[i].tile_list[j];
-			anim[i].tile_duration[j] = cpy.anim[i].tile_duration[j];
-		}
-	}
-	for (i = 0; i < tiles_amount + title_tile_amount * STEAM_LANGUAGE_AMOUNT; i++) {
-		tiles[i] = cpy.tiles[i];
-		tiles[i].tile = new FieldTilesTileDataStruct[tiles[i].tile_amount];
-		for (j = 0; j < tiles[i].tile_amount; j++)
-			tiles[i].tile[j] = cpy.tiles[i].tile[j];
-	}
-	for (i = 0; i < light_amount; i++) {
-		light[i] = cpy.light[i];
-	}
-	for (i = 0; i < camera_amount; i++) {
-		camera[i] = cpy.camera[i];
-	}
-	for (i = 0; i < title_tile_amount * STEAM_LANGUAGE_AMOUNT; i++)
+	for (unsigned int i = 0; i < title_tile_amount * STEAM_LANGUAGE_AMOUNT; i++)
 		tiles[tiles_amount + i].SetupDataInfos(true);
 	SetupDataInfos(true);
 }
@@ -93,6 +66,8 @@ void FieldTilesDataStruct::AddTilesetToImage(uint32_t* imgdest, FieldTilesTilese
 	tilegap = parent->tile_gap;
 	tileperiod = tilesize + 2 * tilegap;
 	if (ts.is_memoria_bgx != 0) {
+		if (ts.memoria_bgx_path.IsEmpty() || ts.width == 0 || ts.height == 0)
+			return;
 		if (ts.memoria_bgx_shader == L"PSX/FieldMap_Abr_None") {
 			psxalpha = 0xFF000000;
 			bm = TIM_BLENDMODE_ABR_NONE;
@@ -669,20 +644,10 @@ void FieldTilesTilesetDataStruct::SetupDataInfos(bool readway) {
 }
 
 void FieldTilesDataStruct::SetupDataInfos(bool readway) {
-	unsigned int i, j;
+	unsigned int i;
 	if (readway) {
 		for (i = 0; i < tiles_amount; i++)
 			tiles[i].SetupDataInfos(readway);
-		FieldTilesTilesetDataStruct* tmp;
-		for (i = 0; i < tiles_amount; i++)
-			tiles_sorted[i] = &tiles[i];
-		for (i = 0; i < tiles_amount; i++)
-			for (j = i + 1; j < tiles_amount; j++)
-				if (tiles_sorted[j]->depth >= tiles_sorted[i]->depth) {
-					tmp = tiles_sorted[j];
-					tiles_sorted[j] = tiles_sorted[i];
-					tiles_sorted[i] = tmp;
-				}
 		for (i = 0; i < anim_amount; i++)
 			if (anim[i].tile_amount > 0)
 				tiles[anim[i].tile_list[0]].is_first_of_anim = true;
@@ -717,9 +682,22 @@ void FieldTilesDataStruct::SetupDataInfos(bool readway) {
 }
 
 void FieldTilesDataStruct::SetupTilePerDepth() {
-	map<int, vector<pair<int, int>>> depthmap;
+	FieldTilesTilesetDataStruct* tmp;
 	unsigned int i, j;
 	tile_per_depth.clear();
+	tiles_sorted.resize(tiles_amount);
+	for (i = 0; i < tiles_amount; i++)
+		tiles_sorted[i] = &tiles[i];
+	for (i = 0; i < tiles_amount; i++)
+		for (j = i + 1; j < tiles_amount; j++)
+			if (tiles_sorted[j]->depth >= tiles_sorted[i]->depth) {
+				tmp = tiles_sorted[j];
+				tiles_sorted[j] = tiles_sorted[i];
+				tiles_sorted[i] = tmp;
+			}
+	if (IsBGXFormat())
+		return;
+	map<int, vector<pair<int, int>>> depthmap;
 	for (i = 0; i < tiles_amount; i++)
 		for (j = 0; j < tiles[i].tile_amount; j++)
 			depthmap[tiles[i].depth + tiles[i].tile[j].depth].push_back({ i, j });
@@ -738,11 +716,13 @@ int FieldTilesDataStruct::GetFieldId() const {
 void FieldTilesDataStruct::ConvertToBGX(wxString imgfolder) {
 	if (IsBGXFormat())
 		return;
+	if (imgfolder.IsEmpty())
+		return;
 	if (!imgfolder.EndsWith('\\') && !imgfolder.EndsWith('/'))
 		imgfolder += _(L"\\");
 	MainFrame::MakeDirForFile(imgfolder.ToStdString());
 	vector<pair<wxString, int>> overlays;
-	unsigned int i;
+	unsigned int i, j;
 	for (i = 0; i < tiles_amount; i++) {
 		wxString filename = "Background_" + to_string(i) + ".png";
 		overlays.push_back({ imgfolder + filename, i });
@@ -752,7 +732,7 @@ void FieldTilesDataStruct::ConvertToBGX(wxString imgfolder) {
 		wxString filename = overlays[i].first.AfterLast(L'\\');
 		FieldTilesTilesetDataStruct& ts = tiles[i];
 		ts.is_memoria_bgx = 1;
-		ts.memoria_bgx_path = overlays[i].first;
+		ts.memoria_bgx_path = sizes[i].first > 0 && sizes[i].second > 0 ? overlays[i].first : wxEmptyString;
 		if (ts.tile_amount > 0 && ts.tile[0].trans) {
 			switch (ts.tile[0].alpha) {
 			case 0:
@@ -773,7 +753,126 @@ void FieldTilesDataStruct::ConvertToBGX(wxString imgfolder) {
 		}
 		ts.width = sizes[i].first * FIELD_TILE_BASE_SIZE / parent->tile_size;
 		ts.height = sizes[i].second * FIELD_TILE_BASE_SIZE / parent->tile_size;
+		if (ts.pos_dx == 256 && ts.pos_dy == 256) {
+			ts.pos_dx = 0;
+			ts.pos_dy = 0;
+		}
+		int depthshift = 0;
+		for (j = 0; j < ts.tile_amount; j++)
+			depthshift += ts.tile[j].depth;
+		if (ts.tile_amount > 0)
+			depthshift /= ts.tile_amount;
+		ts.default_depth += depthshift;
+		ts.depth += depthshift;
 	}
+	for (i = 0; i < camera_amount; i++)
+		camera[i].UpdateSize();
+}
+
+bool FieldTilesDataStruct::AddTileset(unsigned int cameraid, wxString bgxpath) {
+	// TODO: non-BGX version (also beware of title_tile_amount > 0)
+	wxImage img;
+	{
+		wxLogNull preventmsg;
+		if (!img.LoadFile(bgxpath))
+			return false;
+	}
+	FieldTilesTilesetDataStruct& ts = tiles.emplace_back();
+	ts.camera_id = cameraid;
+	ts.width = img.GetWidth() * FIELD_TILE_BASE_SIZE / parent->tile_size;
+	ts.height = img.GetHeight() * FIELD_TILE_BASE_SIZE / parent->tile_size;
+	ts.default_x = 0;
+	ts.default_y = 0;
+	ts.pos_x = 0;
+	ts.pos_y = 0;
+	ts.pos_minx = 0;
+	ts.pos_maxx = ts.width;
+	ts.pos_miny = 0;
+	ts.pos_maxy = ts.height;
+	ts.screen_x = 0;
+	ts.screen_y = 0;
+	ts.pos_dx = 0;
+	ts.pos_dy = 0;
+	ts.pos_fracx = 0;
+	ts.pos_fracy = 0;
+	ts.tile_amount = 1;
+	ts.tile_packet = 0;
+	ts.tile_tpage = 0;
+	ts.is_screen_static = false;
+	ts.use_attaching = false;
+	ts.is_looping = false;
+	ts.has_parallax = false;
+	ts.is_static = true;
+	ts.is_scroll_with_offset = false;
+	ts.depth = 0;
+	ts.default_depth = 0;
+	ts.is_x_offset = false;
+	ts.viewport_id = 0;
+	ts.is_memoria_bgx = 1;
+	ts.memoria_bgx_path = bgxpath;
+	ts.memoria_bgx_shader = _("PSX/FieldMap_Abr_None");
+	ts.tile.resize(1);
+	ts.is_first_of_anim = false;
+	ts.id = tiles_amount;
+	ts.parent = this;
+	tiles_amount++;
+	camera[cameraid].UpdateSize();
+	SetupTilePerDepth();
+	return true;
+}
+
+bool FieldTilesDataStruct::AddAnimation(vector<uint8_t> tilelist, uint8_t flags, int16_t rate) {
+	FieldTilesAnimDataStruct& a = anim.emplace_back();
+	a.flag = flags;
+	a.tile_amount = tilelist.size();
+	a.camera_id = tiles[tilelist[0]].camera_id;
+	a.default_frame = 0;
+	a.rate = rate;
+	a.counter = 0;
+	a.tile_list = tilelist;
+	a.tile_duration.resize(a.tile_amount, 0);
+	anim_amount++;
+	for (unsigned int i = 0; i < tilelist.size(); i++)
+		tiles[tilelist[i]].is_static = false;
+	tiles[tilelist[0]].is_first_of_anim = true;
+	return true;
+}
+
+void FieldTilesDataStruct::RemoveTileset(unsigned int tilesetindex) {
+	int i, j;
+	tiles.erase(tiles.begin() + tilesetindex);
+	tiles_amount--;
+	for (i = tilesetindex; i < tiles_amount; i++)
+		tiles[i].id = i;
+	SetupTilePerDepth();
+	for (i = 0; i < (int)anim_amount; i++) {
+		for (j = 0; j < (int)anim[i].tile_amount; j++) {
+			if (anim[i].tile_list[j] == tilesetindex) {
+				if (anim[i].tile_amount > 1) {
+					anim[i].tile_list.erase(anim[i].tile_list.begin() + j);
+					anim[i].tile_duration.erase(anim[i].tile_duration.begin() + j);
+					anim[i].tile_amount--;
+					if (j == 0 && anim[i].tile_list[0] != tilesetindex)
+						tiles[anim[i].tile_list[0]].is_first_of_anim = true;
+					j--;
+				} else {
+					RemoveAnimation(i);
+					i--;
+					break;
+				}
+			} else if (anim[i].tile_list[j] > tilesetindex) {
+				anim[i].tile_list[j]--;
+			}
+		}
+	}
+}
+
+void FieldTilesDataStruct::RemoveAnimation(unsigned int animindex) {
+	for (unsigned int i = 0; i < anim[animindex].tile_amount; i++)
+		tiles[anim[animindex].tile_list[i]].is_static = true;
+	tiles[anim[animindex].tile_list[0]].is_first_of_anim = false;
+	anim.erase(anim.begin() + animindex);
+	anim_amount--;
 }
 
 #define MACRO_TILES_IOFUNCTION(IO, SEEK, READ, PPF) \
@@ -805,11 +904,10 @@ void FieldTilesDataStruct::ConvertToBGX(wxString imgfolder) {
 	IO ## Short(f, (uint16_t&)screen_y); \
 	if (PPF) PPFEndScanStep(); \
 	if (READ) { \
-		anim = new FieldTilesAnimDataStruct[anim_amount]; \
-		tiles = new FieldTilesTilesetDataStruct[tiles_amount + title_tile_amount * STEAM_LANGUAGE_AMOUNT]; \
-		tiles_sorted = new FieldTilesTilesetDataStruct*[tiles_amount]; \
-		light = new FieldTilesLightDataStruct[light_amount]; \
-		camera = new FieldTilesCameraDataStruct[camera_amount]; \
+		anim.resize(anim_amount); \
+		tiles.resize(tiles_amount + title_tile_amount * STEAM_LANGUAGE_AMOUNT); \
+		light.resize(light_amount); \
+		camera.resize(camera_amount); \
 	} \
 	for (i = 0; i < anim_amount; i++) { \
 		SEEK(f, headerpos, anim_offset + i * 0x10); \
@@ -823,8 +921,8 @@ void FieldTilesDataStruct::ConvertToBGX(wxString imgfolder) {
 		IO ## Long(f, anim[i].tile_list_offset); \
 		if (PPF) PPFEndScanStep(); \
 		if (READ) { \
-			anim[i].tile_list = new uint8_t[anim[i].tile_amount]; \
-			anim[i].tile_duration = new uint8_t[anim[i].tile_amount]; \
+			anim[i].tile_list.resize(anim[i].tile_amount); \
+			anim[i].tile_duration.resize(anim[i].tile_amount); \
 		} \
 		SEEK(f, headerpos, anim[i].tile_list_offset); \
 		if (PPF) PPFInitScanStep(f); \
@@ -863,7 +961,7 @@ void FieldTilesDataStruct::ConvertToBGX(wxString imgfolder) {
 		IO ## Long(f, tiles[i].tile_packet); \
 		IO ## Long(f, tiles[i].tile_tpage); \
 		if (READ) { \
-			tiles[i].tile = new FieldTilesTileDataStruct[tiles[i].tile_amount]; \
+			tiles[i].tile.resize(tiles[i].tile_amount); \
 			tiles[i].parent = this; \
 			tiles[i].id = i; \
 			tiles[i].is_first_of_anim = false; \
@@ -915,8 +1013,8 @@ void FieldTilesDataStruct::ConvertToBGX(wxString imgfolder) {
 		for (j = 0; j < 9; j++) \
 			IO ## Short(f, (uint16_t&)camera[i].matrix[j]); \
 		IO ## Long(f, (uint32_t&)camera[i].offset_x); \
-		IO ## Long(f, (uint32_t&)camera[i].offset_z); \
 		IO ## Long(f, (uint32_t&)camera[i].offset_y); \
+		IO ## Long(f, (uint32_t&)camera[i].offset_z); \
 		IO ## Short(f, (uint16_t&)camera[i].offset_centerx); \
 		IO ## Short(f, (uint16_t&)camera[i].offset_centery); \
 		IO ## Short(f, (uint16_t&)camera[i].offset_width); \
@@ -987,9 +1085,14 @@ int FieldTilesDataStruct::WriteBGX(string destfolder, string bgxfilename) {
 			FieldTilesTilesetDataStruct& ts = tiles[i];
 			wxFileName fnformat(ts.memoria_bgx_path);
 			wxString filename = _(destfolder) + fnformat.GetFullName();
-			wxCopyFile(ts.memoria_bgx_path, filename);
 			overlays.push_back({ filename, i });
-			sizes.push_back({ ts.width * parent->tile_size / FIELD_TILE_BASE_SIZE, ts.height * parent->tile_size / FIELD_TILE_BASE_SIZE });
+			if (ts.memoria_bgx_path.IsEmpty()) {
+				sizes.push_back({ 0, 0 });
+			} else {
+				if (!ts.memoria_bgx_path.IsSameAs(filename, false))
+					wxCopyFile(ts.memoria_bgx_path, filename);
+				sizes.push_back({ ts.width * parent->tile_size / FIELD_TILE_BASE_SIZE, ts.height * parent->tile_size / FIELD_TILE_BASE_SIZE });
+			}
 		}
 	} else {
 		for (i = 0; i < tiles_amount; i++) {
@@ -1010,7 +1113,6 @@ int FieldTilesDataStruct::WriteBGX(string destfolder, string bgxfilename) {
 	fstream f((destfolder + bgxfilename).c_str(), ios::out);
 	if (!f.is_open())
 		return 3;
-	f << "TILESIZE: " << (int)parent->tile_size << "\n\n";
 	for (i = 0; i < overlays.size(); i++) {
 		wxString filename = overlays[i].first.AfterLast(L'\\');
 		int titleid = overlays[i].second;
@@ -1031,7 +1133,7 @@ int FieldTilesDataStruct::WriteBGX(string destfolder, string bgxfilename) {
 		if (sizes[i].first > 0 && sizes[i].second > 0) {
 			f << "Image: " << filename.ToStdString() << "\n";
 			if (ts.is_memoria_bgx != 0) {
-				f << ts.memoria_bgx_shader.c_str() << "\n";
+				f << "Shader: " << ts.memoria_bgx_shader.c_str() << "\n";
 			} else {
 				if (ts.tile_amount > 0 && ts.tile[0].trans) {
 					switch (ts.tile[0].alpha) {
@@ -1079,7 +1181,7 @@ int FieldTilesDataStruct::WriteBGX(string destfolder, string bgxfilename) {
 		f << "CAMERA\n";
 		f << "ViewDistance: " << (int)c.distance << "\n";
 		f << "CenterOffset: " << (int)c.offset_centerx << ", " << (int)c.offset_centery << "\n";
-		f << "Position: " << (int)c.offset_x << ", " << (int)c.offset_z << ", " << (int)c.offset_y << "\n";
+		f << "Position: " << (int)c.offset_x << ", " << (int)c.offset_y << ", " << (int)c.offset_z << "\n";
 		f << "Range: " << (int)c.offset_width << ", " << (int)c.offset_height << "\n";
 		f << "DepthOffset: " << (int)c.depth << "\n";
 		f << "Viewport: " << (int)c.min_x << ", " << (int)c.max_x << ", " << (int)c.min_y << ", " << (int)c.max_y << "\n";
@@ -1092,21 +1194,6 @@ int FieldTilesDataStruct::WriteBGX(string destfolder, string bgxfilename) {
 }
 
 FieldTilesDataStruct::~FieldTilesDataStruct() {
-	return; // TODO (triggers bugs, surely because of struct copying/assigning)
-	if (loaded) {
-		unsigned int i;
-		for (i = 0; i < anim_amount; i++) {
-			delete[] anim[i].tile_list;
-			delete[] anim[i].tile_duration;
-		}
-		delete[] anim;
-		for (i = 0; i < tiles_amount; i++)
-			delete[] tiles[i].tile;
-		delete[] tiles;
-		delete[] light;
-		delete[] camera;
-		delete[] tiles_sorted;
-	}
 }
 
 #define MACRO_WALKMESH_IOFUNCTION(IO,SEEK,READ,PPF) \
@@ -2308,10 +2395,7 @@ bool FieldSteamTitleInfo::ReadTitleTileId(FieldTilesDataStruct* tileset, Configu
 			fnamestream << config.steam_dir_assets << "p0data1" << (unsigned int)config.field_file_id[tileset->id] << ".bin";
 			fstream ffbin(fnamestream.str().c_str(), ios::in | ios::binary);
 			for (langi = STEAM_LANGUAGE_US; langi < STEAM_LANGUAGE_AMOUNT; langi++) {
-				if (langi == STEAM_LANGUAGE_EN && !has_uk[i])
-					lang = STEAM_LANGUAGE_US;
-				else
-					lang = langi;
+				lang = langi == STEAM_LANGUAGE_EN && !has_uk[i] ? STEAM_LANGUAGE_US : langi;
 				FieldTilesDataStruct localbackground;
 				ffbin.seekg(config.meta_field[config.field_file_id[tileset->id] - 1].GetFileOffsetByIndex(config.field_tiles_file[tileset->id][lang]));
 				localbackground.Init(NULL, CHUNK_TYPE_FIELD_TILES, config.field_id[tileset->id]);
@@ -2323,39 +2407,14 @@ bool FieldSteamTitleInfo::ReadTitleTileId(FieldTilesDataStruct* tileset, Configu
 					newtileid = atlas_title_pos[STEAM_LANGUAGE_US][i];
 					for (j = 0; j < title_tile_start[i]; j++)
 						newtileid += tileset->tiles[j].tile_amount;
-				} else
+				} else {
 					newtileid = atlas_title_pos[langi][i];
+				}
 				for (j = title_tile_start[i]; j <= title_tile_last[i]; j++) {
 					tileindex = tileset->tiles_amount + langi * tileset->title_tile_amount + j - title_tile_start[i];
-					tileset->tiles[tileindex].data1 = localbackground.tiles[j].data1;
-					tileset->tiles[tileindex].width = localbackground.tiles[j].width;
-					tileset->tiles[tileindex].height = localbackground.tiles[j].height;
-					tileset->tiles[tileindex].default_x = localbackground.tiles[j].default_x;
-					tileset->tiles[tileindex].default_y = localbackground.tiles[j].default_y;
-					tileset->tiles[tileindex].pos_x = localbackground.tiles[j].pos_x;
-					tileset->tiles[tileindex].pos_y = localbackground.tiles[j].pos_y;
-					tileset->tiles[tileindex].pos_minx = localbackground.tiles[j].pos_minx;
-					tileset->tiles[tileindex].pos_maxx = localbackground.tiles[j].pos_maxx;
-					tileset->tiles[tileindex].pos_miny = localbackground.tiles[j].pos_miny;
-					tileset->tiles[tileindex].pos_maxy = localbackground.tiles[j].pos_maxy;
-					tileset->tiles[tileindex].screen_x = localbackground.tiles[j].screen_x;
-					tileset->tiles[tileindex].screen_y = localbackground.tiles[j].screen_y;
-					tileset->tiles[tileindex].pos_dx = localbackground.tiles[j].pos_dx;
-					tileset->tiles[tileindex].pos_dy = localbackground.tiles[j].pos_dy;
-					tileset->tiles[tileindex].pos_fracx = localbackground.tiles[j].pos_fracx;
-					tileset->tiles[tileindex].pos_fracy = localbackground.tiles[j].pos_fracy;
-					tileset->tiles[tileindex].camera_id = localbackground.tiles[j].camera_id;
-					tileset->tiles[tileindex].data2 = localbackground.tiles[j].data2;
-					tileset->tiles[tileindex].tile_amount = localbackground.tiles[j].tile_amount;
-					tileset->tiles[tileindex].tile_pos_offset = localbackground.tiles[j].tile_pos_offset;
-					tileset->tiles[tileindex].tile_data_offset = localbackground.tiles[j].tile_data_offset;
-					tileset->tiles[tileindex].tile_packet = localbackground.tiles[j].tile_packet;
-					tileset->tiles[tileindex].tile_tpage = localbackground.tiles[j].tile_tpage;
-					tileset->tiles[tileindex].tile = new FieldTilesTileDataStruct[tileset->tiles[tileindex].tile_amount];
-					for (k = 0; k < tileset->tiles[tileindex].tile_amount; k++) {
-						tileset->tiles[tileindex].tile[k] = localbackground.tiles[j].tile[k];
+					tileset->tiles[tileindex] = localbackground.tiles[j];
+					for (k = 0; k < tileset->tiles[tileindex].tile_amount; k++)
 						tileset->tiles[tileindex].tile[k].steam_id = newtileid++;
-					}
 				}
 			}
 			ffbin.close();

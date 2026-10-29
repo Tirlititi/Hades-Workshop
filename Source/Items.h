@@ -109,7 +109,7 @@ public:
 	uint8_t target_flag;
 	int effect;
 	int power;
-	uint8_t element;
+	set<int> element;
 	int accuracy;
 	set<int> status;
 	
@@ -136,7 +136,7 @@ public:
 	wstring model_name;
 	int damage_formula;
 	int power;
-	uint8_t element;
+	set<int> element;
 	int status_accuracy;
 	int16_t offset1;
 	int16_t offset2;
@@ -168,11 +168,11 @@ public:
 	uint8_t strength;
 	uint8_t magic;
 	uint8_t spirit;
-	uint8_t element_immune;
-	uint8_t element_absorb;
-	uint8_t element_half;
-	uint8_t element_weak;
-	uint8_t element_boost;
+	set<int> element_immune;
+	set<int> element_absorb;
+	set<int> element_half;
+	set<int> element_weak;
+	set<int> element_boost;
 
 	void InitializeDefault(int dataid);
 };

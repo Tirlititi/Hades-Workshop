@@ -47,7 +47,7 @@ public:
 	FF9String name; // readonly
 	int effect;
 	int power;
-	uint8_t element;
+	set<int> element;
 	int accuracy;
 	uint8_t flag;
 	int status;
@@ -85,7 +85,7 @@ struct EnemyStatDataStruct {
 public:
 	FF9String name; // readonly
 	int lvl;
-	uint8_t classification;
+	set<int> classification;
 	int hp;
 	int mp;
 	int gils;
@@ -109,10 +109,10 @@ public:
 	int evade;
 	int magic_defence;
 	int magic_evade;
-	uint8_t element_immune;
-	uint8_t element_absorb;
-	uint8_t element_half;
-	uint8_t element_weak;
+	set<int> element_immune;
+	set<int> element_absorb;
+	set<int> element_half;
+	set<int> element_weak;
 	set<int> status_immune;
 	set<int> status_auto;
 	set<int> status_initial;
@@ -216,9 +216,7 @@ public:
 struct EnemySequenceCodeLine {
 	BattleDataStruct* parent;
 	uint8_t code;
-	uint32_t* arg;
-	
-	~EnemySequenceCodeLine();
+	vector<uint32_t> arg;
 };
 
 struct BattleDataStruct : public ChunkChild {

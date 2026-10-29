@@ -1,6 +1,7 @@
 #include "File_IOCommon.h"
 
 #include <codecvt>
+#include <vector>
 
 uint64_t ReadLongLong(fstream& f) {
 	uint64_t res = (uint64_t)ReadLong(f);
@@ -249,13 +250,37 @@ wstring ConvertStrToWStr(const string& str) {
 }
 
 fstream debuglog;
+int infostep = -1;
+int infostepset = -1;
+vector<string> debuginfo;
+void SetDebugLogInfo(int infotype, string info) {
+	if (infotype < 0) {
+		debuginfo.clear();
+		infostepset = -1;
+		infostep = -1;
+		return;
+	}
+	debuginfo.resize(infotype + 1);
+	for (int i = infostepset + 1; i < infotype; i++)
+		debuginfo[i] = "";
+	debuginfo[infotype] = info;
+	infostep = min(infostep, infostepset - 1);
+	infostepset = infotype;
+}
+
 fstream& GetDebugLog() {
 	if (!debuglog.is_open()) {
 		debuglog.open("HadesWorkshopLog.txt", ios::out);
+		infostep = -1;
 	} else if (debuglog.fail() || debuglog.tellp() > 0x1000000) {
 		debuglog.close();
 		debuglog.open("HadesWorkshopLog.txt", ios::out);
 		debuglog << "[DBG] Reopen log after closure" << endl;
+		infostep = -1;
+	}
+	while (infostep < infostepset) {
+		infostep++;
+		debuglog << debuginfo[infostep] << endl;
 	}
 	return debuglog;
 }

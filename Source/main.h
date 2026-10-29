@@ -211,6 +211,7 @@ public:
 	CDDataStruct* CDPanel[MAX_CD_PANELS];
 	string CDName[MAX_CD_PANELS];
 	bool CDModifiedState[MAX_CD_PANELS];
+	bool CDCanSaveState[MAX_CD_PANELS];
 	unsigned int CDPanelAmount;
 	wxFileName SteamSaveDir;
 	

@@ -13,9 +13,9 @@ public:
 	TIMImageDataStruct* tim;
 	unsigned int camera_id;
 	wxImageList* animlist_img;
-	unsigned int* anim_tick_time;
-	unsigned int* anim_tile_pos;
-	unsigned int* anim_play_flag;
+	vector<unsigned int> anim_tick_time;
+	vector<unsigned int> anim_tile_pos;
+	vector<unsigned int> anim_play_flag;
 	wxBitmap animcontrol_loopplay;
 	wxBitmap animcontrol_looppause;
 	wxBitmap animcontrol_noloopplay;
@@ -32,6 +32,9 @@ private:
 	wxBitmap foreground_img;
 	wxImage main_img_base;
 	wxImage imported_img_base;
+	wxMenu* menu;
+	int menu_selection;
+	int menu_selection_type;
 	float scale_ratio;
 	int imported_img_x;
 	int imported_img_y;
@@ -40,6 +43,7 @@ private:
 	int color_selected;
 	bool prevent_event;
 	
+	void DisplayAnimationList();
 	void DrawImage(wxDC& dc);
 	void UpdateImage();
 	void UpdateTexturePreview(int changeid);
@@ -52,11 +56,15 @@ private:
 	void OnTileSelection(wxCommandEvent& event);
 	void OnTilePieceSelection(wxCommandEvent& event);
 	void OnAnimClick(wxMouseEvent& event);
+	void OnTileRightClick(wxMouseEvent& event);
+	void OnAnimRightClick(wxMouseEvent& event);
+	void OnRightClickMenu(wxCommandEvent& event);
 	void OnSpinPosition(wxSpinEvent& event);
 	void OnTextChanged(wxCommandEvent& event);
 	void OnPathSelection(wxFileDirPickerEvent& event);
 	void OnFocusFileImage(wxFocusEvent& event);
 	void OnButtonClick(wxCommandEvent& event);
+	void OnEntryWheel(wxMouseEvent& event);
 	void OnTextureMouseMove(wxMouseEvent& event);
 	void OnTextureMouseWheel(wxMouseEvent& event);
 	void OnPaletteMouseMove(wxMouseEvent& event);

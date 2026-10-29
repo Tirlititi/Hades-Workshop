@@ -9,6 +9,8 @@ struct TextDataSet;
 #define SPECIAL_TEXT_SPELL_NAMING_INDEX_PSX		6
 #define SPECIAL_TEXT_SPELL_NAMING_INDEX_STEAM	2
 #define SPECIAL_TEXT_LOCALIZATION_INDEX_STEAM	6
+#define SPECIAL_TEXT_ELEMENTNAMES_INDEX_STEAM	7
+#define SPECIAL_TEXT_CLASSNAMES_INDEX_STEAM		8
 struct SpecialTextDataEntry;
 struct SpecialTextDataStruct;
 struct SpecialTextDataSet;

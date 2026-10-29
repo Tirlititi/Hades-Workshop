@@ -7,7 +7,7 @@
 #include "Database_CSV.h"
 #include "CommonUtility.h"
 
-#define STAT_HWS_VERSION 5
+#define STAT_HWS_VERSION 6
 
 #define STAT_EQUIPSET_NONE 15
 
@@ -1379,6 +1379,11 @@ int StatDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 			HWSReadFlexibleChar(ffbin, battle_param[i].attack_sfx, true);
 			HWSReadFlexibleChar(ffbin, battle_param[i].attack_sound[0], true);
 			HWSReadFlexibleChar(ffbin, battle_param[i].attack_sound[1], true);
+			if (version >= 6) {
+				uint8_t tmp8;
+				HWSReadChar(ffbin, tmp8);
+				battle_param[i].attack_sound_disabled = tmp8 != 0;
+			}
 			HWSReadChar(ffbin, battle_param[i].weapon_bone);
 			for (j = 0; j < 6; j++) {
 				HWSReadChar(ffbin, battle_param[i].status_bone[j]);
@@ -1520,6 +1525,8 @@ void StatDataSet::WriteHWS(fstream& ffbin) {
 		HWSWriteFlexibleChar(ffbin, battle_param[i].attack_sfx, true);
 		HWSWriteFlexibleChar(ffbin, battle_param[i].attack_sound[0], true);
 		HWSWriteFlexibleChar(ffbin, battle_param[i].attack_sound[1], true);
+		uint8_t tmp8 = battle_param[i].attack_sound_disabled ? 1 : 0;
+		HWSWriteChar(ffbin, tmp8);
 		HWSWriteChar(ffbin, battle_param[i].weapon_bone);
 		for (j = 0; j < 6; j++) {
 			HWSWriteChar(ffbin, battle_param[i].status_bone[j]);

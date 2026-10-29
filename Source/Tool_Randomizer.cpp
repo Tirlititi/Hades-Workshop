@@ -726,8 +726,9 @@ void ToolRandomizer::ApplyRandomizerCharacter() {
 									cddata->spellset.spell[46].model_alt = cddata->spellset.spell[46].model;
 							} else if (cmd.spell_list[j] == 66) { // Fenrir slot
 								ReplacePartySpell(&cddata->spellset.spell[67], spellpick.second);
-								ReplaceStatusOrElementName(1, false, cddata->spellset.spell[67].help, cddata->spellset.spell[67].element, 0x20, &cddata->spellset.spell[67]);
-								cddata->spellset.spell[67].element = 0x20;
+								ReplaceStatusOrElementName(1, false, cddata->spellset.spell[67].help, GetStatusBitList(cddata->spellset.spell[67].element), 0x20, &cddata->spellset.spell[67]);
+								cddata->spellset.spell[67].element.clear();
+								cddata->spellset.spell[67].element.insert(5);
 							} else if (cmd.spell_list[j] == 68) { // Carbuncle slot
 								ReplacePartySpell(&cddata->spellset.spell[69], spellpick.second);
 								ReplaceStatusOrElementName(0, !SpellIsStatusRemove(cddata->spellset.spell[69]), cddata->spellset.spell[69].help, GetStatusBitList(cddata->spellset.GetStatusSetById(cddata->spellset.spell[69].status).status_list), GetStatusBitList(cddata->spellset.status_set[8].status_list), &cddata->spellset.spell[69]);

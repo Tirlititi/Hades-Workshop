@@ -7,6 +7,7 @@
 #include "Database_Item.h"
 #include "Database_CSV.h"
 #include "CommonUtility.h"
+#include "Hades_Strings.h"
 
 #define ITEM_HWS_VERSION 3
 
@@ -189,7 +190,7 @@ wxString ItemDataStruct::GetFieldValue(wxString fieldname) {
 		if (fieldname.IsSameAs("weapon_model_id")) return wxString::Format(wxT("%d"), weap.model);
 		if (fieldname.IsSameAs("weapon_script")) return wxString::Format(wxT("%d"), weap.damage_formula);
 		if (fieldname.IsSameAs("weapon_power")) return wxString::Format(wxT("%d"), weap.power);
-		if (fieldname.IsSameAs("weapon_element")) return wxString::Format(wxT("%d"), weap.element);
+		if (fieldname.IsSameAs("weapon_element")) return FormatElementSet(weap.element);
 		if (fieldname.IsSameAs("weapon_accuracy")) return wxString::Format(wxT("%d"), weap.status_accuracy);
 		if (fieldname.IsSameAs("weapon_offset1")) return wxString::Format(wxT("%d"), weap.offset1);
 		if (fieldname.IsSameAs("weapon_offset2")) return wxString::Format(wxT("%d"), weap.offset2);
@@ -216,7 +217,7 @@ wxString ItemDataStruct::GetFieldValue(wxString fieldname) {
 		if (fieldname.IsSameAs("usable_script")) return wxString::Format(wxT("%d"), usable.effect);
 		if (fieldname.IsSameAs("usable_power")) return wxString::Format(wxT("%d"), usable.power);
 		if (fieldname.IsSameAs("usable_accuracy")) return wxString::Format(wxT("%d"), usable.accuracy);
-		if (fieldname.IsSameAs("usable_element")) return wxString::Format(wxT("%d"), usable.element);
+		if (fieldname.IsSameAs("usable_element")) return FormatElementSet(usable.element);
 		if (fieldname.IsSameAs("usable_status")) return FormatStatusSet(usable.status);
 	}
 	if (fieldname.StartsWith("stat_") && parent->GetStatIndexById(stat_id) >= 0) {
@@ -225,11 +226,11 @@ wxString ItemDataStruct::GetFieldValue(wxString fieldname) {
 		if (fieldname.IsSameAs("stat_strength")) return wxString::Format(wxT("%d"), stat.strength);
 		if (fieldname.IsSameAs("stat_magic")) return wxString::Format(wxT("%d"), stat.magic);
 		if (fieldname.IsSameAs("stat_spirit")) return wxString::Format(wxT("%d"), stat.spirit);
-		if (fieldname.IsSameAs("stat_element_boost")) return wxString::Format(wxT("%d"), stat.element_boost);
-		if (fieldname.IsSameAs("stat_element_immune")) return wxString::Format(wxT("%d"), stat.element_immune);
-		if (fieldname.IsSameAs("stat_element_absorb")) return wxString::Format(wxT("%d"), stat.element_absorb);
-		if (fieldname.IsSameAs("stat_element_half")) return wxString::Format(wxT("%d"), stat.element_half);
-		if (fieldname.IsSameAs("stat_element_weak")) return wxString::Format(wxT("%d"), stat.element_weak);
+		if (fieldname.IsSameAs("stat_element_boost")) return FormatElementSet(stat.element_boost);
+		if (fieldname.IsSameAs("stat_element_immune")) return FormatElementSet(stat.element_immune);
+		if (fieldname.IsSameAs("stat_element_absorb")) return FormatElementSet(stat.element_absorb);
+		if (fieldname.IsSameAs("stat_element_half")) return FormatElementSet(stat.element_half);
+		if (fieldname.IsSameAs("stat_element_weak")) return FormatElementSet(stat.element_weak);
 	}
 	return _(L"");
 }
@@ -357,7 +358,7 @@ void ItemUsableDataStruct::InitializeDefault(int dataid) {
 	target_flag = 0;
 	effect = 0;
 	power = 0;
-	element = 0;
+	element.clear();
 	accuracy = 0;
 	status.clear();
 }
@@ -518,17 +519,18 @@ void ItemUsableDataStruct::SetSound(uint16_t newvalue) {
 	txtpos = ffbin.tellg(); \
 	SEEK(ffbin,txtpos,key_name_space_total);
 
-#define MACRO_ITEM_IOFUNCTIONUSABLE(IO,SEEK,READ,PPF) \
+#define MACRO_ITEM_IOFUNCTIONUSABLE(IO, SEEK, READ, PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<usableamount;i++) { \
-		IO ## Char(ffbin,usable[i].target_type); \
-		IO ## FlexibleShort(ffbin,usable[i].model, useextendedtype); \
-		IO ## Char(ffbin,usable[i].target_flag); \
-		IO ## FlexibleChar(ffbin,usable[i].effect, useextendedtype); \
-		IO ## FlexibleChar(ffbin,usable[i].power, useextendedtype); \
-		IO ## Char(ffbin,usable[i].element); \
-		IO ## FlexibleChar(ffbin,usable[i].accuracy, useextendedtype); \
-		MACRO_IOFUNCTIONGENERIC_STATUS(ffbin, useextendedtype2, IO, READ, usable[i].status) \
+	for (i = 0; i < usableamount; i++) { \
+		IO ## Char(ffbin, usable[i].target_type); \
+		IO ## FlexibleShort(ffbin, usable[i].model, useextendedtype); \
+		IO ## Char(ffbin, usable[i].target_flag); \
+		IO ## FlexibleChar(ffbin, usable[i].effect, useextendedtype); \
+		IO ## FlexibleChar(ffbin, usable[i].power, useextendedtype); \
+		MACRO_IOFUNCTIONGENERIC_ELEMCLASS(ffbin, useextendedtype3, IO, READ, usable[i].element) \
+		IO ## FlexibleChar(ffbin, usable[i].accuracy, useextendedtype); \
+		if (READ && !usable[i].status.empty()) SetDebugLogInfo(2, "Usable " + to_string(usable[i].id)); \
+		MACRO_IOFUNCTIONGENERIC_STATUS(ffbin, useextendedtype2, IO, READ, usable[i].status, "Status removed: ") \
 	} \
 	if (PPF) PPFEndScanStep();
 
@@ -556,7 +558,7 @@ void ItemUsableDataStruct::SetSound(uint16_t newvalue) {
 
 #define MACRO_ITEM_IOFUNCTIONARMOR(IO,SEEK,READ,PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<armoramount;i++) { \
+	for (i = 0; i < armoramount; i++) { \
 		IO ## FlexibleChar(ffbin, armor[i].defence, useextendedtype2); \
 		IO ## FlexibleChar(ffbin, armor[i].evade, useextendedtype2); \
 		IO ## FlexibleChar(ffbin, armor[i].magic_defence, useextendedtype2); \
@@ -564,35 +566,35 @@ void ItemUsableDataStruct::SetSound(uint16_t newvalue) {
 	} \
 	if (PPF) PPFEndScanStep();
 
-#define MACRO_ITEM_IOFUNCTIONSTAT(IO,SEEK,READ,PPF) \
+#define MACRO_ITEM_IOFUNCTIONSTAT(IO, SEEK, READ, PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<statamount;i++) { \
-		IO ## Char(ffbin,stat[i].speed); \
-		IO ## Char(ffbin,stat[i].strength); \
-		IO ## Char(ffbin,stat[i].magic); \
-		IO ## Char(ffbin,stat[i].spirit); \
-		IO ## Char(ffbin,stat[i].element_immune); \
-		IO ## Char(ffbin,stat[i].element_absorb); \
-		IO ## Char(ffbin,stat[i].element_half); \
-		IO ## Char(ffbin,stat[i].element_weak); \
-		IO ## Char(ffbin,stat[i].element_boost); \
-		IO ## Char(ffbin,zero8); \
-		IO ## Short(ffbin,zero16); \
+	for (i = 0; i < statamount; i++) { \
+		IO ## Char(ffbin, stat[i].speed); \
+		IO ## Char(ffbin, stat[i].strength); \
+		IO ## Char(ffbin, stat[i].magic); \
+		IO ## Char(ffbin, stat[i].spirit); \
+		MACRO_IOFUNCTIONGENERIC_ELEMCLASS(ffbin, useextendedtype3, IO, READ, stat[i].element_immune) \
+		MACRO_IOFUNCTIONGENERIC_ELEMCLASS(ffbin, useextendedtype3, IO, READ, stat[i].element_absorb) \
+		MACRO_IOFUNCTIONGENERIC_ELEMCLASS(ffbin, useextendedtype3, IO, READ, stat[i].element_half) \
+		MACRO_IOFUNCTIONGENERIC_ELEMCLASS(ffbin, useextendedtype3, IO, READ, stat[i].element_weak) \
+		MACRO_IOFUNCTIONGENERIC_ELEMCLASS(ffbin, useextendedtype3, IO, READ, stat[i].element_boost) \
+		IO ## Char(ffbin, zero8); \
+		IO ## Short(ffbin, zero16); \
 	} \
 	if (PPF) PPFEndScanStep();
 
-#define MACRO_ITEM_IOFUNCTIONWEAPONSTAT(IO,SEEK,READ,PPF) \
+#define MACRO_ITEM_IOFUNCTIONWEAPONSTAT(IO, SEEK, READ, PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<weaponamount;i++) { \
-		IO ## Char(ffbin,weapon[i].flag); \
-		IO ## FlexibleChar(ffbin,weapon[i].status, useextendedtype2); \
-		IO ## Short(ffbin,weapon[i].model); \
-		IO ## FlexibleChar(ffbin,weapon[i].damage_formula, useextendedtype); \
-		IO ## FlexibleChar(ffbin,weapon[i].power, useextendedtype); \
-		IO ## Char(ffbin,weapon[i].element); \
+	for (i = 0; i < weaponamount; i++) { \
+		IO ## Char(ffbin, weapon[i].flag); \
+		IO ## FlexibleChar(ffbin, weapon[i].status, useextendedtype2); \
+		IO ## Short(ffbin, weapon[i].model); \
+		IO ## FlexibleChar(ffbin, weapon[i].damage_formula, useextendedtype); \
+		IO ## FlexibleChar(ffbin, weapon[i].power, useextendedtype); \
+		MACRO_IOFUNCTIONGENERIC_ELEMCLASS(ffbin, useextendedtype3, IO, READ, weapon[i].element) \
 		IO ## FlexibleChar(ffbin,weapon[i].status_accuracy, useextendedtype); \
-		IO ## Short(ffbin,(uint16_t&)weapon[i].offset1); \
-		IO ## Short(ffbin,(uint16_t&)weapon[i].offset2); \
+		IO ## Short(ffbin, (uint16_t&)weapon[i].offset1); \
+		IO ## Short(ffbin, (uint16_t&)weapon[i].offset2); \
 		if (READ) weapon[i].UpdateModelName(); \
 	} \
 	if (PPF) PPFEndScanStep();
@@ -669,6 +671,7 @@ void ItemDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 	int keyitemamount = KEY_ITEM_AMOUNT;
 	bool useextendedtype = false;
 	bool useextendedtype2 = false;
+	bool useextendedtype3 = false;
 	int i, j;
 	uint32_t txtpos;
 	csv_header = _(HADES_STRING_CSV_ITEM_HEADER);
@@ -898,7 +901,7 @@ DllMetaDataModification* ItemDataSet::ComputeSteamMod(ConfigurationSet& config, 
 		argvalue[i][7] = (usable[i].target_flag >> 7) & 0x1;
 		argvalue[i][8] = usable[i].effect;
 		argvalue[i][9] = usable[i].power;
-		argvalue[i][10] = usable[i].element;
+		argvalue[i][10] = GetStatusBitList(usable[i].element);
 		argvalue[i][11] = usable[i].accuracy;
 		argvalue[i][12] = GetStatusBitList(usable[i].status);
 	}
@@ -925,11 +928,11 @@ DllMetaDataModification* ItemDataSet::ComputeSteamMod(ConfigurationSet& config, 
 		argvalue[i][1] = stat[i].strength;
 		argvalue[i][2] = stat[i].magic;
 		argvalue[i][3] = stat[i].spirit;
-		argvalue[i][4] = stat[i].element_immune;
-		argvalue[i][5] = stat[i].element_absorb;
-		argvalue[i][6] = stat[i].element_half;
-		argvalue[i][7] = stat[i].element_weak;
-		argvalue[i][8] = stat[i].element_boost;
+		argvalue[i][4] = GetStatusBitList(stat[i].element_immune);
+		argvalue[i][5] = GetStatusBitList(stat[i].element_absorb);
+		argvalue[i][6] = GetStatusBitList(stat[i].element_half);
+		argvalue[i][7] = GetStatusBitList(stat[i].element_weak);
+		argvalue[i][8] = GetStatusBitList(stat[i].element_boost);
 	}
 	res[3] = dlldata.ConvertRawToScript_Object(argvalue, steam_method_position[3], steam_method_base_length[3], ITEM_STAT_AMOUNT, 9, steam_stat_field_size);
 	for (i = 0; i < ITEM_STAT_AMOUNT; i++)
@@ -943,7 +946,7 @@ DllMetaDataModification* ItemDataSet::ComputeSteamMod(ConfigurationSet& config, 
 		argvalue[i][2] = weapon[i].model;
 		argvalue[i][3] = weapon[i].damage_formula;
 		argvalue[i][4] = weapon[i].power;
-		argvalue[i][5] = weapon[i].element;
+		argvalue[i][5] = GetStatusBitList(weapon[i].element);
 		argvalue[i][6] = weapon[i].status_accuracy;
 		argvalue[i][7] = (uint16_t)weapon[i].offset1;
 		argvalue[i][8] = (uint16_t)weapon[i].offset2;
@@ -968,7 +971,7 @@ void ItemDataSet::GenerateCSharp(vector<string>& buffer) {
 	itemdb << "\tff9item._FF9Item_Info = new ITEM_DATA[] {\n";
 	for (i = 0; i < ITEM_USABLE_AMOUNT; i++)
 		itemdb	<< "\t\tnew ITEM_DATA(new CMD_INFO(" << (int)(usable[i].target_type & 0xF) << ", " << (int)((usable[i].target_type >> 4) & 0x1) << ", " << (int)((usable[i].target_type >> 5) & 0x7) << ", " << (int)(usable[i].model & 0x1FF) << ", " << (int)usable[i].GetSound() << ", " << (int)((usable[i].target_flag >> 5) & 0x1) << ", " << (int)((usable[i].target_flag >> 6) & 0x1) << ", " << (int)((usable[i].target_flag >> 7) & 0x1)
-				<< "), new BTL_REF(" << (int)usable[i].effect << ", " << (int)usable[i].power << ", " << StreamAsHex(usable[i].element) << ", " << (int)usable[i].accuracy
+				<< "), new BTL_REF(" << (int)usable[i].effect << ", " << (int)usable[i].power << ", " << StreamAsHex(GetStatusBitList(usable[i].element)) << ", " << (int)usable[i].accuracy
 				 << "), " << StreamAsHex(GetStatusBitList(usable[i].status)) << (i+1==ITEM_USABLE_AMOUNT ? "u)" : "u),") << " // " << ConvertWStrToStr(item[ITEM_WEAPON_AMOUNT+ITEM_ARMOR_AMOUNT+i].name.str_nice) << "\n";
 	itemdb << "\t};\n";
 	buffer.push_back(itemdb.str());
@@ -977,7 +980,7 @@ void ItemDataSet::GenerateCSharp(vector<string>& buffer) {
 	weapondb << "\tff9weap._FF9Weapon_Data = new WEAPON[] {\n";
 	for (i = 0; i < ITEM_WEAPON_AMOUNT; i++) {
 		string modelsteamid = weapon[i].model == 0 ? "null" : "\"" + ConvertWStrToStr(weapon[i].model_name) + "\"";
-		weapondb	<< "\t\tnew WEAPON(" << StreamAsHex(weapon[i].flag) << ", " << (int)weapon[i].status << ", " << modelsteamid << ", new BTL_REF(" << (int)weapon[i].damage_formula << ", " << (int)weapon[i].power << ", " << StreamAsHex(weapon[i].element) << ", " << (int)weapon[i].status_accuracy
+		weapondb	<< "\t\tnew WEAPON(" << StreamAsHex(weapon[i].flag) << ", " << (int)weapon[i].status << ", " << modelsteamid << ", new BTL_REF(" << (int)weapon[i].damage_formula << ", " << (int)weapon[i].power << ", " << StreamAsHex(GetStatusBitList(weapon[i].element)) << ", " << (int)weapon[i].status_accuracy
 					<< "), new short[]{ " << (short)weapon[i].offset1 << ", " << (short)weapon[i].offset2 << (i+1==ITEM_WEAPON_AMOUNT ? " })" : " }),") << " // " << ConvertWStrToStr(item[i].name.str_nice) << "\n";
 	}
 	weapondb << "\t};\n";
@@ -994,8 +997,8 @@ void ItemDataSet::GenerateCSharp(vector<string>& buffer) {
 	itemstatdb << "\tff9equip._FF9EquipBonus_Data = new EQUIP_PRIVILEGE[] {\n";
 	for (i = 0; i < ITEM_STAT_AMOUNT; i++)
 		itemstatdb	<< "\t\tnew EQUIP_PRIVILEGE(" << (int)stat[i].speed << ", " << (int)stat[i].strength << ", " << (int)stat[i].magic << ", " << (int)stat[i].spirit
-					<< ", new DEF_ATTR(" << StreamAsHex(stat[i].element_immune) << ", " << StreamAsHex(stat[i].element_absorb) << ", " << StreamAsHex(stat[i].element_half) << ", " << StreamAsHex(stat[i].element_weak)
-					<< "), " << StreamAsHex(stat[i].element_boost) << (i+1==ITEM_STAT_AMOUNT ? ")\n" : "),\n");
+					<< ", new DEF_ATTR(" << StreamAsHex(GetStatusBitList(stat[i].element_immune)) << ", " << StreamAsHex(GetStatusBitList(stat[i].element_absorb)) << ", " << StreamAsHex(GetStatusBitList(stat[i].element_half)) << ", " << StreamAsHex(GetStatusBitList(stat[i].element_weak))
+					<< "), " << StreamAsHex(GetStatusBitList(stat[i].element_boost)) << (i + 1 == ITEM_STAT_AMOUNT ? ")\n" : "),\n");
 	itemstatdb << "\t};\n";
 	buffer.push_back(itemstatdb.str());
 }
@@ -1160,6 +1163,7 @@ void ItemDataSet::Write(fstream& ffbin, ConfigurationSet& config) {
 	int keyitemamount = KEY_ITEM_AMOUNT;
 	bool useextendedtype = false;
 	bool useextendedtype2 = false;
+	bool useextendedtype3 = false;
 	int i, j;
 	uint32_t txtpos;
 	UpdateOffset();
@@ -1195,6 +1199,7 @@ void ItemDataSet::WritePPF(fstream& ffbin, ConfigurationSet& config) {
 	int keyitemamount = KEY_ITEM_AMOUNT;
 	bool useextendedtype = false;
 	bool useextendedtype2 = false;
+	bool useextendedtype3 = false;
 	int i, j;
 	uint32_t txtpos;
 	UpdateOffset();
@@ -1230,6 +1235,7 @@ int ItemDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 	int keyitemamount = KEY_ITEM_AMOUNT;
 	bool useextendedtype = false;
 	bool useextendedtype2 = false;
+	bool useextendedtype3 = GetHWSGlobalVersion() >= 103;
 	vector<ItemDataStruct> nonmodifieditem;
 	vector<ItemWeaponDataStruct> nonmodifiedweapon;
 	vector<ItemArmorDataStruct> nonmodifiedarmor;
@@ -1280,6 +1286,7 @@ int ItemDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 		HWSReadCSVFormatting(ffbin, csv_header_stat, csv_format_stat);
 		HWSReadCSVFields(ffbin, custom_field);
 	}
+	SetDebugLogInfo(1, "Item Datas");
 	MACRO_ITEM_IOFUNCTIONDATA(HWSRead, HWSSeek, true, false)
 	if (GetHWSGameType() == GAME_TYPE_PSX) {
 		if (name_space_total <= namesize && usetext) {
@@ -1425,6 +1432,7 @@ void ItemDataSet::WriteHWS(fstream& ffbin) {
 	int keyitemamount = key_item.size();
 	bool useextendedtype = true;
 	bool useextendedtype2 = true;
+	bool useextendedtype3 = true;
 	int i, j;
 	uint32_t txtpos;
 	UpdateOffset();
@@ -1678,7 +1686,7 @@ void ItemWeaponDataStruct::InitializeDefault(int dataid) {
 	model_name = L"";
 	damage_formula = 0;
 	power = 0;
-	element = 0;
+	element.clear();
 	status_accuracy = 0;
 	offset1 = 0;
 	offset2 = 0;
@@ -1719,11 +1727,11 @@ void ItemStatDataStruct::InitializeDefault(int dataid) {
 	strength = 0;
 	magic = 0;
 	spirit = 0;
-	element_immune = 0;
-	element_absorb = 0;
-	element_half = 0;
-	element_weak = 0;
-	element_boost = 0;
+	element_immune.clear();
+	element_absorb.clear();
+	element_half.clear();
+	element_weak.clear();
+	element_boost.clear();
 }
 
 bool AnyAbilityStruct::operator==(AnyAbilityStruct other) {

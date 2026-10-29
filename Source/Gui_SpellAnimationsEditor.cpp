@@ -400,11 +400,6 @@ EnemyAnimSequenceEditDialog::EnemyAnimSequenceEditDialog(wxWindow* parent, Battl
 	unsigned int i, j;
 	sequence_code_amount = battle.sequence_code_amount[anim_id];
 	sequence_code = battle.sequence_code[anim_id];
-	for (i = 0; i < sequence_code_amount; i++) {
-		EnemySequenceCode& seqcode = GetEnemySequenceCode(sequence_code[i].code);
-		sequence_code[i].arg = new uint32_t[seqcode.arg_amount];
-		memcpy(sequence_code[i].arg, battle.sequence_code[anim_id][i].arg, seqcode.arg_amount * sizeof(uint32_t));
-	}
 	code_list.Alloc(ENEMYANIM_OPCODE.size());
 	for (i = 0; i < ENEMYANIM_OPCODE.size(); i++)
 		code_list.Add(_(ENEMYANIM_OPCODE[i].label));
@@ -483,9 +478,9 @@ EnemyAnimSequenceEditDialog::EnemyAnimSequenceEditDialog(wxWindow* parent, Battl
 }
 
 void EnemyAnimSequenceEditDialog::OnMouseMoveOver(wxMouseEvent& event) {
-	EnemyAnimSequenceCodeSizer* sizer = sequence_code_sizer[event.GetId()/ENEMY_SEQUENCE_CODE_MAX_ARG];
+	EnemyAnimSequenceCodeSizer* sizer = sequence_code_sizer[event.GetId() / ENEMY_SEQUENCE_CODE_MAX_ARG];
 	EnemySequenceCode& seqcode = ENEMYANIM_OPCODE[sizer->m_code->GetSelection()];
-	m_helptextctrl->ChangeValue(wxString::Format(wxT("Code 0x%.2X\n\n%s"),sizer->codeline->code,_(seqcode.help)));
+	m_helptextctrl->ChangeValue(wxString::Format(wxT("Code 0x%.2X\n\n%s"), sizer->codeline->code, _(seqcode.help)));
 }
 
 void EnemyAnimSequenceEditDialog::OnAddCode(wxCommandEvent& event) {
@@ -515,7 +510,7 @@ void EnemyAnimSequenceEditDialog::OnAddCode(wxCommandEvent& event) {
 	EnemySequenceCodeLine newseqcodeline;
 	newseqcodeline.parent = &battle;
 	newseqcodeline.code = newcode;
-	newseqcodeline.arg = new uint32_t[newseq.arg_amount];
+	newseqcodeline.arg.resize(newseq.arg_amount);
 	for (i = 0; (int)i < newseq.arg_amount; i++) {
 		if (newseq.arg_type[i] == EAAT_TIME)
 			newseqcodeline.arg[i] = 1;
@@ -616,8 +611,7 @@ void EnemyAnimSequenceEditDialog::OnChangeCode(wxCommandEvent& event) {
 		delete sizer->m_arg[i];
 	}
 	sequence_code[sizer->line_nb].code = newcode;
-	delete[] sequence_code[sizer->line_nb].arg;
-	sequence_code[sizer->line_nb].arg = new uint32_t[newseq.arg_amount];
+	sequence_code[sizer->line_nb].arg.resize(newseq.arg_amount);
 	for (i = 0; i < newseq.arg_amount; i++) {
 		if (newseq.arg_type[i] == EAAT_TIME)
 			sequence_code[sizer->line_nb].arg[i] = 1;
@@ -631,13 +625,13 @@ void EnemyAnimSequenceEditDialog::OnChangeCode(wxCommandEvent& event) {
 }
 
 void EnemyAnimSequenceEditDialog::OnChangeArgSpin(wxSpinEvent& event) {
-	EnemyAnimSequenceCodeSizer* sizer = sequence_code_sizer[event.GetId()/ENEMY_SEQUENCE_CODE_MAX_ARG];
-	uint32_t value = (GetEnemySequenceCode(sizer->codeline->code).arg_type[event.GetId()%ENEMY_SEQUENCE_CODE_MAX_ARG]==EAAT_COORDINATE && event.GetPosition()<0) ? 0x10000+event.GetPosition() : event.GetPosition();
-	sequence_code[sizer->line_nb].arg[event.GetId()%ENEMY_SEQUENCE_CODE_MAX_ARG] = value;
+	EnemyAnimSequenceCodeSizer* sizer = sequence_code_sizer[event.GetId() / ENEMY_SEQUENCE_CODE_MAX_ARG];
+	uint32_t value = (GetEnemySequenceCode(sizer->codeline->code).arg_type[event.GetId() % ENEMY_SEQUENCE_CODE_MAX_ARG] == EAAT_COORDINATE && event.GetPosition() < 0) ? 0x10000 + event.GetPosition() : event.GetPosition();
+	sequence_code[sizer->line_nb].arg[event.GetId() % ENEMY_SEQUENCE_CODE_MAX_ARG] = value;
 }
 
 void EnemyAnimSequenceEditDialog::OnChangeArgChoice(wxCommandEvent& event) {
-	EnemyAnimSequenceCodeSizer* sizer = sequence_code_sizer[event.GetId()/ENEMY_SEQUENCE_CODE_MAX_ARG];
-	unsigned int argi = event.GetId()%ENEMY_SEQUENCE_CODE_MAX_ARG;
+	EnemyAnimSequenceCodeSizer* sizer = sequence_code_sizer[event.GetId() / ENEMY_SEQUENCE_CODE_MAX_ARG];
+	unsigned int argi = event.GetId() % ENEMY_SEQUENCE_CODE_MAX_ARG;
 	sequence_code[sizer->line_nb].arg[argi] = *(uint32_t*)event.GetClientData();
 }

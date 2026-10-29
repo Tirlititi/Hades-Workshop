@@ -15,7 +15,8 @@
 #define HWS_BATTLE_SCENE_VERSION_VANILLA	7
 #define HWS_BATTLE_SCENE_VERSION_EXTENDED	8
 #define HWS_BATTLE_SCENE_VERSION_SEQPATH	9
-#define HWS_BATTLE_SCENE_VERSION			9
+#define HWS_BATTLE_SCENE_VERSION_EXTELEMENT	10
+#define HWS_BATTLE_SCENE_VERSION			10
 #define HWS_BATTLE_SCENE_MOD_ID				0xFFF0
 
 int EnemySpellDataStruct::SetName(wstring newvalue, SteamLanguage lang) {
@@ -181,14 +182,9 @@ int EnemyDataStruct::AddSpell(EnemySpellDataStruct* copyspell) {
 	bs.sequence_base_anim[newseqindex] = 0;
 	bs.sequence_stat_id[newseqindex] = 0;
 	bs.sequence_code_amount[newseqindex] = copybs.sequence_code_amount[copyspell->id];
-	bs.sequence_code[newseqindex].resize(bs.sequence_code_amount[newseqindex]);
-	for (i = 0; i < bs.sequence_code_amount[newseqindex]; i++) {
-		EnemySequenceCode& seq = GetEnemySequenceCode(copybs.sequence_code[copyspell->id][i].code);
+	bs.sequence_code[newseqindex] = copybs.sequence_code[copyspell->id];
+	for (i = 0; i < bs.sequence_code_amount[newseqindex]; i++)
 		bs.sequence_code[newseqindex][i].parent = &bs;
-		bs.sequence_code[newseqindex][i].code = seq.id;
-		bs.sequence_code[newseqindex][i].arg = new uint32_t[seq.arg_amount];
-		memcpy(bs.sequence_code[newseqindex][i].arg, copybs.sequence_code[copyspell->id][i].arg, seq.arg_amount * sizeof(uint32_t));
-	}
 	bs.sequence_amount = seqamount;
 	bs.UpdateOffset();
 	return 0;
@@ -409,9 +405,10 @@ void EnemySpellDataStruct::SetTargetAmount(Spell_Target_Amount newvalue) {
 	for (i = 0; i < stat_amount; i++) { \
 		if (READ) stat[i].parent = this; \
 		if (READ) stat[i].id = i; \
-		MACRO_IOFUNCTIONGENERIC_STATUS(f, useextendedtype, IO, READ, stat[i].status_immune) \
-		MACRO_IOFUNCTIONGENERIC_STATUS(f, useextendedtype, IO, READ, stat[i].status_auto) \
-		MACRO_IOFUNCTIONGENERIC_STATUS(f, useextendedtype, IO, READ, stat[i].status_initial) \
+		if (READ && HWS) SetDebugLogInfo(2, "Enemy " + to_string(i) + " (" + ConvertWStrToStr(stat[i].name.str_nice) + ")"); \
+		MACRO_IOFUNCTIONGENERIC_STATUS(f, useextendedtype, IO, READ, stat[i].status_immune, "Status immune removed: ") \
+		MACRO_IOFUNCTIONGENERIC_STATUS(f, useextendedtype, IO, READ, stat[i].status_auto, "Status auto removed: ") \
+		MACRO_IOFUNCTIONGENERIC_STATUS(f, useextendedtype, IO, READ, stat[i].status_initial, "Status initial removed: ") \
 		IO ## FlexibleShort(f, stat[i].hp, useextendedtype); \
 		IO ## FlexibleShort(f, stat[i].mp, useextendedtype); \
 		IO ## FlexibleShort(f, stat[i].gils, useextendedtype); \
@@ -465,12 +462,12 @@ void EnemySpellDataStruct::SetTargetAmount(Spell_Target_Amount newvalue) {
 		IO ## Char(f, stat[i].trans); \
 		IO ## Char(f, stat[i].cur_capa); \
 		IO ## Char(f, stat[i].max_capa); \
-		IO ## Char(f, stat[i].element_immune); \
-		IO ## Char(f, stat[i].element_absorb); \
-		IO ## Char(f, stat[i].element_half); \
-		IO ## Char(f, stat[i].element_weak); \
+		MACRO_IOFUNCTIONGENERIC_ELEMCLASS(f, useextendedtype2, IO, READ, stat[i].element_immune) \
+		MACRO_IOFUNCTIONGENERIC_ELEMCLASS(f, useextendedtype2, IO, READ, stat[i].element_absorb) \
+		MACRO_IOFUNCTIONGENERIC_ELEMCLASS(f, useextendedtype2, IO, READ, stat[i].element_half) \
+		MACRO_IOFUNCTIONGENERIC_ELEMCLASS(f, useextendedtype2, IO, READ, stat[i].element_weak) \
 		IO ## FlexibleChar(f, stat[i].lvl, useextendedtype); \
-		IO ## Char(f, stat[i].classification); \
+		MACRO_IOFUNCTIONGENERIC_ELEMCLASS(f, useextendedtype2, IO, READ, stat[i].classification) \
 		IO ## FlexibleChar(f, stat[i].accuracy, useextendedtype); \
 		IO ## FlexibleChar(f, stat[i].defence, useextendedtype); \
 		IO ## FlexibleChar(f, stat[i].evade, useextendedtype); \
@@ -531,7 +528,7 @@ void EnemySpellDataStruct::SetTargetAmount(Spell_Target_Amount newvalue) {
 		if (READ && version < HWS_BATTLE_SCENE_VERSION_SEQPATH) spell[i].target_flag &= 0xE0; \
 		IO ## FlexibleChar(f, spell[i].effect, useextendedtype); \
 		IO ## FlexibleChar(f, spell[i].power, useextendedtype); \
-		IO ## Char(f, spell[i].element); \
+		MACRO_IOFUNCTIONGENERIC_ELEMCLASS(f, useextendedtype2, IO, READ, spell[i].element) \
 		IO ## FlexibleChar(f, spell[i].accuracy, useextendedtype); \
 		IO ## Char(f, spell[i].flag); \
 		if (!READ && HWS) { \
@@ -554,6 +551,7 @@ void EnemyDataStruct::Read(fstream& f) {
 	if (loaded)
 		return;
 	bool useextendedtype = false;
+	bool useextendedtype2 = false;
 	if (GetGameType() == GAME_TYPE_PSX) {
 		MACRO_ENEMY_IOFUNCTION(FFIXRead, FFIXSeek, true, false, false)
 	} else {
@@ -564,23 +562,28 @@ void EnemyDataStruct::Read(fstream& f) {
 
 void EnemyDataStruct::Write(fstream& f) {
 	bool useextendedtype = false;
+	bool useextendedtype2 = false;
 	MACRO_ENEMY_IOFUNCTION(FFIXWrite, FFIXSeek, false, false, false)
 	modified = false;
 }
 
 void EnemyDataStruct::WritePPF(fstream& f) {
 	bool useextendedtype = false;
+	bool useextendedtype2 = false;
 	MACRO_ENEMY_IOFUNCTION(PPFStepAdd, FFIXSeek, false, true, false)
 }
 
 void EnemyDataStruct::ReadHWS(fstream& f) {
 	bool useextendedtype = false;
+	bool useextendedtype2 = GetHWSGlobalVersion() >= 103;
+	SetDebugLogInfo(1, "Battle " + to_string(parent->GetIdByIndex(id)));
 	MACRO_ENEMY_IOFUNCTION(HWSRead, HWSSeek, true, false, true)
 	MarkDataModified();
 }
 
 void EnemyDataStruct::WriteHWS(fstream& f, bool uselatestversion) {
 	bool useextendedtype = uselatestversion;
+	bool useextendedtype2 = uselatestversion;
 	version = uselatestversion ? HWS_BATTLE_SCENE_VERSION : HWS_BATTLE_SCENE_VERSION_VANILLA;
 	MACRO_ENEMY_IOFUNCTION(HWSWrite, HWSSeek, false, false, true)
 }
@@ -641,10 +644,6 @@ vector<pair<EnemySpellDataStruct*, unsigned int>> EnemyDataSet::GetSimilarEnemyS
 	return result;
 }
 
-EnemySequenceCodeLine::~EnemySequenceCodeLine() {
-//	delete[] arg;
-}
-
 #define MACRO_BATTLE_IOFUNCTION_SEQREAD(IO) \
 	sequence_code[i].clear(); \
 	j = 0; \
@@ -653,7 +652,7 @@ EnemySequenceCodeLine::~EnemySequenceCodeLine() {
 		sequence_code[i][j].parent = this; \
 		IO ## Char(f, sequence_code[i][j].code); \
 		EnemySequenceCode& seq = GetEnemySequenceCode(sequence_code[i][j].code); \
-		sequence_code[i][j].arg = new uint32_t[seq.arg_amount]; \
+		sequence_code[i][j].arg.resize(seq.arg_amount); \
 		for (k = 0; k < seq.arg_amount; k++) { \
 			if (seq.arg_length[k] == 1) { \
 				IO ## Char(f, tmp8); \
@@ -719,7 +718,7 @@ EnemySequenceCodeLine::~EnemySequenceCodeLine() {
 		IO ## Short(f, animation_id[i]); \
 		IO ## Short(f, zero16); \
 	} \
-	for (i=0;i<sequence_amount;i++) \
+	for (i = 0; i < sequence_amount; i++) \
 		IO ## Char(f, sequence_base_anim[i]); \
 	if (PPF) PPFEndScanStep(); \
 	for (i = 0; i < sequence_amount; i++) { \
@@ -1850,6 +1849,22 @@ void EnemyDataSet::SetupEnemyInfo(int battleindex) { // TODO: Check that any ord
 		lastisdummy = 1;
 		bd.sequence_stat_id[bd.sequence_amount - 1] = 0;
 	}
+	if (bd.sequence_amount > ed.spell_amount + lastisdummy) {
+		lastisdummy = ed.spell_amount % 2;
+		bd.sequence_amount = ed.spell_amount + lastisdummy;
+		bd.sequence_offset.resize(bd.sequence_amount);
+		bd.sequence_base_anim.resize(bd.sequence_amount);
+		bd.sequence_stat_id.resize(bd.sequence_amount);
+		bd.sequence_code_amount.resize(bd.sequence_amount);
+		bd.sequence_code.resize(bd.sequence_amount);
+		if (lastisdummy != 0 && bd.sequence_amount > 0) {
+			bd.sequence_offset[bd.sequence_amount - 1] = bd.sequence_offset[0];
+			bd.sequence_base_anim[bd.sequence_amount - 1] = 0;
+			bd.sequence_stat_id[bd.sequence_amount - 1] = 0;
+			bd.sequence_code_amount[bd.sequence_amount - 1] = 0;
+			bd.sequence_code[bd.sequence_amount - 1].clear();
+		}
+	}
 	for (i = 0; i < ed.stat_amount; i++) {
 		ed.stat[i].sequence_anim_base = firstanim;
 		while (j + lastisdummy < bd.sequence_amount && bd.sequence_base_anim[j] == firstanim)
@@ -1874,6 +1889,7 @@ void EnemyDataSet::SetupEnemyInfo(int battleindex) { // TODO: Check that any ord
 		if (i >= ed.stat_amount)
 			bd.sequence_stat_id[j++] = ed.stat_amount - 1;
 	}
+	bd.UpdateOffset();
 }
 
 // Model Links

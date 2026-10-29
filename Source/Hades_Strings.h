@@ -244,6 +244,8 @@ extern vector<wxString> HADES_STRING_PARTY_SPECIAL_DATA;
 #define HADES_STRING_WALKMESH_IMPORT_NORMALS L"Triangles can accept only 1 normal (not 1 per vertex); the first normal was used everytimes it conflicted\n"
 #define HADES_STRING_WALKMESH_IMPORT_QUADS L"Only triangular faces are accepted; polygons with more than 3 vertices were cut down to 3 vertices\n"
 #define HADES_STRING_WALKMESH_IMPORT_HINT L"You would better edit the imported walkmesh in order to check it and setup its pathing flags"
+#define HADES_STRING_BACKGROUND_ANIM_TILE_COUNT L"You need to use at least 2 tile blocks for an animation"
+#define HADES_STRING_BACKGROUND_ANIM_CAMERA L"You cannot use tile blocks associated to different camera angles"
 
 //-- Item Panel
 #define HADES_STRING_ITEM_STAT_SET			L"Stat Set "

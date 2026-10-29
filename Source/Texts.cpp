@@ -952,7 +952,7 @@ FF9String& SpecialTextDataStruct::GetTextByKey(wstring key) {
 	return dummytext;
 }
 
-#define MACRO_SPECIALTEXT_IOFUNCTION(IO,SEEK,READ,PPF) \
+#define MACRO_SPECIALTEXT_IOFUNCTION(IO, SEEK, READ, PPF) \
 	uint32_t strpos, textamount = text_block[i].text.size(); \
 	uint16_t zero16 = 0; \
 	if (PPF) PPFInitScanStep(ffbin); \
@@ -1139,6 +1139,16 @@ void SpecialTextDataSet::Load(fstream& ffbin, ConfigurationSet& configset) {
 		for (j = 0; j < text_block[SPECIAL_TEXT_LOCALIZATION_INDEX_STEAM].text.size(); j++)
 			text_block[SPECIAL_TEXT_LOCALIZATION_INDEX_STEAM].text[j].id = j;
 		ffbin.close();
+		text_block[SPECIAL_TEXT_ELEMENTNAMES_INDEX_STEAM].base_amount = text_block[SPECIAL_TEXT_CLASSNAMES_INDEX_STEAM].base_amount = 8;
+		text_block[SPECIAL_TEXT_ELEMENTNAMES_INDEX_STEAM].space_used = text_block[SPECIAL_TEXT_CLASSNAMES_INDEX_STEAM].space_used = 0;
+		text_block[SPECIAL_TEXT_ELEMENTNAMES_INDEX_STEAM].is_localization = text_block[SPECIAL_TEXT_CLASSNAMES_INDEX_STEAM].is_localization = false;
+		text_block[SPECIAL_TEXT_ELEMENTNAMES_INDEX_STEAM].text.resize(8);
+		text_block[SPECIAL_TEXT_CLASSNAMES_INDEX_STEAM].text.resize(8);
+		for (j = 0; j < 8; j++) {
+			text_block[SPECIAL_TEXT_ELEMENTNAMES_INDEX_STEAM].text[j].id = text_block[SPECIAL_TEXT_CLASSNAMES_INDEX_STEAM].text[j].id = j;
+			text_block[SPECIAL_TEXT_ELEMENTNAMES_INDEX_STEAM].text[j].txt = text_block[0].text[j].txt;
+			text_block[SPECIAL_TEXT_CLASSNAMES_INDEX_STEAM].text[j].txt = text_block[1].text[j].txt;
+		}
 	}
 	for (i = 0; i < text_block.size(); i++)
 		text_block[i].UpdateOffset();

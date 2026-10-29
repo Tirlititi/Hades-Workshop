@@ -88,7 +88,7 @@ public:
 	uint8_t target_flag;
 	int effect;
 	int power;
-	uint8_t element;
+	set<int> element;
 	int accuracy;
 	uint8_t flag;
 	int status;

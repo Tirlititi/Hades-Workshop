@@ -53,14 +53,16 @@ string ConvertToString(int val);
 string ConvertWStrToStr(const wstring& wstr);
 wstring ConvertStrToWStr(const string& str);
 
+void SetDebugLogInfo(int infotype, string info);
 fstream& GetDebugLog();
 
 #define StreamAsHex(VALUE) hex << showbase << (unsigned long)VALUE << dec << noshowbase
 
-#define MACRO_IOFUNCTIONGENERIC_STATUS(FFBIN, CONDITION, IO, READ, STATUSSET) \
+#define MACRO_IOFUNCTIONGENERIC_STATUS(FFBIN, CONDITION, IO, READ, STATUSSET, DEBUGINFO) \
 	if (CONDITION) { \
 		int macrostatuscount = 0; \
 		if (READ) { \
+			STATUSSET.clear(); \
 			IO ## FlexibleChar(FFBIN, macrostatuscount, true); \
 			for (int statusit = 0; statusit < macrostatuscount; statusit++) { \
 				int statusnum = 0; \
@@ -80,8 +82,49 @@ fstream& GetDebugLog();
 		if (!READ) \
 			macrostatusraw = GetStatusBitList(STATUSSET); \
 		IO ## Long(FFBIN, macrostatusraw); \
-		if (READ) \
+		if (READ) { \
+			if (!STATUSSET.empty()) { \
+				uint32_t macroremovedstatuses = ~macrostatusraw & GetStatusBitList(STATUSSET); \
+				if (macroremovedstatuses != 0) { \
+					bool macroaddcomma = false; \
+					for (int statusnum = 0; statusnum < 32; statusnum++) { \
+						if ((macroremovedstatuses & (1u << statusnum)) != 0) { \
+							GetDebugLog() << (macroaddcomma ? ", " : DEBUGINFO) << HADES_STRING_STATUS_NAME[statusnum].c_str(); \
+							macroaddcomma = true; \
+						} \
+					} \
+					if (macroaddcomma) \
+						GetDebugLog() << endl; \
+				} \
+			} \
 			SetupStatusList(STATUSSET, macrostatusraw); \
+		} \
+	}
+
+#define MACRO_IOFUNCTIONGENERIC_ELEMCLASS(FFBIN, CONDITION, IO, READ, ELEMSET) \
+	if (CONDITION) { \
+		int macroelemcount = 0; \
+		if (READ) { \
+			ELEMSET.clear(); \
+			IO ## FlexibleChar(FFBIN, macroelemcount, true); \
+			for (int elemit = 0; elemit < macroelemcount; elemit++) { \
+				int elemnum = 0; \
+				IO ## FlexibleChar(FFBIN, elemnum, true); \
+				ELEMSET.insert(elemnum); \
+			} \
+		} else { \
+			macroelemcount = ELEMSET.size(); \
+			IO ## FlexibleChar(FFBIN, macroelemcount, true); \
+			for (auto elemit = ELEMSET.begin(); elemit != ELEMSET.end(); elemit++) { \
+				int elemnum = *elemit; \
+				IO ## FlexibleChar(FFBIN, elemnum, true); \
+			} \
+		} \
+	} else { \
+		uint8_t macroelemraw = 0; \
+		if (!READ) macroelemraw = GetStatusBitList(ELEMSET); \
+		IO ## Char(FFBIN, macroelemraw); \
+		if (READ) SetupStatusList(ELEMSET, macroelemraw); \
 	}
 
 #endif

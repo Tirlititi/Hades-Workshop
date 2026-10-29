@@ -13,6 +13,7 @@
 #include <functional>
 #include <wx/string.h>
 #include <wx/arrstr.h>
+#include <wx/stattext.h>
 #include "File_Manipulation.h"
 using namespace std;
 
@@ -28,10 +29,18 @@ template<typename T> int PrepareHWSFlexibleList(fstream& ffbin, vector<T>& objli
 template<typename T> int GetSteamTextSizeGeneric(vector<T>& list, FF9String T::*field, bool asmes, SteamLanguage lang);
 template<typename T> void WriteSteamTextGeneric(fstream& f, vector<T>& list, FF9String T::*field, vector<int>* subindex, bool asmes, SteamLanguage lang);
 
+template<typename T> bool SetContains(set<T>& set, T&& val);
+
 // Concatenate multiple strings using a delimiter between each, possibly with strings generated out of a list of non-strings
 template<typename T> string ConcatenateStrings(string delim, vector<T>& objlist, function<string(T)> stringifier, bool escapeempty = false);
 string ConcatenateStrings(string delim, vector<string>& objlist, bool escapeempty = false);
 unsigned int CharCountInString(wxString str, wxUniChar c);
+void ClearCustomElemClass(set<int>& elements);
+void SetCustomElemClassLabel(wxStaticText* listlabel, set<int>& elements, bool iselement);
+wxString GetElementNameAndId(int elemid);
+wxString FormatElementSet(set<int>& elements);
+wxString GetEnemyClassNameAndId(int classid);
+wxString FormatEnemyClassSet(set<int>& classes);
 wxString GetStatusNameAndId(int statusid);
 wxString FormatStatusSet(set<int>& statuses);
 uint32_t GetStatusBitList(set<int>& statuses);

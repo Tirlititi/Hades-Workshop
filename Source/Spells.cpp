@@ -3,6 +3,7 @@
 #include "main.h"
 #include "Database_CSV.h"
 #include "CommonUtility.h"
+#include "Hades_Strings.h"
 
 #define SPELL_HWS_VERSION 5
 
@@ -87,7 +88,7 @@ wxString SpellDataStruct::GetFieldValue(wxString fieldname) {
 	if (fieldname.IsSameAs("model_alt")) return wxString::Format(wxT("%d"), model_alt);
 	if (fieldname.IsSameAs("effect")) return wxString::Format(wxT("%d"), effect);
 	if (fieldname.IsSameAs("power")) return wxString::Format(wxT("%d"), power);
-	if (fieldname.IsSameAs("element")) return wxString::Format(wxT("%d"), element);
+	if (fieldname.IsSameAs("element")) return FormatElementSet(element);
 	if (fieldname.IsSameAs("accuracy")) return wxString::Format(wxT("%d"), accuracy);
 	if (fieldname.IsSameAs("flag")) return wxString::Format(wxT("%d"), flag);
 	if (fieldname.IsSameAs("status")) return wxString::Format(wxT("%d"), RedirectEmptyStatusSetToNull(status));
@@ -210,69 +211,70 @@ void SpellDataStruct::SetSound(uint16_t newvalue) {
 	target_flag = (target_flag & 0xE0) | ((newvalue & 0xF80) >> 7);
 }
 
-#define MACRO_SPELL_IOFUNCTIONDATA(IO,SEEK,READ,PPF) \
+#define MACRO_SPELL_IOFUNCTIONDATA(IO, SEEK, READ, PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<spellamount;i++) { \
-		IO ## Char(ffbin,spell[i].target_type); \
-		IO ## FlexibleShort(ffbin,spell[i].model, useextendedtype); \
-		IO ## Char(ffbin,spell[i].target_flag); \
-		IO ## FlexibleChar(ffbin,spell[i].effect, useextendedtype); \
-		IO ## FlexibleChar(ffbin,spell[i].power, useextendedtype); \
-		IO ## Char(ffbin,spell[i].element); \
-		IO ## FlexibleChar(ffbin,spell[i].accuracy, useextendedtype); \
-		IO ## Char(ffbin,spell[i].flag); \
-		IO ## FlexibleChar(ffbin,spell[i].status, useextendedtype2); \
-		IO ## FlexibleChar(ffbin,spell[i].mp, useextendedtype); \
-		IO ## Char(ffbin,spell[i].menu_flag); \
-		IO ## FlexibleShort(ffbin,spell[i].model_alt, useextendedtype); \
-		IO ## Short(ffbin,spell[i].name_offset); \
+	for (i = 0; i < spellamount; i++) { \
+		IO ## Char(ffbin, spell[i].target_type); \
+		IO ## FlexibleShort(ffbin, spell[i].model, useextendedtype); \
+		IO ## Char(ffbin, spell[i].target_flag); \
+		IO ## FlexibleChar(ffbin, spell[i].effect, useextendedtype); \
+		IO ## FlexibleChar(ffbin, spell[i].power, useextendedtype); \
+		MACRO_IOFUNCTIONGENERIC_ELEMCLASS(ffbin, useextendedtype3, IO, READ, spell[i].element) \
+		IO ## FlexibleChar(ffbin, spell[i].accuracy, useextendedtype); \
+		IO ## Char(ffbin, spell[i].flag); \
+		IO ## FlexibleChar(ffbin, spell[i].status, useextendedtype2); \
+		IO ## FlexibleChar(ffbin, spell[i].mp, useextendedtype); \
+		IO ## Char(ffbin, spell[i].menu_flag); \
+		IO ## FlexibleShort(ffbin, spell[i].model_alt, useextendedtype); \
+		IO ## Short(ffbin, spell[i].name_offset); \
 		if (useextendedtype2) IO ## CSVFields(ffbin, spell[i].custom_field); \
 	} \
 	if (PPF) PPFEndScanStep();
 
-#define MACRO_SPELL_IOFUNCTIONNAME(IO,SEEK,TXTPOS,READ,PPF) \
+#define MACRO_SPELL_IOFUNCTIONNAME(IO, SEEK, TXTPOS, READ, PPF) \
 	txtpos = TXTPOS; \
 	if (READ) name_space_used = 0; \
 	ffbin.seekg(txtpos); \
-	if (PPF) PPFInitScanStep(ffbin,true,name_space_total); \
-	for (i=0;i<spellamount;i++) { \
-		SEEK(ffbin,txtpos,spell[i].name_offset); \
-		IO ## FF9String(ffbin,spell[i].name); \
+	if (PPF) PPFInitScanStep(ffbin, true, name_space_total); \
+	for (i = 0; i < spellamount; i++) { \
+		SEEK(ffbin, txtpos, spell[i].name_offset); \
+		IO ## FF9String(ffbin, spell[i].name); \
 		if (READ) name_space_used += spell[i].name.length; \
 	} \
 	if (PPF) PPFEndScanStep(); \
-	SEEK(ffbin,txtpos,name_space_total);
+	SEEK(ffbin, txtpos, name_space_total);
 
-#define MACRO_SPELL_IOFUNCTIONHELP(IO,SEEK,READ,PPF) \
+#define MACRO_SPELL_IOFUNCTIONHELP(IO, SEEK, READ, PPF) \
 	txtpos = ffbin.tellg(); \
-	SEEK(ffbin,txtpos,help_space_total); \
+	SEEK(ffbin, txtpos, help_space_total); \
 	if (PPF) PPFInitScanStep(ffbin); \
-	for (i=0;i<spellamount;i++) { \
-		IO ## Short(ffbin,spell[i].help_offset); \
-		IO ## Short(ffbin,spell[i].help_size_x); \
+	for (i = 0; i < spellamount; i++) { \
+		IO ## Short(ffbin, spell[i].help_offset); \
+		IO ## Short(ffbin, spell[i].help_size_x); \
 	} \
 	if (PPF) PPFEndScanStep(); \
 	if (READ) help_space_used = 0; \
 	ffbin.seekg(txtpos); \
-	if (PPF) PPFInitScanStep(ffbin,true,help_space_total); \
-	for (i=0;i<spellamount;i++) { \
-		SEEK(ffbin,txtpos,spell[i].help_offset); \
-		IO ## FF9String(ffbin,spell[i].help); \
+	if (PPF) PPFInitScanStep(ffbin, true, help_space_total); \
+	for (i = 0; i < spellamount; i++) { \
+		SEEK(ffbin, txtpos, spell[i].help_offset); \
+		IO ## FF9String(ffbin, spell[i].help); \
 		if (READ) help_space_used += spell[i].help.length; \
 	} \
 	if (PPF) PPFEndScanStep(); \
-	SEEK(ffbin,txtpos,help_space_total+4*spellamount);
+	SEEK(ffbin, txtpos, help_space_total + 4 * spellamount);
 
-#define MACRO_SPELL_IOFUNCTIONPERFNAME(IO,SEEK,READ,PPF) \
+#define MACRO_SPELL_IOFUNCTIONPERFNAME(IO, SEEK, READ, PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
 	for (i = 0; i < spellamount; i++) \
 		IO ## FlexibleChar(ffbin, spell[i].perform_name, useextendedtype2); \
 	if (PPF) PPFEndScanStep();
 
-#define MACRO_SPELL_IOFUNCTIONSTATUS(IO,SEEK,READ,PPF) \
+#define MACRO_SPELL_IOFUNCTIONSTATUS(IO, SEEK, READ, PPF) \
 	if (PPF) PPFInitScanStep(ffbin); \
 	for (i = 0; i < statussetamount; i++) { \
-		MACRO_IOFUNCTIONGENERIC_STATUS(ffbin, useextendedtype2, IO, READ, status_set[i].status_list) \
+		if (READ && !status_set[i].status_list.empty()) SetDebugLogInfo(2, "Status set " + to_string(status_set[i].id)); \
+		MACRO_IOFUNCTIONGENERIC_STATUS(ffbin, useextendedtype2, IO, READ, status_set[i].status_list, "Status removed: ") \
 		if (useextendedtype2) IO ## CSVFields(ffbin, status_set[i].custom_field); \
 	} \
 	if (PPF) PPFEndScanStep();
@@ -283,6 +285,7 @@ void SpellDataSet::Load(fstream& ffbin, ConfigurationSet& config) {
 	int statussetamount = STATUS_SET_AMOUNT;
 	bool useextendedtype = false;
 	bool useextendedtype2 = false;
+	bool useextendedtype3 = false;
 	uint32_t txtpos;
 	int i;
 	csv_header = _(HADES_STRING_CSV_SPELL_HEADER);
@@ -384,7 +387,7 @@ DllMetaDataModification* SpellDataSet::ComputeSteamMod(ConfigurationSet& config,
 		argvalue[i][7] = (spell[i].target_flag >> 7) & 0x1;
 		argvalue[i][8] = spell[i].effect;
 		argvalue[i][9] = spell[i].power;
-		argvalue[i][10] = spell[i].element;
+		argvalue[i][10] = GetStatusBitList(spell[i].element);
 		argvalue[i][11] = spell[i].accuracy;
 		argvalue[i][12] = spell[i].flag;
 		argvalue[i][13] = spell[i].status;
@@ -423,7 +426,7 @@ void SpellDataSet::GenerateCSharp(vector<string>& buffer) {
 	battledb << "\tFF9BattleDB.aa_data = new AA_DATA[] {\n";
 	for (i = 0; i < SPELL_AMOUNT; i++)
 		battledb << "\t\tnew AA_DATA(new CMD_INFO(" << (int)(spell[i].target_type & 0xF) << ", " << (int)((spell[i].target_type >> 4) & 0x1) << ", " << (int)((spell[i].target_type >> 5) & 0x7) << ", " << (int)(spell[i].model & 0x1FF) << ", " << (int)spell[i].GetSound() << ", " << (int)((spell[i].target_flag >> 5) & 0x1) << ", " << (int)((spell[i].target_flag >> 6) & 0x1) << ", " << (int)((spell[i].target_flag >> 7) & 0x1)
-		<< "), new BTL_REF(" << (int)spell[i].effect << ", " << (int)spell[i].power << ", " << StreamAsHex(spell[i].element) << ", " << (int)spell[i].accuracy
+		<< "), new BTL_REF(" << (int)spell[i].effect << ", " << (int)spell[i].power << ", " << StreamAsHex(GetStatusBitList(spell[i].element)) << ", " << (int)spell[i].accuracy
 		<< "), " << StreamAsHex(spell[i].flag) << ", " << (int)spell[i].status << ", " << (int)spell[i].mp << ", " << StreamAsHex(spell[i].menu_flag) << ", " << (int)spell[i].model_alt << ", " << (int)spell[i].name_offset << (i + 1 == SPELL_AMOUNT ? ")" : "),") << " // " << ConvertWStrToStr(spell[i].name.str_nice) << "\n";
 	battledb << "\t};\n";
 	battledb << "\t// ...\n";
@@ -471,6 +474,7 @@ void SpellDataSet::Write(fstream& ffbin, ConfigurationSet& config) {
 	int statussetamount = STATUS_SET_AMOUNT;
 	bool useextendedtype = false;
 	bool useextendedtype2 = false;
+	bool useextendedtype3 = false;
 	uint32_t txtpos;
 	int i;
 	UpdateOffset();
@@ -502,6 +506,7 @@ void SpellDataSet::WritePPF(fstream& ffbin, ConfigurationSet& config) {
 	int statussetamount = STATUS_SET_AMOUNT;
 	bool useextendedtype = false;
 	bool useextendedtype2 = false;
+	bool useextendedtype3 = false;
 	uint32_t txtpos;
 	int i;
 	UpdateOffset();
@@ -533,6 +538,7 @@ int SpellDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 	int statussetamount = STATUS_SET_AMOUNT;
 	bool useextendedtype = false;
 	bool useextendedtype2 = false;
+	bool useextendedtype3 = GetHWSGlobalVersion() >= 103;
 	vector<SpellDataStruct> nonmodifiedspell;
 	vector<StatusSetStruct> nonmodifiedstatusset;
 	uint32_t txtpos;
@@ -652,6 +658,7 @@ int SpellDataSet::LoadHWS(fstream& ffbin, bool usetext) {
 		MACRO_SPELL_IOFUNCTIONPERFNAME(HWSRead, HWSSeek, true, false)
 	}
 	if (version >= 3) {
+		SetDebugLogInfo(1, "Status set datas");
 		MACRO_SPELL_IOFUNCTIONSTATUS(HWSRead, HWSSeek, true, false)
 	}
 	for (i = 0; i < (int)nonmodifiedspell.size(); i++)
@@ -669,6 +676,7 @@ void SpellDataSet::WriteHWS(fstream& ffbin) {
 	int statussetamount = status_set.size();
 	bool useextendedtype = true;
 	bool useextendedtype2 = true;
+	bool useextendedtype3 = true;
 	uint32_t txtpos;
 	int i;
 	UpdateOffset();

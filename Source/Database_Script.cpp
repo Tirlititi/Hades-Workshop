@@ -1,6 +1,7 @@
 #include "Database_Script.h"
 
 map<wstring, int> SCRIPT_ARG_TYPE_MAP = {
+	{ L"SPIN",				AT_SPIN },
 	{ L"USPIN",				AT_USPIN },
 	{ L"BOOL",				AT_BOOL },
 	{ L"BOOLLIST",			AT_BOOLLIST },
@@ -166,7 +167,7 @@ map<unsigned int, SortedChoiceItemScriptOpcode> HADES_STRING_SCRIPT_OPCODE = {
 	{ 0x61, { 0x61, L"SetTileAnimationSpeed", L"Change the speed of a field tile animation.\n\n1st argument: background animation.\n2nd argument: speed (256 = 1 tile/frame).", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Tile Animation", L"Speed" }, new uint8_t[2]{ AT_TILEANIM, AT_SPIN }, 0 } },
 	{ 0x62, { 0x62, L"SetRow", L"Change the battle row of a party member.\n\n1st argument: party member.\n2nd argument: boolean front/back.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Character", L"Row" }, new uint8_t[2]{ AT_LCHARACTER, AT_BOOL }, 0 } },
 	{ 0x63, { 0x63, L"SetTileAnimationPause", L"Make a field tile animation pause at some frame in addition to its normal animation speed.\n\n1st argument: background animation.\n2nd argument: animation frame.\n3rd argument: wait time.", true, 3, new uint8_t[3]{ 1, 1, 1 }, new wstring[3]{ L"Tile Animation", L"Frame ID", L"Time" }, new uint8_t[3]{ AT_TILEANIM, AT_USPIN, AT_USPIN }, 0 } },
-	{ 0x64, { 0x64, L"SetTileAnimationFlags", L"Add flags of a field tile animation.\n\n1st argument: background animation.\n2nd argument: flags (only the flags 5 and 6 can be added).\n 5: unknown\n 6: loop back and forth", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Tile Animation", L"Flags" }, new uint8_t[2]{ AT_TILEANIM, AT_BOOLLIST }, 0 } },
+	{ 0x64, { 0x64, L"SetTileAnimationFlags", L"Add flags of a field tile animation.\n\n1st argument: background animation.\n2nd argument: flags (only the flags 5 and 6 can be added).\n 5: loop\n 6: loop as palindrome", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Tile Animation", L"Flags" }, new uint8_t[2]{ AT_TILEANIM, AT_BOOLLIST }, 0 } },
 	{ 0x65, { 0x65, L"RunTileAnimationEx", L"Run a field tile animation and choose its frame range.\n\n1st argument: background animation.\n2nd argument: starting frame.\n3rd argument: ending frame.", true, 3, new uint8_t[3]{ 1, 1, 1 }, new wstring[3]{ L"Tile Animation", L"Start", L"End" }, new uint8_t[3]{ AT_TILEANIM, AT_USPIN, AT_USPIN }, 0 } },
 	{ 0x66, { 0x66, L"SetTextVariable", L"Set the value of a text number or item variable.\n\n1st argument: text variable's \"Script ID\".\n2nd argument: depends on which text opcode is related to the text variable.\n For [VAR_NUM]: integral value.\n For [VAR_ITEM]: item ID.\n For [VAR_TOKEN]: token number.", true, 2, new uint8_t[2]{ 1, 2 }, new wstring[2]{ L"Variable ID", L"Value" }, new uint8_t[2]{ AT_USPIN, AT_ITEM }, 0 } },
 	{ 0x67, { 0x67, L"SetControlDirection", L"Set the angles for the player's movement control.\n\n1st argument: angle used for arrow movements.\n2nd argument: angle used for analogic stick movements.", true, 2, new uint8_t[2]{ 1, 1 }, new wstring[2]{ L"Arrow Angle", L"Analogic Angle" }, new uint8_t[2]{ AT_SPIN, AT_SPIN }, 0 } },

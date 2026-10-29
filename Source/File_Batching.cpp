@@ -915,6 +915,8 @@ LogStruct BatchImportDialog::ImportText(SaveSet* dataset, set<int>& sectionmodif
 					dataset->ffuiset->special_text->modified = true;
 				} else {
 					int specialblock = currentfileid - 1;
+					if (specialblock >= (int)dataset->ffuiset->special_text->text_block.size())
+						continue;
 					int textindex = dataset->ffuiset->special_text->text_block[specialblock].GetTextIndexById(result[i].textid);
 					if (textindex >= 0) {
 						dataset->ffuiset->special_text->text_block[specialblock].SetText(textindex, result[i].str.ToStdWstring(), result[i].lang);

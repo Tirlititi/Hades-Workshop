@@ -1598,14 +1598,14 @@ struct DamageCalculation {
 				spell_index = 73; // Rebirth Flame spell slot
 				spell_power = cddata->spellset.spell[73].power;
 				spell_accuracy = cddata->spellset.spell[73].accuracy;
-				spell_element = cddata->spellset.spell[73].element;
+				spell_element = GetStatusBitList(cddata->spellset.spell[73].element);
 				spell_status = cddata->spellset.spell[73].status;
 			} else {
 				spell_effect = 9; // Magic Attack
 				spell_index = 72; // Phoenix spell slot
 				spell_power = cddata->spellset.spell[72].power;
 				spell_accuracy = cddata->spellset.spell[72].accuracy;
-				spell_element = cddata->spellset.spell[72].element;
+				spell_element = GetStatusBitList(cddata->spellset.spell[72].element);
 				spell_status = cddata->spellset.spell[72].status;
 			}
 			ProcessMain();
@@ -2223,7 +2223,7 @@ void ToolDamageCalculator::UpdateInformation() {
 		calc.attacker_name = player_panel[0]->m_basechar->GetString(calc.attacker_player_slot);
 		calc.attacker_weapon_index = player_panel[0]->m_weapon->GetSelection();
 		if (calc.attacker_weapon_index >= 0 && calc.attacker_weapon_index < ITEM_WEAPON_AMOUNT) {
-			calc.attacker_weapon_element = cddata->itemset.weapon[calc.attacker_weapon_index].element;
+			calc.attacker_weapon_element = GetStatusBitList(cddata->itemset.weapon[calc.attacker_weapon_index].element);
 			calc.attacker_weapon_status = GetStatusBitList(cddata->spellset.status_set[cddata->itemset.weapon[calc.attacker_weapon_index].status].status_list);
 		}
 		calc.attacker_weapon_power = max(0, min(255, player_panel[0]->equip.attack + player_panel[0]->stat->attack));
@@ -2838,11 +2838,11 @@ void ToolDamageCalculatorPlayer::ComputeEquipCumulatedStat() {
 	equip.evade = (weaponarmor != NULL ? weaponarmor->evade : 0) + (headarmor != NULL ? headarmor->evade : 0) + (wristarmor != NULL ? wristarmor->evade : 0) + (armorarmor != NULL ? armorarmor->evade : 0) + (accessoryarmor != NULL ? accessoryarmor->evade : 0);
 	equip.magic_defence = (weaponarmor != NULL ? weaponarmor->magic_defence : 0) + (headarmor != NULL ? headarmor->magic_defence : 0) + (wristarmor != NULL ? wristarmor->magic_defence : 0) + (armorarmor != NULL ? armorarmor->magic_defence : 0) + (accessoryarmor != NULL ? accessoryarmor->magic_defence : 0);
 	equip.magic_evade = (weaponarmor != NULL ? weaponarmor->magic_evade : 0) + (headarmor != NULL ? headarmor->magic_evade : 0) + (wristarmor != NULL ? wristarmor->magic_evade : 0) + (armorarmor != NULL ? armorarmor->magic_evade : 0) + (accessoryarmor != NULL ? accessoryarmor->magic_evade : 0);
-	equip.element_absorb = weaponstat.element_absorb | headstat.element_absorb | wriststat.element_absorb | armorstat.element_absorb | accessorystat.element_absorb;
-	equip.element_immune = weaponstat.element_immune | headstat.element_immune | wriststat.element_immune | armorstat.element_immune | accessorystat.element_immune;
-	equip.element_half = weaponstat.element_half | headstat.element_half | wriststat.element_half | armorstat.element_half | accessorystat.element_half;
-	equip.element_weak = weaponstat.element_weak | headstat.element_weak | wriststat.element_weak | armorstat.element_weak | accessorystat.element_weak;
-	equip.element_boost = weaponstat.element_boost | headstat.element_boost | wriststat.element_boost | armorstat.element_boost | accessorystat.element_boost;
+	equip.element_absorb = GetStatusBitList(weaponstat.element_absorb) | GetStatusBitList(headstat.element_absorb) | GetStatusBitList(wriststat.element_absorb) | GetStatusBitList(armorstat.element_absorb) | GetStatusBitList(accessorystat.element_absorb);
+	equip.element_immune = GetStatusBitList(weaponstat.element_immune) | GetStatusBitList(headstat.element_immune) | GetStatusBitList(wriststat.element_immune) | GetStatusBitList(armorstat.element_immune) | GetStatusBitList(accessorystat.element_immune);
+	equip.element_half = GetStatusBitList(weaponstat.element_half) | GetStatusBitList(headstat.element_half) | GetStatusBitList(wriststat.element_half) | GetStatusBitList(armorstat.element_half) | GetStatusBitList(accessorystat.element_half);
+	equip.element_weak = GetStatusBitList(weaponstat.element_weak) | GetStatusBitList(headstat.element_weak) | GetStatusBitList(wriststat.element_weak) | GetStatusBitList(armorstat.element_weak) | GetStatusBitList(accessorystat.element_weak);
+	equip.element_boost = GetStatusBitList(weaponstat.element_boost) | GetStatusBitList(headstat.element_boost) | GetStatusBitList(wriststat.element_boost) | GetStatusBitList(armorstat.element_boost) | GetStatusBitList(accessorystat.element_boost);
 }
 
 void ToolDamageCalculatorPlayer::ComputePlayerBaseStat() {
@@ -3043,7 +3043,7 @@ void ToolDamageCalculatorPlayer::SelectBaseSpell(int sel) {
 			m_status->SetSelection(weap.status);
 			//m_power->SetValue(weap.power);
 			m_power->SetValue(0);
-			MACRO_CALCULATOR_SETELEMS(weap.element)
+			MACRO_CALCULATOR_SETELEMS(GetStatusBitList(weap.element))
 			parent->UpdateInformation();
 			return;
 		}
@@ -3058,7 +3058,7 @@ void ToolDamageCalculatorPlayer::SelectBaseSpell(int sel) {
 	m_accuracy->SetValue(spell.accuracy);
 	m_status->SetSelection(spell.status);
 	m_power->SetValue(spell.power);
-	MACRO_CALCULATOR_SETELEMS(spell.element)
+	MACRO_CALCULATOR_SETELEMS(GetStatusBitList(spell.element))
 	parent->UpdateInformation();
 }
 
@@ -3235,7 +3235,7 @@ void ToolDamageCalculatorEnemy::SelectBaseEnemy(int sel) {
 	m_basespell->SetSelection(0);
 	m_level->SetValue(stat.lvl);
 	m_maxhp->SetValue(stat.hp);
-	MACRO_CALCULATOR_SETCLASS(stat.classification)
+	MACRO_CALCULATOR_SETCLASS(GetStatusBitList(stat.classification))
 	m_speed->SetValue(stat.speed);
 	m_strength->SetValue(stat.strength);
 	m_magic->SetValue(stat.magic);
@@ -3244,10 +3244,10 @@ void ToolDamageCalculatorEnemy::SelectBaseEnemy(int sel) {
 	m_evade->SetValue(stat.evade);
 	m_magicdefence->SetValue(stat.magic_defence);
 	m_magicevade->SetValue(stat.magic_evade);
-	buff.element_absorb = stat.element_absorb;
-	buff.element_immune = stat.element_immune;
-	buff.element_half = stat.element_half;
-	buff.element_weak = stat.element_weak;
+	buff.element_absorb = GetStatusBitList(stat.element_absorb);
+	buff.element_immune = GetStatusBitList(stat.element_immune);
+	buff.element_half = GetStatusBitList(stat.element_half);
+	buff.element_weak = GetStatusBitList(stat.element_weak);
 	buff.element_boost = 0; // TODO: include the bug of the PSX version
 	buff.status = GetStatusBitList(stat.status_auto) | GetStatusBitList(stat.status_initial);
 	buff.back_row = false;
@@ -3268,7 +3268,7 @@ void ToolDamageCalculatorEnemy::SelectBaseSpell(int sel) {
 	m_accuracy->SetValue(spell.accuracy);
 	m_status->SetSelection(spell.status);
 	m_power->SetValue(spell.power);
-	MACRO_CALCULATOR_SETELEMS(spell.element)
+	MACRO_CALCULATOR_SETELEMS(GetStatusBitList(spell.element))
 	parent->UpdateInformation();
 }
 

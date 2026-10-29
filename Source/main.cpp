@@ -136,6 +136,7 @@ void MainFrame::MarkDataModified() {
 	if (currentpanel == wxNOT_FOUND || CDModifiedState[currentpanel])
 		return;
 	CDModifiedState[currentpanel] = true;
+	CDCanSaveState[currentpanel] = true;
 	m_cdbook->SetPageText(currentpanel, '*' + m_cdbook->GetPageText(currentpanel));
 	UpdateMenuAvailability(currentpanel);
 }
@@ -303,6 +304,7 @@ void MainFrame::OnOpenClick(wxCommandEvent& event) {
 		}
 		SetGameSaveSet(&CDPanel[CDPanelAmount]->saveset);
 		CDModifiedState[CDPanelAmount] = false;
+		CDCanSaveState[CDPanelAmount] = false;
 		m_cdbook->AddPage(CDPanel[CDPanelAmount], _(CDName[CDPanelAmount].c_str()), true, wxNullBitmap);
 		m_openhws->Enable();
 		m_close->Enable();
@@ -337,7 +339,9 @@ void MainFrame::OnOpenHWSClick(wxCommandEvent& event) {
 		localsec[2] = TheIOHWSMessageIn->m_fieldlocal->GetValue() && TheIOHWSMessageIn->m_fieldlocal->IsEnabled();
 		hwsname[hwslen] = 0;
 		strncpy(hwsname, (const char*)TheIOHWSMessageIn->m_hwspicker->GetPath().mb_str(), hwslen);
+		SetDebugLogInfo(0, "Reading HWS: " + string(hwsname));
 		wstring* res = CDPanel[currentpanel]->ReadHWS(hwsname, section, sectext, localsec);
+		SetDebugLogInfo(-1, "");
 		delete[] hwsname;
 		delete[] section;
 		delete[] sectext;
@@ -362,6 +366,7 @@ void MainFrame::OnCloseClick(wxCommandEvent& event) {
 			CDName[i] = CDName[i + 1];
 			CDPanel[i] = CDPanel[i + 1];
 			CDModifiedState[i] = CDModifiedState[i + 1];
+			CDCanSaveState[i] = CDCanSaveState[i + 1];
 		}
 	} else {
 		m_cdbook->Show(false);
@@ -833,12 +838,13 @@ void MainFrame::OnToolClick( wxCommandEvent& event ) {
 	}
 }
 
+// Dummied
 void MainFrame::OnMemoriaClick(wxCommandEvent& event) {
 	int currentpanel = m_cdbook->GetSelection();
 	if (currentpanel == wxNOT_FOUND)
 		return;
 	int id = event.GetId();
-	if (id == wxID_CUSTOMFIELD) {
+	if (id == wxID_FIELD) {
 		bool ok = true;
 		if (!CDPanel[currentpanel]->saveset.sectionloaded[DATA_SECTION_FIELD]) {
 			wxMessageDialog popup(this, wxString::Format(wxT(HADES_STRING_MEMORIA_LOAD_SECTIONS), "fields"), HADES_STRING_WARNING, wxOK | wxCANCEL | wxSTAY_ON_TOP | wxCENTRE);
@@ -860,7 +866,7 @@ void MainFrame::OnMemoriaClick(wxCommandEvent& event) {
 				}
 			}
 		}
-	} else if (id == wxID_CUSTOMBATTLE) {
+	} else if (id == wxID_ENMY) {
 		bool ok = true;
 		if (!CDPanel[currentpanel]->saveset.sectionloaded[DATA_SECTION_ENMY]) {
 			wxMessageDialog popup(this, wxString::Format(wxT(HADES_STRING_MEMORIA_LOAD_SECTIONS), "battles"), HADES_STRING_WARNING, wxOK | wxCANCEL | wxSTAY_ON_TOP | wxCENTRE);
@@ -971,8 +977,6 @@ void MainFrame::UpdateMenuAvailability(int panel) {
 		m_randomizer->Enable(false);
 		m_damagecalculator->Enable(false);
 		m_backgroundeditor->Enable(false);
-		m_customfield->Enable(false);
-		m_custombattle->Enable(false);
 		return;
 	}
 	SetGameType(CDPanel[panel]->gametype);
@@ -985,10 +989,10 @@ void MainFrame::UpdateMenuAvailability(int panel) {
 	m_randomizer->Enable(true);
 	m_damagecalculator->Enable(true);
 	m_backgroundeditor->Enable(true);
-	m_savehws->Enable(CDModifiedState[panel]);
-	m_savesteam->Enable(CDModifiedState[panel] && GetGameType() != GAME_TYPE_PSX);
-	m_exportppf->Enable(CDModifiedState[panel] && GetGameType() == GAME_TYPE_PSX);
-	m_savebin->Enable(CDModifiedState[panel] && GetGameType() == GAME_TYPE_PSX);
+	m_savehws->Enable(CDCanSaveState[panel]);
+	m_savesteam->Enable(CDCanSaveState[panel] && GetGameType() != GAME_TYPE_PSX);
+	m_exportppf->Enable(CDCanSaveState[panel] && GetGameType() == GAME_TYPE_PSX);
+	m_savebin->Enable(CDCanSaveState[panel] && GetGameType() == GAME_TYPE_PSX);
 	m_exporttext->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_TEXT]);
 	m_exportworldtext->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_WORLD_MAP]);
 	m_exportbattletext->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_ENMY]);
@@ -1012,8 +1016,6 @@ void MainFrame::UpdateMenuAvailability(int panel) {
 	m_importfieldscript->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_FIELD]);
 	m_exportfieldbackground->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_FIELD]);
 	m_exportfieldwalkmesh->Enable(CDPanel[panel]->saveset.sectionloaded[DATA_SECTION_FIELD]);
-	m_customfield->Enable(CDPanel[panel]->config.gametype == GAME_TYPE_STEAM && CDPanel[panel]->config.dll_usage != 0);
-	m_custombattle->Enable(CDPanel[panel]->config.gametype == GAME_TYPE_STEAM && CDPanel[panel]->config.dll_usage != 0);
 }
 
 void MainFrame::OnDebugClick(wxCommandEvent& event) {

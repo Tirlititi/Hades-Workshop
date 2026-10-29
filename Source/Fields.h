@@ -41,8 +41,8 @@ public:
 	int16_t rate;
 	uint16_t counter;
 	uint32_t tile_list_offset;
-	uint8_t* tile_list;
-	uint8_t* tile_duration;
+	vector<uint8_t> tile_list;
+	vector<uint8_t> tile_duration;
 };
 
 struct FieldTilesTileDataStruct {
@@ -114,7 +114,7 @@ public:
 	wxString memoria_bgx_path;
 	wxString memoria_bgx_shader;
 
-	FieldTilesTileDataStruct* tile;
+	vector<FieldTilesTileDataStruct> tile;
 	
 	bool is_first_of_anim;
 	uint8_t id;
@@ -195,12 +195,12 @@ public:
 	int16_t max_y;
 	int16_t screen_x;
 	int16_t screen_y;
-	FieldTilesAnimDataStruct* anim;
-	FieldTilesTilesetDataStruct* tiles;
-	FieldTilesLightDataStruct* light; // seems unused at all...
-	FieldTilesCameraDataStruct* camera;
+	vector<FieldTilesAnimDataStruct> anim;
+	vector<FieldTilesTilesetDataStruct> tiles;
+	vector<FieldTilesLightDataStruct> light; // seems unused at all...
+	vector<FieldTilesCameraDataStruct> camera;
 	
-	FieldTilesTilesetDataStruct** tiles_sorted; // For ConvertAsImage: each tile block is a layer with a unique depth
+	vector<FieldTilesTilesetDataStruct*> tiles_sorted; // For ConvertAsImage: each tile block is a layer with a unique depth
 	vector<vector<pair<int, int>>> tile_per_depth; // For ConvertAsImageAccurate: each tile has its own depth
 	
 	unsigned int title_tile_amount; // Steam only
@@ -217,6 +217,10 @@ public:
 	int GetFieldId() const;
 	bool IsBGXFormat() const;
 	void ConvertToBGX(wxString imgfolder);
+	bool AddTileset(unsigned int cameraid, wxString bgxpath);
+	bool AddAnimation(vector<uint8_t> tilelist, uint8_t flags, int16_t rate);
+	void RemoveTileset(unsigned int tilesetindex);
+	void RemoveAnimation(unsigned int animindex);
 	
 	void Read(fstream& f, unsigned int titletileamount);
 	void Read(fstream& f) { Read(f, 0); }
