@@ -437,8 +437,8 @@ void MainFrame::OnSaveHWSClick(wxCommandEvent& event) {
 class SaveSteamDialog : public SaveSteamWindow {
 public:
 	SaveSteamDialog(wxWindow* parent) : SaveSteamWindow(parent) {
-		m_customFieldScriptsOnly = new wxCheckBox(this, wxID_ANY, _("Export only custom field scripts"));
-		m_customFieldScriptsOnly->SetToolTip(_("Raw Assets only. Exports custom field scripts and registration. Existing field assets are required."));
+		m_customFieldScriptsOnly = new wxCheckBox(this, wxID_ANY, _("Export custom field scripts only"));
+		m_customFieldScriptsOnly->SetToolTip(_("Raw Assets only. Export custom field scripts and registrations without replacing existing background, walkmesh, or SPS assets."));
 		wxSizer* options = m_infotext->GetContainingSizer();
 		options->Insert(3, m_customFieldScriptsOnly, 0, wxALL, 5);
 		m_assetformat->Bind(wxEVT_CHOICE, [this](wxCommandEvent& event) {
