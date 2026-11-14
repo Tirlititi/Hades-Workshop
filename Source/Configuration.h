@@ -343,7 +343,7 @@ int WriteHWS(string filepath, bool* section, bool* localsec, SaveSet& saveset, U
 int CreatePPF(string basefile, string ppfname, bool* section, ConfigurationSet& config, SaveSet& saveset, ClusterSet& cluster, bool undo, bool blockcheck, string description);
 int OverwritePSXBinary(string filename, bool* section, ConfigurationSet& config, SaveSet& saveset, ClusterSet& cluster);
 
-int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, SaveSet& saveset, int dllformat, int assetformat, bool deleteold);
+int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, SaveSet& saveset, int dllformat, int assetformat, bool deleteold, bool customFieldScriptsOnly = false);
 int CreateSteamCustomBattleAssets(string destfolder, ConfigurationSet& config, SaveSet& saveset, int basebattle, uint16_t scriptid, string battleid, string bgid);
 int CreateSteamCustomFieldAssets(string destfolder, ConfigurationSet& config, SaveSet& saveset, int basefield, uint16_t scriptid, uint8_t areaid, string mapid, string fieldid, uint16_t textid);
 

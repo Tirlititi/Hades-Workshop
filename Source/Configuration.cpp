@@ -1549,7 +1549,7 @@ int InitSteamConfiguration(string filepath, ConfigurationSet& dest) {
 	return 0;
 }
 
-int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, SaveSet& saveset, int dllformat, int assetformat, bool deleteold) {
+int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, SaveSet& saveset, int dllformat, int assetformat, bool deleteold, bool customFieldScriptsOnly) {
 	// For chunks, we use the functions WriteHWS as the writing process is the same
 	// A WriteSteam function is needed only when texts are involved
 	SteamLanguage lang;
@@ -2323,7 +2323,7 @@ int CreateSteamMod(string destfolder, bool* section, ConfigurationSet& config, S
 		if (section[DATA_SECTION_FIELD])
 			for (i = 0; i < saveset.fieldset->amount; i++)
 				if (saveset.fieldset->addition[i] != NULL) {
-					int errcode = saveset.fieldset->addition[i]->ExportAssets(config, saveset, destfolder);
+					int errcode = saveset.fieldset->addition[i]->ExportAssets(config, saveset, destfolder, customFieldScriptsOnly);
 					if (errcode != 0)
 						return errcode;
 				}

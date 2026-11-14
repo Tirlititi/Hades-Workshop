@@ -436,14 +436,31 @@ void MainFrame::OnSaveHWSClick(wxCommandEvent& event) {
 
 class SaveSteamDialog : public SaveSteamWindow {
 public:
-	SaveSteamDialog(wxWindow* parent) : SaveSteamWindow(parent) {}
+	SaveSteamDialog(wxWindow* parent) : SaveSteamWindow(parent) {
+		m_customFieldScriptsOnly = new wxCheckBox(this, wxID_ANY, _("Export only custom field scripts"));
+		m_customFieldScriptsOnly->SetToolTip(_("Raw Assets only. Exports custom field scripts and registration. Existing field assets are required."));
+		wxSizer* options = m_infotext->GetContainingSizer();
+		options->Insert(3, m_customFieldScriptsOnly, 0, wxALL, 5);
+		m_assetformat->Bind(wxEVT_CHOICE, [this](wxCommandEvent& event) {
+			m_customFieldScriptsOnly->Enable(m_assetformat->GetSelection() == 1);
+			event.Skip();
+		});
+	}
+
+	bool CustomFieldScriptsOnly() const {
+		return m_assetformat->GetSelection() == 1 && m_customFieldScriptsOnly->GetValue();
+	}
 	int ShowModal() {
 		m_infotext->Hide();
 		m_showinfobtn->SetBitmap(wxBitmap(wxBITMAP(bulletright_image).ConvertToImage()));
+		m_customFieldScriptsOnly->Enable(m_assetformat->GetSelection() == 1);
+		Fit();
 		return SaveSteamWindow::ShowModal();
 	}
 
 private:
+	wxCheckBox* m_customFieldScriptsOnly;
+
 	void OnShowHideInfo(wxMouseEvent& event) {
 		if (m_infotext->IsShown()) {
 			m_infotext->Hide();
@@ -483,7 +500,7 @@ void MainFrame::OnSaveSteamClick(wxCommandEvent& event) {
 			wxFileName::Mkdir(SteamSaveDir.GetPath() + _(L"\\StreamingAssets\\"), wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 			wxFileName::Mkdir(SteamSaveDir.GetPath() + _(L"\\x64\\FF9_Data\\"), wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 		}
-		int res = CreateSteamMod(SteamSaveDir.GetPath().ToStdString(), modifiedsection, CDPanel[currentpanel]->config, CDPanel[currentpanel]->saveset, dllformat, assetformat, deleteold);
+		int res = CreateSteamMod(SteamSaveDir.GetPath().ToStdString(), modifiedsection, CDPanel[currentpanel]->config, CDPanel[currentpanel]->saveset, dllformat, assetformat, deleteold, dial.CustomFieldScriptsOnly());
 		if (res == 0) {
 			wxMessageDialog popupsuccess(this, HADES_STRING_STEAM_SAVE_SUCCESS, HADES_STRING_SUCCESS, wxOK | wxCENTRE);
 			popupsuccess.ShowModal();
