@@ -2517,17 +2517,17 @@ void FieldSteamTitleInfo::Write(fstream& f) {
 	// ToDo ; also compute the size before
 }
 
-int FieldAdditionDataStruct::ExportAssets(ConfigurationSet& config, SaveSet& saveset, string destfolder) {
+int FieldAdditionDataStruct::ExportAssets(ConfigurationSet& config, SaveSet& saveset, string destfolder, bool scriptsOnly) {
 	string mapid = ConvertWStrToStr(L"FBG_N" + (area_id < 10 ? L"0" + to_wstring(area_id) : to_wstring(area_id)) + L"_" + map_id);
 	string fieldid = ConvertWStrToStr(L"EVT_" + field_id);
 	if (destfolder.back() != '\\' && destfolder.back() != '/')
 		destfolder += "\\";
-	if (saveset.fieldset->background_data[index] != NULL) {
+	if (!scriptsOnly && saveset.fieldset->background_data[index] != NULL) {
 		int errorcode = saveset.fieldset->background_data[index]->WriteBGX(destfolder + "StreamingAssets\\Assets\\Resources\\FieldMaps\\" + mapid + "\\", mapid + ".bgx");
 		if (errorcode != 0)
 			return errorcode;
 	}
-	if (saveset.fieldset->walkmesh[index] != NULL) {
+	if (!scriptsOnly && saveset.fieldset->walkmesh[index] != NULL) {
 		string fname = destfolder + "StreamingAssets\\Assets\\Resources\\FieldMaps\\" + mapid + "\\" + mapid + ".bgi.bytes";
 		MainFrame::MakeDirForFile(fname);
 		fstream filedest(fname.c_str(), ios::out | ios::binary);
@@ -2546,7 +2546,7 @@ int FieldAdditionDataStruct::ExportAssets(ConfigurationSet& config, SaveSet& sav
 		filedest.close();
 	}
 	int spsindex = saveset.fieldset->GetIndexById(sps_pool);
-	if (spsindex >= 0 && config.field_file_id[spsindex] > 0) {
+	if (!scriptsOnly && spsindex >= 0 && config.field_file_id[spsindex] > 0) {
 		fstream filebase(config.steam_dir_assets + "p0data1" + to_string(config.field_file_id[spsindex]) + ".bin", ios::in | ios::binary);
 		if (!filebase.is_open())
 			return 2;
